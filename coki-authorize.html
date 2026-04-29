@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autorizar — Coki Studios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif}</style>
+</head>
+
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+        
+        <!-- 🏢 HEADER -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span class="text-white font-bold text-2xl">C</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800">Coki Studios</h1>
+            <p class="text-slate-500">Autorización de acceso</p>
+        </div>
+
+        <!-- 🔐 ESTADO 1: NO LOGUEADO -->
+        <div id="login-section" class="bg-white rounded-2xl shadow-sm p-8">
+            <p class="text-center text-slate-600 mb-6">
+                Primero inicia sesión en tu cuenta de <strong>Coki Studios</strong>
+            </p>
+            
+            <a id="btn-coki-login"
+               class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors mb-4">
+                Iniciar sesión en Coki Studios
+            </a>
+            
+            <p class="text-center text-sm text-slate-400">
+                ¿No tienes cuenta? 
+                <a href="coki-register.html" class="text-blue-600 hover:underline">Crear una</a>
+            </p>
+        </div>
+
+        <!-- ✅ ESTADO 2: LOGUEADO -->
+        <div id="consent-section" class="hidden">
+            
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
+                <div class="flex items-center gap-3 mb-4">
+                    <img id="user-avatar" src="" class="w-10 h-10 rounded-full bg-blue-100 object-cover hidden">
+                    <div id="user-avatar-fallback" class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                        U
+                    </div>
+                    <div>
+                        <p id="user-name" class="font-semibold text-slate-800">Usuario</p>
+                        <p id="user-email" class="text-sm text-slate-500">email@coki.com</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="text-sm text-red-500 hover:text-red-700">Usar otra cuenta</button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm p-8">
+                <div class="text-center mb-6">
+                    <p class="text-slate-600">
+                        <strong id="client-name">App Externa</strong> quiere acceder a tu cuenta de Coki Studios
+                    </p>
+                </div>
+                
+                <div class="bg-slate-50 rounded-xl p-4 mb-6">
+                    <p class="text-sm font-medium text-slate-700 mb-3">Esta app podrá ver:</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-sm text-slate-600">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Tu dirección de email
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-slate-600">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Tu nombre y foto de perfil
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-slate-600">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Tu ID de usuario de Coki
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button id="btn-deny"
+                            class="flex-1 py-3 border-2 border-slate-200 text-slate-600 font-medium rounded-xl hover:border-slate-300 transition-colors">
+                        Denegar
+                    </button>
+                    <button id="btn-approve"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors">
+                        Autorizar acceso
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { handleAuthorizeRequest, approveAuthorization } from './oauth-server.js';
+        import { getCurrentCokiUser, logoutCoki } from './coki-auth.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeChallenge = urlParams.get('code_challenge');
+        
+        const validation = handleAuthorizeRequest(urlParams);
+        if (!validation.valid) {
+            alert('Error OAuth: ' + validation.error_description);
+            throw new Error(validation.error);
+        }
+        
+        document.getElementById('client-name').textContent = validation.client_name || 'App Externa';
+
+        async function checkUser() {
+            const user = await getCurrentCokiUser();
+            
+            if (user) {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('consent-section').classList.remove('hidden');
+                
+                document.getElementById('user-name').textContent = user.name || user.email.split('@')[0];
+                document.getElementById('user-email').textContent = user.email;
+                
+                if (user.picture) {
+                    const img = document.getElementById('user-avatar');
+                    img.src = user.picture;
+                    img.classList.remove('hidden');
+                    document.getElementById('user-avatar-fallback').classList.add('hidden');
+                } else {
+                    document.getElementById('user-avatar-fallback').textContent = 
+                        (user.name || user.email).charAt(0).toUpperCase();
+                }
+            } else {
+                sessionStorage.setItem('cki_oauth_pending', window.location.search);
+                
+                const loginUrl = new URL('coki-register.html', window.location.origin);
+                loginUrl.searchParams.set('redirect', '/oauth-authorize.html' + window.location.search);
+                document.getElementById('btn-coki-login').href = loginUrl.toString();
+            }
+        }
+        
+        checkUser();
+
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await logoutCoki();
+            window.location.reload();
+        });
+        
+        document.getElementById('btn-approve').addEventListener('click', async () => {
+            const user = await getCurrentCokiUser();
+            if (!user) return;
+            
+            const result = await approveAuthorization(codeChallenge, user);
+            
+            if (result.success) {
+                window.location.href = result.redirect_url;
+            } else {
+                alert('Error: ' + result.error);
+            }
+        });
+        
+        document.getElementById('btn-deny').addEventListener('click', () => {
+            const redirectUri = urlParams.get('redirect_uri');
+            const state = urlParams.get('state');
+            const url = new URL(redirectUri);
+            url.searchParams.set('error', 'access_denied');
+            url.searchParams.set('error_description', 'User denied authorization');
+            if (state) url.searchParams.set('state', state);
+            window.location.href = url.toString();
+        });
+    </script>
+
+</body>
+</html>
