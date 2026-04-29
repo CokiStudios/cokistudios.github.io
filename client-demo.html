@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Demo — Login con Coki Studios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif}</style>
+</head>
+
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+        
+        <!-- 🔓 ESTADO 1: NO LOGUEADO -->
+        <div id="login-view" class="bg-white rounded-2xl shadow-sm p-8">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white font-bold text-2xl">D</span>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">App Demo</h1>
+                <p class="text-slate-500">Ejemplo de app que usa Coki Studios OAuth</p>
+            </div>
+            
+            <!-- 🔵 BOTÓN "Iniciar sesión con Coki Studios" -->
+            <button id="btn-coki-login"
+                    class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-blue-500 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all mb-4">
+                <div class="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
+                    <span class="text-white font-bold text-xs">C</span>
+                </div>
+                Iniciar sesión con Coki Studios
+            </button>
+            
+            <p class="text-center text-sm text-slate-400">
+                Al continuar, aceptas los términos de Coki Studios
+            </p>
+        </div>
+
+        <!-- ✅ ESTADO 2: LOGUEADO -->
+        <div id="dashboard-view" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-8 mb-4">
+                <div class="flex items-center gap-4 mb-6">
+                    <div id="user-avatar" class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl">
+                        U
+                    </div>
+                    <div>
+                        <h2 id="user-name" class="text-xl font-bold text-slate-800">Usuario</h2>
+                        <p id="user-email" class="text-slate-500">email@coki.com</p>
+                        <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                            ✓ Verificado por Coki Studios
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 rounded-xl p-4 mb-6">
+                    <h3 class="font-semibold text-slate-700 mb-2">Datos recibidos de Coki:</h3>
+                    <pre id="user-data" class="text-xs text-slate-600 overflow-x-auto">{}</pre>
+                </div>
+                
+                <button id="btn-logout"
+                        class="w-full py-3 border-2 border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors">
+                    Cerrar sesión
+                </button>
+            </div>
+            
+            <div class="bg-blue-50 rounded-2xl p-6">
+                <h3 class="font-semibold text-blue-900 mb-2">🎉 Funciona!</h3>
+                <p class="text-sm text-blue-700">
+                    Esta app demostró el flujo completo OAuth 2.0 + PKCE con Coki Studios como proveedor.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { generateCode, sha256 } from './oauth-server.js';
+
+        // 🔧 CONFIGURACIÓN DEL CLIENTE
+        const COKI_AUTH_URL = 'https://cokistudios.github.io/coki-authorize.html';
+        const CLIENT_ID = 'demo-app-123';
+        const REDIRECT_URI = 'https://cokistudios.github.io/client-demo.html';
+        const SCOPE = 'openid profile email';
+
+        // 🔵 INICIAR LOGIN CON COKI STUDIOS (PKCE)
+        document.getElementById('btn-coki-login').addEventListener('click', async () => {
+            // 1. Generar PKCE
+            const codeVerifier = generateCode(128);
+            const codeChallenge = await sha256(codeVerifier);
+            
+            sessionStorage.setItem('coki_oauth_code_verifier', codeVerifier);
+            
+            // 2. Construir URL de autorización
+            const authUrl = new URL(COKI_AUTH_URL);
+            authUrl.searchParams.set('client_id', CLIENT_ID);
+            authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
+            authUrl.searchParams.set('response_type', 'code');
+            authUrl.searchParams.set('scope', SCOPE);
+            authUrl.searchParams.set('code_challenge', codeChallenge);
+            authUrl.searchParams.set('code_challenge_method', 'S256');
+            authUrl.searchParams.set('state', generateCode(16));
+            
+            window.location.href = authUrl.toString();
+        });
+        
+        // 🔄 PROCESAR CALLBACK
+        async function handleCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            
+            if (error) {
+                alert('Error OAuth: ' + urlParams.get('error_description'));
+                return;
+            }
+            
+            if (!code) return;
+            
+            const codeVerifier = sessionStorage.getItem('coki_oauth_code_verifier');
+            if (!codeVerifier) {
+                alert('Error de seguridad: code_verifier no encontrado');
+                return;
+            }
+            
+            sessionStorage.removeItem('coki_oauth_code_verifier');
+            
+            // Intercambiar code por token
+            const result = await exchangeCodeForToken(code, REDIRECT_URI, codeVerifier);
+            
+            if (result.error) {
+                alert('Error: ' + result.error_description);
+                return;
+            }
+            
+            // Guardar tokens
+            localStorage.setItem('coki_access_token', result.access_token);
+            localStorage.setItem('coki_id_token', result.id_token);
+            
+            const payload = JSON.parse(atob(result.id_token.split('.')[1]));
+            localStorage.setItem('coki_user', JSON.stringify({
+                id: payload.sub,
+                email: payload.email,
+                name: payload.name,
+                picture: payload.picture
+            }));
+            
+            window.history.replaceState({}, document.title, window.location.pathname);
+            updateUI();
+        }
+        
+        // Intercambiar code por token (llama al oauth-server.js)
+        async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
+            // En producción esto debería ser una llamada a tu backend
+            // Por ahora usamos la función del oauth-server.js
+            const { exchangeCodeForToken } = await import('./oauth-server.js');
+            return await exchangeCodeForToken(code, redirectUri, codeVerifier);
+        }
+        
+        // 👤 MOSTRAR DATOS
+        function updateUI() {
+            const user = JSON.parse(localStorage.getItem('coki_user') || 'null');
+            const token = localStorage.getItem('coki_access_token');
+            
+            if (user && token) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                
+                document.getElementById('user-name').textContent = user.name || 'Usuario';
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-avatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+                document.getElementById('user-data').textContent = JSON.stringify(user, null, 2);
+            } else {
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('dashboard-view').classList.add('hidden');
+            }
+        }
+        
+        // 🚪 Logout
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            localStorage.removeItem('coki_access_token');
+            localStorage.removeItem('coki_id_token');
+            localStorage.removeItem('coki_user');
+            updateUI();
+        });
+        
+        // Inicializar
+        handleCallback();
+        updateUI();
+    </script>
+
+</body>
+</html>
