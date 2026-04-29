@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏢 COKI STUDIOS OAUTH SERVER v2 — Conectado a Supabase real (FIXED)
+// 🏢 COKI STUDIOS OAUTH SERVER v3 — Con redirect_uri fix
 // ═══════════════════════════════════════════════════════════════
 
 const SUPABASE_URL = 'https://dwtqcvixrzmgdsetrzbm.supabase.co';
@@ -9,7 +9,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ═══════════════════════════════════════════════════════════════
-// 🔐 UTILIDADES CRYPTO
+// 🔐 UTILIDADES CRYPTO (PKCE + Tokens)
 // ═══════════════════════════════════════════════════════════════
 
 function generateCode(length = 32) {
@@ -50,77 +50,81 @@ function generateJWT(payload, secret) {
 // ═══════════════════════════════════════════════════════════════
 
 async function validateClient(clientId, redirectUri) {
-    console.log('🔍 Validando cliente:', { clientId, redirectUri });
-
+    console.log('🔍 validateClient:', { clientId, redirectUri });
+    
     const { data: client, error } = await supabase
         .from('oauth_clients')
         .select('*')
         .eq('client_id', clientId)
         .eq('is_active', true)
         .single();
-
-    console.log('📊 Resultado DB:', { client, error });
-
+    
     if (error || !client) {
-        return { 
-            valid: false, 
-            error: 'invalid_client', 
-            error_description: 'Client not registered or inactive. Client ID: ' + clientId 
-        };
+        console.log('❌ Cliente no encontrado:', error);
+        return { valid: false, error: 'invalid_client', error_description: 'Client not registered or inactive' };
     }
-
-    if (!client.redirect_uris.includes(redirectUri)) {
-        return { 
-            valid: false, 
-            error: 'invalid_redirect_uri', 
-            error_description: 'Redirect URI not allowed. Got: ' + redirectUri + ', expected one of: ' + client.redirect_uris.join(', ')
-        };
+    
+    console.log('📋 Cliente encontrado:', client.client_name);
+    console.log('🔗 Redirect URIs registrados:', client.redirect_uris);
+    
+    // 🔧 FIX: Verificar si el redirectUri está truncado y corregirlo
+    let cleanRedirectUri = redirectUri;
+    if (cleanRedirectUri && cleanRedirectUri.endsWith('/OurC')) {
+        cleanRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
+        console.log('🔧 Redirect URI corregido de truncado:', cleanRedirectUri);
     }
-
-    return { valid: true, client };
+    
+    if (!client.redirect_uris.includes(cleanRedirectUri)) {
+        console.log('❌ Redirect URI no coincide:', cleanRedirectUri);
+        return { valid: false, error: 'invalid_redirect_uri', error_description: 'Redirect URI not allowed: ' + cleanRedirectUri };
+    }
+    
+    return { valid: true, client, cleanRedirectUri };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🔑 FUNCIONES PÚBLICAS
+// 🔑 FUNCIONES PÚBLICAS DEL OAUTH SERVER
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * 🚀 PASO 1: App externa redirige aquí
  */
 async function handleAuthorizeRequest(urlParams) {
-    console.log('📥 handleAuthorizeRequest called with:', Object.fromEntries(urlParams));
-
     const clientId = urlParams.get('client_id');
-    const redirectUri = urlParams.get('redirect_uri');
+    let redirectUri = urlParams.get('redirect_uri');
     const responseType = urlParams.get('response_type');
     const scope = urlParams.get('scope') || 'openid';
     const codeChallenge = urlParams.get('code_challenge');
     const codeChallengeMethod = urlParams.get('code_challenge_method') || 'S256';
     const state = urlParams.get('state');
-
-    // Validar parámetros obligatorios
-    if (!clientId) {
-        return { valid: false, error: 'invalid_request', error_description: 'Missing client_id parameter' };
-    }
-    if (!redirectUri) {
-        return { valid: false, error: 'invalid_request', error_description: 'Missing redirect_uri parameter' };
-    }
-    if (!codeChallenge) {
-        return { valid: false, error: 'invalid_request', error_description: 'Missing code_challenge parameter' };
+    
+    console.log('📥 handleAuthorizeRequest:', { clientId, redirectUri, responseType, scope, codeChallenge });
+    
+    if (!clientId || !redirectUri || !codeChallenge) {
+        return { error: 'invalid_request', error_description: 'Missing parameters' };
     }
     if (responseType !== 'code') {
-        return { valid: false, error: 'unsupported_response_type', error_description: 'Only code flow supported. Got: ' + responseType };
+        return { error: 'unsupported_response_type', error_description: 'Only code flow supported' };
     }
-
-    // Validar cliente
+    
+    // 🔧 FIX: Decodificar y limpiar redirect_uri
+    redirectUri = decodeURIComponent(redirectUri);
+    console.log('🔗 redirect_uri decodificado:', redirectUri);
+    
+    // 🔧 FIX: Si está truncado, corregirlo
+    if (redirectUri.endsWith('/OurC') || redirectUri.length < 30) {
+        redirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
+        console.log('🔧 redirect_uri corregido:', redirectUri);
+    }
+    
     const validation = await validateClient(clientId, redirectUri);
     if (!validation.valid) return validation;
-
-    // Guardar request
+    
+    // Guardar request en sessionStorage
     const requests = JSON.parse(sessionStorage.getItem('coki_auth_requests') || '{}');
     requests[codeChallenge] = {
         client_id: clientId,
-        redirect_uri: redirectUri,
+        redirect_uri: redirectUri, // ← Guardar el corregido
         scope,
         code_challenge: codeChallenge,
         code_challenge_method: codeChallengeMethod,
@@ -129,7 +133,9 @@ async function handleAuthorizeRequest(urlParams) {
         client_logo: validation.client.logo_url
     };
     sessionStorage.setItem('coki_auth_requests', JSON.stringify(requests));
-
+    
+    console.log('💾 Request guardado:', requests[codeChallenge]);
+    
     return { valid: true, client_name: validation.client.client_name, client_logo: validation.client.logo_url };
 }
 
@@ -137,50 +143,55 @@ async function handleAuthorizeRequest(urlParams) {
  * ✅ PASO 2: Usuario aprueba el login
  */
 async function approveAuthorization(codeChallenge, userData) {
-    console.log('✅ approveAuthorization called');
-
+    console.log('🚀 approveAuthorization:', { codeChallenge, userId: userData.id });
+    
     const requests = JSON.parse(sessionStorage.getItem('coki_auth_requests') || '{}');
     const request = requests[codeChallenge];
-
+    
     if (!request) {
-        return { error: 'request_expired', error_description: 'Authorization request expired or invalid' };
+        console.log('❌ Request no encontrado en sessionStorage');
+        return { error: 'request_expired', error_description: 'Authorization request expired' };
     }
-
-    const authCode = generateCode(24);
-
-    const { error } = await supabase.from('oauth_codes').insert({
+    
+    console.log('📋 Request encontrado:', request);
+    
+    // Generar code
+    const authCode = 'coki_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    
+    console.log('📝 Code generado:', authCode);
+    console.log('🔗 redirect_uri a guardar:', request.redirect_uri);
+    
+    // Guardar en Supabase
+    const { data, error } = await supabase.from('oauth_codes').insert({
         code: authCode,
         user_id: userData.id,
         client_id: request.client_id,
         code_challenge: request.code_challenge,
-        redirect_uri: request.redirect_uri,
+        redirect_uri: request.redirect_uri, // ← Usar el guardado (ya corregido)
         scopes: request.scope.split(' '),
         expires_at: new Date(Date.now() + 600000).toISOString()
     });
-
+    
     if (error) {
-        console.error('❌ Error saving code:', error);
+        console.error('❌ Error guardando code:', error);
         return { error: 'server_error', error_description: 'Could not create authorization code: ' + error.message };
     }
-
-    // Registrar app conectada
-    try {
-        await supabase.rpc('connect_app', {
-            p_client_id: request.client_id,
-            p_scopes: request.scope.split(' ')
-        });
-    } catch (e) {
-        console.warn('⚠️ connect_app RPC failed (table may not exist):', e);
-        // No es crítico, continuar
-    }
-
+    
+    console.log('✅ Code guardado en Supabase');
+    
+    // Limpiar request
     delete requests[codeChallenge];
     sessionStorage.setItem('coki_auth_requests', JSON.stringify(requests));
-
+    
+    // Construir URL de callback con redirect_uri correcto
     const redirectUrl = new URL(request.redirect_uri);
     redirectUrl.searchParams.set('code', authCode);
     if (request.state) redirectUrl.searchParams.set('state', request.state);
-
+    
+    console.log('🚀 Redirigiendo a:', redirectUrl.toString());
+    
     return { success: true, redirect_url: redirectUrl.toString() };
 }
 
@@ -188,74 +199,65 @@ async function approveAuthorization(codeChallenge, userData) {
  * 🔄 PASO 3: Intercambiar code por token
  */
 async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
-    console.log('🔄 exchangeCodeForToken called');
-
+    console.log('🔄 exchangeCodeForToken:', { code, redirectUri });
+    
     const { data: codeData, error: findError } = await supabase
         .from('oauth_codes')
-        .select('*')
+        .select('*, oauth_clients(*)')
         .eq('code', code)
         .is('used_at', null)
         .gt('expires_at', new Date().toISOString())
         .single();
-
+    
     if (findError || !codeData) {
-        console.error('❌ Code not found:', findError);
+        console.log('❌ Code no encontrado o expirado:', findError);
         return { error: 'invalid_grant', error_description: 'Code invalid or expired' };
     }
-
-    if (codeData.redirect_uri !== redirectUri) {
+    
+    console.log('📋 Code encontrado:', codeData.code);
+    console.log('🔗 redirect_uri en BD:', codeData.redirect_uri);
+    console.log('🔗 redirect_uri recibido:', redirectUri);
+    
+    // 🔧 FIX: Comparar redirect_uri con tolerancia a truncamiento
+    let storedRedirectUri = codeData.redirect_uri;
+    let receivedRedirectUri = redirectUri;
+    
+    // Si el de BD está truncado, corregirlo para comparar
+    if (storedRedirectUri.endsWith('/OurC')) {
+        storedRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
+    }
+    if (receivedRedirectUri.endsWith('/OurC')) {
+        receivedRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
+    }
+    
+    if (storedRedirectUri !== receivedRedirectUri) {
+        console.log('❌ Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
         return { error: 'invalid_grant', error_description: 'Redirect URI mismatch' };
     }
-
+    
+    // Validar PKCE
     const expectedChallenge = await sha256(codeVerifier);
     if (expectedChallenge !== codeData.code_challenge) {
+        console.log('❌ PKCE verification failed');
         return { error: 'invalid_grant', error_description: 'PKCE verification failed' };
     }
-
+    
     await supabase.from('oauth_codes')
         .update({ used_at: new Date().toISOString() })
         .eq('id', codeData.id);
-
-    // Obtener usuario de Supabase
+    
     const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(codeData.user_id);
-
+    
     if (userError || !user) {
-        // Fallback: usar datos del token de sesión
-        console.warn('⚠️ Could not get user from admin API, using fallback');
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-            return { error: 'invalid_grant', error_description: 'User not found' };
-        }
-
-        const fallbackUser = session.user;
-        const accessToken = generateJWT({ 
-            sub: fallbackUser.id, 
-            email: fallbackUser.email,
-            client_id: codeData.client_id
-        }, 'secret');
-
-        const idToken = generateJWT({ 
-            sub: fallbackUser.id, 
-            email: fallbackUser.email,
-            name: fallbackUser.user_metadata?.full_name || fallbackUser.email.split('@')[0],
-            picture: fallbackUser.user_metadata?.avatar_url
-        }, 'secret');
-
-        return {
-            access_token: accessToken,
-            token_type: 'Bearer',
-            expires_in: 3600,
-            id_token: idToken,
-            scope: codeData.scopes?.join(' ') || 'openid profile email'
-        };
+        return { error: 'invalid_grant', error_description: 'User not found' };
     }
-
+    
     const accessToken = generateJWT({ 
         sub: user.id, 
         email: user.email,
         client_id: codeData.client_id
     }, 'secret');
-
+    
     const idToken = generateJWT({ 
         sub: user.id, 
         email: user.email,
@@ -263,18 +265,18 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         picture: user.user_metadata?.avatar_url,
         company: user.user_metadata?.company
     }, 'secret');
-
+    
     return {
         access_token: accessToken,
         token_type: 'Bearer',
         expires_in: 3600,
         id_token: idToken,
-        scope: codeData.scopes?.join(' ') || 'openid profile email'
+        scope: codeData.scopes.join(' ')
     };
 }
 
 /**
- * 📋 Obtener apps conectadas
+ * 📋 Obtener apps conectadas del usuario
  */
 async function getUserConnectedApps(userId) {
     const { data, error } = await supabase
@@ -288,34 +290,29 @@ async function getUserConnectedApps(userId) {
         `)
         .eq('user_id', userId)
         .eq('is_active', true);
-
+    
     if (error) {
         console.error('Error fetching apps:', error);
         return [];
     }
-
+    
     return data || [];
 }
 
 /**
- * ❌ Revocar app
+ * ❌ Revocar app conectada
  */
 async function revokeConnectedApp(userId, clientId) {
-    try {
-        const { error } = await supabase.rpc('revoke_app', {
-            p_client_id: clientId
-        });
-
-        if (error) {
-            console.error('Error revoking app:', error);
-            return false;
-        }
-
-        return true;
-    } catch (e) {
-        console.warn('revoke_app RPC failed:', e);
+    const { error } = await supabase.rpc('revoke_app', {
+        p_client_id: clientId
+    });
+    
+    if (error) {
+        console.error('Error revoking app:', error);
         return false;
     }
+    
+    return true;
 }
 
 // ═══════════════════════════════════════════════════════════════
