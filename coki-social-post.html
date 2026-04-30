@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicación — Coki Studios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif}</style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- 🔝 NAVBAR -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="coki-social.html" class="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span class="font-medium">Comunidad</span>
+                </a>
+            </div>
+            <a href="coki-dashboard.html" id="nav-profile" class="hidden flex items-center gap-2 text-sm text-slate-600 hover:text-blue-600 transition-colors">
+                <div id="nav-avatar" class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">U</div>
+                <span id="nav-name">Mi cuenta</span>
+            </a>
+            <a href="coki-register.html" id="nav-login" class="text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                Iniciar sesión
+            </a>
+        </div>
+    </nav>
+
+    <div class="max-w-3xl mx-auto px-6 py-8">
+        
+        <!-- 📰 POST -->
+        <div id="post-container" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <div class="animate-pulse space-y-4">
+                <div class="h-6 bg-slate-100 rounded w-3/4"></div>
+                <div class="h-4 bg-slate-100 rounded w-1/4"></div>
+                <div class="h-20 bg-slate-100 rounded"></div>
+            </div>
+        </div>
+
+        <!-- 💬 COMENTARIOS -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <h3 class="font-bold text-slate-800 mb-4">
+                Comentarios <span id="comments-count" class="text-slate-400 font-normal">(0)</span>
+            </h3>
+            
+            <!-- Formulario comentario -->
+            <div id="comment-form" class="hidden mb-6">
+                <div class="flex gap-3">
+                    <div id="form-avatar" class="w-9 h-9 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center text-blue-600 font-bold text-xs">U</div>
+                    <div class="flex-1">
+                        <textarea id="comment-content" rows="3"
+                                  class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:outline-none resize-none text-sm"
+                                  placeholder="Escribe un comentario..."></textarea>
+                        <div class="flex justify-end mt-2">
+                            <button onclick="submitComment()" id="btn-comment"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg text-sm transition-colors">
+                                Comentar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login prompt -->
+            <div id="login-prompt" class="hidden mb-6 p-4 bg-slate-50 rounded-xl text-center">
+                <p class="text-slate-500 text-sm mb-2">Inicia sesión para comentar</p>
+                <a href="coki-register.html" class="text-blue-600 hover:text-blue-700 font-medium text-sm">Iniciar sesión con CS ID →</a>
+            </div>
+
+            <!-- Lista comentarios -->
+            <div id="comments-list" class="space-y-4">
+                <p class="text-slate-400 text-center py-4 text-sm">Cargando comentarios...</p>
+            </div>
+            
+            <div id="comments-empty" class="hidden text-center py-8">
+                <p class="text-slate-400 text-sm">No hay comentarios aún. Sé el primero en opinar.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            getPostById, getComments, createComment, deleteComment, deletePost,
+            toggleLikePost, getUserLike, isFollowing, toggleFollow,
+            getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials
+        } from './coki-social.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        
+        let currentUser = null;
+        let postData = null;
+        let userLiked = false;
+
+        async function init() {
+            if (!postId) {
+                window.location.href = 'coki-social.html';
+                return;
+            }
+
+            currentUser = await getCurrentUser();
+            updateNav();
+            loadPost();
+        }
+
+        function updateNav() {
+            const profileBtn = document.getElementById('nav-profile');
+            const loginBtn = document.getElementById('nav-login');
+            const commentForm = document.getElementById('comment-form');
+            const loginPrompt = document.getElementById('login-prompt');
+            
+            if (currentUser) {
+                profileBtn.classList.remove('hidden');
+                loginBtn.classList.add('hidden');
+                commentForm.classList.remove('hidden');
+                loginPrompt.classList.add('hidden');
+                
+                const name = getUserDisplayName(currentUser);
+                document.getElementById('nav-name').textContent = name;
+                
+                const avatar = getUserAvatar(currentUser);
+                const navAvatar = document.getElementById('nav-avatar');
+                const formAvatar = document.getElementById('form-avatar');
+                
+                if (avatar) {
+                    navAvatar.innerHTML = `<img src="${avatar}" class="w-full h-full rounded-full object-cover">`;
+                    formAvatar.innerHTML = `<img src="${avatar}" class="w-full h-full rounded-full object-cover">`;
+                } else {
+                    const initials = getInitials(name);
+                    navAvatar.textContent = initials;
+                    formAvatar.textContent = initials;
+                }
+            } else {
+                profileBtn.classList.add('hidden');
+                loginBtn.classList.remove('hidden');
+                commentForm.classList.add('hidden');
+                loginPrompt.classList.remove('hidden');
+            }
+        }
+
+        async function loadPost() {
+            postData = await getPostById(postId);
+            if (!postData) {
+                document.getElementById('post-container').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-slate-500">Publicación no encontrada</p>
+                        <a href="coki-social.html" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Volver a la comunidad</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const name = postData.author_name || 'Usuario';
+            const avatar = postData.author_avatar;
+            const initials = getInitials(name);
+            const cat = postData.category;
+            const isOwner = currentUser?.id === postData.user_id;
+            
+            const likeData = await getUserLike(postId);
+            userLiked = !!likeData;
+
+            let showFollow = false;
+            let following = false;
+            if (currentUser && currentUser.id !== postData.user_id) {
+                showFollow = true;
+                following = await isFollowing(postData.user_id);
+            }
+
+            const container = document.getElementById('post-container');
+            container.innerHTML = `
+                <div class="flex items-start gap-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center text-blue-600 font-bold overflow-hidden">
+                        ${avatar ? `<img src="${avatar}" class="w-full h-full object-cover">` : initials}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-slate-800">${escapeHtml(name)}</span>
+                            ${showFollow ? `
+                                <button onclick="toggleFollowUser('${postData.user_id}')" id="btn-follow" 
+                                        class="text-xs px-3 py-1 rounded-full font-medium transition-colors ${following ? 'bg-slate-100 text-slate-600' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}">
+                                    ${following ? 'Siguiendo' : 'Seguir'}
+                                </button>
+                            ` : ''}
+                        </div>
+                        <p class="text-slate-400 text-sm">${formatDate(postData.created_at)}</p>
+                    </div>
+                    ${isOwner ? `
+                        <button onclick="deleteMyPost()" class="text-slate-400 hover:text-red-500 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    ` : ''}
+                </div>
+                
+                ${cat ? `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3" style="background:${cat.color}15;color:${cat.color}">${cat.name}</span>` : ''}
+                
+                <h1 class="text-2xl font-bold text-slate-800 mb-4">${escapeHtml(postData.title)}</h1>
+                <div class="text-slate-600 leading-relaxed whitespace-pre-wrap">${escapeHtml(postData.content)}</div>
+                
+                <div class="flex items-center gap-6 mt-6 pt-4 border-t border-slate-100">
+                    <button onclick="toggleLike()" id="btn-like" 
+                            class="flex items-center gap-2 text-sm font-medium transition-colors ${userLiked ? 'text-red-500' : 'text-slate-500 hover:text-red-500'}">
+                        <svg class="w-5 h-5 ${userLiked ? 'fill-current' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span id="likes-count">${postData.likes_count || 0}</span>
+                    </button>
+                    <span class="flex items-center gap-2 text-sm text-slate-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        ${postData.comments_count || 0}
+                    </span>
+                </div>
+            `;
+
+            loadComments();
+        }
+
+        async function loadComments() {
+            const comments = await getComments(postId);
+            const list = document.getElementById('comments-list');
+            const empty = document.getElementById('comments-empty');
+            
+            document.getElementById('comments-count').textContent = `(${comments.length})`;
+            
+            if (comments.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            
+            list.innerHTML = comments.map(comment => {
+                const name = comment.author_name || 'Usuario';
+                const avatar = comment.author_avatar;
+                const initials = getInitials(name);
+                const isOwner = currentUser?.id === comment.user_id;
+                
+                return `
+                    <div class="flex gap-3">
+                        <div class="w-9 h-9 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center text-blue-600 font-bold text-xs overflow-hidden">
+                            ${avatar ? `<img src="${avatar}" class="w-full h-full object-cover">` : initials}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="bg-slate-50 rounded-xl p-4">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-semibold text-slate-800 text-sm">${escapeHtml(name)}</span>
+                                    <span class="text-slate-400 text-xs">${formatDate(comment.created_at)}</span>
+                                </div>
+                                <p class="text-slate-600 text-sm whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
+                            </div>
+                            ${isOwner ? `
+                                <button onclick="deleteMyComment('${comment.id}')" class="text-xs text-slate-400 hover:text-red-500 mt-1 ml-1 transition-colors">
+                                    Eliminar
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.toggleLike = async () => {
+            if (!currentUser) {
+                window.location.href = 'coki-register.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            
+            const result = await toggleLikePost(postId);
+            if (result.success) {
+                userLiked = result.liked;
+                const btn = document.getElementById('btn-like');
+                const count = document.getElementById('likes-count');
+                const currentCount = parseInt(count.textContent);
+                
+                if (result.liked) {
+                    btn.classList.remove('text-slate-500');
+                    btn.classList.add('text-red-500');
+                    btn.querySelector('svg').classList.add('fill-current');
+                    count.textContent = currentCount + 1;
+                } else {
+                    btn.classList.remove('text-red-500');
+                    btn.classList.add('text-slate-500');
+                    btn.querySelector('svg').classList.remove('fill-current');
+                    count.textContent = Math.max(0, currentCount - 1);
+                }
+            }
+        };
+
+        window.toggleFollowUser = async (userId) => {
+            if (!currentUser) return;
+            const result = await toggleFollow(userId);
+            if (result.success) {
+                const btn = document.getElementById('btn-follow');
+                if (result.following) {
+                    btn.textContent = 'Siguiendo';
+                    btn.className = 'text-xs px-3 py-1 rounded-full font-medium transition-colors bg-slate-100 text-slate-600';
+                } else {
+                    btn.textContent = 'Seguir';
+                    btn.className = 'text-xs px-3 py-1 rounded-full font-medium transition-colors bg-blue-50 text-blue-600 hover:bg-blue-100';
+                }
+            }
+        };
+
+        window.submitComment = async () => {
+            const content = document.getElementById('comment-content').value.trim();
+            if (!content) return;
+            
+            const btn = document.getElementById('btn-comment');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            
+            const result = await createComment(postId, content);
+            
+            btn.disabled = false;
+            btn.textContent = 'Comentar';
+            
+            if (result.success) {
+                document.getElementById('comment-content').value = '';
+                loadComments();
+                postData.comments_count = (postData.comments_count || 0) + 1;
+            } else {
+                alert('Error: ' + result.error);
+            }
+        };
+
+        window.deleteMyComment = async (commentId) => {
+            if (!confirm('¿Eliminar este comentario?')) return;
+            const result = await deleteComment(commentId);
+            if (result.success) {
+                loadComments();
+                postData.comments_count = Math.max(0, (postData.comments_count || 0) - 1);
+            }
+        };
+
+        window.deleteMyPost = async () => {
+            if (!confirm('¿Eliminar esta publicación? Esta acción no se puede deshacer.')) return;
+            const result = await deletePost(postId);
+            if (result.success) {
+                window.location.href = 'coki-social.html';
+            } else {
+                alert('Error: ' + result.error);
+            }
+        };
+
+        init();
+    </script>
+
+</body>
+</html>
