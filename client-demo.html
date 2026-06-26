@@ -7,14 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body{font-family:'Inter',sans-serif}</style>
-<base target="_blank">
 </head>
-
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
-
     <div class="w-full max-w-md">
-
-        <!-- 🔓 ESTADO 1: NO LOGUEADO -->
         <div id="login-view" class="bg-white rounded-2xl shadow-sm p-8">
             <div class="text-center mb-8">
                 <div class="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -23,9 +18,7 @@
                 <h1 class="text-2xl font-bold text-slate-800">App Demo</h1>
                 <p class="text-slate-500">Ejemplo de app que usa Coki Studios OAuth</p>
             </div>
-
-            <button id="btn-coki-login"
-                    class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-blue-500 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all mb-4">
+            <button id="btn-coki-login" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-blue-500 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all mb-4">
                 <div class="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
                     <span class="text-white font-bold text-xs">C</span>
                 </div>
@@ -33,7 +26,6 @@
             </button>
         </div>
 
-        <!-- ✅ ESTADO 2: LOGUEADO -->
         <div id="dashboard-view" class="hidden">
             <div class="bg-white rounded-2xl shadow-sm p-8 mb-4">
                 <div class="flex items-center gap-4 mb-6">
@@ -41,38 +33,33 @@
                     <div>
                         <h2 id="user-name" class="text-xl font-bold text-slate-800">Usuario</h2>
                         <p id="user-email" class="text-slate-500">email@coki.com</p>
-                        <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            ✓ Verificado por Coki Studios
-                        </span>
+                        <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">✓ Verificado por Coki Studios</span>
                     </div>
                 </div>
-                <button id="btn-logout" class="w-full py-3 border-2 border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors">
-                    Cerrar sesión
-                </button>
+                <button id="btn-logout" class="w-full py-3 border-2 border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors">Cerrar sesión</button>
             </div>
         </div>
-
     </div>
 
     <script type="module">
         import { generateCode, sha256 } from './oauth-server.js';
+        import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
 
-        // 🔧 CONFIGURACIÓN — SIN ESPACIOS AL FINAL
         const COKI_AUTH_URL = 'https://cokistudios.github.io/coki-authorize.html';
         const CLIENT_ID = 'demo-app-123';
-        const REDIRECT_URI = 'https://cokistudios.github.io/client-demo.html';  // ← SIN ESPACIO
+        const REDIRECT_URI = 'https://cokistudios.github.io/client-demo.html';
         const SCOPE = 'openid profile email';
 
-        // 🔵 BOTÓN LOGIN
         document.getElementById('btn-coki-login').addEventListener('click', async () => {
             const codeVerifier = generateCode(128);
             const codeChallenge = await sha256(codeVerifier);
 
-            sessionStorage.setItem('coki_oauth_code_verifier', codeVerifier);
+            // 🍪 Guardar code_verifier en cookie (10 minutos)
+            setCookie('coki_oauth_code_verifier', codeVerifier, { maxAge: 600 });
 
             const authUrl = new URL(COKI_AUTH_URL);
             authUrl.searchParams.set('client_id', CLIENT_ID);
-            authUrl.searchParams.set('redirect_uri', REDIRECT_URI);  // ← URL limpia
+            authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
             authUrl.searchParams.set('response_type', 'code');
             authUrl.searchParams.set('scope', SCOPE);
             authUrl.searchParams.set('code_challenge', codeChallenge);
@@ -83,7 +70,6 @@
             window.location.href = authUrl.toString();
         });
 
-        // 🔄 CALLBACK
         async function handleCallback() {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
@@ -96,13 +82,14 @@
 
             if (!code) return;
 
-            const codeVerifier = sessionStorage.getItem('coki_oauth_code_verifier');
+            // 🍪 Leer code_verifier de cookie
+            const codeVerifier = getCookie('coki_oauth_code_verifier');
             if (!codeVerifier) {
                 alert('Error: PKCE verifier perdido');
                 return;
             }
 
-            sessionStorage.removeItem('coki_oauth_code_verifier');
+            deleteCookie('coki_oauth_code_verifier');
 
             const { exchangeCodeForToken } = await import('./oauth-server.js');
             const result = await exchangeCodeForToken(code, REDIRECT_URI, codeVerifier);
@@ -112,24 +99,25 @@
                 return;
             }
 
-            localStorage.setItem('coki_access_token', result.access_token);
-            localStorage.setItem('coki_id_token', result.id_token);
+            // 🍪 Guardar tokens en cookies (7 días)
+            setCookie('coki_access_token', result.access_token, { maxAge: 7 * 24 * 60 * 60 });
+            setCookie('coki_id_token', result.id_token, { maxAge: 7 * 24 * 60 * 60 });
 
             const payload = JSON.parse(atob(result.id_token.split('.')[1]));
-            localStorage.setItem('coki_user', JSON.stringify({
+            setCookieJSON('coki_user', {
                 id: payload.sub,
                 email: payload.email,
                 name: payload.name,
                 picture: payload.picture
-            }));
+            }, { maxAge: 7 * 24 * 60 * 60 });
 
             window.history.replaceState({}, document.title, window.location.pathname);
             updateUI();
         }
 
         function updateUI() {
-            const user = JSON.parse(localStorage.getItem('coki_user') || 'null');
-            const token = localStorage.getItem('coki_access_token');
+            const user = getCookieJSON('coki_user');
+            const token = getCookie('coki_access_token');
 
             if (user && token) {
                 document.getElementById('login-view').classList.add('hidden');
@@ -144,13 +132,15 @@
         }
 
         document.getElementById('btn-logout').addEventListener('click', () => {
-            localStorage.clear();
+            deleteCookie('coki_access_token');
+            deleteCookie('coki_id_token');
+            deleteCookie('coki_user');
+            deleteCookie('coki_oauth_code_verifier');
             updateUI();
         });
 
         handleCallback();
         updateUI();
     </script>
-
 </body>
 </html>
