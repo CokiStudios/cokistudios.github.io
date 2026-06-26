@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏢 COKI STUDIOS AUTH SYSTEM
+// 🏢 COKI STUDIOS AUTH SYSTEM v2 — Con Cookies
 // Registro, login y gestión de usuarios de Coki Studios
 // ═══════════════════════════════════════════════════════════════
 
-// 🔧 CONFIGURACIÓN SUPABASE (ya configurado con tus credenciales)
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
+
+// 🔧 CONFIGURACIÓN SUPABASE
 const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ';
-
-// Importar Supabase
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -16,9 +16,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // 📝 REGISTRO DE USUARIOS COKI STUDIOS
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Crear cuenta nueva en Coki Studios
- */
 async function registerCokiAccount(email, password, metadata = {}) {
     const { data, error } = await supabase.auth.signUp({
         email: email,
@@ -48,9 +45,6 @@ async function registerCokiAccount(email, password, metadata = {}) {
     };
 }
 
-/**
- * Login con email + password en Coki Studios
- */
 async function loginCokiAccount(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
@@ -62,21 +56,24 @@ async function loginCokiAccount(email, password) {
         return { success: false, error: error.message };
     }
     
-    sessionStorage.setItem('coki_current_user', JSON.stringify({
+    // 🍪 GUARDAR EN COOKIES (7 días)
+    setCookieJSON('coki_current_user', {
         id: data.user.id,
         email: data.user.email,
         name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
         picture: data.user.user_metadata?.avatar_url,
         metadata: data.user.user_metadata
-    }));
+    }, { maxAge: 7 * 24 * 60 * 60 });
+    
+    if (data.session) {
+        setCookie('coki_access_token', data.session.access_token, { maxAge: 7 * 24 * 60 * 60 });
+        setCookie('coki_refresh_token', data.session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
+    }
     
     console.log('✅ Sesión Coki iniciada:', data.user.email);
     return { success: true, session: data.session, user: data.user };
 }
 
-/**
- * Login con OAuth externo (Google/GitHub) pero vinculado a Coki
- */
 async function loginCokiWithOAuth(provider) {
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
@@ -94,9 +91,6 @@ async function loginCokiWithOAuth(provider) {
     return { success: true };
 }
 
-/**
- * Procesar callback de OAuth externo (Google/GitHub → Coki)
- */
 async function handleCokiOAuthCallback() {
     const { data: { session }, error } = await supabase.auth.getSession();
     
@@ -105,20 +99,24 @@ async function handleCokiOAuthCallback() {
     }
     
     const user = session.user;
-    sessionStorage.setItem('coki_current_user', JSON.stringify({
+    
+    // 🍪 GUARDAR EN COOKIES
+    setCookieJSON('coki_current_user', {
         id: user.id,
         email: user.email,
         name: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0],
         picture: user.user_metadata?.avatar_url || user.user_metadata?.picture,
         metadata: user.user_metadata
-    }));
+    }, { maxAge: 7 * 24 * 60 * 60 });
+    
+    if (session) {
+        setCookie('coki_access_token', session.access_token, { maxAge: 7 * 24 * 60 * 60 });
+        setCookie('coki_refresh_token', session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
+    }
     
     return { success: true, user };
 }
 
-/**
- * Recuperar contraseña
- */
 async function resetCokiPassword(email) {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/coki-reset-password.html'
@@ -131,9 +129,6 @@ async function resetCokiPassword(email) {
     return { success: true, message: 'Revisa tu email para restablecer la contraseña' };
 }
 
-/**
- * Actualizar perfil del usuario Coki
- */
 async function updateCokiProfile(updates) {
     const { data, error } = await supabase.auth.updateUser({
         data: updates
@@ -143,18 +138,16 @@ async function updateCokiProfile(updates) {
         return { success: false, error: error.message };
     }
     
-    const current = JSON.parse(sessionStorage.getItem('coki_current_user') || '{}');
-    sessionStorage.setItem('coki_current_user', JSON.stringify({
+    // 🍪 ACTUALIZAR COOKIE
+    const current = getCookieJSON('coki_current_user') || {};
+    setCookieJSON('coki_current_user', {
         ...current,
         ...updates
-    }));
+    }, { maxAge: 7 * 24 * 60 * 60 });
     
     return { success: true, user: data.user };
 }
 
-/**
- * Cambiar contraseña
- */
 async function changeCokiPassword(newPassword) {
     const { data, error } = await supabase.auth.updateUser({
         password: newPassword
@@ -167,12 +160,16 @@ async function changeCokiPassword(newPassword) {
     return { success: true };
 }
 
-/**
- * 🚪 Cerrar sesión Coki
- */
 async function logoutCoki() {
     const { error } = await supabase.auth.signOut();
-    sessionStorage.removeItem('coki_current_user');
+    
+    // 🍪 LIMPIAR TODAS LAS COOKIES DE COKI
+    deleteCookie('coki_current_user');
+    deleteCookie('coki_access_token');
+    deleteCookie('coki_refresh_token');
+    deleteCookie('coki_oauth_pending');
+    deleteCookie('coki_oauth_code_verifier');
+    deleteCookie('coki_auth_requests');
     
     if (error) {
         console.error('Error logout:', error);
@@ -181,9 +178,6 @@ async function logoutCoki() {
     return { success: !error };
 }
 
-/**
- * 👤 Obtener usuario Coki actual
- */
 async function getCurrentCokiUser() {
     const { data: { user }, error } = await supabase.auth.getUser();
     
@@ -197,35 +191,33 @@ async function getCurrentCokiUser() {
         };
     }
     
-    const stored = sessionStorage.getItem('coki_current_user');
-    return stored ? JSON.parse(stored) : null;
+    // 🍪 FALLBACK: Leer de cookies
+    const stored = getCookieJSON('coki_current_user');
+    return stored || null;
 }
 
-/**
- * 🎧 Escuchar cambios de auth
- */
+// 🎧 Escuchar cambios de auth
 supabase.auth.onAuthStateChange((event, session) => {
     console.log('🔔 Coki Auth event:', event);
     
     if (event === 'SIGNED_IN' && session) {
         const user = session.user;
-        sessionStorage.setItem('coki_current_user', JSON.stringify({
+        setCookieJSON('coki_current_user', {
             id: user.id,
             email: user.email,
             name: user.user_metadata?.full_name || user.email.split('@')[0],
             picture: user.user_metadata?.avatar_url,
             metadata: user.user_metadata
-        }));
+        }, { maxAge: 7 * 24 * 60 * 60 });
     }
     
     if (event === 'SIGNED_OUT') {
-        sessionStorage.removeItem('coki_current_user');
+        deleteCookie('coki_current_user');
+        deleteCookie('coki_access_token');
+        deleteCookie('coki_refresh_token');
     }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// 📦 EXPORTAR
-// ═══════════════════════════════════════════════════════════════
 export {
     supabase,
     registerCokiAccount,
