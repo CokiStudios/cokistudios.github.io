@@ -10,7 +10,6 @@
         .spinner { animation: spin 1s linear infinite; }
     </style>
 </head>
-
 <body class="bg-slate-50 min-h-screen flex items-center justify-center">
     <div class="text-center">
         <svg class="spinner w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
@@ -22,15 +21,17 @@
 
     <script type="module">
         import { handleCokiOAuthCallback } from './coki-auth.js';
+        import { getCookie, deleteCookie } from './cookie-utils.js';
 
         async function process() {
             const result = await handleCokiOAuthCallback();
             
             if (result.success) {
-                const pending = sessionStorage.getItem('cki_oauth_pending');
+                // 🍪 Leer pending OAuth de cookie
+                const pending = getCookie('coki_oauth_pending');
                 if (pending) {
-                    sessionStorage.removeItem('cki_oauth_pending');
-                    window.location.href = '/oauth-authorize.html' + pending;
+                    deleteCookie('coki_oauth_pending');
+                    window.location.href = '/coki-authorize.html' + pending;
                 } else {
                     window.location.href = '/coki-dashboard.html';
                 }
