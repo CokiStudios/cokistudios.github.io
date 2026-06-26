@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏢 COKI STUDIOS OAUTH SERVER v3 — Con redirect_uri fix
+// 🏢 COKI STUDIOS OAUTH SERVER v4 — Con Cookies
 // ═══════════════════════════════════════════════════════════════
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
 
 const SUPABASE_URL = 'https://dwtqcvixrzmgdsetrzbm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3dHFjdml4cnptZ2RzZXRyemJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MjM2ODcsImV4cCI6MjA5Mjk5OTY4N30.3wxZGaQcuwNYIUVR7EBzB3XXsx3_sbvoSpNCv33FwLU';
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ═══════════════════════════════════════════════════════════════
@@ -67,7 +69,6 @@ async function validateClient(clientId, redirectUri) {
     console.log('📋 Cliente encontrado:', client.client_name);
     console.log('🔗 Redirect URIs registrados:', client.redirect_uris);
     
-    // 🔧 FIX: Verificar si el redirectUri está truncado y corregirlo
     let cleanRedirectUri = redirectUri;
     if (cleanRedirectUri && cleanRedirectUri.endsWith('/OurC')) {
         cleanRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
@@ -86,9 +87,6 @@ async function validateClient(clientId, redirectUri) {
 // 🔑 FUNCIONES PÚBLICAS DEL OAUTH SERVER
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * 🚀 PASO 1: App externa redirige aquí
- */
 async function handleAuthorizeRequest(urlParams) {
     const clientId = urlParams.get('client_id');
     let redirectUri = urlParams.get('redirect_uri');
@@ -107,11 +105,9 @@ async function handleAuthorizeRequest(urlParams) {
         return { error: 'unsupported_response_type', error_description: 'Only code flow supported' };
     }
     
-    // 🔧 FIX: Decodificar y limpiar redirect_uri
     redirectUri = decodeURIComponent(redirectUri);
     console.log('🔗 redirect_uri decodificado:', redirectUri);
     
-    // 🔧 FIX: Si está truncado, corregirlo
     if (redirectUri.endsWith('/OurC') || redirectUri.length < 30) {
         redirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
         console.log('🔧 redirect_uri corregido:', redirectUri);
@@ -120,11 +116,11 @@ async function handleAuthorizeRequest(urlParams) {
     const validation = await validateClient(clientId, redirectUri);
     if (!validation.valid) return validation;
     
-    // Guardar request en sessionStorage
-    const requests = JSON.parse(sessionStorage.getItem('coki_auth_requests') || '{}');
+    // 🍪 GUARDAR REQUEST EN COOKIE (10 minutos)
+    const requests = getCookieJSON('coki_auth_requests') || {};
     requests[codeChallenge] = {
         client_id: clientId,
-        redirect_uri: redirectUri, // ← Guardar el corregido
+        redirect_uri: redirectUri,
         scope,
         code_challenge: codeChallenge,
         code_challenge_method: codeChallengeMethod,
@@ -132,30 +128,27 @@ async function handleAuthorizeRequest(urlParams) {
         client_name: validation.client.client_name,
         client_logo: validation.client.logo_url
     };
-    sessionStorage.setItem('coki_auth_requests', JSON.stringify(requests));
+    setCookieJSON('coki_auth_requests', requests, { maxAge: 600 });
     
-    console.log('💾 Request guardado:', requests[codeChallenge]);
+    console.log('💾 Request guardado en cookie:', requests[codeChallenge]);
     
     return { valid: true, client_name: validation.client.client_name, client_logo: validation.client.logo_url };
 }
 
-/**
- * ✅ PASO 2: Usuario aprueba el login
- */
 async function approveAuthorization(codeChallenge, userData) {
     console.log('🚀 approveAuthorization:', { codeChallenge, userId: userData.id });
     
-    const requests = JSON.parse(sessionStorage.getItem('coki_auth_requests') || '{}');
+    // 🍪 LEER REQUEST DE COOKIE
+    const requests = getCookieJSON('coki_auth_requests') || {};
     const request = requests[codeChallenge];
     
     if (!request) {
-        console.log('❌ Request no encontrado en sessionStorage');
+        console.log('❌ Request no encontrado en cookies');
         return { error: 'request_expired', error_description: 'Authorization request expired' };
     }
     
     console.log('📋 Request encontrado:', request);
     
-    // Generar code
     const authCode = 'coki_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
@@ -163,13 +156,12 @@ async function approveAuthorization(codeChallenge, userData) {
     console.log('📝 Code generado:', authCode);
     console.log('🔗 redirect_uri a guardar:', request.redirect_uri);
     
-    // Guardar en Supabase
     const { data, error } = await supabase.from('oauth_codes').insert({
         code: authCode,
         user_id: userData.id,
         client_id: request.client_id,
         code_challenge: request.code_challenge,
-        redirect_uri: request.redirect_uri, // ← Usar el guardado (ya corregido)
+        redirect_uri: request.redirect_uri,
         scopes: request.scope.split(' '),
         expires_at: new Date(Date.now() + 600000).toISOString()
     });
@@ -181,11 +173,10 @@ async function approveAuthorization(codeChallenge, userData) {
     
     console.log('✅ Code guardado en Supabase');
     
-    // Limpiar request
+    // 🍪 LIMPIAR REQUEST
     delete requests[codeChallenge];
-    sessionStorage.setItem('coki_auth_requests', JSON.stringify(requests));
+    setCookieJSON('coki_auth_requests', requests, { maxAge: 600 });
     
-    // Construir URL de callback con redirect_uri correcto
     const redirectUrl = new URL(request.redirect_uri);
     redirectUrl.searchParams.set('code', authCode);
     if (request.state) redirectUrl.searchParams.set('state', request.state);
@@ -195,9 +186,6 @@ async function approveAuthorization(codeChallenge, userData) {
     return { success: true, redirect_url: redirectUrl.toString() };
 }
 
-/**
- * 🔄 PASO 3: Intercambiar code por token
- */
 async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     console.log('🔄 exchangeCodeForToken:', { code, redirectUri });
     
@@ -215,14 +203,10 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     }
     
     console.log('📋 Code encontrado:', codeData.code);
-    console.log('🔗 redirect_uri en BD:', codeData.redirect_uri);
-    console.log('🔗 redirect_uri recibido:', redirectUri);
     
-    // 🔧 FIX: Comparar redirect_uri con tolerancia a truncamiento
     let storedRedirectUri = codeData.redirect_uri;
     let receivedRedirectUri = redirectUri;
     
-    // Si el de BD está truncado, corregirlo para comparar
     if (storedRedirectUri.endsWith('/OurC')) {
         storedRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
     }
@@ -235,7 +219,6 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         return { error: 'invalid_grant', error_description: 'Redirect URI mismatch' };
     }
     
-    // Validar PKCE
     const expectedChallenge = await sha256(codeVerifier);
     if (expectedChallenge !== codeData.code_challenge) {
         console.log('❌ PKCE verification failed');
@@ -275,9 +258,6 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     };
 }
 
-/**
- * 📋 Obtener apps conectadas del usuario
- */
 async function getUserConnectedApps(userId) {
     const { data, error } = await supabase
         .from('user_apps')
@@ -299,9 +279,6 @@ async function getUserConnectedApps(userId) {
     return data || [];
 }
 
-/**
- * ❌ Revocar app conectada
- */
 async function revokeConnectedApp(userId, clientId) {
     const { error } = await supabase.rpc('revoke_app', {
         p_client_id: clientId
@@ -315,9 +292,6 @@ async function revokeConnectedApp(userId, clientId) {
     return true;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 📦 EXPORTAR
-// ═══════════════════════════════════════════════════════════════
 export {
     supabase,
     handleAuthorizeRequest,
