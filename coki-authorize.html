@@ -7,11 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>body{font-family: 'Inter', system-ui, sans-serif}</style>
 </head>
-
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
-
     <div class="w-full max-w-md">
-        
         <div class="text-center mb-8">
             <div class="w-20 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span class="text-white font-bold text-2xl">CS ID</span>
@@ -20,25 +17,18 @@
             <p class="text-slate-500">Autorización de acceso</p>
         </div>
 
-        <!-- DEBUG INFO -->
         <div id="debug-info" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 hidden">
             <p class="text-sm text-yellow-800 font-mono" id="debug-text"></p>
         </div>
 
         <!-- 🔐 ESTADO 1: NO LOGUEADO -->
         <div id="login-section" class="bg-white rounded-2xl shadow-sm p-8">
-            <p class="text-center text-slate-600 mb-6">
-                Primero inicia sesión en tu cuenta de <strong>Coki Studios</strong>
-            </p>
-            <a href="coki-register.html" 
-               class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors mb-4">
-                Iniciar sesión en Coki Studios
-            </a>
+            <p class="text-center text-slate-600 mb-6">Primero inicia sesión en tu cuenta de <strong>Coki Studios</strong></p>
+            <a href="coki-register.html" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors mb-4">Iniciar sesión en Coki Studios</a>
         </div>
 
         <!-- ✅ ESTADO 2: LOGUEADO -->
         <div id="consent-section" class="hidden">
-            
             <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
                 <div class="flex items-center gap-3 mb-4">
                     <div id="user-avatar" class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">U</div>
@@ -51,11 +41,8 @@
 
             <div class="bg-white rounded-2xl shadow-sm p-8">
                 <div class="text-center mb-6">
-                    <p class="text-slate-600">
-                        <strong id="client-name">App Externa</strong> quiere acceder a tu cuenta
-                    </p>
+                    <p class="text-slate-600"><strong id="client-name">App Externa</strong> quiere acceder a tu cuenta</p>
                 </div>
-                
                 <div class="bg-slate-50 rounded-xl p-4 mb-6">
                     <p class="text-sm font-medium text-slate-700 mb-3">Permisos solicitados:</p>
                     <ul class="space-y-2">
@@ -69,31 +56,23 @@
                         </li>
                     </ul>
                 </div>
-                
                 <div class="flex gap-3">
-                    <button id="btn-deny"
-                            class="flex-1 py-3 border-2 border-slate-200 text-slate-600 font-medium rounded-xl hover:border-slate-300 transition-colors">
-                        Denegar
-                    </button>
-                    <button id="btn-approve"
-                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors">
-                        Autorizar
-                    </button>
+                    <button id="btn-deny" class="flex-1 py-3 border-2 border-slate-200 text-slate-600 font-medium rounded-xl hover:border-slate-300 transition-colors">Denegar</button>
+                    <button id="btn-approve" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors">Autorizar</button>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
         import { handleAuthorizeRequest, approveAuthorization } from './oauth-server.js';
+        import { setCookie, getCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
 
         const SUPABASE_URL = 'https://dwtqcvixrzmgdsetrzbm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3dHFjdml4cnptZ2RzZXRyemJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MjM2ODcsImV4cCI6MjA5Mjk5OTY4N30.3wxZGaQcuwNYIUVR7EBzB3XXsx3_sbvoSpNCv33FwLU';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // DEBUG
         function showDebug(msg) {
             const box = document.getElementById('debug-info');
             const text = document.getElementById('debug-text');
@@ -104,7 +83,6 @@
 
         showDebug('🚀 Página cargada');
 
-        // LEER PARÁMETROS
         const urlParams = new URLSearchParams(window.location.search);
         const codeChallenge = urlParams.get('code_challenge');
         
@@ -116,7 +94,6 @@
             throw new Error('Missing code_challenge');
         }
 
-        // VALIDAR REQUEST
         let validation;
         try {
             validation = await handleAuthorizeRequest(urlParams);
@@ -136,7 +113,6 @@
 
         document.getElementById('client-name').textContent = validation.client_name || 'App Externa';
 
-        // VERIFICAR SESIÓN
         async function checkSession() {
             showDebug('🔍 Verificando sesión...');
             
@@ -155,14 +131,13 @@
                 document.getElementById('user-avatar').textContent = (user.user_metadata?.full_name || user.email).charAt(0).toUpperCase();
             } else {
                 showDebug('❌ No logueado — redirigiendo a login');
-                // Guardar params para volver
-                sessionStorage.setItem('coki_oauth_pending', window.location.search);
+                // 🍪 Guardar params para volver
+                setCookie('coki_oauth_pending', window.location.search, { maxAge: 600 });
             }
         }
 
         checkSession();
 
-        // ACCIONES
         document.getElementById('btn-approve').addEventListener('click', async () => {
             showDebug('✅ Click en Aprobar');
             
@@ -205,6 +180,5 @@
             window.location.href = url.toString();
         });
     </script>
-
 </body>
 </html>
