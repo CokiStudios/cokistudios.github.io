@@ -159,7 +159,18 @@
                     // Las cookies ya se setearon con 7 días, pero podemos ajustar
                     // Esto es un comportamiento simplificado
                 }
-                const redirect = new URLSearchParams(window.location.search).get('redirect') || '/coki-dashboard.html';
+                
+                let redirect = new URLSearchParams(window.location.search).get('redirect');
+                if (!redirect) {
+                    const pending = getCookie('coki_oauth_pending');
+                    if (pending) {
+                        deleteCookie('coki_oauth_pending');
+                        redirect = 'coki-authorize.html' + pending;
+                    }
+                }
+                if (!redirect) {
+                    redirect = '/coki-dashboard.html';
+                }
                 window.location.href = redirect;
             } else {
                 alert('❌ ' + result.error);

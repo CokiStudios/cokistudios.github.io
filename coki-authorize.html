@@ -65,13 +65,9 @@
     </div>
 
     <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        import { supabase, getCurrentCokiUser } from './coki-auth.js';
         import { handleAuthorizeRequest, approveAuthorization } from './oauth-server.js';
         import { setCookie, getCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
-
-        const SUPABASE_URL = 'https://dwtqcvixrzmgdsetrzbm.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3dHFjdml4cnptZ2RzZXRyemJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MjM2ODcsImV4cCI6MjA5Mjk5OTY4N30.3wxZGaQcuwNYIUVR7EBzB3XXsx3_sbvoSpNCv33FwLU';
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function showDebug(msg) {
             const box = document.getElementById('debug-info');
@@ -113,25 +109,30 @@
 
         document.getElementById('client-name').textContent = validation.client_name || 'App Externa';
 
+        // Configurar enlace de login con redirección de regreso
+        const loginBtn = document.querySelector('#login-section a');
+        if (loginBtn) {
+            loginBtn.href = `coki-register.html?redirect=${encodeURIComponent(window.location.href)}`;
+        }
+
         async function checkSession() {
             showDebug('🔍 Verificando sesión...');
             
-            const { data: { user }, error } = await supabase.auth.getUser();
+            const user = await getCurrentCokiUser();
             
             showDebug('👤 User: ' + (user ? user.email : 'null'));
-            showDebug('❌ Error: ' + (error ? error.message : 'none'));
 
             if (user) {
                 showDebug('✅ Usuario logueado');
                 document.getElementById('login-section').classList.add('hidden');
                 document.getElementById('consent-section').classList.remove('hidden');
                 
-                document.getElementById('user-name').textContent = user.user_metadata?.full_name || user.email.split('@')[0];
+                document.getElementById('user-name').textContent = user.name || user.email.split('@')[0];
                 document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-avatar').textContent = (user.user_metadata?.full_name || user.email).charAt(0).toUpperCase();
+                document.getElementById('user-avatar').textContent = (user.name || user.email).charAt(0).toUpperCase();
             } else {
-                showDebug('❌ No logueado — redirigiendo a login');
-                // 🍪 Guardar params para volver
+                showDebug('❌ No logueado — preparando enlace de login');
+                // 🍪 Guardar params para volver (soporte para flujos externos/OAuth callback)
                 setCookie('coki_oauth_pending', window.location.search, { maxAge: 600 });
             }
         }
@@ -141,7 +142,7 @@
         document.getElementById('btn-approve').addEventListener('click', async () => {
             showDebug('✅ Click en Aprobar');
             
-            const { data: { user } } = await supabase.auth.getUser();
+            const user = await getCurrentCokiUser();
             if (!user) {
                 showDebug('❌ No hay usuario al aprobar');
                 alert('Error: Sesión perdida');
@@ -151,8 +152,8 @@
             const userData = {
                 id: user.id,
                 email: user.email,
-                name: user.user_metadata?.full_name || user.email.split('@')[0],
-                picture: user.user_metadata?.avatar_url
+                name: user.name || user.email.split('@')[0],
+                picture: user.picture
             };
 
             showDebug('📤 Aprobando con user: ' + userData.email);
