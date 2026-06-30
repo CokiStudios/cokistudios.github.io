@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS oauth_clients (
     logo_url text,
     website_url text,
     is_active boolean default true,
+    developer_id uuid references auth.users(id) on delete cascade,
     created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now()
 );
@@ -21,9 +22,24 @@ CREATE TABLE IF NOT EXISTS oauth_clients (
 -- Habilitar RLS para oauth_clients
 ALTER TABLE oauth_clients ENABLE ROW LEVEL SECURITY;
 
--- Permitir lectura pública de clientes activos
+-- Lectura pública de clientes activos (requerido para que las apps cliente funcionen)
 CREATE POLICY "Allow public read of active clients" ON oauth_clients 
     FOR SELECT USING (is_active = true);
+
+-- Los desarrolladores pueden insertar sus propias apps
+CREATE POLICY "Developers can insert their own apps" ON oauth_clients 
+    FOR INSERT WITH CHECK (auth.uid() = developer_id);
+
+-- Los desarrolladores pueden ver todas sus apps (incluyendo las desactivadas)
+CREATE POLICY "Developers can select their own apps" ON oauth_clients 
+    FOR SELECT USING (auth.uid() = developer_id);
+
+-- Los desarrolladores pueden actualizar/eliminar solo sus propias apps
+CREATE POLICY "Developers can update their own apps" ON oauth_clients 
+    FOR UPDATE USING (auth.uid() = developer_id);
+
+CREATE POLICY "Developers can delete their own apps" ON oauth_clients 
+    FOR DELETE USING (auth.uid() = developer_id);
 
 
 -- ─── 2. Tabla oauth_codes ───
