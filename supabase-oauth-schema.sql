@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS oauth_codes (
     id uuid primary key default gen_random_uuid(),
     code text unique not null,
     user_id uuid references auth.users(id) on delete cascade not null,
-    client_id text not null,
+    client_id text references oauth_clients(client_id) on delete cascade not null,
     code_challenge text not null,
     redirect_uri text not null,
     scopes text[] not null,
@@ -60,7 +60,7 @@ CREATE POLICY "Allow public update of used_at" ON oauth_codes
 CREATE TABLE IF NOT EXISTS user_apps (
     id uuid primary key default gen_random_uuid(),
     user_id uuid references auth.users(id) on delete cascade not null,
-    client_id text not null,
+    client_id text references oauth_clients(client_id) on delete cascade not null,
     scopes text[] not null,
     is_active boolean default true,
     granted_at timestamp with time zone default now(),
