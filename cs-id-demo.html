@@ -96,9 +96,22 @@
 
             <div id="result-section">
                 <h3 style="color:#10b981; font-weight:800; font-size:16px;">✅ ¡Autenticación Exitosa!</h3>
-                <p style="color:var(--text); margin-top:4px;">Tu app ha recibido los datos del usuario desde Coki Studios:</p>
-                <pre class="data-pre" id="user-data"></pre>
-                <button class="btn" style="background:rgba(255,255,255,0.1); margin-top:16px;" onclick="window.location.href=window.location.pathname">Volver a empezar</button>
+                <p style="color:var(--text); margin-top:4px; margin-bottom: 16px;">Tu app ha recibido los datos del usuario desde Coki Studios:</p>
+                
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 16px;">
+                    <div id="profile-avatar" style="width: 56px; height: 56px; border-radius: 12px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--accent); overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+                    <div>
+                        <h4 id="profile-name" style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 2px;"></h4>
+                        <p id="profile-email" style="font-size: 13px; color: var(--text-sub);"></p>
+                    </div>
+                </div>
+
+                <details style="margin-top: 16px;">
+                    <summary style="font-size: 12px; font-weight: 600; color: var(--text-sub); cursor: pointer; user-select: none;">Ver datos crudos (JSON)</summary>
+                    <pre class="data-pre" id="user-data"></pre>
+                </details>
+
+                <button class="btn" style="background:rgba(255,255,255,0.05); border: 1px solid var(--border); margin-top:24px; color: var(--text-sub);" onclick="window.location.href=window.location.pathname">Cerrar sesión / Probar de nuevo</button>
             </div>
         </div>
     </div>
@@ -201,6 +214,18 @@
                         const userData = JSON.parse(jsonPayload);
                         
                         document.getElementById('result-section').style.display = 'block';
+                        
+                        // Poblar la tarjeta de perfil visual
+                        const avatar = document.getElementById('profile-avatar');
+                        if (userData.picture) {
+                            avatar.innerHTML = `<img src="${userData.picture}" style="width:100%;height:100%;object-fit:cover;">`;
+                        } else {
+                            avatar.textContent = (userData.name || userData.email).charAt(0).toUpperCase();
+                        }
+                        document.getElementById('profile-name').textContent = userData.name || userData.email.split('@')[0];
+                        document.getElementById('profile-email').textContent = userData.email;
+
+                        // Poblar el JSON en bruto
                         document.getElementById('user-data').textContent = JSON.stringify(userData, null, 2);
                     }
                 } catch (err) {
