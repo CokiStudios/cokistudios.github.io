@@ -191,7 +191,7 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     
     const { data: codeData, error: findError } = await supabase
         .from('oauth_codes')
-        .select('*, oauth_clients(*)')
+        .select('*')
         .eq('code', code)
         .is('used_at', null)
         .gt('expires_at', new Date().toISOString())
@@ -201,6 +201,20 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         console.log('❌ Code no encontrado o expirado:', findError);
         return { error: 'invalid_grant', error_description: 'Code invalid or expired' };
     }
+
+    // Fetch client relation manually to avoid PostgREST foreign key cache issues (PGRST200)
+    const { data: clientData, error: clientError } = await supabase
+        .from('oauth_clients')
+        .select('*')
+        .eq('client_id', codeData.client_id)
+        .single();
+
+    if (clientError || !clientData) {
+        console.log('❌ Client not found for code:', clientError);
+        return { error: 'invalid_client', error_description: 'Client not found' };
+    }
+
+    codeData.oauth_clients = clientData;
     
     console.log('📋 Code encontrado:', codeData.code);
     
@@ -259,24 +273,35 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
 }
 
 async function getUserConnectedApps(userId) {
-    const { data, error } = await supabase
+    const { data: appsData, error: appsError } = await supabase
         .from('user_apps')
-        .select(`
-            id,
-            scopes,
-            granted_at,
-            last_used_at,
-            oauth_clients (client_name, logo_url, website_url, client_id)
-        `)
+        .select('id, scopes, granted_at, last_used_at, client_id')
         .eq('user_id', userId)
         .eq('is_active', true);
     
-    if (error) {
-        console.error('Error fetching apps:', error);
+    if (appsError) {
+        console.error('Error fetching apps:', appsError);
         return [];
     }
     
-    return data || [];
+    if (!appsData || appsData.length === 0) return [];
+
+    // Fetch client relations manually to avoid PostgREST foreign key cache issues (PGRST200)
+    const clientIds = appsData.map(a => a.client_id);
+    const { data: clientsData, error: clientsError } = await supabase
+        .from('oauth_clients')
+        .select('client_name, logo_url, website_url, client_id')
+        .in('client_id', clientIds);
+
+    if (clientsError) {
+        console.error('Error fetching clients:', clientsError);
+        return [];
+    }
+
+    return appsData.map(app => ({
+        ...app,
+        oauth_clients: clientsData.find(c => c.client_id === app.client_id)
+    }));
 }
 
 async function revokeConnectedApp(userId, clientId) {
