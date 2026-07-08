@@ -396,7 +396,7 @@ struct ConnectedAppRow: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(app.appName)
-                        .font(.system(size: 16, weight: .extrabold))
+                        .font(.system(size: 16, weight: .heavy))
                         .foregroundColor(CokiTheme.text)
                     
                     Text("Permisos: \(app.scopesString)")
