@@ -171,6 +171,8 @@
                 <input type="hidden" id="report-target-id">
                 <input type="hidden" id="report-target-type">
                 
+                <div id="report-preview" style="margin-bottom:16px; display:none;"></div>
+                
                 <div class="form-group">
                     <label class="form-label" style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">MOTIVO DEL REPORTE</label>
                     <select class="form-select" id="report-reason" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none;">
@@ -208,6 +210,7 @@
         let currentUser = null;
         let postData = null;
         let userLiked = false;
+        let loadedComments = [];
 
         function escHtml(str) {
             if (!str) return '';
@@ -343,6 +346,7 @@
 
         async function loadComments() {
             const comments = await getComments(postId);
+            loadedComments = comments;
             const list = document.getElementById('comments-list');
             const empty = document.getElementById('comments-empty');
             
@@ -488,6 +492,29 @@
             document.getElementById('report-target-type').value = type || 'post';
             document.getElementById('report-reason').value = 'spam';
             document.getElementById('report-details').value = '';
+            
+            let previewText = '';
+            if (type === 'post') {
+                previewText = postData ? postData.title : '';
+            } else {
+                const found = loadedComments.find(c => c.id === id);
+                previewText = found ? found.content : '';
+            }
+            
+            const previewEl = document.getElementById('report-preview');
+            if (previewEl) {
+                if (previewText) {
+                    previewEl.style.display = 'block';
+                    previewEl.innerHTML = `
+                        <label class="form-label" style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">CONTENIDO A REPORTAR</label>
+                        <div style="padding:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); border-radius:12px; font-size:14px; color:var(--text-sub); font-style:italic; line-height:1.4;">
+                            "${previewText}"
+                        </div>
+                    `;
+                } else {
+                    previewEl.style.display = 'none';
+                }
+            }
             
             // Reutilizar la clase open de modal-overlay
             document.getElementById('modal-report').classList.add('open');
