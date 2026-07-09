@@ -266,7 +266,7 @@ struct ContentView: View {
     private var applicationsHeaderSection: some View {
         HStack {
             Text("Mis Aplicaciones")
-                .font(.system(size: 18, weight: .extrabold))
+                .font(.system(size: 18, weight: .heavy))
                 .foregroundColor(CSDevelopTheme.text)
             Spacer()
             Button(action: {

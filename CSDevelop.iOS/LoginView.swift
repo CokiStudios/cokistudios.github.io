@@ -44,7 +44,7 @@ struct LoginView: View {
                             .shadow(color: CSDevelopTheme.accent.opacity(0.3), radius: 15)
                         
                         Text("Coki Studios")
-                            .font(.system(size: 24, weight: .extrabold))
+                            .font(.system(size: 24, weight: .heavy))
                             .foregroundColor(CSDevelopTheme.text)
                         
                         Text("Consola de Desarrolladores")
