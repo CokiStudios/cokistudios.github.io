@@ -41,14 +41,8 @@ ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
 -- 5. Crear políticas RLS para Moderación
 
--- user_roles: Leer todos pueden (para verificar roles), escribir solo admins
+-- user_roles: Leer todos pueden (para verificar roles). Las modificaciones se hacen por SQL Editor.
 CREATE POLICY "roles_select_all" ON user_roles FOR SELECT USING (true);
-CREATE POLICY "roles_admin_all" ON user_roles FOR ALL USING (
-    exists (
-        select 1 from user_roles 
-        where user_roles.user_id = auth.uid() and user_roles.role = 'admin'
-    )
-);
 
 -- social_reports: 
 -- Crear: cualquier usuario autenticado puede insertar un reporte
