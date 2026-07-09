@@ -11,38 +11,38 @@ const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const AUTH_HELPER_URL = 'http://localhost:5001';
 
 // ═══════════════════════════════════════════════════════════════
 // 📝 REGISTRO DE USUARIOS COKI STUDIOS
 // ═══════════════════════════════════════════════════════════════
 
 async function registerCokiAccount(email, password, metadata = {}) {
-    try {
-        const response = await fetch(`${AUTH_HELPER_URL}/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email,
-                password,
-                metadata: {
-                    full_name: metadata.full_name || '',
-                    company: metadata.company || 'Coki Studios',
-                    role: metadata.role || 'user',
-                    avatar_url: metadata.avatar_url || null,
-                    redirect_to: window.location.origin + '/coki-confirm.html',
-                    ...metadata
-                }
-            })
-        });
-        const result = await response.json();
-        if (!response.ok) {
-            return { success: false, error: result.error || 'Error al registrar' };
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                full_name: metadata.full_name || '',
+                company: metadata.company || 'Coki Studios',
+                role: metadata.role || 'user',
+                avatar_url: metadata.avatar_url || null,
+                ...metadata
+            },
+            emailRedirectTo: window.location.origin + '/coki-confirm.html'
         }
-        return { success: true, user: result.user, message: result.message };
-    } catch (e) {
-        return { success: false, error: e.message };
+    });
+    
+    if (error) {
+        console.error('❌ Error registro Coki:', error);
+        return { success: false, error: error.message };
     }
+    
+    console.log('✅ Cuenta Coki creada:', data.user.email);
+    return { 
+        success: true, 
+        user: data.user,
+        message: 'Revisa tu email para confirmar la cuenta'
+    };
 }
 
 async function loginCokiAccount(email, password) {
@@ -118,23 +118,15 @@ async function handleCokiOAuthCallback() {
 }
 
 async function resetCokiPassword(email) {
-    try {
-        const response = await fetch(`${AUTH_HELPER_URL}/auth/recovery`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email,
-                redirect_to: window.location.origin + '/coki-register.html?tab=reset'
-            })
-        });
-        const result = await response.json();
-        if (!response.ok) {
-            return { success: false, error: result.error || 'Error en la recuperación' };
-        }
-        return { success: true, message: result.message };
-    } catch (e) {
-        return { success: false, error: e.message };
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/coki-reset-password.html'
+    });
+    
+    if (error) {
+        return { success: false, error: error.message };
     }
+    
+    return { success: true, message: 'Revisa tu email para restablecer la contraseña' };
 }
 
 async function updateCokiProfile(updates) {

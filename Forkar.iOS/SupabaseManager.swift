@@ -146,10 +146,7 @@ class SupabaseManager: ObservableObject {
     }
     
     func signUp(email: String, password: String, name: String, company: String? = nil) async throws {
-        let helperURLString = "http://localhost:5001/auth/signup"
-        guard let url = URL(string: helperURLString) else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid helper URL"])
-        }
+        let path = "/auth/v1/signup"
         
         var metadataJson: [String: Any] = [
             "full_name": name,
@@ -166,28 +163,30 @@ class SupabaseManager: ObservableObject {
         let bodyJson: [String: Any] = [
             "email": email,
             "password": password,
-            "metadata": metadataJson
+            "options": [
+                "data": metadataJson,
+                "email_redirect_to": "https://cokistudios.github.io/coki-confirm.html"
+            ]
         ]
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: bodyJson)
-        
+        let request = makeRequest(path: path, method: "POST", body: bodyData)
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid server response"])
         }
         
-        if !(200...299).contains(httpResponse.statusCode) {
+        if httpResponse.statusCode != 200 && httpResponse.statusCode != 201 {
             if let errorObj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let desc = errorObj["error"] as? String {
+               let desc = errorObj["msg"] as? String {
                 throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: desc])
             }
             throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Registration failed (\(httpResponse.statusCode))"])
         }
         
+        // Automatical log in if credentials allow, or wait for verification if email verification is enabled.
+        // Usually, try logging in immediately.
         try await login(email: email, password: password)
     }
     
