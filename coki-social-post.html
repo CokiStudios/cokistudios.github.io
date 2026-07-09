@@ -104,6 +104,18 @@
         /* Skeleton loaders */
         .skeleton { background: rgba(255,255,255,0.05); border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        /* ── MODALS ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 24px; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #111827; border: 1px solid var(--border); border-radius: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: mIn 0.25s ease; }
+        .modal-header { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #111827; }
+        .modal-title { font-size: 19px; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); border: none; cursor: pointer; color: var(--text-sub); font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .modal-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; }
+        .modal-footer { padding: 0 28px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+        @keyframes mIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
