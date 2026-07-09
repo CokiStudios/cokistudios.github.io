@@ -543,6 +543,51 @@ class SupabaseManager: ObservableObject {
             self.sessionToken = accessToken
         }
     }
+    
+    // MARK: - Moderation API
+    func reportPost(postId: UUID, reason: String, details: String? = nil) async throws {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para reportar"])
+        }
+        
+        let path = "/rest/v1/social_reports"
+        var bodyJson: [String: Any] = [
+            "reporter_id": user.id.uuidString.lowercased(),
+            "post_id": postId.uuidString.lowercased(),
+            "reason": reason
+        ]
+        
+        if let d = details, !d.isEmpty {
+            bodyJson["details"] = d
+        }
+        
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
+        let request = makeRequest(path: path, method: "POST", body: bodyData)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+    }
+    
+    func reportComment(commentId: UUID, reason: String, details: String? = nil) async throws {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para reportar"])
+        }
+        
+        let path = "/rest/v1/social_reports"
+        var bodyJson: [String: Any] = [
+            "reporter_id": user.id.uuidString.lowercased(),
+            "comment_id": commentId.uuidString.lowercased(),
+            "reason": reason
+        ]
+        
+        if let d = details, !d.isEmpty {
+            bodyJson["details"] = d
+        }
+        
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
+        let request = makeRequest(path: path, method: "POST", body: bodyData)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+    }
 }
 
 // MARK: - Presentation Anchor Provider Helper

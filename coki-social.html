@@ -273,6 +273,39 @@
         </div>
     </div>
 
+    <!-- MODAL REPORTAR -->
+    <div class="modal-overlay" id="modal-report">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Reportar contenido</div>
+                <button class="modal-close" onclick="closeReportModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="report-target-id">
+                <input type="hidden" id="report-target-type">
+                
+                <div class="form-group">
+                    <label class="form-label" style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">MOTIVO DEL REPORTE</label>
+                    <select class="form-select" id="report-reason" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none;">
+                        <option value="spam">Spam / Publicidad</option>
+                        <option value="harassment">Acoso o agresión</option>
+                        <option value="inappropriate">Contenido inapropiado / explícito</option>
+                        <option value="other">Otro motivo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-top:16px;">
+                    <label class="form-label" style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">DETALLES ADICIONALES (OPCIONAL)</label>
+                    <textarea class="form-textarea" id="report-details" placeholder="Escribe más detalles sobre por qué reportas este contenido..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none; resize:vertical; min-height:80px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:0 28px 28px; display:flex; gap:12px; justify-content:flex-end;">
+                <button class="btn-sm btn-ghost" onclick="closeReportModal()" style="padding:10px 20px; border-radius:10px; background:rgba(255,255,255,0.05); color:var(--text-sub); border:none; cursor:pointer;">Cancelar</button>
+                <button class="btn-sm btn-accent" id="btn-submit-report" onclick="submitReport()" style="padding:10px 20px; border-radius:10px; background:var(--accent); color:white; border:none; cursor:pointer; font-weight:bold;">Enviar Reporte</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import {
             getCategories, getPosts, createPost,
@@ -357,6 +390,11 @@
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                             ${post.comments_count || 0}
                         </span>
+                        ${(currentUser && currentUser.id !== post.user_id) ? `
+                            <span class="post-stat" style="margin-left:auto; cursor:pointer;" onclick="event.preventDefault(); event.stopPropagation(); openReportModal('${post.id}', 'post')">
+                                ⚠️ Reportar
+                            </span>
+                        ` : ''}
                     </div>
                 </a>
             `;
@@ -454,6 +492,60 @@
                 updateToggleIcon();
             });
         }
+
+        window.openReportModal = (id, type) => {
+            const user = currentUser;
+            if (!user) {
+                alert('Inicia sesión para reportar contenido');
+                return;
+            }
+            document.getElementById('report-target-id').value = id;
+            document.getElementById('report-target-type').value = type || 'post';
+            document.getElementById('report-reason').value = 'spam';
+            document.getElementById('report-details').value = '';
+            document.getElementById('modal-report').classList.add('open');
+        };
+
+        window.closeReportModal = () => {
+            document.getElementById('modal-report').classList.remove('open');
+        };
+
+        window.submitReport = async () => {
+            const targetId = document.getElementById('report-target-id').value;
+            const targetType = document.getElementById('report-target-type').value;
+            const reason = document.getElementById('report-reason').value;
+            const details = document.getElementById('report-details').value.trim();
+            const btn = document.getElementById('btn-submit-report');
+            
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            
+            const insertData = {
+                reporter_id: currentUser.id,
+                reason: reason,
+                details: details || null
+            };
+            
+            if (targetType === 'post') {
+                insertData.post_id = targetId;
+            } else {
+                insertData.comment_id = targetId;
+            }
+            
+            const { error } = await supabase
+                .from('social_reports')
+                .insert(insertData);
+                
+            btn.disabled = false;
+            btn.textContent = 'Enviar Reporte';
+            
+            if (error) {
+                alert('Error al enviar el reporte: ' + error.message);
+            } else {
+                alert('✅ Reporte enviado con éxito. Gracias por ayudarnos a mantener la comunidad limpia.');
+                closeReportModal();
+            }
+        };
     </script>
 </body>
 </html>
