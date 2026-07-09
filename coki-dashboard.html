@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cuenta — CS ID</title>
+    <title>Mi Cuenta — Coki ID</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -170,7 +170,7 @@
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-title">Apps conectadas</div>
+                <div class="stat-title">Juegos y Apps</div>
                 <div class="stat-val" id="stat-apps">0</div>
             </div>
             <div class="stat-card">
@@ -184,22 +184,22 @@
         </div>
 
         <div class="section-box">
-            <h2 class="section-title">Apps conectadas</h2>
+            <h2 class="section-title">Juegos y Aplicaciones vinculadas</h2>
             <div id="apps-list" class="apps-list">
                 <p style="color:var(--text-muted);font-weight:500;text-align:center;padding:24px 0;">Cargando apps...</p>
             </div>
         </div>
 
         <div class="section-box">
-            <h2 class="section-title">Configuración de Perfil</h2>
+            <h2 class="section-title">Ajustes de Perfil</h2>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Nombre completo</label>
+                    <label>Nombre para mostrar</label>
                     <input type="text" id="edit-name" class="form-input" placeholder="Tu nombre">
                 </div>
                 <div class="form-group">
-                    <label>Empresa / Organización</label>
-                    <input type="text" id="edit-company" class="form-input" placeholder="Tu empresa">
+                    <label>Biografía / Lema</label>
+                    <input type="text" id="edit-company" class="form-input" placeholder="Escribe algo sobre ti...">
                 </div>
             </div>
             <button id="btn-save" class="btn-primary">Guardar cambios</button>
@@ -241,8 +241,8 @@
             if (!apps || apps.length === 0) {
                 container.innerHTML = `
                     <div style="text-align:center;padding:32px 0;">
-                        <p style="color:var(--text-sub);font-weight:700;font-size:16px;margin-bottom:4px;">No tienes apps conectadas aún</p>
-                        <p style="color:var(--text-muted);font-size:14px;">Las apps aparecerán aquí cuando uses "Iniciar sesión con CS ID"</p>
+                        <p style="color:var(--text-sub);font-weight:700;font-size:16px;margin-bottom:4px;">No tienes aplicaciones vinculadas</p>
+                        <p style="color:var(--text-muted);font-size:14px;">Los juegos y servicios autorizados aparecerán en esta sección.</p>
                     </div>`;
                 return;
             }
@@ -253,19 +253,19 @@
                         <div class="app-icon">${(app.oauth_clients?.client_name || 'A').charAt(0)}</div>
                         <div>
                             <div class="app-name">${app.oauth_clients?.client_name || 'App Externa'}</div>
-                            <div class="app-desc">Permisos: ${app.scopes?.join(', ') || 'Perfil'} • Conectada: ${new Date(app.granted_at).toLocaleDateString()}</div>
+                            <div class="app-desc">Acceso a: ${app.scopes?.join(', ') || 'Perfil'} • Vinculado el: ${new Date(app.granted_at).toLocaleDateString()}</div>
                         </div>
                     </div>
-                    <button class="btn-revoke" onclick="revokeApp('${app.oauth_clients?.client_id || ''}')">Revocar acceso</button>
+                    <button class="btn-revoke" onclick="revokeApp('${app.oauth_clients?.client_id || ''}')">Desvincular cuenta</button>
                 </div>
             `).join('');
         }
         
         window.revokeApp = async (clientId) => {
-            if (!confirm('¿Seguro que quieres desconectar esta app?')) return;
+            if (!confirm('¿Seguro que quieres desvincular esta aplicación?')) return;
             const success = await revokeConnectedApp(currentUser.id, clientId);
-            if (success) { alert('✅ App desconectada'); loadConnectedApps(); } 
-            else alert('❌ Error al desconectar');
+            if (success) { alert('✅ Cuenta desvinculada'); loadConnectedApps(); } 
+            else alert('❌ Error al desvincular');
         };
         
         loadUser();

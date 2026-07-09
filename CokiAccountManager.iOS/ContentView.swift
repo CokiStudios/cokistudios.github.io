@@ -73,14 +73,14 @@ struct ContentView: View {
                             
                             // 2. Stats Grid
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                StatCard(title: "Apps Conectadas", value: "\(connectedApps.count)", color: CokiTheme.text)
-                                StatCard(title: "Estado de Cuenta", value: "Activo", color: .green)
+                                StatCard(title: "Juegos y Apps", value: "\(connectedApps.count)", color: CokiTheme.text)
+                                StatCard(title: "Estado de Perfil", value: "Activo", color: .green)
                             }
                             .padding(.horizontal)
                             
                             // 3. Connected Apps Box
                             VStack(alignment: .leading, spacing: 16) {
-                                Text("Apps conectadas")
+                                Text("Juegos y Aplicaciones vinculadas")
                                     .font(.headline)
                                     .foregroundColor(CokiTheme.text)
                                 
@@ -94,10 +94,10 @@ struct ContentView: View {
                                     .padding(.vertical, 20)
                                 } else if connectedApps.isEmpty {
                                     VStack(spacing: 8) {
-                                        Text("No tienes apps conectadas aún")
+                                        Text("No tienes aplicaciones vinculadas")
                                             .font(.system(size: 15, weight: .bold))
                                             .foregroundColor(CokiTheme.text)
-                                        Text("Las apps aparecerán aquí cuando uses \"Iniciar sesión con CS ID\"")
+                                        Text("Los juegos y servicios autorizados aparecerán en esta sección.")
                                             .font(.system(size: 13))
                                             .foregroundColor(CokiTheme.textSub)
                                             .multilineTextAlignment(.center)
@@ -125,12 +125,12 @@ struct ContentView: View {
                             
                             // 4. Edit Profile Box
                             VStack(alignment: .leading, spacing: 20) {
-                                Text("Configuración de Perfil")
+                                Text("Ajustes de Perfil")
                                     .font(.headline)
                                     .foregroundColor(CokiTheme.text)
                                 
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Nombre completo")
+                                    Text("Nombre para mostrar")
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(CokiTheme.textSub)
                                     
@@ -143,11 +143,11 @@ struct ContentView: View {
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Empresa / Organización")
+                                    Text("Biografía / Lema")
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(CokiTheme.textSub)
                                     
-                                    TextField("Tu empresa", text: $editCompany)
+                                    TextField("Escribe algo sobre ti...", text: $editCompany)
                                         .foregroundColor(CokiTheme.text)
                                         .padding()
                                         .background(Color.black.opacity(0.2))
@@ -201,16 +201,16 @@ struct ContentView: View {
                 } else {
                     // Not logged in view
                     VStack(spacing: 24) {
-                        Image(systemName: "shield.lefthalf.filled")
+                        Image(systemName: "person.crop.circle.badge.checkmark")
                             .font(.system(size: 72))
-                            .foregroundColor(CokiTheme.textSub)
+                            .foregroundColor(CokiTheme.accent)
                         
                         VStack(spacing: 8) {
-                            Text("Coki Studios ID")
+                            Text("Mi Coki ID")
                                 .font(.title2.bold())
                                 .foregroundColor(CokiTheme.text)
                             
-                            Text("Tu cuenta global de desarrollador y usuario.")
+                            Text("Tu cuenta única para todos los juegos, foros y comunidades de Coki Studios.")
                                 .font(.subheadline)
                                 .foregroundColor(CokiTheme.textSub)
                                 .multilineTextAlignment(.center)
@@ -220,7 +220,7 @@ struct ContentView: View {
                         Button(action: {
                             showLogin = true
                         }) {
-                            Text("Iniciar Sesión / Registrarse")
+                            Text("Acceder / Registrarse")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(PrimaryButtonStyle())
@@ -257,7 +257,7 @@ struct ContentView: View {
                             .background(CokiTheme.primaryGradient)
                             .cornerRadius(6)
                         
-                        Text("Coki Studios ID")
+                        Text("Coki ID")
                             .font(.headline)
                             .foregroundColor(CokiTheme.text)
                     }
@@ -399,11 +399,11 @@ struct ConnectedAppRow: View {
                         .font(.system(size: 16, weight: .heavy))
                         .foregroundColor(CokiTheme.text)
                     
-                    Text("Permisos: \(app.scopesString)")
+                    Text("Acceso a: \(app.scopesString)")
                         .font(.system(size: 12))
                         .foregroundColor(CokiTheme.textSub)
                     
-                    Text("Conectada: \(app.formattedDate)")
+                    Text("Vinculado el: \(app.formattedDate)")
                         .font(.system(size: 11))
                         .foregroundColor(CokiTheme.textMuted)
                 }
@@ -411,7 +411,7 @@ struct ConnectedAppRow: View {
             }
             
             Button(action: onRevoke) {
-                Text("Revocar acceso")
+                Text("Desvincular cuenta")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.red)
                     .frame(maxWidth: .infinity)

@@ -34,11 +34,11 @@ struct LoginView: View {
                             .cornerRadius(16)
                             .shadow(color: CokiTheme.accent.opacity(0.4), radius: 15, y: 5)
                         
-                        Text("Coki Studios ID")
+                        Text("Coki ID")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(CokiTheme.text)
                         
-                        Text("Tu identidad única para todo el ecosistema")
+                        Text("Tu llave de entrada a todos nuestros juegos y comunidades")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(CokiTheme.textSub)
                     }
@@ -115,8 +115,8 @@ struct LoginView: View {
                             )
                             
                             CustomTextField(
-                                icon: "briefcase.fill",
-                                placeholder: "Empresa / Organización (opcional)",
+                                icon: "quote.bubble.fill",
+                                placeholder: "Un lema o biografía (opcional)",
                                 text: $company
                             )
                         }
@@ -171,7 +171,7 @@ struct LoginView: View {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
-                                    Text(isRegistering ? "Crear cuenta CS ID" : "Entrar a mi cuenta")
+                                    Text(isRegistering ? "Crear mi Coki ID" : "Iniciar sesión")
                                         .frame(maxWidth: .infinity)
                                 }
                             }

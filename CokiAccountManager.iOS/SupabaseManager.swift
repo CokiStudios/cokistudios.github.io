@@ -10,14 +10,23 @@ class SupabaseManager: ObservableObject {
     let baseURL = "https://cmkumxprmmhuinxfppxl.supabase.co"
     let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
     
-    @Published var currentUser: CokiUser? = nil
-    @Published var sessionToken: String? = nil {
+    @Published var currentUser: CokiUser? = nil {
         didSet {
-            UserDefaults.standard.set(sessionToken, forKey: "coki_session_token")
-            if let user = currentUser, let data = try? JSONEncoder().encode(user) {
-                UserDefaults.standard.set(data, forKey: "coki_current_user")
+            if let user = currentUser {
+                if let data = try? JSONEncoder().encode(user) {
+                    UserDefaults.standard.set(data, forKey: "coki_current_user")
+                }
             } else {
                 UserDefaults.standard.removeObject(forKey: "coki_current_user")
+            }
+        }
+    }
+    @Published var sessionToken: String? = nil {
+        didSet {
+            if let token = sessionToken {
+                UserDefaults.standard.set(token, forKey: "coki_session_token")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "coki_session_token")
             }
         }
     }
@@ -28,12 +37,9 @@ class SupabaseManager: ObservableObject {
     
     private init() {
         // Restore session
-        if let token = UserDefaults.standard.string(forKey: "coki_session_token") {
-            self.sessionToken = token
-            if let data = UserDefaults.standard.data(forKey: "coki_current_user"),
-               let user = try? JSONDecoder().decode(CokiUser.self, from: data) {
-                self.currentUser = user
-            }
+        self.sessionToken = UserDefaults.standard.string(forKey: "coki_session_token")
+        if let data = UserDefaults.standard.data(forKey: "coki_current_user") {
+            self.currentUser = try? JSONDecoder().decode(CokiUser.self, from: data)
         }
     }
     
@@ -61,6 +67,29 @@ class SupabaseManager: ObservableObject {
         }
         
         return request
+    }
+    
+    private func verifyResponse(data: Data, response: URLResponse) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid server response"])
+        }
+        
+        if !(200...299).contains(httpResponse.statusCode) {
+            if let errorObj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let msg = errorObj["message"] as? String ?? errorObj["msg"] as? String ?? errorObj["error_description"] as? String ?? "HTTP Error \(httpResponse.statusCode)"
+                
+                if httpResponse.statusCode == 401 || msg.lowercased().contains("jwt") {
+                    self.logout()
+                }
+                
+                throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])
+            }
+            
+            if httpResponse.statusCode == 401 {
+                self.logout()
+            }
+            throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code \(httpResponse.statusCode)"])
+        }
     }
     
     // MARK: - Authentication API
@@ -189,10 +218,7 @@ class SupabaseManager: ObservableObject {
         
         let appsRequest = makeRequest(path: appsPath, queryItems: appsQuery)
         let (appsData, response) = try await URLSession.shared.data(for: appsRequest)
-        
-        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            return []
-        }
+        try verifyResponse(data: appsData, response: response)
         
         // Decode temp client representations
         struct TempApp: Codable {
@@ -217,7 +243,8 @@ class SupabaseManager: ObservableObject {
         ]
         
         let clientsRequest = makeRequest(path: clientsPath, queryItems: clientsQuery)
-        let (clientsData, _) = try await URLSession.shared.data(for: clientsRequest)
+        let (clientsData, clientsResponse) = try await URLSession.shared.data(for: clientsRequest)
+        try verifyResponse(data: clientsData, response: clientsResponse)
         let clients = try JSONDecoder().decode([OAuthClient].self, from: clientsData)
         
         return tempApps.map { app in
@@ -239,11 +266,8 @@ class SupabaseManager: ObservableObject {
         let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
         
         let request = makeRequest(path: path, method: "POST", body: bodyData)
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al revocar acceso"])
-        }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
     }
     
     // MARK: - OAuth Authentication API

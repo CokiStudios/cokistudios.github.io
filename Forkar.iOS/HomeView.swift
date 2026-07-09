@@ -188,6 +188,11 @@ struct HomeView: View {
                     await loadData()
                 }
             }
+            .onChange(of: authManager.isLoggedIn) { _ in
+                Task {
+                    await loadData()
+                }
+            }
         }
     }
     

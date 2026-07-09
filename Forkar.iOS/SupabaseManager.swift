@@ -34,14 +34,23 @@ class SupabaseManager: ObservableObject {
     let baseURL = "https://cmkumxprmmhuinxfppxl.supabase.co"
     let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
     
-    @Published var currentUser: SupabaseUser? = nil
-    @Published var sessionToken: String? = nil {
+    @Published var currentUser: SupabaseUser? = nil {
         didSet {
-            UserDefaults.standard.set(sessionToken, forKey: "supabase_session_token")
-            if let user = currentUser, let data = try? JSONEncoder().encode(user) {
-                UserDefaults.standard.set(data, forKey: "supabase_current_user")
+            if let user = currentUser {
+                if let data = try? JSONEncoder().encode(user) {
+                    UserDefaults.standard.set(data, forKey: "supabase_current_user")
+                }
             } else {
                 UserDefaults.standard.removeObject(forKey: "supabase_current_user")
+            }
+        }
+    }
+    @Published var sessionToken: String? = nil {
+        didSet {
+            if let token = sessionToken {
+                UserDefaults.standard.set(token, forKey: "supabase_session_token")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "supabase_session_token")
             }
         }
     }
@@ -52,12 +61,9 @@ class SupabaseManager: ObservableObject {
     
     private init() {
         // Load session
-        if let token = UserDefaults.standard.string(forKey: "supabase_session_token") {
-            self.sessionToken = token
-            if let data = UserDefaults.standard.data(forKey: "supabase_current_user"),
-               let user = try? JSONDecoder().decode(SupabaseUser.self, from: data) {
-                self.currentUser = user
-            }
+        self.sessionToken = UserDefaults.standard.string(forKey: "supabase_session_token")
+        if let data = UserDefaults.standard.data(forKey: "supabase_current_user") {
+            self.currentUser = try? JSONDecoder().decode(SupabaseUser.self, from: data)
         }
     }
     
@@ -85,6 +91,29 @@ class SupabaseManager: ObservableObject {
         }
         
         return request
+    }
+    
+    private func verifyResponse(data: Data, response: URLResponse) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid server response"])
+        }
+        
+        if !(200...299).contains(httpResponse.statusCode) {
+            if let errorObj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let msg = errorObj["message"] as? String ?? errorObj["msg"] as? String ?? errorObj["error_description"] as? String ?? "HTTP Error \(httpResponse.statusCode)"
+                
+                if httpResponse.statusCode == 401 || msg.lowercased().contains("jwt") {
+                    self.logout()
+                }
+                
+                throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])
+            }
+            
+            if httpResponse.statusCode == 401 {
+                self.logout()
+            }
+            throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code \(httpResponse.statusCode)"])
+        }
     }
     
     // MARK: - Authentication API
@@ -179,7 +208,8 @@ class SupabaseManager: ObservableObject {
         ]
         
         let request = makeRequest(path: path, queryItems: queryItems)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         return try JSONDecoder().decode([Category].self, from: data)
     }
     
@@ -203,6 +233,7 @@ class SupabaseManager: ObservableObject {
         
         let request = makeRequest(path: path, queryItems: queryItems)
         let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         
         if let jsonStr = String(data: data, encoding: .utf8) {
             print("Posts Response JSON: \(jsonStr)")
@@ -234,7 +265,8 @@ class SupabaseManager: ObservableObject {
         
         let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
         let request = makeRequest(path: path, method: "POST", body: bodyData)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         
         let posts = try JSONDecoder().decode([Post].self, from: data)
         guard let newPost = posts.first else {
@@ -265,7 +297,8 @@ class SupabaseManager: ObservableObject {
         ]
         
         let request = makeRequest(path: path, queryItems: queryItems)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         return try JSONDecoder().decode([Comment].self, from: data)
     }
     
@@ -291,7 +324,8 @@ class SupabaseManager: ObservableObject {
         
         let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
         let request = makeRequest(path: path, method: "POST", body: bodyData)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         
         let comments = try JSONDecoder().decode([Comment].self, from: data)
         guard let newComment = comments.first else {
@@ -312,7 +346,8 @@ class SupabaseManager: ObservableObject {
         ]
         
         let request = makeRequest(path: path, queryItems: queryItems)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         
         if let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
             return !list.isEmpty
@@ -367,7 +402,8 @@ class SupabaseManager: ObservableObject {
         ]
         
         let request = makeRequest(path: path, queryItems: queryItems)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
         
         if let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
             return !list.isEmpty
@@ -383,7 +419,8 @@ class SupabaseManager: ObservableObject {
             URLQueryItem(name: "select", value: "id"),
             URLQueryItem(name: "following_id", value: "eq.\(userId.uuidString.lowercased())")
         ])
-        let (followersData, _) = try await URLSession.shared.data(for: followersRequest)
+        let (followersData, followersResponse) = try await URLSession.shared.data(for: followersRequest)
+        try verifyResponse(data: followersData, response: followersResponse)
         let followersCount = (try? JSONSerialization.jsonObject(with: followersData) as? [[String: Any]])?.count ?? 0
         
         // Following count
@@ -391,7 +428,8 @@ class SupabaseManager: ObservableObject {
             URLQueryItem(name: "select", value: "id"),
             URLQueryItem(name: "follower_id", value: "eq.\(userId.uuidString.lowercased())")
         ])
-        let (followingData, _) = try await URLSession.shared.data(for: followingRequest)
+        let (followingData, followingResponse) = try await URLSession.shared.data(for: followingRequest)
+        try verifyResponse(data: followingData, response: followingResponse)
         let followingCount = (try? JSONSerialization.jsonObject(with: followingData) as? [[String: Any]])?.count ?? 0
         
         return (followersCount, followingCount)

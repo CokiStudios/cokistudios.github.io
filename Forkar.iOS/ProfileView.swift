@@ -45,13 +45,21 @@ struct ProfileView: View {
                                         .overlay(Circle().stroke(ForkarTheme.accent, lineWidth: 2))
                                 }
                                 
-                                VStack(spacing: 4) {
+                                VStack(spacing: 6) {
                                     Text(displayName)
                                         .font(.title2.bold())
                                         .foregroundColor(ForkarTheme.text)
                                     
+                                    if let bio = user.user_metadata?.company, !bio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        Text(bio)
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundColor(ForkarTheme.accent)
+                                            .multilineTextAlignment(.center)
+                                            .padding(.horizontal, 24)
+                                    }
+                                    
                                     Text(user.email ?? "")
-                                        .font(.subheadline)
+                                        .font(.system(size: 12))
                                         .foregroundColor(ForkarTheme.textSub)
                                 }
                                 

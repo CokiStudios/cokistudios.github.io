@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuenta Coki Studios</title>
-    <meta name="description" content="Inicia sesión o crea tu cuenta Coki Studios (CS ID) para acceder a todas nuestras aplicaciones de forma segura.">
+    <title>Cuenta Coki ID</title>
+    <meta name="description" content="Inicia sesión o crea tu cuenta Coki ID para acceder a todas nuestras aplicaciones de forma segura.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -129,8 +129,8 @@
     <div class="auth-container">
         <div class="auth-header">
             <div class="auth-logo">C</div>
-            <h1>Coki Studios <span>ID</span></h1>
-            <p>Tu identidad única para todo el ecosistema</p>
+            <h1>Coki <span>ID</span></h1>
+            <p>Tu llave de entrada a todos nuestros juegos y comunidades</p>
         </div>
 
         <div class="auth-card" id="main-card">
@@ -195,14 +195,14 @@
                         <input type="password" id="reg-password" required minlength="6" class="form-input" placeholder="Mínimo 6 caracteres">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Empresa (opcional)</label>
-                        <input type="text" id="reg-company" class="form-input" placeholder="Tu empresa">
+                        <label class="form-label">Biografía / Estado (opcional)</label>
+                        <input type="text" id="reg-company" class="form-input" placeholder="Escribe algo sobre ti...">
                     </div>
                     <label class="checkbox-label" style="margin: 20px 0;">
                         <input type="checkbox" id="reg-terms" required>
                         <span>Acepto los <a href="#" class="link">términos</a> y <a href="#" class="link">privacidad</a></span>
                     </label>
-                    <button type="submit" class="btn-primary" style="background:#10b981;box-shadow:0 4px 12px rgba(16,185,129,0.2)">Crear CS ID</button>
+                    <button type="submit" class="btn-primary" style="background:#10b981;box-shadow:0 4px 12px rgba(16,185,129,0.2)">Crear Coki ID</button>
                 </form>
             </div>
         </div>
@@ -289,7 +289,7 @@
             
             if (result.success) { alert('✅ ' + result.message); tabLogin.click(); } 
             else { alert('❌ ' + result.error); }
-            btn.disabled = false; btn.textContent = 'Crear CS ID';
+            btn.disabled = false; btn.textContent = 'Crear Coki ID';
         });
 
         document.getElementById('btn-coki-google').addEventListener('click', () => loginCokiWithOAuth('google'));

@@ -53,7 +53,7 @@ struct LoginView: View {
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(ForkarTheme.text)
                         
-                        Text("Comunidad Coki Studios")
+                        Text("Conéctate con otros jugadores y comparte tus ideas")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(ForkarTheme.textSub)
                     }
@@ -73,8 +73,8 @@ struct LoginView: View {
                             )
                             
                             CustomTextField(
-                                icon: "briefcase.fill",
-                                placeholder: "Empresa (opcional)",
+                                icon: "quote.bubble.fill",
+                                placeholder: "Biografía / Estado (opcional)",
                                 text: $company
                             )
                         } else {
@@ -184,7 +184,7 @@ struct LoginView: View {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
-                                    Text(isRegistering ? "Registrarse" : "Entrar")
+                                    Text(isRegistering ? "Crear cuenta" : "Iniciar sesión")
                                         .frame(maxWidth: .infinity)
                                 }
                             }
