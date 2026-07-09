@@ -189,12 +189,16 @@
                 return;
             }
 
+            console.log('👤 Current User:', currentUser);
+
             // 1. Verificar el rol en la base de datos
             const { data: roleData, error: roleError } = await supabase
                 .from('user_roles')
                 .select('role')
                 .eq('user_id', currentUser.id)
                 .maybeSingle();
+
+            console.log('🛡️ Role Query Result:', { roleData, roleError });
 
             userRole = roleData?.role || 'user';
 
