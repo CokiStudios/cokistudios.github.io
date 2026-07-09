@@ -101,4 +101,14 @@ extension Color {
             return nil
         }
     }
+    
+    static func dynamic(light: Color, dark: Color) -> Color {
+        Color(UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .light {
+                return UIColor(light)
+            } else {
+                return UIColor(dark)
+            }
+        })
+    }
 }

@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cuenta Coki ID</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
     <meta name="description" content="Inicia sesión o crea tu cuenta Coki ID para acceder a todas nuestras aplicaciones de forma segura.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -20,6 +25,27 @@
             --text-sub: #94a3b8;
             --text-muted: #475569;
         }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --bg2: #f1f5f9;
+            --card: rgba(0,0,0,0.02);
+            --card-hover: rgba(0,0,0,0.04);
+            --border: rgba(0,0,0,0.06);
+            --border-glow: rgba(99,102,241,0.3);
+            --accent: #4f46e5;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
 
         body {
             font-family: 'Outfit', sans-serif;
@@ -122,9 +148,16 @@
         .back-link { text-align: center; margin-top: 24px; }
 
         .hidden { display: none !important; }
+        .floating-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
+    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
 
     <div class="auth-container">
         <div class="auth-header">
@@ -314,6 +347,20 @@
             }
         };
         init();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
     </script>
 </body>
 </html>

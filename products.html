@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos — Coki Studios</title>
-    <meta name="description" content="Descubre los productos de Coki Studios: Horizon Maps, OurCommonHome, Forkar, Shine Find y CS ID. Herramientas que hacen el mundo más accesible.">
+    <meta name="description" content="Descubre los productos de Coki Studios: Horizon Maps, OurCommonHome, Forkar, Shine Find y Coki ID. Herramientas que hacen el mundo más accesible.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,6 +26,27 @@
             --text-sub: #94a3b8;
             --text-muted: #475569;
         }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --bg2: #f1f5f9;
+            --card: rgba(0,0,0,0.02);
+            --card-hover: rgba(0,0,0,0.04);
+            --border: rgba(0,0,0,0.06);
+            --border-glow: rgba(99,102,241,0.3);
+            --accent: #4f46e5;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
 
         html { scroll-behavior: smooth; }
         body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
@@ -123,8 +149,9 @@
                 <a href="products.html" class="nav-link active">Productos</a>
                 <a href="coki-social.html" class="nav-link">Forkar</a>
                 <a href="coki-developer.html" class="nav-link">Developers</a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
             </div>
-            <a href="coki-register.html" class="nav-cta">CS ID</a>
+            <a href="coki-register.html" class="nav-cta">Coki ID</a>
         </div>
     </nav>
 
@@ -136,11 +163,8 @@
     </div>
 
     <!-- ── PRODUCTS SECTION ── -->
-    <div class="products-section">
-        <div class="products-grid">
-
-            <!-- OurCommonHome — FEATURED -->
-            <a href="https://anonymus-devop.github.io/OurCommonHome/" target="_blank" class="product-card featured">
+              <!-- OurCommonHome — FEATURED -->
+            <div class="product-card featured">
                 <div class="product-preview">
                     <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(6,9,15,0.8));">
                         <span style="font-size:56px;opacity:0.6;">🏠</span>
@@ -153,25 +177,25 @@
                         <div class="product-name">OurCommonHome</div>
                     </div>
                     <div class="product-desc">
-                        Plataforma colaborativa para conectar personas y recursos en un mismo espacio digital. Construye comunidad, comparte información y accede a servicios de forma fácil y segura. Incluye autenticación con CS ID.
+                        Plataforma colaborativa para conectar personas y recursos en un mismo espacio digital. Construye comunidad, comparte información y accede a servicios de forma fácil y segura. Incluye autenticación con Coki ID.
                     </div>
                     <div class="product-tags">
                         <span class="product-tag">Web App</span>
                         <span class="product-tag">Comunidad</span>
-                        <span class="product-tag">CS ID</span>
+                        <span class="product-tag">Coki ID</span>
                         <span class="product-tag">Open Source</span>
                     </div>
                     <div class="product-actions">
-                        <span class="btn-visit" style="background:rgba(16,185,129,0.8)">Visitar sitio →</span>
-                        <a href="https://github.com/anonymus-devop/OurCommonHome" target="_blank" class="btn-github" onclick="event.stopPropagation()">
+                        <a href="https://anonymus-devop.github.io/OurCommonHome/" target="_blank" class="btn-visit" style="background:rgba(16,185,129,0.8)">Visitar sitio →</a>
+                        <a href="https://github.com/anonymus-devop/OurCommonHome" target="_blank" class="btn-github">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                         </a>
                     </div>
                 </div>
-            </a>
-
+            </div>
+ 
             <!-- HorizonMaps -->
-            <a href="https://anonymus-devop.github.io/HorizonMaps/" target="_blank" class="product-card">
+            <div class="product-card">
                 <div class="product-preview">
                     <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(6,9,15,0.8));">
                         <span style="font-size:56px;opacity:0.6;">🗺️</span>
@@ -190,16 +214,16 @@
                         <span class="product-tag">Mobile</span>
                     </div>
                     <div class="product-actions">
-                        <span class="btn-visit" style="background:rgba(56,189,248,0.75)">Visitar sitio →</span>
-                        <a href="https://github.com/anonymus-devop/HorizonMaps" target="_blank" class="btn-github" onclick="event.stopPropagation()">
+                        <a href="https://anonymus-devop.github.io/HorizonMaps/" target="_blank" class="btn-visit" style="background:rgba(56,189,248,0.75)">Visitar sitio →</a>
+                        <a href="https://github.com/anonymus-devop/HorizonMaps" target="_blank" class="btn-github">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                         </a>
                     </div>
                 </div>
-            </a>
-
+            </div>
+ 
             <!-- Forkar (ex Coki Social) -->
-            <a href="coki-social.html" class="product-card">
+            <div class="product-card">
                 <div class="product-preview">
                     <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,9,15,0.8));">
                         <span style="font-size:56px;opacity:0.6;">💬</span>
@@ -211,20 +235,20 @@
                         <div class="product-icon" style="background:rgba(139,92,246,0.12);">💬</div>
                         <div class="product-name">Forkar</div>
                     </div>
-                    <div class="product-desc">La comunidad de Coki Studios. Un foro donde builders y desarrolladores comparten ideas, resuelven dudas y se conectan.</div>
+                    <div class="product-desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas, resuelven dudas y se conectan.</div>
                     <div class="product-tags">
                         <span class="product-tag">Comunidad</span>
                         <span class="product-tag">Foro</span>
-                        <span class="product-tag">CS ID</span>
+                        <span class="product-tag">Coki ID</span>
                     </div>
                     <div class="product-actions">
-                        <span class="btn-visit" style="background:rgba(139,92,246,0.75)">Entrar a Forkar →</span>
+                        <a href="coki-social.html" class="btn-visit" style="background:rgba(139,92,246,0.75)">Entrar a Forkar →</a>
                     </div>
                 </div>
-            </a>
-
+            </div>
+ 
             <!-- Shine Find -->
-            <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="product-card">
+            <div class="product-card">
                 <div class="product-preview">
                     <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,9,15,0.8));">
                         <img src="https://github.com/user-attachments/assets/ea5e2b3f-8613-4bfe-9459-837482c047cb" alt="Shine Find" style="width:80px;height:80px;object-fit:contain;opacity:0.7;" onerror="this.style.display='none'">
@@ -244,15 +268,15 @@
                     </div>
                     <div class="product-actions">
                         <span class="btn-soon">Próximamente</span>
-                        <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="btn-github" onclick="event.stopPropagation()">
+                        <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="btn-github">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                         </a>
                     </div>
                 </div>
-            </a>
-
-            <!-- CS ID -->
-            <a href="coki-dashboard.html" class="product-card">
+            </div>
+ 
+            <!-- Coki ID -->
+            <div class="product-card">
                 <div class="product-preview">
                     <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,9,15,0.8));">
                         <span style="font-size:56px;opacity:0.6;">🪪</span>
@@ -262,22 +286,18 @@
                 <div class="product-body">
                     <div class="product-icon-row">
                         <div class="product-icon" style="background:rgba(99,102,241,0.12);">🪪</div>
-                        <div class="product-name">CS ID</div>
+                        <div class="product-name">Coki ID</div>
                     </div>
-                    <div class="product-desc">Tu identidad única en el ecosistema Coki Studios. OAuth 2.0 + PKCE: un solo login para todas tus apps favoritas.</div>
+                    <div class="product-desc">Tu cuenta única para acceder de forma rápida y segura a todos los juegos y aplicaciones de Coki Studios.</div>
                     <div class="product-tags">
-                        <span class="product-tag">Autenticación</span>
-                        <span class="product-tag">OAuth 2.0</span>
-                        <span class="product-tag">PKCE</span>
+                        <span class="product-tag">Perfil Único</span>
+                        <span class="product-tag">Seguridad</span>
                     </div>
                     <div class="product-actions">
-                        <span class="btn-visit">Tu CS ID →</span>
-                        <a href="coki-developer.html" class="btn-github" title="Consola de Desarrolladores">
-                            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                        </a>
+                        <a href="coki-dashboard.html" class="btn-visit">Mi Coki ID →</a>
                     </div>
                 </div>
-            </a>
+            </div>
 
         </div>
     </div>
@@ -299,5 +319,20 @@
         </div>
     </footer>
 
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
+    </script>
 </body>
 </html>

@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coki Studios — Making the world Shine, together</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
     <meta name="description" content="Coki Studios crea herramientas digitales que conectan personas y hacen el mundo más accesible. Descubre Horizon Maps, OurCommonHome y CS ID.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -23,6 +28,27 @@
             --text-sub: #94a3b8;
             --text-muted: #475569;
         }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --bg2: #f1f5f9;
+            --card: rgba(0,0,0,0.02);
+            --card-hover: rgba(0,0,0,0.04);
+            --border: rgba(0,0,0,0.06);
+            --border-glow: rgba(99,102,241,0.3);
+            --accent: #4f46e5;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
 
         html { scroll-behavior: smooth; }
 
@@ -297,10 +323,11 @@
                 <a href="coki-social.html" class="nav-link">Forkar</a>
                 <a href="products.html" class="nav-link">Productos</a>
                 <a href="coki-developer.html" class="nav-link">Developers</a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
             </div>
             <a href="coki-register.html" class="nav-cta">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                CS ID
+                Coki ID
             </a>
         </div>
     </nav>
@@ -325,7 +352,7 @@
                 Únete a la comunidad
             </a>
             <a href="coki-register.html" class="btn-hero-secondary">
-                Tu CS ID
+                Tu Coki ID
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
@@ -366,9 +393,9 @@
                 </a>
                 <a href="coki-dashboard.html" class="product-card card-indigo">
                     <div class="product-icon" style="background:rgba(99,102,241,0.12);">🪪</div>
-                    <div class="product-name">CS ID</div>
-                    <div class="product-desc">Identidad única para todo el ecosistema Coki. Un solo login para todas tus apps, con OAuth 2.0 + PKCE.</div>
-                    <span class="product-tag">🔐 Autenticación</span>
+                    <div class="product-name">Coki ID</div>
+                    <div class="product-desc">Tu cuenta única para todos los juegos y la comunidad de Coki Studios. Un solo acceso para tus aplicaciones favoritas.</div>
+                    <span class="product-tag">🔐 Cuenta única</span>
                     <div class="product-arrow">↗</div>
                 </a>
             </div>
@@ -380,29 +407,29 @@
         <div class="section-inner">
             <div class="csid-section">
                 <div>
-                    <div class="section-label">CS ID — Autenticación</div>
-                    <h2 class="section-title" style="max-width:360px;">Integra CS ID en minutos</h2>
-                    <p style="color:var(--text-sub);font-size:15px;line-height:1.7;margin-top:12px;">OAuth 2.0 con PKCE listo para producción. Tus usuarios inician sesión con su cuenta Coki en cualquiera de tus aplicaciones.</p>
+                    <div class="section-label">Coki ID — Cuentas</div>
+                    <h2 class="section-title" style="max-width:360px;">Una sola cuenta para todo</h2>
+                    <p style="color:var(--text-sub);font-size:15px;line-height:1.7;margin-top:12px;">Con Coki ID puedes acceder a todos nuestros juegos, foros y herramientas al instante. Tu progreso se guardará automáticamente en la nube.</p>
                     <div class="csid-feature-list">
                         <div class="csid-feature">
                             <div class="csid-feature-icon" style="background:rgba(99,102,241,0.12);">🔐</div>
                             <div>
-                                <div class="csid-feature-title">OAuth 2.0 + PKCE</div>
-                                <div class="csid-feature-desc">Estándar de la industria. Seguro para SPAs y apps móviles sin servidor backend.</div>
+                                <div class="csid-feature-title">Acceso rápido y seguro</div>
+                                <div class="csid-feature-desc">Iniciar sesión es facilísimo. Sin contraseñas complicadas y con la mayor protección para tus datos.</div>
                             </div>
                         </div>
                         <div class="csid-feature">
                             <div class="csid-feature-icon" style="background:rgba(16,185,129,0.12);">⚡</div>
                             <div>
-                                <div class="csid-feature-title">Integración rápida</div>
-                                <div class="csid-feature-desc">Registra tu app en la consola de desarrolladores y obtén tu client_id en segundos.</div>
+                                <div class="csid-feature-title">Progreso en la nube</div>
+                                <div class="csid-feature-desc">Juega o participa en la comunidad desde cualquier dispositivo móvil o web. Tus datos siempre te acompañan.</div>
                             </div>
                         </div>
                         <div class="csid-feature">
                             <div class="csid-feature-icon" style="background:rgba(245,158,11,0.12);">🪪</div>
                             <div>
-                                <div class="csid-feature-title">Perfil completo</div>
-                                <div class="csid-feature-desc">Acceso a email, nombre, foto y empresa del usuario con su consentimiento explícito.</div>
+                                <div class="csid-feature-title">Perfil personalizado</div>
+                                <div class="csid-feature-desc">Controla qué información compartes con las aplicaciones autorizadas y edita tu perfil en segundos.</div>
                             </div>
                         </div>
                     </div>
@@ -444,10 +471,10 @@
         <div class="section-inner">
             <div class="dev-cta">
                 <div style="font-size:48px;margin-bottom:16px;">🚀</div>
-                <h2>¿Listo para integrar CS ID?</h2>
-                <p>Regístrate, crea tu aplicación en la consola y empieza a ofrecer inicio de sesión con Coki Studios en minutos.</p>
+                <h2>¿Listo para crear tu Coki ID?</h2>
+                <p>Únete a la comunidad de Coki Studios hoy mismo y disfruta de todos nuestros servicios conectados.</p>
                 <div class="dev-cta-actions">
-                    <a href="coki-developer.html" class="btn-hero-primary">Ir a la Consola de Desarrolladores</a>
+                    <a href="coki-register.html" class="btn-hero-primary">Registrar mi Coki ID</a>
                     <a href="mailto:cokistudiosllc@gmail.com" class="btn-hero-secondary">Contactar al equipo</a>
                 </div>
             </div>
@@ -472,5 +499,20 @@
         </div>
     </footer>
 
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
+    </script>
 </body>
 </html>
