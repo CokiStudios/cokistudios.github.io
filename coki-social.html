@@ -127,6 +127,8 @@
         .post-body { font-size: 14px; color: var(--text-sub); line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 16px; }
         .post-stats { display: flex; gap: 16px; }
         .post-stat { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-muted); }
+        .report-btn-action { transition: color 0.2s, opacity 0.2s; }
+        .report-btn-action:hover { color: var(--red) !important; opacity: 0.9; }
 
         .empty-state { text-align: center; padding: 80px 24px; background: var(--card); border: 1px dashed var(--border); border-radius: 20px; }
         .empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
@@ -394,8 +396,9 @@
                             ${post.comments_count || 0}
                         </span>
                         ${(currentUser && currentUser.id !== post.user_id) ? `
-                            <span class="post-stat" style="margin-left:auto; cursor:pointer;" onclick="event.preventDefault(); event.stopPropagation(); openReportModal('${post.id}', 'post')">
-                                ⚠️ Reportar
+                            <span class="post-stat report-btn-action" style="margin-left:auto; cursor:pointer;" onclick="event.preventDefault(); event.stopPropagation(); openReportModal('${post.id}', 'post')">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21v8h-6l-1-1H5a2 2 0 00-2 2zm0 0h18"/></svg>
+                                <span>Reportar</span>
                             </span>
                         ` : ''}
                     </div>
