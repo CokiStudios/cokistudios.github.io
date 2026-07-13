@@ -1,7 +1,9 @@
 import Foundation
 import Combine
 import AuthenticationServices
+#if canImport(UIKit)
 import UIKit
+#endif
 
 // MARK: - Auth Response Structs
 struct SupabaseAuthResponse: Codable {
