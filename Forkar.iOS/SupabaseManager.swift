@@ -588,6 +588,221 @@ class SupabaseManager: ObservableObject {
         let (data, response) = try await URLSession.shared.data(for: request)
         try verifyResponse(data: data, response: response)
     }
+    
+    // MARK: - Chats API
+    
+    func fetchChatRooms() async throws -> [ChatRoom] {
+        guard let user = currentUser else { return [] }
+        
+        let path = "/rest/v1/chat_room_members"
+        let queryItems = [
+            URLQueryItem(name: "user_id", value: "eq.\(user.id.uuidString.lowercased())"),
+            URLQueryItem(name: "select", value: "room_id,chat_rooms(*)")
+        ]
+        
+        let request = makeRequest(path: path, queryItems: queryItems)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+        
+        let memberships = try JSONDecoder().decode([ChatRoomMemberWithRoom].self, from: data)
+        return memberships.compactMap { $0.chat_rooms }
+    }
+    
+    func fetchRoomMembers(roomId: UUID) async throws -> [ChatRoomMember] {
+        let path = "/rest/v1/chat_room_members"
+        let queryItems = [
+            URLQueryItem(name: "room_id", value: "eq.\(roomId.uuidString.lowercased())")
+        ]
+        
+        let request = makeRequest(path: path, queryItems: queryItems)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+        
+        return try JSONDecoder().decode([ChatRoomMember].self, from: data)
+    }
+    
+    func createGroupChat(name: String) async throws -> ChatRoom {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para crear grupos"])
+        }
+        
+        // 1. Crear sala de chat
+        let path = "/rest/v1/chat_rooms"
+        let roomBody: [String: Any] = [
+            "name": name,
+            "is_group": true,
+            "created_by": user.id.uuidString.lowercased()
+        ]
+        let roomBodyData = try JSONSerialization.data(withJSONObject: roomBody)
+        let createRoomRequest = makeRequest(path: path, method: "POST", body: roomBodyData)
+        let (roomData, roomRes) = try await URLSession.shared.data(for: createRoomRequest)
+        try verifyResponse(data: roomData, response: roomRes)
+        
+        let createdRooms = try JSONDecoder().decode([ChatRoom].self, from: roomData)
+        guard let newRoom = createdRooms.first else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al crear grupo"])
+        }
+        
+        // 2. Agregar al creador como miembro
+        let myName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
+        let myAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
+        
+        let membersPath = "/rest/v1/chat_room_members"
+        let memberBody: [String: Any] = [
+            "room_id": newRoom.id.uuidString.lowercased(),
+            "user_id": user.id.uuidString.lowercased(),
+            "user_name": myName,
+            "user_avatar": myAvatar as Any
+        ]
+        let memberBodyData = try JSONSerialization.data(withJSONObject: memberBody)
+        let addMemberRequest = makeRequest(path: membersPath, method: "POST", body: memberBodyData)
+        let (_, addRes) = try await URLSession.shared.data(for: addMemberRequest)
+        
+        guard let httpAddRes = addRes as? HTTPURLResponse, (200...299).contains(httpAddRes.statusCode) else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al unirse al grupo"])
+        }
+        
+        return newRoom
+    }
+    
+    func fetchMessages(roomId: UUID) async throws -> [ChatMessage] {
+        let path = "/rest/v1/chat_messages"
+        let queryItems = [
+            URLQueryItem(name: "room_id", value: "eq.\(roomId.uuidString.lowercased())"),
+            URLQueryItem(name: "order", value: "created_at.asc")
+        ]
+        
+        let request = makeRequest(path: path, queryItems: queryItems)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+        
+        return try JSONDecoder().decode([ChatMessage].self, from: data)
+    }
+    
+    func sendMessage(roomId: UUID, content: String) async throws -> ChatMessage {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para enviar mensajes"])
+        }
+        
+        let path = "/rest/v1/chat_messages"
+        let authorName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
+        let authorAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
+        
+        var bodyJson: [String: Any] = [
+            "room_id": roomId.uuidString.lowercased(),
+            "user_id": user.id.uuidString.lowercased(),
+            "author_name": authorName,
+            "content": content
+        ]
+        
+        if let avatar = authorAvatar {
+            bodyJson["author_avatar"] = avatar
+        }
+        
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
+        let request = makeRequest(path: path, method: "POST", body: bodyData)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+        
+        let messages = try JSONDecoder().decode([ChatMessage].self, from: data)
+        guard let newMessage = messages.first else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al enviar mensaje"])
+        }
+        return newMessage
+    }
+    
+    func getOrCreateDirectChat(with targetUserId: UUID, targetUserName: String, targetUserAvatar: String?) async throws -> ChatRoom {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para chatear"])
+        }
+        
+        // 1. Obtener salas directas del usuario actual
+        let myRoomsPath = "/rest/v1/chat_room_members"
+        let myRoomsQuery = [
+            URLQueryItem(name: "user_id", value: "eq.\(user.id.uuidString.lowercased())"),
+            URLQueryItem(name: "select", value: "room_id,chat_rooms(*)")
+        ]
+        let myRequest = makeRequest(path: myRoomsPath, queryItems: myRoomsQuery)
+        let (myData, myRes) = try await URLSession.shared.data(for: myRequest)
+        try verifyResponse(data: myData, response: myRes)
+        
+        let myMemberships = try JSONDecoder().decode([ChatRoomMemberWithRoom].self, from: myData)
+        // Filtrar solo las salas directas (no grupales)
+        let myDirectRoomIds = myMemberships
+            .filter { $0.chat_rooms?.is_group == false }
+            .map { $0.room_id }
+            
+        // 2. Si hay salas directas, ver si el destinatario está en alguna de ellas
+        if !myDirectRoomIds.isEmpty {
+            let matchPath = "/rest/v1/chat_room_members"
+            let roomFilter = "in.(\(myDirectRoomIds.map { $0.uuidString.lowercased() }.joined(separator: ",")))"
+            let matchQuery = [
+                URLQueryItem(name: "room_id", value: roomFilter),
+                URLQueryItem(name: "user_id", value: "eq.\(targetUserId.uuidString.lowercased())"),
+                URLQueryItem(name: "select", value: "room_id")
+            ]
+            let matchRequest = makeRequest(path: matchPath, queryItems: matchQuery)
+            let (matchData, matchRes) = try await URLSession.shared.data(for: matchRequest)
+            try verifyResponse(data: matchData, response: matchRes)
+            
+            struct SimpleMember: Codable {
+                let room_id: UUID
+            }
+            
+            let matchingMemberships = try JSONDecoder().decode([SimpleMember].self, from: matchData)
+            if let matchingRoomId = matchingMemberships.first?.room_id {
+                // Encontramos una sala existente, obtener sus detalles
+                if let matchedRoom = myMemberships.first(where: { $0.room_id == matchingRoomId })?.chat_rooms {
+                    return matchedRoom
+                }
+            }
+        }
+        
+        // 3. Si no existe, crear una nueva sala directa
+        let createPath = "/rest/v1/chat_rooms"
+        let roomBody: [String: Any] = [
+            "is_group": false,
+            "created_by": user.id.uuidString.lowercased()
+        ]
+        let roomBodyData = try JSONSerialization.data(withJSONObject: roomBody)
+        let createRoomRequest = makeRequest(path: createPath, method: "POST", body: roomBodyData)
+        let (roomData, roomRes) = try await URLSession.shared.data(for: createRoomRequest)
+        try verifyResponse(data: roomData, response: roomRes)
+        
+        let createdRooms = try JSONDecoder().decode([ChatRoom].self, from: roomData)
+        guard let newRoom = createdRooms.first else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al crear sala de chat"])
+        }
+        
+        // 4. Agregar a ambos miembros
+        let myName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
+        let myAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
+        
+        let membersPath = "/rest/v1/chat_room_members"
+        let membersBody: [[String: Any]] = [
+            [
+                "room_id": newRoom.id.uuidString.lowercased(),
+                "user_id": user.id.uuidString.lowercased(),
+                "user_name": myName,
+                "user_avatar": myAvatar as Any
+            ],
+            [
+                "room_id": newRoom.id.uuidString.lowercased(),
+                "user_id": targetUserId.uuidString.lowercased(),
+                "user_name": targetUserName,
+                "user_avatar": targetUserAvatar as Any
+            ]
+        ]
+        let membersBodyData = try JSONSerialization.data(withJSONObject: membersBody)
+        let addMembersRequest = makeRequest(path: membersPath, method: "POST", body: membersBodyData)
+        let (_, addRes) = try await URLSession.shared.data(for: addMembersRequest)
+        
+        guard let httpAddRes = addRes as? HTTPURLResponse, (200...299).contains(httpAddRes.statusCode) else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al agregar miembros al chat"])
+        }
+        
+        return newRoom
+    }
 }
 
 // MARK: - Presentation Anchor Provider Helper

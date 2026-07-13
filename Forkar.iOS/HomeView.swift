@@ -22,7 +22,7 @@ struct HomeView: View {
                     SearchBarView(text: $searchQuery)
                         .padding(.horizontal)
                         .padding(.top, 8)
-                        .onChange(of: searchQuery) { _ in
+                        .onChange(of: searchQuery) {
                             Task {
                                 await loadPosts()
                             }
@@ -188,7 +188,7 @@ struct HomeView: View {
                     await loadData()
                 }
             }
-            .onChange(of: authManager.isLoggedIn) { _ in
+            .onChange(of: authManager.isLoggedIn) {
                 Task {
                     await loadData()
                 }

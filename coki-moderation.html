@@ -313,24 +313,40 @@
         window.resolveReport = async (reportId, action, type = null, targetId = null) => {
             try {
                 if (action === 'hide') {
-                    const table = type === 'post' ? 'social_posts' : 'social_comments';
-                    // 1. Ocultar el contenido
-                    const { error: hideErr } = await supabase
-                        .from(table)
-                        .update({ is_hidden: true })
-                        .eq('id', targetId);
-                    
-                    if (hideErr) throw hideErr;
+                    if (type === 'comment') {
+                        // 1. Eliminar físicamente el comentario (cascadeará y borrará el reporte)
+                        const { error: deleteErr } = await supabase
+                            .from('social_comments')
+                            .delete()
+                            .eq('id', targetId);
+                        
+                        if (deleteErr) throw deleteErr;
+                    } else {
+                        // 1. Ocultar el post
+                        const { error: hideErr } = await supabase
+                            .from('social_posts')
+                            .update({ is_hidden: true })
+                            .eq('id', targetId);
+                        
+                        if (hideErr) throw hideErr;
+
+                        // 2. Resolver el reporte del post
+                        const { error: reportErr } = await supabase
+                            .from('social_reports')
+                            .update({ status: 'reviewed' })
+                            .eq('id', reportId);
+
+                        if (reportErr) throw reportErr;
+                    }
+                } else {
+                    // Desestimar el reporte
+                    const { error: reportErr } = await supabase
+                        .from('social_reports')
+                        .update({ status: 'dismissed' })
+                        .eq('id', reportId);
+
+                    if (reportErr) throw reportErr;
                 }
-
-                // 2. Resolver el reporte
-                const status = action === 'hide' ? 'reviewed' : 'dismissed';
-                const { error: reportErr } = await supabase
-                    .from('social_reports')
-                    .update({ status: status })
-                    .eq('id', reportId);
-
-                if (reportErr) throw reportErr;
 
                 // Animación y recargar datos
                 const card = document.getElementById(`card-${reportId}`);

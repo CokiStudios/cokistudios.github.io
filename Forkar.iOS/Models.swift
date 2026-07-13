@@ -112,3 +112,62 @@ extension Color {
         })
     }
 }
+
+// MARK: - Chat Models
+
+struct ChatRoom: Identifiable, Codable, Hashable {
+    let id: UUID
+    let name: String?
+    let is_group: Bool
+    let created_at: String
+    let created_by: UUID
+    
+    var displayName: String {
+        name ?? "Chat Privado"
+    }
+}
+
+struct ChatRoomMember: Identifiable, Codable, Hashable {
+    let id: UUID
+    let room_id: UUID
+    let user_id: UUID
+    let user_name: String
+    let user_avatar: String?
+    let joined_at: String
+    
+    var initials: String {
+        user_name.prefix(1).uppercased()
+    }
+}
+
+struct ChatMessage: Identifiable, Codable, Hashable {
+    let id: UUID
+    let room_id: UUID
+    let user_id: UUID
+    let author_name: String
+    let author_avatar: String?
+    let content: String
+    let created_at: String
+    
+    var formattedTime: String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = formatter.date(from: created_at) ?? ISO8601DateFormatter().date(from: created_at) else {
+            return "hace poco"
+        }
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateStyle = .none
+        timeFormatter.timeStyle = .short
+        return timeFormatter.string(from: date)
+    }
+    
+    var initials: String {
+        author_name.prefix(1).uppercased()
+    }
+}
+
+struct ChatRoomMemberWithRoom: Identifiable, Codable, Hashable {
+    var id: UUID { room_id }
+    let room_id: UUID
+    let chat_rooms: ChatRoom?
+}

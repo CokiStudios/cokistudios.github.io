@@ -31,12 +31,19 @@ struct ContentView: View {
                 }
                 .tag(0)
             
+            ChatsView()
+                .environmentObject(authManager)
+                .tabItem {
+                    Label("Chats", systemImage: "bubble.left.and.bubble.right.fill")
+                }
+                .tag(1)
+            
             ProfileView()
                 .environmentObject(authManager)
                 .tabItem {
                     Label("Mi Perfil", systemImage: "person.fill")
                 }
-                .tag(1)
+                .tag(2)
         }
         .tint(ForkarTheme.accent)
     }

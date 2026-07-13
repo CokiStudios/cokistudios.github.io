@@ -13,6 +13,13 @@ struct PostDetailView: View {
     @State private var isLoadingComments = false
     @State private var showLogin = false
     
+    @State private var showReportPostDialog = false
+    @State private var showReportCommentDialog = false
+    @State private var selectedCommentToReport: Comment? = nil
+    @State private var showSuccessAlert = false
+    @State private var activeChatRoom: ChatRoom? = nil
+    @State private var isNavigatingToChat = false
+    
     var body: some View {
         ZStack {
             ForkarTheme.bg
@@ -49,24 +56,44 @@ struct PostDetailView: View {
                             
                             Spacer()
                             
-                            // Follow Button (if not current user)
+                            // Follow and Message Buttons (if not current user)
                             if authManager.isLoggedIn && post.user_id != authManager.currentUser?.id {
-                                Button(action: {
-                                    Task {
-                                        await toggleFollow()
+                                HStack(spacing: 8) {
+                                    // Chat / Message button
+                                    Button(action: {
+                                        startChat()
+                                    }) {
+                                        Image(systemName: "message.fill")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 12)
+                                            .background(ForkarTheme.card)
+                                            .foregroundColor(ForkarTheme.accent)
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(ForkarTheme.border, lineWidth: 1)
+                                            )
                                     }
-                                }) {
-                                    Text(isFollowingAuthor ? "Siguiendo" : "Seguir")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .padding(.vertical, 6)
-                                        .padding(.horizontal, 14)
-                                        .background(isFollowingAuthor ? Color.clear : ForkarTheme.accent)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(isFollowingAuthor ? ForkarTheme.border : Color.clear, lineWidth: 1)
-                                        )
+                                    
+                                    // Follow Button
+                                    Button(action: {
+                                        Task {
+                                            await toggleFollow()
+                                        }
+                                    }) {
+                                        Text(isFollowingAuthor ? "Siguiendo" : "Seguir")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 14)
+                                            .background(isFollowingAuthor ? Color.clear : ForkarTheme.accent)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(isFollowingAuthor ? ForkarTheme.border : Color.clear, lineWidth: 1)
+                                            )
+                                    }
                                 }
                             }
                         }
@@ -156,7 +183,10 @@ struct PostDetailView: View {
                         } else {
                             VStack(spacing: 12) {
                                 ForEach(comments) { comment in
-                                    CommentRowView(comment: comment)
+                                    CommentRowView(comment: comment, currentUserId: authManager.currentUser?.id) {
+                                        selectedCommentToReport = comment
+                                        showReportCommentDialog = true
+                                    }
                                 }
                             }
                         }
@@ -206,16 +236,84 @@ struct PostDetailView: View {
         }
         .navigationTitle("Publicación")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if authManager.isLoggedIn && post.user_id != authManager.currentUser?.id {
+                    Button(action: {
+                        showReportPostDialog = true
+                    }) {
+                        Image(systemName: "flag")
+                            .foregroundColor(ForkarTheme.textSub)
+                    }
+                }
+            }
+        }
+        .confirmationDialog("Reportar Publicación", isPresented: $showReportPostDialog, titleVisibility: .visible) {
+            Button("Spam / Publicidad") { reportPost(reason: "spam") }
+            Button("Acoso / Agresión") { reportPost(reason: "harassment") }
+            Button("Contenido inapropiado") { reportPost(reason: "inappropriate") }
+            Button("Otro motivo") { reportPost(reason: "other") }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Selecciona el motivo del reporte para esta publicación.")
+        }
+        .confirmationDialog("Reportar Comentario", isPresented: $showReportCommentDialog, titleVisibility: .visible) {
+            Button("Spam / Publicidad") { reportComment(reason: "spam") }
+            Button("Acoso / Agresión") { reportComment(reason: "harassment") }
+            Button("Contenido inapropiado") { reportComment(reason: "inappropriate") }
+            Button("Otro motivo") { reportComment(reason: "other") }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Selecciona el motivo del reporte para este comentario.")
+        }
+        .alert("Reporte Enviado", isPresented: $showSuccessAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Gracias por reportar. Revisaremos el contenido lo antes posible.")
+        }
         .sheet(isPresented: $showLogin) {
             NavigationView {
                 LoginView()
                     .environmentObject(authManager)
             }
         }
+        .background(
+            NavigationLink(
+                destination: Group {
+                    if let room = activeChatRoom {
+                        ChatRoomDetailView(room: room)
+                            .environmentObject(authManager)
+                    } else {
+                        EmptyView()
+                    }
+                },
+                isActive: $isNavigatingToChat
+            ) {
+                EmptyView()
+            }
+        )
         .onAppear {
             likesCount = post.likes_count
             Task {
                 await loadPostDetails()
+            }
+        }
+    }
+    
+    private func startChat() {
+        Task {
+            do {
+                let room = try await authManager.getOrCreateDirectChat(
+                    with: post.user_id,
+                    targetUserName: post.author_name,
+                    targetUserAvatar: post.author_avatar
+                )
+                await MainActor.run {
+                    self.activeChatRoom = room
+                    self.isNavigatingToChat = true
+                }
+            } catch {
+                print("Error starting direct chat: \(error.localizedDescription)")
             }
         }
     }
@@ -267,11 +365,39 @@ struct PostDetailView: View {
             print("Error posting comment: \(error)")
         }
     }
+    private func reportPost(reason: String) {
+        Task {
+            do {
+                try await authManager.reportPost(postId: post.id, reason: reason)
+                await MainActor.run {
+                    showSuccessAlert = true
+                }
+            } catch {
+                print("Error reporting post: \(error)")
+            }
+        }
+    }
+    
+    private func reportComment(reason: String) {
+        guard let comment = selectedCommentToReport else { return }
+        Task {
+            do {
+                try await authManager.reportComment(commentId: comment.id, reason: reason)
+                await MainActor.run {
+                    showSuccessAlert = true
+                }
+            } catch {
+                print("Error reporting comment: \(error)")
+            }
+        }
+    }
 }
 
 // MARK: - Comment Row View Component
 struct CommentRowView: View {
     let comment: Comment
+    let currentUserId: UUID?
+    let onReport: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -299,6 +425,15 @@ struct CommentRowView: View {
                 Text(comment.formattedDate)
                     .font(.system(size: 10))
                     .foregroundColor(ForkarTheme.textSub)
+                
+                if comment.user_id != currentUserId {
+                    Button(action: onReport) {
+                        Image(systemName: "flag")
+                            .font(.system(size: 10))
+                            .foregroundColor(ForkarTheme.textSub)
+                            .padding(4)
+                    }
+                }
             }
             
             Text(comment.content)
