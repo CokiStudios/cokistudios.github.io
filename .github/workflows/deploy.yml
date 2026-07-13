@@ -1,0 +1,42 @@
+name: Deploy Static HTML to GitHub Pages
+
+# El workflow se ejecutará cada vez que hagas un push a la rama 'main'
+on:
+  push:
+    branches: ["main"]
+  # Permite ejecutar el workflow manualmente desde la pestaña Actions
+  workflow_dispatch:
+
+# Configura los permisos necesarios del GITHUB_TOKEN para publicar en Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita que se ejecuten múltiples despliegues al mismo tiempo
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate syntaxis
+        uses: actions/checkout@v4
+
+      - name: Setup Git Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Aquí indicamos que suba todo el contenido de la raíz ('.')
+          path: '.' 
+
+      - name: Deploy on the web
+        id: deployment
+        uses: actions/deploy-pages@v4
