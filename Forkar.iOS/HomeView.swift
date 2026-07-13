@@ -155,7 +155,9 @@ struct HomeView: View {
                     }
                 }
             }
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
@@ -262,10 +264,16 @@ struct SearchBarView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(ForkarTheme.textSub)
             
+            #if os(iOS)
             TextField("Buscar en Forkar...", text: $text)
                 .foregroundColor(ForkarTheme.text)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
+            #else
+            TextField("Buscar en Forkar...", text: $text)
+                .foregroundColor(ForkarTheme.text)
+                .disableAutocorrection(true)
+            #endif
             
             if !text.isEmpty {
                 Button(action: { text = "" }) {

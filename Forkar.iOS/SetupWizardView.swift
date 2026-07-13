@@ -88,7 +88,9 @@ struct SetupWizardView: View {
                 .padding(.bottom, 24)
             }
         }
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .interactiveDismissDisabled()
     }
     

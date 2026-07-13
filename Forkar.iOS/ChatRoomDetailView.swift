@@ -140,8 +140,11 @@ struct ChatRoomDetailView: View {
                 )
             }
         }
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .navigationBarTrailing) {
                 if room.is_group {
                     Button(action: {
@@ -152,6 +155,18 @@ struct ChatRoomDetailView: View {
                     }
                 }
             }
+            #else
+            ToolbarItem(placement: .primaryAction) {
+                if room.is_group {
+                    Button(action: {
+                        showInviteSheet = true
+                    }) {
+                        Image(systemName: "person.badge.plus")
+                            .foregroundColor(ForkarTheme.accent)
+                    }
+                }
+            }
+            #endif
         }
         .sheet(isPresented: $showInviteSheet) {
             InviteUsersSheetView(roomId: room.id, communityUsers: $communityUsers, isLoading: $isLoadingUsers, onInvite: { user in
@@ -417,14 +432,25 @@ struct InviteUsersSheetView: View {
                 }
             }
             .navigationTitle("Invitar al Grupo")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cerrar") {
                         presentationMode.wrappedValue.dismiss()
                     }
                     .foregroundColor(ForkarTheme.textSub)
                 }
+                #else
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cerrar") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(ForkarTheme.textSub)
+                }
+                #endif
             }
         }
     }
@@ -556,7 +582,7 @@ struct RoundedCorner: Shape {
     }
 }
 
-struct RectCorner: OptionSet {
+struct RectCorner: OptionSet, Sendable {
     let rawValue: Int
     
     static let topLeft = RectCorner(rawValue: 1 << 0)

@@ -59,6 +59,7 @@ struct ChatsView: View {
                         await loadRooms()
                     }
                     .toolbar {
+                        #if os(iOS)
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button(action: {
                                 showCreateGroup = true
@@ -71,6 +72,20 @@ struct ChatsView: View {
                                 .foregroundColor(ForkarTheme.accent)
                             }
                         }
+                        #else
+                        ToolbarItem(placement: .primaryAction) {
+                            Button(action: {
+                                showCreateGroup = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus")
+                                    Text("Crear Grupo")
+                                }
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(ForkarTheme.accent)
+                            }
+                        }
+                        #endif
                     }
                     .sheet(isPresented: $showCreateGroup) {
                         CreateGroupSheetView(
@@ -300,16 +315,27 @@ struct CreateGroupSheetView: View {
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Nuevo Grupo")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancelar") {
-                        isPresented = false
-                    }
-                    .foregroundColor(ForkarTheme.textSub)
-                }
-            }
+             .navigationTitle("Nuevo Grupo")
+             #if os(iOS)
+             .navigationBarTitleDisplayMode(.inline)
+             #endif
+             .toolbar {
+                 #if os(iOS)
+                 ToolbarItem(placement: .navigationBarLeading) {
+                     Button("Cancelar") {
+                         isPresented = false
+                     }
+                     .foregroundColor(ForkarTheme.textSub)
+                 }
+                 #else
+                 ToolbarItem(placement: .cancellationAction) {
+                     Button("Cancelar") {
+                         isPresented = false
+                     }
+                     .foregroundColor(ForkarTheme.textSub)
+                 }
+                 #endif
+             }
         }
     }
 }

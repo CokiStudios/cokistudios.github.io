@@ -139,6 +139,7 @@ struct ProfileView: View {
                         await loadProfileData(userId: user.id)
                     }
                     .toolbar {
+                        #if os(iOS)
                         ToolbarItem(placement: .navigationBarLeading) {
                             Button(action: {
                                 showSetupWizard = true
@@ -159,6 +160,28 @@ struct ProfileView: View {
                                 .foregroundColor(.red)
                             }
                         }
+                        #else
+                        ToolbarItem(placement: .navigation) {
+                            Button(action: {
+                                showSetupWizard = true
+                            }) {
+                                Image(systemName: "gearshape")
+                                    .foregroundColor(ForkarTheme.textSub)
+                            }
+                        }
+                        ToolbarItem(placement: .primaryAction) {
+                            Button(action: {
+                                authManager.logout()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "power")
+                                    Text("Salir")
+                                }
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.red)
+                            }
+                        }
+                        #endif
                     }
                     .sheet(isPresented: $showSetupWizard) {
                         SetupWizardView()

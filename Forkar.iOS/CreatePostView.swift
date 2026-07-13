@@ -137,14 +137,25 @@ struct CreatePostView: View {
                 }
             }
             .navigationTitle("Crear Publicación")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancelar") {
                         dismiss()
                     }
                     .foregroundColor(ForkarTheme.text)
                 }
+                #else
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") {
+                        dismiss()
+                    }
+                    .foregroundColor(ForkarTheme.text)
+                }
+                #endif
             }
             .onAppear {
                 Task {

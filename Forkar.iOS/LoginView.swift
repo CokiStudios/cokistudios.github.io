@@ -269,6 +269,16 @@ struct CustomTextField: View {
     #if os(iOS)
     var keyboardType: UIKeyboardType = .default
     var autocapitalization: TextInputAutocapitalization = .sentences
+    #else
+    var keyboardType: DummyKeyboardType = .default
+    var autocapitalization: DummyAutocapitalization = .sentences
+    
+    enum DummyKeyboardType {
+        case `default`, emailAddress
+    }
+    enum DummyAutocapitalization {
+        case sentences, never
+    }
     #endif
     
     var body: some View {
@@ -310,10 +320,16 @@ struct CustomSecureField: View {
                 .foregroundColor(ForkarTheme.textSub)
                 .frame(width: 20)
             
+            #if os(iOS)
             SecureField(placeholder, text: $text)
                 .foregroundColor(ForkarTheme.text)
                 .disableAutocorrection(true)
                 .textInputAutocapitalization(.none)
+            #else
+            SecureField(placeholder, text: $text)
+                .foregroundColor(ForkarTheme.text)
+                .disableAutocorrection(true)
+            #endif
         }
         .padding()
         .background(Color.black.opacity(0.2))
