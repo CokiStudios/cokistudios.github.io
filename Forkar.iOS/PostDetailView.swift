@@ -19,6 +19,7 @@ struct PostDetailView: View {
     @State private var showSuccessAlert = false
     @State private var activeChatRoom: ChatRoom? = nil
     @State private var isNavigatingToChat = false
+    @State private var knownNames: [String] = []
     
     var body: some View {
         ZStack {
@@ -183,7 +184,7 @@ struct PostDetailView: View {
                         } else {
                             VStack(spacing: 12) {
                                 ForEach(comments) { comment in
-                                    CommentRowView(comment: comment, currentUserId: authManager.currentUser?.id) {
+                                    CommentRowView(comment: comment, currentUserId: authManager.currentUser?.id, knownNames: knownNames) {
                                         selectedCommentToReport = comment
                                         showReportCommentDialog = true
                                     }
@@ -327,20 +328,31 @@ struct PostDetailView: View {
     }
     
     private func parseMentions(_ text: String) -> LocalizedStringKey {
-        let pattern = "@([a-zA-Z0-9_]+)"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return LocalizedStringKey(text)
+        var formatted = text
+        let sortedNames = knownNames.sorted { $0.count > $1.count }
+        for name in sortedNames {
+            let mentionTag = "@\(name)"
+            if formatted.contains(mentionTag) {
+                let escapedName = name.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? name
+                formatted = formatted.replacingOccurrences(of: mentionTag, with: "[\(mentionTag)](mention:\(escapedName))")
+            }
         }
-        let range = NSRange(text.startIndex..., in: text)
-        let markdown = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[$0](mention:$1)")
-        return LocalizedStringKey(markdown)
+        
+        let pattern = "@([a-zA-Z0-9_]+)"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+            let range = NSRange(formatted.startIndex..., in: formatted)
+            formatted = regex.stringByReplacingMatches(in: formatted, options: [], range: range, withTemplate: "[$0](mention:$1)")
+        }
+        return LocalizedStringKey(formatted)
     }
     
     private func openDirectChat(withUsername name: String) {
+        // First clean the username from URL escaping (e.g. %20 -> space)
+        let cleanName = name.removingPercentEncoding ?? name
         Task {
             do {
-                if let target = try await authManager.findUserByName(name: name) {
-                    let room = try await authManager.getOrCreateDirectChat(with: target.id, targetUserName: name, targetUserAvatar: target.avatar)
+                if let target = try await authManager.findUserByName(name: cleanName) {
+                    let room = try await authManager.getOrCreateDirectChat(with: target.id, targetUserName: cleanName, targetUserAvatar: target.avatar)
                     await MainActor.run {
                         self.activeChatRoom = room
                         self.isNavigatingToChat = true
@@ -360,10 +372,23 @@ struct PostDetailView: View {
                 isLiked = try await authManager.checkIfLiked(postId: post.id)
                 isFollowingAuthor = try await authManager.checkFollowStatus(targetUserId: post.user_id)
             }
+            updateKnownNames()
         } catch {
             print("Error loading post details: \(error)")
         }
         isLoadingComments = false
+    }
+    
+    private func updateKnownNames() {
+        var names = [post.author_name]
+        for c in comments {
+            if !names.contains(c.author_name) {
+                names.append(c.author_name)
+            }
+        }
+        if names.count != knownNames.count {
+            self.knownNames = names
+        }
     }
     
     private func toggleLike() async {
@@ -431,7 +456,28 @@ struct PostDetailView: View {
 struct CommentRowView: View {
     let comment: Comment
     let currentUserId: UUID?
+    let knownNames: [String]
     let onReport: () -> Void
+    
+    var formattedContent: LocalizedStringKey {
+        var formatted = comment.content
+        let sortedNames = knownNames.sorted { $0.count > $1.count }
+        for name in sortedNames {
+            let mentionTag = "@\(name)"
+            if formatted.contains(mentionTag) {
+                let escapedName = name.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? name
+                formatted = formatted.replacingOccurrences(of: mentionTag, with: "[\(mentionTag)](mention:\(escapedName))")
+            }
+        }
+        
+        let pattern = "@([a-zA-Z0-9_]+)"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+            let range = NSRange(formatted.startIndex..., in: formatted)
+            formatted = regex.stringByReplacingMatches(in: formatted, options: [], range: range, withTemplate: "[$0](mention:$1)")
+        }
+        
+        return LocalizedStringKey(formatted)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -468,17 +514,6 @@ struct CommentRowView: View {
                             .padding(4)
                     }
                 }
-            }
-            
-            var formattedContent: LocalizedStringKey {
-                let pattern = "@([a-zA-Z0-9_]+)"
-                guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-                    return LocalizedStringKey(comment.content)
-                }
-                let text = comment.content
-                let range = NSRange(text.startIndex..., in: text)
-                let markdown = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[$0](mention:$1)")
-                return LocalizedStringKey(markdown)
             }
             
             Text(formattedContent)

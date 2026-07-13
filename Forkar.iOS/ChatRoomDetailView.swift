@@ -20,6 +20,7 @@ struct ChatRoomDetailView: View {
     
     @State private var activeChatRoom: ChatRoom? = nil
     @State private var navigateToChat = false
+    @State private var knownNames: [String] = []
     
     var body: some View {
         ZStack {
@@ -76,7 +77,7 @@ struct ChatRoomDetailView: View {
                         ScrollView {
                             LazyVStack(spacing: 14) {
                                 ForEach(messages) { message in
-                                    MessageBubbleView(message: message, isCurrentUser: message.user_id == authManager.currentUser?.id)
+                                    MessageBubbleView(message: message, isCurrentUser: message.user_id == authManager.currentUser?.id, knownNames: knownNames)
                                         .id(message.id)
                                 }
                             }
@@ -200,6 +201,7 @@ struct ChatRoomDetailView: View {
         if !room.is_group {
             await loadPartnerName()
         }
+        updateKnownNames()
     }
     
     private func loadMessages() async {
@@ -223,6 +225,7 @@ struct ChatRoomDetailView: View {
             await MainActor.run {
                 if fetched.count != self.messages.count {
                     self.messages = fetched
+                    updateKnownNames()
                 }
             }
         } catch {
@@ -308,10 +311,12 @@ struct ChatRoomDetailView: View {
     }
     
     private func openDirectChat(withUsername name: String) {
+        // First clean the username from URL escaping (e.g. %20 -> space)
+        let cleanName = name.removingPercentEncoding ?? name
         Task {
             do {
-                if let target = try await authManager.findUserByName(name: name) {
-                    let room = try await authManager.getOrCreateDirectChat(with: target.id, targetUserName: name, targetUserAvatar: target.avatar)
+                if let target = try await authManager.findUserByName(name: cleanName) {
+                    let room = try await authManager.getOrCreateDirectChat(with: target.id, targetUserName: cleanName, targetUserAvatar: target.avatar)
                     await MainActor.run {
                         self.activeChatRoom = room
                         self.navigateToChat = true
@@ -320,6 +325,26 @@ struct ChatRoomDetailView: View {
             } catch {
                 print("Error opening direct chat from mention: \(error)")
             }
+        }
+    }
+    
+    private func updateKnownNames() {
+        var names = knownNames
+        for msg in messages {
+            if !names.contains(msg.author_name) {
+                names.append(msg.author_name)
+            }
+        }
+        if !room.is_group && partnerName != "Cargando..." && !names.contains(partnerName) {
+            names.append(partnerName)
+        }
+        for u in communityUsers {
+            if !names.contains(u.name) {
+                names.append(u.name)
+            }
+        }
+        if names.count != knownNames.count {
+            self.knownNames = names
         }
     }
 }
@@ -408,16 +433,27 @@ struct InviteUsersSheetView: View {
 struct MessageBubbleView: View {
     let message: ChatMessage
     let isCurrentUser: Bool
+    let knownNames: [String]
 
     var formattedContent: LocalizedStringKey {
-        let pattern = "@([a-zA-Z0-9_]+)"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return LocalizedStringKey(message.content)
+        var formatted = message.content
+        let sortedNames = knownNames.sorted { $0.count > $1.count }
+        for name in sortedNames {
+            let mentionTag = "@\(name)"
+            if formatted.contains(mentionTag) {
+                let escapedName = name.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? name
+                formatted = formatted.replacingOccurrences(of: mentionTag, with: "[\(mentionTag)](mention:\(escapedName))")
+            }
         }
-        let text = message.content
-        let range = NSRange(text.startIndex..., in: text)
-        let markdown = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[$0](mention:$1)")
-        return LocalizedStringKey(markdown)
+        
+        // Alphanumeric fallback regex for single words
+        let pattern = "@([a-zA-Z0-9_]+)"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+            let range = NSRange(formatted.startIndex..., in: formatted)
+            formatted = regex.stringByReplacingMatches(in: formatted, options: [], range: range, withTemplate: "[$0](mention:$1)")
+        }
+        
+        return LocalizedStringKey(formatted)
     }
     
     var body: some View {
