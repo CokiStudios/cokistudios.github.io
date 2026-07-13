@@ -218,7 +218,9 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Mi Perfil")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .sheet(isPresented: $showLogin, onDismiss: {
                 if authManager.isLoggedIn, let user = authManager.currentUser {
                     Task {
