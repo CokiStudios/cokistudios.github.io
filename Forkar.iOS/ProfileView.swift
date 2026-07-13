@@ -8,6 +8,7 @@ struct ProfileView: View {
     @State private var followingCount = 0
     @State private var isLoading = false
     @State private var showLogin = false
+    @State private var showSetupWizard = false
     
     var body: some View {
         NavigationView {
@@ -138,6 +139,14 @@ struct ProfileView: View {
                         await loadProfileData(userId: user.id)
                     }
                     .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button(action: {
+                                showSetupWizard = true
+                            }) {
+                                Image(systemName: "gearshape")
+                                    .foregroundColor(ForkarTheme.textSub)
+                            }
+                        }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button(action: {
                                 authManager.logout()
@@ -150,6 +159,10 @@ struct ProfileView: View {
                                 .foregroundColor(.red)
                             }
                         }
+                    }
+                    .sheet(isPresented: $showSetupWizard) {
+                        SetupWizardView()
+                            .environmentObject(authManager)
                     }
                 } else {
                     // Not logged in view
