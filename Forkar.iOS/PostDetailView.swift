@@ -236,8 +236,11 @@ struct PostDetailView: View {
             }
         }
         .navigationTitle("Publicación")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .navigationBarTrailing) {
                 if authManager.isLoggedIn && post.user_id != authManager.currentUser?.id {
                     Button(action: {
@@ -248,6 +251,18 @@ struct PostDetailView: View {
                     }
                 }
             }
+            #else
+            ToolbarItem(placement: .primaryAction) {
+                if authManager.isLoggedIn && post.user_id != authManager.currentUser?.id {
+                    Button(action: {
+                        showReportPostDialog = true
+                    }) {
+                        Image(systemName: "flag")
+                            .foregroundColor(ForkarTheme.textSub)
+                    }
+                }
+            }
+            #endif
         }
         .confirmationDialog("Reportar Publicación", isPresented: $showReportPostDialog, titleVisibility: .visible) {
             Button("Spam / Publicidad") { reportPost(reason: "spam") }
