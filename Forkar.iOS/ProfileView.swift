@@ -239,6 +239,7 @@ struct ProfileView: View {
                         await loadProfileData(userId: user.id)
                     }
                 }
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
     }

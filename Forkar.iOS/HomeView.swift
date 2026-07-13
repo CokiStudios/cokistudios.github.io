@@ -199,6 +199,7 @@ struct HomeView: View {
                 Task {
                     await loadData()
                 }
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
     }

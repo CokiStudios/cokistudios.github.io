@@ -146,6 +146,7 @@ struct ChatsView: View {
                         await loadRooms()
                     }
                 }
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
     }
