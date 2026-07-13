@@ -53,6 +53,7 @@ $$ LANGUAGE plpgsql;
 
 -- 5.1 Políticas RLS para salas de chat (chat_rooms)
 CREATE POLICY "chat_rooms_select_member" ON chat_rooms FOR SELECT USING (
+    created_by = auth.uid() or
     check_user_in_room(id, auth.uid())
 );
 
