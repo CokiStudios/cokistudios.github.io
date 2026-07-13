@@ -656,11 +656,8 @@ class SupabaseManager: ObservableObject {
         ]
         let memberBodyData = try JSONSerialization.data(withJSONObject: memberBody)
         let addMemberRequest = makeRequest(path: membersPath, method: "POST", body: memberBodyData)
-        let (_, addRes) = try await URLSession.shared.data(for: addMemberRequest)
-        
-        guard let httpAddRes = addRes as? HTTPURLResponse, (200...299).contains(httpAddRes.statusCode) else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al unirse al grupo"])
-        }
+        let (addMemberData, addRes) = try await URLSession.shared.data(for: addMemberRequest)
+        try verifyResponse(data: addMemberData, response: addRes)
         
         return newRoom
     }

@@ -63,6 +63,7 @@ CREATE POLICY "chat_rooms_insert_auth" ON chat_rooms FOR INSERT WITH CHECK (
 
 -- 6. Políticas RLS para miembros de salas (chat_room_members)
 CREATE POLICY "chat_members_select_member" ON chat_room_members FOR SELECT USING (
+    user_id = auth.uid() or
     check_user_in_room(room_id, auth.uid())
 );
 
