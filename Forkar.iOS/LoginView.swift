@@ -213,7 +213,9 @@ struct LoginView: View {
                 .padding()
             }
         }
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
     
     private func handleAuth() async {
