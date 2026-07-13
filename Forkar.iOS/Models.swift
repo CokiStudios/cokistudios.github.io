@@ -103,13 +103,25 @@ extension Color {
     }
     
     static func dynamic(light: Color, dark: Color) -> Color {
-        Color(UIColor { traitCollection in
+        #if canImport(UIKit)
+        return Color(UIColor { traitCollection in
             if traitCollection.userInterfaceStyle == .light {
                 return UIColor(light)
             } else {
                 return UIColor(dark)
             }
         })
+        #elseif canImport(AppKit)
+        return Color(NSColor(name: nil) { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua {
+                return NSColor(light)
+            } else {
+                return NSColor(dark)
+            }
+        })
+        #else
+        return light
+        #endif
     }
 }
 

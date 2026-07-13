@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var selectedTab = 0
     
     init() {
+        #if os(iOS)
         // Customize UITabBar appearance for a modern premium dark feel
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
@@ -20,6 +21,7 @@ struct ContentView: View {
         
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
+        #endif
     }
     
     var body: some View {

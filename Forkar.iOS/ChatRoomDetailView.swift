@@ -497,19 +497,78 @@ struct MessageBubbleView: View {
     }
 }
 
-// MARK: - Rounded Corner Helper Extension
+// MARK: - Rounded Corner Helper Extension (Pure SwiftUI, Platform-Agnostic)
 struct RoundedCorner: Shape {
     var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
+    var corners: RectCorner = .allCorners
 
     func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
+        var path = Path()
+        let width = rect.width
+        let height = rect.height
+        
+        let tr = min(min(self.radius, height/2), width/2)
+        let tl = min(min(self.radius, height/2), width/2)
+        let bl = min(min(self.radius, height/2), width/2)
+        let br = min(min(self.radius, height/2), width/2)
+        
+        let hasTopLeft = corners.contains(.topLeft)
+        let hasTopRight = corners.contains(.topRight)
+        let hasBottomLeft = corners.contains(.bottomLeft)
+        let hasBottomRight = corners.contains(.bottomRight)
+        
+        path.move(to: CGPoint(x: width / 2, y: 0))
+        
+        if hasTopRight {
+            path.addLine(to: CGPoint(x: width - tr, y: 0))
+            path.addArc(center: CGPoint(x: width - tr, y: tr), radius: tr,
+                        startAngle: Angle(degrees: -90), endAngle: Angle(degrees: 0), clockwise: false)
+        } else {
+            path.addLine(to: CGPoint(x: width, y: 0))
+        }
+        
+        if hasBottomRight {
+            path.addLine(to: CGPoint(x: width, y: height - br))
+            path.addArc(center: CGPoint(x: width - br, y: height - br), radius: br,
+                        startAngle: Angle(degrees: 0), endAngle: Angle(degrees: 90), clockwise: false)
+        } else {
+            path.addLine(to: CGPoint(x: width, y: height))
+        }
+        
+        if hasBottomLeft {
+            path.addLine(to: CGPoint(x: bl, y: height))
+            path.addArc(center: CGPoint(x: bl, y: height - bl), radius: bl,
+                        startAngle: Angle(degrees: 90), endAngle: Angle(degrees: 180), clockwise: false)
+        } else {
+            path.addLine(to: CGPoint(x: 0, y: height))
+        }
+        
+        if hasTopLeft {
+            path.addLine(to: CGPoint(x: 0, y: tl))
+            path.addArc(center: CGPoint(x: tl, y: tl), radius: tl,
+                        startAngle: Angle(degrees: 180), endAngle: Angle(degrees: 270), clockwise: false)
+        } else {
+            path.addLine(to: CGPoint(x: 0, y: 0))
+        }
+        
+        path.closeSubpath()
+        return path
     }
 }
 
+struct RectCorner: OptionSet {
+    let rawValue: Int
+    
+    static let topLeft = RectCorner(rawValue: 1 << 0)
+    static let topRight = RectCorner(rawValue: 1 << 1)
+    static let bottomLeft = RectCorner(rawValue: 1 << 2)
+    static let bottomRight = RectCorner(rawValue: 1 << 3)
+    
+    static let allCorners: RectCorner = [.topLeft, .topRight, .bottomLeft, .bottomRight]
+}
+
 extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+    func cornerRadius(_ radius: CGFloat, corners: RectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
     }
 }

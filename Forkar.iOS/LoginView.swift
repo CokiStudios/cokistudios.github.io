@@ -266,8 +266,10 @@ struct CustomTextField: View {
     let icon: String
     let placeholder: String
     @Binding var text: String
+    #if os(iOS)
     var keyboardType: UIKeyboardType = .default
     var autocapitalization: TextInputAutocapitalization = .sentences
+    #endif
     
     var body: some View {
         HStack(spacing: 12) {
@@ -275,11 +277,17 @@ struct CustomTextField: View {
                 .foregroundColor(ForkarTheme.textSub)
                 .frame(width: 20)
             
+            #if os(iOS)
             TextField(placeholder, text: $text)
                 .foregroundColor(ForkarTheme.text)
                 .keyboardType(keyboardType)
                 .textInputAutocapitalization(autocapitalization)
                 .disableAutocorrection(true)
+            #else
+            TextField(placeholder, text: $text)
+                .foregroundColor(ForkarTheme.text)
+                .disableAutocorrection(true)
+            #endif
         }
         .padding()
         .background(Color.black.opacity(0.2))
