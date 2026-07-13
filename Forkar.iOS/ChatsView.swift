@@ -148,7 +148,9 @@ struct ChatsView: View {
                 }
             }
         }
+        #if os(iOS)
         .navigationViewStyle(StackNavigationViewStyle())
+        #endif
     }
     
     private func loadRooms() async {

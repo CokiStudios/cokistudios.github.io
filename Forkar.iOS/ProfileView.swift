@@ -241,7 +241,9 @@ struct ProfileView: View {
                 }
             }
         }
+        #if os(iOS)
         .navigationViewStyle(StackNavigationViewStyle())
+        #endif
     }
     
     private func loadProfileData(userId: UUID) async {

@@ -201,7 +201,9 @@ struct HomeView: View {
                 }
             }
         }
+        #if os(iOS)
         .navigationViewStyle(StackNavigationViewStyle())
+        #endif
     }
     
     private func loadData() async {
