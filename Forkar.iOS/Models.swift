@@ -312,7 +312,6 @@ struct MultiplatformNavigationStack<Content: View>: View {
             NavigationStack(root: content)
         } else {
             NavigationView(content: content)
-                .navigationViewStyle(.stack)
         }
         #else
         NavigationView(content: content)
