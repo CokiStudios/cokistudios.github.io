@@ -18,6 +18,9 @@ struct ChatRoomDetailView: View {
     @State private var communityUsers: [CommunityUser] = []
     @State private var isLoadingUsers = false
     
+    @State private var activeChatRoom: ChatRoom? = nil
+    @State private var navigateToChat = false
+    
     var body: some View {
         ZStack {
             ForkarTheme.bg
@@ -170,6 +173,26 @@ struct ChatRoomDetailView: View {
                 await loadMessagesSilently()
             }
         }
+        .environment(\.openURL, OpenURLAction { url in
+            if url.scheme == "mention" {
+                let username = url.host ?? ""
+                openDirectChat(withUsername: username)
+                return .handled
+            }
+            return .systemAction
+        })
+        .background(
+            NavigationLink(
+                destination: Group {
+                    if let room = activeChatRoom {
+                        ChatRoomDetailView(room: room)
+                            .environmentObject(authManager)
+                    }
+                },
+                isActive: $navigateToChat,
+                label: { EmptyView() }
+            )
+        )
     }
     
     private func loadInitialData() async {
@@ -283,6 +306,22 @@ struct ChatRoomDetailView: View {
             }
         }
     }
+    
+    private func openDirectChat(withUsername name: String) {
+        Task {
+            do {
+                if let target = try await authManager.findUserByName(name: name) {
+                    let room = try await authManager.getOrCreateDirectChat(with: target.id, targetUserName: name, targetUserAvatar: target.avatar)
+                    await MainActor.run {
+                        self.activeChatRoom = room
+                        self.navigateToChat = true
+                    }
+                }
+            } catch {
+                print("Error opening direct chat from mention: \(error)")
+            }
+        }
+    }
 }
 
 // MARK: - Invite Users Sheet Component
@@ -369,6 +408,17 @@ struct InviteUsersSheetView: View {
 struct MessageBubbleView: View {
     let message: ChatMessage
     let isCurrentUser: Bool
+
+    var formattedContent: LocalizedStringKey {
+        let pattern = "@([a-zA-Z0-9_]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return LocalizedStringKey(message.content)
+        }
+        let text = message.content
+        let range = NSRange(text.startIndex..., in: text)
+        let markdown = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[$0](mention:$1)")
+        return LocalizedStringKey(markdown)
+    }
     
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
@@ -385,7 +435,7 @@ struct MessageBubbleView: View {
                         .foregroundColor(ForkarTheme.textSub)
                 }
                 
-                Text(message.content)
+                Text(formattedContent)
                     .font(.system(size: 14))
                     .padding(.vertical, 10)
                     .padding(.horizontal, 14)

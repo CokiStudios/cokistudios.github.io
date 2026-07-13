@@ -117,7 +117,7 @@ struct PostDetailView: View {
                         }
                         
                         // Content Body
-                        Text(post.content)
+                        Text(parseMentions(post.content))
                             .font(.system(size: 15))
                             .lineSpacing(4)
                             .foregroundColor(ForkarTheme.text)
@@ -298,6 +298,14 @@ struct PostDetailView: View {
                 await loadPostDetails()
             }
         }
+        .environment(\.openURL, OpenURLAction { url in
+            if url.scheme == "mention" {
+                let username = url.host ?? ""
+                openDirectChat(withUsername: username)
+                return .handled
+            }
+            return .systemAction
+        })
     }
     
     private func startChat() {
@@ -314,6 +322,32 @@ struct PostDetailView: View {
                 }
             } catch {
                 print("Error starting direct chat: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    private func parseMentions(_ text: String) -> LocalizedStringKey {
+        let pattern = "@([a-zA-Z0-9_]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return LocalizedStringKey(text)
+        }
+        let range = NSRange(text.startIndex..., in: text)
+        let markdown = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[$0](mention:$1)")
+        return LocalizedStringKey(markdown)
+    }
+    
+    private func openDirectChat(withUsername name: String) {
+        Task {
+            do {
+                if let target = try await authManager.findUserByName(name: name) {
+                    let room = try await authManager.getOrCreateDirectChat(with: target.id, targetUserName: name, targetUserAvatar: target.avatar)
+                    await MainActor.run {
+                        self.activeChatRoom = room
+                        self.isNavigatingToChat = true
+                    }
+                }
+            } catch {
+                print("Error opening direct chat from mention: \(error)")
             }
         }
     }
@@ -436,7 +470,18 @@ struct CommentRowView: View {
                 }
             }
             
-            Text(comment.content)
+            var formattedContent: LocalizedStringKey {
+                let pattern = "@([a-zA-Z0-9_]+)"
+                guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+                    return LocalizedStringKey(comment.content)
+                }
+                let text = comment.content
+                let range = NSRange(text.startIndex..., in: text)
+                let markdown = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[$0](mention:$1)")
+                return LocalizedStringKey(markdown)
+            }
+            
+            Text(formattedContent)
                 .font(.system(size: 13))
                 .foregroundColor(ForkarTheme.text)
                 .padding(.leading, 32)

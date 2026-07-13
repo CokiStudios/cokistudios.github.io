@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var isLoading = false
     @State private var showCreatePost = false
     @State private var showLogin = false
+    @State private var showSetupWizard = false
     
     var body: some View {
         NavigationView {
@@ -183,6 +184,10 @@ struct HomeView: View {
                         .environmentObject(authManager)
                 }
             }
+            .sheet(isPresented: $showSetupWizard) {
+                SetupWizardView()
+                    .environmentObject(authManager)
+            }
             .onAppear {
                 Task {
                     await loadData()
@@ -201,10 +206,26 @@ struct HomeView: View {
         do {
             categories = try await authManager.fetchCategories()
             posts = try await authManager.fetchPosts(categoryId: selectedCategory?.id, query: searchQuery)
+            await MainActor.run {
+                checkSetupWizard()
+            }
         } catch {
             print("Error loading data: \(error)")
         }
         isLoading = false
+    }
+    
+    private func checkSetupWizard() {
+        if authManager.isLoggedIn {
+            if let meta = authManager.currentUser?.user_metadata {
+                let name = meta.full_name ?? ""
+                if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    showSetupWizard = true
+                }
+            } else {
+                showSetupWizard = true
+            }
+        }
     }
     
     private func loadPosts() async {

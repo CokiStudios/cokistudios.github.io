@@ -814,6 +814,61 @@ class SupabaseManager: ObservableObject {
         let (data, res) = try await URLSession.shared.data(for: request)
         try verifyResponse(data: data, response: res)
     }
+    
+    func updateProfile(fullName: String, avatarUrl: String?, company: String?, role: String?) async throws {
+        let path = "/auth/v1/user"
+        var meta: [String: Any] = [
+            "full_name": fullName,
+            "name": fullName
+        ]
+        if let avatar = avatarUrl {
+            meta["avatar_url"] = avatar
+            meta["picture"] = avatar
+        }
+        if let comp = company {
+            meta["company"] = comp
+        }
+        if let r = role {
+            meta["role"] = r
+        }
+        
+        let body: [String: Any] = ["data": meta]
+        let bodyData = try JSONSerialization.data(withJSONObject: body)
+        let request = makeRequest(path: path, method: "PUT", body: bodyData)
+        let (data, res) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: res)
+        
+        // Reload user info
+        let updatedUser = try JSONDecoder().decode(SupabaseUser.self, from: data)
+        await MainActor.run {
+            self.currentUser = updatedUser
+            if let encoded = try? JSONEncoder().encode(updatedUser) {
+                UserDefaults.standard.set(encoded, forKey: "supabase_current_user")
+            }
+        }
+    }
+    
+    func findUserByName(name: String) async throws -> (id: UUID, avatar: String?)? {
+        let path = "/rest/v1/chat_room_members"
+        let queryItems = [
+            URLQueryItem(name: "user_name", value: "ieq.\(name)"),
+            URLQueryItem(name: "select", value: "user_id,user_avatar"),
+            URLQueryItem(name: "limit", value: "1")
+        ]
+        let request = makeRequest(path: path, queryItems: queryItems)
+        let (data, res) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: res)
+        
+        struct SimpleUser: Codable {
+            let user_id: UUID
+            let user_avatar: String?
+        }
+        let users = try JSONDecoder().decode([SimpleUser].self, from: data)
+        if let user = users.first {
+            return (user.user_id, user.user_avatar)
+        }
+        return nil
+    }
 }
 
 // MARK: - Presentation Anchor Provider Helper
