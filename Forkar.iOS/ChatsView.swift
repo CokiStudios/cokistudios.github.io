@@ -146,8 +146,8 @@ struct ChatsView: View {
                         await loadRooms()
                     }
                 }
-            }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     private func loadRooms() async {

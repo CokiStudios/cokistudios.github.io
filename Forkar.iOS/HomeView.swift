@@ -199,8 +199,8 @@ struct HomeView: View {
                 Task {
                     await loadData()
                 }
-            }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     private func loadData() async {

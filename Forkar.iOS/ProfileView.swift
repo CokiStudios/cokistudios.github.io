@@ -239,8 +239,8 @@ struct ProfileView: View {
                         await loadProfileData(userId: user.id)
                     }
                 }
-            }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     private func loadProfileData(userId: UUID) async {
