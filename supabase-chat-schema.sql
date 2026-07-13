@@ -40,11 +40,20 @@ ALTER TABLE chat_room_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- 5. Políticas RLS para salas de chat (chat_rooms)
+-- 5. Función Auxiliar (SECURITY DEFINER) para evitar recursión infinita en las políticas
+CREATE OR REPLACE FUNCTION check_user_in_room(room_uuid uuid, user_uuid uuid) 
+RETURNS boolean SECURITY DEFINER AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.chat_room_members 
+        WHERE room_id = room_uuid AND user_id = user_uuid
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- 5.1 Políticas RLS para salas de chat (chat_rooms)
 CREATE POLICY "chat_rooms_select_member" ON chat_rooms FOR SELECT USING (
-    exists (
-        select 1 from chat_room_members 
-        where chat_room_members.room_id = chat_rooms.id and chat_room_members.user_id = auth.uid()
-    )
+    check_user_in_room(id, auth.uid())
 );
 
 CREATE POLICY "chat_rooms_insert_auth" ON chat_rooms FOR INSERT WITH CHECK (
@@ -53,10 +62,7 @@ CREATE POLICY "chat_rooms_insert_auth" ON chat_rooms FOR INSERT WITH CHECK (
 
 -- 6. Políticas RLS para miembros de salas (chat_room_members)
 CREATE POLICY "chat_members_select_member" ON chat_room_members FOR SELECT USING (
-    exists (
-        select 1 from chat_room_members my_membership
-        where my_membership.room_id = chat_room_members.room_id and my_membership.user_id = auth.uid()
-    )
+    check_user_in_room(room_id, auth.uid())
 );
 
 CREATE POLICY "chat_members_insert_auth" ON chat_room_members FOR INSERT WITH CHECK (
@@ -65,17 +71,11 @@ CREATE POLICY "chat_members_insert_auth" ON chat_room_members FOR INSERT WITH CH
 
 -- 7. Políticas RLS para mensajes (chat_messages)
 CREATE POLICY "chat_messages_select_member" ON chat_messages FOR SELECT USING (
-    exists (
-        select 1 from chat_room_members 
-        where chat_room_members.room_id = chat_messages.room_id and chat_room_members.user_id = auth.uid()
-    )
+    check_user_in_room(room_id, auth.uid())
 );
 
 CREATE POLICY "chat_messages_insert_member" ON chat_messages FOR INSERT WITH CHECK (
-    auth.uid() = user_id and exists (
-        select 1 from chat_room_members 
-        where chat_room_members.room_id = chat_messages.room_id and chat_room_members.user_id = auth.uid()
-    )
+    auth.uid() = user_id and check_user_in_room(room_id, auth.uid())
 );
 
 -- 8. Política de eliminación de comentarios para moderadores
