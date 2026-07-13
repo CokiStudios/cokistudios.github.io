@@ -14,6 +14,10 @@ struct ChatRoomDetailView: View {
     // Timer to pull new messages every 3 seconds
     let timer = Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()
     
+    @State private var showInviteSheet = false
+    @State private var communityUsers: [CommunityUser] = []
+    @State private var isLoadingUsers = false
+    
     var body: some View {
         ZStack {
             ForkarTheme.bg
@@ -133,6 +137,29 @@ struct ChatRoomDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if room.is_group {
+                    Button(action: {
+                        showInviteSheet = true
+                    }) {
+                        Image(systemName: "person.badge.plus")
+                            .foregroundColor(ForkarTheme.accent)
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showInviteSheet) {
+            InviteUsersSheetView(roomId: room.id, communityUsers: $communityUsers, isLoading: $isLoadingUsers, onInvite: { user in
+                inviteUser(user)
+            })
+            .environmentObject(authManager)
+            .onAppear {
+                Task {
+                    await loadCommunityUsers()
+                }
+            }
+        }
         .onAppear {
             Task {
                 await loadInitialData()
@@ -215,6 +242,124 @@ struct ChatRoomDetailView: View {
                 print("Error sending message: \(error.localizedDescription)")
                 await MainActor.run {
                     self.isSending = false
+                }
+            }
+        }
+    }
+    
+    private func loadCommunityUsers() async {
+        isLoadingUsers = true
+        do {
+            let posts = try await authManager.fetchPosts()
+            let members = try await authManager.fetchRoomMembers(roomId: room.id)
+            let memberIds = Set(members.map { $0.user_id })
+            
+            // Filter out logged in user, current group members, and duplicate post authors
+            let unique = posts.reduce(into: [CommunityUser]()) { result, post in
+                if post.user_id != authManager.currentUser?.id &&
+                   !memberIds.contains(post.user_id) &&
+                   !result.contains(where: { $0.id == post.user_id }) {
+                    result.append(CommunityUser(id: post.user_id, name: post.author_name, avatar: post.author_avatar))
+                }
+            }
+            await MainActor.run {
+                self.communityUsers = unique
+                self.isLoadingUsers = false
+            }
+        } catch {
+            print("Error loading community users: \(error)")
+            await MainActor.run {
+                self.isLoadingUsers = false
+            }
+        }
+    }
+    
+    private func inviteUser(_ user: CommunityUser) {
+        Task {
+            do {
+                try await authManager.inviteUserToGroup(roomId: room.id, userId: user.id, userName: user.name, userAvatar: user.avatar)
+            } catch {
+                print("Error inviting user: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
+// MARK: - Invite Users Sheet Component
+struct InviteUsersSheetView: View {
+    let roomId: UUID
+    @Binding var communityUsers: [CommunityUser]
+    @Binding var isLoading: Bool
+    let onInvite: (CommunityUser) -> Void
+    
+    @Environment(\.presentationMode) var presentationMode
+    @State private var invitedUserIds: Set<UUID> = []
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                ForkarTheme.bg
+                    .ignoresSafeArea()
+                
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
+                } else if communityUsers.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "person.3")
+                            .font(.system(size: 48))
+                            .foregroundColor(ForkarTheme.textSub)
+                        Text("No hay usuarios para invitar")
+                            .font(.headline)
+                            .foregroundColor(ForkarTheme.text)
+                        Text("Todos los usuarios activos ya son miembros de este grupo.")
+                            .font(.subheadline)
+                            .foregroundColor(ForkarTheme.textSub)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
+                } else {
+                    List {
+                        ForEach(communityUsers) { user in
+                            HStack {
+                                CircleAvatarPlaceholder(initials: user.name.prefix(1).uppercased())
+                                    .frame(width: 36, height: 36)
+                                    .font(.system(size: 14, weight: .bold))
+                                
+                                Text(user.name)
+                                    .font(.body)
+                                    .foregroundColor(ForkarTheme.text)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    invitedUserIds.insert(user.id)
+                                    onInvite(user)
+                                }) {
+                                    Text(invitedUserIds.contains(user.id) ? "Invitado" : "Invitar")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 12)
+                                        .background(invitedUserIds.contains(user.id) ? Color.gray : ForkarTheme.accent)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(8)
+                                }
+                                .disabled(invitedUserIds.contains(user.id))
+                            }
+                            .listRowBackground(Color.clear)
+                        }
+                    }
+                    .listStyle(PlainListStyle())
+                }
+            }
+            .navigationTitle("Invitar al Grupo")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cerrar") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(ForkarTheme.textSub)
                 }
             }
         }

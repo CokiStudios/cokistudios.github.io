@@ -171,3 +171,9 @@ struct ChatRoomMemberWithRoom: Identifiable, Codable, Hashable {
     let room_id: UUID
     let chat_rooms: ChatRoom?
 }
+
+struct CommunityUser: Identifiable, Hashable {
+    let id: UUID
+    let name: String
+    let avatar: String?
+}

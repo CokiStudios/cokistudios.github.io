@@ -800,6 +800,20 @@ class SupabaseManager: ObservableObject {
         
         return newRoom
     }
+    
+    func inviteUserToGroup(roomId: UUID, userId: UUID, userName: String, userAvatar: String?) async throws {
+        let membersPath = "/rest/v1/chat_room_members"
+        let memberBody: [String: Any] = [
+            "room_id": roomId.uuidString.lowercased(),
+            "user_id": userId.uuidString.lowercased(),
+            "user_name": userName,
+            "user_avatar": userAvatar as Any
+        ]
+        let memberBodyData = try JSONSerialization.data(withJSONObject: memberBody)
+        let request = makeRequest(path: membersPath, method: "POST", body: memberBodyData)
+        let (data, res) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: res)
+    }
 }
 
 // MARK: - Presentation Anchor Provider Helper
