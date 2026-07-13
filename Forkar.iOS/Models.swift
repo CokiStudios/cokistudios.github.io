@@ -297,3 +297,26 @@ extension String {
         LocalizationManager.shared.translate(self)
     }
 }
+
+// MARK: - Multiplatform Navigation Stack Helper
+struct MultiplatformNavigationStack<Content: View>: View {
+    let content: () -> Content
+    
+    init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
+    
+    var body: some View {
+        #if os(macOS)
+        if #available(macOS 13.0, *) {
+            NavigationStack(root: content)
+        } else {
+            NavigationView(content: content)
+                .navigationViewStyle(.stack)
+        }
+        #else
+        NavigationView(content: content)
+            .navigationViewStyle(StackNavigationViewStyle())
+        #endif
+    }
+}

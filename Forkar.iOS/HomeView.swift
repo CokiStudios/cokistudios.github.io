@@ -13,7 +13,7 @@ struct HomeView: View {
     @State private var showSetupWizard = false
     
     var body: some View {
-        NavigationView {
+        MultiplatformNavigationStack {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
@@ -201,9 +201,6 @@ struct HomeView: View {
                 }
             }
         }
-        #if os(iOS)
-        .navigationViewStyle(StackNavigationViewStyle())
-        #endif
     }
     
     private func loadData() async {

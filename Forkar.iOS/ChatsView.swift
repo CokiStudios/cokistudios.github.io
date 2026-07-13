@@ -11,7 +11,7 @@ struct ChatsView: View {
     @State private var showLogin = false
     
     var body: some View {
-        NavigationView {
+        MultiplatformNavigationStack {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
@@ -148,9 +148,6 @@ struct ChatsView: View {
                 }
             }
         }
-        #if os(iOS)
-        .navigationViewStyle(StackNavigationViewStyle())
-        #endif
     }
     
     private func loadRooms() async {
