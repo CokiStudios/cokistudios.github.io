@@ -302,11 +302,29 @@
         .footer-link:hover { color: var(--text-sub); }
         .footer-copy { font-size: 12px; color: var(--text-muted); }
 
+        /* ── XTRAPS SEPARATOR STYLES (imported design) ── */
+        .xtraps-separator {
+            position: relative;
+            width: 100%;
+            height: 180px; /* separator height */
+            overflow: hidden;
+            pointer-events: auto;
+            margin: 0; padding: 0; background: transparent;
+        }
+        .xtraps-separator .xtraps-canvas {
+            position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+        }
+        /* small optional overlay to visually separate sections in light theme */
+        html.light-theme .xtraps-separator {
+            background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0));
+        }
+
         @media (max-width: 768px) {
             .nav-links { display: none; }
             .csid-section { grid-template-columns: 1fr; padding: 36px; gap: 36px; }
             .dev-cta { padding: 40px 24px; }
             .hero h1 { font-size: 44px; }
+            .xtraps-separator { height: 140px; }
         }
     </style>
 </head>
@@ -327,7 +345,7 @@
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
             </div>
             <a href="coki-register.html" class="nav-cta">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 01[...]
                 Coki ID
             </a>
         </div>
@@ -349,7 +367,7 @@
         </p>
         <div class="hero-actions">
             <a href="coki-social.html" class="btn-hero-primary">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.3[...]
                 Únete a la comunidad
             </a>
             <a href="coki-register.html" class="btn-hero-secondary">
@@ -361,6 +379,11 @@
             <div class="hero-scroll-line"></div>
         </div>
     </section>
+
+    <!-- XTRAPS SEPARATOR (after HERO) -->
+    <div class="xtraps-separator" aria-hidden="true">
+        <canvas class="xtraps-canvas"></canvas>
+    </div>
 
     <!-- ── PRODUCTS ── -->
     <section>
@@ -403,6 +426,11 @@
         </div>
     </section>
 
+    <!-- XTRAPS SEPARATOR (after PRODUCTS) -->
+    <div class="xtraps-separator" aria-hidden="true">
+        <canvas class="xtraps-canvas"></canvas>
+    </div>
+
     <!-- ── CS ID FEATURE ── -->
     <section>
         <div class="section-inner">
@@ -410,7 +438,7 @@
                 <div>
                     <div class="section-label">Coki ID — Cuentas</div>
                     <h2 class="section-title" style="max-width:360px;">Una sola cuenta para todo</h2>
-                    <p style="color:var(--text-sub);font-size:15px;line-height:1.7;margin-top:12px;">Con Coki ID puedes acceder a todos nuestros juegos, foros y herramientas al instante. Tu progreso se guardará automáticamente en la nube.</p>
+                    <p style="color:var(--text-sub);font-size:15px;line-height:1.7;margin-top:12px;">Con Coki ID puedes acceder a todos nuestros juegos, foros y herramientas al instante. Tu progreso s[...]
                     <div class="csid-feature-list">
                         <div class="csid-feature">
                             <div class="csid-feature-icon" style="background:rgba(99,102,241,0.12);">🔐</div>
@@ -467,6 +495,11 @@
         </div>
     </section>
 
+    <!-- XTRAPS SEPARATOR (after CS ID) -->
+    <div class="xtraps-separator" aria-hidden="true">
+        <canvas class="xtraps-canvas"></canvas>
+    </div>
+
     <!-- ── DEVELOPER CTA ── -->
     <section>
         <div class="section-inner">
@@ -481,6 +514,11 @@
             </div>
         </div>
     </section>
+
+    <!-- XTRAPS SEPARATOR (after DEV CTA) -->
+    <div class="xtraps-separator" aria-hidden="true">
+        <canvas class="xtraps-canvas"></canvas>
+    </div>
 
     <!-- ── FOOTER ── -->
     <footer>
@@ -514,6 +552,106 @@
                 updateToggleIcon();
             });
         }
+    </script>
+
+    <!-- XTRAPS SCRIPT: initializes one independent animation per separator -->
+    <script>
+    (function(){
+        // Create an Xtraps-like animated wave canvas for each .xtraps-canvas
+        const separators = Array.from(document.querySelectorAll('.xtraps-separator'));
+        const DPR = Math.max(1, window.devicePixelRatio || 1);
+
+        separators.forEach((sep, index) => {
+            const canvas = sep.querySelector('.xtraps-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let width = 0, height = 0;
+            let phase = Math.random() * Math.PI * 2; // give each separator slight variation
+            let mouse = { x: null, y: null };
+
+            function resize() {
+                const rect = sep.getBoundingClientRect();
+                width = Math.max(0, Math.floor(rect.width));
+                height = Math.max(0, Math.floor(rect.height));
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+                canvas.width = Math.floor(width * DPR);
+                canvas.height = Math.floor(height * DPR);
+                ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            }
+
+            // pointer tracking local to this separator
+            canvas.addEventListener('pointermove', (e) => {
+                const r = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - r.left;
+                mouse.y = e.clientY - r.top;
+            });
+            canvas.addEventListener('pointerleave', () => { mouse.x = null; mouse.y = null; });
+
+            // simple wave drawer (adapted from the provided Xtraps demo)
+            function drawWave(amplitude, frequency, phaseShift, color, lineWidth, offsetMultiplier) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+
+                for (let x = 0; x <= width; x += 2) {
+                    const base = Math.sin(x * frequency + phase + phaseShift);
+                    let y = height / 2 + base * amplitude;
+
+                    if (mouse.x !== null) {
+                        const dist = Math.abs(x - mouse.x);
+                        if (dist < 160) {
+                            const force = (160 - dist) / 160;
+                            y += (mouse.y - y) * force * offsetMultiplier;
+                        }
+                    }
+
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+
+                ctx.stroke();
+            }
+
+            function render() {
+                // clear with slight transparency for a subtle trail
+                ctx.clearRect(0, 0, width, height);
+
+                // background subtle gradient (keeps it lightweight)
+                // draw waves
+                drawWave(22, 0.008 + (index * 0.0003), 0, 'rgba(88,166,255,0.9)', 2, 0.35);
+                drawWave(26, 0.009 + (index * 0.0004), Math.PI, 'rgba(188,140,255,0.75)', 1.8, -0.2);
+
+                phase += 0.02 + (index * 0.002);
+                rafId = requestAnimationFrame(render);
+            }
+
+            let rafId = null;
+            // responsiveness
+            const ro = new ResizeObserver(() => {
+                resize();
+            });
+            ro.observe(sep);
+            resize();
+            render();
+
+            // pause animation when not visible to save CPU
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (!rafId) render();
+                    } else {
+                        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+                    }
+                });
+            }, { threshold: 0.01 });
+            io.observe(sep);
+
+            // cleanup on unload (defensive)
+            window.addEventListener('pagehide', () => { ro.disconnect(); io.disconnect(); if (rafId) cancelAnimationFrame(rafId); });
+        });
+    })();
     </script>
 </body>
 </html>
