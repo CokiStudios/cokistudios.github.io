@@ -63,7 +63,7 @@
         /* ── BACKGROUND GRID ── */
         body::before {
             content: '';
-            position: fixed; inset: 0; z-index: 0;
+            position: fixed; inset: 0; z-index: -1;
             background-image:
                 linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
@@ -73,15 +73,21 @@
 
         body::after {
             content: '';
-            position: fixed; inset: 0; z-index: 0;
+            position: fixed; inset: 0; z-index: -1;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3C/svg%3E");
             background-repeat: repeat-y;
             background-size: 100% 600px;
             background-position: center top;
             pointer-events: none;
+            animation: moveBackground 25s linear infinite;
         }
         html.light-theme body::after {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3C/svg%3E");
+        }
+
+        @keyframes moveBackground {
+            from { background-position: center 0px; }
+            to { background-position: center 600px; }
         }
 
         /* ── NAV ── */
