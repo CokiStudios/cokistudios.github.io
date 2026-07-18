@@ -15,6 +15,8 @@ struct ProfileView: View {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
+                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                    .ignoresSafeArea()
                 
                 if authManager.isLoggedIn, let user = authManager.currentUser {
                     ScrollView {

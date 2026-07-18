@@ -15,6 +15,8 @@ struct ChatsView: View {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
+                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                    .ignoresSafeArea()
                 
                 if authManager.isLoggedIn {
                     ScrollView {
@@ -275,6 +277,8 @@ struct CreateGroupSheetView: View {
         NavigationView {
             ZStack {
                 ForkarTheme.bg
+                    .ignoresSafeArea()
+                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
                     .ignoresSafeArea()
                 
                 VStack(spacing: 24) {

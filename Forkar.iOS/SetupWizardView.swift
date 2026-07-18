@@ -25,6 +25,8 @@ struct SetupWizardView: View {
         ZStack {
             ForkarTheme.bg
                 .ignoresSafeArea()
+            XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                .ignoresSafeArea()
             
             VStack(spacing: 24) {
                 // Header (Progress Bar)

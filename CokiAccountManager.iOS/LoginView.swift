@@ -18,6 +18,8 @@ struct LoginView: View {
         ZStack {
             CokiTheme.bg
                 .ignoresSafeArea()
+            XtrapsBackground(strokeColor: CokiTheme.accent.opacity(0.12))
+                .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 30) {

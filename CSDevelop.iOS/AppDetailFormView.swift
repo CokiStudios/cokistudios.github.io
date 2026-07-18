@@ -23,6 +23,8 @@ struct AppDetailFormView: View {
             ZStack {
                 CSDevelopTheme.bg
                     .ignoresSafeArea()
+                XtrapsBackground(strokeColor: CSDevelopTheme.accent.opacity(0.12))
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {

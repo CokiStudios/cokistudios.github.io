@@ -62,7 +62,7 @@ async function createPost(title, content, categoryId = null) {
     if (!user) return { success: false, error: 'Debes iniciar sesión' };
     
     const meta = user.user_metadata || {};
-    const authorName = meta.full_name || meta.name || user.email?.split('@')[0] || 'Usuario';
+    const authorName = meta.full_name || meta.name || user.email || user.phone || 'Usuario';
     const authorAvatar = meta.avatar_url || meta.picture || null;
     
     const { data, error } = await supabase
@@ -110,7 +110,7 @@ async function createComment(postId, content) {
     if (!user) return { success: false, error: 'Debes iniciar sesión' };
     
     const meta = user.user_metadata || {};
-    const authorName = meta.full_name || meta.name || user.email?.split('@')[0] || 'Usuario';
+    const authorName = meta.full_name || meta.name || user.email || user.phone || 'Usuario';
     const authorAvatar = meta.avatar_url || meta.picture || null;
     
     const { data, error } = await supabase
@@ -265,7 +265,7 @@ function formatDate(dateString) {
 function getUserDisplayName(user) {
     if (!user) return 'Anónimo';
     const meta = user.user_metadata || {};
-    return meta.full_name || meta.name || user.email?.split('@')[0] || 'Usuario';
+    return meta.full_name || meta.name || user.email || user.phone || 'Usuario';
 }
 
 function getUserAvatar(user) {

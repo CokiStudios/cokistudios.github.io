@@ -60,7 +60,7 @@ async function loginCokiAccount(email, password) {
     setCookieJSON('coki_current_user', {
         id: data.user.id,
         email: data.user.email,
-        name: data.user.user_metadata?.full_name || data.user.email.split('@')[0],
+        name: data.user.user_metadata?.full_name || data.user.email || data.user.phone || 'Usuario',
         picture: data.user.user_metadata?.avatar_url,
         metadata: data.user.user_metadata
     }, { maxAge: 7 * 24 * 60 * 60 });
@@ -104,7 +104,7 @@ async function handleCokiOAuthCallback() {
     setCookieJSON('coki_current_user', {
         id: user.id,
         email: user.email,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0],
+        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.phone || 'Usuario',
         picture: user.user_metadata?.avatar_url || user.user_metadata?.picture,
         metadata: user.user_metadata
     }, { maxAge: 7 * 24 * 60 * 60 });
@@ -185,7 +185,7 @@ async function getCurrentCokiUser() {
         return {
             id: user.id,
             email: user.email,
-            name: user.user_metadata?.full_name || user.email.split('@')[0],
+            name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
             picture: user.user_metadata?.avatar_url,
             metadata: user.user_metadata
         };
@@ -205,7 +205,7 @@ supabase.auth.onAuthStateChange((event, session) => {
         setCookieJSON('coki_current_user', {
             id: user.id,
             email: user.email,
-            name: user.user_metadata?.full_name || user.email.split('@')[0],
+            name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
             picture: user.user_metadata?.avatar_url,
             metadata: user.user_metadata
         }, { maxAge: 7 * 24 * 60 * 60 });

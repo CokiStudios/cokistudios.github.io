@@ -26,6 +26,8 @@ struct ChatRoomDetailView: View {
         ZStack {
             ForkarTheme.bg
                 .ignoresSafeArea()
+            XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header (if direct chat, shows partner's name)
@@ -378,6 +380,8 @@ struct InviteUsersSheetView: View {
         NavigationView {
             ZStack {
                 ForkarTheme.bg
+                    .ignoresSafeArea()
+                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
                     .ignoresSafeArea()
                 
                 if isLoading {

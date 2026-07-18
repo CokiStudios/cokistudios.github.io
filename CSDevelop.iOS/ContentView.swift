@@ -34,6 +34,8 @@ struct ContentView: View {
             ZStack {
                 CSDevelopTheme.bg
                     .ignoresSafeArea()
+                XtrapsBackground(strokeColor: CSDevelopTheme.accent.opacity(0.12))
+                    .ignoresSafeArea()
                 
                 // ambient glow background
                 VStack {

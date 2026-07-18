@@ -258,7 +258,7 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     const idToken = generateJWT({ 
         sub: user.id, 
         email: user.email,
-        name: user.user_metadata?.full_name || user.email.split('@')[0],
+        name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
         picture: user.user_metadata?.avatar_url,
         company: user.user_metadata?.company
     }, 'secret');

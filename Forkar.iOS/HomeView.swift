@@ -17,6 +17,8 @@ struct HomeView: View {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
+                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                    .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Search Bar
