@@ -75,14 +75,9 @@
         .xtraps-bg {
             position: fixed; inset: 0; z-index: -1; pointer-events: none;
         }
-        .xtraps-svg {
+        .xtraps-canvas {
             width: 100%; height: 100%; display: block;
         }
-        .xtraps-path { stroke: #6366f1; stroke-width: 1.8; opacity: 0.22; fill: none; }
-        html.light-theme .xtraps-path { stroke: #4f46e5; opacity: 0.12; }
-        
-        .xtraps-path-1 { transform-origin: center; }
-        .xtraps-path-2 { transform-origin: center; }
 
         /* ── NAV ── */
         nav {
@@ -326,10 +321,7 @@
 
     <!-- ── XTRAPS BACKGROUND ── -->
     <div class="xtraps-bg">
-        <svg class="xtraps-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" preserveAspectRatio="none">
-            <path class="xtraps-path xtraps-path-1" d="M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39"/>
-            <path class="xtraps-path xtraps-path-2" d="M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0"/>
-        </svg>
+        <canvas id="xtrapsCanvas" class="xtraps-canvas"></canvas>
     </div>
 
     <!-- ── NAVBAR ── -->
@@ -535,18 +527,67 @@
             });
         }
 
-        const path1 = document.querySelector('.xtraps-path-1');
-        const path2 = document.querySelector('.xtraps-path-2');
+        // Xtraps Interactive Canvas Animation
+        const canvas = document.getElementById('xtrapsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
         let phase = 0;
-        function animateXtraps() {
-            phase += 0.015;
-            if(path1 && path2) {
-                const s1 = Math.sin(phase) * 25;
-                const c1 = Math.cos(phase) * 20;
-                
-                path1.setAttribute('d', `M0,${48 + s1} C150,${48 - c1} 300,${105 + s1} 450,${174 - c1} C580,${228 + s1} 700,${234 - c1} 820,${186 + s1} C900,${150 - c1} 960,${84 + s1} 1000,${39 - c1}`);
-                path2.setAttribute('d', `M0,${129 - c1} C150,${111 + s1} 350,${96 - c1} 550,${96 + s1} C720,${96 - c1} 830,${126 + s1} 880,${102 - c1} C930,${66 + s1} 970,${24 - c1} 1000,${0 + s1}`);
+        let mouse = { x: null, y: null };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        function drawWave(amplitude, frequency, phaseShift, color, lineWidth, offsetMultiplier) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+
+            for (let x = 0; x <= canvas.width; x += 2) {
+                let baseSvg = Math.sin(x * frequency + phase + phaseShift);
+                let y = canvas.height / 2 + baseSvg * amplitude;
+
+                if (mouse.x !== null) {
+                    let dist = Math.abs(x - mouse.x);
+                    if (dist < 200) {
+                        let force = (200 - dist) / 200;
+                        y += (mouse.y - y) * force * offsetMultiplier;
+                    }
+                }
+
+                if (x === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
             }
+            ctx.stroke();
+        }
+
+        function animateXtraps() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const isLight = document.documentElement.classList.contains('light-theme');
+            const color1 = isLight ? 'rgba(79, 70, 229, 0.4)' : 'rgba(99, 102, 241, 0.3)';
+            const color2 = isLight ? 'rgba(139, 92, 246, 0.3)' : 'rgba(168, 85, 247, 0.25)';
+
+            drawWave(70, 0.003, 0, color1, 2.5, 0.4);
+            drawWave(90, 0.004, Math.PI, color2, 2, -0.3);
+
+            phase += 0.015;
             requestAnimationFrame(animateXtraps);
         }
         animateXtraps();
