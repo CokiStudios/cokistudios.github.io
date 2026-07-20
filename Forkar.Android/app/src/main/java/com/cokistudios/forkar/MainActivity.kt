@@ -40,6 +40,7 @@ import com.cokistudios.forkar.ui.screens.PostDetailScreen
 import com.cokistudios.forkar.ui.screens.ProfileScreen
 import com.cokistudios.forkar.ui.theme.ForkarTheme
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
+import com.cokistudios.forkar.ui.components.XtrapsBackground
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -191,7 +192,7 @@ fun MainContainerScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            com.cokistudios.forkar.ui.components.XtrapsBackground(
+            XtrapsBackground(
                 opacity = 0.15f
             )
 
