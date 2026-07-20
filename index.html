@@ -99,11 +99,10 @@
         }
         .nav-logo-wrap { display: flex; align-items: center; gap: 12px; }
         .nav-logo-box {
-            width: 38px; height: 38px; background: var(--accent);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 16px; color: white;
-            box-shadow: 0 0 30px rgba(99,102,241,0.4);
+            width: 40px; height: 40px; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 0 25px rgba(99,102,241,0.5); background: #000;
         }
+        .nav-logo-box img { width: 100%; height: 100%; object-fit: cover; }
         .nav-brand-name { font-size: 17px; font-weight: 700; color: var(--text); }
         .nav-links { display: flex; align-items: center; gap: 8px; }
         .nav-link {
@@ -337,7 +336,7 @@
     <nav>
         <div class="nav-inner">
             <div class="nav-logo-wrap">
-                <div class="nav-logo-box">C</div>
+                <div class="nav-logo-box"><img src="assets/cs-logo.png" alt="CS Logo"></div>
                 <span class="nav-brand-name">Coki Studios</span>
             </div>
             <div class="nav-links">
