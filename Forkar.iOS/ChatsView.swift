@@ -15,7 +15,7 @@ struct ChatsView: View {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
-                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                XtrapsBackground(strokeColor: ForkarTheme.accent, opacity: 0.65)
                     .ignoresSafeArea()
                 
                 if authManager.isLoggedIn {

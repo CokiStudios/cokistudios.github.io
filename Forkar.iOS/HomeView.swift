@@ -17,7 +17,7 @@ struct HomeView: View {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
-                XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+                XtrapsBackground(strokeColor: ForkarTheme.accent, opacity: 0.65)
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
