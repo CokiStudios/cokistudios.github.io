@@ -71,23 +71,26 @@
             pointer-events: none;
         }
 
-        body::after {
-            content: '';
-            position: fixed; inset: 0; z-index: -1;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3C/svg%3E");
-            background-repeat: repeat-y;
-            background-size: 100% 600px;
-            background-position: center top;
-            pointer-events: none;
-            animation: moveBackground 25s linear infinite;
+        /* ── XTRAPS BACKGROUND ── */
+        .xtraps-bg {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
         }
-        html.light-theme body::after {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3C/svg%3E");
+        .xtraps-svg {
+            width: 100%; height: 100%; display: block;
         }
-
-        @keyframes moveBackground {
-            from { background-position: center 0px; }
-            to { background-position: center 600px; }
+        .xtraps-path { stroke: #6366f1; stroke-width: 1.8; opacity: 0.22; fill: none; }
+        html.light-theme .xtraps-path { stroke: #4f46e5; opacity: 0.12; }
+        
+        .xtraps-path-1 { animation: waveAnim1 5s ease-in-out infinite alternate; }
+        .xtraps-path-2 { animation: waveAnim2 5s ease-in-out infinite alternate; }
+        
+        @keyframes waveAnim1 { 
+            0% { transform: translateY(-16px); } 
+            100% { transform: translateY(16px); } 
+        }
+        @keyframes waveAnim2 { 
+            0% { transform: translateY(16px); } 
+            100% { transform: translateY(-16px); } 
         }
 
         /* ── NAV ── */
@@ -330,6 +333,14 @@
     </style>
 </head>
 <body>
+
+    <!-- ── XTRAPS BACKGROUND ── -->
+    <div class="xtraps-bg">
+        <svg class="xtraps-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" preserveAspectRatio="none">
+            <path class="xtraps-path xtraps-path-1" d="M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39"/>
+            <path class="xtraps-path xtraps-path-2" d="M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0"/>
+        </svg>
+    </div>
 
     <!-- ── NAVBAR ── -->
     <nav>
