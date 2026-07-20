@@ -42,21 +42,46 @@ fun XtrapsBackground(
         val h = size.height
 
         val wave1Path = Path().apply {
-            moveTo(0f, h * 0.16f)
-            cubicTo(w * 0.15f, h * 0.16f, w * 0.30f, h * 0.35f, w * 0.45f, h * 0.58f)
-            cubicTo(w * 0.58f, h * 0.76f, w * 0.70f, h * 0.78f, w * 0.82f, h * 0.62f)
-            cubicTo(w * 0.90f, h * 0.50f, w * 0.96f, h * 0.28f, w, h * 0.13f)
+            val s1 = sin(currentPhase) * 40f
+            val c1 = cos(currentPhase) * 30f
+            moveTo(0f, h * 0.16f + s1)
+            cubicTo(
+                w * 0.15f, h * 0.16f - c1, 
+                w * 0.30f, h * 0.35f + s1, 
+                w * 0.45f, h * 0.58f - c1
+            )
+            cubicTo(
+                w * 0.58f, h * 0.76f + s1, 
+                w * 0.70f, h * 0.78f - c1, 
+                w * 0.82f, h * 0.62f + s1
+            )
+            cubicTo(
+                w * 0.90f, h * 0.50f - c1, 
+                w * 0.96f, h * 0.28f + s1, 
+                w, h * 0.13f - c1
+            )
         }
 
         val wave2Path = Path().apply {
-            moveTo(0f, h * 0.43f)
-            cubicTo(w * 0.15f, h * 0.37f, w * 0.35f, h * 0.32f, w * 0.55f, h * 0.32f)
-            cubicTo(w * 0.72f, h * 0.32f, w * 0.83f, h * 0.42f, w * 0.88f, h * 0.34f)
-            cubicTo(w * 0.93f, h * 0.22f, w * 0.97f, h * 0.08f, w, 0f)
+            val s1 = sin(currentPhase) * 40f
+            val c1 = cos(currentPhase) * 30f
+            moveTo(0f, h * 0.43f - c1)
+            cubicTo(
+                w * 0.15f, h * 0.37f + s1, 
+                w * 0.35f, h * 0.32f - c1, 
+                w * 0.55f, h * 0.32f + s1
+            )
+            cubicTo(
+                w * 0.72f, h * 0.32f - c1, 
+                w * 0.83f, h * 0.42f + s1, 
+                w * 0.88f, h * 0.34f - c1
+            )
+            cubicTo(
+                w * 0.93f, h * 0.22f + s1, 
+                w * 0.97f, h * 0.08f - c1, 
+                w, 0f + s1
+            )
         }
-
-        val yOffset1 = (sin(currentPhase) * 24f).toFloat()
-        val yOffset2 = (cos(currentPhase) * 24f).toFloat()
 
         val gradient1 = Brush.linearGradient(
             colors = listOf(
@@ -68,19 +93,15 @@ fun XtrapsBackground(
             end = Offset(w, 0f)
         )
 
-        androidx.compose.ui.graphics.drawscope.withTransform({
-            translate(top = yOffset1)
-        }) {
-            drawPath(
-                path = wave1Path,
-                brush = gradient1,
-                style = Stroke(
-                    width = lineWidth,
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
+        drawPath(
+            path = wave1Path,
+            brush = gradient1,
+            style = Stroke(
+                width = lineWidth,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
             )
-        }
+        )
 
         val gradient2 = Brush.linearGradient(
             colors = listOf(
@@ -92,18 +113,14 @@ fun XtrapsBackground(
             end = Offset(w, 0f)
         )
 
-        androidx.compose.ui.graphics.drawscope.withTransform({
-            translate(top = yOffset2)
-        }) {
-            drawPath(
-                path = wave2Path,
-                brush = gradient2,
-                style = Stroke(
-                    width = lineWidth,
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
+        drawPath(
+            path = wave2Path,
+            brush = gradient2,
+            style = Stroke(
+                width = lineWidth,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
             )
-        }
+        )
     }
 }

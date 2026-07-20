@@ -81,17 +81,8 @@
         .xtraps-path { stroke: #6366f1; stroke-width: 1.8; opacity: 0.22; fill: none; }
         html.light-theme .xtraps-path { stroke: #4f46e5; opacity: 0.12; }
         
-        .xtraps-path-1 { animation: waveAnim1 5s ease-in-out infinite alternate; }
-        .xtraps-path-2 { animation: waveAnim2 5s ease-in-out infinite alternate; }
-        
-        @keyframes waveAnim1 { 
-            0% { transform: translateY(-16px); } 
-            100% { transform: translateY(16px); } 
-        }
-        @keyframes waveAnim2 { 
-            0% { transform: translateY(16px); } 
-            100% { transform: translateY(-16px); } 
-        }
+        .xtraps-path-1 { transform-origin: center; }
+        .xtraps-path-2 { transform-origin: center; }
 
         /* ── NAV ── */
         nav {
@@ -544,6 +535,22 @@
                 updateToggleIcon();
             });
         }
+
+        const path1 = document.querySelector('.xtraps-path-1');
+        const path2 = document.querySelector('.xtraps-path-2');
+        let phase = 0;
+        function animateXtraps() {
+            phase += 0.015;
+            if(path1 && path2) {
+                const s1 = Math.sin(phase) * 25;
+                const c1 = Math.cos(phase) * 20;
+                
+                path1.setAttribute('d', `M0,${48 + s1} C150,${48 - c1} 300,${105 + s1} 450,${174 - c1} C580,${228 + s1} 700,${234 - c1} 820,${186 + s1} C900,${150 - c1} 960,${84 + s1} 1000,${39 - c1}`);
+                path2.setAttribute('d', `M0,${129 - c1} C150,${111 + s1} 350,${96 - c1} 550,${96 + s1} C720,${96 - c1} 830,${126 + s1} 880,${102 - c1} C930,${66 + s1} 970,${24 - c1} 1000,${0 + s1}`);
+            }
+            requestAnimationFrame(animateXtraps);
+        }
+        animateXtraps();
     </script>
 </body>
 </html>
