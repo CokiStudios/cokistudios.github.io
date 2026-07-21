@@ -1,0 +1,87 @@
+/* Shine UI Core Component Styles */
+/* Defines the distinctive "Thick Border" and "Corner Attached Buttons" aesthetic */
+
+.shine-menu-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+    display: none; align-items: center; justify-content: center; z-index: 10000;
+}
+
+.shine-menu-overlay.active {
+    display: flex;
+}
+
+.shine-menu {
+    position: relative;
+    background: #ffffff;
+    color: #000000;
+    border: 6px solid #000000;
+    border-radius: 2px;
+    padding: 40px;
+    min-width: 320px;
+    text-align: center;
+    box-shadow: 10px 10px 0px rgba(0,0,0,0.3);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+.shine-menu h3 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Corner Attached Buttons (The 'Mickey Ears') */
+.shine-corner-btn {
+    position: absolute;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 6px solid #000000;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px;
+    color: #000000;
+    transition: transform 0.2s, background 0.2s;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.shine-corner-btn:hover {
+    transform: scale(1.15);
+    background: #f0f0f0;
+}
+
+.shine-btn-tl { top: -22px; left: -22px; } /* Top-Left */
+.shine-btn-tr { top: -22px; right: -22px; } /* Top-Right */
+.shine-btn-bl { bottom: -22px; left: -22px; } /* Bottom-Left */
+.shine-btn-br { bottom: -22px; right: -22px; } /* Bottom-Right */
+
+/* Inner Colorful Circular Buttons */
+.shine-internal-actions {
+    display: flex;
+    justify-content: space-evenly;
+    margin-top: 30px;
+}
+
+.shine-color-btn {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 6px solid #000000;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    /* Multicolored background matching the sketch (Blue, Yellow, Red, Green) */
+    background: conic-gradient(from 45deg, #2196F3 0% 90deg, #FFEB3B 90deg 180deg, #F44336 180deg 270deg, #4CAF50 270deg 360deg);
+    transition: transform 0.2s;
+}
+
+.shine-color-btn:hover {
+    transform: scale(1.1);
+}
+
+.shine-color-btn svg {
+    width: 32px; height: 32px;
+    /* Thick black outline on the icons inside */
+    filter: drop-shadow(0px 0px 1px black) drop-shadow(0px 0px 1px black);
+}

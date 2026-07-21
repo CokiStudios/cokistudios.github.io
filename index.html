@@ -11,6 +11,7 @@
     </script>
     <meta name="description" content="Coki Studios crea herramientas digitales que conectan personas y hacen el mundo más accesible. Descubre Horizon Maps, OurCommonHome y CS ID.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/shine-ui.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -357,7 +358,8 @@
             <span>del futuro, juntos</span>
         </h1>
         <p class="hero-desc">
-            Coki Studios diseña herramientas digitales que conectan personas, facilitan el acceso a la información y hacen el mundo más brillante — para todos.
+            Ecosistema conectado e identidad digital inteligente para todos tus juegos y comunidades.<br>
+            <button onclick="document.getElementById('shineDemo').classList.add('active')" style="margin-top: 15px; background: transparent; border: 2px solid white; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">Probar Shine UI Menu</button>
         </p>
         <div class="hero-actions">
             <a href="coki-social.html" class="btn-hero-primary">
@@ -511,6 +513,38 @@
             <div class="footer-copy">© 2026 Coki Studios LLC</div>
         </div>
     </footer>
+
+    <!-- ── SHINE UI MENUS DEMO ── -->
+    <div id="shineDemo" class="shine-menu-overlay">
+        <!-- Pop-Up Example -->
+        <div class="shine-menu" id="shinePopup" style="display: block;">
+            <button class="shine-corner-btn shine-btn-tl" onclick="document.getElementById('shineDemo').classList.remove('active')" aria-label="Close">X</button>
+            
+            <h3>Pop-Up<br>Example</h3>
+            
+            <div class="shine-internal-actions">
+                <button class="shine-color-btn" onclick="alert('Rechazado')">
+                    <!-- Red Cross SVG -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <button class="shine-color-btn" onclick="document.getElementById('shinePopup').style.display='none'; document.getElementById('shineAdvance').style.display='block';">
+                    <!-- Green Check SVG -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4cd964" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Advance Screen -->
+        <div class="shine-menu" id="shineAdvance" style="display: none; padding-bottom: 60px;">
+            <button class="shine-corner-btn shine-btn-tl" onclick="document.getElementById('shineDemo').classList.remove('active')">X</button>
+            
+            <h3 style="margin-top: 20px;">Advance<br>screen</h3>
+            
+            <!-- Corner bottom arrows -->
+            <button class="shine-corner-btn shine-btn-bl" onclick="document.getElementById('shineAdvance').style.display='none'; document.getElementById('shinePopup').style.display='block';">←</button>
+            <button class="shine-corner-btn shine-btn-br" onclick="alert('Siguiente!')">→</button>
+        </div>
+    </div>
 
     <script>
         const themeToggle = document.getElementById('theme-toggle');
