@@ -45,12 +45,11 @@ struct HomeView: View {
                                     .font(.system(size: 13, weight: .bold))
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
-                                    .background(selectedCategory == nil ? ForkarTheme.accent : ForkarTheme.card)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(20)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(selectedCategory == nil ? Color.clear : ForkarTheme.border, lineWidth: 1)
+                                    .foregroundColor(selectedCategory == nil ? .white : ForkarTheme.text)
+                                    .shineInlineCard(
+                                        borderLineWidth: 2.0,
+                                        shadowOffset: selectedCategory == nil ? 3.0 : 0.0,
+                                        backgroundColor: selectedCategory == nil ? ForkarTheme.accent : ForkarTheme.card
                                     )
                             }
                             
@@ -71,12 +70,11 @@ struct HomeView: View {
                                     }
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
-                                    .background(selectedCategory?.id == category.id ? category.themeColor : ForkarTheme.card)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(20)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(selectedCategory?.id == category.id ? Color.clear : ForkarTheme.border, lineWidth: 1)
+                                    .foregroundColor(selectedCategory?.id == category.id ? .white : ForkarTheme.text)
+                                    .shineInlineCard(
+                                        borderLineWidth: 2.0,
+                                        shadowOffset: selectedCategory?.id == category.id ? 3.0 : 0.0,
+                                        backgroundColor: selectedCategory?.id == category.id ? category.themeColor : ForkarTheme.card
                                     )
                                 }
                             }
@@ -138,20 +136,12 @@ struct HomeView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        Button(action: {
+                        ShineColorButton(iconSystemName: "plus", iconColor: .white) {
                             if authManager.isLoggedIn {
                                 showCreatePost = true
                             } else {
                                 showLogin = true
                             }
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.title.bold())
-                                .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
-                                .background(ForkarTheme.primaryGradient)
-                                .cornerRadius(28)
-                                .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 10, y: 5)
                         }
                         .padding()
                     }
@@ -286,12 +276,7 @@ struct SearchBarView: View {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 14)
-        .background(ForkarTheme.card)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(ForkarTheme.border, lineWidth: 1)
-        )
+        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
     }
 }
 
@@ -375,13 +360,7 @@ struct PostCardView: View {
                 Spacer()
             }
         }
-        .padding()
-        .background(ForkarTheme.card)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(ForkarTheme.border, lineWidth: 1)
-        )
+        .shineInlineCard(borderLineWidth: 2.5, shadowOffset: 5.0, backgroundColor: ForkarTheme.card)
     }
 }
 

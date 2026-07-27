@@ -193,3 +193,98 @@ public struct ShineAlertView<Content: View>: View {
         }
     }
 }
+
+// MARK: - Shine UI style for standard inline card components
+public struct ShineCardInlineModifier: ViewModifier {
+    public let borderLineWidth: CGFloat
+    public let shadowOffset: CGFloat
+    public let backgroundColor: Color
+    
+    public init(
+        borderLineWidth: CGFloat = 3.5,
+        shadowOffset: CGFloat = 6.0,
+        backgroundColor: Color = Color.white
+    ) {
+        self.borderLineWidth = borderLineWidth
+        self.shadowOffset = shadowOffset
+        self.backgroundColor = backgroundColor
+    }
+    
+    public func body(content: Content) -> some View {
+        content
+            .padding(16)
+            .background(backgroundColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.black, lineWidth: borderLineWidth)
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.black)
+                    .offset(x: shadowOffset, y: shadowOffset)
+            )
+            .padding(.trailing, shadowOffset)
+            .padding(.bottom, shadowOffset)
+    }
+}
+
+// MARK: - Shine Button Style for Standard UI Buttons
+public struct ShineButtonStyle: ButtonStyle {
+    public let backgroundColor: Color
+    public let borderLineWidth: CGFloat
+    public let shadowOffset: CGFloat
+    
+    public init(
+        backgroundColor: Color = Color.indigo,
+        borderLineWidth: CGFloat = 3.5,
+        shadowOffset: CGFloat = 5.0
+    ) {
+        self.backgroundColor = backgroundColor
+        self.borderLineWidth = borderLineWidth
+        self.shadowOffset = shadowOffset
+    }
+    
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 24)
+            .background(backgroundColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.black, lineWidth: borderLineWidth)
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.black)
+                    .offset(
+                        x: configuration.isPressed ? 1.0 : shadowOffset,
+                        y: configuration.isPressed ? 1.0 : shadowOffset
+                    )
+            )
+            .offset(
+                x: configuration.isPressed ? shadowOffset - 1.0 : 0,
+                y: configuration.isPressed ? shadowOffset - 1.0 : 0
+            )
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+            .padding(.trailing, shadowOffset)
+            .padding(.bottom, shadowOffset)
+    }
+}
+
+public extension View {
+    func shineInlineCard(
+        borderLineWidth: CGFloat = 3.5,
+        shadowOffset: CGFloat = 6.0,
+        backgroundColor: Color = Color.white
+    ) -> some View {
+        self.modifier(
+            ShineCardInlineModifier(
+                borderLineWidth: borderLineWidth,
+                shadowOffset: shadowOffset,
+                backgroundColor: backgroundColor
+            )
+        )
+    }
+}
