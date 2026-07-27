@@ -9,6 +9,7 @@ struct ProfileView: View {
     @State private var isLoading = false
     @State private var showLogin = false
     @State private var showSetupWizard = false
+    @State private var showLogoutConfirmation = false
     
     var body: some View {
         MultiplatformNavigationStack {
@@ -152,7 +153,7 @@ struct ProfileView: View {
                         }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button(action: {
-                                authManager.logout()
+                                showLogoutConfirmation = true
                             }) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "power")
@@ -173,7 +174,7 @@ struct ProfileView: View {
                         }
                         ToolbarItem(placement: .primaryAction) {
                             Button(action: {
-                                authManager.logout()
+                                showLogoutConfirmation = true
                             }) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "power")
@@ -216,6 +217,34 @@ struct ProfileView: View {
                         }
                         .buttonStyle(PrimaryButtonStyle())
                         .padding(.horizontal, 32)
+                    }
+                }
+                
+                // Shine UI Custom Brand Alert Confirmation
+                ShineAlertView(isPresented: $showLogoutConfirmation) {
+                    VStack(spacing: 16) {
+                        Text("¿Cerrar Sesión?")
+                            .font(.system(size: 22, weight: .black, design: .rounded))
+                            .foregroundColor(.black)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("¿Estás seguro de que quieres salir de tu cuenta de Coki Studios?")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        HStack(spacing: 24) {
+                            ShineColorButton(iconSystemName: "xmark", iconColor: .red) {
+                                showLogoutConfirmation = false
+                            }
+                            
+                            ShineColorButton(iconSystemName: "checkmark", iconColor: .green) {
+                                showLogoutConfirmation = false
+                                authManager.logout()
+                            }
+                        }
+                        .padding(.top, 8)
                     }
                 }
             }
