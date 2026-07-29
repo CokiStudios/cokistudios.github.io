@@ -374,5 +374,6 @@ struct CircleAvatarPlaceholder: View {
             .frame(width: 32, height: 32)
             .background(ForkarTheme.accent.opacity(0.15))
             .clipShape(Circle())
+            .overlay(Circle().stroke(Color.black, lineWidth: 1.5))
     }
 }

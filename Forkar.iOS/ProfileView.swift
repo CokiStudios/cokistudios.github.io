@@ -98,9 +98,9 @@ struct ProfileView: View {
                                 }
                                 .padding(.top, 8)
                             }
-                            .padding()
                             .frame(maxWidth: .infinity)
-                            .glassCard()
+                            .shineInlineCard(borderLineWidth: 2.8, shadowOffset: 5.5, backgroundColor: ForkarTheme.card)
+                            .padding(.horizontal)
                             
                             // User's Posts list
                             VStack(alignment: .leading, spacing: 14) {
@@ -123,7 +123,7 @@ struct ProfileView: View {
                                         .foregroundColor(ForkarTheme.textSub)
                                         .frame(maxWidth: .infinity, alignment: .center)
                                         .padding(.vertical, 30)
-                                        .glassCard()
+                                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
                                         .padding(.horizontal)
                                 } else {
                                     ForEach(userPosts) { post in
@@ -213,9 +213,12 @@ struct ProfileView: View {
                             showLogin = true
                         }) {
                             Text("Iniciar Sesión / Registrarse")
+                                .font(.system(size: 15, weight: .black))
+                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
+                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
                         .padding(.horizontal, 32)
                     }
                 }

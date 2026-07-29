@@ -90,18 +90,13 @@ struct LoginView: View {
                                     HStack(spacing: 10) {
                                         Image(systemName: "safari.fill")
                                         Text("Continuar con Google")
-                                            .font(.system(size: 14, weight: .bold))
+                                            .font(.system(size: 13, weight: .black))
                                     }
                                     .foregroundColor(ForkarTheme.text)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(Color.white.opacity(0.04))
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(ForkarTheme.border, lineWidth: 1)
-                                    )
+                                    .padding(.vertical, 4)
                                 }
+                                .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
                                 
                                 Button(action: {
                                     Task {
@@ -111,18 +106,13 @@ struct LoginView: View {
                                     HStack(spacing: 10) {
                                         Image(systemName: "terminal.fill")
                                         Text("Continuar con GitHub")
-                                            .font(.system(size: 14, weight: .bold))
+                                            .font(.system(size: 13, weight: .black))
                                     }
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(Color.black.opacity(0.4))
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(ForkarTheme.border, lineWidth: 1)
-                                    )
+                                    .padding(.vertical, 4)
                                 }
+                                .buttonStyle(ShineButtonStyle(backgroundColor: Color.black, borderLineWidth: 2.0, shadowOffset: 3.0))
                             }
                             .padding(.bottom, 4)
                             
@@ -187,15 +177,18 @@ struct LoginView: View {
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
                                     Text(isRegistering ? "Crear cuenta" : "Iniciar sesión")
+                                        .font(.system(size: 15, weight: .black))
+                                        .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 4)
                                 }
                             }
                         }
-                        .buttonStyle(PrimaryButtonStyle())
+                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
                         .disabled(isLoading)
                         .padding(.top, 10)
                     }
-                    .glassCard()
+                    .shineInlineCard(borderLineWidth: 2.8, shadowOffset: 6.0, backgroundColor: ForkarTheme.card)
                     .padding(.horizontal)
                     
                     // Switch login / register
@@ -303,13 +296,8 @@ struct CustomTextField: View {
                 .disableAutocorrection(true)
             #endif
         }
-        .padding()
-        .background(Color.black.opacity(0.2))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(ForkarTheme.border, lineWidth: 1)
-        )
+        .padding(.horizontal, 4)
+        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
     }
 }
 
@@ -335,12 +323,7 @@ struct CustomSecureField: View {
                 .disableAutocorrection(true)
             #endif
         }
-        .padding()
-        .background(Color.black.opacity(0.2))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(ForkarTheme.border, lineWidth: 1)
-        )
+        .padding(.horizontal, 4)
+        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
     }
 }

@@ -35,9 +35,8 @@ struct CreatePostView: View {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
                                     .frame(maxWidth: .infinity, alignment: .center)
-                            } else {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 10) {
+                            } else {                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
                                         ForEach(categories) { category in
                                             Button(action: {
                                                 selectedCategoryId = category.id
@@ -46,48 +45,49 @@ struct CreatePostView: View {
                                                     Circle()
                                                         .fill(category.themeColor)
                                                         .frame(width: 8, height: 8)
+                                                        .overlay(Circle().stroke(Color.black, lineWidth: 1.0))
                                                     
                                                     Text(category.name)
-                                                        .font(.system(size: 13, weight: .bold))
+                                                        .font(.system(size: 12, weight: .black))
+                                                        .foregroundColor(selectedCategoryId == category.id ? .white : ForkarTheme.text)
                                                 }
                                                 .padding(.vertical, 8)
                                                 .padding(.horizontal, 16)
                                                 .background(selectedCategoryId == category.id ? category.themeColor : ForkarTheme.card)
-                                                .foregroundColor(.white)
-                                                .cornerRadius(20)
+                                                .cornerRadius(6)
                                                 .overlay(
-                                                    RoundedRectangle(cornerRadius: 20)
-                                                        .stroke(selectedCategoryId == category.id ? Color.clear : ForkarTheme.border, lineWidth: 1)
+                                                    RoundedRectangle(cornerRadius: 6)
+                                                        .stroke(Color.black, lineWidth: 2.0)
                                                 )
+                                                .shadow(color: .black, radius: 0, x: selectedCategoryId == category.id ? 1.5 : 2.5, y: selectedCategoryId == category.id ? 1.5 : 2.5)
                                             }
+                                            .buttonStyle(PlainButtonStyle())
+                                            .padding(.vertical, 4)
                                         }
                                     }
+                                    .padding(.horizontal, 2)
                                 }
                             }
                             
                             // Title input
                             Text("Título")
-                                .font(.headline)
+                                .font(.system(size: 16, weight: .black))
                                 .foregroundColor(ForkarTheme.text)
                             
                             TextField("Escribe un título descriptivo...", text: $title)
                                 .foregroundColor(ForkarTheme.text)
-                                .padding()
-                                .background(ForkarTheme.card)
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(ForkarTheme.border, lineWidth: 1)
-                                )
+                                .padding(.horizontal, 4)
+                                .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                             
                             // Content input
                             Text("Contenido")
-                                .font(.headline)
+                                .font(.system(size: 16, weight: .black))
                                 .foregroundColor(ForkarTheme.text)
                             
                             ZStack(alignment: .topLeading) {
                                 if content.isEmpty {
                                     Text("Escribe aquí los detalles de tu publicación...")
+                                        .font(.system(size: 14))
                                         .foregroundColor(ForkarTheme.textMuted)
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 18)
@@ -96,15 +96,10 @@ struct CreatePostView: View {
                                 
                                 TextEditor(text: $content)
                                     .foregroundColor(ForkarTheme.text)
-                                    .padding(10)
+                                    .padding(8)
                                     .frame(minHeight: 180)
                                     .scrollContentBackground(.hidden) // Required to make background color work on iOS 16+
-                                    .background(ForkarTheme.card)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(ForkarTheme.border, lineWidth: 1)
-                                    )
+                                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                             }
                             
                             if !errorMessage.isEmpty {
@@ -129,11 +124,13 @@ struct CreatePostView: View {
                             } else {
                                 Image(systemName: "paperplane.fill")
                                 Text("Publicar en la Comunidad")
+                                    .font(.system(size: 15, weight: .black))
                             }
                         }
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
                     .disabled(isLoading)
                     .padding()
                 }

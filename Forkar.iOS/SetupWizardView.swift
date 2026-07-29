@@ -69,7 +69,11 @@ struct SetupWizardView: View {
                         Button("back_btn".localized) {
                             withAnimation { step -= 1 }
                         }
-                        .buttonStyle(SecondaryButtonStyle())
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundColor(ForkarTheme.text)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 16)
+                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.5))
                     }
                     
                     Button(action: {
@@ -78,12 +82,16 @@ struct SetupWizardView: View {
                         if isSaving {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .frame(maxWidth: .infinity)
                         } else {
                             Text(step == 2 ? "finish_btn".localized : "next_btn".localized)
+                                .font(.system(size: 14, weight: .black))
+                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
                         }
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
                     .disabled(isNextDisabled || isSaving)
                 }
                 .padding(.horizontal, 24)
@@ -164,14 +172,9 @@ struct SetupWizardView: View {
                     .foregroundColor(ForkarTheme.text)
                 
                 TextField("full_name_placeholder".localized, text: $fullName)
-                    .padding()
-                    .background(ForkarTheme.card)
                     .foregroundColor(ForkarTheme.text)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(ForkarTheme.border, lineWidth: 1)
-                    )
+                    .padding(.horizontal, 4)
+                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
@@ -182,14 +185,9 @@ struct SetupWizardView: View {
                     .foregroundColor(ForkarTheme.text)
                 
                 TextField("avatar_url_placeholder".localized, text: $avatarUrl)
-                    .padding()
-                    .background(ForkarTheme.card)
                     .foregroundColor(ForkarTheme.text)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(ForkarTheme.border, lineWidth: 1)
-                    )
+                    .padding(.horizontal, 4)
+                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
             }
             .padding(.horizontal, 24)
         }
@@ -232,13 +230,8 @@ struct SetupWizardView: View {
                             .font(.caption)
                             .foregroundColor(ForkarTheme.textSub)
                     }
-                    .padding()
-                    .background(ForkarTheme.card)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(ForkarTheme.border, lineWidth: 1)
-                    )
+                    .padding(.horizontal, 4)
+                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                 }
             }
             .padding(.horizontal, 24)
@@ -250,14 +243,9 @@ struct SetupWizardView: View {
                     .foregroundColor(ForkarTheme.text)
                 
                 TextField("company_placeholder".localized, text: $company)
-                    .padding()
-                    .background(ForkarTheme.card)
                     .foregroundColor(ForkarTheme.text)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(ForkarTheme.border, lineWidth: 1)
-                    )
+                    .padding(.horizontal, 4)
+                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
             }
             .padding(.horizontal, 24)
         }

@@ -103,15 +103,10 @@ struct ChatRoomDetailView: View {
                 // Message Input Area
                 HStack(spacing: 12) {
                     TextField("Escribe un mensaje...", text: $newMessageText)
+                        .foregroundColor(ForkarTheme.text)
                         .padding(.vertical, 10)
                         .padding(.horizontal, 16)
-                        .background(ForkarTheme.card)
-                        .foregroundColor(ForkarTheme.text)
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(ForkarTheme.border, lineWidth: 1)
-                        )
+                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                         .disabled(isSending)
                     
                     Button(action: {
@@ -120,17 +115,20 @@ struct ChatRoomDetailView: View {
                         if isSending {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .frame(width: 24, height: 24)
+                                .frame(width: 38, height: 38)
                         } else {
                             Image(systemName: "paperplane.fill")
-                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.white)
+                                .frame(width: 38, height: 38)
+                                .background(newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : ForkarTheme.accent)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.black, lineWidth: 2.0))
+                                .background(Circle().fill(Color.black).offset(x: 2, y: 2))
                         }
                     }
-                    .padding(10)
-                    .background(newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : ForkarTheme.accent)
-                    .clipShape(Circle())
                     .disabled(newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
+                    .padding(.trailing, 2)
+                    .padding(.bottom, 2)
                 }
                 .padding()
                 .background(ForkarTheme.card)
@@ -507,15 +505,18 @@ struct MessageBubbleView: View {
                     .padding(.horizontal, 14)
                     .background(isCurrentUser ? ForkarTheme.accent : ForkarTheme.card)
                     .foregroundColor(isCurrentUser ? .white : ForkarTheme.text)
-                    .cornerRadius(16, corners: isCurrentUser ? [.topLeft, .topRight, .bottomLeft] : [.topLeft, .topRight, .bottomRight])
+                    .cornerRadius(8)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(isCurrentUser ? Color.clear : ForkarTheme.border, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.black, lineWidth: 2.0)
                     )
+                    .shadow(color: .black, radius: 0, x: isCurrentUser ? 2.5 : -2.5, y: 2.5)
+                    .padding(.horizontal, 4)
                 
                 Text(message.formattedTime)
                     .font(.system(size: 9))
                     .foregroundColor(ForkarTheme.textMuted)
+                    .padding(.horizontal, 6)
             }
             
             if isCurrentUser {

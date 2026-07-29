@@ -236,8 +236,7 @@ struct ChatRoomRowView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(ForkarTheme.textMuted)
         }
-        .padding()
-        .glassCard()
+        .shineInlineCard(borderLineWidth: 2.5, shadowOffset: 4.5, backgroundColor: ForkarTheme.card)
         .onAppear {
             if !room.is_group {
                 Task {
@@ -289,13 +288,7 @@ struct CreateGroupSheetView: View {
                         
                         TextField("Ej. Club de Lectura, Hacks, etc.", text: $groupName)
                             .padding()
-                            .background(ForkarTheme.card)
-                            .foregroundColor(ForkarTheme.text)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(ForkarTheme.border, lineWidth: 1)
-                            )
+                            .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                             .disabled(isCreating)
                     }
                     .padding(.horizontal)
@@ -308,10 +301,13 @@ struct CreateGroupSheetView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
                             Text("Crear Grupo de Chat")
+                                .font(.system(size: 15, weight: .black))
+                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
                         }
                     }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
                     .disabled(groupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
                     .padding(.horizontal)
                     

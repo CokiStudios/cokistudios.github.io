@@ -30,140 +30,129 @@ struct PostDetailView: View {
             
             VStack(spacing: 0) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 24) {
                         
-                        // Author Card Header
-                        HStack(spacing: 12) {
-                            if let avatarURL = post.author_avatar, let url = URL(string: avatarURL) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable()
-                                } placeholder: {
-                                    CircleAvatarPlaceholder(initials: post.initials)
-                                }
-                                .frame(width: 44, height: 44)
-                                .clipShape(Circle())
-                            } else {
-                                CircleAvatarPlaceholder(initials: post.initials)
+                        // Main Post Neubrutalist Card
+                        VStack(alignment: .leading, spacing: 20) {
+                            // Author Card Header
+                            HStack(spacing: 12) {
+                                if let avatarURL = post.author_avatar, let url = URL(string: avatarURL) {
+                                    AsyncImage(url: url) { image in
+                                        image.resizable()
+                                    } placeholder: {
+                                        CircleAvatarPlaceholder(initials: post.initials)
+                                    }
                                     .frame(width: 44, height: 44)
-                                    .font(.system(size: 16, weight: .bold))
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(post.author_name)
-                                    .font(.headline)
-                                    .foregroundColor(ForkarTheme.text)
-                                Text(post.formattedDate)
-                                    .font(.subheadline)
-                                    .foregroundColor(ForkarTheme.textSub)
-                            }
-                            
-                            Spacer()
-                            
-                            // Follow and Message Buttons (if not current user)
-                            if authManager.isLoggedIn && post.user_id != authManager.currentUser?.id {
-                                HStack(spacing: 8) {
-                                    // Chat / Message button
-                                    Button(action: {
-                                        startChat()
-                                    }) {
-                                        Image(systemName: "message.fill")
-                                            .font(.system(size: 12, weight: .bold))
-                                            .padding(.vertical, 8)
-                                            .padding(.horizontal, 12)
-                                            .background(ForkarTheme.card)
-                                            .foregroundColor(ForkarTheme.accent)
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(ForkarTheme.border, lineWidth: 1)
-                                            )
-                                    }
-                                    
-                                    // Follow Button
-                                    Button(action: {
-                                        Task {
-                                            await toggleFollow()
-                                        }
-                                    }) {
-                                        Text(isFollowingAuthor ? "Siguiendo" : "Seguir")
-                                            .font(.system(size: 12, weight: .bold))
-                                            .padding(.vertical, 6)
-                                            .padding(.horizontal, 14)
-                                            .background(isFollowingAuthor ? Color.clear : ForkarTheme.accent)
-                                            .foregroundColor(.white)
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(isFollowingAuthor ? ForkarTheme.border : Color.clear, lineWidth: 1)
-                                            )
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.bottom, 8)
-                        
-                        // Post Header (Category and Title)
-                        VStack(alignment: .leading, spacing: 10) {
-                            if let cat = post.category {
-                                Text(cat.name)
-                                    .font(.system(size: 11, weight: .black))
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 12)
-                                    .background(cat.themeColor.opacity(0.15))
-                                    .foregroundColor(cat.themeColor)
-                                    .cornerRadius(10)
-                            }
-                            
-                            Text(post.title)
-                                .font(.system(size: 22, weight: .heavy))
-                                .foregroundColor(ForkarTheme.text)
-                        }
-                        
-                        // Content Body
-                        Text(parseMentions(post.content))
-                            .font(.system(size: 15))
-                            .lineSpacing(4)
-                            .foregroundColor(ForkarTheme.text)
-                            .textSelection(.enabled)
-                        
-                        // Like/Action bar
-                        HStack(spacing: 24) {
-                            Button(action: {
-                                if authManager.isLoggedIn {
-                                    Task {
-                                        await toggleLike()
-                                    }
+                                    .clipShape(Circle())
                                 } else {
-                                    showLogin = true
+                                    CircleAvatarPlaceholder(initials: post.initials)
+                                        .frame(width: 44, height: 44)
+                                        .font(.system(size: 16, weight: .bold))
                                 }
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: isLiked ? "heart.fill" : "heart")
-                                        .foregroundColor(isLiked ? .red : ForkarTheme.textSub)
-                                    Text("\(likesCount) Likes")
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(post.author_name)
+                                        .font(.headline)
+                                        .foregroundColor(ForkarTheme.text)
+                                    Text(post.formattedDate)
+                                        .font(.subheadline)
                                         .foregroundColor(ForkarTheme.textSub)
                                 }
-                                .font(.system(size: 13, weight: .bold))
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(ForkarTheme.card)
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(ForkarTheme.border, lineWidth: 1)
-                                )
+                                
+                                Spacer()
+                                
+                                // Follow and Message Buttons (if not current user)
+                                if authManager.isLoggedIn && post.user_id != authManager.currentUser?.id {
+                                    HStack(spacing: 8) {
+                                        // Chat / Message button
+                                        Button(action: {
+                                            startChat()
+                                        }) {
+                                            Image(systemName: "message.fill")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(ForkarTheme.accent)
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal, 12)
+                                        }
+                                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 2.5))
+                                        
+                                        // Follow Button
+                                        Button(action: {
+                                            Task {
+                                                await toggleFollow()
+                                            }
+                                        }) {
+                                            Text(isFollowingAuthor ? "Siguiendo" : "Seguir")
+                                                .font(.system(size: 11, weight: .black))
+                                                .foregroundColor(isFollowingAuthor ? ForkarTheme.text : .white)
+                                                .padding(.vertical, 6)
+                                                .padding(.horizontal, 14)
+                                        }
+                                        .buttonStyle(ShineButtonStyle(backgroundColor: isFollowingAuthor ? ForkarTheme.card : ForkarTheme.accent, borderLineWidth: 2.0, shadowOffset: 2.5))
+                                    }
+                                }
+                            }
+                            .padding(.bottom, 4)
+                            
+                            // Post Header (Category and Title)
+                            VStack(alignment: .leading, spacing: 10) {
+                                if let cat = post.category {
+                                    Text(cat.name)
+                                        .font(.system(size: 10, weight: .black))
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, 12)
+                                        .background(cat.themeColor.opacity(0.15))
+                                        .foregroundColor(cat.themeColor)
+                                        .cornerRadius(6)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(Color.black, lineWidth: 1.5)
+                                        )
+                                }
+                                
+                                Text(post.title)
+                                    .font(.system(size: 22, weight: .heavy))
+                                    .foregroundColor(ForkarTheme.text)
                             }
                             
-                            Spacer()
+                            // Content Body
+                            Text(parseMentions(post.content))
+                                .font(.system(size: 15))
+                                .lineSpacing(4)
+                                .foregroundColor(ForkarTheme.text)
+                                .textSelection(.enabled)
+                            
+                            // Like/Action bar
+                            HStack(spacing: 24) {
+                                Button(action: {
+                                    if authManager.isLoggedIn {
+                                        Task {
+                                            await toggleLike()
+                                        }
+                                    } else {
+                                        showLogin = true
+                                    }
+                                }) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                                            .foregroundColor(isLiked ? .red : ForkarTheme.textSub)
+                                        Text("\(likesCount) Likes")
+                                            .foregroundColor(ForkarTheme.text)
+                                    }
+                                    .font(.system(size: 12, weight: .black))
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 16)
+                                }
+                                .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
+                                
+                                Spacer()
+                            }
                         }
-                        .padding(.vertical, 10)
-                        
-                        Divider()
-                            .background(ForkarTheme.border)
+                        .shineInlineCard(borderLineWidth: 2.8, shadowOffset: 5.0, backgroundColor: ForkarTheme.card)
                         
                         // Comments Title
                         Text("Comentarios (\(comments.count))")
-                            .font(.headline)
+                            .font(.system(size: 16, weight: .black))
                             .foregroundColor(ForkarTheme.text)
                             .padding(.top, 4)
                         
@@ -207,12 +196,7 @@ struct PostDetailView: View {
                             .foregroundColor(ForkarTheme.text)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
-                            .background(Color.black.opacity(0.2))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(ForkarTheme.border, lineWidth: 1)
-                            )
+                            .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                         
                         Button(action: {
                             if authManager.isLoggedIn {
@@ -225,11 +209,15 @@ struct PostDetailView: View {
                         }) {
                             Image(systemName: "paperplane.fill")
                                 .foregroundColor(.white)
-                                .frame(width: 40, height: 40)
-                                .background(ForkarTheme.primaryGradient)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .frame(width: 38, height: 38)
+                                .background(ForkarTheme.accent)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.black, lineWidth: 2.0))
+                                .background(Circle().fill(Color.black).offset(x: 2, y: 2))
                         }
                         .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .padding(.trailing, 2)
+                        .padding(.bottom, 2)
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 12)
@@ -538,12 +526,6 @@ struct CommentRowView: View {
                 .foregroundColor(ForkarTheme.text)
                 .padding(.leading, 32)
         }
-        .padding()
-        .background(ForkarTheme.card)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(ForkarTheme.border, lineWidth: 1)
-        )
+        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 3.5, backgroundColor: ForkarTheme.card)
     }
 }
