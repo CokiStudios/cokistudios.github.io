@@ -546,7 +546,33 @@
         </div>
     </div>
 
+    <!-- ── CUSTOM SHINE ALERT ── -->
+    <div id="shineAlertModal" class="shine-menu-overlay">
+        <div class="shine-menu" style="max-width: 400px; padding: 40px 30px 30px;">
+            <button class="shine-corner-btn shine-btn-tl" onclick="closeShineAlert()" aria-label="Close">X</button>
+            <h3 id="shineAlertTitle" style="margin-top: 10px;">Aviso</h3>
+            <p id="shineAlertMessage" style="font-size: 15px; font-weight: 800; margin-bottom: 25px; line-height: 1.6; color: #000000; letter-spacing: 0.5px;"></p>
+            
+            <div class="shine-internal-actions" style="margin-top: 20px;">
+                <button class="shine-color-btn" onclick="closeShineAlert()" style="width: 54px; height: 54px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Override standard alert with Neubrutalist Shine Alert
+        window.alert = function(message) {
+            document.getElementById('shineAlertTitle').innerText = 'Aviso';
+            document.getElementById('shineAlertMessage').innerText = message;
+            document.getElementById('shineAlertModal').classList.add('active');
+        };
+        
+        function closeShineAlert() {
+            document.getElementById('shineAlertModal').classList.remove('active');
+        }
+
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
