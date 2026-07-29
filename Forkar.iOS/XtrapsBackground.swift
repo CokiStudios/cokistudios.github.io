@@ -64,30 +64,37 @@ public struct XtrapsBackground: View {
     public let animated: Bool
     public let lineWidth: CGFloat
     @State private var phase: CGFloat = 0.0
+    @State private var hue: Double = 0.0
     
     public init(
         strokeColor: Color = Color(red: 99/255, green: 102/255, blue: 241/255), // Vibrant Indigo
         opacity: Double = 0.55,
         animated: Bool = true,
-        lineWidth: CGFloat = 2.2
+        lineWidth: CGFloat = 2.2,
+        rainbow: Bool = false
     ) {
         self.strokeColor = strokeColor
         self.opacity = opacity
         self.animated = animated
         self.lineWidth = lineWidth
+        self.rainbow = rainbow
     }
+    // New property for rainbow animation
+    private let rainbow: Bool
     
     public var body: some View {
         GeometryReader { geometry in
             ZStack {
+                // Determine current color based on rainbow flag
+                let currentColor = rainbow ? Color(hue: hue, saturation: 0.8, brightness: 0.9) : strokeColor
                 // Wave 1 Gradient Stroke
                 XtrapsWave1()
                     .stroke(
                         LinearGradient(
                             colors: [
-                                strokeColor.opacity(opacity * 0.5),
-                                strokeColor.opacity(opacity * 1.0),
-                                strokeColor.opacity(opacity * 0.6)
+                                currentColor.opacity(opacity * 0.5),
+                                currentColor.opacity(opacity * 1.0),
+                                currentColor.opacity(opacity * 0.6)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -101,9 +108,9 @@ public struct XtrapsBackground: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                strokeColor.opacity(opacity * 0.4),
-                                strokeColor.opacity(opacity * 0.85),
-                                strokeColor.opacity(opacity * 1.0)
+                                currentColor.opacity(opacity * 0.4),
+                                currentColor.opacity(opacity * 0.85),
+                                currentColor.opacity(opacity * 1.0)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -118,6 +125,16 @@ public struct XtrapsBackground: View {
             if animated {
                 withAnimation(Animation.easeInOut(duration: 5.0).repeatForever(autoreverses: true)) {
                     phase = .pi * 2
+                }
+            }
+            if rainbow {
+                // Start hue animation loop
+                withAnimation(Animation.linear(duration: 12.0).repeatForever(autoreverses: false)) {
+                    hue = 1.0
+                }
+                // Periodic timer to update hue smoothly
+                Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
+                    hue = (hue + 0.002).truncatingRemainder(dividingBy: 1.0)
                 }
             }
         }

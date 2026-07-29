@@ -19,7 +19,7 @@ struct LoginView: View {
             // Background
             ForkarTheme.bg
                 .ignoresSafeArea()
-            XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12))
+            XtrapsBackground(strokeColor: ForkarTheme.accent.opacity(0.12), rainbow: true)
                 .ignoresSafeArea()
             
             // Grid Effect from the web

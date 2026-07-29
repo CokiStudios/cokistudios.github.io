@@ -1,0 +1,39 @@
+/* XTRAPS Rainbow Background CSS */
+@keyframes xtrapsRainbowRotate {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes xtrapsPulse {
+    0%, 100% { transform: scale(1) translateY(0); opacity: 0.25; }
+    50% { transform: scale(1.08) translateY(-15px); opacity: 0.45; }
+}
+
+.xtraps-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #0d1117 0%, #06090f 100%);
+}
+
+.xtraps-bg.rainbow::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: conic-gradient(
+        from 0deg at 50% 50%,
+        #ff0055, #7928ca, #0070f3, #00dfd8, #7928ca, #ff0055
+    );
+    opacity: 0.2;
+    filter: blur(60px);
+    animation: xtrapsRainbowRotate 12s linear infinite;
+}
+
+.xtraps-bg .xtraps-wave {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    animation: xtrapsPulse 8s ease-in-out infinite alternate;
+}
