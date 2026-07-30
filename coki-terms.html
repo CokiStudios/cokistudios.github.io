@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos y Privacidad — Coki Studios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #06090f;
+            --card: rgba(13, 17, 23, 0.8);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 100px 24px 60px;
+            line-height: 1.7;
+        }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 0 32px; background: rgba(6,9,15,0.85);
+            backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            max-width: 1000px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between; height: 68px;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; font-weight: 700; }
+        .nav-logo { width: 36px; height: 36px; background: #000; border-radius: 10px; overflow: hidden; }
+        .nav-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+        .legal-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 48px;
+            backdrop-filter: blur(25px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .legal-header { text-align: center; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid var(--border); }
+        .legal-header h1 { font-size: 38px; font-weight: 900; margin-bottom: 12px; }
+        .legal-header p { color: var(--text-sub); font-size: 15px; }
+
+        .legal-tabs { display: flex; gap: 12px; justify-content: center; margin-bottom: 36px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
+            transition: all 0.25s;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .legal-text pre {
+            white-space: pre-wrap;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            color: #cbd5e1;
+            line-height: 1.8;
+        }
+
+        footer { text-align: center; margin-top: 60px; color: var(--text-sub); font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <div class="xtraps-bg rainbow">
+        <div class="xtraps-wave"></div>
+    </div>
+
+    <nav>
+        <div class="nav-inner">
+            <a href="index.html" class="nav-brand">
+                <div class="nav-logo"><img src="assets/cs-logo.png" alt="CS Logo"></div>
+                <span>Coki Studios</span>
+            </a>
+            <a href="index.html" style="color:var(--text-sub);text-decoration:none;font-weight:600;font-size:14px;">← Volver al Inicio</a>
+        </div>
+    </nav>
+
+    <div class="legal-container">
+        <div class="legal-header">
+            <h1>Legal & Privacidad</h1>
+            <p>Términos Oficiales de Servicio y Política de Privacidad de Coki Studios LLC</p>
+        </div>
+
+        <div class="legal-tabs">
+            <button class="tab-btn active" onclick="showTab('terms')">📜 Términos y Condiciones</button>
+            <button class="tab-btn" onclick="showTab('privacy')">🔒 Política de Privacidad</button>
+        </div>
+
+        <!-- TAB 1: TÉRMINOS Y CONDICIONES -->
+        <div id="terms" class="tab-content active legal-text">
+<pre>
+TERMINOS Y CONDICIONES DE SERVICIO
+Coki Studios LLC — Coki ID (CS ID) & Forkar
+Ultima actualización: 30 de Julio de 2026
+
+1. ACEPTACION DE LOS TERMINOS
+Al registrarte, crear una cuenta de Coki ID (CS ID) o interactuar con la plataforma Forkar (vía web o aplicación móvil iOS/Android), aceptas quedar vinculado legalmente por los presentes Términos y Condiciones, así como por nuestra Política de Privacidad. Si no estás de acuerdo con alguno de estos términos, no debes utilizar nuestros servicios.
+
+2. DEFINICION DEL SERVICIO
+- Coki ID (CS ID): Es el sistema de identidad digital unificada (Single Sign-On / SSO) administrado por Coki Studios LLC. Permite autenticar tu perfil, guardar tu progreso y vincular tus datos de forma segura entre todos los juegos, herramientas y aplicaciones autorizadas de Coki Studios.
+- Forkar: Es la plataforma social, foro y comunidad de desarrolladores de Coki Studios donde los usuarios pueden compartir publicaciones, interactuar en salas de chat (CSMS), crear comunidades y publicar proyectos.
+
+3. REGISTRO Y SEGURIDAD DE LA CUENTA
+3.1 Veracidad de los Datos: Debes proporcionar información precisa y mantener actualizado tu correo electrónico para la recepción de credenciales y verificaciones de seguridad (como códigos OTP).
+3.2 Custodia de Credenciales: Eres el único responsable de mantener la confidencialidad de tu contraseña y de cualquier actividad realizada bajo tu cuenta de Coki ID.
+3.3 Notificación de Accesos No Autorizados: Te comprometes a notificar de inmediato a Coki Studios si detectas un acceso no autorizado a tu cuenta.
+
+4. NORMAS DE CONDUCTA Y MODERACION EN FORKAR
+Para mantener un entorno seguro e inspirador para todos los creadores y jugadoras/es, queda estrictamente prohibido en Forkar y en los servicios de mensajería CSMS:
+- Contenido Inapropiado: Publicar material de odio, acoso, difamación, contenido explícito, spam o virus informáticos.
+- Suplantación de Identidad: Intentar hacerse pasar por otro usuario, desarrollador o representante oficial de Coki Studios.
+- Explotación de Vulnerabilidades: Intentar alterar la infraestructura de API, evadir los mecanismos de autenticación PKCE/OAuth o modificar las puntuaciones y progresos mediante hacks o scripts maliciosos.
+
+Coki Studios se reserva el derecho de suspender o inhabilitar temporal o permanentemente cualquier cuenta de Coki ID que viole estas reglas de convivencia.
+
+5. INTEGRACION PARA DESARROLLADORES (OAUTH 2.0 & APIS)
+5.1 Uso de la Consola de Desarrolladores: Los desarrolladores que utilicen Coki ID como proveedor de identidad (OAuth 2.0 / PKCE) se comprometen a solicitar únicamente los permisos (scopes) estrictamente necesarios para su aplicación.
+5.2 Protección de Datos de Terceros: Las aplicaciones de terceros conectadas a Coki ID no podrán vender, comerciar ni transferir información de los usuarios a anunciantes o terceros no autorizados.
+
+6. PROPIEDAD INTELECTUAL
+- Todos los personajes, logotipos, elementos gráficos (incluyendo a Coki el perro, Forkman, el diseño XTRAPS, y la marca registral de Coki Studios) son propiedad exclusiva de Coki Studios LLC.
+- Conservas la propiedad de los derechos de autor sobre las ideas, publicaciones y proyectos originales que compartas en Forkar, otorgando a Coki Studios una licencia no exclusiva para alojar y mostrar dicho contenido dentro de la plataforma.
+
+7. LIMITACION DE RESPONSABILIDAD Y EXENCION LEGAL
+7.1 Exención por Caídas del Servicio: Coki Studios LLC proporciona todos los servicios "tal cual" (as is) y según disponibilidad. Coki Studios queda exento de cualquier responsabilidad por interrupciones temporales o prolongadas del servicio, caídas de servidores, mantenimientos no programados, fallas en proveedores de infraestructura de terceros (tales como GitHub Pages, Supabase o Brevo) o pérdidas de disponibilidad.
+7.2 Exención por Filtraciones o Accesos No Autorizados: Si bien Coki Studios implementa estándares de seguridad del sector (encriptación, políticas de seguridad RLS y validación OTP), Coki Studios queda completamente exento e indemne de toda responsabilidad legal o financiera ante eventuales filtraciones de datos, brechas de seguridad o ciberataques externos perpetrados por terceros no autorizados, o derivados del uso indebido de las credenciales por parte del usuario.
+
+8. MODIFICACIONES Y CONTACTO
+Coki Studios LLC se reserva el derecho de actualizar estos términos en cualquier momento. Notificaremos a los usuarios sobre cambios sustanciales a través de un aviso en Forkar o mediante correo electrónico.
+
+Contacto de soporte y legales: cokistudiosllc@gmail.com
+Sitio oficial: https://cokistudios.github.io
+</pre>
+        </div>
+
+        <!-- TAB 2: POLÍTICA DE PRIVACIDAD -->
+        <div id="privacy" class="tab-content legal-text">
+<pre>
+POLITICA DE PRIVACIDAD
+Coki Studios LLC — Protegiendo la privacidad de tu Coki ID
+Ultima actualización: 30 de Julio de 2026
+
+1. INFORMACION QUE RECOPILAMOS
+Para el funcionamiento de Coki ID (CS ID), la plataforma Forkar y nuestros juegos asociados, recopilamos la siguiente información personal:
+- Datos de Cuenta: Nombre completo, dirección de correo electrónico, avatar de perfil e ID único generado de Supabase.
+- Datos de Autenticación: Contraseñas encriptadas mediante algoritmos Hash unidireccionales (bcrypt/argon2) alojados en infraestructura Supabase Auth.
+- Datos de Uso y Progreso: Puntuaciones de juegos (ej. Coki Arcade), publicaciones en Forkar, mensajes de chat CSMS y token de sesión.
+
+2. USO DE LA INFORMACION
+Utilizamos la información recopilada exclusivamente para:
+- Autenticar tu identidad digital (Coki ID) en todos los servicios y juegos conectados.
+- Facilitar el funcionamiento de la red social Forkar y el servicio de mensajería CSMS.
+- Enviar notificaciones de seguridad necesarias, como códigos de verificación OTP e inicios de sesión sospechosos mediante Brevo SMTP.
+- Sincronizar tu progreso e historial en la nube entre aplicaciones web y móviles iOS/Android.
+
+3. COMPARTICION Y PROTECCION DE DATOS
+3.1 Aplicaciones Autorizadas de Terceros: Cuando inicias sesión con tu Coki ID en una aplicación de terceros mediante OAuth 2.0 / PKCE, solo compartimos la información básica autorizada por ti (nombre, correo y foto de perfil). Jamás compartimos tus contraseñas.
+3.2 Sin Venta de Datos: Coki Studios LLC no vende, alquila ni comercializa tu información personal a anunciantes ni a terceros.
+
+4. ALMACENAMIENTO Y SEGURIDAD
+Tus datos se almacenan en servidores seguros con cifrado de extremo a extremo y políticas de seguridad a nivel de fila (Row Level Security - RLS). La sesión en navegadores web se gestiona mediante cookies HTTP seguras o storage encriptado.
+
+5. DERECHOS DEL USUARIO Y ELIMINACION DE DATOS
+Tienes derecho a acceder, corregir o solicitar la eliminación total de tu cuenta de Coki ID y de todos los datos asociados en cualquier momento desde tu panel de control de Coki ID o escribiéndonos a nuestro correo de contacto.
+
+6. CONTACTO
+Para cualquier duda o solicitud relacionada con tu privacidad y protección de datos:
+Correo electrónico: cokistudiosllc@gmail.com
+Sitio web: https://cokistudios.github.io
+</pre>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 Coki Studios LLC. Todos los derechos reservados.
+    </footer>
+
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tabName === 'terms') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('terms').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('privacy').classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
