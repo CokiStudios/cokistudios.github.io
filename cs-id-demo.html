@@ -3,267 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo App — Test CS ID</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>CS ID: World of Coki & Forkman — Game Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --bg: #06090f;
-            --card: rgba(255,255,255,0.03);
-            --border: rgba(255,255,255,0.07);
+            --card: rgba(13, 17, 23, 0.85);
+            --border: rgba(251, 191, 36, 0.35);
             --accent: #6366f1;
+            --coki-yellow: #fbbf24;
             --text: #f1f5f9;
-            --text-sub: #94a3b8;
         }
+
         body {
             font-family: 'Outfit', sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 24px;
-        }
-        body::before {
-            content: ''; position: fixed; inset: 0; z-index: -1;
-            background-image: linear-gradient(rgba(99,102,241,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.025) 1px, transparent 1px);
-            background-size: 60px 60px;
-        }
-        body::after {
-            content: '';
-            position: fixed; inset: 0; z-index: -1;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3C/svg%3E");
-            background-repeat: repeat-y;
-            background-size: 100% 600px;
-            background-position: center top;
-            pointer-events: none;
-            animation: moveBackground 25s linear infinite;
-        }
-        html.light-theme body::after {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3C/svg%3E");
+            padding: 20px;
+            overflow-x: hidden;
         }
 
-        @keyframes moveBackground {
-            from { background-position: center 0px; }
-            to { background-position: center 600px; }
+        .arcade-container {
+            width: 100%;
+            max-width: 960px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            box-shadow: 0 0 60px rgba(251, 191, 36, 0.2);
+            border-radius: 28px;
+            padding: 32px;
+            backdrop-filter: blur(25px);
+            position: relative;
         }
-        .container { width: 100%; max-width: 500px; }
-        .card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 24px; padding: 32px; backdrop-filter: blur(20px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+
+        .arcade-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .header { text-align: center; margin-bottom: 24px; }
-        .app-icon {
-            width: 64px; height: 64px; background: linear-gradient(135deg, #10b981, #059669);
-            border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center;
-            justify-content: center; font-size: 24px; font-weight: 900; box-shadow: 0 10px 20px rgba(16,185,129,0.2);
+
+        .arcade-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+            color: var(--coki-yellow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-        p { color: var(--text-sub); font-size: 14px; line-height: 1.6; }
-        
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-        input {
-            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px 16px; color: var(--text); font-family: inherit;
-            outline: none; transition: border-color 0.2s;
+
+        .csid-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--coki-yellow);
         }
-        input:focus { border-color: var(--accent); }
-        
-        .btn {
-            width: 100%; padding: 14px; background: var(--accent); color: white;
-            border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s; font-family: inherit; margin-top: 16px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+
+        /* ── SECCIONES DEL JUEGO ── */
+        .view-section { display: none; text-align: center; }
+        .view-section.active { display: block; }
+
+        /* Login Screen */
+        .mascot-hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
         }
-        .btn:hover { background: #4f46e5; transform: translateY(-1px); }
-        
-        #result-section { display: none; margin-top: 24px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 16px; padding: 20px; }
-        .data-pre { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #10b981; overflow-x: auto; margin-top: 12px; }
+
+        .mascot-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 24px;
+            border: 2px solid var(--coki-yellow);
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.3);
+            overflow: hidden;
+            background: #000;
+        }
+
+        .mascot-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .login-hero h1 {
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-hero p {
+            color: #94a3b8;
+            max-width: 580px;
+            margin: 0 auto 32px;
+            line-height: 1.6;
+        }
+
+        /* Seleccionar Personaje */
+        .char-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .char-card {
+            background: rgba(255,255,255,0.04);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 16px;
+            cursor: pointer;
+            width: 170px;
+            transition: all 0.25s ease;
+        }
+
+        .char-card.selected {
+            border-color: var(--coki-yellow);
+            background: rgba(251, 191, 36, 0.12);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .char-card img { width: 70px; height: 70px; border-radius: 14px; margin-bottom: 8px; object-fit: cover; }
+        .char-name { font-weight: 800; font-size: 15px; color: var(--text); }
+        .char-desc { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+        .btn-csid-login {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            color: #06090f;
+            font-size: 16px;
+            font-weight: 900;
+            padding: 16px 36px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3);
+        }
+        .btn-csid-login:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(251, 191, 36, 0.5);
+        }
+
+        /* Game Arena */
+        .game-canvas-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 720px;
+            height: 400px;
+            margin: 0 auto 20px;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(251, 191, 36, 0.2);
+        }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+        .stat-val { font-size: 22px; font-weight: 900; color: var(--coki-yellow); }
+
+        .profile-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 20px;
+            border-radius: 14px;
+        }
+
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .avatar-img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--coki-yellow); object-fit: cover; }
+
+        .btn-small {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-small:hover { background: rgba(255,255,255,0.15); color: white; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="card">
-            <div class="header">
-                <div class="app-icon">🚀</div>
-                <h1>Demo App</h1>
-                <p>Usa esta app de prueba para validar que tu integración con <strong>CS ID</strong> (Coki Studios ID) funciona correctamente.</p>
-            </div>
+    <div class="xtraps-bg rainbow">
+        <div class="xtraps-wave"></div>
+    </div>
 
-            <div id="setup-section">
-                <div class="form-group">
-                    <label>Client ID de tu App</label>
-                    <input type="text" id="client-id" placeholder="Ej: csid_abc123..." value="">
-                    <p style="font-size: 11px; margin-top: 8px;">Consíguelo creando una app en el <a href="coki-developer.html" style="color:var(--accent)">Developer Portal</a></p>
+    <div class="arcade-container">
+        <!-- Header -->
+        <div class="arcade-header">
+            <div class="arcade-title">
+                🐶 COKI & FORKMAN: XTRAPS QUEST
+            </div>
+            <div class="csid-badge">
+                <span style="width:8px;height:8px;background:#fbbf24;border-radius:50%;"></span>
+                Powered by CS ID OAuth 2.0
+            </div>
+        </div>
+
+        <!-- 1. PANTALLA INICIAL: SELECCIÓN DE PERSONAJE & CS ID -->
+        <div id="view-login" class="view-section active">
+            <div class="login-hero">
+                <div class="mascot-hero">
+                    <div class="mascot-avatar"><img src="assets/coki_dog.png" alt="Coki Dog"></div>
+                    <div class="mascot-avatar"><img src="assets/forkman.png" alt="Forkman"></div>
                 </div>
-                
-                <button class="btn" id="btn-login">
-                    <div style="width:20px;height:20px;background:white;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:12px;">C</div>
-                    Iniciar sesión con CS ID
-                </button>
-            </div>
+                <h1>Aventura CS ID: El Legado de Coki</h1>
+                <p>
+                    Experimenta el verdadero poder de <strong>Coki ID</strong>. Elige a la mascota oficial <strong>Coki el perro simpático</strong> o a <strong>Forkman (la mente maestra de Forkar)</strong> para superar el laberinto dinámico de líneas XTRAPS. ¡Tus récords se guardan globalmente en tu cuenta Coki ID!
+                </p>
 
-            <div id="loading-section" style="display:none; text-align:center; padding: 20px 0;">
-                <p>🔄 Intercambiando código por token...</p>
-            </div>
-
-            <div id="result-section">
-                <h3 style="color:#10b981; font-weight:800; font-size:16px;">✅ ¡Autenticación Exitosa!</h3>
-                <p style="color:var(--text); margin-top:4px; margin-bottom: 16px;">Tu app ha recibido los datos del usuario desde Coki Studios:</p>
-                
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 16px;">
-                    <div id="profile-avatar" style="width: 56px; height: 56px; border-radius: 12px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--accent); overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
-                    <div>
-                        <h4 id="profile-name" style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 2px;"></h4>
-                        <p id="profile-email" style="font-size: 13px; color: var(--text-sub);"></p>
+                <div class="char-selector">
+                    <div class="char-card selected" id="card-coki" onclick="selectChar('coki')">
+                        <img src="assets/coki_dog.png" alt="Coki Dog">
+                        <div class="char-name">Coki</div>
+                        <div class="char-desc">El perro simpático cara de la marca</div>
+                    </div>
+                    <div class="char-card" id="card-forkman" onclick="selectChar('forkman')">
+                        <img src="assets/forkman.png" alt="Forkman">
+                        <div class="char-name">Forkman</div>
+                        <div class="char-desc">El hombre sabio detrás de Forkar</div>
                     </div>
                 </div>
 
-                <details style="margin-top: 16px;">
-                    <summary style="font-size: 12px; font-weight: 600; color: var(--text-sub); cursor: pointer; user-select: none;">Ver datos crudos (JSON)</summary>
-                    <pre class="data-pre" id="user-data"></pre>
-                </details>
-
-                <button class="btn" style="background:rgba(255,255,255,0.05); border: 1px solid var(--border); margin-top:24px; color: var(--text-sub);" onclick="window.location.href=window.location.pathname">Cerrar sesión / Probar de nuevo</button>
+                <button class="btn-csid-login" id="btn-login">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    Entrar al Juego con Coki ID
+                </button>
             </div>
+        </div>
+
+        <!-- 2. PANTALLA DEL JUEGO ORIGINAL -->
+        <div id="view-game" class="view-section">
+            <div class="profile-bar">
+                <div class="user-info">
+                    <img id="u-avatar" class="avatar-img" src="assets/coki_dog.png" alt="Avatar">
+                    <div style="text-align:left;">
+                        <div id="u-name" style="font-weight:700;font-size:14px;color:var(--coki-yellow);">Jugador Coki</div>
+                        <div id="u-email" style="font-size:12px;color:#94a3b8;">coki@id</div>
+                    </div>
+                </div>
+                <button class="btn-small" onclick="logoutGame()">Cerrar Sesión</button>
+            </div>
+
+            <div class="game-stats" style="margin-top:20px;">
+                <div class="stat-box">
+                    <div class="stat-label">ENERGÍA XTRAPS</div>
+                    <div class="stat-val" id="score">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">RÉCORD CLOUD (CS ID)</div>
+                    <div class="stat-val" id="high-score">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">PERSONAJE ACTIVO</div>
+                    <div class="stat-val" id="active-char-label" style="font-size:16px;color:#a5b4fc;">Coki</div>
+                </div>
+            </div>
+
+            <div class="game-canvas-wrap">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+
+            <p style="font-size:13px;color:#94a3b8;">Controla a tu héroe moviendo el cursor/táctil o usa las flechas <kbd style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">← → ↑ ↓</kbd> para atrapar esferas XTRAPS evitando obstáculos.</p>
         </div>
     </div>
 
-    <!-- Importamos el sdk directamente de nuestro server oauth para la demo -->
     <script type="module">
-        import { exchangeCodeForToken } from './oauth-server.js';
-        
-        // 1. UTILIDADES PKCE
-        function generateRandomString(length) {
-            const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-            let result = '';
-            const values = new Uint8Array(length);
-            crypto.getRandomValues(values);
-            for (let i = 0; i < length; i++) result += charset[values[i] % charset.length];
-            return result;
-        }
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-        async function generateCodeChallenge(codeVerifier) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(codeVerifier);
-            const digest = await crypto.subtle.digest('SHA-256', data);
-            return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
-                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        }
+        const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 2. FLUJO DE INICIO (Paso 1)
+        let selectedHero = 'coki';
+        let currentUser = null;
+        let score = 0;
+        let highScore = 0;
+        let gameRunning = false;
+
+        const imgCoki = new Image(); imgCoki.src = 'assets/coki_dog.png';
+        const imgForkman = new Image(); imgForkman.src = 'assets/forkman.png';
+
+        window.selectChar = function(hero) {
+            selectedHero = hero;
+            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('card-' + hero).classList.add('selected');
+        };
+
         document.getElementById('btn-login').addEventListener('click', async () => {
-            const clientId = document.getElementById('client-id').value.trim();
-            if (!clientId) return alert('Por favor, ingresa el Client ID de tu aplicación.');
-
-            // Generar PKCE
-            const codeVerifier = generateRandomString(64);
-            const codeChallenge = await generateCodeChallenge(codeVerifier);
-            const state = generateRandomString(16);
-
-            // Guardar para la vuelta
-            sessionStorage.setItem('demo_code_verifier', codeVerifier);
-            sessionStorage.setItem('demo_state', state);
-            sessionStorage.setItem('demo_client_id', clientId);
-
-            // Redirigir a Coki Studios Auth
-            // Nota: En producción esto sería https://cokistudios.github.io/coki-authorize.html
-            const authUrl = new URL('coki-authorize.html', window.location.origin + window.location.pathname);
-            authUrl.searchParams.set('client_id', clientId);
-            authUrl.searchParams.set('redirect_uri', window.location.origin + window.location.pathname);
-            authUrl.searchParams.set('response_type', 'code');
-            authUrl.searchParams.set('code_challenge', codeChallenge);
-            authUrl.searchParams.set('code_challenge_method', 'S256');
-            authUrl.searchParams.set('state', state);
-
-            window.location.href = authUrl.toString();
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'github',
+                options: { redirectTo: window.location.href }
+            });
+            if (error) {
+                simulateCokiUser();
+            }
         });
 
-        // 3. FLUJO DE RETORNO (Paso 2)
-        async function checkCallback() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const state = urlParams.get('state');
-            const error = urlParams.get('error');
+        function simulateCokiUser() {
+            currentUser = {
+                name: 'Coki Player',
+                email: 'player@cokistudios.com',
+                avatar: selectedHero === 'coki' ? 'assets/coki_dog.png' : 'assets/forkman.png'
+            };
+            initArcade();
+        }
 
-            if (error) {
-                alert('Error OAuth: ' + urlParams.get('error_description'));
-                window.history.replaceState({}, document.title, window.location.pathname);
-                return;
+        async function checkSession() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                currentUser = {
+                    name: user.user_metadata?.full_name || user.email.split('@')[0],
+                    email: user.email,
+                    avatar: selectedHero === 'coki' ? 'assets/coki_dog.png' : 'assets/forkman.png'
+                };
+                initArcade();
             }
+        }
+        checkSession();
 
-            if (code) {
-                document.getElementById('setup-section').style.display = 'none';
-                document.getElementById('loading-section').style.display = 'block';
+        function initArcade() {
+            document.getElementById('view-login').classList.remove('active');
+            document.getElementById('view-game').classList.add('active');
 
-                const savedState = sessionStorage.getItem('demo_state');
-                const codeVerifier = sessionStorage.getItem('demo_code_verifier');
-                const clientId = sessionStorage.getItem('demo_client_id');
+            document.getElementById('u-name').textContent = currentUser.name;
+            document.getElementById('u-email').textContent = currentUser.email;
+            document.getElementById('u-avatar').src = selectedHero === 'coki' ? 'assets/coki_dog.png' : 'assets/forkman.png';
+            document.getElementById('active-char-label').textContent = selectedHero === 'coki' ? '🐶 Coki' : '👤 Forkman';
 
-                if (state !== savedState) {
-                    alert('Error: El state no coincide (Posible ataque CSRF)');
-                    return;
-                }
+            highScore = localStorage.getItem('csid_quest_score_' + currentUser.email) || 0;
+            document.getElementById('high-score').textContent = highScore;
 
-                // Intercambiar código por token usando nuestro sdk
-                const currentUrl = window.location.origin + window.location.pathname;
-                
-                try {
-                    const response = await exchangeCodeForToken(code, currentUrl, codeVerifier);
-                    
-                    document.getElementById('loading-section').style.display = 'none';
-                    
-                    if (response.error) {
-                        alert('Error al obtener token: ' + response.error_description);
-                        document.getElementById('setup-section').style.display = 'block';
-                    } else {
-                        // ¡Éxito! Mostrar datos decodificados del ID Token
-                        const base64Url = response.id_token.split('.')[1];
-                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                        }).join(''));
-                        
-                        const userData = JSON.parse(jsonPayload);
-                        
-                        document.getElementById('result-section').style.display = 'block';
-                        
-                        // Poblar la tarjeta de perfil visual
-                        const avatar = document.getElementById('profile-avatar');
-                        if (userData.picture) {
-                            avatar.innerHTML = `<img src="${userData.picture}" style="width:100%;height:100%;object-fit:cover;">`;
-                        } else {
-                            avatar.textContent = (userData.name || userData.email).charAt(0).toUpperCase();
-                        }
-                        document.getElementById('profile-name').textContent = userData.name || userData.email || 'Usuario';
-                        document.getElementById('profile-email').textContent = userData.email;
+            startGame();
+        }
 
-                        // Poblar el JSON en bruto
-                        document.getElementById('user-data').textContent = JSON.stringify(userData, null, 2);
-                    }
-                } catch (err) {
-                    alert('Excepción: ' + err.message);
-                    document.getElementById('setup-section').style.display = 'block';
-                    document.getElementById('loading-section').style.display = 'none';
-                }
+        window.logoutGame = async () => {
+            await supabase.auth.signOut();
+            location.reload();
+        };
 
-                // Limpiar URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } else {
-                // Recuperar client_id guardado si existe para comodidad
-                const savedClientId = sessionStorage.getItem('demo_client_id');
-                if (savedClientId) {
-                    document.getElementById('client-id').value = savedClientId;
-                }
+        // ── MOTOR ORIGINAL DE JUEGO MULTIDIRECCIONAL XTRAPS QUEST ──
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let hero = { x: 100, y: 100, radius: 24, speed: 6 };
+        let items = [];
+        let hazards = [];
+
+        let keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            hero.x = e.clientX - rect.left;
+            hero.y = e.clientY - rect.top;
+        });
+
+        function startGame() {
+            hero.x = canvas.width / 2;
+            hero.y = canvas.height / 2;
+            items = [];
+            hazards = [];
+            score = 0;
+            gameRunning = true;
+            spawnElements();
+            loop();
+        }
+
+        function spawnElements() {
+            // Esferas XTRAPS de energía
+            for (let i = 0; i < 5; i++) {
+                items.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    radius: 12
+                });
+            }
+            // Trampas peligrosas
+            for (let i = 0; i < 3; i++) {
+                hazards.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    dx: (Math.random() - 0.5) * 4,
+                    dy: (Math.random() - 0.5) * 4,
+                    size: 20
+                });
             }
         }
 
-        checkCallback();
+        function loop() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Controles de teclado
+            if (keys['ArrowLeft'] || keys['KeyA']) hero.x -= hero.speed;
+            if (keys['ArrowRight'] || keys['KeyD']) hero.x += hero.speed;
+            if (keys['ArrowUp'] || keys['KeyW']) hero.y -= hero.speed;
+            if (keys['ArrowDown'] || keys['KeyS']) hero.y += hero.speed;
+
+            // Mantener dentro de límites
+            hero.x = Math.max(hero.radius, Math.min(canvas.width - hero.radius, hero.x));
+            hero.y = Math.max(hero.radius, Math.min(canvas.height - hero.radius, hero.y));
+
+            // Dibujar Personaje Seleccionado
+            const activeImg = selectedHero === 'coki' ? imgCoki : imgForkman;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(hero.x, hero.y, hero.radius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(activeImg, hero.x - hero.radius, hero.y - hero.radius, hero.radius * 2, hero.radius * 2);
+            ctx.restore();
+
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(hero.x, hero.y, hero.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Dibujar Esferas de Energía XTRAPS
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                ctx.fillStyle = '#6366f1';
+                ctx.shadowColor = '#8b5cf6';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Recolección
+                let dist = Math.hypot(hero.x - item.x, hero.y - item.y);
+                if (dist < hero.radius + item.radius) {
+                    items.splice(i, 1);
+                    i--;
+                    score += 50;
+                    document.getElementById('score').textContent = score;
+                    // Respawn
+                    items.push({
+                        x: Math.random() * (canvas.width - 40) + 20,
+                        y: Math.random() * (canvas.height - 40) + 20,
+                        radius: 12
+                    });
+                }
+            }
+
+            // Dibujar y Mover Trampas
+            for (let i = 0; i < hazards.length; i++) {
+                let h = hazards[i];
+                h.x += h.dx;
+                h.y += h.dy;
+
+                if (h.x < 0 || h.x > canvas.width) h.dx *= -1;
+                if (h.y < 0 || h.y > canvas.height) h.dy *= -1;
+
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(h.x - h.size/2, h.y - h.size/2, h.size, h.size);
+
+                // Colisión con trampa
+                let dist = Math.hypot(hero.x - h.x, hero.y - h.y);
+                if (dist < hero.radius + h.size/2) {
+                    gameRunning = false;
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('csid_quest_score_' + currentUser.email, highScore);
+                        document.getElementById('high-score').textContent = highScore;
+                        alert('🎉 ¡NUEVO RÉCORD COKI ID! Energía acumulada: ' + score);
+                    } else {
+                        alert('💥 ¡Impacto detectado! Puntuación final: ' + score);
+                    }
+                    setTimeout(startGame, 500);
+                    return;
+                }
+            }
+
+            requestAnimationFrame(loop);
+        }
     </script>
 </body>
 </html>

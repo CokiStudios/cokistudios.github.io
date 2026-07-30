@@ -218,6 +218,38 @@ supabase.auth.onAuthStateChange((event, session) => {
     }
 });
 
+async function sendCokiOTP(email) {
+    try {
+        const response = await fetch('http://localhost:5001/auth/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Error al enviar OTP');
+        return { success: true, message: data.message };
+    } catch (err) {
+        console.error('❌ Error sendCokiOTP:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+async function verifyCokiOTP(email, code) {
+    try {
+        const response = await fetch('http://localhost:5001/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.valid) throw new Error(data.error || 'Código OTP inválido');
+        return { success: true, message: data.message };
+    } catch (err) {
+        console.error('❌ Error verifyCokiOTP:', err);
+        return { success: false, error: err.message };
+    }
+}
+
 export {
     supabase,
     registerCokiAccount,
@@ -228,5 +260,7 @@ export {
     updateCokiProfile,
     changeCokiPassword,
     logoutCoki,
-    getCurrentCokiUser
+    getCurrentCokiUser,
+    sendCokiOTP,
+    verifyCokiOTP
 };
