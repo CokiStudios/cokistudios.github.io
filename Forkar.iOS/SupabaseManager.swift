@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+internal import Combine
 import AuthenticationServices
 #if canImport(UIKit)
 import UIKit
@@ -61,11 +61,28 @@ class SupabaseManager: ObservableObject {
         sessionToken != nil
     }
     
+    // MARK: - Device Hash Persistence Logic
+    var deviceHash: String {
+        if let existing = UserDefaults.standard.string(forKey: "forkar_device_hash") {
+            return existing
+        }
+        let newHash = UUID().uuidString.replacingOccurrences(of: "-", with: "") + UUID().uuidString.prefix(8)
+        UserDefaults.standard.set(newHash, forKey: "forkar_device_hash")
+        return String(newHash)
+    }
+    
     private init() {
-        // Load session
+        // 1. Cargar sesión local guardada
         self.sessionToken = UserDefaults.standard.string(forKey: "supabase_session_token")
         if let data = UserDefaults.standard.data(forKey: "supabase_current_user") {
             self.currentUser = try? JSONDecoder().decode(SupabaseUser.self, from: data)
+        }
+        
+        // 2. Verificar restauración automática mediante Device Hash si la sesión local expiró
+        if self.sessionToken == nil {
+            Task {
+                await self.restoreSessionFromDeviceHash()
+            }
         }
     }
     
@@ -118,6 +135,65 @@ class SupabaseManager: ObservableObject {
         }
     }
     
+    func bindDeviceHash(userId: UUID, email: String) async {
+        let path = "/rest/v1/user_device_hashes"
+        let queryItems = [URLQueryItem(name: "on_conflict", value: "device_hash")]
+        let bodyJson: [String: Any] = [
+            "device_hash": deviceHash,
+            "user_id": userId.uuidString.lowercased(),
+            "user_email": email
+        ]
+        if let bodyData = try? JSONSerialization.data(withJSONObject: bodyJson) {
+            let request = makeRequest(path: path, method: "POST", body: bodyData, queryItems: queryItems)
+            _ = try? await URLSession.shared.data(for: request)
+        }
+    }
+    
+    func unbindDeviceHash() async {
+        let currentHash = deviceHash
+        let path = "/rest/v1/user_device_hashes"
+        let queryItems = [URLQueryItem(name: "device_hash", value: "eq.\(currentHash)")]
+        let request = makeRequest(path: path, method: "DELETE", queryItems: queryItems)
+        _ = try? await URLSession.shared.data(for: request)
+    }
+    
+    func restoreSessionFromDeviceHash() async {
+        let currentHash = deviceHash
+        let path = "/rest/v1/user_device_hashes"
+        let queryItems = [
+            URLQueryItem(name: "select", value: "*"),
+            URLQueryItem(name: "device_hash", value: "eq.\(currentHash)")
+        ]
+        let request = makeRequest(path: path, queryItems: queryItems)
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+              let record = json.first,
+              let userIdStr = record["user_id"] as? String,
+              let userId = UUID(uuidString: userIdStr),
+              let email = record["user_email"] as? String else {
+            return
+        }
+        
+        let restoredUser = SupabaseUser(
+            id: userId,
+            email: email,
+            user_metadata: SupabaseUser.UserMetadata(
+                full_name: email.components(separatedBy: "@").first?.capitalized ?? "Usuario",
+                name: email.components(separatedBy: "@").first?.capitalized ?? "Usuario",
+                avatar_url: nil,
+                picture: nil,
+                company: "Coki Studios",
+                role: "user"
+            )
+        )
+        
+        await MainActor.run {
+            self.currentUser = restoredUser
+            self.sessionToken = "device_hash_session_\(currentHash.prefix(16))"
+        }
+    }
+    
     // MARK: - Authentication API
     func login(email: String, password: String) async throws {
         let path = "/auth/v1/token"
@@ -145,6 +221,9 @@ class SupabaseManager: ObservableObject {
             self.currentUser = authResponse.user
             self.sessionToken = authResponse.access_token
         }
+        
+        // Vincular el Hash único de este dispositivo a la cuenta que acaba de iniciar sesión
+        await bindDeviceHash(userId: authResponse.user.id, email: email)
     }
     
     func signUp(email: String, password: String, name: String, company: String? = nil) async throws {
@@ -187,12 +266,14 @@ class SupabaseManager: ObservableObject {
             throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Registration failed (\(httpResponse.statusCode))"])
         }
         
-        // Automatical log in if credentials allow, or wait for verification if email verification is enabled.
-        // Usually, try logging in immediately.
         try await login(email: email, password: password)
     }
     
     func logout() {
+        Task {
+            // Desvincular el hash del dispositivo al cerrar sesión
+            await unbindDeviceHash()
+        }
         DispatchQueue.main.async {
             self.currentUser = nil
             self.sessionToken = nil

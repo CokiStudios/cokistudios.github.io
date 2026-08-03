@@ -49,7 +49,7 @@ struct HomeView: View {
                                     .shineInlineCard(
                                         borderLineWidth: 2.0,
                                         shadowOffset: selectedCategory == nil ? 3.0 : 0.0,
-                                        backgroundColor: selectedCategory == nil ? ForkarTheme.accent : ForkarTheme.card
+                                        backgroundColor: selectedCategory == nil ? ForkarTheme.accent : ForkarTheme.cardHover
                                     )
                             }
                             
@@ -74,7 +74,7 @@ struct HomeView: View {
                                     .shineInlineCard(
                                         borderLineWidth: 2.0,
                                         shadowOffset: selectedCategory?.id == category.id ? 3.0 : 0.0,
-                                        backgroundColor: selectedCategory?.id == category.id ? category.themeColor : ForkarTheme.card
+                                        backgroundColor: selectedCategory?.id == category.id ? category.themeColor : ForkarTheme.cardHover
                                     )
                                 }
                             }

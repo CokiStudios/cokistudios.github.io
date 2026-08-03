@@ -780,6 +780,10 @@
                 <span class="nav-page">Forkar</span>
             </div>
             <div class="nav-right">
+                <a href="https://anonymus-devop.github.io/OurCommonHome/" target="_blank"
+                    style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:#10b981; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s;"
+                    onmouseover="this.style.color='#34d399'"
+                    onmouseout="this.style.color='#10b981'">🌿 Nuestro Hogar Común</a>
                 <a href="coki-messenger.html"
                     style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:var(--text-sub); transition:color 0.2s;"
                     onmouseover="this.style.color='var(--text)'"
@@ -810,6 +814,31 @@
                                 d="M12 4v16m8-8H4" />
                         </svg>
                         Nueva publicación
+                    </button>
+                </div>
+
+                <!-- ── FORKAR ECO NATIVE SUB-MENU ── -->
+                <div class="sidebar-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(99,102,241,0.08)); border: 1px solid rgba(16,185,129,0.4); border-radius: 18px; padding: 20px;">
+                    <div class="sidebar-card-title" style="color:#34d399; font-size:15px; display:flex; align-items:center; gap:8px;">
+                        <span>🌿</span> Forkar Eco Hub
+                    </div>
+                    <p style="font-size:12px; color:var(--text-sub); margin-bottom:14px; line-height:1.6;">
+                        El módulo ecológico de Forkar. Retos de impacto de CO₂, mapa verde de recolección y estadísticas de la comunidad.
+                    </p>
+
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Tu Impacto CO₂</span>
+                            <span style="font-size:14px; font-weight:900; color:#34d399;" id="forkar-eco-co2">0.0 kg</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Puntos Eco</span>
+                            <span style="font-size:14px; font-weight:900; color:#fbbf24;" id="forkar-eco-pts">0 pts</span>
+                        </div>
+                    </div>
+
+                    <button onclick="openForkarEcoModal()" class="btn-new-post" style="background: linear-gradient(135deg, #10b981, #059669); color:white; font-weight:800; border-radius:12px; width:100%;">
+                        Ver Panel Eco Completo 🍃
                     </button>
                 </div>
 
@@ -895,6 +924,56 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL FORKAR ECO HUB -->
+    <div class="modal-overlay" id="modal-forkar-eco">
+        <div class="modal" style="max-width: 650px;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(16,185,129,0.2);">
+                <div class="modal-title" style="color:#34d399; display:flex; align-items:center; gap:8px;">
+                    🌿 Forkar Eco Hub — Impacto & Reciclaje
+                </div>
+                <button class="modal-close" onclick="closeForkarEcoModal()">✕</button>
+            </div>
+            <div class="modal-body" style="max-height:75vh; overflow-y:auto; padding:20px;">
+                <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,9,15,0.6)); border:1px solid rgba(16,185,129,0.3); border-radius:16px; padding:20px; text-align:center; margin-bottom:20px;">
+                    <p style="font-size:12px; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Mi Ahorro CO₂ en Forkar</p>
+                    <div style="font-size:42px; font-weight:900; color:white;" id="modal-co2-total">0.0 kg</div>
+                    <p style="font-size:13px; color:var(--text-sub); margin-top:4px;">Iniciativas completadas en la red de Coki Studios</p>
+                </div>
+
+                <h4 style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px;">Retos Ecológicos Disponibles</h4>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">🚴 Usar Transporte Sostenible</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Bicicleta o caminata (+1.5 kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('Bici', 1.5, 30)" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+30 pts)</button>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">♻️ Separación de Residuos</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Punto verde municipal (+2.0 kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('Reciclaje', 2.0, 40)" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+40 pts)</button>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">🔌 Ahorro Energético RAEE</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Entrega de electrónicos en desuso (+3.5 kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('RAEE', 3.5, 70)" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+70 pts)</button>
+                    </div>
+                </div>
+
+                <h4 style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px;">Puntos de Recolección (Cota & Alrededores)</h4>
+                <div style="background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:14px; padding:14px; font-size:13px; color:var(--text-sub); line-height:1.8;">
+                    <div>🟢 <strong>Centro de Acopio Municipal:</strong> Cra. 3 #5-20, Cota (Lun-Vie 8am-5pm)</div>
+                    <div>🔵 <strong>Punto Verde Parque Principal:</strong> Parque Principal de Cota (Todos los días)</div>
+                    <div>🟠 <strong>Punto RAEE Electrónicos:</strong> Carrera 4 No. 12 - 63 (Lun-Vie 7:30am-5:30pm)</div>
+                </div>
+            </div>
+        </div>
 
     <!-- MODAL REPORTAR -->
     <div class="modal-overlay" id="modal-report">
@@ -1213,6 +1292,28 @@
                 alert('✅ Reporte enviado con éxito. Gracias por ayudarnos a mantener la comunidad limpia.');
                 closeReportModal();
             }
+        };
+
+        window.openForkarEcoModal = () => {
+            document.getElementById('modal-forkar-eco').classList.add('open');
+        };
+
+        window.closeForkarEcoModal = () => {
+            document.getElementById('modal-forkar-eco').classList.remove('open');
+        };
+
+        let currentEcoCO2 = 0;
+        let currentEcoPts = 0;
+
+        window.completeForkarEcoAction = (actionName, co2, pts) => {
+            currentEcoCO2 += co2;
+            currentEcoPts += pts;
+
+            document.getElementById('forkar-eco-co2').textContent = currentEcoCO2.toFixed(1) + ' kg';
+            document.getElementById('forkar-eco-pts').textContent = currentEcoPts + ' pts';
+            document.getElementById('modal-co2-total').textContent = currentEcoCO2.toFixed(1) + ' kg';
+
+            alert(`🌿 ¡Reto Eco "${actionName}" completado en Forkar!\n+${co2} kg CO₂ ahorrados | +${pts} Puntos Eco`);
         };
     </script>
 </body>

@@ -33,19 +33,26 @@ struct ContentView: View {
                 }
                 .tag(0)
             
+            ForkarEcoView()
+                .environmentObject(authManager)
+                .tabItem {
+                    Label("Eco Hub", systemImage: "leaf.fill")
+                }
+                .tag(1)
+            
             ChatsView()
                 .environmentObject(authManager)
                 .tabItem {
                     Label("Chats", systemImage: "bubble.left.and.bubble.right.fill")
                 }
-                .tag(1)
+                .tag(2)
             
             ProfileView()
                 .environmentObject(authManager)
                 .tabItem {
                     Label("Mi Perfil", systemImage: "person.fill")
                 }
-                .tag(2)
+                .tag(3)
         }
         .tint(ForkarTheme.accent)
     }

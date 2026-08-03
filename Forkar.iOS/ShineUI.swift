@@ -21,6 +21,7 @@ public struct ShineCornerButtonData: Identifiable {
 
 // MARK: - Shine UI Corner Button View (The 'Mickey Ears' attached directly to the thick border)
 public struct ShineCornerButton: View {
+    @Environment(\.colorScheme) var colorScheme
     public let label: String
     public let action: () -> Void
     
@@ -30,16 +31,21 @@ public struct ShineCornerButton: View {
     }
     
     public var body: some View {
+        let isDark = colorScheme == .dark
+        let btnBg = isDark ? Color(hex: "#1e293b") ?? .black : Color.white
+        let btnBorder = isDark ? Color(hex: "#38bdf8") ?? .white : Color.black
+        let btnText = isDark ? Color.white : Color.black
+        
         Button(action: action) {
             Text(label)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundColor(.black)
+                .foregroundColor(btnText)
                 .frame(width: 44, height: 44)
-                .background(Color.white)
+                .background(btnBg)
                 .clipShape(Circle())
                 .overlay(
                     Circle()
-                        .stroke(Color.black, lineWidth: 6)
+                        .stroke(btnBorder, lineWidth: 4)
                 )
         }
         .buttonStyle(ShineCornerButtonStyle())
@@ -56,6 +62,7 @@ struct ShineCornerButtonStyle: ButtonStyle {
 
 // MARK: - Shine Color Action Button View (conic-gradient circular buttons with green/red icons)
 public struct ShineColorButton: View {
+    @Environment(\.colorScheme) var colorScheme
     public let iconSystemName: String
     public let iconColor: Color
     public let action: () -> Void
@@ -67,6 +74,9 @@ public struct ShineColorButton: View {
     }
     
     public var body: some View {
+        let isDark = colorScheme == .dark
+        let btnBorder = isDark ? Color(hex: "#38bdf8") ?? .white : Color.black
+        
         Button(action: action) {
             Image(systemName: iconSystemName)
                 .font(.system(size: 24, weight: .bold))
@@ -81,7 +91,7 @@ public struct ShineColorButton: View {
                 .clipShape(Circle())
                 .overlay(
                     Circle()
-                        .stroke(Color.black, lineWidth: 6)
+                        .stroke(btnBorder, lineWidth: 4)
                 )
                 .shadow(color: .black.opacity(0.15), radius: 2, x: 2, y: 2)
         }
@@ -91,6 +101,7 @@ public struct ShineColorButton: View {
 
 // MARK: - Shine Card Container View Modifier (Thick border, flat offset shadow, corner attachment)
 public struct ShineCardModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
     public let cornerButtons: [ShineCornerButtonData]
     public let shadowOffset: CGFloat
     
@@ -100,17 +111,23 @@ public struct ShineCardModifier: ViewModifier {
     }
     
     public func body(content: Content) -> some View {
+        let isDark = colorScheme == .dark
+        let cardBg = isDark ? Color(hex: "#0f172a") ?? .black : Color.white
+        let borderColor = isDark ? Color(hex: "#38bdf8") ?? .white : Color.black
+        let textColor = isDark ? Color(hex: "#f8fafc") ?? .white : Color.black
+        let shadowColor = isDark ? Color(hex: "#0284c7")?.opacity(0.3) ?? Color.cyan.opacity(0.3) : Color.black.opacity(0.3)
+        
         content
             .padding(40)
-            .background(Color.white)
-            .foregroundColor(.black)
+            .background(cardBg)
+            .foregroundColor(textColor)
             .overlay(
                 Rectangle()
-                    .stroke(Color.black, lineWidth: 6)
+                    .stroke(borderColor, lineWidth: 4)
             )
             .background(
                 Rectangle()
-                    .fill(Color.black.opacity(0.3))
+                    .fill(shadowColor)
                     .offset(x: shadowOffset, y: shadowOffset)
             )
             .overlay(
@@ -196,9 +213,10 @@ public struct ShineAlertView<Content: View>: View {
 
 // MARK: - Shine UI style for standard inline card components
 public struct ShineCardInlineModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
     public let borderLineWidth: CGFloat
     public let shadowOffset: CGFloat
-    public let backgroundColor: Color
+    public let customBackgroundColor: Color?
     
     public init(
         borderLineWidth: CGFloat = 3.5,
@@ -207,20 +225,31 @@ public struct ShineCardInlineModifier: ViewModifier {
     ) {
         self.borderLineWidth = borderLineWidth
         self.shadowOffset = shadowOffset
-        self.backgroundColor = backgroundColor
+        self.customBackgroundColor = backgroundColor == Color.white ? nil : backgroundColor
     }
     
     public func body(content: Content) -> some View {
+        let isDark = colorScheme == .dark
+        let defaultDarkBg = Color(hex: "#0f172a") ?? .black
+        let cardBg: Color = {
+            if let custom = customBackgroundColor {
+                return custom
+            }
+            return isDark ? defaultDarkBg : Color.white
+        }()
+        let borderColor = isDark ? Color.white.opacity(0.8) : Color.black
+        let shadowColor = isDark ? Color(hex: "#6366f1")?.opacity(0.3) ?? Color.indigo.opacity(0.3) : Color.black.opacity(0.8)
+        
         content
             .padding(16)
-            .background(backgroundColor)
+            .background(cardBg)
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.black, lineWidth: borderLineWidth)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(borderColor, lineWidth: borderLineWidth)
             )
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.black)
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(shadowColor)
                     .offset(x: shadowOffset, y: shadowOffset)
             )
             .padding(.trailing, shadowOffset)
@@ -230,6 +259,7 @@ public struct ShineCardInlineModifier: ViewModifier {
 
 // MARK: - Shine Button Style for Standard UI Buttons
 public struct ShineButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) var colorScheme
     public let backgroundColor: Color
     public let borderLineWidth: CGFloat
     public let shadowOffset: CGFloat
@@ -245,6 +275,10 @@ public struct ShineButtonStyle: ButtonStyle {
     }
     
     public func makeBody(configuration: Configuration) -> some View {
+        let isDark = colorScheme == .dark
+        let borderColor = isDark ? Color(hex: "#38bdf8") ?? .white : Color.black
+        let shadowColor = isDark ? Color(hex: "#0284c7")?.opacity(0.4) ?? Color.cyan.opacity(0.4) : Color.black
+        
         configuration.label
             .fontWeight(.bold)
             .foregroundColor(.white)
@@ -252,12 +286,12 @@ public struct ShineButtonStyle: ButtonStyle {
             .padding(.horizontal, 24)
             .background(backgroundColor)
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.black, lineWidth: borderLineWidth)
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(borderColor, lineWidth: borderLineWidth)
             )
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.black)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(shadowColor)
                     .offset(
                         x: configuration.isPressed ? 1.0 : shadowOffset,
                         y: configuration.isPressed ? 1.0 : shadowOffset

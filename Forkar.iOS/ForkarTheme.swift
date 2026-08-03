@@ -21,17 +21,64 @@ struct ForkarTheme {
     }
 }
 
-// MARK: - View Modifiers for Glassmorphism
+// MARK: - View Modifiers for Glassmorphism & Liquid Glass
 struct GlassmorphicCard: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding()
-            .background(ForkarTheme.card)
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(ForkarTheme.border, lineWidth: 1)
+            .background(
+                Group {
+                    if #available(iOS 15.0, macOS 12.0, *) {
+                        Rectangle().fill(.ultraThinMaterial)
+                    } else {
+                        ForkarTheme.card
+                    }
+                }
             )
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            )
+            .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 10)
+    }
+}
+
+struct LiquidGlassModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    if #available(iOS 15.0, macOS 12.0, *) {
+                        Rectangle().fill(.thinMaterial)
+                    } else {
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.15), Color.white.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                    
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.5), Color.indigo.opacity(0.3), Color.white.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .shadow(color: Color.indigo.opacity(0.2), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -71,5 +118,9 @@ struct SecondaryButtonStyle: ButtonStyle {
 extension View {
     func glassCard() -> some View {
         modifier(GlassmorphicCard())
+    }
+    
+    func liquidGlass() -> some View {
+        modifier(LiquidGlassModifier())
     }
 }
