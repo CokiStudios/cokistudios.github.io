@@ -40,8 +40,13 @@ import com.cokistudios.forkar.ui.screens.PostDetailScreen
 import com.cokistudios.forkar.ui.screens.ProfileScreen
 import com.cokistudios.forkar.ui.theme.ForkarTheme
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
-import com.cokistudios.forkar.ui.components.XtrapsBackground
 import kotlinx.coroutines.launch
+import com.cokistudios.forkar.ui.components.XtrapsBackground
+import com.cokistudios.forkar.ui.components.LiquidGlassNavigationBar
+import com.cokistudios.forkar.ui.components.LiquidNavItem
+import com.cokistudios.forkar.ui.screens.EcoHubScreen
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Email
 
 class MainActivity : ComponentActivity() {
 
@@ -148,7 +153,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 @Composable
 fun MainContainerScreen(
     manager: SupabaseManager,
@@ -158,33 +162,22 @@ fun MainContainerScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color.Transparent
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-                    label = { Text("Inicio") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = IndigoPrimary,
-                        selectedTextColor = IndigoPrimary
-                    )
-                )
+    val navItems = remember {
+        listOf(
+            LiquidNavItem("Inicio", Icons.Default.Home, IndigoPrimary),
+            LiquidNavItem("Eco Hub", Icons.Default.Star, Color(0xFF10B981)),
+            LiquidNavItem("Mi Perfil", Icons.Default.Person, IndigoPrimary)
+        )
+    }
 
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Mi Perfil") },
-                    label = { Text("Mi Perfil") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = IndigoPrimary,
-                        selectedTextColor = IndigoPrimary
-                    )
-                )
-            }
+    Scaffold(
+        containerColor = Color.Transparent,
+        bottomBar = {
+            LiquidGlassNavigationBar(
+                items = navItems,
+                selectedIndex = selectedTab,
+                onItemSelected = { selectedTab = it }
+            )
         }
     ) { paddingValues ->
         Box(
@@ -203,7 +196,11 @@ fun MainContainerScreen(
                     onCreatePostClick = onCreatePostClick,
                     onLoginRequired = onLoginRequired
                 )
-                1 -> ProfileScreen(
+                1 -> EcoHubScreen(
+                    manager = manager,
+                    onLoginRequired = onLoginRequired
+                )
+                2 -> ProfileScreen(
                     manager = manager,
                     onLoginClick = onLoginRequired,
                     onPostClick = onPostClick
@@ -212,3 +209,5 @@ fun MainContainerScreen(
         }
     }
 }
+
+

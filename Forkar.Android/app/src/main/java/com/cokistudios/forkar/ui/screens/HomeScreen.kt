@@ -25,8 +25,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Search
+import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -125,40 +127,15 @@ fun HomeScreen(
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Brush.linearGradient(listOf(IndigoPrimary, PurpleAccent2))),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "F",
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Black
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Forkar",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+            LiquidGlassTopBar(
+                title = "Forkar",
+                subtitle = "Comunidad Coki Studios",
+                icon = Icons.Default.Home,
+                iconColor = IndigoPrimary
             )
         },
+
+
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {

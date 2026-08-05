@@ -32,6 +32,8 @@ struct SupabaseUser: Codable, Identifiable {
 // MARK: - Supabase Manager
 class SupabaseManager: ObservableObject {
     static let shared = SupabaseManager()
+    static let appVersion = "2.0"
+    static let buildNumber = "2"
     
     let baseURL = "https://cmkumxprmmhuinxfppxl.supabase.co"
     let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
@@ -123,6 +125,9 @@ class SupabaseManager: ObservableObject {
                 
                 if httpResponse.statusCode == 401 || msg.lowercased().contains("jwt") {
                     self.logout()
+                    Task {
+                        await self.restoreSessionFromDeviceHash()
+                    }
                 }
                 
                 throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])
@@ -130,6 +135,9 @@ class SupabaseManager: ObservableObject {
             
             if httpResponse.statusCode == 401 {
                 self.logout()
+                Task {
+                    await self.restoreSessionFromDeviceHash()
+                }
             }
             throw NSError(domain: "SupabaseManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code \(httpResponse.statusCode)"])
         }
@@ -951,6 +959,66 @@ class SupabaseManager: ObservableObject {
             return (user.user_id, user.user_avatar)
         }
         return nil
+    }
+
+    // MARK: - Forkar Eco Hub API
+    @MainActor
+    func logUserEcoImpact(actionId: String, co2Saved: Double, pointsEarned: Int) async throws -> Bool {
+        guard let user = currentUser else { return false }
+        
+        let path = "/rest/v1/forkman_user_eco"
+        
+        // Verificar 1 redención por día
+        let formatter = ISO8601DateFormatter()
+        let todayMidnight = Calendar.current.startOfDay(for: Date())
+        let todayStr = formatter.string(from: todayMidnight)
+        
+        let checkItems = [
+            URLQueryItem(name: "select", value: "id,created_at"),
+            URLQueryItem(name: "user_id", value: "eq.\(user.id.uuidString)"),
+            URLQueryItem(name: "created_at", value: "gte.\(todayStr)")
+        ]
+        let checkReq = makeRequest(path: path, queryItems: checkItems)
+        let (checkData, checkRes) = try await URLSession.shared.data(for: checkReq)
+        if let checkList = try? JSONSerialization.jsonObject(with: checkData) as? [[String: Any]], !checkList.isEmpty {
+            throw NSError(domain: "EcoHub", code: 409, userInfo: [NSLocalizedDescriptionKey: "Solo puedes redimir 1 reto ecológico por día. ¡Vuelve mañana!"])
+        }
+        
+        var bodyDict: [String: Any] = [
+            "user_id": user.id.uuidString,
+            "co2_saved": co2Saved,
+            "points_earned": pointsEarned
+        ]
+        
+        let isUuid = actionId.range(of: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", options: .regularExpression) != nil
+        if isUuid {
+            bodyDict["action_id"] = actionId
+        }
+        
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyDict)
+        let request = makeRequest(path: path, method: "POST", body: bodyData)
+        
+        do {
+            let (data, res) = try await URLSession.shared.data(for: request)
+            if let httpRes = res as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) {
+                return true
+            }
+        } catch {
+            // Retry fallback without action_id if FK fails
+        }
+        
+        let fallbackDict: [String: Any] = [
+            "user_id": user.id.uuidString,
+            "co2_saved": co2Saved,
+            "points_earned": pointsEarned
+        ]
+        let fallbackData = try JSONSerialization.data(withJSONObject: fallbackDict)
+        let fallbackReq = makeRequest(path: path, method: "POST", body: fallbackData)
+        let (data, res) = try await URLSession.shared.data(for: fallbackReq)
+        if let httpRes = res as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) {
+            return true
+        }
+        return false
     }
 }
 

@@ -7,7 +7,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,13 +32,10 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +48,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -62,11 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cokistudios.forkar.data.SupabaseManager
 import com.cokistudios.forkar.ui.components.GlassCard
+import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
 import com.cokistudios.forkar.ui.components.PrimaryButton
-import com.cokistudios.forkar.ui.theme.BorderDark
-import com.cokistudios.forkar.ui.theme.BorderLight
-import com.cokistudios.forkar.ui.theme.CardDark
-import com.cokistudios.forkar.ui.theme.CardLight
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
 import com.cokistudios.forkar.ui.theme.PurpleAccent2
 import kotlinx.coroutines.launch
@@ -91,12 +83,23 @@ fun LoginScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val isDark = isSystemInDarkTheme()
-    val bgColors = if (isDark) {
-        listOf(Color(0xFF0D1117), Color(0xFF06090F))
-    } else {
-        listOf(Color(0xFFF1F5F9), Color(0xFFF8FAFC))
-    }
+    val bgColors = listOf(Color(0xFF0F172A), Color(0xFF06090F))
+
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        focusedBorderColor = IndigoPrimary,
+        unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+        focusedLabelColor = IndigoPrimary,
+        unfocusedLabelColor = Color(0xFFCBD5E1),
+        focusedLeadingIconColor = Color.White,
+        unfocusedLeadingIconColor = Color(0xFFCBD5E1),
+        focusedTrailingIconColor = Color.White,
+        unfocusedTrailingIconColor = Color(0xFFCBD5E1),
+        cursorColor = Color.White,
+        focusedPlaceholderColor = Color(0xFF94A3B8),
+        unfocusedPlaceholderColor = Color(0xFF64748B)
+    )
 
     val handleOAuth = { provider: String ->
         val authUrl = "${manager.baseURL}/auth/v1/authorize?provider=$provider&redirect_to=forkar://oauth"
@@ -106,12 +109,11 @@ fun LoginScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Autenticación") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+            LiquidGlassTopBar(
+                title = "Autenticación",
+                subtitle = "Acceso seguro con CS ID",
+                icon = Icons.Default.Lock,
+                iconColor = IndigoPrimary
             )
         },
         containerColor = Color.Transparent
@@ -156,14 +158,14 @@ fun LoginScreen(
                     Text(
                         text = "Forkar",
                         fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        fontWeight = FontWeight.Black,
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Conéctate con otros jugadores y comparte tus ideas",
+                        text = "Conéctate con otros builders y comparte tus ideas",
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        color = Color(0xFFCBD5E1),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -177,10 +179,10 @@ fun LoginScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = if (isRegistering) "Crear Cuenta" else "Iniciar Sesión",
-                            fontWeight = FontWeight.Bold,
+                            text = if (isRegistering) "Crear Cuenta Coki ID" else "Iniciar Sesión Coki ID",
+                            fontWeight = FontWeight.Black,
                             fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = Color.White
                         )
 
                         if (isRegistering) {
@@ -190,7 +192,8 @@ fun LoginScreen(
                                 placeholder = { Text("Nombre Completo") },
                                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                colors = textFieldColors
                             )
 
                             OutlinedTextField(
@@ -199,7 +202,8 @@ fun LoginScreen(
                                 placeholder = { Text("Biografía / Estado (opcional)") },
                                 leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                colors = textFieldColors
                             )
                         } else {
                             // OAuth Social Buttons
@@ -211,34 +215,15 @@ fun LoginScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isDark) CardDark else CardLight)
-                                        .border(1.dp, if (isDark) BorderDark else BorderLight, RoundedCornerShape(12.dp))
+                                        .background(Color(0x1EFFFFFF))
+                                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(12.dp))
                                         .clickable { handleOAuth("google") }
                                         .padding(vertical = 12.dp),
                                     horizontalArrangement = Arrangement.Center,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Continuar con Google",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                }
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color.Black.copy(alpha = 0.4f))
-                                        .border(1.dp, if (isDark) BorderDark else BorderLight, RoundedCornerShape(12.dp))
-                                        .clickable { handleOAuth("github") }
-                                        .padding(vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Continuar con GitHub",
+                                        text = "Continuar con Google 🌐",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
                                         color = Color.White
@@ -247,114 +232,106 @@ fun LoginScreen(
                             }
 
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Divider(modifier = Modifier.weight(1f))
+                                Divider(modifier = Modifier.weight(1f), color = Color.White.copy(alpha = 0.2f))
                                 Text(
-                                    text = "o usa tu correo",
+                                    text = "  o con tu correo  ",
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(horizontal = 8.dp),
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                                    color = Color(0xFFCBD5E1)
                                 )
-                                Divider(modifier = Modifier.weight(1f))
+                                Divider(modifier = Modifier.weight(1f), color = Color.White.copy(alpha = 0.2f))
                             }
                         }
 
                         OutlinedTextField(
                             value = email,
-                            onValueChange = { email = it },
-                            placeholder = { Text("Correo Electrónico") },
+                            onValueChange = { email = it; errorMessage = "" },
+                            placeholder = { Text("correo@ejemplo.com") },
                             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = textFieldColors
                         )
 
                         OutlinedTextField(
                             value = password,
-                            onValueChange = { password = it },
+                            onValueChange = { password = it; errorMessage = "" },
                             placeholder = { Text("Contraseña") },
                             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            trailingIcon = {
-                                IconButton(onClick = { showPassword = !showPassword }) {
-                                    Text(if (showPassword) "Ocultar" else "Mostrar", fontSize = 11.sp)
-                                }
-                            },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = textFieldColors
                         )
 
                         AnimatedVisibility(visible = errorMessage.isNotEmpty()) {
                             Text(
                                 text = errorMessage,
-                                color = Color.Red,
-                                fontSize = 12.sp
+                                color = Color(0xFFEF4444),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             )
                         }
 
                         PrimaryButton(
-                            text = if (isRegistering) "Crear cuenta" else "Iniciar sesión",
+                            text = if (isLoading) "Procesando..." else if (isRegistering) "Registrarme" else "Entrar",
                             onClick = {
                                 if (email.isBlank() || password.isBlank()) {
-                                    errorMessage = "Completa todos los campos"
+                                    errorMessage = "Completa todos los campos obligatorios"
                                     return@PrimaryButton
                                 }
-                                if (isRegistering && name.isBlank()) {
-                                    errorMessage = "Completa tu nombre"
-                                    return@PrimaryButton
-                                }
-
+                                isLoading = true
                                 coroutineScope.launch {
-                                    isLoading = true
-                                    errorMessage = ""
                                     try {
                                         if (isRegistering) {
-                                            manager.signUp(email, password, name, company.ifBlank { null })
+                                            manager.signUp(email, password, name, company)
+                                            Toast.makeText(context, "Cuenta creada exitosamente", Toast.LENGTH_LONG).show()
                                         } else {
                                             manager.login(email, password)
                                         }
-                                        Toast.makeText(context, "Bienvenido", Toast.LENGTH_SHORT).show()
                                         onLoginSuccess()
                                     } catch (e: Exception) {
-                                        errorMessage = e.message ?: "Ocurrió un error"
+                                        errorMessage = e.message ?: "Error al autenticar"
                                     } finally {
                                         isLoading = false
                                     }
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isLoading
+                            enabled = !isLoading,
+                            modifier = Modifier.fillMaxWidth()
                         )
 
-                        if (isLoading) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(color = IndigoPrimary)
-                            }
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = if (isRegistering) "¿Ya tienes cuenta? " else "¿No tienes cuenta aún? ",
+                                fontSize = 13.sp,
+                                color = Color(0xFFCBD5E1)
+                            )
+                            Text(
+                                text = if (isRegistering) "Inicia Sesión" else "Regístrate gratis",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = IndigoPrimary,
+                                modifier = Modifier.clickable {
+                                    isRegistering = !isRegistering
+                                    errorMessage = ""
+                                }
+                            )
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = if (isRegistering) "¿Ya tienes cuenta? Inicia sesión" else "¿No tienes cuenta? Regístrate gratis",
-                    color = IndigoPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .clickable {
-                            isRegistering = !isRegistering
-                            errorMessage = ""
-                        }
-                        .padding(8.dp)
-                )
 
                 Spacer(modifier = Modifier.height(40.dp))
             }

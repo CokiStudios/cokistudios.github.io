@@ -1,7 +1,19 @@
 [
     {
-        "merged": "com.cokistudios.forkar.app-debug-52:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.cokistudios.forkar.app-main-54:/drawable/ic_launcher_foreground.xml"
+        "merged": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-debug-52:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-main-54:\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-debug-52:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-main-54:\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-debug-52:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-main-54:\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-debug-52:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\canin\\.gradle\\daemon\\8.9\\com.cokistudios.forkar.app-main-54:\\drawable\\ic_launcher_foreground.xml"
     },
     {
         "merged": "com.cokistudios.forkar.app-debug-52:/mipmap-xxhdpi_ic_launcher_round.png.flat",
@@ -10,9 +22,5 @@
     {
         "merged": "com.cokistudios.forkar.app-debug-52:/mipmap-xxhdpi_ic_launcher.png.flat",
         "source": "com.cokistudios.forkar.app-main-54:/mipmap-xxhdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.cokistudios.forkar.app-debug-52:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.cokistudios.forkar.app-main-54:/drawable/ic_launcher_background.xml"
     }
 ]

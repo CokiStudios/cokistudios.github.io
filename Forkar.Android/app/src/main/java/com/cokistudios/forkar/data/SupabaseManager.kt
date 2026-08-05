@@ -8,7 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -26,9 +28,12 @@ class SupabaseManager private constructor(context: Context) {
     private val sharedPrefs: SharedPreferences = context.getSharedPreferences("supabase_prefs", Context.MODE_PRIVATE)
     private val client = OkHttpClient()
     private val gson = Gson()
+    private val managerScope = CoroutineScope(Dispatchers.IO)
 
     val baseURL = "https://cmkumxprmmhuinxfppxl.supabase.co"
     val anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
+
+    val appVersion = "2.0"
 
     var currentUser by mutableStateOf<SupabaseUser?>(null)
         private set
@@ -39,6 +44,15 @@ class SupabaseManager private constructor(context: Context) {
     val isLoggedIn: Boolean
         get() = sessionToken != null
 
+    val deviceHash: String
+        get() {
+            val existing = sharedPrefs.getString("forkar_device_hash", null)
+            if (existing != null) return existing
+            val newHash = java.util.UUID.randomUUID().toString().replace("-", "") + java.util.UUID.randomUUID().toString().substring(0, 8)
+            sharedPrefs.edit().putString("forkar_device_hash", newHash).apply()
+            return newHash
+        }
+
     init {
         sessionToken = sharedPrefs.getString("supabase_session_token", null)
         val userJson = sharedPrefs.getString("supabase_current_user", null)
@@ -47,6 +61,11 @@ class SupabaseManager private constructor(context: Context) {
                 currentUser = gson.fromJson(userJson, SupabaseUser::class.java)
             } catch (e: Exception) {
                 Log.e("SupabaseManager", "Error decoding stored user", e)
+            }
+        }
+        if (sessionToken == null) {
+            managerScope.launch {
+                restoreSessionFromDeviceHash()
             }
         }
     }
@@ -67,11 +86,89 @@ class SupabaseManager private constructor(context: Context) {
             }
             apply()
         }
+        if (user != null && user.email != null) {
+            managerScope.launch {
+                bindDeviceHash(user.id, user.email)
+            }
+        }
     }
 
     fun logout() {
+        managerScope.launch {
+            unbindDeviceHash()
+        }
         saveSession(null, null)
     }
+
+    suspend fun bindDeviceHash(userId: String, email: String): Unit = withContext(Dispatchers.IO) {
+        try {
+            val path = "/rest/v1/user_device_hashes"
+            val queryParams = mapOf("on_conflict" to "device_hash")
+            val bodyJson = JSONObject().apply {
+                put("device_hash", deviceHash)
+                put("user_id", userId.lowercase())
+                put("user_email", email)
+            }
+            val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
+            val request = makeRequest(path, "POST", body, queryParams)
+            client.newCall(request).execute().use { response ->
+                Log.d("SupabaseManager", "Device hash bound: ${response.code}")
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error binding device hash", e)
+        }
+    }
+
+    suspend fun unbindDeviceHash(): Unit = withContext(Dispatchers.IO) {
+        try {
+            val currentHash = deviceHash
+            val path = "/rest/v1/user_device_hashes"
+            val queryParams = mapOf("device_hash" to "eq.$currentHash")
+            val request = makeRequest(path, "DELETE", queryParams = queryParams)
+            client.newCall(request).execute().use { response ->
+                Log.d("SupabaseManager", "Device hash unbound: ${response.code}")
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error unbinding device hash", e)
+        }
+    }
+
+    suspend fun restoreSessionFromDeviceHash(): Unit = withContext(Dispatchers.IO) {
+        try {
+            val currentHash = deviceHash
+            val path = "/rest/v1/user_device_hashes"
+            val queryParams = mapOf(
+                "select" to "*",
+                "device_hash" to "eq.$currentHash"
+            )
+            val request = makeRequest(path, queryParams = queryParams)
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotBlank()) {
+                    val array = JSONArray(body)
+                    if (array.length() > 0) {
+                        val obj = array.getJSONObject(0)
+                        val userId = obj.optString("user_id")
+                        val userEmail = obj.optString("user_email")
+                        if (!userId.isNullOrBlank()) {
+                            val restoredUser = SupabaseUser(
+                                id = userId,
+                                email = userEmail,
+                                userMetadata = UserMetadata(fullName = userEmail.substringBefore("@"), name = userEmail.substringBefore("@"), avatarUrl = null, picture = null, company = "Coki Studios", role = "user")
+                            )
+                            val token = "device_hash_session_${currentHash.take(16)}"
+                            withContext(Dispatchers.Main) {
+                                saveSession(token, restoredUser)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error restoring session from device hash", e)
+        }
+    }
+
 
     private fun makeRequest(
         path: String,
@@ -550,6 +647,173 @@ class SupabaseManager private constructor(context: Context) {
         client.newCall(request).execute().use { response ->
             val responseBody = response.body?.string() ?: ""
             verifyResponse(response, responseBody)
+        }
+    }
+
+    // MARK: - Forkar Eco Hub API
+    suspend fun fetchEcoActions(): List<EcoAction> = withContext(Dispatchers.IO) {
+        val path = "/rest/v1/forkman_eco_actions"
+        val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
+        val request = makeRequest(path, queryParams = queryParams)
+        client.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            verifyResponse(response, body)
+            val type = object : TypeToken<List<EcoAction>>() {}.type
+            gson.fromJson(body, type) ?: emptyList()
+        }
+    }
+
+    suspend fun fetchUserEcoImpact(userId: String? = null): Pair<Double, Int> = withContext(Dispatchers.IO) {
+        val targetUserId = userId ?: currentUser?.id ?: return@withContext Pair(0.0, 0)
+        val path = "/rest/v1/forkman_user_eco"
+        val queryParams = mapOf("select" to "*", "user_id" to "eq.$targetUserId")
+        val request = makeRequest(path, queryParams = queryParams)
+        client.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            if (!response.isSuccessful || body.isBlank()) return@withContext Pair(0.0, 0)
+            val type = object : TypeToken<List<UserEcoImpact>>() {}.type
+            val list: List<UserEcoImpact> = gson.fromJson(body, type) ?: emptyList()
+            val totalCo2 = list.sumOf { it.co2Saved }
+            val totalPts = list.sumOf { it.pointsEarned }
+            Pair(totalCo2, totalPts)
+        }
+    }
+
+    suspend fun hasRedeemedEcoToday(userId: String): Boolean = withContext(Dispatchers.IO) {
+        val path = "/rest/v1/forkman_user_eco"
+        val todayStart = java.text.SimpleDateFormat("yyyy-MM-dd'T'00:00:00.000'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
+
+        val queryParams = mapOf(
+            "select" to "id,created_at",
+            "user_id" to "eq.$userId",
+            "created_at" to "gte.$todayStart"
+        )
+        val request = makeRequest(path, queryParams = queryParams)
+        client.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            if (!response.isSuccessful || body.isBlank()) return@withContext false
+            val array = JSONArray(body)
+            array.length() > 0
+        }
+    }
+
+    suspend fun logUserEcoImpact(actionId: String, co2Saved: Double, pointsEarned: Int): Boolean = withContext(Dispatchers.IO) {
+        val user = currentUser ?: throw IOException("Inicia sesión para registrar impacto ecológico")
+
+        if (hasRedeemedEcoToday(user.id)) {
+            throw IOException("Solo puedes redimir 1 reto ecológico por día. ¡Vuelve mañana!")
+        }
+
+        val path = "/rest/v1/forkman_user_eco"
+        val isUuid = actionId.matches(Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"))
+
+        val bodyJson = JSONObject().apply {
+            put("user_id", user.id)
+            if (isUuid) {
+                put("action_id", actionId)
+            }
+            put("co2_saved", co2Saved)
+            put("points_earned", pointsEarned)
+        }
+        val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
+        val request = makeRequest(path, "POST", body)
+
+        client.newCall(request).execute().use { response ->
+            if (response.isSuccessful) {
+                true
+            } else {
+                // Fallback sin action_id por si hay restricción de FK o ID de NFC no guardado en la tabla de acciones
+                val fallbackJson = JSONObject().apply {
+                    put("user_id", user.id)
+                    put("co2_saved", co2Saved)
+                    put("points_earned", pointsEarned)
+                }
+                val fallbackBody = fallbackJson.toString().toRequestBody("application/json".toMediaType())
+                val fallbackReq = makeRequest(path, "POST", fallbackBody)
+                client.newCall(fallbackReq).execute().use { r -> r.isSuccessful }
+            }
+        }
+    }
+
+    suspend fun fetchEcoMapPoints(): List<EcoMapPoint> = withContext(Dispatchers.IO) {
+        val path = "/rest/v1/forkman_eco_map_points"
+        val queryParams = mapOf("select" to "*", "order" to "name.asc")
+        val request = makeRequest(path, queryParams = queryParams)
+        client.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            verifyResponse(response, body)
+            val type = object : TypeToken<List<EcoMapPoint>>() {}.type
+            gson.fromJson(body, type) ?: emptyList()
+        }
+    }
+
+    // MARK: - CSMS / Chat API
+    suspend fun fetchChatRooms(): List<JSONObject> = withContext(Dispatchers.IO) {
+        val user = currentUser ?: return@withContext emptyList()
+        val path = "/rest/v1/chat_rooms"
+        val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
+        val request = makeRequest(path, queryParams = queryParams)
+        client.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
+            val array = JSONArray(body)
+            val list = mutableListOf<JSONObject>()
+            for (i in 0 until array.length()) {
+                list.add(array.getJSONObject(i))
+            }
+            list
+        }
+    }
+
+    suspend fun createGroupChat(name: String): Boolean = withContext(Dispatchers.IO) {
+        val user = currentUser ?: throw IOException("Inicia sesión para crear grupos CSMS")
+        val path = "/rest/v1/chat_rooms"
+        val bodyJson = JSONObject().apply {
+            put("name", name)
+            put("is_group", true)
+            put("created_by", user.id)
+        }
+        val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
+        val request = makeRequest(path, "POST", body)
+        client.newCall(request).execute().use { response ->
+            response.isSuccessful
+        }
+    }
+
+    suspend fun fetchChatMessages(roomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val path = "/rest/v1/chat_messages"
+        val queryParams = mapOf(
+            "select" to "*",
+            "room_id" to "eq.$roomId",
+            "order" to "created_at.asc"
+        )
+        val request = makeRequest(path, queryParams = queryParams)
+        client.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
+            val array = JSONArray(body)
+            val list = mutableListOf<JSONObject>()
+            for (i in 0 until array.length()) {
+                list.add(array.getJSONObject(i))
+            }
+            list
+        }
+    }
+
+    suspend fun sendChatMessage(roomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
+        val user = currentUser ?: throw IOException("Inicia sesión para enviar mensajes")
+        val path = "/rest/v1/chat_messages"
+        val bodyJson = JSONObject().apply {
+            put("room_id", roomId)
+            put("sender_id", user.id)
+            put("content", content)
+        }
+        val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
+        val request = makeRequest(path, "POST", body)
+        client.newCall(request).execute().use { response ->
+            response.isSuccessful
         }
     }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 struct ForkarEcoView: View {
     @EnvironmentObject var authManager: SupabaseManager
@@ -39,19 +40,39 @@ struct ForkarEcoView: View {
                             }
                             .padding(.top, 4)
                             
-                            // Botón de Escaneo NFC Físico
-                            Button(action: scanNFCTag) {
-                                HStack {
-                                    Image(systemName: "wave.3.right.circle.fill")
-                                        .font(.system(size: 18))
-                                    Text("Escanear Tag NFC Físico 📶")
-                                        .font(.system(size: 13, weight: .black))
+                            // Botones de Acción Eco & Dynamic Island
+                            HStack(spacing: 12) {
+                                Button(action: scanNFCTag) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "wave.3.right.circle.fill")
+                                        Text("NFC Físico 📶")
+                                    }
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 14)
+                                    .background(LinearGradient(colors: [Color.emerald, Color.blue], startPoint: .leading, endPoint: .trailing))
+                                    .cornerRadius(10)
                                 }
-                                .foregroundColor(.white)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 20)
-                                .background(LinearGradient(colors: [Color.emerald, Color.blue], startPoint: .leading, endPoint: .trailing))
-                                .cornerRadius(12)
+                                
+                                Button(action: {
+                                    DynamicIslandEcoManager.shared.startEcoLiveActivity(
+                                        co2: co2Saved,
+                                        pts: ecoPoints,
+                                        userName: authManager.currentUser?.email?.components(separatedBy: "@").first?.capitalized ?? "Usuario"
+                                    )
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "capsule.portrait.fill")
+                                        Text("Activar Isla 🏝️")
+                                    }
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 14)
+                                    .background(LinearGradient(colors: [Color.purple, Color.indigo], startPoint: .leading, endPoint: .trailing))
+                                    .cornerRadius(10)
+                                }
                             }
                             .padding(.top, 10)
                         }
@@ -103,12 +124,19 @@ struct ForkarEcoView: View {
                     .padding(.vertical)
                 }
             }
-            .navigationTitle("Forkar Eco")
-            .alert(isPresented: $showSuccessAlert) {
-                Alert(title: Text("¡Reto Completado! 🌿"), message: Text(alertMessage), dismissButton: .default(Text("Genial")))
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .background {
+                    DynamicIslandEcoManager.shared.startEcoLiveActivity(
+                        co2: co2Saved,
+                        pts: ecoPoints,
+                        userName: authManager.currentUser?.email?.components(separatedBy: "@").first?.capitalized ?? "Usuario"
+                    )
+                }
             }
         }
     }
+    
+    @Environment(\.scenePhase) private var scenePhase
     
     private func scanNFCTag() {
         nfcReader.startScan { tagContent in
@@ -125,8 +153,15 @@ struct ForkarEcoView: View {
     private func completeAction(co2: Double, pts: Int, title: String) {
         co2Saved += co2
         ecoPoints += pts
-        alertMessage = "¡Tag NFC detectado! 📶\nHas registrado \"\(title)\": +\(String(format: "%.1f", co2)) kg CO₂ ahorrados y +\(pts) Puntos Eco."
+        
+        UserDefaults.standard.set(co2Saved, forKey: "forkar_co2_saved")
+        UserDefaults.standard.set(ecoPoints, forKey: "forkar_eco_points")
+        WidgetCenter.shared.reloadAllTimelines()
+        
+        alertMessage = "¡Reto Registrado! 🌿\nHas registrado \"\(title)\": +\(String(format: "%.1f", co2)) kg CO₂ ahorrados y +\(pts) Puntos Eco."
         showSuccessAlert = true
+        
+        DynamicIslandEcoManager.shared.updateEcoLiveActivity(co2: co2Saved, pts: ecoPoints)
     }
 }
 

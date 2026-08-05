@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
+import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON, getBrowserHash, regenerateBrowserHash } from './cookie-utils.js';
 
 // 🔧 CONFIGURACIÓN SUPABASE
 const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
@@ -70,8 +70,68 @@ async function loginCokiAccount(email, password) {
         setCookie('coki_refresh_token', data.session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
     }
     
+    // 🔑 Vincular Hash de Navegador en Supabase
+    await bindBrowserHash(data.user.id, data.user.email);
+
     console.log('✅ Sesión Coki iniciada:', data.user.email);
     return { success: true, session: data.session, user: data.user };
+}
+
+async function bindBrowserHash(userId, email) {
+    try {
+        const hash = getBrowserHash();
+        const { error } = await supabase
+            .from('user_device_hashes')
+            .upsert({
+                device_hash: hash,
+                user_id: userId,
+                user_email: email,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'device_hash' });
+        if (error) console.warn('⚠️ Error al vincular Browser Hash:', error.message);
+        else console.log('🔑 Browser Hash vinculado en cookies:', hash);
+    } catch (e) {
+        console.warn('⚠️ Error bindBrowserHash:', e);
+    }
+}
+
+async function unbindBrowserHash() {
+    try {
+        const hash = getBrowserHash();
+        const { error } = await supabase
+            .from('user_device_hashes')
+            .delete()
+            .eq('device_hash', hash);
+        if (error) console.warn('⚠️ Error al desvincular Browser Hash:', error.message);
+    } catch (e) {
+        console.warn('⚠️ Error unbindBrowserHash:', e);
+    }
+}
+
+async function restoreSessionFromBrowserHash() {
+    try {
+        const hash = getBrowserHash();
+        if (!hash) return null;
+        const { data, error } = await supabase
+            .from('user_device_hashes')
+            .select('*')
+            .eq('device_hash', hash)
+            .maybeSingle();
+        if (error || !data) return null;
+        
+        const restoredUser = {
+            id: data.user_id,
+            email: data.user_email,
+            name: data.user_email ? data.user_email.split('@')[0] : 'Usuario',
+            metadata: { restored_from_hash: true }
+        };
+        setCookieJSON('coki_current_user', restoredUser, { maxAge: 7 * 24 * 60 * 60 });
+        console.log('🔄 Sesión restaurada desde Browser Hash Cookie:', data.user_email);
+        return restoredUser;
+    } catch (e) {
+        console.warn('⚠️ Error restoreSessionFromBrowserHash:', e);
+        return null;
+    }
 }
 
 async function loginCokiWithOAuth(provider) {
@@ -113,6 +173,8 @@ async function handleCokiOAuthCallback() {
         setCookie('coki_access_token', session.access_token, { maxAge: 7 * 24 * 60 * 60 });
         setCookie('coki_refresh_token', session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
     }
+
+    await bindBrowserHash(user.id, user.email);
     
     return { success: true, user };
 }
@@ -161,6 +223,7 @@ async function changeCokiPassword(newPassword) {
 }
 
 async function logoutCoki() {
+    await unbindBrowserHash();
     const { error } = await supabase.auth.signOut();
     
     // 🍪 LIMPIAR TODAS LAS COOKIES DE COKI
@@ -191,9 +254,12 @@ async function getCurrentCokiUser() {
         };
     }
     
-    // 🍪 FALLBACK: Leer de cookies
+    // 🍪 FALLBACK: Leer de cookies o restaurar por Browser Hash
     const stored = getCookieJSON('coki_current_user');
-    return stored || null;
+    if (stored) return stored;
+
+    const restored = await restoreSessionFromBrowserHash();
+    return restored || null;
 }
 
 // 🎧 Escuchar cambios de auth
@@ -262,5 +328,11 @@ export {
     logoutCoki,
     getCurrentCokiUser,
     sendCokiOTP,
-    verifyCokiOTP
+    verifyCokiOTP,
+    bindBrowserHash,
+    unbindBrowserHash,
+    restoreSessionFromBrowserHash,
+    getBrowserHash,
+    regenerateBrowserHash
 };
+

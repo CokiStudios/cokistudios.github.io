@@ -9,6 +9,8 @@ struct ChatsView: View {
     @State private var newGroupName = ""
     @State private var isCreatingGroup = false
     @State private var showLogin = false
+    @StateObject private var securityManager = SecurityAndNotificationManager.shared
+    @State private var isFaceIDUnlocked = false
     
     var body: some View {
         MultiplatformNavigationStack {
@@ -19,85 +21,86 @@ struct ChatsView: View {
                     .ignoresSafeArea()
                 
                 if authManager.isLoggedIn {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            if isLoading && rooms.isEmpty {
-                                HStack {
-                                    Spacer()
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
-                                    Spacer()
-                                }
-                                .padding()
-                            } else if rooms.isEmpty {
-                                VStack(spacing: 20) {
-                                    Image(systemName: "message.and.waveform.fill")
-                                        .font(.system(size: 64))
-                                        .foregroundColor(ForkarTheme.textSub)
-                                    Text("Bandeja de Entrada Vacía")
-                                        .font(.title3.bold())
-                                        .foregroundColor(ForkarTheme.text)
-                                    Text("Comienza un chat directo con otro usuario en sus posts o crea un grupo de chat con tus amigos.")
-                                        .font(.subheadline)
-                                        .foregroundColor(ForkarTheme.textSub)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal, 40)
-                                }
-                                .padding(.vertical, 80)
-                            } else {
-                                ForEach(rooms) { room in
-                                    NavigationLink(destination: ChatRoomDetailView(room: room).environmentObject(authManager)) {
-                                        ChatRoomRowView(room: room)
-                                            .environmentObject(authManager)
+                    if isFaceIDUnlocked {
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                if isLoading && rooms.isEmpty {
+                                    HStack {
+                                        Spacer()
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
+                                        Spacer()
                                     }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .padding(.horizontal)
+                                    .padding()
+                                } else if rooms.isEmpty {
+                                    VStack(spacing: 20) {
+                                        Image(systemName: "message.and.waveform.fill")
+                                            .font(.system(size: 64))
+                                            .foregroundColor(ForkarTheme.textSub)
+                                        Text("Bandeja de Entrada Vacía")
+                                            .font(.title3.bold())
+                                            .foregroundColor(ForkarTheme.text)
+                                        Text("Comienza un chat directo con otro usuario en sus posts o crea un grupo de chat con tus amigos.")
+                                            .font(.subheadline)
+                                            .foregroundColor(ForkarTheme.textSub)
+                                            .multilineTextAlignment(.center)
+                                            .padding(.horizontal, 40)
+                                    }
+                                    .padding(.vertical, 80)
+                                } else {
+                                    ForEach(rooms) { room in
+                                        NavigationLink(destination: ChatRoomDetailView(room: room).environmentObject(authManager)) {
+                                            ChatRoomRowView(room: room)
+                                                .environmentObject(authManager)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                        .padding(.horizontal)
+                                    }
                                 }
                             }
+                            .padding(.vertical)
                         }
-                        .padding(.vertical)
-                    }
-                    .refreshable {
-                        await loadRooms()
-                    }
-                    .toolbar {
-                        #if os(iOS)
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button(action: {
-                                showCreateGroup = true
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "plus")
-                                    Text("Crear Grupo")
-                                }
-                                .font(.system(size: 14, weight: .bold))
+                        .refreshable {
+                            await loadRooms()
+                        }
+                    } else {
+                        // Face ID Locked State Overlay
+                        VStack(spacing: 24) {
+                            Image(systemName: "faceid")
+                                .font(.system(size: 72))
                                 .foregroundColor(ForkarTheme.accent)
+                            
+                            VStack(spacing: 8) {
+                                Text("Chats Privados Protegidos")
+                                    .font(.title2.bold())
+                                    .foregroundColor(ForkarTheme.text)
+                                Text("Se requiere Face ID / Touch ID para ver tus conversaciones privadas en Forkar.")
+                                    .font(.subheadline)
+                                    .foregroundColor(ForkarTheme.textSub)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 32)
                             }
-                        }
-                        #else
-                        ToolbarItem(placement: .primaryAction) {
-                            Button(action: {
-                                showCreateGroup = true
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "plus")
-                                    Text("Crear Grupo")
+                            
+                            Button(action: unlockChats) {
+                                HStack {
+                                    Image(systemName: "lock.open.fill")
+                                    Text("Desbloquear con Face ID")
                                 }
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(ForkarTheme.accent)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.vertical, 14)
+                                .padding(.horizontal, 28)
+                                .background(ForkarTheme.primaryGradient)
+                                .cornerRadius(14)
+                                .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 10, y: 4)
                             }
                         }
-                        #endif
-                    }
-                    .sheet(isPresented: $showCreateGroup) {
-                        CreateGroupSheetView(
-                            isPresented: $showCreateGroup,
-                            groupName: $newGroupName,
-                            isCreating: $isCreatingGroup,
-                            onCreate: {
-                                createGroup()
-                            }
-                        )
+                        .padding(32)
+                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
+                        .padding(.horizontal, 20)
+                        .onAppear {
+                            unlockChats()
+                        }
                     }
                 } else {
                     // Not logged in state
@@ -142,11 +145,63 @@ struct ChatsView: View {
                 }
             }
             .navigationTitle("Chats")
+            .toolbar {
+                if authManager.isLoggedIn && isFaceIDUnlocked {
+                    #if os(iOS)
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            showCreateGroup = true
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus")
+                                Text("Crear Grupo")
+                            }
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(ForkarTheme.accent)
+                        }
+                    }
+                    #else
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: {
+                            showCreateGroup = true
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus")
+                                Text("Crear Grupo")
+                            }
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(ForkarTheme.accent)
+                        }
+                    }
+                    #endif
+                }
+            }
+            .sheet(isPresented: $showCreateGroup) {
+                CreateGroupSheetView(
+                    isPresented: $showCreateGroup,
+                    groupName: $newGroupName,
+                    isCreating: $isCreatingGroup,
+                    onCreate: {
+                        createGroup()
+                    }
+                )
+            }
             .onAppear {
-                if authManager.isLoggedIn {
+                if authManager.isLoggedIn && isFaceIDUnlocked {
                     Task {
                         await loadRooms()
                     }
+                }
+            }
+        }
+    }
+    
+    private func unlockChats() {
+        securityManager.authenticateBiometrics { success in
+            self.isFaceIDUnlocked = success
+            if success {
+                Task {
+                    await loadRooms()
                 }
             }
         }
@@ -207,36 +262,54 @@ struct ChatRoomRowView: View {
                 // Group Icon
                 ZStack {
                     Circle()
-                        .fill(ForkarTheme.accent2.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                        .fill(ForkarTheme.accent.opacity(0.2))
+                        .frame(width: 48, height: 48)
+                    
                     Image(systemName: "person.3.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(ForkarTheme.accent2)
+                        .font(.system(size: 20))
+                        .foregroundColor(ForkarTheme.accent)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(room.name ?? "Grupo de Chat")
+                        .font(.headline)
+                        .foregroundColor(ForkarTheme.text)
+                    
+                    Text("Grupo Privado")
+                        .font(.caption)
+                        .foregroundColor(ForkarTheme.textSub)
                 }
             } else {
-                // Partner initials
-                CircleAvatarPlaceholder(initials: initials)
-                    .frame(width: 44, height: 44)
-                    .font(.system(size: 16, weight: .bold))
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(room.is_group ? room.displayName : displayName)
-                    .font(.headline)
-                    .foregroundColor(ForkarTheme.text)
+                // Direct Message Icon
+                ZStack {
+                    Circle()
+                        .fill(ForkarTheme.primaryGradient)
+                        .frame(width: 48, height: 48)
+                    
+                    Text(initials)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
                 
-                Text(room.is_group ? "Grupo de Chat" : "Mensaje Privado")
-                    .font(.subheadline)
-                    .foregroundColor(ForkarTheme.textSub)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(displayName)
+                        .font(.headline)
+                        .foregroundColor(ForkarTheme.text)
+                    
+                    Text("Mensaje Directo")
+                        .font(.caption)
+                        .foregroundColor(ForkarTheme.textSub)
+                }
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(ForkarTheme.textMuted)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(ForkarTheme.textSub)
         }
-        .shineInlineCard(borderLineWidth: 2.5, shadowOffset: 4.5, backgroundColor: ForkarTheme.card)
+        .padding()
+        .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 2.0, backgroundColor: ForkarTheme.card)
         .onAppear {
             if !room.is_group {
                 Task {
@@ -300,42 +373,27 @@ struct CreateGroupSheetView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
-                            Text("Crear Grupo de Chat")
-                                .font(.system(size: 15, weight: .black))
-                                .foregroundColor(.white)
+                            Text("Crear Grupo")
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 4)
                         }
                     }
-                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(groupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
                     .padding(.horizontal)
                     
                     Spacer()
                 }
-                .padding(.vertical)
+                .padding(.top, 24)
             }
-             .navigationTitle("Nuevo Grupo")
-             #if os(iOS)
-             .navigationBarTitleDisplayMode(.inline)
-             #endif
-             .toolbar {
-                 #if os(iOS)
-                 ToolbarItem(placement: .navigationBarLeading) {
-                     Button("Cancelar") {
-                         isPresented = false
-                     }
-                     .foregroundColor(ForkarTheme.textSub)
-                 }
-                 #else
-                 ToolbarItem(placement: .cancellationAction) {
-                     Button("Cancelar") {
-                         isPresented = false
-                     }
-                     .foregroundColor(ForkarTheme.textSub)
-                 }
-                 #endif
-             }
+            .navigationTitle("Nuevo Grupo")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") {
+                        isPresented = false
+                    }
+                    .foregroundColor(ForkarTheme.textSub)
+                }
+            }
         }
     }
 }

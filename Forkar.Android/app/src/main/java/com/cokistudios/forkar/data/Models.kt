@@ -122,3 +122,36 @@ data class SupabaseAuthResponse(
     @SerializedName("refresh_token") val refreshToken: String,
     val user: SupabaseUser
 )
+
+data class EcoAction(
+    val id: String,
+    val title: String,
+    val description: String,
+    @SerializedName("co2_impact") val co2Impact: Double = 1.0,
+    val category: String = "General",
+    @SerializedName("created_at") val createdAt: String? = null
+) {
+    val pointsEarned: Int
+        get() = (co2Impact * 20).toInt()
+}
+
+data class UserEcoImpact(
+    val id: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("action_id") val actionId: String?,
+    @SerializedName("co2_saved") val co2Saved: Double = 0.0,
+    @SerializedName("points_earned") val pointsEarned: Int = 0,
+    @SerializedName("created_at") val createdAt: String? = null,
+    val action: EcoAction? = null
+)
+
+data class EcoMapPoint(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val latitude: Double,
+    val longitude: Double,
+    @SerializedName("point_type") val pointType: String = "verde",
+    val color: String = "#10b981"
+)
+

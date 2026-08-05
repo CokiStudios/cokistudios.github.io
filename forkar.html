@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forkar — Comunidad Coki Studios</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+    <meta name="description"
+        content="Forkar es la comunidad de Coki Studios. Comparte ideas, haz preguntas y conecta con otros builders y desarrolladores.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #06090f;
+            --bg2: #0d1117;
+            --card: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-glow: rgba(99, 102, 241, 0.4);
+            --accent: #6366f1;
+            --accent2: #8b5cf6;
+            --green: #10b981;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #475569;
+        }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --bg2: #f1f5f9;
+            --card: rgba(0, 0, 0, 0.02);
+            --card-hover: rgba(0, 0, 0, 0.04);
+            --border: rgba(0, 0, 0, 0.06);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            --accent: #4f46e5;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .theme-toggle-btn:hover {
+            color: var(--text);
+            background: var(--card-hover);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: linear-gradient(rgba(99, 102, 241, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3C/svg%3E");
+            background-repeat: repeat-y;
+            background-size: 100% 600px;
+            background-position: center top;
+            pointer-events: none;
+            animation: moveBackground 25s linear infinite;
+        }
+        html.light-theme body::after {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3C/svg%3E");
+        }
+
+        @keyframes moveBackground {
+            from { background-position: center 0px; }
+            to { background-position: center 600px; }
+        }
+
+
+        @keyframes moveBackground {
+            from { background-position: center 0px; }
+            to { background-position: center 600px; }
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(6, 9, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 13px;
+            color: white;
+        }
+
+        .nav-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .nav-sep {
+            color: var(--text-muted);
+            margin: 0 4px;
+        }
+
+        .nav-page {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #nav-profile {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-sub);
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        #nav-profile:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+        }
+
+        #nav-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            overflow: hidden;
+        }
+
+        #nav-login {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 18px;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        #nav-login:hover {
+            background: #4f46e5;
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        /* ── PAGE HERO ── */
+        .page-hero {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .page-hero h1 {
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .page-hero h1 span {
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-hero p {
+            color: var(--text-sub);
+            font-size: 16px;
+        }
+
+        /* ── GRID ── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 24px;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            position: sticky;
+            top: 84px;
+            height: fit-content;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sidebar-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .sidebar-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .btn-new-post {
+            width: 100%;
+            padding: 11px;
+            background: var(--accent);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-new-post:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .cat-btn {
+            width: 100%;
+            text-align: left;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-sub);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cat-btn:hover,
+        .cat-btn.active {
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--text);
+        }
+
+        .cat-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .stat-row .label {
+            color: var(--text-muted);
+        }
+
+        .stat-row .value {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ── FEED ── */
+        .feed {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-bar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--border-glow);
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .active-filter {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .active-filter .label {
+            color: var(--text-muted);
+        }
+
+        .filter-chip {
+            padding: 3px 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .filter-clear {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .filter-clear:hover {
+            color: var(--text);
+        }
+
+        .post-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: all 0.25s ease;
+        }
+
+        .post-card:hover {
+            border-color: var(--border-glow);
+            background: var(--card-hover);
+            transform: translateY(-2px);
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .post-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .post-author {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .post-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .post-cat-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 100px;
+        }
+
+        .post-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .post-body {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.65;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .post-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .post-card-report-btn {
+            margin-left: auto;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .post-card-report-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red) !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            background: var(--card);
+            border: 1px dashed var(--border);
+            border-radius: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: var(--text-sub);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
+            background-size: 200%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 10px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200%
+            }
+
+            100% {
+                background-position: -200%
+            }
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: mIn 0.25s ease;
+        }
+
+        @keyframes mIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.97)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .modal-header {
+            padding: 24px 28px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: #111827;
+        }
+
+        .modal-title {
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            cursor: pointer;
+            color: var(--text-sub);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--border-glow);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .modal-footer {
+            padding: 0 28px 24px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            color: var(--text);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-publish {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-publish:hover {
+            background: #4f46e5;
+        }
+
+        .btn-publish:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="xtraps-bg rainbow">
+        <div class="xtraps-wave"></div>
+    </div>
+
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <a href="index.html" class="nav-brand">
+                    <div class="nav-logo">C</div>
+                    <span class="nav-name">Coki Studios</span>
+                </a>
+                <span class="nav-sep">/</span>
+                <span class="nav-page">Forkar</span>
+            </div>
+            <div class="nav-right">
+                <a href="https://anonymus-devop.github.io/OurCommonHome/" target="_blank"
+                    style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:#10b981; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s;"
+                    onmouseover="this.style.color='#34d399'"
+                    onmouseout="this.style.color='#10b981'">🌿 Nuestro Hogar Común</a>
+                <a href="coki-messenger.html"
+                    style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:var(--text-sub); transition:color 0.2s;"
+                    onmouseover="this.style.color='var(--text)'"
+                    onmouseout="this.style.color='var(--text-sub)'">CSMS</a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <a href="coki-dashboard.html" id="nav-profile">
+                    <div id="nav-avatar">U</div>
+                    <span id="nav-name">Mi cuenta</span>
+                </a>
+                <a href="coki-register.html" id="nav-login">Iniciar sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="page-hero">
+            <h1>Bienvenido a <span>Forkar</span></h1>
+            <p>Tu lugar para conectar con otros</p>
+        </div>
+
+        <div class="content-grid">
+            <!-- ── SIDEBAR ── -->
+            <div class="sidebar">
+                <div class="sidebar-card">
+                    <button class="btn-new-post" onclick="openModal()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nueva publicación
+                    </button>
+                </div>
+
+                <!-- ── FORKAR ECO NATIVE SUB-MENU ── -->
+                <div class="sidebar-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(99,102,241,0.08)); border: 1px solid rgba(16,185,129,0.4); border-radius: 18px; padding: 20px;">
+                    <div class="sidebar-card-title" style="color:#34d399; font-size:15px; display:flex; align-items:center; gap:8px;">
+                        <span>🌿</span> Forkar Eco Hub
+                    </div>
+                    <p style="font-size:12px; color:var(--text-sub); margin-bottom:14px; line-height:1.6;">
+                        El módulo ecológico de Forkar. Retos de impacto de CO₂, mapa verde de recolección y estadísticas de la comunidad.
+                    </p>
+
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Tu Impacto CO₂</span>
+                            <span style="font-size:14px; font-weight:900; color:#34d399;" id="forkar-eco-co2">0.0 kg</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Puntos Eco</span>
+                            <span style="font-size:14px; font-weight:900; color:#fbbf24;" id="forkar-eco-pts">0 pts</span>
+                        </div>
+                    </div>
+
+                    <button onclick="openForkarEcoModal()" class="btn-new-post" style="background: linear-gradient(135deg, #10b981, #059669); color:white; font-weight:800; border-radius:12px; width:100%;">
+                        Ver Panel Eco Completo 🍃
+                    </button>
+                </div>
+
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">Categorías</div>
+                    <div id="categories-list">
+                        <div class="skeleton" style="height:34px;margin-bottom:6px;"></div>
+                        <div class="skeleton" style="height:34px;margin-bottom:6px;"></div>
+                        <div class="skeleton" style="height:34px;"></div>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">Estadísticas</div>
+                    <div class="stat-row"><span class="label">Publicaciones</span><span class="value"
+                            id="stat-posts">—</span></div>
+                    <div class="stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:10px;">
+                        <span class="label">Miembros</span><span class="value" id="stat-members">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── FEED ── -->
+            <div class="feed">
+                <div class="search-bar">
+                    <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Buscar en Forkar...">
+                </div>
+
+                <div class="active-filter" id="active-filter">
+                    <span class="label">Filtrado por:</span>
+                    <span class="filter-chip" id="filter-name">General</span>
+                    <button class="filter-clear" onclick="clearFilter()">✕</button>
+                </div>
+
+                <div id="posts-list">
+                    <div class="skeleton" style="height:140px;margin-bottom:12px;"></div>
+                    <div class="skeleton" style="height:140px;margin-bottom:12px;"></div>
+                    <div class="skeleton" style="height:140px;"></div>
+                </div>
+
+                <div id="empty-state" class="empty-state" style="display:none;">
+                    <div style="font-size:40px;margin-bottom:12px;">📭</div>
+                    <h3>No hay publicaciones aún</h3>
+                    <p>Sé el primero en compartir algo con la comunidad</p>
+                    <button class="btn-publish" onclick="openModal()">+ Crear publicación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL NUEVO POST ── -->
+    <div class="modal-overlay" id="modal-post">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Nueva publicación</div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input class="form-input" type="text" id="post-title" placeholder="¿De qué quieres hablar?">
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select class="form-select" id="post-category">
+                        <option value="">Sin categoría</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contenido</label>
+                    <textarea class="form-textarea" id="post-content"
+                        placeholder="Escribe tu publicación..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="btn-publish" id="btn-submit" onclick="submitPost()">Publicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORKAR ECO HUB -->
+    <div class="modal-overlay" id="modal-forkar-eco">
+        <div class="modal" style="max-width: 650px;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(16,185,129,0.2);">
+                <div class="modal-title" style="color:#34d399; display:flex; align-items:center; gap:8px;">
+                    🌿 Forkar Eco Hub — Impacto & Reciclaje
+                </div>
+                <button class="modal-close" onclick="closeForkarEcoModal()">✕</button>
+            </div>
+            <div class="modal-body" style="max-height:75vh; overflow-y:auto; padding:20px;">
+                <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,9,15,0.6)); border:1px solid rgba(16,185,129,0.3); border-radius:16px; padding:20px; text-align:center; margin-bottom:20px;">
+                    <p style="font-size:12px; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Mi Ahorro CO₂ en Forkar</p>
+                    <div style="font-size:42px; font-weight:900; color:white;" id="modal-co2-total">0.0 kg</div>
+                    <p style="font-size:13px; color:var(--text-sub); margin-top:4px;">Iniciativas completadas en la red de Coki Studios</p>
+                </div>
+
+                <!-- 🍪 SECCIÓN HASH DE NAVEGADOR -->
+                <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:14px; padding:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <div style="font-size:11px; font-weight:800; color:#a5b4fc; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                            <span>🍪</span> Hash de Navegador (Cookie Activa)
+                        </div>
+                        <div style="font-family:monospace; font-size:12px; color:var(--text); margin-top:4px;" id="browser-hash-display">Cargando hash...</div>
+                    </div>
+                    <button onclick="handleRotateBrowserHash()" style="background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#c7d2fe; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer;">🔄 Renovar Hash</button>
+                </div>
+
+                <h4 style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px;">Retos Ecológicos Disponibles</h4>
+                <div id="eco-actions-container" style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">🚴 Usar Transporte Sostenible</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Bicicleta o caminata (+1.5 kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('Bici', 1.5, 30)" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+30 pts)</button>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">♻️ Separación de Residuos</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Punto verde municipal (+2.0 kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('Reciclaje', 2.0, 40)" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+40 pts)</button>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">🔌 Ahorro Energético RAEE</div>
+                            <div style="font-size:12px; color:var(--text-sub);">Entrega de electrónicos en desuso (+3.5 kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('RAEE', 3.5, 70)" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+70 pts)</button>
+                    </div>
+                </div>
+
+                <h4 style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px;">Puntos de Recolección (Cota & Alrededores)</h4>
+                <div id="eco-map-points-container" style="background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:14px; padding:14px; font-size:13px; color:var(--text-sub); line-height:1.8;">
+                    <div>🟢 <strong>Centro de Acopio Municipal:</strong> Cra. 3 #5-20, Cota (Lun-Vie 8am-5pm)</div>
+                    <div>🔵 <strong>Punto Verde Parque Principal:</strong> Parque Principal de Cota (Todos los días)</div>
+                    <div>🟠 <strong>Punto RAEE Electrónicos:</strong> Carrera 4 No. 12 - 63 (Lun-Vie 7:30am-5:30pm)</div>
+                </div>
+            </div>
+        </div>
+
+    <!-- MODAL REPORTAR -->
+    <div class="modal-overlay" id="modal-report">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Reportar contenido</div>
+                <button class="modal-close" onclick="closeReportModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="report-target-id">
+                <input type="hidden" id="report-target-type">
+
+                <div id="report-preview" style="margin-bottom:16px; display:none;"></div>
+
+                <div class="form-group">
+                    <label class="form-label"
+                        style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">MOTIVO
+                        DEL REPORTE</label>
+                    <select class="form-select" id="report-reason"
+                        style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none;">
+                        <option value="spam">Spam / Publicidad</option>
+                        <option value="harassment">Acoso o agresión</option>
+                        <option value="inappropriate">Contenido inapropiado / explícito</option>
+                        <option value="other">Otro motivo</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top:16px;">
+                    <label class="form-label"
+                        style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">DETALLES
+                        ADICIONALES (OPCIONAL)</label>
+                    <textarea class="form-textarea" id="report-details"
+                        placeholder="Escribe más detalles sobre por qué reportas este contenido..."
+                        style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none; resize:vertical; min-height:80px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:0 28px 28px; display:flex; gap:12px; justify-content:flex-end;">
+                <button class="btn-sm btn-ghost" onclick="closeReportModal()"
+                    style="padding:10px 20px; border-radius:10px; background:rgba(255,255,255,0.05); color:var(--text-sub); border:none; cursor:pointer;">Cancelar</button>
+                <button class="btn-sm btn-accent" id="btn-submit-report" onclick="submitReport()"
+                    style="padding:10px 20px; border-radius:10px; background:var(--accent); color:white; border:none; cursor:pointer; font-weight:bold;">Enviar
+                    Reporte</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            initSocialApp
+        } from './forkar.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSocialApp();
+        });
+    </script>
+        <script type="module">
+        import {
+            getCategories, getPosts, createPost,
+            getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials,
+            getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints
+        } from './forkar.js';
+
+        import { getBrowserHash, regenerateBrowserHash } from './cookie-utils.js';
+
+        // 1. Importar el renderizador de menciones
+        import { renderMentionsInDOM } from './coki-extensions.js';
+
+        let currentCategory = null;
+        let currentUser = null;
+        let allCategories = [];
+        let loadedPosts = [];
+
+        async function init() {
+            currentUser = await getCurrentUser();
+            updateNav();
+            loadCategories();
+            loadPosts();
+            loadEcoSummary();
+        }
+
+        function updateNav() {
+            const profileEl = document.getElementById('nav-profile');
+            const loginEl = document.getElementById('nav-login');
+            if (currentUser) {
+                profileEl.style.display = 'flex';
+                loginEl.style.display = 'none';
+                const name = getUserDisplayName(currentUser);
+                document.getElementById('nav-name').textContent = name;
+                const avatar = getUserAvatar(currentUser);
+                const avatarEl = document.getElementById('nav-avatar');
+                if (avatar) {
+                    avatarEl.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                } else {
+                    avatarEl.textContent = getInitials(name);
+                }
+            }
+        }
+
+        async function loadEcoSummary() {
+            const hashDisplay = document.getElementById('browser-hash-display');
+            if (hashDisplay) {
+                hashDisplay.textContent = getBrowserHash();
+            }
+            if (currentUser) {
+                const impact = await getUserEcoImpact(currentUser.id);
+                document.getElementById('forkar-eco-co2').textContent = impact.co2Saved + ' kg';
+                document.getElementById('forkar-eco-pts').textContent = impact.pointsEarned + ' pts';
+                const modalCo2 = document.getElementById('modal-co2-total');
+                if (modalCo2) modalCo2.textContent = impact.co2Saved + ' kg';
+            }
+        }
+
+        async function loadCategories() {
+            allCategories = await getCategories();
+            const list = document.getElementById('categories-list');
+            const select = document.getElementById('post-category');
+
+            list.innerHTML = `
+                <button class="cat-btn ${!currentCategory ? 'active' : ''}" onclick="filterByCategory(null)">
+                    <span class="cat-dot" style="background:var(--text-muted)"></span> Todas
+                </button>
+            `;
+            allCategories.forEach(cat => {
+                list.innerHTML += `
+                    <button class="cat-btn ${currentCategory === cat.id ? 'active' : ''}" onclick="filterByCategory('${cat.id}')">
+                        <span class="cat-dot" style="background:${cat.color}"></span>${cat.name}
+                    </button>
+                `;
+                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        }
+
+        function escHtml(str) {
+            const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+        }
+
+        function renderPostCard(post) {
+            const name = post.author_name || 'Usuario';
+            const avatar = post.author_avatar;
+            const cat = post.category;
+            return `
+                <a href="forkar-post.html?id=${post.id}" class="post-card">
+                    <div class="post-meta">
+                        <div class="post-avatar">
+                            ${avatar ? `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : escHtml(getInitials(name))}
+                        </div>
+                        <span class="post-author">${escHtml(name)}</span>
+                        <span class="post-time">${formatDate(post.created_at)}</span>
+                        ${cat ? `<span class="post-cat-tag" style="background:${cat.color}18;color:${cat.color}">${escHtml(cat.name)}</span>` : ''}
+                        ${(currentUser && currentUser.id !== post.user_id) ? `
+                            <span class="post-card-report-btn" onclick="event.preventDefault(); event.stopPropagation(); openReportModal('${post.id}', 'post')" title="Reportar publicación">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21v8h-6l-1-1H5a2 2 0 00-2 2zm0 0h18"/></svg>
+                            </span>
+                        ` : ''}
+                    </div>
+                    <div class="post-title">${escHtml(post.title)}</div>
+                    <div class="post-body">${escHtml(post.content)}</div>
+                    <div class="post-stats">
+                        <span class="post-stat">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            ${post.likes_count || 0}
+                        </span>
+                        <span class="post-stat">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            ${post.comments_count || 0}
+                        </span>
+                    </div>
+                </a>
+            `;
+        }
+
+        async function loadPosts() {
+            const posts = await getPosts({ category: currentCategory });
+            loadedPosts = posts;
+            const container = document.getElementById('posts-list');
+            const empty = document.getElementById('empty-state');
+            document.getElementById('stat-posts').textContent = posts.length;
+            if (posts.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            container.innerHTML = posts.map(renderPostCard).join('');
+
+            // 2. Convertir los @usuarios en enlaces hacia el CSMS
+            renderMentionsInDOM();
+        }
+
+        window.filterByCategory = (catId) => {
+            currentCategory = catId;
+            const filterDiv = document.getElementById('active-filter');
+            if (catId) {
+                const cat = allCategories.find(c => c.id === catId);
+                document.getElementById('filter-name').textContent = cat?.name || 'Categoría';
+                filterDiv.style.display = 'flex';
+            } else {
+                filterDiv.style.display = 'none';
+            }
+            loadCategories();
+            loadPosts();
+        };
+
+        window.clearFilter = () => filterByCategory(null);
+
+        window.openModal = () => {
+            if (!currentUser) {
+                window.location.href = 'coki-register.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            document.getElementById('modal-post').classList.add('open');
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modal-post').classList.remove('open');
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-content').value = '';
+        };
+
+        document.getElementById('modal-post').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-post') closeModal();
+        });
+
+        window.submitPost = async () => {
+            const title = document.getElementById('post-title').value.trim();
+            const content = document.getElementById('post-content').value.trim();
+            const categoryId = document.getElementById('post-category').value || null;
+            if (!title || !content) { alert('Por favor escribe un título y contenido'); return; }
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true; btn.textContent = 'Publicando...';
+            const result = await createPost(title, content, categoryId);
+            btn.disabled = false; btn.textContent = 'Publicar';
+            if (result.success) { closeModal(); loadPosts(); }
+            else { alert('Error: ' + result.error); }
+        };
+
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const term = e.target.value.toLowerCase();
+                if (!term) { loadPosts(); return; }
+                const posts = await getPosts({ category: currentCategory });
+                const filtered = posts.filter(p => p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term));
+                const container = document.getElementById('posts-list');
+                const empty = document.getElementById('empty-state');
+                if (filtered.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+                empty.style.display = 'none';
+                container.innerHTML = filtered.map(renderPostCard).join('');
+
+                // 3. Procesar las menciones también en los resultados de búsqueda
+                renderMentionsInDOM();
+            }, 300);
+        });
+
+        init();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
+
+        window.openReportModal = (id, type) => {
+            const user = currentUser;
+            if (!user) {
+                alert('Inicia sesión para reportar contenido');
+                return;
+            }
+            document.getElementById('report-target-id').value = id;
+            document.getElementById('report-target-type').value = type || 'post';
+            document.getElementById('report-reason').value = 'spam';
+            document.getElementById('report-details').value = '';
+
+            let previewText = '';
+            if (type === 'post') {
+                const found = loadedPosts.find(p => p.id === id);
+                previewText = found ? found.title : '';
+            }
+
+            const previewEl = document.getElementById('report-preview');
+            if (previewEl) {
+                if (previewText) {
+                    previewEl.style.display = 'block';
+                    previewEl.innerHTML = `
+                        <label class="form-label" style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">CONTENIDO A REPORTAR</label>
+                        <div style="padding:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); border-radius:12px; font-size:14px; color:var(--text-sub); font-style:italic; line-height:1.4;">
+                            "${previewText}"
+                        </div>
+                    `;
+                } else {
+                    previewEl.style.display = 'none';
+                }
+            }
+
+            document.getElementById('modal-report').classList.add('open');
+        };
+
+        window.closeReportModal = () => {
+            document.getElementById('modal-report').classList.remove('open');
+        };
+
+        window.submitReport = async () => {
+            const targetId = document.getElementById('report-target-id').value;
+            const targetType = document.getElementById('report-target-type').value;
+            const reason = document.getElementById('report-reason').value;
+            const details = document.getElementById('report-details').value.trim();
+            const btn = document.getElementById('btn-submit-report');
+
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+
+            const insertData = {
+                reporter_id: currentUser.id,
+                reason: reason,
+                details: details || null
+            };
+
+            if (targetType === 'post') {
+                insertData.post_id = targetId;
+            } else {
+                insertData.comment_id = targetId;
+            }
+
+            const { error } = await supabase
+                .from('social_reports')
+                .insert(insertData);
+
+            btn.disabled = false;
+            btn.textContent = 'Enviar Reporte';
+
+            if (error) {
+                alert('Error al enviar el reporte: ' + error.message);
+            } else {
+                alert('✅ Reporte enviado con éxito. Gracias por ayudarnos a mantener la comunidad limpia.');
+                closeReportModal();
+            }
+        };
+
+        window.openForkarEcoModal = async () => {
+            document.getElementById('modal-forkar-eco').classList.add('open');
+            document.getElementById('browser-hash-display').textContent = getBrowserHash();
+            await loadEcoSummary();
+            await renderEcoActionsAndMap();
+        };
+
+        window.closeForkarEcoModal = () => {
+            document.getElementById('modal-forkar-eco').classList.remove('open');
+        };
+
+        window.handleRotateBrowserHash = () => {
+            const newHash = regenerateBrowserHash();
+            document.getElementById('browser-hash-display').textContent = newHash;
+            alert('🔄 Hash de Navegador renovado en cookies: ' + newHash);
+        };
+
+        async function renderEcoActionsAndMap() {
+            const actionsContainer = document.getElementById('eco-actions-container');
+            const mapContainer = document.getElementById('eco-map-points-container');
+
+            const actions = await getEcoActions();
+            if (actions && actions.length > 0) {
+                actionsContainer.innerHTML = actions.map(act => `
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">🌱 ${escHtml(act.title)}</div>
+                            <div style="font-size:12px; color:var(--text-sub);">${escHtml(act.description)} (+${act.co2_impact} kg CO₂)</div>
+                        </div>
+                        <button class="btn-publish" onclick="completeForkarEcoAction('${act.id}', '${escHtml(act.title)}', ${act.co2_impact}, ${Math.round(act.co2_impact * 20)})" style="background:#10b981; padding:8px 16px; font-size:12px;">Completar (+${Math.round(act.co2_impact * 20)} pts)</button>
+                    </div>
+                `).join('');
+            }
+
+            const points = await getEcoMapPoints();
+            if (points && points.length > 0) {
+                mapContainer.innerHTML = points.map(pt => `
+                    <div>📍 <strong>${escHtml(pt.name)}:</strong> ${escHtml(pt.description || '')} (Tipo: ${escHtml(pt.point_type)})</div>
+                `).join('');
+            }
+        }
+
+        window.completeForkarEcoAction = async (actionId, actionName, co2, pts) => {
+            if (!currentUser) {
+                alert('Debes iniciar sesión para registrar impacto ecológico.');
+                return;
+            }
+
+            const res = await logUserEcoImpact(actionId, co2, pts);
+            if (res.success) {
+                await loadEcoSummary();
+                alert(`🌿 ¡Reto Eco "${actionName}" registrado con éxito!\n+${co2} kg CO₂ ahorrados | +${pts} Puntos Eco`);
+            } else {
+                alert('⚠️ No se pudo registrar el reto eco: ' + res.error);
+            }
+        };
+    </script>
+
+</body>
+
+</html>

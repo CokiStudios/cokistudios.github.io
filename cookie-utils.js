@@ -46,12 +46,19 @@ function getCookieJSON(name) {
     try { return JSON.parse(val); } catch (e) { return null; }
 }
 
-function clearAllCookies() {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-        const [name] = cookie.trim().split('=');
-        deleteCookie(decodeURIComponent(name));
+function getBrowserHash() {
+    let hash = getCookie('coki_browser_hash');
+    if (!hash) {
+        hash = 'web_br_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        setCookie('coki_browser_hash', hash, { maxAge: 30 * 24 * 60 * 60 });
     }
+    return hash;
+}
+
+function regenerateBrowserHash() {
+    const newHash = 'web_br_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    setCookie('coki_browser_hash', newHash, { maxAge: 30 * 24 * 60 * 60 });
+    return newHash;
 }
 
 export {
@@ -61,5 +68,8 @@ export {
     setCookieJSON,
     getCookieJSON,
     clearAllCookies,
+    getBrowserHash,
+    regenerateBrowserHash,
     COOKIE_CONFIG
 };
+
