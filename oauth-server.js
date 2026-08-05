@@ -69,18 +69,12 @@ async function validateClient(clientId, redirectUri) {
     console.log('📋 Cliente encontrado:', client.client_name);
     console.log('🔗 Redirect URIs registrados:', client.redirect_uris);
     
-    let cleanRedirectUri = redirectUri;
-    if (cleanRedirectUri && cleanRedirectUri.endsWith('/OurC')) {
-        cleanRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
-        console.log('🔧 Redirect URI corregido de truncado:', cleanRedirectUri);
+    if (!client.redirect_uris.includes(redirectUri)) {
+        console.log('❌ Redirect URI no coincide:', redirectUri);
+        return { valid: false, error: 'invalid_redirect_uri', error_description: 'Redirect URI not allowed: ' + redirectUri };
     }
     
-    if (!client.redirect_uris.includes(cleanRedirectUri)) {
-        console.log('❌ Redirect URI no coincide:', cleanRedirectUri);
-        return { valid: false, error: 'invalid_redirect_uri', error_description: 'Redirect URI not allowed: ' + cleanRedirectUri };
-    }
-    
-    return { valid: true, client, cleanRedirectUri };
+    return { valid: true, client, cleanRedirectUri: redirectUri };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -107,11 +101,6 @@ async function handleAuthorizeRequest(urlParams) {
     
     redirectUri = decodeURIComponent(redirectUri);
     console.log('🔗 redirect_uri decodificado:', redirectUri);
-    
-    if (redirectUri.endsWith('/OurC') || redirectUri.length < 30) {
-        redirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
-        console.log('🔧 redirect_uri corregido:', redirectUri);
-    }
     
     const validation = await validateClient(clientId, redirectUri);
     if (!validation.valid) return validation;
@@ -220,13 +209,6 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     
     let storedRedirectUri = codeData.redirect_uri;
     let receivedRedirectUri = redirectUri;
-    
-    if (storedRedirectUri.endsWith('/OurC')) {
-        storedRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
-    }
-    if (receivedRedirectUri.endsWith('/OurC')) {
-        receivedRedirectUri = 'https://anonymus-devop.github.io/OurCommonHome/';
-    }
     
     if (storedRedirectUri !== receivedRedirectUri) {
         console.log('❌ Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
