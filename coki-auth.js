@@ -3,7 +3,7 @@
 // Registro, login y gestión de usuarios de Coki Studios
 // ═══════════════════════════════════════════════════════════════
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON, getBrowserHash, regenerateBrowserHash } from './cookie-utils.js';
 
 // 🔧 CONFIGURACIÓN SUPABASE

@@ -46,6 +46,16 @@ function getCookieJSON(name) {
     try { return JSON.parse(val); } catch (e) { return null; }
 }
 
+function clearAllCookies() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [cookieName] = cookie.trim().split('=');
+        if (cookieName) {
+            deleteCookie(decodeURIComponent(cookieName));
+        }
+    }
+}
+
 function getBrowserHash() {
     let hash = getCookie('coki_browser_hash');
     if (!hash) {

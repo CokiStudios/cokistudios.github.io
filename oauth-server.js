@@ -2,7 +2,7 @@
 // 🏢 COKI STUDIOS OAUTH SERVER v4 — Con Cookies
 // ═══════════════════════════════════════════════════════════════
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
 
 const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
