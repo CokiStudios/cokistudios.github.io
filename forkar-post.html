@@ -729,7 +729,7 @@
         }
 
         async function loadPost() {
-            postData = await getPost(postId);
+            postData = await getPostById(postId);
             if (!postData) {
                 document.getElementById('post-container').innerHTML = `
                     <div class="empty-state">
