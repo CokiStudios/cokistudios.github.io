@@ -1,6 +1,52 @@
 import SwiftUI
 import WebKit
-internal import Combine
+
+// ═══════════════════════════════════════════════════════════════
+// 🧠 AI PROVIDERS MODEL
+// ═══════════════════════════════════════════════════════════════
+enum AISidebarProvider: String, CaseIterable, Identifiable {
+    case gemini = "Gemini"
+    case chatgpt = "ChatGPT"
+    case claude = "Claude"
+    case kimi = "Kimi"
+    case xAI = "Grok (xAI)"
+    case none = "Nulo (Desactivado)"
+    
+    var id: String { self.rawValue }
+    
+    var icon: String {
+        switch self {
+        case .gemini: return "✨"
+        case .chatgpt: return "🤖"
+        case .claude: return "🧠"
+        case .kimi: return "🌙"
+        case .xAI: return "🚀"
+        case .none: return "🚫"
+        }
+    }
+    
+    var url: String {
+        switch self {
+        case .gemini: return "https://gemini.google.com"
+        case .chatgpt: return "https://chatgpt.com"
+        case .claude: return "https://claude.ai"
+        case .kimi: return "https://kimi.moonshot.cn"
+        case .xAI: return "https://x.ai"
+        case .none: return "about:blank"
+        }
+    }
+    
+    var themeColor: Color {
+        switch self {
+        case .gemini: return .purple
+        case .chatgpt: return .green
+        case .claude: return .orange
+        case .kimi: return .cyan
+        case .xAI: return .blue
+        case .none: return .gray
+        }
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════
 // ⚡ OPTIMIZACIONES DEL NAVEGADOR & STATE MANAGER FOR MAC
@@ -14,13 +60,14 @@ class BrowserOptimizerManager: ObservableObject {
     
     @Published var blockedTrackersCount: Int = 14
     @Published var co2SavedGrams: Double = 3.4
+    @Published var selectedAIProvider: AISidebarProvider = .gemini
     
     // Extensions Store
     @Published var extensionsList: [BrowserExtension] = [
         BrowserExtension(id: "sentinel", name: "CSID Sentinel Shield", icon: "🛡️", isEnabled: true),
         BrowserExtension(id: "eco", name: "Eco Hub CO₂ Tracker", icon: "🌿", isEnabled: true),
         BrowserExtension(id: "dark", name: "Shine Dark Theme Engine", icon: "🌙", isEnabled: true),
-        BrowserExtension(id: "gemini", name: "Gemini AI Sidebar", icon: "✨", isEnabled: true)
+        BrowserExtension(id: "ai_sidebar", name: "Multi-AI Assistant Engine", icon: "🤖", isEnabled: true)
     ]
     
     // Bookmarks Store
@@ -29,6 +76,8 @@ class BrowserOptimizerManager: ObservableObject {
         BookmarkItemData(id: UUID(), icon: "⚡", title: "Coki Products", url: "https://cokistudios.github.io/products.html"),
         BookmarkItemData(id: UUID(), icon: "🪪", title: "CSID Dashboard", url: "https://cokistudios.github.io/coki-dashboard.html"),
         BookmarkItemData(id: UUID(), icon: "✨", title: "Gemini AI", url: "https://gemini.google.com"),
+        BookmarkItemData(id: UUID(), icon: "🤖", title: "ChatGPT", url: "https://chatgpt.com"),
+        BookmarkItemData(id: UUID(), icon: "🧠", title: "Claude AI", url: "https://claude.ai"),
         BookmarkItemData(id: UUID(), icon: "🗺️", title: "Horizon Maps", url: "https://anonymus-devop.github.io/HorizonMaps/")
     ]
     
@@ -75,7 +124,6 @@ struct TabItem: Identifiable, Hashable {
 struct ShineFindWebView: NSViewRepresentable {
     @Binding var urlString: String
     @ObservedObject var optimizerManager: BrowserOptimizerManager
-    var onInspectElement: (() -> Void)? = nil
     
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -83,7 +131,6 @@ struct ShineFindWebView: NSViewRepresentable {
         preferences.allowsContentJavaScript = true
         config.defaultWebpagePreferences = preferences
         
-        // 🛡️ Habilitar DevTools / Inspector Web & Aislamiento de Almacenamiento
         config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
@@ -156,14 +203,42 @@ struct PreferencesView: View {
             
             Divider().background(Color.white.opacity(0.1))
             
+            // Selector de IA Predeterminada
+            VStack(alignment: .leading, spacing: 10) {
+                Text("PROVEEDOR DE ASISTENTE IA EN SIDEBAR")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.purple)
+                
+                Picker("Seleccionar IA Lateral", selection: $optimizer.selectedAIProvider) {
+                    ForEach(AISidebarProvider.allCases) { provider in
+                        HStack {
+                            Text(provider.icon)
+                            Text(provider.rawValue)
+                        }
+                        .tag(provider)
+                    }
+                }
+                .pickerStyle(.menu)
+                .padding(6)
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(8)
+            }
+            
+            Divider().background(Color.white.opacity(0.1))
+            
             // General Settings
             VStack(alignment: .leading, spacing: 12) {
-                Text("GENERAL")
+                Text("VIRTUDES Y OPTIMIZACIONES DE CHROMIUM")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.blue)
                 
-                Toggle("Activar Optimizaciones del Navegador (Bajo Consumo Metal/VRAM)", isOn: $optimizer.isOptimizationModeActive)
+                Toggle("Optimizaciones del Navegador (Ahorro de Memoria VRAM y CPU)", isOn: $optimizer.isOptimizationModeActive)
+                    .toggleStyle(.checkbox)
+                    .foregroundColor(.white)
+                
+                Toggle("Aceleración por GPU C++ Chromium Core", isOn: .constant(true))
                     .toggleStyle(.checkbox)
                     .foregroundColor(.white)
                 
@@ -174,31 +249,6 @@ struct PreferencesView: View {
                 Toggle("Escudo Sentinel Anti-Trackers a Nivel Hardware", isOn: .constant(true))
                     .toggleStyle(.checkbox)
                     .foregroundColor(.white)
-            }
-            
-            Divider().background(Color.white.opacity(0.1))
-            
-            // Extensions Manager
-            VStack(alignment: .leading, spacing: 12) {
-                Text("EXTENSIONES DE SHINE FIND")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.purple)
-                
-                ForEach($optimizer.extensionsList) { $ext in
-                    HStack {
-                        Text(ext.icon)
-                        Text(ext.name)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white)
-                        Spacer()
-                        Toggle("", isOn: $ext.isEnabled)
-                            .toggleStyle(.switch)
-                    }
-                    .padding(8)
-                    .background(Color.white.opacity(0.04))
-                    .cornerRadius(8)
-                }
             }
             
             Spacer()
@@ -212,23 +262,21 @@ struct PreferencesView: View {
             }
         }
         .padding(24)
-        .frame(width: 520, height: 480)
+        .frame(width: 540, height: 500)
         .background(Color(red: 0.06, green: 0.08, blue: 0.14))
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🎨 PREMIUM MACOS BROWSER UI (SHINE UI & GEMINI INTEGRATION)
+// 🎨 PREMIUM MACOS BROWSER UI (SHINE UI & MULTI-AI SIDEBAR)
 // ═══════════════════════════════════════════════════════════════
 struct MainWindowView: View {
     @State private var urlString: String = "https://cokistudios.github.io/forkar.html"
     @State private var addressInput: String = "https://cokistudios.github.io/forkar.html"
-    @State private var isGeminiSidebarOpen: Bool = false
+    @State private var isAISidebarOpen: Bool = false
     @State private var isExtensionsOpen: Bool = false
     @State private var isPreferencesOpen: Bool = false
-    @State private var newBookmarkTitle: String = ""
-    @State private var newBookmarkUrl: String = ""
-    @State private var isAddBookmarkOpen: Bool = false
+    @State private var isDownloadsOpen: Bool = false
     
     @StateObject private var optimizer = BrowserOptimizerManager.shared
     
@@ -236,7 +284,6 @@ struct MainWindowView: View {
         VStack(spacing: 0) {
             // ── TOP TAB BAR (NATIVE MACOS INTEGRATED TRAFFIC LIGHTS) ──
             HStack(spacing: 0) {
-                // Reserve space for native macOS traffic light buttons (Red/Yellow/Green)
                 Spacer()
                     .frame(width: 78)
                 
@@ -252,10 +299,7 @@ struct MainWindowView: View {
                                     .foregroundColor(tab.isActive ? .white : Color.gray)
                                     .lineLimit(1)
                                 
-                                // ❌ BOTÓN PARA CERRAR PESTAÑA FUNCIONAL
-                                Button(action: {
-                                    closeTab(tab)
-                                }) {
+                                Button(action: { closeTab(tab) }) {
                                     Image(systemName: "xmark")
                                         .font(.system(size: 8, weight: .bold))
                                         .foregroundColor(Color.gray)
@@ -271,9 +315,7 @@ struct MainWindowView: View {
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(tab.isActive ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)
                             )
-                            .onTapGesture {
-                                selectTab(tab)
-                            }
+                            .onTapGesture { selectTab(tab) }
                         }
                     }
                 }
@@ -296,9 +338,9 @@ struct MainWindowView: View {
             .background(Color(red: 0.03, green: 0.04, blue: 0.08))
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
             
-            // ── MAIN NAVIGATION TOOLBAR ──
+            // ── MAIN NAVIGATION TOOLBAR (VIRTUDES DE CHROME) ──
             HStack(spacing: 10) {
-                // Nav controls
+                // Navigation buttons
                 HStack(spacing: 4) {
                     Button(action: {}) {
                         Image(systemName: "chevron.left")
@@ -334,7 +376,7 @@ struct MainWindowView: View {
                         .foregroundColor(Color.green)
                         .font(.system(size: 10))
                     
-                    TextField("Buscar con Google o ingresar URL...", text: $addressInput, onCommit: {
+                    TextField("Buscar en Google o escribir URL...", text: $addressInput, onCommit: {
                         var target = addressInput.trimmingCharacters(in: .whitespacesAndNewlines)
                         if !target.hasPrefix("http://") && !target.hasPrefix("https://") {
                             target = "https://" + target
@@ -348,10 +390,7 @@ struct MainWindowView: View {
                     
                     Spacer()
                     
-                    // 🌟 BOTÓN PARA AÑADIR A BOOKMARKS
-                    Button(action: {
-                        addCurrentToBookmarks()
-                    }) {
+                    Button(action: addCurrentToBookmarks) {
                         Image(systemName: "star.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.yellow)
@@ -371,30 +410,73 @@ struct MainWindowView: View {
                         .stroke(optimizer.isOptimizationModeActive ? Color.blue : Color.blue.opacity(0.3), lineWidth: 1)
                 )
                 
-                // Control Badges & Tools (Gemini, DevTools, Extensions, Config)
+                // Chrome Virtues & Tools (Multi-AI Selector, Downloads, DevTools, Extensions, Config)
                 HStack(spacing: 6) {
-                    // ✨ Gemini AI Sidebar Button
-                    Button(action: {
-                        isGeminiSidebarOpen.toggle()
-                    }) {
+                    // 🤖 MULTI-AI SIDEBAR SELECTOR BUTTON
+                    Menu {
+                        ForEach(AISidebarProvider.allCases) { provider in
+                            Button(action: {
+                                optimizer.selectedAIProvider = provider
+                                if provider != .none {
+                                    isAISidebarOpen = true
+                                } else {
+                                    isAISidebarOpen = false
+                                }
+                            }) {
+                                HStack {
+                                    Text(provider.icon)
+                                    Text(provider.rawValue)
+                                    if optimizer.selectedAIProvider == provider {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
                         HStack(spacing: 4) {
-                            Text("✨")
-                            Text("Gemini")
+                            Text(optimizer.selectedAIProvider.icon)
+                            Text(optimizer.selectedAIProvider.rawValue)
                                 .font(.system(size: 10, weight: .bold))
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(isGeminiSidebarOpen ? Color.purple : Color.purple.opacity(0.18))
-                        .foregroundColor(isGeminiSidebarOpen ? .white : .purple)
+                        .background(isAISidebarOpen ? optimizer.selectedAIProvider.themeColor : optimizer.selectedAIProvider.themeColor.opacity(0.18))
+                        .foregroundColor(isAISidebarOpen ? .white : optimizer.selectedAIProvider.themeColor)
                         .cornerRadius(7)
                         .overlay(
                             RoundedRectangle(cornerRadius: 7)
-                                .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                .stroke(optimizer.selectedAIProvider.themeColor.opacity(0.4), lineWidth: 1)
                         )
                     }
-                    .buttonStyle(.plain)
+                    .menuStyle(.borderlessButton)
                     
-                    // 🛠️ DevTools Button
+                    // 📥 VIRTUD CHROME: Descargas (Downloads Manager)
+                    Button(action: { isDownloadsOpen.toggle() }) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.green)
+                            .padding(5)
+                            .background(Color.green.opacity(0.15))
+                            .cornerRadius(7)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $isDownloadsOpen) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("📥 Descargas de Shine Find")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Divider()
+                            Text("No hay descargas activas en segundo plano.")
+                                .font(.system(size: 11))
+                                .foregroundColor(.gray)
+                        }
+                        .padding(12)
+                        .frame(width: 220)
+                        .background(Color(red: 0.08, green: 0.1, blue: 0.16))
+                    }
+                    
+                    // 🛠️ VIRTUD CHROME: Inspeccionar Elemento / DevTools
                     Button(action: openDevToolsAlert) {
                         Image(systemName: "terminal.fill")
                             .font(.system(size: 10))
@@ -404,9 +486,9 @@ struct MainWindowView: View {
                             .cornerRadius(7)
                     }
                     .buttonStyle(.plain)
-                    .help("Inspeccionar Elemento / DevTools (Option + Cmd + I)")
+                    .help("DevTools / Inspeccionar Elemento (Option + Cmd + I)")
 
-                    // 🧩 Extensiones Button
+                    // 🧩 Extensiones Popover
                     Button(action: { isExtensionsOpen.toggle() }) {
                         Image(systemName: "puzzlepiece.fill")
                             .font(.system(size: 10))
@@ -441,7 +523,7 @@ struct MainWindowView: View {
                         .background(Color(red: 0.08, green: 0.1, blue: 0.16))
                     }
 
-                    // ⚙️ Config Button (Cmd + ,)
+                    // ⚙️ Configuración (Cmd + ,)
                     Button(action: { isPreferencesOpen = true }) {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 10))
@@ -456,10 +538,8 @@ struct MainWindowView: View {
                         PreferencesView(optimizer: optimizer)
                     }
                     
-                    // Optimization Button
-                    Button(action: {
-                        optimizer.isOptimizationModeActive.toggle()
-                    }) {
+                    // Optimization Toggle Button
+                    Button(action: { optimizer.isOptimizationModeActive.toggle() }) {
                         HStack(spacing: 4) {
                             Text("⚡")
                             Text(optimizer.isOptimizationModeActive ? "Optimizaciones: ON" : "Optimizaciones: OFF")
@@ -495,20 +575,20 @@ struct MainWindowView: View {
             .background(Color(red: 0.04, green: 0.05, blue: 0.09))
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.05))
 
-            // ── MAIN CONTENT AREA WITH GEMINI SIDEBAR ──
+            // ── MAIN CONTENT AREA WITH MULTI-AI SIDEBAR ──
             HStack(spacing: 0) {
                 // Main Render Port
                 ShineFindWebView(urlString: $urlString, optimizerManager: optimizer)
                 
-                // ✨ GEMINI AI SIDEBAR INTEGRATION WITH GOOGLE LOGIN
-                if isGeminiSidebarOpen {
+                // 🤖 DYNAMIC MULTI-AI SIDEBAR (Gemini, ChatGPT, Claude, Kimi, xAI)
+                if isAISidebarOpen && optimizer.selectedAIProvider != .none {
                     VStack(spacing: 0) {
                         HStack {
-                            Text("✨ Google Gemini AI")
+                            Text("\(optimizer.selectedAIProvider.icon) \(optimizer.selectedAIProvider.rawValue)")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.purple)
+                                .foregroundColor(optimizer.selectedAIProvider.themeColor)
                             Spacer()
-                            Button(action: { isGeminiSidebarOpen = false }) {
+                            Button(action: { isAISidebarOpen = false }) {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 10))
                                     .foregroundColor(.gray)
@@ -519,10 +599,10 @@ struct MainWindowView: View {
                         .background(Color(red: 0.06, green: 0.08, blue: 0.14))
                         .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
                         
-                        ShineFindWebView(urlString: .constant("https://gemini.google.com"), optimizerManager: optimizer)
+                        ShineFindWebView(urlString: .constant(optimizer.selectedAIProvider.url), optimizerManager: optimizer)
                     }
                     .frame(width: 380)
-                    .border(width: 1, edges: [.leading], color: Color.purple.opacity(0.4))
+                    .border(width: 1, edges: [.leading], color: optimizer.selectedAIProvider.themeColor.opacity(0.4))
                 }
             }
             
@@ -542,7 +622,6 @@ struct MainWindowView: View {
         }
     }
     
-    // ❌ CERRAR PESTAÑA
     private func closeTab(_ tab: TabItem) {
         guard optimizer.activeTabs.count > 1 else { return }
         if let index = optimizer.activeTabs.firstIndex(where: { $0.id == tab.id }) {
@@ -616,11 +695,20 @@ struct BookmarkItem: View {
     }
 }
 
-// Extension Helper for Border Edge
-extension View {
-    func border(width: CGFloat, edges: [Edge], color: Color) -> some View {
-        overlay(EdgeBorder(width: width, edges: edges).foregroundColor(color))
+// Helper to hide native window title text and retain clean traffic lights
+struct WindowTitleBarAccessor: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let window = view.window {
+                window.titleVisibility = .hidden
+                window.titlebarAppearsTransparent = true
+                window.styleMask.insert(.fullSizeContentView)
+            }
+        }
+        return view
     }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 struct EdgeBorder: Shape {
@@ -660,20 +748,10 @@ struct EdgeBorder: Shape {
     }
 }
 
-// Helper to hide native window title text and retain clean traffic lights
-struct WindowTitleBarAccessor: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async {
-            if let window = view.window {
-                window.titleVisibility = .hidden
-                window.titlebarAppearsTransparent = true
-                window.styleMask.insert(.fullSizeContentView)
-            }
-        }
-        return view
+extension View {
+    func border(width: CGFloat, edges: [Edge], color: Color) -> some View {
+        overlay(EdgeBorder(width: width, edges: edges).foregroundColor(color))
     }
-    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 @main
