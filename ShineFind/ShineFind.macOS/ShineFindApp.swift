@@ -2,22 +2,22 @@ import SwiftUI
 import WebKit
 
 // ═══════════════════════════════════════════════════════════════
-// 🍒 NOOTEDRED HACKINTOSH OPTIMIZER CONFIGURATION FOR MAC
+// ⚡ OPTIMIZACIONES DEL NAVEGADOR CONFIGURATION FOR MAC
 // ═══════════════════════════════════════════════════════════════
-class NootedRedManager: ObservableObject {
-    static let shared = NootedRedManager()
+class BrowserOptimizerManager: ObservableObject {
+    static let shared = BrowserOptimizerManager()
     
-    @Published var isNootedRedModeActive: Bool = false {
+    @Published var isOptimizationModeActive: Bool = false {
         didSet {
             applyOptimizations()
         }
     }
     
     func applyOptimizations() {
-        if isNootedRedModeActive {
-            print("🍒 NootedRed Hackintosh Mode ACTIVE: Disabling Hardware Acceleration & Video HW Decode to prevent APU KP.")
+        if isOptimizationModeActive {
+            print("⚡ Optimizaciones del Navegador ACTIVAS: Ajustando aceleración gráfica, memoria VRAM y decodificación de video.")
         } else {
-            print("⚡ Standard Performance Mode ACTIVE.")
+            print("⚡ Modo Estándar ACTIVO.")
         }
     }
 }
@@ -27,7 +27,7 @@ class NootedRedManager: ObservableObject {
 // ═══════════════════════════════════════════════════════════════
 struct ShineFindWebView: NSViewRepresentable {
     @Binding var urlString: String
-    @ObservedObject var nootedRedManager: NootedRedManager
+    @ObservedObject var optimizerManager: BrowserOptimizerManager
     
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -37,7 +37,7 @@ struct ShineFindWebView: NSViewRepresentable {
         
         // Custom User-Agent for Shine Find Browser
         let webView = WKWebView(frame: .zero, configuration: config)
-        webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 ShineFind/1.0 (macOS NootedRed Enabled)"
+        webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 ShineFind/1.0 (Optimized Edition)"
         webView.navigationDelegate = context.coordinator
         
         if let url = URL(string: urlString) {
@@ -80,7 +80,7 @@ struct ShineFindWebView: NSViewRepresentable {
 struct MainWindowView: View {
     @State private var urlString: String = "https://cokistudios.github.io/forkar.html"
     @State private var addressInput: String = "https://cokistudios.github.io/forkar.html"
-    @StateObject private var nootedRed = NootedRedManager.shared
+    @StateObject private var optimizer = BrowserOptimizerManager.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -142,28 +142,28 @@ struct MainWindowView: View {
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(nootedRed.isNootedRedModeActive ? Color.red : Color.blue.opacity(0.4), lineWidth: 1)
+                        .stroke(optimizer.isOptimizationModeActive ? Color.blue : Color.blue.opacity(0.4), lineWidth: 1)
                 )
                 
-                // Badges & NootedRed Toggle
+                // Badges & Optimization Toggle
                 HStack(spacing: 8) {
-                    // NootedRed Button
+                    // Optimization Button
                     Button(action: {
-                        nootedRed.isNootedRedModeActive.toggle()
+                        optimizer.isOptimizationModeActive.toggle()
                     }) {
                         HStack(spacing: 4) {
-                            Text("🍒")
-                            Text(nootedRed.isNootedRedModeActive ? "NootedRed: ON ⚡" : "NootedRed: OFF")
+                            Text("⚡")
+                            Text(optimizer.isOptimizationModeActive ? "Optimizaciones: ON" : "Optimizaciones: OFF")
                                 .font(.system(size: 11, weight: .bold))
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(nootedRed.isNootedRedModeActive ? Color.red : Color.red.opacity(0.15))
-                        .foregroundColor(nootedRed.isNootedRedModeActive ? .white : .red)
+                        .background(optimizer.isOptimizationModeActive ? Color.blue : Color.blue.opacity(0.15))
+                        .foregroundColor(optimizer.isOptimizationModeActive ? .white : .blue)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.red.opacity(0.5), lineWidth: 1)
+                                .stroke(Color.blue.opacity(0.5), lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -200,17 +200,17 @@ struct MainWindowView: View {
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.1))
             
             // ── WEBVIEW PORT ──
-            ShineFindWebView(urlString: $urlString, nootedRedManager: nootedRed)
+            ShineFindWebView(urlString: $urlString, optimizerManager: optimizer)
             
             // ── STATUS BAR ──
             HStack {
-                Text("Shine Find Browser macOS CEF Edition — Coki Studios")
+                Text("Shine Find Browser macOS Edition — Coki Studios")
                     .font(.system(size: 11))
                     .foregroundColor(.gray)
                 Spacer()
-                Text(nootedRed.isNootedRedModeActive ? "🍒 NootedRed Hackintosh Mode Active (APU Guard ON)" : "⚡ Native Metal Acceleration")
+                Text(optimizer.isOptimizationModeActive ? "⚡ Optimizaciones del Navegador Activas" : "⚡ Aceleración Nativa Standard")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(nootedRed.isNootedRedModeActive ? .red : .green)
+                    .foregroundColor(optimizer.isOptimizationModeActive ? .blue : .green)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 4)

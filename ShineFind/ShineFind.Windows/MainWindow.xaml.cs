@@ -8,7 +8,41 @@ namespace ShineFind.Windows;
 
 public partial class MainWindow : Window
 {
-    private bool _isNootedRedModeActive = false;
+    private bool _isOptimizationModeActive = false;
+
+    private void BtnOptimization_Click(object sender, RoutedEventArgs e)
+    {
+        _isOptimizationModeActive = !_isOptimizationModeActive;
+
+        if (_isOptimizationModeActive)
+        {
+            BtnOptimization.Content = "⚡ Optimizaciones: ON";
+            BtnOptimization.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248));
+            BtnOptimization.Foreground = System.Windows.Media.Brushes.White;
+            TxtStatus.Text = "⚡ Optimizaciones del Navegador Activas (--disable-accelerated-video-decode --enable-low-power)";
+            TxtStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248));
+
+            MessageBox.Show(
+                "⚡ OPTIMIZACIONES DEL NAVEGADOR ACTIVADAS:\n\n" +
+                "1. Desactivación inteligente de decodificación HW de video para prevenir congelamientos\n" +
+                "2. Modo de bajo consumo de GPU / Software Composition Fallback\n" +
+                "3. Gestión dinámica de VRAM Swap y ahorro de memoria del sistema\n" +
+                "4. Ajustes de aceleración gráfica para estabilidad total",
+                "Shine Find Sentinel — Optimizaciones del Navegador",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information
+            );
+        }
+        else
+        {
+            BtnOptimization.Content = "⚡ Optimizaciones: OFF";
+            BtnOptimization.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x26, 0x38, 0xBD, 0xF8));
+            BtnOptimization.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248));
+            TxtStatus.Text = "Ready (Hardware Accelerated)";
+            TxtStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(16, 185, 129));
+        }
+    }
+}
 
     public MainWindow()
     {
@@ -62,36 +96,5 @@ public partial class MainWindow : Window
         }
     }
 
-    private void BtnNootedRed_Click(object sender, RoutedEventArgs e)
-    {
-        _isNootedRedModeActive = !_isNootedRedModeActive;
 
-        if (_isNootedRedModeActive)
-        {
-            BtnNootedRed.Content = "🍒 NootedRed Mode: ON ⚡";
-            BtnNootedRed.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(239, 68, 68));
-            BtnNootedRed.Foreground = System.Windows.Media.Brushes.White;
-            TxtStatus.Text = "🍒 NootedRed Hackintosh Mode Active (--disable-accelerated-video-decode --enable-metal-low-power)";
-            TxtStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(239, 68, 68));
-
-            MessageBox.Show(
-                "🍒 MODO NOOTEDRED HACKINTOSH ACTIVADO:\n\n" +
-                "1. --disable-accelerated-video-decode (Evita Kernel Panic en Video VP9/HEVC)\n" +
-                "2. --enable-metal-low-power / Software Composition Fallback\n" +
-                "3. Limitación de VRAM Swap dinámico en APUs AMD Ryzen (Raven/Renoir/Cezanne)\n" +
-                "4. Desactivación de GPU Rasterization para estabilidad",
-                "Shine Find Sentinel — AMD Hackintosh Guard",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information
-            );
-        }
-        else
-        {
-            BtnNootedRed.Content = "🍒 NootedRed Mode: OFF";
-            BtnNootedRed.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x26, 0xEF, 0x44, 0x44));
-            BtnNootedRed.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(239, 68, 68));
-            TxtStatus.Text = "Ready (Hardware Accelerated)";
-            TxtStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(16, 185, 129));
-        }
-    }
 }

@@ -240,8 +240,8 @@
                 </div>
 
                 <div class="browser-actions">
-                    <button id="nooted-btn" class="nooted-toggle-btn" onclick="toggleNootedRedMode()" title="Optimización para AMD APU NootedRed Hackintosh">
-                        <span>🍒</span> NootedRed Mode: OFF
+                    <button id="opt-btn" class="nooted-toggle-btn" onclick="toggleOptimizationMode()" title="Optimizaciones Avanzadas de Rendimiento y Memoria">
+                        <span>⚡</span> Optimizaciones: OFF
                     </button>
                     <div class="shield-badge" title="Sentinel Shield Activo">
                         <span>🛡️</span> 14 Bloqueados
@@ -272,10 +272,10 @@
             <p class="feature-desc">Bloqueador nativo de scripts invasivos, cookies de terceros y malware a nivel de red antes de que se procesen en la CPU.</p>
         </div>
 
-        <div class="feature-card" style="border-color:rgba(239, 68, 68, 0.4);">
-            <div class="feature-icon" style="background:rgba(239, 68, 68, 0.15);color:#ef4444;">🍒</div>
-            <h3 class="feature-title">Modo Optimización NootedRed (AMD Hackintosh)</h3>
-            <p class="feature-desc">Diseñado específicamente para iGPUs AMD Ryzen (Raven/Renoir/Cezanne) bajo macOS. Desactiva descodificación HEVC por hardware propensa a KP (Kernel Panic), fuerza Metal VSM y limita memoria VRAM para evitar congelamiento de maquina.</p>
+        <div class="feature-card" style="border-color:rgba(56, 189, 248, 0.4);">
+            <div class="feature-icon" style="background:rgba(56, 189, 248, 0.15);color:var(--accent);">⚙️</div>
+            <h3 class="feature-title">Optimizaciones Avanzadas del Navegador</h3>
+            <p class="feature-desc">Diseñado para maximizar el rendimiento en cualquier equipo. Control dinámico de decodificación de video, gestión inteligente de VRAM Swap y fallback eficiente para evitar congelamientos.</p>
         </div>
     </section>
 
@@ -295,20 +295,20 @@
             }
         }
 
-        let nootedRedActive = false;
-        function toggleNootedRedMode() {
-            nootedRedActive = !nootedRedActive;
-            const btn = document.getElementById('nooted-btn');
+        let optimizationActive = false;
+        function toggleOptimizationMode() {
+            optimizationActive = !optimizationActive;
+            const btn = document.getElementById('opt-btn');
             const mockup = document.querySelector('.browser-mockup');
 
-            if (nootedRedActive) {
-                btn.innerHTML = '<span>🍒</span> NootedRed Mode: ON ⚡';
+            if (optimizationActive) {
+                btn.innerHTML = '<span>⚡</span> Optimizaciones: ON';
                 btn.classList.add('active');
-                mockup.style.borderColor = '#ef4444';
-                mockup.style.boxShadow = '0 25px 80px rgba(239, 68, 68, 0.3), 0 0 35px rgba(239, 68, 68, 0.4)';
-                alert('🍒 MODO NOOTEDRED HACKINTOSH ACTIVADO:\n\n1. --disable-accelerated-video-decode (Evita KP en Video VP9/HEVC)\n2. --enable-metal-low-power (Fallback Metal VSM)\n3. Limitación de VRAM Swap dinámico en APUs AMD Ryzen\n4. Forzar composición Software de sombras XTRAPS');
+                mockup.style.borderColor = 'var(--accent)';
+                mockup.style.boxShadow = '0 25px 80px rgba(56, 189, 248, 0.3), 0 0 35px rgba(56, 189, 248, 0.4)';
+                alert('⚡ OPTIMIZACIONES DEL NAVEGADOR ACTIVADAS:\n\n1. Desactivación inteligente de decodificación HW de video para prevenir congelamientos\n2. Modo de bajo consumo de GPU / Metal VSM Fallback\n3. Gestión dinámica de VRAM y reducción de consumo de memoria\n4. Composición optimizada de interfaz');
             } else {
-                btn.innerHTML = '<span>🍒</span> NootedRed Mode: OFF';
+                btn.innerHTML = '<span>⚡</span> Optimizaciones: OFF';
                 btn.classList.remove('active');
                 mockup.style.borderColor = 'var(--border)';
                 mockup.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-glow)';
