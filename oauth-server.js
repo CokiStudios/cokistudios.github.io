@@ -36,15 +36,50 @@ async function sha256(plain) {
         .replace(/=+$/, '');
 }
 
-function generateJWT(payload, secret) {
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const body = btoa(JSON.stringify({
+async function generateJWE(payload, secretKeyStr = 'coki_studios_super_secret_jwe_key_2026') {
+    const encoder = new TextEncoder();
+    const payloadStr = JSON.stringify({
         ...payload,
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 3600,
-        iss: 'coki-studios'
-    }));
-    return `${header}.${body}.${generateCode(16)}`;
+        iss: 'csid-server'
+    });
+
+    // 1. Derivar clave simétrica AES-GCM (256-bit)
+    const keyData = encoder.encode(secretKeyStr.padEnd(32, '0').slice(0, 32));
+    const cryptoKey = await crypto.subtle.importKey(
+        'raw', keyData, { name: 'AES-GCM' }, false, ['encrypt']
+    );
+
+    // 2. Generar IV (Initialization Vector) de 12 bytes
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    // 3. Cifrar payload
+    const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        cryptoKey,
+        encoder.encode(payloadStr)
+    );
+
+    // 4. Formatear como JWE Compact Serialization (Header.EncryptedKey.IV.Ciphertext.Tag)
+    const jweHeader = btoa(JSON.stringify({ alg: 'dir', enc: 'A256GCM', typ: 'JWE' }))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const base64Iv = btoa(String.fromCharCode(...iv))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const encryptedArray = new Uint8Array(encryptedBuffer);
+    // Extraer ciphertext y auth tag (últimos 16 bytes de AES-GCM)
+    const ciphertext = encryptedArray.slice(0, encryptedArray.length - 16);
+    const tag = encryptedArray.slice(encryptedArray.length - 16);
+
+    const base64Ciphertext = btoa(String.fromCharCode(...ciphertext))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const base64Tag = btoa(String.fromCharCode(...tag))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    // JWE Compact Serialization con Direct Encryption (Key Encrypted vacía)
+    return `${jweHeader}..${base64Iv}.${base64Ciphertext}.${base64Tag}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -231,19 +266,19 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         return { error: 'invalid_grant', error_description: 'User not found' };
     }
     
-    const accessToken = generateJWT({ 
+    const accessToken = await generateJWE({ 
         sub: user.id, 
         email: user.email,
         client_id: codeData.client_id
-    }, 'secret');
+    });
     
-    const idToken = generateJWT({ 
+    const idToken = await generateJWE({ 
         sub: user.id, 
         email: user.email,
         name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
         picture: user.user_metadata?.avatar_url,
         company: user.user_metadata?.company
-    }, 'secret');
+    });
     
     return {
         access_token: accessToken,
@@ -307,5 +342,6 @@ export {
     getUserConnectedApps,
     revokeConnectedApp,
     generateCode,
-    sha256
+    sha256,
+    generateJWE
 };
