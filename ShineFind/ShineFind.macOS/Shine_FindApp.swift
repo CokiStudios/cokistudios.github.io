@@ -1,6 +1,5 @@
 import SwiftUI
 import WebKit
-internal import Combine
 
 // ═══════════════════════════════════════════════════════════════
 // ⚡ OPTIMIZACIONES DEL NAVEGADOR & STATE MANAGER FOR MAC
@@ -14,6 +13,24 @@ class BrowserOptimizerManager: ObservableObject {
     
     @Published var blockedTrackersCount: Int = 14
     @Published var co2SavedGrams: Double = 3.4
+    
+    // Extensions Store
+    @Published var extensionsList: [BrowserExtension] = [
+        BrowserExtension(id: "sentinel", name: "CSID Sentinel Shield", icon: "🛡️", isEnabled: true),
+        BrowserExtension(id: "eco", name: "Eco Hub CO₂ Tracker", icon: "🌿", isEnabled: true),
+        BrowserExtension(id: "dark", name: "Shine Dark Theme Engine", icon: "🌙", isEnabled: true),
+        BrowserExtension(id: "gemini", name: "Gemini AI Sidebar", icon: "✨", isEnabled: true)
+    ]
+    
+    // Bookmarks Store
+    @Published var bookmarksList: [BookmarkItemData] = [
+        BookmarkItemData(id: UUID(), icon: "💬", title: "Forkar Hub", url: "https://cokistudios.github.io/forkar.html"),
+        BookmarkItemData(id: UUID(), icon: "⚡", title: "Coki Products", url: "https://cokistudios.github.io/products.html"),
+        BookmarkItemData(id: UUID(), icon: "🪪", title: "CSID Dashboard", url: "https://cokistudios.github.io/coki-dashboard.html"),
+        BookmarkItemData(id: UUID(), icon: "✨", title: "Gemini AI", url: "https://gemini.google.com"),
+        BookmarkItemData(id: UUID(), icon: "🗺️", title: "Horizon Maps", url: "https://anonymus-devop.github.io/HorizonMaps/")
+    ]
+    
     @Published var activeTabs: [TabItem] = [
         TabItem(id: UUID(), title: "Forkar — Comunidad", url: "https://cokistudios.github.io/forkar.html", favicon: "💬", isActive: true),
         TabItem(id: UUID(), title: "Productos — Coki Studios", url: "https://cokistudios.github.io/products.html", favicon: "⚡", isActive: false),
@@ -27,6 +44,20 @@ class BrowserOptimizerManager: ObservableObject {
             print("⚡ Modo Estándar ACTIVO.")
         }
     }
+}
+
+struct BrowserExtension: Identifiable, Hashable {
+    let id: String
+    var name: String
+    var icon: String
+    var isEnabled: Bool
+}
+
+struct BookmarkItemData: Identifiable, Hashable {
+    let id: UUID
+    var icon: String
+    var title: String
+    var url: String
 }
 
 struct TabItem: Identifiable, Hashable {
@@ -43,6 +74,7 @@ struct TabItem: Identifiable, Hashable {
 struct ShineFindWebView: NSViewRepresentable {
     @Binding var urlString: String
     @ObservedObject var optimizerManager: BrowserOptimizerManager
+    var onInspectElement: (() -> Void)? = nil
     
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -50,7 +82,7 @@ struct ShineFindWebView: NSViewRepresentable {
         preferences.allowsContentJavaScript = true
         config.defaultWebpagePreferences = preferences
         
-        // 🛡️ Optimización de aislamiento de procesos y almacenamiento sin fugas XPC
+        // 🛡️ Habilitar DevTools / Inspector Web & Aislamiento de Almacenamiento
         config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
@@ -90,7 +122,6 @@ struct ShineFindWebView: NSViewRepresentable {
             }
         }
         
-        // 🔄 AUTO-RECOVERY SI EL WEB PROCESS COLAPSA O ES RESTRINGIDO POR SANDBOX
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             print("⚠️ WebContent Process colapsó. Intentando recarga automática de Shine Find...")
             webView.reload()
@@ -99,12 +130,105 @@ struct ShineFindWebView: NSViewRepresentable {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🎨 PREMIUM MACOS BROWSER UI (SHINE UI, DYNAMIC TABS & XTRAPS)
+// ⚙️ PREFERENCES / CONFIG WINDOW (Cmd + ,)
+// ═══════════════════════════════════════════════════════════════
+struct PreferencesView: View {
+    @ObservedObject var optimizer = BrowserOptimizerManager.shared
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("⚙️ Configuración de Shine Find Browser")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                Spacer()
+                Button(action: { presentationMode.wrappedValue.dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.bottom, 10)
+            
+            Divider().background(Color.white.opacity(0.1))
+            
+            // General Settings
+            VStack(alignment: .leading, spacing: 12) {
+                Text("GENERAL")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+                
+                Toggle("Activar Optimizaciones del Navegador (Bajo Consumo Metal/VRAM)", isOn: $optimizer.isOptimizationModeActive)
+                    .toggleStyle(.checkbox)
+                    .foregroundColor(.white)
+                
+                Toggle("Passkeys & CSID Autologin en Sitios Autorizados", isOn: .constant(true))
+                    .toggleStyle(.checkbox)
+                    .foregroundColor(.white)
+                
+                Toggle("Escudo Sentinel Anti-Trackers a Nivel Hardware", isOn: .constant(true))
+                    .toggleStyle(.checkbox)
+                    .foregroundColor(.white)
+            }
+            
+            Divider().background(Color.white.opacity(0.1))
+            
+            // Extensions Manager
+            VStack(alignment: .leading, spacing: 12) {
+                Text("EXTENSIONES DE SHINE FIND")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.purple)
+                
+                ForEach($optimizer.extensionsList) { $ext in
+                    HStack {
+                        Text(ext.icon)
+                        Text(ext.name)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white)
+                        Spacer()
+                        Toggle("", isOn: $ext.isEnabled)
+                            .toggleStyle(.switch)
+                    }
+                    .padding(8)
+                    .background(Color.white.opacity(0.04))
+                    .cornerRadius(8)
+                }
+            }
+            
+            Spacer()
+            
+            HStack {
+                Spacer()
+                Button("Guardar y Cerrar") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(24)
+        .frame(width: 520, height: 480)
+        .background(Color(red: 0.06, green: 0.08, blue: 0.14))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 PREMIUM MACOS BROWSER UI (SHINE UI & GEMINI INTEGRATION)
 // ═══════════════════════════════════════════════════════════════
 struct MainWindowView: View {
     @State private var urlString: String = "https://cokistudios.github.io/forkar.html"
     @State private var addressInput: String = "https://cokistudios.github.io/forkar.html"
-    @State private var isBookmarksOpen: Bool = false
+    @State private var isGeminiSidebarOpen: Bool = false
+    @State private var isExtensionsOpen: Bool = false
+    @State private var isPreferencesOpen: Bool = false
+    @State private var newBookmarkTitle: String = ""
+    @State private var newBookmarkUrl: String = ""
+    @State private var isAddBookmarkOpen: Bool = false
+    
     @StateObject private var optimizer = BrowserOptimizerManager.shared
     
     var body: some View {
@@ -132,7 +256,10 @@ struct MainWindowView: View {
                                     .foregroundColor(tab.isActive ? .white : Color.gray)
                                     .lineLimit(1)
                                 
-                                Button(action: {}) {
+                                // ❌ BOTÓN PARA CERRAR PESTAÑA FUNCIONAL
+                                Button(action: {
+                                    closeTab(tab)
+                                }) {
                                     Image(systemName: "xmark")
                                         .font(.system(size: 8, weight: .bold))
                                         .foregroundColor(Color.gray)
@@ -225,6 +352,16 @@ struct MainWindowView: View {
                     
                     Spacer()
                     
+                    // 🌟 BOTÓN PARA AÑADIR A BOOKMARKS
+                    Button(action: {
+                        addCurrentToBookmarks()
+                    }) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.yellow)
+                    }
+                    .buttonStyle(.plain)
+                    
                     Text("CEF 122")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(.gray)
@@ -238,8 +375,91 @@ struct MainWindowView: View {
                         .stroke(optimizer.isOptimizationModeActive ? Color.blue : Color.blue.opacity(0.3), lineWidth: 1)
                 )
                 
-                // Control Badges & Optimization Toggle
+                // Control Badges & Tools (Gemini, DevTools, Extensions, Config)
                 HStack(spacing: 6) {
+                    // ✨ Gemini AI Sidebar Button
+                    Button(action: {
+                        isGeminiSidebarOpen.toggle()
+                    }) {
+                        HStack(spacing: 4) {
+                            Text("✨")
+                            Text("Gemini")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(isGeminiSidebarOpen ? Color.purple : Color.purple.opacity(0.18))
+                        .foregroundColor(isGeminiSidebarOpen ? .white : .purple)
+                        .cornerRadius(7)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7)
+                                .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // 🛠️ DevTools Button
+                    Button(action: openDevToolsAlert) {
+                        Image(systemName: "terminal.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                            .padding(5)
+                            .background(Color.orange.opacity(0.15))
+                            .cornerRadius(7)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Inspeccionar Elemento / DevTools (Option + Cmd + I)")
+
+                    // 🧩 Extensiones Button
+                    Button(action: { isExtensionsOpen.toggle() }) {
+                        Image(systemName: "puzzlepiece.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.blue)
+                            .padding(5)
+                            .background(Color.blue.opacity(0.15))
+                            .cornerRadius(7)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $isExtensionsOpen) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("🧩 Extensiones Activas")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Divider()
+                            ForEach(optimizer.extensionsList) { ext in
+                                HStack {
+                                    Text(ext.icon)
+                                    Text(ext.name)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(ext.isEnabled ? .white : .gray)
+                                    Spacer()
+                                    Circle()
+                                        .fill(ext.isEnabled ? Color.green : Color.red)
+                                        .frame(width: 6, height: 6)
+                                }
+                            }
+                        }
+                        .padding(12)
+                        .frame(width: 220)
+                        .background(Color(red: 0.08, green: 0.1, blue: 0.16))
+                    }
+
+                    // ⚙️ Config Button (Cmd + ,)
+                    Button(action: { isPreferencesOpen = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.gray)
+                            .padding(5)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(7)
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(",", modifiers: .command)
+                    .sheet(isPresented: $isPreferencesOpen) {
+                        PreferencesView(optimizer: optimizer)
+                    }
+                    
                     // Optimization Button
                     Button(action: {
                         optimizer.isOptimizationModeActive.toggle()
@@ -260,46 +480,6 @@ struct MainWindowView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    
-                    // Sentinel Shield Badge
-                    HStack(spacing: 4) {
-                        Image(systemName: "shield.fill")
-                            .foregroundColor(.green)
-                            .font(.system(size: 10))
-                        Text("\(optimizer.blockedTrackersCount) Bloqueados")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.green)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.green.opacity(0.12))
-                    .cornerRadius(7)
-                    
-                    // Eco CO2 Badge
-                    HStack(spacing: 4) {
-                        Text("🌿")
-                        Text("\(optimizer.co2SavedGrams, specifier: "%.1f")g CO₂")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.yellow)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.yellow.opacity(0.12))
-                    .cornerRadius(7)
-
-                    // CSID Status Indicator
-                    HStack(spacing: 4) {
-                        Image(systemName: "person.badge.key.fill")
-                            .foregroundColor(.cyan)
-                            .font(.system(size: 10))
-                        Text("CSID")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.cyan)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.cyan.opacity(0.12))
-                    .cornerRadius(7)
                 }
             }
             .padding(.horizontal, 10)
@@ -309,10 +489,9 @@ struct MainWindowView: View {
             
             // ── BOOKMARKS BAR ──
             HStack(spacing: 12) {
-                BookmarkItem(icon: "💬", title: "Forkar Hub", url: "https://cokistudios.github.io/forkar.html", onSelect: navigateTo)
-                BookmarkItem(icon: "⚡", title: "Coki Products", url: "https://cokistudios.github.io/products.html", onSelect: navigateTo)
-                BookmarkItem(icon: "🪪", title: "CSID Dashboard", url: "https://cokistudios.github.io/coki-dashboard.html", onSelect: navigateTo)
-                BookmarkItem(icon: "🗺️", title: "Horizon Maps", url: "https://anonymus-devop.github.io/HorizonMaps/", onSelect: navigateTo)
+                ForEach(optimizer.bookmarksList) { bm in
+                    BookmarkItem(icon: bm.icon, title: bm.title, url: bm.url, onSelect: navigateTo)
+                }
                 Spacer()
             }
             .padding(.horizontal, 12)
@@ -320,8 +499,36 @@ struct MainWindowView: View {
             .background(Color(red: 0.04, green: 0.05, blue: 0.09))
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.05))
 
-            // ── RENDER PORT ──
-            ShineFindWebView(urlString: $urlString, optimizerManager: optimizer)
+            // ── MAIN CONTENT AREA WITH GEMINI SIDEBAR ──
+            HStack(spacing: 0) {
+                // Main Render Port
+                ShineFindWebView(urlString: $urlString, optimizerManager: optimizer)
+                
+                // ✨ GEMINI AI SIDEBAR INTEGRATION WITH GOOGLE LOGIN
+                if isGeminiSidebarOpen {
+                    VStack(spacing: 0) {
+                        HStack {
+                            Text("✨ Google Gemini AI")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.purple)
+                            Spacer()
+                            Button(action: { isGeminiSidebarOpen = false }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(10)
+                        .background(Color(red: 0.06, green: 0.08, blue: 0.14))
+                        .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
+                        
+                        ShineFindWebView(urlString: .constant("https://gemini.google.com"), optimizerManager: optimizer)
+                    }
+                    .frame(width: 380)
+                    .border(width: 1, edges: [.leading], color: Color.purple.opacity(0.4))
+                }
+            }
             
             // ── STATUS BAR FOOTER ──
             HStack {
@@ -336,6 +543,19 @@ struct MainWindowView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
             .background(Color(red: 0.02, green: 0.03, blue: 0.06))
+        }
+    }
+    
+    // ❌ CERRAR PESTAÑA
+    private func closeTab(_ tab: TabItem) {
+        guard optimizer.activeTabs.count > 1 else { return }
+        if let index = optimizer.activeTabs.firstIndex(where: { $0.id == tab.id }) {
+            let wasActive = optimizer.activeTabs[index].isActive
+            optimizer.activeTabs.remove(at: index)
+            if wasActive && !optimizer.activeTabs.isEmpty {
+                let newIndex = max(0, index - 1)
+                selectTab(optimizer.activeTabs[newIndex])
+            }
         }
     }
     
@@ -355,6 +575,18 @@ struct MainWindowView: View {
         optimizer.activeTabs.append(newTab)
         urlString = newTab.url
         addressInput = newTab.url
+    }
+    
+    private func addCurrentToBookmarks() {
+        let title = addressInput.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: "")
+        let newBookmark = BookmarkItemData(id: UUID(), icon: "⭐", title: title, url: addressInput)
+        if !optimizer.bookmarksList.contains(where: { $0.url == addressInput }) {
+            optimizer.bookmarksList.append(newBookmark)
+        }
+    }
+    
+    private func openDevToolsAlert() {
+        print("🛠️ DevTools Habilitadas: Presiona Option + Cmd + I sobre la vista web para abrir la inspección de elementos.")
     }
     
     private func navigateTo(_ url: String) {
