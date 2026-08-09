@@ -50,7 +50,8 @@ struct ShineFindWebView: NSViewRepresentable {
         preferences.allowsContentJavaScript = true
         config.defaultWebpagePreferences = preferences
         
-        // 🛡️ Permisos para WebKit Process Resilience
+        // 🛡️ Optimización de aislamiento de procesos y almacenamiento sin fugas XPC
+        config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
         let webView = WKWebView(frame: .zero, configuration: config)
