@@ -253,7 +253,7 @@
                     </div>
                     <div class="form-group" style="margin: 16px 0;">
                         <!-- reCAPTCHA v2 Widget Container -->
-                        <div class="g-recaptcha" data-sitekey="6Ld_sample_site_key_coki_studios" data-theme="dark" style="transform: scale(0.92); transform-origin: 0 0;"></div>
+                        <div class="g-recaptcha" data-sitekey="6Le3vn0tAAAAAFEX_QW1m9M5Qe6a1oCek7j1krsK" data-theme="dark" style="transform: scale(0.92); transform-origin: 0 0;"></div>
                     </div>
                     <label class="checkbox-label" style="margin: 16px 0;">
                         <input type="checkbox" id="reg-terms" required>
@@ -334,6 +334,14 @@
 
         document.getElementById('form-register').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // 🛡️ VALIDAR RECAPTCHA
+            const recaptchaResponse = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : null;
+            if (!recaptchaResponse) {
+                alert('⚠️ Por favor, completa la verificación "No soy un robot" de reCAPTCHA.');
+                return;
+            }
+
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true; btn.textContent = 'Creando...';
             
@@ -344,9 +352,16 @@
             
             const result = await registerCokiAccount(email, password, { full_name: name, company: company || 'Coki Studios' });
             
-            if (result.success) { alert('✅ ' + result.message); tabLogin.click(); } 
-            else { alert('❌ ' + result.error); }
-            btn.disabled = false; btn.textContent = 'Crear Coki ID';
+            if (result.success) { 
+                alert('✅ ' + result.message); 
+                if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+                tabLogin.click(); 
+            } 
+            else { 
+                alert('❌ ' + result.error); 
+                if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+            }
+            btn.disabled = false; btn.textContent = 'Crear CSID';
         });
 
         document.getElementById('btn-coki-google').addEventListener('click', () => loginCokiWithOAuth('google'));
