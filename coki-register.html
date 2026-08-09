@@ -10,6 +10,7 @@
         }
     </script>
     <meta name="description" content="Inicia sesión o crea tu cuenta Coki ID para acceder a todas nuestras aplicaciones de forma segura.">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -250,7 +251,11 @@
                         <label class="form-label">Biografía / Estado (opcional)</label>
                         <input type="text" id="reg-company" class="form-input" placeholder="Escribe algo sobre ti...">
                     </div>
-                    <label class="checkbox-label" style="margin: 20px 0;">
+                    <div class="form-group" style="margin: 16px 0;">
+                        <!-- reCAPTCHA v2 Widget Container -->
+                        <div class="g-recaptcha" data-sitekey="6Ld_sample_site_key_coki_studios" data-theme="dark" style="transform: scale(0.92); transform-origin: 0 0;"></div>
+                    </div>
+                    <label class="checkbox-label" style="margin: 16px 0;">
                         <input type="checkbox" id="reg-terms" required>
                         <span>Acepto los <a href="#" class="link">términos</a> y <a href="#" class="link">privacidad</a></span>
                     </label>
