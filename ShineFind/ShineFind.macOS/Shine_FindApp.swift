@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+internal import Combine
 
 // ═══════════════════════════════════════════════════════════════
 // ⚡ OPTIMIZACIONES DEL NAVEGADOR & STATE MANAGER FOR MAC
@@ -233,16 +234,11 @@ struct MainWindowView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // ── TOP TAB BAR (CHROMIUM / SAFARI HYBRID) ──
+            // ── TOP TAB BAR (NATIVE MACOS INTEGRATED TRAFFIC LIGHTS) ──
             HStack(spacing: 0) {
-                // Drag handle area for window move
-                HStack(spacing: 4) {
-                    Circle().fill(Color.red).frame(width: 10, height: 10)
-                    Circle().fill(Color.yellow).frame(width: 10, height: 10)
-                    Circle().fill(Color.green).frame(width: 10, height: 10)
-                }
-                .padding(.leading, 14)
-                .padding(.trailing, 16)
+                // Reserve space for native macOS traffic light buttons (Red/Yellow/Green)
+                Spacer()
+                    .frame(width: 78)
                 
                 // Tabs list
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -664,11 +660,28 @@ struct EdgeBorder: Shape {
     }
 }
 
+// Helper to hide native window title text and retain clean traffic lights
+struct WindowTitleBarAccessor: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let window = view.window {
+                window.titleVisibility = .hidden
+                window.titlebarAppearsTransparent = true
+                window.styleMask.insert(.fullSizeContentView)
+            }
+        }
+        return view
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
 @main
 struct Shine_FindApp: App {
     var body: some Scene {
         WindowGroup {
             MainWindowView()
+                .background(WindowTitleBarAccessor())
                 .frame(minWidth: 1100, minHeight: 700)
         }
         .windowStyle(.hiddenTitleBar)
