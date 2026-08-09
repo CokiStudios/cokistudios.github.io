@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+internal import Combine
 
 // ═══════════════════════════════════════════════════════════════
 // ⚡ OPTIMIZACIONES DEL NAVEGADOR & STATE MANAGER FOR MAC
@@ -49,6 +50,9 @@ struct ShineFindWebView: NSViewRepresentable {
         preferences.allowsContentJavaScript = true
         config.defaultWebpagePreferences = preferences
         
+        // 🛡️ Permisos para WebKit Process Resilience
+        config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 ShineFind/1.0 (Optimized Edition)"
         webView.navigationDelegate = context.coordinator
@@ -83,6 +87,12 @@ struct ShineFindWebView: NSViewRepresentable {
                     self.parent.urlString = url
                 }
             }
+        }
+        
+        // 🔄 AUTO-RECOVERY SI EL WEB PROCESS COLAPSA O ES RESTRINGIDO POR SANDBOX
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            print("⚠️ WebContent Process colapsó. Intentando recarga automática de Shine Find...")
+            webView.reload()
         }
     }
 }
