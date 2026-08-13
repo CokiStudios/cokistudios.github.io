@@ -2,14 +2,14 @@ import SwiftUI
 import WebKit
 
 // ═══════════════════════════════════════════════════════════════
-// 🧠 AI PROVIDERS MODEL
+// 🧠 AI PROVIDERS MODEL & CUSTOM USER AI
 // ═══════════════════════════════════════════════════════════════
 enum AISidebarProvider: String, CaseIterable, Identifiable {
     case gemini = "Gemini"
     case chatgpt = "ChatGPT"
     case claude = "Claude"
     case kimi = "Kimi"
-    case xAI = "Grok (xAI)"
+    case custom = "Personalizada (Tu IA)"
     case none = "Nulo (Desactivado)"
     
     var id: String { self.rawValue }
@@ -20,18 +20,18 @@ enum AISidebarProvider: String, CaseIterable, Identifiable {
         case .chatgpt: return "🤖"
         case .claude: return "🧠"
         case .kimi: return "🌙"
-        case .xAI: return "🚀"
+        case .custom: return "🚀"
         case .none: return "🚫"
         }
     }
     
-    var url: String {
+    var defaultUrl: String {
         switch self {
         case .gemini: return "https://gemini.google.com"
         case .chatgpt: return "https://chatgpt.com"
         case .claude: return "https://claude.ai"
         case .kimi: return "https://kimi.moonshot.cn"
-        case .xAI: return "https://x.ai"
+        case .custom: return "https://chat.openai.com"
         case .none: return "about:blank"
         }
     }
@@ -42,7 +42,7 @@ enum AISidebarProvider: String, CaseIterable, Identifiable {
         case .chatgpt: return .green
         case .claude: return .orange
         case .kimi: return .cyan
-        case .xAI: return .blue
+        case .custom: return .blue
         case .none: return .gray
         }
     }
@@ -61,6 +61,27 @@ class BrowserOptimizerManager: ObservableObject {
     @Published var blockedTrackersCount: Int = 14
     @Published var co2SavedGrams: Double = 3.4
     @Published var selectedAIProvider: AISidebarProvider = .gemini
+    
+    // URL Personalizada guardada para la opción "Personalizada (Tu IA)"
+    @Published var customAIUrl: String = UserDefaults.standard.string(forKey: "shine_custom_ai_url") ?? "https://perplex.ai" {
+        didSet {
+            UserDefaults.standard.set(customAIUrl, forKey: "shine_custom_ai_url")
+        }
+    }
+    
+    @Published var customAIName: String = UserDefaults.standard.string(forKey: "shine_custom_ai_name") ?? "Mi IA Personalizada" {
+        didSet {
+            UserDefaults.standard.set(customAIName, forKey: "shine_custom_ai_name")
+        }
+    }
+    
+    // Obtiene la URL activa según la IA seleccionada
+    var currentAIUrl: String {
+        if selectedAIProvider == .custom {
+            return customAIUrl.isEmpty ? "https://perplex.ai" : customAIUrl
+        }
+        return selectedAIProvider.defaultUrl
+    }
     
     // Extensions Store
     @Published var extensionsList: [BrowserExtension] = [
@@ -203,8 +224,8 @@ struct PreferencesView: View {
             
             Divider().background(Color.white.opacity(0.1))
             
-            // Selector de IA Predeterminada
-            VStack(alignment: .leading, spacing: 10) {
+            // Selector de IA Predeterminada + Configuración de IA Personalizada
+            VStack(alignment: .leading, spacing: 12) {
                 Text("PROVEEDOR DE ASISTENTE IA EN SIDEBAR")
                     .font(.caption)
                     .fontWeight(.bold)
@@ -223,6 +244,31 @@ struct PreferencesView: View {
                 .padding(6)
                 .background(Color.white.opacity(0.08))
                 .cornerRadius(8)
+                
+                // Campo para configurar la IA Personalizada por el usuario
+                if optimizer.selectedAIProvider == .custom {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Nombre de tu IA Personalizada:")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        TextField("Ej. Mi IA Local / DeepSeek", text: $optimizer.customAIName)
+                            .textFieldStyle(.roundedBorder)
+                        
+                        Text("URL del sitio web / Chat de tu IA:")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        TextField("https://tu-ia-personalizada.com", text: $optimizer.customAIUrl)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                    }
+                    .padding(12)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.blue.opacity(0.4), lineWidth: 1)
+                    )
+                }
             }
             
             Divider().background(Color.white.opacity(0.1))
@@ -262,7 +308,7 @@ struct PreferencesView: View {
             }
         }
         .padding(24)
-        .frame(width: 540, height: 500)
+        .frame(width: 560, height: 540)
         .background(Color(red: 0.06, green: 0.08, blue: 0.14))
     }
 }
@@ -425,7 +471,7 @@ struct MainWindowView: View {
                             }) {
                                 HStack {
                                     Text(provider.icon)
-                                    Text(provider.rawValue)
+                                    Text(provider == .custom ? optimizer.customAIName : provider.rawValue)
                                     if optimizer.selectedAIProvider == provider {
                                         Image(systemName: "checkmark")
                                     }
@@ -435,7 +481,7 @@ struct MainWindowView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Text(optimizer.selectedAIProvider.icon)
-                            Text(optimizer.selectedAIProvider.rawValue)
+                            Text(optimizer.selectedAIProvider == .custom ? optimizer.customAIName : optimizer.selectedAIProvider.rawValue)
                                 .font(.system(size: 10, weight: .bold))
                         }
                         .padding(.horizontal, 8)
@@ -575,16 +621,16 @@ struct MainWindowView: View {
             .background(Color(red: 0.04, green: 0.05, blue: 0.09))
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.05))
 
-            // ── MAIN CONTENT AREA WITH MULTI-AI SIDEBAR ──
+            // ── MAIN CONTENT AREA WITH CUSTOM IA SIDEBAR ──
             HStack(spacing: 0) {
                 // Main Render Port
                 ShineFindWebView(urlString: $urlString, optimizerManager: optimizer)
                 
-                // 🤖 DYNAMIC MULTI-AI SIDEBAR (Gemini, ChatGPT, Claude, Kimi, xAI)
+                // 🤖 DYNAMIC CUSTOM IA SIDEBAR
                 if isAISidebarOpen && optimizer.selectedAIProvider != .none {
                     VStack(spacing: 0) {
                         HStack {
-                            Text("\(optimizer.selectedAIProvider.icon) \(optimizer.selectedAIProvider.rawValue)")
+                            Text("\(optimizer.selectedAIProvider.icon) \(optimizer.selectedAIProvider == .custom ? optimizer.customAIName : optimizer.selectedAIProvider.rawValue)")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(optimizer.selectedAIProvider.themeColor)
                             Spacer()
@@ -599,7 +645,7 @@ struct MainWindowView: View {
                         .background(Color(red: 0.06, green: 0.08, blue: 0.14))
                         .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
                         
-                        ShineFindWebView(urlString: .constant(optimizer.selectedAIProvider.url), optimizerManager: optimizer)
+                        ShineFindWebView(urlString: .constant(optimizer.currentAIUrl), optimizerManager: optimizer)
                     }
                     .frame(width: 380)
                     .border(width: 1, edges: [.leading], color: optimizer.selectedAIProvider.themeColor.opacity(0.4))

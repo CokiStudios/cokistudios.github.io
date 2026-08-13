@@ -42,7 +42,7 @@ async function generateJWE(payload, secretKeyStr = 'coki_studios_super_secret_jw
         ...payload,
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 3600,
-        iss: 'csid-server'
+        iss: 'https://csid.cokistudios.com'
     });
 
     // 1. Derivar clave simétrica AES-GCM (256-bit)
