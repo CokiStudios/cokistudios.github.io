@@ -1041,15 +1041,6 @@
 
     <script type="module">
         import {
-            initSocialApp
-        } from './forkar.js';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initSocialApp();
-        });
-    </script>
-        <script type="module">
-        import {
             getCategories, getPosts, createPost,
             getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials,
             getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints
@@ -1235,8 +1226,6 @@
             const result = await createPost(title, content, categoryId, { imageUrl, videoUrl });
             btn.disabled = false; btn.textContent = 'Publicar';
             if (result.success) { closeModal(); loadPosts(); }
-            else { alert('Error: ' + result.error); }
-        };
             else { alert('Error: ' + result.error); }
         };
 
