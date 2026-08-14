@@ -915,7 +915,15 @@
                 <div class="form-group">
                     <label>Contenido</label>
                     <textarea class="form-textarea" id="post-content"
-                        placeholder="Escribe tu publicación..."></textarea>
+                        placeholder="Escribe tu publicación... Usa @nombre para mencionar a alguien."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>🖼️ URL de Imagen (opcional)</label>
+                    <input class="form-input" type="url" id="post-media-image" placeholder="https://ejemplo.com/foto.jpg">
+                </div>
+                <div class="form-group">
+                    <label>🎬 URL de Video (opcional - MP4 o YouTube)</label>
+                    <input class="form-input" type="url" id="post-media-video" placeholder="https://ejemplo.com/video.mp4 o https://youtube.com/watch?v=...">
                 </div>
             </div>
             <div class="modal-footer">
@@ -1142,6 +1150,8 @@
                     </div>
                     <div class="post-title">${escHtml(post.title)}</div>
                     <div class="post-body">${escHtml(post.content)}</div>
+                    ${post.image_url ? `<div class="post-media-box" style="margin: 12px 0; border-radius: 12px; overflow: hidden; max-height: 400px; border: 1px solid var(--border);"><img src="${escHtml(post.image_url)}" style="width: 100%; height: auto; display: block; object-fit: cover;" alt="Foto adjunta"></div>` : ''}
+                    ${post.video_url ? `<div class="post-media-box" style="margin: 12px 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);">${post.video_url.includes('youtube.com') || post.video_url.includes('youtu.be') ? `<iframe src="${escHtml(post.video_url.replace('watch?v=', 'embed/'))}" style="width:100%; height:280px; border:none;" allowfullscreen></iframe>` : `<video src="${escHtml(post.video_url)}" controls style="width:100%; max-height:360px; display:block;"></video>`}</div>` : ''}
                     <div class="post-stats">
                         <span class="post-stat">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
@@ -1202,6 +1212,10 @@
             document.getElementById('modal-post').classList.remove('open');
             document.getElementById('post-title').value = '';
             document.getElementById('post-content').value = '';
+            const imgInput = document.getElementById('post-media-image');
+            if (imgInput) imgInput.value = '';
+            const vidInput = document.getElementById('post-media-video');
+            if (vidInput) vidInput.value = '';
         };
 
         document.getElementById('modal-post').addEventListener('click', (e) => {
@@ -1212,12 +1226,17 @@
             const title = document.getElementById('post-title').value.trim();
             const content = document.getElementById('post-content').value.trim();
             const categoryId = document.getElementById('post-category').value || null;
+            const imageUrl = document.getElementById('post-media-image')?.value.trim() || null;
+            const videoUrl = document.getElementById('post-media-video')?.value.trim() || null;
+
             if (!title || !content) { alert('Por favor escribe un título y contenido'); return; }
             const btn = document.getElementById('btn-submit');
             btn.disabled = true; btn.textContent = 'Publicando...';
-            const result = await createPost(title, content, categoryId);
+            const result = await createPost(title, content, categoryId, { imageUrl, videoUrl });
             btn.disabled = false; btn.textContent = 'Publicar';
             if (result.success) { closeModal(); loadPosts(); }
+            else { alert('Error: ' + result.error); }
+        };
             else { alert('Error: ' + result.error); }
         };
 

@@ -9,6 +9,8 @@ struct CreatePostView: View {
     
     @State private var title = ""
     @State private var content = ""
+    @State private var imageUrl = ""
+    @State private var videoUrl = ""
     @State private var errorMessage = ""
     @State private var isLoading = false
     @State private var isFetchingCategories = false
@@ -97,10 +99,30 @@ struct CreatePostView: View {
                                 TextEditor(text: $content)
                                     .foregroundColor(ForkarTheme.text)
                                     .padding(8)
-                                    .frame(minHeight: 180)
-                                    .scrollContentBackground(.hidden) // Required to make background color work on iOS 16+
+                                    .frame(minHeight: 140)
+                                    .scrollContentBackground(.hidden)
                                     .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                             }
+                            
+                            // Image URL input
+                            Text("URL de Foto / Imagen (opcional)")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(ForkarTheme.text)
+                            
+                            TextField("https://ejemplo.com/imagen.jpg", text: $imageUrl)
+                                .foregroundColor(ForkarTheme.text)
+                                .padding(.horizontal, 4)
+                                .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                            
+                            // Video URL input
+                            Text("URL de Video MP4 (opcional)")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(ForkarTheme.text)
+                            
+                            TextField("https://ejemplo.com/video.mp4", text: $videoUrl)
+                                .foregroundColor(ForkarTheme.text)
+                                .padding(.horizontal, 4)
+                                .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
                             
                             if !errorMessage.isEmpty {
                                 Text(errorMessage)
@@ -197,8 +219,17 @@ struct CreatePostView: View {
         isLoading = true
         errorMessage = ""
         
+        let cleanImage = imageUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanVideo = videoUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         do {
-            _ = try await authManager.createPost(title: cleanTitle, content: cleanContent, categoryId: categoryId)
+            _ = try await authManager.createPost(
+                title: cleanTitle,
+                content: cleanContent,
+                categoryId: categoryId,
+                imageUrl: cleanImage.isEmpty ? nil : cleanImage,
+                videoUrl: cleanVideo.isEmpty ? nil : cleanVideo
+            )
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

@@ -57,7 +57,7 @@ async function getPostById(postId) {
     return data;
 }
 
-async function createPost(title, content, categoryId = null) {
+async function createPost(title, content, categoryId = null, mediaOptions = {}) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Debes iniciar sesión' };
     
@@ -65,16 +65,21 @@ async function createPost(title, content, categoryId = null) {
     const authorName = meta.full_name || meta.name || user.email || user.phone || 'Usuario';
     const authorAvatar = meta.avatar_url || meta.picture || null;
     
+    const insertPayload = {
+        user_id: user.id,
+        author_name: authorName,
+        author_avatar: authorAvatar,
+        title,
+        content,
+        category_id: categoryId
+    };
+
+    if (mediaOptions.imageUrl) insertPayload.image_url = mediaOptions.imageUrl;
+    if (mediaOptions.videoUrl) insertPayload.video_url = mediaOptions.videoUrl;
+    
     const { data, error } = await supabase
         .from('social_posts')
-        .insert({
-            user_id: user.id,
-            author_name: authorName,
-            author_avatar: authorAvatar,
-            title,
-            content,
-            category_id: categoryId
-        })
+        .insert(insertPayload)
         .select()
         .single();
     

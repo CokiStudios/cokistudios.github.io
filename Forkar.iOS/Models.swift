@@ -27,6 +27,8 @@ struct Post: Identifiable, Codable, Hashable {
     let content: String
     let likes_count: Int
     let comments_count: Int
+    let image_url: String?
+    let video_url: String?
     let created_at: String // Decoded from ISO8601
     let updated_at: String?
     

@@ -333,7 +333,7 @@ class SupabaseManager: ObservableObject {
         return try JSONDecoder().decode([Post].self, from: data)
     }
     
-    func createPost(title: String, content: String, categoryId: UUID) async throws -> Post {
+    func createPost(title: String, content: String, categoryId: UUID, imageUrl: String? = nil, videoUrl: String? = nil) async throws -> Post {
         guard let user = currentUser else {
             throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para publicar"])
         }
@@ -352,6 +352,12 @@ class SupabaseManager: ObservableObject {
         
         if let avatar = authorAvatar {
             bodyJson["author_avatar"] = avatar
+        }
+        if let img = imageUrl, !img.isEmpty {
+            bodyJson["image_url"] = img
+        }
+        if let vid = videoUrl, !vid.isEmpty {
+            bodyJson["video_url"] = vid
         }
         
         let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
