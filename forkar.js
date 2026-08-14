@@ -342,14 +342,21 @@ async function logUserEcoImpact(actionId, co2Saved = 1.00, pointsEarned = 10) {
         return { success: false, error: 'Solo puedes redimir 1 reto ecológico por día. ¡Vuelve mañana!' };
     }
 
+    // Validar si actionId es un UUID válido (36 caracteres con guiones)
+    const isUUID = typeof actionId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actionId);
+
+    const payload = {
+        user_id: user.id,
+        co2_saved: co2Saved,
+        points_earned: pointsEarned
+    };
+    if (isUUID) {
+        payload.action_id = actionId;
+    }
+
     const { data, error } = await supabase
         .from('forkman_user_eco')
-        .insert({
-            user_id: user.id,
-            action_id: actionId,
-            co2_saved: co2Saved,
-            points_earned: pointsEarned
-        })
+        .insert(payload)
         .select()
         .single();
 
