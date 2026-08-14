@@ -57,6 +57,33 @@ async function getPostById(postId) {
     return data;
 }
 
+async function uploadMediaToStorage(file) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Inicia sesión para subir archivos' };
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+        .from('forkar-media')
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+    if (error) {
+        console.error('Error subiendo a Supabase Storage:', error);
+        return { success: false, error: error.message };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+        .from('forkar-media')
+        .getPublicUrl(filePath);
+
+    return { success: true, publicUrl: publicUrlData.publicUrl };
+}
+
 async function createPost(title, content, categoryId = null, mediaOptions = {}) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Debes iniciar sesión' };
@@ -450,6 +477,7 @@ export {
     getCSMSRooms,
     createCSMSGroup,
     getCSMSMessages,
-    sendCSMSMessage
+    sendCSMSMessage,
+    uploadMediaToStorage
 };
 

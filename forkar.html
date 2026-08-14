@@ -918,11 +918,16 @@
                         placeholder="Escribe tu publicación... Usa @nombre para mencionar a alguien."></textarea>
                 </div>
                 <div class="form-group">
-                    <label>🖼️ URL de Imagen (opcional)</label>
+                    <label>📁 Subir Archivo a Supabase Storage (Foto / Video)</label>
+                    <input class="form-input" type="file" id="post-file-upload" accept="image/*,video/*" style="padding: 8px;">
+                    <div id="file-upload-status" style="font-size: 11px; color: var(--accent); margin-top: 4px; display: none;">☁️ Subiendo archivo a Supabase Storage...</div>
+                </div>
+                <div class="form-group">
+                    <label>🖼️ URL de Imagen (opcional o autogenerada)</label>
                     <input class="form-input" type="url" id="post-media-image" placeholder="https://ejemplo.com/foto.jpg">
                 </div>
                 <div class="form-group">
-                    <label>🎬 URL de Video (opcional - MP4 o YouTube)</label>
+                    <label>🎬 URL de Video (opcional o autogenerada - MP4 / YouTube)</label>
                     <input class="form-input" type="url" id="post-media-video" placeholder="https://ejemplo.com/video.mp4 o https://youtube.com/watch?v=...">
                 </div>
             </div>
@@ -1041,7 +1046,7 @@
 
     <script type="module">
         import {
-            getCategories, getPosts, createPost,
+            getCategories, getPosts, createPost, uploadMediaToStorage,
             getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials,
             getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints
         } from './forkar.js';
@@ -1199,10 +1204,32 @@
             document.getElementById('modal-post').classList.add('open');
         };
 
+        document.getElementById('post-file-upload')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const statusEl = document.getElementById('file-upload-status');
+            if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '☁️ Subiendo ' + file.name + ' a Supabase Storage...'; }
+            const res = await uploadMediaToStorage(file);
+            if (res.success) {
+                if (statusEl) { statusEl.textContent = '✅ ¡Archivo subido con éxito!'; statusEl.style.color = '#10b981'; }
+                if (file.type.startsWith('video/')) {
+                    document.getElementById('post-media-video').value = res.publicUrl;
+                } else {
+                    document.getElementById('post-media-image').value = res.publicUrl;
+                }
+            } else {
+                if (statusEl) { statusEl.textContent = '❌ Error al subir: ' + res.error; statusEl.style.color = '#ef4444'; }
+            }
+        });
+
         window.closeModal = () => {
             document.getElementById('modal-post').classList.remove('open');
             document.getElementById('post-title').value = '';
             document.getElementById('post-content').value = '';
+            const fileInput = document.getElementById('post-file-upload');
+            if (fileInput) fileInput.value = '';
+            const statusEl = document.getElementById('file-upload-status');
+            if (statusEl) statusEl.style.display = 'none';
             const imgInput = document.getElementById('post-media-image');
             if (imgInput) imgInput.value = '';
             const vidInput = document.getElementById('post-media-video');
