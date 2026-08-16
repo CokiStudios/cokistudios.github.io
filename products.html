@@ -1,26 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos — Coki Studios</title>
-    <meta name="description" content="Descubre los productos de Coki Studios: Horizon Maps, OurCommonHome, Forkar, Shine Find y Coki ID. Herramientas que hacen el mundo más accesible.">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="description"
+        content="Descubre los productos de Coki Studios: Horizon Maps, OurCommonHome, Forkar, Shine Find y Coki ID. Herramientas que hacen el mundo más accesible.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <script>
         if (localStorage.getItem('coki-theme') === 'light') {
             document.documentElement.classList.add('light-theme');
         }
     </script>
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
             --bg: #06090f;
             --bg2: #0d1117;
-            --card: rgba(255,255,255,0.04);
-            --card-hover: rgba(255,255,255,0.07);
-            --border: rgba(255,255,255,0.07);
-            --border-glow: rgba(99,102,241,0.4);
+            --card: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-glow: rgba(99, 102, 241, 0.4);
             --accent: #6366f1;
             --text: #f1f5f9;
             --text-sub: #94a3b8;
@@ -30,10 +39,10 @@
         html.light-theme {
             --bg: #f8fafc;
             --bg2: #f1f5f9;
-            --card: rgba(0,0,0,0.02);
-            --card-hover: rgba(0,0,0,0.04);
-            --border: rgba(0,0,0,0.06);
-            --border-glow: rgba(99,102,241,0.3);
+            --card: rgba(0, 0, 0, 0.02);
+            --card-hover: rgba(0, 0, 0, 0.04);
+            --border: rgba(0, 0, 0, 0.06);
+            --border-glow: rgba(99, 102, 241, 0.3);
             --accent: #4f46e5;
             --text: #0f172a;
             --text-sub: #475569;
@@ -41,26 +50,52 @@
         }
 
         .theme-toggle-btn {
-            background: none; border: none; cursor: pointer;
-            width: 36px; height: 36px; border-radius: 9px;
-            display: inline-flex; align-items: center; justify-content: center;
-            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            transition: all 0.2s;
+            font-size: 16px;
         }
-        .theme-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
 
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        .theme-toggle-btn:hover {
+            color: var(--text);
+            background: var(--card-hover);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
         body::before {
             content: '';
-            position: fixed; inset: 0; z-index: -1;
-            background-image: linear-gradient(rgba(99,102,241,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.025) 1px, transparent 1px);
-            background-size: 60px 60px; pointer-events: none;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: linear-gradient(rgba(99, 102, 241, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
         }
 
         body::after {
             content: '';
-            position: fixed; inset: 0; z-index: -1;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3C/svg%3E");
             background-repeat: repeat-y;
             background-size: 100% 600px;
@@ -68,109 +103,417 @@
             pointer-events: none;
             animation: moveBackground 25s linear infinite;
         }
+
         html.light-theme body::after {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3C/svg%3E");
         }
 
         @keyframes moveBackground {
-            from { background-position: center 0px; }
-            to { background-position: center 600px; }
+            from {
+                background-position: center 0px;
+            }
+
+            to {
+                background-position: center 600px;
+            }
         }
 
         /* ── NAV ── */
-        nav { position: sticky; top: 0; z-index: 100; background: rgba(6,9,15,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 24px; }
-        .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 64px; }
-        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .nav-logo { width: 34px; height: 34px; background: var(--accent); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: white; }
-        .nav-brand-name { font-size: 16px; font-weight: 700; color: var(--text); }
-        .nav-links { display: flex; gap: 4px; }
-        .nav-link { font-size: 14px; font-weight: 500; padding: 7px 13px; color: var(--text-sub); text-decoration: none; border-radius: 8px; transition: all 0.2s; }
-        .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
-        .nav-link.active { color: var(--text); background: rgba(99,102,241,0.1); }
-        .nav-cta { font-size: 13px; font-weight: 600; padding: 8px 18px; background: var(--accent); color: white; border-radius: 9px; text-decoration: none; transition: all 0.2s; }
-        .nav-cta:hover { background: #4f46e5; transform: translateY(-1px); }
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(6, 9, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            width: 34px;
+            height: 34px;
+            background: var(--accent);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            color: white;
+        }
+
+        .nav-brand-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-link {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 7px 13px;
+            color: var(--text-sub);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .nav-link.active {
+            color: var(--text);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .nav-cta {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 18px;
+            background: var(--accent);
+            color: white;
+            border-radius: 9px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
 
         /* ── PAGE HEADER ── */
-        .page-header { position: relative; z-index: 1; padding: 80px 24px 60px; text-align: center; }
-        .page-header .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 16px; }
-        .page-header h1 { font-size: clamp(32px, 5vw, 52px); font-weight: 900; margin-bottom: 16px; line-height: 1.1; }
-        .page-header h1 span { background: linear-gradient(135deg, #6366f1, #a78bfa, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .page-header p { font-size: 17px; color: var(--text-sub); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+        .page-header {
+            position: relative;
+            z-index: 1;
+            padding: 80px 24px 60px;
+            text-align: center;
+        }
+
+        .page-header .label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .page-header h1 {
+            font-size: clamp(32px, 5vw, 52px);
+            font-weight: 900;
+            margin-bottom: 16px;
+            line-height: 1.1;
+        }
+
+        .page-header h1 span {
+            background: linear-gradient(135deg, #6366f1, #a78bfa, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            font-size: 17px;
+            color: var(--text-sub);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
 
         /* ── PRODUCTS GRID ── */
-        .products-section { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 100px; }
+        .products-section {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px 100px;
+        }
 
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
 
         .product-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 20px; text-decoration: none; color: inherit;
-            display: flex; flex-direction: column;
-            transition: all 0.3s ease; overflow: hidden; position: relative;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
         }
-        .product-card:hover { border-color: var(--border-glow); transform: translateY(-4px); }
+
+        .product-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+        }
 
         .product-preview {
-            aspect-ratio: 16/9; overflow: hidden; position: relative;
-            background: var(--bg2); flex-shrink: 0;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg2);
+            flex-shrink: 0;
         }
-        .product-preview img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: opacity 0.3s; }
-        .product-card:hover .product-preview img { opacity: 1; }
-        .product-preview-placeholder {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-        }
-        .preview-gradient { position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: linear-gradient(to top, var(--bg2), transparent); }
 
-        .product-body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
-        .product-icon-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-        .product-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .product-name { font-size: 20px; font-weight: 800; color: var(--text); }
-        .product-desc { font-size: 14px; color: var(--text-sub); line-height: 1.7; margin-bottom: 16px; flex: 1; }
-        .product-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
-        .product-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-muted); }
-        .product-actions { display: flex; gap: 10px; }
-        .btn-visit { flex: 1; text-align: center; padding: 10px 16px; background: var(--accent); color: white; font-size: 14px; font-weight: 700; border-radius: 10px; text-decoration: none; transition: all 0.2s; }
-        .btn-visit:hover { background: #4f46e5; transform: translateY(-1px); }
-        .btn-github { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-sub); text-decoration: none; transition: all 0.2s; flex-shrink: 0; }
-        .btn-github:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: rgba(255,255,255,0.15); }
-        .btn-soon { flex: 1; text-align: center; padding: 10px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-muted); font-size: 14px; font-weight: 600; border-radius: 10px; cursor: default; }
+        .product-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:hover .product-preview img {
+            opacity: 1;
+        }
+
+        .product-preview-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-gradient {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to top, var(--bg2), transparent);
+        }
+
+        .product-body {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-icon-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .product-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .product-desc {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.7;
+            margin-bottom: 16px;
+            flex: 1;
+        }
+
+        .product-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .product-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-visit {
+            flex: 1;
+            text-align: center;
+            padding: 10px 16px;
+            background: var(--accent);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-visit:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .btn-github {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            text-decoration: none;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-github:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-soon {
+            flex: 1;
+            text-align: center;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: default;
+        }
 
         /* ── FEATURED CARD ── */
-        .product-card.featured { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; }
-        .product-card.featured .product-preview { aspect-ratio: auto; min-height: 220px; }
+        .product-card.featured {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .product-card.featured .product-preview {
+            aspect-ratio: auto;
+            min-height: 220px;
+        }
 
         /* ── FOOTER ── */
-        footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 36px 24px; background: rgba(6,9,15,0.6); }
-        .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-        .footer-links { display: flex; gap: 20px; }
-        .footer-link { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-        .footer-link:hover { color: var(--text-sub); }
-        .footer-copy { font-size: 12px; color: var(--text-muted); }
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 36px 24px;
+            background: rgba(6, 9, 15, 0.6);
+        }
+
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-link {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--text-sub);
+        }
+
+        .footer-copy {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
 
         @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .product-card.featured { grid-column: auto; display: flex; flex-direction: column; }
-            .product-card.featured .product-preview { aspect-ratio: 16/9; }
+            .nav-links {
+                display: none;
+            }
+
+            .product-card.featured {
+                grid-column: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .product-card.featured .product-preview {
+                aspect-ratio: 16/9;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <!-- ── NAV ── -->
     <nav>
         <div class="nav-inner">
-            <a href="index.html" class="nav-brand">
+            <a href="index" class="nav-brand">
                 <div class="nav-logo">C</div>
                 <span class="nav-brand-name">Coki Studios</span>
             </a>
             <div class="nav-links">
-                <a href="index.html" class="nav-link">Inicio</a>
-                <a href="products.html" class="nav-link active">Productos</a>
-                <a href="forkar.html" class="nav-link">Forkar</a>
-                <a href="coki-developer.html" class="nav-link">Developers</a>
+                <a href="index" class="nav-link">Inicio</a>
+                <a href="products" class="nav-link active">Productos</a>
+                <a href="forkar" class="nav-link">Forkar</a>
+                <a href="coki-developer" class="nav-link">Developers</a>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
             </div>
-            <a href="coki-register.html" class="nav-cta">Coki ID</a>
+            <a href="coki-register" class="nav-cta">Coki ID</a>
         </div>
     </nav>
 
@@ -178,173 +521,197 @@
     <div class="page-header">
         <div class="label">Ecosistema Coki</div>
         <h1>Nuestros <span>Productos</span></h1>
-        <p>Herramientas diseñadas para conectar personas, facilitar el acceso a la información y hacer el mundo más brillante.</p>
+        <p>Herramientas diseñadas para conectar personas, facilitar el acceso a la información y hacer el mundo más
+            brillante.</p>
     </div>
 
     <!-- ── PRODUCTS SECTION ── -->
 
- 
-            <!-- HorizonMaps -->
-            <div class="product-card">
-                <div class="product-preview">
-                    <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(6,9,15,0.8));">
-                        <span style="font-size:56px;opacity:0.6;">🗺️</span>
-                    </div>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(56,189,248,0.12);">🗺️</div>
-                        <div class="product-name">Horizon Maps</div>
-                    </div>
-                    <div class="product-desc">App de mapas con integración Android Auto. Navegación inteligente, accesible y diseñada para el día a día.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Maps</span>
-                        <span class="product-tag">Android Auto</span>
-                        <span class="product-tag">Mobile</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="https://anonymus-devop.github.io/HorizonMaps/" target="_blank" class="btn-visit" style="background:rgba(56,189,248,0.75)">Visitar sitio →</a>
-                        <a href="https://github.com/anonymus-devop/HorizonMaps" target="_blank" class="btn-github">
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
- 
-            <!-- Forkar (ex Coki Social) -->
-            <div class="product-card">
-                <div class="product-preview">
-                    <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,9,15,0.8));">
-                        <span style="font-size:56px;opacity:0.6;">💬</span>
-                    </div>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(139,92,246,0.12);">💬</div>
-                        <div class="product-name">Forkar</div>
-                    </div>
-                    <div class="product-desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas, resuelven dudas y se conectan.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Comunidad</span>
-                        <span class="product-tag">Foro</span>
-                        <span class="product-tag">Coki ID</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="forkar.html" class="btn-visit" style="background:rgba(139,92,246,0.75)">Entrar a Forkar →</a>
-                    </div>
-                </div>
-            </div>
- 
-            <!-- Shine Find -->
-            <div class="product-card">
-                <div class="product-preview">
-                    <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,9,15,0.8));">
-                        <img src="https://github.com/user-attachments/assets/ea5e2b3f-8613-4bfe-9459-837482c047cb" alt="Shine Find" style="width:80px;height:80px;object-fit:contain;opacity:0.7;" onerror="this.style.display='none'">
-                    </div>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(245,158,11,0.12);">✨</div>
-                        <div class="product-name">Shine Find</div>
-                    </div>
-                    <div class="product-desc">Encuentra webs, navega, busca, crea e innova. Un explorador moderno con diseño Liquid Glass para macOS.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">macOS</span>
-                        <span class="product-tag">Liquid Glass</span>
-                        <span class="product-tag">Navegador</span>
-                    </div>
-                    <div class="product-actions">
-                        <span class="btn-soon">Próximamente</span>
-                        <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="btn-github">
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-            <!-- Shine Find Browser (CEF) -->
-            <div class="product-card featured" style="border-color:rgba(56,189,248,0.4);">
-                <div class="product-preview">
-                    <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(6,9,15,0.85));">
-                        <span style="font-size:56px;opacity:0.8;">🌐</span>
-                    </div>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(56,189,248,0.15);color:#38bdf8;">🌐</div>
-                        <div class="product-name">Shine Find Browser</div>
-                    </div>
-                    <div class="product-desc">
-                        El navegador web nativo de Coki Studios impulsado por Chromium Embedded Framework (CEF C++). Integra el escudo Sentinel Anti-Rastreadores, aceleración GPU y autenticación passkey con CSID.
-                    </div>
-                    <div class="product-tags">
-                        <span class="product-tag">CEF / Chromium</span>
-                        <span class="product-tag">Escudo Sentinel</span>
-                        <span class="product-tag">CSID Autologin</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="shine-find.html" class="btn-visit" style="background:linear-gradient(135deg,#38bdf8,#8b5cf6);">Explorar Demo →</a>
-                    </div>
-                </div>
-            </div>
 
-            <!-- CSID -->
-            <div class="product-card">
-                <div class="product-preview">
-                    <div class="product-preview-placeholder" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,9,15,0.8));">
-                        <span style="font-size:56px;opacity:0.6;">🪪</span>
-                    </div>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(99,102,241,0.12);">🪪</div>
-                        <div class="product-name">CSID</div>
-                    </div>
-                    <div class="product-desc">Tu cuenta única para acceder de forma rápida y segura a todos los juegos y aplicaciones de Coki Studios.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Perfil Único</span>
-                        <span class="product-tag">Seguridad</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="coki-dashboard.html" class="btn-visit">Mi CSID →</a>
-                    </div>
-                </div>
+    <!-- HorizonMaps -->
+    <div class="product-card">
+        <div class="product-preview">
+            <div class="product-preview-placeholder"
+                style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(6,9,15,0.8));">
+                <span style="font-size:56px;opacity:0.6;">🗺️</span>
             </div>
-
+            <div class="preview-gradient"></div>
+        </div>
+        <div class="product-body">
+            <div class="product-icon-row">
+                <div class="product-icon" style="background:rgba(56,189,248,0.12);">🗺️</div>
+                <div class="product-name">Horizon Maps</div>
+            </div>
+            <div class="product-desc">App de mapas con integración Android Auto. Navegación inteligente, accesible y
+                diseñada para el día a día.</div>
+            <div class="product-tags">
+                <span class="product-tag">Maps</span>
+                <span class="product-tag">Android Auto</span>
+                <span class="product-tag">Mobile</span>
+            </div>
+            <div class="product-actions">
+                <a href="https://anonymus-devop.github.io/HorizonMaps/" target="_blank" class="btn-visit"
+                    style="background:rgba(56,189,248,0.75)">Visitar sitio →</a>
+                <a href="https://github.com/anonymus-devop/HorizonMaps" target="_blank" class="btn-github">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- ── FOOTER ── -->
-    <footer>
-        <div class="footer-inner">
-            <div class="nav-brand" style="text-decoration:none;">
-                <div class="nav-logo" style="width:28px;height:28px;font-size:12px;">C</div>
-                <span style="font-size:13px;font-weight:600;color:var(--text-sub);">Coki Studios</span>
+    <!-- Forkar (ex Coki Social) -->
+    <div class="product-card">
+        <div class="product-preview">
+            <div class="product-preview-placeholder"
+                style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,9,15,0.8));">
+                <span style="font-size:56px;opacity:0.6;">💬</span>
             </div>
-            <div class="footer-links">
-                <a href="index.html" class="footer-link">Inicio</a>
-                <a href="coki-social.html" class="footer-link">Forkar</a>
-                <a href="coki-developer.html" class="footer-link">Developers</a>
-                <a href="mailto:cokistudiosllc@gmail.com" class="footer-link">Contacto</a>
-            </div>
-            <div class="footer-copy">© 2026 Coki Studios LLC</div>
+            <div class="preview-gradient"></div>
         </div>
-    </footer>
+        <div class="product-body">
+            <div class="product-icon-row">
+                <div class="product-icon" style="background:rgba(139,92,246,0.12);">💬</div>
+                <div class="product-name">Forkar</div>
+            </div>
+            <div class="product-desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas,
+                resuelven dudas y se conectan.</div>
+            <div class="product-tags">
+                <span class="product-tag">Comunidad</span>
+                <span class="product-tag">Foro</span>
+                <span class="product-tag">Coki ID</span>
+            </div>
+            <div class="product-actions">
+                <a href="forkar.html" class="btn-visit" style="background:rgba(139,92,246,0.75)">Entrar a Forkar →</a>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            themeToggle.textContent = isLight ? '🌙' : '☀️';
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+    <!-- Shine Find -->
+    <div class="product-card">
+        <div class="product-preview">
+            <div class="product-preview-placeholder"
+                style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,9,15,0.8));">
+                <img src="https://github.com/user-attachments/assets/ea5e2b3f-8613-4bfe-9459-837482c047cb"
+                    alt="Shine Find" style="width:80px;height:80px;object-fit:contain;opacity:0.7;"
+                    onerror="this.style.display='none'">
+            </div>
+            <div class="preview-gradient"></div>
+        </div>
+        <div class="product-body">
+            <div class="product-icon-row">
+                <div class="product-icon" style="background:rgba(245,158,11,0.12);">✨</div>
+                <div class="product-name">Shine Find</div>
+            </div>
+            <div class="product-desc">Encuentra webs, navega, busca, crea e innova. Un explorador moderno con diseño
+                Liquid Glass para macOS.</div>
+            <div class="product-tags">
+                <span class="product-tag">macOS</span>
+                <span class="product-tag">Liquid Glass</span>
+                <span class="product-tag">Navegador</span>
+            </div>
+            <div class="product-actions">
+                <span class="btn-soon">Próximamente</span>
+                <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="btn-github">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                    <!-- Shine Find Browser (CEF) -->
+                    <div class="product-card featured" style="border-color:rgba(56,189,248,0.4);">
+                        <div class="product-preview">
+                            <div class="product-preview-placeholder"
+                                style="background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(6,9,15,0.85));">
+                                <span style="font-size:56px;opacity:0.8;">🌐</span>
+                            </div>
+                            <div class="preview-gradient"></div>
+                        </div>
+                        <div class="product-body">
+                            <div class="product-icon-row">
+                                <div class="product-icon" style="background:rgba(56,189,248,0.15);color:#38bdf8;">🌐
+                                </div>
+                                <div class="product-name">Shine Find Browser</div>
+                            </div>
+                            <div class="product-desc">
+                                El navegador web nativo de Coki Studios impulsado por Chromium Embedded Framework (CEF
+                                C++). Integra el escudo Sentinel Anti-Rastreadores, aceleración GPU y autenticación
+                                passkey con CSID.
+                            </div>
+                            <div class="product-tags">
+                                <span class="product-tag">CEF / Chromium</span>
+                                <span class="product-tag">Escudo Sentinel</span>
+                                <span class="product-tag">CSID Autologin</span>
+                            </div>
+                            <div class="product-actions">
+                                <a href="shine-find.html" class="btn-visit"
+                                    style="background:linear-gradient(135deg,#38bdf8,#8b5cf6);">Explorar Demo →</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CSID -->
+                    <div class="product-card">
+                        <div class="product-preview">
+                            <div class="product-preview-placeholder"
+                                style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,9,15,0.8));">
+                                <span style="font-size:56px;opacity:0.6;">🪪</span>
+                            </div>
+                            <div class="preview-gradient"></div>
+                        </div>
+                        <div class="product-body">
+                            <div class="product-icon-row">
+                                <div class="product-icon" style="background:rgba(99,102,241,0.12);">🪪</div>
+                                <div class="product-name">CSID</div>
+                            </div>
+                            <div class="product-desc">Tu cuenta única para acceder de forma rápida y segura a todos los
+                                juegos y aplicaciones de Coki Studios.</div>
+                            <div class="product-tags">
+                                <span class="product-tag">Perfil Único</span>
+                                <span class="product-tag">Seguridad</span>
+                            </div>
+                            <div class="product-actions">
+                                <a href="coki-dashboard.html" class="btn-visit">Mi CSID →</a>
+                            </div>
+                        </div>
+                    </div>
+
+            </div>
+        </div>
+
+        <!-- ── FOOTER ── -->
+        <footer>
+            <div class="footer-inner">
+                <div class="nav-brand" style="text-decoration:none;">
+                    <div class="nav-logo" style="width:28px;height:28px;font-size:12px;">C</div>
+                    <span style="font-size:13px;font-weight:600;color:var(--text-sub);">Coki Studios</span>
+                </div>
+                <div class="footer-links">
+                    <a href="index.html" class="footer-link">Inicio</a>
+                    <a href="coki-social.html" class="footer-link">Forkar</a>
+                    <a href="coki-developer.html" class="footer-link">Developers</a>
+                    <a href="mailto:cokistudiosllc@gmail.com" class="footer-link">Contacto</a>
+                </div>
+                <div class="footer-copy">© 2026 Coki Studios LLC</div>
+            </div>
+        </footer>
+
+        <script>
+            const themeToggle = document.getElementById('theme-toggle');
+            const updateToggleIcon = () => {
+                const isLight = document.documentElement.classList.contains('light-theme');
+                themeToggle.textContent = isLight ? '🌙' : '☀️';
+            };
+            if (themeToggle) {
                 updateToggleIcon();
-            });
-        }
-    </script>
+                themeToggle.addEventListener('click', () => {
+                    const wasLight = document.documentElement.classList.toggle('light-theme');
+                    localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                    updateToggleIcon();
+                });
+            }
+        </script>
 </body>
+
 </html>
