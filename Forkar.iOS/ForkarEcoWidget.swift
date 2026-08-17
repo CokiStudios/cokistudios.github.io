@@ -159,18 +159,32 @@ struct ForkarEcoActivityWidget: Widget {
                 }
                 
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack(spacing: 10) {
-                        // Botón de Escaneo Rápido de QR de Eco Points
+                    VStack(spacing: 8) {
+                        // Resumen de Consumo
+                        HStack {
+                            Text("Consumo Ecológico:")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.gray)
+                            Text("\(context.state.co2Saved, specifier: "%.2f") kg CO₂")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(Color.emerald)
+                            Spacer()
+                            Text("\(context.state.ecoPoints) pts acumulados")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.yellow)
+                        }
+                        .padding(.horizontal, 4)
+                        
+                        // Botón Escanear QR Nativo de Forkar
                         Link(destination: URL(string: "forkar://ecoscan")!) {
-                            HStack(spacing: 6) {
+                            HStack(spacing: 8) {
                                 Image(systemName: "qrcode.viewfinder")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Escanear Código QR Eco")
                                     .font(.system(size: 13, weight: .bold))
-                                Text("Escanear QR Eco")
-                                    .font(.system(size: 12, weight: .bold))
                             }
-                            .foregroundColor(.white)
-                            .padding(.vertical, 7)
-                            .padding(.horizontal, 14)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
                             .background(
                                 LinearGradient(
                                     colors: [Color.emerald, Color.green.opacity(0.8)],
@@ -178,31 +192,15 @@ struct ForkarEcoActivityWidget: Widget {
                                     endPoint: .trailing
                                 )
                             )
+                            .foregroundColor(.white)
                             .cornerRadius(12)
                             .shadow(color: Color.emerald.opacity(0.4), radius: 6, y: 2)
                         }
-                        
-                        Spacer()
-                        
-                        // Botón para Abrir Forkar Completo
-                        Link(destination: URL(string: "forkar://app")!) {
-                            HStack(spacing: 4) {
-                                Text("Abrir Forkar")
-                                    .font(.system(size: 11, weight: .bold))
-                                Image(systemName: "arrow.right.circle.fill")
-                                    .font(.system(size: 12))
-                            }
-                            .foregroundColor(Color.emerald)
-                            .padding(.vertical, 7)
-                            .padding(.horizontal, 10)
-                            .background(Color.white.opacity(0.1))
-                            .cornerRadius(10)
-                        }
                     }
-                    .padding(.top, 6)
+                    .padding(.top, 4)
                 }
             } compactLeading: {
-                // Isla compacta Izquierda (1 click abre escáner o muestra consumo)
+                // Isla compacta Izquierda
                 HStack(spacing: 4) {
                     Text("🌿")
                         .font(.system(size: 12))
@@ -220,7 +218,7 @@ struct ForkarEcoActivityWidget: Widget {
                 Text("🌿")
                     .font(.system(size: 12))
             }
-            .widgetURL(URL(string: "forkar://ecoscan"))
+            .widgetURL(URL(string: "forkar://app"))
         }
     }
 }
