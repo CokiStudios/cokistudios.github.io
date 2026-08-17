@@ -14,10 +14,5 @@
 	<true/>
 	<key>com.apple.security.device.camera</key>
 	<true/>
-	<!-- Permitir Keychain & Passkeys / WebAuthn en App Sandbox -->
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.cokistudios.csms.mac</string>
-	</array>
 </dict>
 </plist>
