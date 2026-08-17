@@ -125,44 +125,84 @@ struct ForkarEcoActivityWidget: Widget {
             
         } dynamicIsland: { context in
             DynamicIsland {
-                // Vista Expandida de la Dynamic Island (Mantener presionado la isla)
+                // Vista Expandida de la Dynamic Island (Al presionar 1 vez / expandir)
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
                         Text("🌿")
-                            .font(.title)
-                        VStack(alignment: .leading) {
+                            .font(.title2)
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("FORKAR ECO")
                                 .font(.system(size: 10, weight: .black))
                                 .foregroundColor(Color.emerald)
                             Text("\(context.state.co2Saved, specifier: "%.1f") kg CO₂")
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white)
                         }
                     }
                 }
                 
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing) {
+                    VStack(alignment: .trailing, spacing: 2) {
                         Text("⭐ PUNTOS")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.yellow)
-                        Text("\(context.state.ecoPoints)")
-                            .font(.system(size: 18, weight: .black))
+                        Text("\(context.state.ecoPoints) pts")
+                            .font(.system(size: 14, weight: .black))
                             .foregroundColor(.white)
                     }
                 }
                 
+                DynamicIslandExpandedRegion(.center) {
+                    Text("Consumo Ecológico Activo")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
-                        Text("Monitoreando impacto ecológico...")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                    HStack(spacing: 10) {
+                        // Botón de Escaneo Rápido de QR de Eco Points
+                        Link(destination: URL(string: "forkar://ecoscan")!) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "qrcode.viewfinder")
+                                    .font(.system(size: 13, weight: .bold))
+                                Text("Escanear QR Eco")
+                                    .font(.system(size: 12, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 7)
+                            .padding(.horizontal, 14)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.emerald, Color.green.opacity(0.8)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                            .shadow(color: Color.emerald.opacity(0.4), radius: 6, y: 2)
+                        }
+                        
                         Spacer()
+                        
+                        // Botón para Abrir Forkar Completo
+                        Link(destination: URL(string: "forkar://app")!) {
+                            HStack(spacing: 4) {
+                                Text("Abrir Forkar")
+                                    .font(.system(size: 11, weight: .bold))
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.system(size: 12))
+                            }
+                            .foregroundColor(Color.emerald)
+                            .padding(.vertical, 7)
+                            .padding(.horizontal, 10)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(10)
+                        }
                     }
-                    .padding(.top, 4)
+                    .padding(.top, 6)
                 }
             } compactLeading: {
-                // Isla compacta Izquierda
+                // Isla compacta Izquierda (1 click abre escáner o muestra consumo)
                 HStack(spacing: 4) {
                     Text("🌿")
                         .font(.system(size: 12))
@@ -180,6 +220,7 @@ struct ForkarEcoActivityWidget: Widget {
                 Text("🌿")
                     .font(.system(size: 12))
             }
+            .widgetURL(URL(string: "forkar://ecoscan"))
         }
     }
 }

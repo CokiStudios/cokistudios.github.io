@@ -55,6 +55,24 @@ struct ContentView: View {
                 .tag(3)
         }
         .tint(ForkarTheme.accent)
+        .onOpenURL { url in
+            handleDynamicIslandDeepLink(url)
+        }
+    }
+    
+    private func handleDynamicIslandDeepLink(_ url: URL) {
+        if url.scheme == "forkar" {
+            if url.host == "ecoscan" {
+                // 1 Click en Dynamic Island -> Cambiar a Eco Hub y abrir escáner QR
+                selectedTab = 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: NSNotification.Name("OpenEcoQRScanner"), object: nil)
+                }
+            } else if url.host == "app" {
+                // 2 Clicks / Click en Abrir Forkar -> Abrir vista principal
+                selectedTab = 0
+            }
+        }
     }
 }
 
