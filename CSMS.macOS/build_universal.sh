@@ -19,7 +19,7 @@ echo "📦 Compilando para Apple Silicon (arm64)..."
 swiftc -O -target arm64-apple-macos12.0 -parse-as-library \
     -sdk $(xcrun --show-sdk-path) \
     -framework SwiftUI -framework WebKit -framework AppKit \
-    "$DIR/main.swift" \
+    "$DIR/CSMSApp.swift" \
     -o "$BUILD_DIR/csms-arm64"
 
 # 2. Compilar para Intel (x86_64)
@@ -27,7 +27,7 @@ echo "📦 Compilando para Intel (x86_64)..."
 swiftc -O -target x86_64-apple-macos12.0 -parse-as-library \
     -sdk $(xcrun --show-sdk-path) \
     -framework SwiftUI -framework WebKit -framework AppKit \
-    "$DIR/main.swift" \
+    "$DIR/CSMSApp.swift" \
     -o "$BUILD_DIR/csms-x86_64"
 
 # 3. Crear Binario Universal usando lipo
