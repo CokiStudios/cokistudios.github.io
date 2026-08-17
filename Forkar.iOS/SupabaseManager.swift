@@ -1026,6 +1026,52 @@ class SupabaseManager: ObservableObject {
         }
         return false
     }
+    
+    // MARK: - Taste Matching Algorithm (Letter & Category Affinity)
+    func rankPostsByTaste(posts: [Post], preferences: [String]) -> [Post] {
+        guard !preferences.isEmpty else { return posts }
+        
+        return posts.sorted { postA, postB in
+            let scoreA = calculateTasteScore(post: postA, preferences: preferences)
+            let scoreB = calculateTasteScore(post: postB, preferences: preferences)
+            if scoreA != scoreB {
+                return scoreA > scoreB
+            }
+            return postA.created_at > postB.created_at
+        }
+    }
+    
+    private func calculateTasteScore(post: Post, preferences: [String]) -> Int {
+        var score = 0
+        let text = "\(post.title) \(post.content)".lowercased()
+        let postCatName = post.category?.name.lowercased() ?? ""
+        let postCatSlug = post.category?.slug.lowercased() ?? ""
+        
+        for pref in preferences {
+            let prefLower = pref.lowercased()
+            
+            // 1. Direct Category Match (+100)
+            if postCatName.contains(prefLower) || postCatSlug.contains(prefLower) || prefLower.contains(postCatSlug) {
+                score += 100
+            }
+            
+            // 2. N-Gram Substring / Letter Group Matching (+5 per matching sub-letter group)
+            let cleanPref = prefLower.filter { $0.isLetter || $0.isNumber }
+            if cleanPref.count >= 3 {
+                for len in 3...min(4, cleanPref.count) {
+                    for i in 0...(cleanPref.count - len) {
+                        let startIndex = cleanPref.index(cleanPref.startIndex, offsetBy: i)
+                        let endIndex = cleanPref.index(startIndex, offsetBy: len)
+                        let sub = String(cleanPref[startIndex..<endIndex])
+                        if text.contains(sub) {
+                            score += 5
+                        }
+                    }
+                }
+            }
+        }
+        return score
+    }
 }
 
 // MARK: - Presentation Anchor Provider Helper

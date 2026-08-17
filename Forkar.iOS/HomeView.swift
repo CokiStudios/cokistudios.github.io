@@ -36,7 +36,7 @@ struct HomeView: View {
                         HStack(spacing: 10) {
                             // "All" Category
                             Button(action: {
-                                withAnimation {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                     selectedCategory = nil
                                     Task { await loadPosts() }
                                 }
@@ -46,16 +46,33 @@ struct HomeView: View {
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
                                     .foregroundColor(selectedCategory == nil ? .white : ForkarTheme.text)
-                                    .shineInlineCard(
-                                        borderLineWidth: 2.0,
-                                        shadowOffset: selectedCategory == nil ? 3.0 : 0.0,
-                                        backgroundColor: selectedCategory == nil ? ForkarTheme.accent : ForkarTheme.cardHover
+                                    .background(
+                                        ZStack {
+                                            if selectedCategory == nil {
+                                                ForkarTheme.primaryGradient
+                                            } else {
+                                                ForkarTheme.card
+                                            }
+                                        }
                                     )
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [Color.white.opacity(selectedCategory == nil ? 0.6 : 0.2), Color.white.opacity(0.05)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                                    .shadow(color: selectedCategory == nil ? ForkarTheme.accent.opacity(0.35) : Color.clear, radius: 8, y: 3)
                             }
                             
                             ForEach(categories) { category in
                                 Button(action: {
-                                    withAnimation {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                         selectedCategory = category
                                         Task { await loadPosts() }
                                     }
@@ -71,11 +88,28 @@ struct HomeView: View {
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
                                     .foregroundColor(selectedCategory?.id == category.id ? .white : ForkarTheme.text)
-                                    .shineInlineCard(
-                                        borderLineWidth: 2.0,
-                                        shadowOffset: selectedCategory?.id == category.id ? 3.0 : 0.0,
-                                        backgroundColor: selectedCategory?.id == category.id ? category.themeColor : ForkarTheme.cardHover
+                                    .background(
+                                        ZStack {
+                                            if selectedCategory?.id == category.id {
+                                                category.themeColor
+                                            } else {
+                                                ForkarTheme.card
+                                            }
+                                        }
                                     )
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [Color.white.opacity(selectedCategory?.id == category.id ? 0.6 : 0.2), Color.white.opacity(0.05)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                                    .shadow(color: selectedCategory?.id == category.id ? category.themeColor.opacity(0.35) : Color.clear, radius: 8, y: 3)
                                 }
                             }
                         }
@@ -221,10 +255,13 @@ struct HomeView: View {
             }
         }
     }
-    
-    private func loadPosts() async {
+        private func loadPosts() async {
         do {
-            posts = try await authManager.fetchPosts(categoryId: selectedCategory?.id, query: searchQuery)
+            var fetched = try await authManager.fetchPosts(categoryId: selectedCategory?.id, query: searchQuery)
+            if let userTastes = authManager.currentUser?.user_metadata?.company?.components(separatedBy: ",") {
+                fetched = authManager.rankPostsByTaste(posts: fetched, preferences: userTastes)
+            }
+            posts = fetched
         } catch {
             print("Error loading posts: \(error)")
         }
@@ -256,16 +293,9 @@ struct SearchBarView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(ForkarTheme.textSub)
             
-            #if os(iOS)
             TextField("Buscar en Forkar...", text: $text)
                 .foregroundColor(ForkarTheme.text)
-                .textInputAutocapitalization(.never)
-                .disableAutocorrection(true)
-            #else
-            TextField("Buscar en Forkar...", text: $text)
-                .foregroundColor(ForkarTheme.text)
-                .disableAutocorrection(true)
-            #endif
+                .font(.system(size: 14))
             
             if !text.isEmpty {
                 Button(action: { text = "" }) {
@@ -274,19 +304,33 @@ struct SearchBarView: View {
                 }
             }
         }
-        .padding(.vertical, 10)
         .padding(.horizontal, 14)
-        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(ForkarTheme.card)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
     }
 }
 
-// MARK: - Post Card View
-struct PostCardView: View {
+// MARK: - Post Row View with Liquid Glass Aesthetic
+struct PostRowView: View {
     let post: Post
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header: Author & Category
+            // Header: Author Info + Category Tag
             HStack {
                 // Author Avatar/Initials
                 if let avatarURL = post.author_avatar, let url = URL(string: avatarURL) {
@@ -295,7 +339,7 @@ struct PostCardView: View {
                     } placeholder: {
                         CircleAvatarPlaceholder(initials: post.initials)
                     }
-                    .frame(width: 32, height: 32)
+                    .frame(width: 34, height: 34)
                     .clipShape(Circle())
                 } else {
                     CircleAvatarPlaceholder(initials: post.initials)
@@ -315,12 +359,16 @@ struct PostCardView: View {
                 // Category Tag
                 if let cat = post.category {
                     Text(cat.name)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 11, weight: .bold))
                         .padding(.vertical, 4)
                         .padding(.horizontal, 10)
                         .background(cat.themeColor.opacity(0.15))
                         .foregroundColor(cat.themeColor)
-                        .cornerRadius(10)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(cat.themeColor.opacity(0.3), lineWidth: 1)
+                        )
                 }
             }
             
@@ -337,9 +385,24 @@ struct PostCardView: View {
                     .lineLimit(3)
             }
             
+            // Media preview indicator if present
+            if post.image_url != nil || post.video_url != nil {
+                HStack(spacing: 6) {
+                    Image(systemName: post.video_url != nil ? "video.fill" : "photo.fill")
+                        .font(.system(size: 11))
+                    Text(post.video_url != nil ? "Video adjunto" : "Foto adjunta")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundColor(ForkarTheme.accent)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(ForkarTheme.accent.opacity(0.1))
+                .cornerRadius(8)
+            }
+            
             Divider()
                 .background(ForkarTheme.border)
-                .padding(.top, 4)
+                .padding(.top, 2)
             
             // Footer: Stats (Likes, Comments)
             HStack(spacing: 20) {
@@ -360,7 +423,30 @@ struct PostCardView: View {
                 Spacer()
             }
         }
-        .shineInlineCard(borderLineWidth: 2.5, shadowOffset: 5.0, backgroundColor: ForkarTheme.card)
+        .padding(16)
+        .background(
+            ZStack {
+                if #available(iOS 15.0, macOS 12.0, *) {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(.ultraThinMaterial)
+                } else {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(ForkarTheme.card)
+                }
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.2), Color.white.opacity(0.04)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
     }
 }
 
@@ -371,9 +457,9 @@ struct CircleAvatarPlaceholder: View {
         Text(initials)
             .font(.system(size: 12, weight: .bold))
             .foregroundColor(ForkarTheme.accent)
-            .frame(width: 32, height: 32)
+            .frame(width: 34, height: 34)
             .background(ForkarTheme.accent.opacity(0.15))
             .clipShape(Circle())
-            .overlay(Circle().stroke(Color.black, lineWidth: 1.5))
+            .overlay(Circle().stroke(ForkarTheme.accent.opacity(0.3), lineWidth: 1))
     }
 }
