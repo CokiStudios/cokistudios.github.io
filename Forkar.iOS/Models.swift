@@ -321,3 +321,7 @@ struct MultiplatformNavigationStack<Content: View>: View {
         #endif
     }
 }
+
+// MARK: - PostCardView alias for backwards compatibility
+typealias PostCardView = PostRowView
+
