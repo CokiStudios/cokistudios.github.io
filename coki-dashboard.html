@@ -498,6 +498,34 @@
 
     <div class="page-wrap">
 
+        <!-- 🚀 BANNER / FORMULARIO DE MIGRACIÓN PARA USUARIOS NO MIGRADOS -->
+        <div id="migration-card" style="display: none; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 24px; padding: 28px; margin-bottom: 32px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
+            <div style="display: flex; align-items: flex-start; gap: 18px; margin-bottom: 20px;">
+                <div style="font-size: 38px; line-height: 1;">✨</div>
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: #818cf8; margin-bottom: 6px;">¡Bienvenido a la nueva era de CSID & Forkar!</h2>
+                    <p style="font-size: 14px; color: var(--text-sub); line-height: 1.6;">
+                        Hemos actualizado nuestra infraestructura global. Para migrar tu perfil y calibrar tu algoritmo personalizado, por favor selecciona tus temas y categorías de interés a continuación.
+                    </p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text); margin-bottom:12px;">
+                    🎯 Selecciona tus categorías favoritas para completar tu migración:
+                </label>
+                <div id="migration-categories-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                    <!-- Inyectado por JS -->
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end;">
+                <button id="btn-complete-migration" style="padding: 12px 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.2s;">
+                    🚀 Completar Migración de Cuenta
+                </button>
+            </div>
+        </div>
+
         <div class="profile-box">
             <div class="profile-avatar" id="profile-avatar">U</div>
             <div>
@@ -651,9 +679,91 @@
             }
             renderCategoryPreferences();
 
+            // 🚀 VERIFICAR SI EL USUARIO YA ESTÁ MIGRADO
+            checkUserMigrationStatus();
+
             loadConnectedApps();
             await checkAndShowSetupWizard();
         }
+
+        let migrationSelectedCategories = ["cat-general", "cat-gaming"];
+
+        function checkUserMigrationStatus() {
+            const isMigrated = currentUser?.metadata?.migrated_v2 === true;
+            const migrationCard = document.getElementById('migration-card');
+            
+            if (!isMigrated) {
+                // Mostrar formulario de migración
+                if (migrationCard) {
+                    migrationCard.style.display = 'block';
+                    renderMigrationCategories();
+                }
+            } else {
+                // Ya migrado: ocultar banner
+                if (migrationCard) migrationCard.style.display = 'none';
+            }
+        }
+
+        function renderMigrationCategories() {
+            const grid = document.getElementById('migration-categories-grid');
+            if (!grid) return;
+
+            grid.innerHTML = DEFAULT_CATEGORIES.map(cat => {
+                const isSelected = migrationSelectedCategories.includes(cat.id);
+                return `
+                    <div class="mig-card" data-cat-id="${cat.id}" style="
+                        background: ${isSelected ? 'rgba(99, 102, 241, 0.25)' : 'rgba(0,0,0,0.3)'};
+                        border: 1.5px solid ${isSelected ? '#818cf8' : 'rgba(255,255,255,0.08)'};
+                        border-radius: 12px;
+                        padding: 10px 12px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        user-select: none;
+                        transition: all 0.15s ease;
+                    ">
+                        <span>${cat.icon || '🏷️'}</span>
+                        <span style="font-size: 13px; font-weight: 600; color: ${isSelected ? '#ffffff' : 'var(--text-sub)'}; flex: 1;">${cat.name}</span>
+                        <span style="font-size: 12px; color: ${isSelected ? '#818cf8' : 'transparent'}; font-weight: bold;">${isSelected ? '✓' : ''}</span>
+                    </div>
+                `;
+            }).join('');
+
+            grid.querySelectorAll('.mig-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const catId = card.getAttribute('data-cat-id');
+                    if (migrationSelectedCategories.includes(catId)) {
+                        migrationSelectedCategories = migrationSelectedCategories.filter(id => id !== catId);
+                    } else {
+                        migrationSelectedCategories.push(catId);
+                    }
+                    renderMigrationCategories();
+                });
+            });
+        }
+
+        document.getElementById('btn-complete-migration')?.addEventListener('click', async () => {
+            const btn = document.getElementById('btn-complete-migration');
+            btn.disabled = true;
+            btn.textContent = '⏳ Migrando perfil...';
+
+            const result = await updateCokiProfile({
+                migrated_v2: true,
+                favorite_categories: migrationSelectedCategories,
+                migrated_at: new Date().toISOString()
+            });
+
+            if (result.success) {
+                localStorage.setItem('forkar_user_tastes', JSON.stringify(migrationSelectedCategories));
+                alert('🎉 ¡Tu cuenta ha sido migrada con éxito al nuevo sistema global!');
+                loadUser();
+            } else {
+                btn.disabled = false;
+                btn.textContent = '🚀 Completar Migración de Cuenta';
+                alert('❌ Error al migrar: ' + result.error);
+            }
+        });
 
         async function loadConnectedApps() {
             if (!currentUser) return;
