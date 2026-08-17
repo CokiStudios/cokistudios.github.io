@@ -567,9 +567,9 @@
     </div>
 
     <script type="module">
-        import { getCurrentCokiUser, logoutCoki, updateCokiProfile } from './coki-auth.js';
+        import { getCurrentCokiUser, logoutCoki, updateCokiProfile, DEFAULT_CATEGORIES } from './coki-auth.js';
         import { getUserConnectedApps, revokeConnectedApp } from './oauth-server.js';
-        import { DEFAULT_CATEGORIES } from './forkar.js';
+        import { checkAndShowSetupWizard } from './coki-extensions.js';
 
         let currentUser = null;
         let selectedCategories = [];
@@ -615,7 +615,6 @@
                 `;
             }).join('');
 
-            // Click listener para cada tarjeta
             grid.querySelectorAll('.taste-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const catId = card.getAttribute('data-cat-id');
@@ -645,7 +644,6 @@
             document.getElementById('edit-name').value = user.name || '';
             document.getElementById('edit-company').value = user.metadata?.company || '';
 
-            // Cargar categorías guardadas en metadata o localStorage
             if (user.metadata?.favorite_categories) {
                 selectedCategories = user.metadata.favorite_categories;
             } else {
@@ -654,6 +652,7 @@
             renderCategoryPreferences();
 
             loadConnectedApps();
+            await checkAndShowSetupWizard();
         }
 
         async function loadConnectedApps() {
@@ -703,7 +702,6 @@
             const name = document.getElementById('edit-name').value;
             const company = document.getElementById('edit-company').value;
 
-            // Guardar localmente y en metadata del usuario
             localStorage.setItem('forkar_user_tastes', JSON.stringify(selectedCategories));
 
             const result = await updateCokiProfile({
@@ -733,29 +731,6 @@
                 updateToggleIcon();
             });
         }
-    </script>
-    <script type="module">
-        // Tus importaciones existentes (ej. Supabase, cookies, etc.)
-        import { getCurrentCokiUser, logoutCoki } from './coki-auth.js';
-
-        // 1. Importar el Asistente de Configuración
-        import { checkAndShowSetupWizard } from './coki-extensions.js';
-
-        // Tu código de inicialización existente...
-        const init = async () => {
-            const user = await getCurrentCokiUser();
-            if (!user) {
-                window.location.href = 'coki-register.html';
-                return;
-            }
-            // ... resto de tu lógica para mostrar datos del usuario ...
-
-            // 2. Disparar el Wizard
-            // Esto verificará si falta el nombre o la biografía en la base de datos
-            await checkAndShowSetupWizard();
-        };
-
-        init();
     </script>
 </body>
 
