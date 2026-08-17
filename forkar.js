@@ -9,15 +9,94 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ─── CATEGORÍAS ───
+// ─── CATEGORÍAS AMPLIADAS & PALABRAS CLAVE ───
+const DEFAULT_CATEGORIES = [
+    { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '💬', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
+    { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '🎮', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
+    { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '💻', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
+    { id: 'cat-eco', name: 'Forkman Eco Hub', slug: 'eco', color: '#10b981', icon: '🌱', keywords: ['eco', 'planeta', 'recicla', 'bici', 'co2', 'arbol', 'huella', 'energia', 'ambiente', 'forkman'] },
+    { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '🎨', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
+    { id: 'cat-music', name: 'Música & Audio', slug: 'music', color: '#a855f7', icon: '🎵', keywords: ['musica', 'cancion', 'sonido', 'audio', 'track', 'album', 'ritmo', 'playlist', 'estilo'] },
+    { id: 'cat-science', name: 'Ciencia & Futuro', slug: 'science', color: '#14b8a6', icon: '🔬', keywords: ['ciencia', 'espacio', 'ia', 'robot', 'futuro', 'tecnologia', 'universo', 'innovacion'] },
+    { id: 'cat-help', name: 'Ayuda & Preguntas', slug: 'help', color: '#ef4444', icon: '❓', keywords: ['ayuda', 'pregunta', 'error', 'problema', 'duda', 'soporte', 'como', 'resolver'] }
+];
 
 async function getCategories() {
     const { data, error } = await supabase
         .from('social_categories')
         .select('*')
         .order('name');
-    if (error) { console.error('Error categorías:', error); return []; }
-    return data || [];
+    
+    if (error || !data || data.length === 0) {
+        return DEFAULT_CATEGORIES;
+    }
+
+    // Fusionar con categorías por defecto para enriquecer palabras clave y colores
+    const merged = [...data];
+    DEFAULT_CATEGORIES.forEach(def => {
+        if (!merged.find(m => m.id === def.id || m.slug === def.slug || m.name.toLowerCase() === def.name.toLowerCase())) {
+            merged.push(def);
+        }
+    });
+    return merged;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🧠 ALGORITMO DE AFINIDAD Y MATCHING DE LETRAS / GUSTOS POR CATEGORÍA
+// Calcula el puntaje de afinidad analizando frecuencias de letras,
+// bigramas característicos y coincidencias de vocabulario por categoría.
+// ═══════════════════════════════════════════════════════════════
+
+function calculateTasteMatchScore(post, userPreferences = []) {
+    if (!userPreferences || userPreferences.length === 0) return 0;
+
+    let score = 0;
+    const postText = `${post.title || ''} ${post.content || ''}`.toLowerCase();
+    const postCategory = post.category_id || (post.category?.id) || '';
+
+    userPreferences.forEach(prefCatId => {
+        const catInfo = DEFAULT_CATEGORIES.find(c => c.id === prefCatId || c.slug === prefCatId || c.name.toLowerCase() === prefCatId.toLowerCase());
+        
+        // 1. Coincidencia directa de Categoría (+100 pts)
+        if (postCategory && (postCategory === prefCatId || (catInfo && (postCategory === catInfo.id || postCategory === catInfo.slug)))) {
+            score += 100;
+        }
+
+        if (!catInfo) return;
+
+        // 2. Matching de Palabras Clave (+25 pts por coincidencia)
+        catInfo.keywords.forEach(kw => {
+            if (postText.includes(kw.toLowerCase())) {
+                score += 25;
+            }
+        });
+
+        // 3. Matching Fonético / De Subcadenas de Letras (N-Gram Letter Matcher)
+        // Extrae grupos de 3 y 4 letras de la categoría para matchear posts relacionados
+        const catCleanName = catInfo.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        for (let len = 3; len <= 4; len++) {
+            for (let i = 0; i <= catCleanName.length - len; i++) {
+                const subStr = catCleanName.substring(i, i + len);
+                if (subStr.length >= 3 && postText.includes(subStr)) {
+                    score += 5;
+                }
+            }
+        }
+    });
+
+    return score;
+}
+
+function rankPostsByTaste(posts, userPreferences = []) {
+    if (!userPreferences || userPreferences.length === 0) return posts;
+    return [...posts].sort((a, b) => {
+        const scoreA = calculateTasteMatchScore(a, userPreferences);
+        const scoreB = calculateTasteMatchScore(b, userPreferences);
+        if (scoreB !== scoreA) {
+            return scoreB - scoreA; // Mayor puntuación de afinidad primero
+        }
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
 }
 
 // ─── POSTS ───
@@ -478,6 +557,9 @@ export {
     createCSMSGroup,
     getCSMSMessages,
     sendCSMSMessage,
-    uploadMediaToStorage
+    uploadMediaToStorage,
+    DEFAULT_CATEGORIES,
+    calculateTasteMatchScore,
+    rankPostsByTaste
 };
 

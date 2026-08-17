@@ -1064,7 +1064,8 @@
         import {
             getCategories, getPosts, createPost, uploadMediaToStorage,
             getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials,
-            getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints
+            getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints,
+            rankPostsByTaste
         } from './forkar.js';
 
         import { getBrowserHash, regenerateBrowserHash } from './cookie-utils.js';
@@ -1179,7 +1180,19 @@
         }
 
         async function loadPosts() {
-            const posts = await getPosts({ category: currentCategory });
+            let posts = await getPosts({ category: currentCategory });
+            
+            // 🧠 Aplicar Algoritmo de Gustos y Afinidad si el usuario tiene preferencias configuradas
+            if (currentUser && currentUser.user_metadata?.favorite_categories) {
+                posts = rankPostsByTaste(posts, currentUser.user_metadata.favorite_categories);
+            } else {
+                // Si guardó en localStorage de navegador
+                const localPrefs = JSON.parse(localStorage.getItem('forkar_user_tastes') || '[]');
+                if (localPrefs.length > 0) {
+                    posts = rankPostsByTaste(posts, localPrefs);
+                }
+            }
+
             loadedPosts = posts;
             const container = document.getElementById('posts-list');
             const empty = document.getElementById('empty-state');
