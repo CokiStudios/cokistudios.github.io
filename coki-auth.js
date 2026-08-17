@@ -254,16 +254,28 @@ async function logoutCoki() {
 }
 
 async function getCurrentCokiUser() {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (user) {
-        return {
-            id: user.id,
-            email: user.email,
-            name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
-            picture: user.user_metadata?.avatar_url,
-            metadata: user.user_metadata
-        };
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (user) {
+            return {
+                id: user.id,
+                email: user.email,
+                name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
+                picture: user.user_metadata?.avatar_url,
+                metadata: user.user_metadata
+            };
+        }
+
+        // 🔄 MIGRACIÓN AUTOMÁTICA Y LIMPIEZA DE SESIONES OBSOLETAS
+        if (error && (error.message?.includes('Invalid Refresh Token') || error.message?.includes('JWT') || error.status === 401 || error.status === 400)) {
+            console.warn('⚠️ Sesión de base de datos anterior detectada. Limpiando tokens obsoletos...');
+            deleteCookie('coki_access_token');
+            deleteCookie('coki_refresh_token');
+            await supabase.auth.signOut().catch(() => {});
+        }
+    } catch (e) {
+        console.warn('⚠️ Error verificando usuario Supabase:', e);
     }
     
     // 🍪 FALLBACK: Leer de cookies o restaurar por Browser Hash
