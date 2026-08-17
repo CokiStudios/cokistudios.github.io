@@ -8,10 +8,26 @@
 
 /* Begin PBXBuildFile section */
 		9B0000012A00000100000001 /* CSMSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000022A00000100000001 /* CSMSApp.swift */; };
+		9B0000112A00000100000001 /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000122A00000100000001 /* SupabaseManager.swift */; };
+		9B0000132A00000100000001 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000142A00000100000001 /* Models.swift */; };
+		9B0000152A00000100000001 /* ForkarTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000162A00000100000001 /* ForkarTheme.swift */; };
+		9B0000172A00000100000001 /* ChatRoomDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000182A00000100000001 /* ChatRoomDetailView.swift */; };
+		9B0000192A00000100000001 /* ChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B00001A2A00000100000001 /* ChatsView.swift */; };
+		9B00001B2A00000100000001 /* XtrapsBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B00001C2A00000100000001 /* XtrapsBackground.swift */; };
+		9B00001D2A00000100000001 /* SecurityAndNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B00001E2A00000100000001 /* SecurityAndNotificationManager.swift */; };
+		9B00001F2A00000100000001 /* ShineUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000202A00000100000001 /* ShineUI.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		9B0000022A00000100000001 /* CSMSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSMSApp.swift; sourceTree = "<group>"; };
+		9B0000122A00000100000001 /* SupabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseManager.swift; sourceTree = "<group>"; };
+		9B0000142A00000100000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		9B0000162A00000100000001 /* ForkarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarTheme.swift; sourceTree = "<group>"; };
+		9B0000182A00000100000001 /* ChatRoomDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRoomDetailView.swift; sourceTree = "<group>"; };
+		9B00001A2A00000100000001 /* ChatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsView.swift; sourceTree = "<group>"; };
+		9B00001C2A00000100000001 /* XtrapsBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XtrapsBackground.swift; sourceTree = "<group>"; };
+		9B00001E2A00000100000001 /* SecurityAndNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityAndNotificationManager.swift; sourceTree = "<group>"; };
+		9B0000202A00000100000001 /* ShineUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShineUI.swift; sourceTree = "<group>"; };
 		9B0000032A00000100000001 /* CSMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -29,15 +45,23 @@
 		9B0000052A00000100000001 = {
 			isa = PBXGroup;
 			children = (
-				9B0000062A00000100000001 /* . */,
+				9B0000062A00000100000001 /* CSMS */,
 				9B0000072A00000100000001 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		9B0000062A00000100000001 /* . */ = {
+		9B0000062A00000100000001 /* CSMS */ = {
 			isa = PBXGroup;
 			children = (
 				9B0000022A00000100000001 /* CSMSApp.swift */,
+				9B0000122A00000100000001 /* SupabaseManager.swift */,
+				9B0000142A00000100000001 /* Models.swift */,
+				9B0000162A00000100000001 /* ForkarTheme.swift */,
+				9B0000182A00000100000001 /* ChatRoomDetailView.swift */,
+				9B00001A2A00000100000001 /* ChatsView.swift */,
+				9B00001C2A00000100000001 /* XtrapsBackground.swift */,
+				9B00001E2A00000100000001 /* SecurityAndNotificationManager.swift */,
+				9B0000202A00000100000001 /* ShineUI.swift */,
 			);
 			path = .;
 			sourceTree = "<group>";
@@ -108,6 +132,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B0000012A00000100000001 /* CSMSApp.swift in Sources */,
+				9B0000112A00000100000001 /* SupabaseManager.swift in Sources */,
+				9B0000132A00000100000001 /* Models.swift in Sources */,
+				9B0000152A00000100000001 /* ForkarTheme.swift in Sources */,
+				9B0000172A00000100000001 /* ChatRoomDetailView.swift in Sources */,
+				9B0000192A00000100000001 /* ChatsView.swift in Sources */,
+				9B00001B2A00000100000001 /* XtrapsBackground.swift in Sources */,
+				9B00001D2A00000100000001 /* SecurityAndNotificationManager.swift in Sources */,
+				9B00001F2A00000100000001 /* ShineUI.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,7 +173,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -172,7 +204,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -190,20 +222,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = CSMS;
+				INFOPLIST_KEY_CFBundleURLTypes = (
+					{
+						CFBundleURLName = "com.cokistudios.csms.mac";
+						CFBundleURLSchemes = (
+							forkar,
+							csms,
+						);
+					},
+				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Coki Studios. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -213,7 +243,7 @@
 				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.csms.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTED_PLATFORMS = "macosx";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -228,20 +258,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = CSMS;
+				INFOPLIST_KEY_CFBundleURLTypes = (
+					{
+						CFBundleURLName = "com.cokistudios.csms.mac";
+						CFBundleURLSchemes = (
+							forkar,
+							csms,
+						);
+					},
+				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Coki Studios. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -251,7 +279,7 @@
 				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.csms.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTED_PLATFORMS = "macosx";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -279,6 +307,7 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
 	};
 	rootObject = 9B00000B2A00000100000001 /* Project object */;
 }
