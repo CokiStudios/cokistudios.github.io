@@ -364,16 +364,19 @@ async function registerPasskey() {
 
         const userIdBytes = new TextEncoder().encode(user.id);
 
+        const hostname = window.location.hostname;
+        const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
+
         const publicKeyCredentialCreationOptions = {
             challenge: challenge,
             rp: {
-                name: "CSID — Coki Studios",
-                id: window.location.hostname.includes('cokistudios.com') ? 'cokistudios.com' : window.location.hostname
+                name: "CSID - Coki Studios",
+                id: rpId
             },
             user: {
                 id: userIdBytes,
-                name: user.email,
-                displayName: user.name || user.email
+                name: user.email || 'usuario',
+                displayName: user.name || user.email || 'Usuario'
             },
             pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
             authenticatorSelection: {
@@ -396,6 +399,7 @@ async function registerPasskey() {
         // Almacenar en metadata y localStorage
         localStorage.setItem(`csid_passkey_${user.id}`, passkeyId);
         localStorage.setItem('csid_last_passkey_user', user.email);
+        localStorage.setItem('csid_last_passkey_user_id', user.id);
 
         await updateCokiProfile({
             has_passkey: true,
@@ -412,8 +416,11 @@ async function registerPasskey() {
 async function loginWithPasskey() {
     try {
         if (!await isPasskeySupported()) {
-            throw new Error('Passkeys no soportadas en este dispositivo.');
+            throw new Error('Passkeys no están soportadas en este navegador o app.');
         }
+
+        const hostname = window.location.hostname;
+        const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
 
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
@@ -421,7 +428,7 @@ async function loginWithPasskey() {
         const publicKeyCredentialRequestOptions = {
             challenge: challenge,
             timeout: 60000,
-            rpId: window.location.hostname.includes('cokistudios.com') ? 'cokistudios.com' : window.location.hostname,
+            rpId: rpId,
             userVerification: "preferred"
         };
 
@@ -432,9 +439,7 @@ async function loginWithPasskey() {
         if (!assertion) throw new Error('Autenticación con Passkey cancelada');
 
         // Restaurar sesión o vincular cookie activa
-        const lastUser = localStorage.getItem('csid_last_passkey_user');
         const storedUser = getCookieJSON('coki_current_user');
-
         if (storedUser) {
             return { success: true, user: storedUser };
         }
@@ -444,10 +449,23 @@ async function loginWithPasskey() {
             return { success: true, user: restored };
         }
 
-        return { success: true, email: lastUser, message: 'Passkey verificada con éxito' };
+        const lastUserId = localStorage.getItem('csid_last_passkey_user_id');
+        const lastUserEmail = localStorage.getItem('csid_last_passkey_user');
+        if (lastUserId || lastUserEmail) {
+            const fallbackUser = {
+                id: lastUserId || 'passkey-user',
+                email: lastUserEmail || 'passkey@cokistudios.com',
+                name: lastUserEmail?.split('@')[0] || 'Usuario Passkey'
+            };
+            setCookieJSON('coki_current_user', fallbackUser, { maxAge: 7 * 24 * 60 * 60 });
+            return { success: true, user: fallbackUser };
+        }
+
+        return { success: true, message: 'Passkey verificada con éxito' };
     } catch (err) {
         console.error('❌ Error login con Passkey:', err);
-        return { success: false, error: err.message };
+        const msg = err.name === 'NotAllowedError' ? 'No se encontró una Passkey registrada en este dispositivo o la operación fue cancelada.' : (err.message || 'Error al autenticar');
+        return { success: false, error: msg };
     }
 }
 
