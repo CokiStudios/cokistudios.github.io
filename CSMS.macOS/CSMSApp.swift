@@ -113,7 +113,7 @@ struct CSMSNativeLoginView: View {
                         .foregroundColor(ForkarTheme.textSub)
                 }
                 
-                // Card
+                // Card Liquid Glass
                 VStack(spacing: 18) {
                     // Botón Safari Pop-Up OAuth (Google / GitHub)
                     VStack(spacing: 10) {
@@ -126,10 +126,20 @@ struct CSMSNativeLoginView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.06))
+                            .background(Color.white.opacity(0.08))
                             .foregroundColor(ForkarTheme.text)
                             .cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
                         }
                         .buttonStyle(PlainButtonStyle())
                         
@@ -142,10 +152,20 @@ struct CSMSNativeLoginView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.black.opacity(0.4))
+                            .background(Color.black.opacity(0.5))
                             .foregroundColor(.white)
                             .cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [Color.white.opacity(0.3), Color.white.opacity(0.05)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
@@ -163,24 +183,33 @@ struct CSMSNativeLoginView: View {
                             TextField("Nombre Completo", text: $fullName)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding(12)
-                                .background(Color.black.opacity(0.2))
+                                .background(Color.black.opacity(0.35))
                                 .cornerRadius(10)
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(ForkarTheme.border, lineWidth: 1))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                )
                         }
                         
                         TextField("Correo Electrónico", text: $email)
                             .textFieldStyle(PlainTextFieldStyle())
                             .padding(12)
-                            .background(Color.black.opacity(0.2))
+                            .background(Color.black.opacity(0.35))
                             .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(ForkarTheme.border, lineWidth: 1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
                         
                         SecureField("Contraseña", text: $password)
                             .textFieldStyle(PlainTextFieldStyle())
                             .padding(12)
-                            .background(Color.black.opacity(0.2))
+                            .background(Color.black.opacity(0.35))
                             .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(ForkarTheme.border, lineWidth: 1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
                     }
                     
                     if let err = errorMessage {
@@ -204,6 +233,7 @@ struct CSMSNativeLoginView: View {
                         .background(ForkarTheme.primaryGradient)
                         .foregroundColor(.white)
                         .cornerRadius(12)
+                        .shadow(color: ForkarTheme.accent.opacity(0.5), radius: 12, y: 4)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .disabled(isLoading)
@@ -216,11 +246,8 @@ struct CSMSNativeLoginView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
                 .padding(28)
-                .frame(width: 380)
-                .background(Color(red: 13/255, green: 17/255, blue: 23/255).opacity(0.95))
-                .cornerRadius(20)
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(ForkarTheme.border, lineWidth: 1.5))
-                .shadow(color: Color.black.opacity(0.3), radius: 20, y: 8)
+                .frame(width: 400)
+                .liquidGlass(cornerRadius: 24, glowColor: ForkarTheme.accent)
             }
         }
     }
@@ -471,7 +498,7 @@ struct NativeNewDMSheet: View {
         VStack(spacing: 18) {
             HStack {
                 Text("Nuevo Mensaje Directo")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(ForkarTheme.text)
                 Spacer()
                 Button("✕") { isPresented = false }
@@ -481,15 +508,18 @@ struct NativeNewDMSheet: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 Text("Correo Electrónico del Destinatario")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(ForkarTheme.textSub)
                 
                 TextField("amigo@correo.com", text: $email)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .padding(10)
-                    .background(Color.black.opacity(0.2))
-                    .cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ForkarTheme.border, lineWidth: 1))
+                    .padding(12)
+                    .background(Color.black.opacity(0.35))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    )
             }
             
             if let status = statusMsg {
@@ -518,13 +548,14 @@ struct NativeNewDMSheet: View {
                 .padding(.vertical, 8)
                 .background(ForkarTheme.accent)
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(10)
+                .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 8, y: 3)
                 .disabled(email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
             }
         }
-        .padding(20)
-        .frame(width: 380)
-        .background(Color(red: 13/255, green: 17/255, blue: 23/255))
+        .padding(24)
+        .frame(width: 400)
+        .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent)
     }
     
     private func startChat() {
@@ -571,7 +602,7 @@ struct NativeNewGroupSheet: View {
         VStack(spacing: 18) {
             HStack {
                 Text("Crear Nuevo Grupo")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(ForkarTheme.text)
                 Spacer()
                 Button("✕") { isPresented = false }
@@ -581,15 +612,18 @@ struct NativeNewGroupSheet: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 Text("Nombre del Grupo")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(ForkarTheme.textSub)
                 
                 TextField("Ej: Equipo de Desarrollo", text: $groupName)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .padding(10)
-                    .background(Color.black.opacity(0.2))
-                    .cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ForkarTheme.border, lineWidth: 1))
+                    .padding(12)
+                    .background(Color.black.opacity(0.35))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    )
             }
             
             HStack {
@@ -612,13 +646,14 @@ struct NativeNewGroupSheet: View {
                 .padding(.vertical, 8)
                 .background(ForkarTheme.accent)
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(10)
+                .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 8, y: 3)
                 .disabled(groupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
             }
         }
-        .padding(20)
-        .frame(width: 380)
-        .background(Color(red: 13/255, green: 17/255, blue: 23/255))
+        .padding(24)
+        .frame(width: 400)
+        .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent2)
     }
     
     private func createGroup() {

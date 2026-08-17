@@ -27,12 +27,17 @@ struct GlassmorphicCard: ViewModifier {
         content
             .padding()
             .background(
-                Group {
+                ZStack {
                     if #available(iOS 15.0, macOS 12.0, *) {
                         Rectangle().fill(.ultraThinMaterial)
                     } else {
                         ForkarTheme.card
                     }
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.08), Color.white.opacity(0.02)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 }
             )
             .cornerRadius(20)
@@ -40,45 +45,76 @@ struct GlassmorphicCard: ViewModifier {
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(
                         LinearGradient(
-                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
+                            colors: [Color.white.opacity(0.4), Color.indigo.opacity(0.3), Color.white.opacity(0.1)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.5
+                        lineWidth: 1.2
                     )
             )
-            .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 10)
+            .shadow(color: Color.black.opacity(0.25), radius: 15, x: 0, y: 8)
     }
 }
 
 struct LiquidGlassModifier: ViewModifier {
+    var cornerRadius: CGFloat = 20
+    var glowColor: Color = ForkarTheme.accent
+    
     func body(content: Content) -> some View {
         content
             .background(
                 ZStack {
                     if #available(iOS 15.0, macOS 12.0, *) {
-                        Rectangle().fill(.thinMaterial)
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(.ultraThinMaterial)
                     } else {
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.15), Color.white.opacity(0.05)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(Color.black.opacity(0.4))
                     }
                     
-                    RoundedRectangle(cornerRadius: 24)
+                    // Capa de reflexión líquida translúcida
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.12),
+                                    glowColor.opacity(0.06),
+                                    Color.black.opacity(0.15)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    
+                    // Borde de cristal con degradado brillante
+                    RoundedRectangle(cornerRadius: cornerRadius)
                         .stroke(
                             LinearGradient(
-                                colors: [Color.white.opacity(0.5), Color.indigo.opacity(0.3), Color.white.opacity(0.1)],
+                                colors: [
+                                    Color.white.opacity(0.6),
+                                    glowColor.opacity(0.4),
+                                    Color.white.opacity(0.1)
+                                ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: 1.5
+                            lineWidth: 1.2
                         )
                 }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: Color.indigo.opacity(0.2), radius: 20, x: 0, y: 10)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .shadow(color: glowColor.opacity(0.25), radius: 18, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 4)
+    }
+}
+
+extension View {
+    func liquidGlass(cornerRadius: CGFloat = 20, glowColor: Color = ForkarTheme.accent) -> some View {
+        self.modifier(LiquidGlassModifier(cornerRadius: cornerRadius, glowColor: glowColor))
+    }
+    
+    func glassCard() -> some View {
+        self.modifier(GlassmorphicCard())
     }
 }
 
@@ -112,15 +148,5 @@ struct SecondaryButtonStyle: ButtonStyle {
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
-    }
-}
-
-extension View {
-    func glassCard() -> some View {
-        modifier(GlassmorphicCard())
-    }
-    
-    func liquidGlass() -> some View {
-        modifier(LiquidGlassModifier())
     }
 }

@@ -30,8 +30,17 @@ struct ChatRoomDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header (if direct chat, shows partner's name)
+                // Header (if direct chat, shows partner's name) con Liquid Glass
                 HStack {
+                    ZStack {
+                        Circle()
+                            .fill(ForkarTheme.primaryGradient)
+                            .frame(width: 36, height: 36)
+                        Text(String((room.is_group ? room.displayName : partnerName).prefix(1)).uppercased())
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    
                     VStack(alignment: .leading, spacing: 2) {
                         Text(room.is_group ? room.displayName : partnerName)
                             .font(.headline)
@@ -43,12 +52,28 @@ struct ChatRoomDetailView: View {
                     }
                     Spacer()
                 }
-                .padding()
-                .background(ForkarTheme.card)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .background(
+                    ZStack {
+                        Rectangle().fill(.ultraThinMaterial)
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.06), Color.clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    }
+                )
                 .overlay(
                     VStack {
                         Spacer()
-                        Divider().background(ForkarTheme.border)
+                        Rectangle().fill(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.2), Color.indigo.opacity(0.2), Color.white.opacity(0.05)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        ).frame(height: 1)
                     }
                 )
                 
@@ -100,13 +125,19 @@ struct ChatRoomDetailView: View {
                     }
                 }
                 
-                // Message Input Area
+                // Message Input Area con Liquid Glass
                 HStack(spacing: 12) {
                     TextField("Escribe un mensaje...", text: $newMessageText)
+                        .textFieldStyle(PlainTextFieldStyle())
                         .foregroundColor(ForkarTheme.text)
                         .padding(.vertical, 10)
                         .padding(.horizontal, 16)
-                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                        .background(Color.black.opacity(0.35))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        )
                         .disabled(isSending)
                     
                     Button(action: {
@@ -120,21 +151,38 @@ struct ChatRoomDetailView: View {
                             Image(systemName: "paperplane.fill")
                                 .foregroundColor(.white)
                                 .frame(width: 38, height: 38)
-                                .background(newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : ForkarTheme.accent)
+                                .background(newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : ForkarTheme.accent)
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.black, lineWidth: 2.0))
-                                .background(Circle().fill(Color.black).offset(x: 2, y: 2))
+                                .overlay(
+                                    Circle().stroke(Color.white.opacity(0.4), lineWidth: 1.0)
+                                )
+                                .shadow(color: newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.clear : ForkarTheme.accent.opacity(0.5), radius: 8, y: 3)
                         }
                     }
+                    .buttonStyle(PlainButtonStyle())
                     .disabled(newMessageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
-                    .padding(.trailing, 2)
-                    .padding(.bottom, 2)
                 }
-                .padding()
-                .background(ForkarTheme.card)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    ZStack {
+                        Rectangle().fill(.ultraThinMaterial)
+                        LinearGradient(
+                            colors: [Color.clear, Color.white.opacity(0.04)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    }
+                )
                 .overlay(
                     VStack {
-                        Divider().background(ForkarTheme.border)
+                        Rectangle().fill(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.2), Color.indigo.opacity(0.2), Color.white.opacity(0.05)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        ).frame(height: 1)
                         Spacer()
                     }
                 )
@@ -546,21 +594,39 @@ struct MessageBubbleView: View {
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 14)
-                .background(isCurrentUser ? ForkarTheme.accent : ForkarTheme.card)
+                .background(
+                    ZStack {
+                        if isCurrentUser {
+                            ForkarTheme.primaryGradient
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.2), Color.clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        } else {
+                            Rectangle().fill(.ultraThinMaterial)
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.08), Color.white.opacity(0.02)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        }
+                    }
+                )
                 .foregroundColor(isCurrentUser ? .white : ForkarTheme.text)
-                .cornerRadius(12)
+                .cornerRadius(14)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 14)
                         .stroke(
                             LinearGradient(
-                                colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)],
+                                colors: isCurrentUser ? [Color.white.opacity(0.5), Color.white.opacity(0.1)] : [Color.white.opacity(0.3), Color.white.opacity(0.05)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: 1
+                            lineWidth: 1.2
                         )
                 )
-                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                .shadow(color: isCurrentUser ? ForkarTheme.accent.opacity(0.35) : Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 4)
                 
                 Text(message.formattedTime)

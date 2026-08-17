@@ -306,8 +306,9 @@ struct ChatRoomRowView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(ForkarTheme.textSub)
         }
-        .padding()
-        .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 2.0, backgroundColor: ForkarTheme.card)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .liquidGlass(cornerRadius: 14, glowColor: room.is_group ? ForkarTheme.accent2 : ForkarTheme.accent)
         .onAppear {
             if !room.is_group {
                 Task {
