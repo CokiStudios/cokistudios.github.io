@@ -34,6 +34,12 @@ struct CSMSApp: App {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Silenciar mensajes internos de linkd y WebContent sandbox logging en la consola de Xcode
+        setenv("OS_ACTIVITY_MODE", "disable", 1)
+        UserDefaults.standard.set(false, forKey: "NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints")
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
     }
