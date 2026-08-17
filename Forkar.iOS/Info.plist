@@ -26,9 +26,22 @@
     <array>
         <string>armv7</string>
     </array>
-    <key>UISupportedInterfaceOrientations</key>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
+    <key>NSSupportsLiveActivitiesFrequentUpdates</key>
+    <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>Forkar necesita acceso a la cámara para escanear códigos QR de retos y estaciones ecológicas.</string>
+    <key>CFBundleURLTypes</key>
     <array>
-        <string>UIInterfaceOrientationPortrait</string>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.cokistudios.forkar</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>forkar</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>
