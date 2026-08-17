@@ -499,19 +499,70 @@ struct MessageBubbleView: View {
                         .foregroundColor(ForkarTheme.textSub)
                 }
                 
-                Text(formattedContent)
-                    .font(.system(size: 14))
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 14)
-                    .background(isCurrentUser ? ForkarTheme.accent : ForkarTheme.card)
-                    .foregroundColor(isCurrentUser ? .white : ForkarTheme.text)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.black, lineWidth: 2.0)
-                    )
-                    .shadow(color: .black, radius: 0, x: isCurrentUser ? 2.5 : -2.5, y: 2.5)
-                    .padding(.horizontal, 4)
+                VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 6) {
+                    if !message.content.isEmpty {
+                        Text(formattedContent)
+                            .font(.system(size: 14))
+                    }
+                    
+                    // 📎 Media Attachments
+                    if let mediaUrl = message.media_url, let url = URL(string: mediaUrl) {
+                        let type = message.media_type ?? (mediaUrl.hasSuffix(".mp4") || mediaUrl.hasSuffix(".mov") ? "video" : "image")
+                        if type == "image" {
+                            AsyncImage(url: url) { image in
+                                image.resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 240, maxHeight: 200)
+                                    .cornerRadius(10)
+                            } placeholder: {
+                                ProgressView()
+                                    .frame(width: 80, height: 80)
+                            }
+                        } else if type == "video" {
+                            Link(destination: url) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "video.fill")
+                                    Text("Reproducir Video")
+                                }
+                                .font(.system(size: 12, weight: .bold))
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(8)
+                            }
+                        } else {
+                            Link(destination: url) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "doc.fill")
+                                    Text("Descargar Archivo")
+                                }
+                                .font(.system(size: 12, weight: .bold))
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .background(isCurrentUser ? ForkarTheme.accent : ForkarTheme.card)
+                .foregroundColor(isCurrentUser ? .white : ForkarTheme.text)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                .padding(.horizontal, 4)
                 
                 Text(message.formattedTime)
                     .font(.system(size: 9))

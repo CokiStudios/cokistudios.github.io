@@ -161,6 +161,8 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     let author_name: String
     let author_avatar: String?
     let content: String
+    let media_url: String?
+    let media_type: String?
     let created_at: String
     
     var formattedTime: String {

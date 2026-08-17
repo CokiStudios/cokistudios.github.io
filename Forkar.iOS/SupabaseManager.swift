@@ -946,25 +946,93 @@ class SupabaseManager: ObservableObject {
     }
     
     func findUserByName(name: String) async throws -> (id: UUID, avatar: String?)? {
-        let path = "/rest/v1/chat_room_members"
-        let queryItems = [
-            URLQueryItem(name: "user_name", value: "ieq.\(name)"),
-            URLQueryItem(name: "select", value: "user_id,user_avatar"),
-            URLQueryItem(name: "limit", value: "1")
-        ]
-        let request = makeRequest(path: path, queryItems: queryItems)
-        let (data, res) = try await URLSession.shared.data(for: request)
-        try verifyResponse(data: data, response: res)
-        
-        struct SimpleUser: Codable {
-            let user_id: UUID
-            let user_avatar: String?
-        }
-        let users = try JSONDecoder().decode([SimpleUser].self, from: data)
-        if let user = users.first {
-            return (user.user_id, user.user_avatar)
+        if let user = try await findUserByEmail(email: name) {
+            return (user.id, user.avatar)
         }
         return nil
+    }
+
+    func findUserByEmail(email: String) async throws -> (id: UUID, name: String, avatar: String?)? {
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        // 1. Buscar en profiles
+        let profilesPath = "/rest/v1/profiles"
+        let queryItems = [
+            URLQueryItem(name: "email", value: "ilike.\(cleanEmail)"),
+            URLQueryItem(name: "limit", value: "1")
+        ]
+        let request = makeRequest(path: profilesPath, queryItems: queryItems)
+        if let (data, res) = try? await URLSession.shared.data(for: request),
+           let httpRes = res as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) {
+            struct ProfileItem: Codable {
+                let id: UUID
+                let full_name: String?
+                let email: String?
+                let avatar_url: String?
+            }
+            if let profiles = try? JSONDecoder().decode([ProfileItem].self, from: data), let p = profiles.first {
+                return (p.id, p.full_name ?? p.email ?? cleanEmail, p.avatar_url)
+            }
+        }
+        
+        // 2. Fallback: buscar en miembros de chat existentes
+        let path = "/rest/v1/chat_room_members"
+        let fallbackQuery = [
+            URLQueryItem(name: "user_name", value: "ilike.%\(cleanEmail)%"),
+            URLQueryItem(name: "select", value: "user_id,user_name,user_avatar"),
+            URLQueryItem(name: "limit", value: "1")
+        ]
+        let fallbackRequest = makeRequest(path: path, queryItems: fallbackQuery)
+        let (data, res) = try await URLSession.shared.data(for: fallbackRequest)
+        try verifyResponse(data: data, response: res)
+        
+        struct SimpleMember: Codable {
+            let user_id: UUID
+            let user_name: String
+            let user_avatar: String?
+        }
+        let users = try JSONDecoder().decode([SimpleMember].self, from: data)
+        if let user = users.first {
+            return (user.user_id, user.user_name, user.user_avatar)
+        }
+        return nil
+    }
+
+    func sendMessageWithMedia(roomId: UUID, content: String, mediaUrl: String?, mediaType: String?) async throws -> ChatMessage {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para enviar mensajes"])
+        }
+        
+        let path = "/rest/v1/chat_messages"
+        let authorName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
+        let authorAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
+        
+        var bodyJson: [String: Any] = [
+            "room_id": roomId.uuidString.lowercased(),
+            "user_id": user.id.uuidString.lowercased(),
+            "author_name": authorName,
+            "content": content
+        ]
+        if let avatar = authorAvatar {
+            bodyJson["author_avatar"] = avatar
+        }
+        if let mUrl = mediaUrl {
+            bodyJson["media_url"] = mUrl
+        }
+        if let mType = mediaType {
+            bodyJson["media_type"] = mType
+        }
+        
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)
+        let request = makeRequest(path: path, method: "POST", body: bodyData)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try verifyResponse(data: data, response: response)
+        
+        let messages = try JSONDecoder().decode([ChatMessage].self, from: data)
+        guard let newMessage = messages.first else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al enviar mensaje"])
+        }
+        return newMessage
     }
 
     // MARK: - Forkar Eco Hub API

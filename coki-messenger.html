@@ -617,6 +617,109 @@
         }
         @keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
 
+        /* Attachment Preview in Input Bar */
+        .attachment-preview-bar {
+            display: none;
+            padding: 8px 24px;
+            background: rgba(99, 102, 241, 0.08);
+            border-top: 1px solid var(--border);
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .attachment-preview-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .attachment-preview-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: rgba(0,0,0,0.2);
+        }
+        .attachment-remove-btn {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+        .attachment-remove-btn:hover {
+            color: #ef4444;
+        }
+
+        .btn-attach {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-attach:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Message Attachment Styles */
+        .message-media-attachment {
+            margin-top: 8px;
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .message-media-attachment img {
+            max-width: 100%;
+            max-height: 280px;
+            border-radius: 12px;
+            display: block;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .message-media-attachment img:hover {
+            transform: scale(1.02);
+        }
+        .message-media-attachment video {
+            max-width: 100%;
+            max-height: 280px;
+            border-radius: 12px;
+            display: block;
+        }
+        .message-file-attachment {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+        .message-file-attachment:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--accent);
+        }
+
         /* ── RESPONSIVENESS ── */
         @media (max-width: 768px) {
             .messenger-wrap { padding: 12px; }
@@ -666,7 +769,7 @@
                 <div class="sidebar-header">
                     <h2>Chats</h2>
                     <div class="header-actions">
-                        <button id="btn-new-dm" title="Nuevo Chat Directo">💬</button>
+                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email">💬</button>
                         <button id="btn-new-group" title="Nuevo Grupo">👥</button>
                     </div>
                 </div>
@@ -683,7 +786,7 @@
                 <div class="welcome-splash" id="welcome-splash">
                     <div class="splash-logo">💬</div>
                     <h3>Bienvenido a CSMS</h3>
-                    <p>Selecciona una conversación o crea un nuevo grupo para empezar a chatear en tiempo real con desarrolladores.</p>
+                    <p>Selecciona una conversación, busca a un amigo por su correo electrónico o crea un nuevo grupo para chatear en tiempo real.</p>
                 </div>
 
                 <!-- Chat Room Active -->
@@ -706,8 +809,22 @@
                         <!-- Message Bubbles -->
                     </div>
 
+                    <!-- Attachment Preview Bar -->
+                    <div class="attachment-preview-bar" id="attachment-preview-bar">
+                        <div class="attachment-preview-info">
+                            <img id="attachment-preview-img" class="attachment-preview-thumb" src="" style="display:none;">
+                            <span id="attachment-preview-icon" style="font-size:18px;">📎</span>
+                            <span id="attachment-preview-name">archivo.png</span>
+                        </div>
+                        <button class="attachment-remove-btn" id="btn-remove-attachment" title="Quitar adjunto">✕</button>
+                    </div>
+
                     <div class="message-input-bar">
-                        <input type="text" id="message-input" placeholder="Escribe un mensaje aquí..." disabled>
+                        <input type="file" id="chat-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip">
+                        <button class="btn-attach" id="btn-attach-file" title="Adjuntar foto, video o archivo">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                        </button>
+                        <input type="text" id="message-input" placeholder="Escribe un mensaje aquí..." disabled autocomplete="off">
                         <button class="btn-send" id="btn-send-message" disabled>
                             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                         </button>
@@ -718,20 +835,38 @@
         </div>
     </div>
 
-    <!-- MODAL NUEVO DM -->
+    <!-- MODAL NUEVO DM / ENVIAR POR EMAIL -->
     <div class="modal-overlay" id="modal-dm">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">Nuevo Chat Directo</div>
+                <div class="modal-title">Nuevo Mensaje Directo</div>
                 <button class="modal-close" onclick="closeModal('modal-dm')">✕</button>
             </div>
             <div class="modal-body">
+                <!-- Opción 1: Enviar por correo exacto -->
+                <div class="form-group" style="background: rgba(99, 102, 241, 0.08); padding: 14px; border-radius: 14px; border: 1px solid var(--border-glow);">
+                    <label style="color: var(--accent); font-weight: 800;">✉️ Escribir a un Correo Electrónico</label>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <input class="form-input" type="email" id="dm-email-input" placeholder="amigo@correo.com">
+                        <button type="button" id="btn-start-by-email" style="padding: 10px 16px; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+                            Chatear
+                        </button>
+                    </div>
+                    <div id="dm-email-status" style="font-size: 11px; color: var(--text-sub); margin-top: 6px;"></div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px; margin: 4px 0;">
+                    <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                    <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">o selecciona de la lista</span>
+                    <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                </div>
+
                 <div class="form-group">
-                    <label>Buscar Usuario</label>
-                    <input class="form-input" type="text" id="dm-search-user" placeholder="Escribe un nombre...">
+                    <label>Buscar por Nombre o Email</label>
+                    <input class="form-input" type="text" id="dm-search-user" placeholder="Escribe un nombre o correo...">
                 </div>
                 <div class="form-group">
-                    <label>Selecciona un usuario</label>
+                    <label>Desarrolladores y Usuarios</label>
                     <div class="users-checklist" id="dm-users-list">
                         <!-- Users list with checkboxes -->
                     </div>
@@ -1070,12 +1205,119 @@
             }
         }
 
+        // Attachment State
+        let currentAttachmentFile = null;
+
+        const fileInput = document.getElementById('chat-file-input');
+        const btnAttach = document.getElementById('btn-attach-file');
+        const attachmentPreviewBar = document.getElementById('attachment-preview-bar');
+        const attachmentPreviewImg = document.getElementById('attachment-preview-img');
+        const attachmentPreviewIcon = document.getElementById('attachment-preview-icon');
+        const attachmentPreviewName = document.getElementById('attachment-preview-name');
+        const btnRemoveAttachment = document.getElementById('btn-remove-attachment');
+
+        btnAttach?.addEventListener('click', () => {
+            if (!activeRoom) return;
+            fileInput.click();
+        });
+
+        fileInput?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 25 * 1024 * 1024) {
+                alert('El archivo no puede exceder los 25MB');
+                fileInput.value = '';
+                return;
+            }
+
+            currentAttachmentFile = file;
+            attachmentPreviewName.textContent = file.name;
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    attachmentPreviewImg.src = re.target.result;
+                    attachmentPreviewImg.style.display = 'block';
+                    attachmentPreviewIcon.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                attachmentPreviewImg.style.display = 'none';
+                attachmentPreviewIcon.style.display = 'inline-block';
+                attachmentPreviewIcon.textContent = file.type.startsWith('video/') ? '🎬' : '📄';
+            }
+
+            attachmentPreviewBar.style.display = 'flex';
+        });
+
+        btnRemoveAttachment?.addEventListener('click', () => {
+            currentAttachmentFile = null;
+            fileInput.value = '';
+            attachmentPreviewBar.style.display = 'none';
+        });
+
+        async function uploadCSMSMedia(file) {
+            const ext = file.name.split('.').pop() || 'bin';
+            const fileName = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+            const { data, error } = await supabase.storage
+                .from('csms-media')
+                .upload(fileName, file, { cacheControl: '3600', upsert: true });
+
+            if (error) {
+                console.warn('Fallback a forkar-media si csms-media no esta creado aun:', error);
+                const { data: d2, error: err2 } = await supabase.storage
+                    .from('forkar-media')
+                    .upload(`csms/${fileName}`, file, { cacheControl: '3600', upsert: true });
+                if (err2) throw err2;
+                const { data: { publicUrl } } = supabase.storage.from('forkar-media').getPublicUrl(`csms/${fileName}`);
+                return publicUrl;
+            }
+
+            const { data: { publicUrl } } = supabase.storage.from('csms-media').getPublicUrl(fileName);
+            return publicUrl;
+        }
+
+        function renderAttachmentHTML(msg) {
+            if (!msg.media_url) return '';
+            const type = msg.media_type || (msg.media_url.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? 'image' : 
+                                            msg.media_url.match(/\.(mp4|mov|webm)$/i) ? 'video' : 'file');
+            
+            if (type === 'image') {
+                return `
+                    <div class="message-media-attachment">
+                        <a href="${msg.media_url}" target="_blank" rel="noopener">
+                            <img src="${msg.media_url}" loading="lazy" alt="Foto adjunta">
+                        </a>
+                    </div>
+                `;
+            } else if (type === 'video') {
+                return `
+                    <div class="message-media-attachment">
+                        <video controls src="${msg.media_url}"></video>
+                    </div>
+                `;
+            } else {
+                const fileName = msg.media_url.split('/').pop() || 'Archivo adjunto';
+                return `
+                    <a href="${msg.media_url}" target="_blank" download class="message-file-attachment">
+                        <span style="font-size: 20px;">📄</span>
+                        <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:600;">
+                            ${escHtml(fileName)}
+                        </div>
+                        <span style="font-size: 11px; color: var(--accent); font-weight:bold;">Descargar</span>
+                    </a>
+                `;
+            }
+        }
+
         function renderMessages(messages) {
             const container = document.getElementById('messages-container');
             if (messages.length === 0) {
                 container.innerHTML = `
                     <div style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px;">
-                        Escribe un mensaje para iniciar la conversación.
+                        Escribe un mensaje o adjunta un archivo para iniciar la conversación.
                     </div>
                 `;
                 return;
@@ -1096,7 +1338,8 @@
                         <div class="message-bubble-wrap">
                             ${!isSent && activeRoom.is_group ? `<div class="message-author">${escHtml(msg.author_name)}</div>` : ''}
                             <div class="message-bubble">
-                                ${escHtml(msg.content)}
+                                ${msg.content ? escHtml(msg.content) : ''}
+                                ${renderAttachmentHTML(msg)}
                             </div>
                             <div class="message-time">${formatShortTime(msg.created_at)}</div>
                         </div>
@@ -1118,17 +1361,13 @@
             activeMessagesChannel = supabase
                 .channel(`room_messages_${roomId}`)
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` }, (payload) => {
-                    // Update room lastMessage preview in rooms list array
                     const roomIdx = allRooms.findIndex(r => r.id === roomId);
                     if (roomIdx !== -1) {
                         allRooms[roomIdx].lastMessage = payload.new;
-                        // Move room to top
                         const room = allRooms.splice(roomIdx, 1)[0];
                         allRooms.unshift(room);
                         renderRooms(allRooms);
                     }
-
-                    // Append message bubble to history
                     appendMessageBubble(payload.new);
                 })
                 .subscribe();
@@ -1136,7 +1375,6 @@
 
         function appendMessageBubble(msg) {
             const container = document.getElementById('messages-container');
-            // Remove empty state message if exists
             if (container.firstElementChild && container.firstElementChild.style.justifyContent === 'center') {
                 container.innerHTML = '';
             }
@@ -1156,7 +1394,8 @@
                 <div class="message-bubble-wrap">
                     ${!isSent && activeRoom.is_group ? `<div class="message-author">${escHtml(msg.author_name)}</div>` : ''}
                     <div class="message-bubble">
-                        ${escHtml(msg.content)}
+                        ${msg.content ? escHtml(msg.content) : ''}
+                        ${renderAttachmentHTML(msg)}
                     </div>
                     <div class="message-time">${formatShortTime(msg.created_at)}</div>
                 </div>
@@ -1165,18 +1404,36 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Send Message
+        // Send Message with Attachments
         async function sendMessage() {
             const input = document.getElementById('message-input');
+            const sendBtn = document.getElementById('btn-send-message');
             const text = input.value.trim();
-            if (!text || !activeRoom) return;
+            const fileToSend = currentAttachmentFile;
+
+            if ((!text && !fileToSend) || !activeRoom) return;
 
             input.value = "";
+            currentAttachmentFile = null;
+            fileInput.value = '';
+            attachmentPreviewBar.style.display = 'none';
+
+            sendBtn.disabled = true;
+
             const meta = currentUser.user_metadata || {};
             const authorName = meta.full_name || meta.name || currentUser.email || currentUser.phone || 'Usuario';
             const authorAvatar = meta.avatar_url || meta.picture || null;
 
             try {
+                let mediaUrl = null;
+                let mediaType = null;
+
+                if (fileToSend) {
+                    mediaUrl = await uploadCSMSMedia(fileToSend);
+                    mediaType = fileToSend.type.startsWith('image/') ? 'image' : 
+                                fileToSend.type.startsWith('video/') ? 'video' : 'file';
+                }
+
                 const { error } = await supabase
                     .from('chat_messages')
                     .insert({
@@ -1184,14 +1441,138 @@
                         user_id: currentUser.id,
                         author_name: authorName,
                         author_avatar: authorAvatar,
-                        content: text
+                        content: text || (mediaType === 'image' ? '📷 Foto' : mediaType === 'video' ? '🎬 Video' : '📎 Archivo'),
+                        media_url: mediaUrl,
+                        media_type: mediaType
                     });
                 if (error) throw error;
             } catch (err) {
                 console.error("Error al enviar mensaje:", err);
                 alert("No se pudo enviar el mensaje: " + err.message);
+            } finally {
+                sendBtn.disabled = false;
             }
         }
+
+        // Handle Direct Chat via Email
+        document.getElementById('btn-start-by-email')?.addEventListener('click', async () => {
+            const emailInput = document.getElementById('dm-email-input');
+            const statusDiv = document.getElementById('dm-email-status');
+            const email = emailInput.value.trim().toLowerCase();
+
+            if (!email) {
+                statusDiv.innerHTML = '<span style="color:#ef4444;">Introduce un correo válido.</span>';
+                return;
+            }
+
+            if (email === currentUser.email?.toLowerCase()) {
+                statusDiv.innerHTML = '<span style="color:#ef4444;">No puedes enviarte un mensaje directo a ti mismo.</span>';
+                return;
+            }
+
+            const btn = document.getElementById('btn-start-by-email');
+            btn.disabled = true;
+            btn.textContent = 'Buscando...';
+            statusDiv.innerHTML = 'Buscando usuario en la red de Coki Studios...';
+
+            try {
+                // 1. Buscar usuario por email en perfiles o chat_room_members
+                let targetUser = allUsers.find(u => u.email?.toLowerCase() === email);
+
+                if (!targetUser) {
+                    const { data: foundProfiles } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .ilike('email', email)
+                        .limit(1);
+
+                    if (foundProfiles && foundProfiles.length > 0) {
+                        targetUser = foundProfiles[0];
+                    }
+                }
+
+                if (!targetUser) {
+                    // Fallback: buscar en chat_room_members existentes
+                    const { data: memberFound } = await supabase
+                        .from('chat_room_members')
+                        .select('user_id, user_name, user_avatar')
+                        .ilike('user_name', `%${email}%`)
+                        .limit(1);
+
+                    if (memberFound && memberFound.length > 0) {
+                        targetUser = {
+                            id: memberFound[0].user_id,
+                            full_name: memberFound[0].user_name,
+                            avatar_url: memberFound[0].user_avatar
+                        };
+                    }
+                }
+
+                const targetUserId = targetUser ? targetUser.id : null;
+                const targetUserName = targetUser ? (targetUser.full_name || email) : email;
+                const targetUserAvatar = targetUser ? targetUser.avatar_url : null;
+
+                // 2. Verificar si ya existe una conversación directa entre ambos
+                let existingRoomId = null;
+                for (let r of allRooms) {
+                    if (!r.is_group && r.members) {
+                        const hasTarget = targetUserId ? 
+                            r.members.some(m => m.user_id === targetUserId) :
+                            r.members.some(m => m.user_name?.toLowerCase().includes(email));
+                        if (hasTarget) {
+                            existingRoomId = r.id;
+                            break;
+                        }
+                    }
+                }
+
+                if (existingRoomId) {
+                    closeModal('modal-dm');
+                    selectRoom(existingRoomId);
+                    return;
+                }
+
+                // 3. Crear nueva sala
+                const { data: room, error: rError } = await supabase
+                    .from('chat_rooms')
+                    .insert({ is_group: false })
+                    .select()
+                    .single();
+
+                if (rError) throw rError;
+
+                const meta = currentUser.user_metadata || {};
+                const myName = meta.full_name || meta.name || currentUser.email || currentUser.phone || 'Usuario';
+                const myAvatar = meta.avatar_url || meta.picture || null;
+
+                // Agregar miembros
+                await supabase.from('chat_room_members').insert([
+                    {
+                        room_id: room.id,
+                        user_id: currentUser.id,
+                        user_name: myName,
+                        user_avatar: myAvatar
+                    },
+                    {
+                        room_id: room.id,
+                        user_id: targetUserId || '00000000-0000-0000-0000-000000000000',
+                        user_name: targetUserName,
+                        user_avatar: targetUserAvatar
+                    }
+                ]);
+
+                closeModal('modal-dm');
+                await loadRooms();
+                selectRoom(room.id);
+
+            } catch (err) {
+                console.error("Error al iniciar chat por correo:", err);
+                statusDiv.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Chatear';
+            }
+        });
 
         document.getElementById('btn-send-message').addEventListener('click', sendMessage);
         document.getElementById('message-input').addEventListener('keydown', (e) => {
