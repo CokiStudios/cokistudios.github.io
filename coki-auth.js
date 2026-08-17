@@ -340,6 +340,117 @@ async function verifyCokiOTP(email, code) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🔑 WEBAUTHN / PASSKEYS INTEGRATION (Face ID, Touch ID, Windows Hello)
+// ═══════════════════════════════════════════════════════════════
+
+async function isPasskeySupported() {
+    return window.PublicKeyCredential !== undefined &&
+           typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function' &&
+           await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+}
+
+async function registerPasskey() {
+    try {
+        const user = await getCurrentCokiUser();
+        if (!user) throw new Error('Debes iniciar sesión para vincular una Passkey');
+
+        if (!await isPasskeySupported()) {
+            throw new Error('Tu dispositivo o navegador no soporta Passkeys / Biometría.');
+        }
+
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const userIdBytes = new TextEncoder().encode(user.id);
+
+        const publicKeyCredentialCreationOptions = {
+            challenge: challenge,
+            rp: {
+                name: "CSID — Coki Studios",
+                id: window.location.hostname.includes('cokistudios.com') ? 'cokistudios.com' : window.location.hostname
+            },
+            user: {
+                id: userIdBytes,
+                name: user.email,
+                displayName: user.name || user.email
+            },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+            authenticatorSelection: {
+                authenticatorAttachment: "platform",
+                userVerification: "preferred"
+            },
+            timeout: 60000,
+            attestation: "none"
+        };
+
+        const credential = await navigator.credentials.create({
+            publicKey: publicKeyCredentialCreationOptions
+        });
+
+        if (!credential) throw new Error('No se pudo crear la Passkey');
+
+        // Guardar identificador de Passkey en el perfil del usuario
+        const passkeyId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        
+        // Almacenar en metadata y localStorage
+        localStorage.setItem(`csid_passkey_${user.id}`, passkeyId);
+        localStorage.setItem('csid_last_passkey_user', user.email);
+
+        await updateCokiProfile({
+            has_passkey: true,
+            passkey_created_at: new Date().toISOString()
+        });
+
+        return { success: true, credentialId: passkeyId };
+    } catch (err) {
+        console.error('❌ Error registrando Passkey:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+async function loginWithPasskey() {
+    try {
+        if (!await isPasskeySupported()) {
+            throw new Error('Passkeys no soportadas en este dispositivo.');
+        }
+
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const publicKeyCredentialRequestOptions = {
+            challenge: challenge,
+            timeout: 60000,
+            rpId: window.location.hostname.includes('cokistudios.com') ? 'cokistudios.com' : window.location.hostname,
+            userVerification: "preferred"
+        };
+
+        const assertion = await navigator.credentials.get({
+            publicKey: publicKeyCredentialRequestOptions
+        });
+
+        if (!assertion) throw new Error('Autenticación con Passkey cancelada');
+
+        // Restaurar sesión o vincular cookie activa
+        const lastUser = localStorage.getItem('csid_last_passkey_user');
+        const storedUser = getCookieJSON('coki_current_user');
+
+        if (storedUser) {
+            return { success: true, user: storedUser };
+        }
+
+        const restored = await restoreSessionFromBrowserHash();
+        if (restored) {
+            return { success: true, user: restored };
+        }
+
+        return { success: true, email: lastUser, message: 'Passkey verificada con éxito' };
+    } catch (err) {
+        console.error('❌ Error login con Passkey:', err);
+        return { success: false, error: err.message };
+    }
+}
+
 export {
     supabase,
     registerCokiAccount,
@@ -358,6 +469,9 @@ export {
     restoreSessionFromBrowserHash,
     getBrowserHash,
     regenerateBrowserHash,
-    DEFAULT_CATEGORIES
+    DEFAULT_CATEGORIES,
+    isPasskeySupported,
+    registerPasskey,
+    loginWithPasskey
 };
 

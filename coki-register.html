@@ -195,6 +195,10 @@
             <!-- 🔐 LOGIN -->
             <div id="panel-login" class="panel active">
                 <div class="social-btns">
+                    <button id="btn-coki-passkey" type="button" class="btn-social" style="grid-column: span 2; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2)); border: 1.5px solid var(--border-glow); color: var(--text); font-weight: 700;">
+                        <span style="font-size: 18px;">🔑</span>
+                        Iniciar sesión con Passkey (Touch ID / Face ID)
+                    </button>
                     <button id="btn-coki-google" class="btn-social btn-google">
                         <svg width="20" height="20" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -287,7 +291,7 @@
     <script type="module">
         import {
             registerCokiAccount, loginCokiAccount, loginCokiWithOAuth,
-            resetCokiPassword, getCurrentCokiUser
+            resetCokiPassword, getCurrentCokiUser, loginWithPasskey
         } from './coki-auth.js';
         import { setCookie, getCookie, deleteCookie } from './cookie-utils.js';
 
@@ -329,6 +333,27 @@
             } else {
                 alert('❌ ' + result.error);
                 btn.disabled = false; btn.textContent = 'Entrar a mi cuenta';
+            }
+        });
+
+        // 🔑 PASSKEY BIOMETRIC LOGIN
+        document.getElementById('btn-coki-passkey')?.addEventListener('click', async () => {
+            const btn = document.getElementById('btn-coki-passkey');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Verificando datos biométricos...';
+
+            const res = await loginWithPasskey();
+            if (res.success) {
+                let redirect = new URLSearchParams(window.location.search).get('redirect');
+                if (!redirect) {
+                    const pending = getCookie('coki_oauth_pending');
+                    if (pending) { deleteCookie('coki_oauth_pending'); redirect = 'coki-authorize.html' + pending; }
+                }
+                window.location.href = redirect || '/coki-dashboard.html';
+            } else {
+                alert('❌ ' + res.error);
+                btn.disabled = false;
+                btn.innerHTML = '<span style="font-size: 18px;">🔑</span> Iniciar sesión con Passkey (Touch ID / Face ID)';
             }
         });
 
