@@ -96,7 +96,7 @@ struct ChatsView: View {
                             }
                         }
                         .padding(32)
-                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
+                        .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent)
                         .padding(.horizontal, 20)
                         .onAppear {
                             unlockChats()
@@ -360,7 +360,12 @@ struct CreateGroupSheetView: View {
                         
                         TextField("Ej. Club de Lectura, Hacks, etc.", text: $groupName)
                             .padding()
-                            .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                            .background(ForkarTheme.card)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(ForkarTheme.border, lineWidth: 1)
+                            )
                             .disabled(isCreating)
                     }
                     .padding(.horizontal)

@@ -106,7 +106,12 @@ struct ChatRoomDetailView: View {
                         .foregroundColor(ForkarTheme.text)
                         .padding(.vertical, 10)
                         .padding(.horizontal, 16)
-                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                        .background(ForkarTheme.card)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(ForkarTheme.border, lineWidth: 1)
+                        )
                         .disabled(isSending)
                     
                     Button(action: {

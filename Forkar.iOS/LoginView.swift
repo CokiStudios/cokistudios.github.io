@@ -90,13 +90,16 @@ struct LoginView: View {
                                     HStack(spacing: 10) {
                                         Image(systemName: "safari.fill")
                                         Text("Continuar con Google")
-                                            .font(.system(size: 13, weight: .black))
+                                            .font(.system(size: 13, weight: .bold))
                                     }
                                     .foregroundColor(ForkarTheme.text)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 12)
+                                    .background(ForkarTheme.card)
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
                                 }
-                                .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
+                                .buttonStyle(PlainButtonStyle())
                                 
                                 Button(action: {
                                     Task {
@@ -106,13 +109,16 @@ struct LoginView: View {
                                     HStack(spacing: 10) {
                                         Image(systemName: "terminal.fill")
                                         Text("Continuar con GitHub")
-                                            .font(.system(size: 13, weight: .black))
+                                            .font(.system(size: 13, weight: .bold))
                                     }
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 12)
+                                    .background(Color.black.opacity(0.6))
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
                                 }
-                                .buttonStyle(ShineButtonStyle(backgroundColor: Color.black, borderLineWidth: 2.0, shadowOffset: 3.0))
+                                .buttonStyle(PlainButtonStyle())
                             }
                             .padding(.bottom, 4)
                             
@@ -128,44 +134,38 @@ struct LoginView: View {
                         
                         CustomTextField(
                             icon: "envelope.fill",
-                            placeholder: "Correo Electrónico",
+                            placeholder: "Correo electrónico",
                             text: $email,
                             keyboardType: .emailAddress,
                             autocapitalization: .never
                         )
                         
-                        VStack(alignment: .trailing, spacing: 8) {
-                            ZStack(alignment: .trailing) {
-                                if showPassword {
-                                    CustomTextField(
-                                        icon: "lock.fill",
-                                        placeholder: "Contraseña",
-                                        text: $password,
-                                        autocapitalization: .never
-                                    )
-                                } else {
-                                    CustomSecureField(
-                                        icon: "lock.fill",
-                                        placeholder: "Contraseña",
-                                        text: $password
-                                    )
+                        CustomSecureField(
+                            icon: "lock.fill",
+                            placeholder: "Contraseña",
+                            text: $password
+                        )
+                        
+                        if !isRegistering {
+                            HStack {
+                                Spacer()
+                                Button("¿Olvidaste tu contraseña?") {
+                                    // TODO: Password reset
                                 }
-                                
-                                Button(action: { showPassword.toggle() }) {
-                                    Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
-                                        .foregroundColor(ForkarTheme.textSub)
-                                        .padding(.trailing, 16)
-                                }
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(ForkarTheme.accent)
                             }
                         }
                         
                         if !errorMessage.isEmpty {
                             Text(errorMessage)
-                                .font(.caption)
+                                .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.red)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 4)
                         }
                         
+                        // Submit button
                         Button(action: {
                             Task {
                                 await handleAuth()
@@ -177,18 +177,22 @@ struct LoginView: View {
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 } else {
                                     Text(isRegistering ? "Crear cuenta" : "Iniciar sesión")
-                                        .font(.system(size: 15, weight: .black))
+                                        .font(.system(size: 15, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 4)
+                                        .padding(.vertical, 12)
                                 }
                             }
+                            .background(ForkarTheme.primaryGradient)
+                            .cornerRadius(12)
+                            .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 10, y: 4)
                         }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
+                        .buttonStyle(PlainButtonStyle())
                         .disabled(isLoading)
                         .padding(.top, 10)
                     }
-                    .shineInlineCard(borderLineWidth: 2.8, shadowOffset: 6.0, backgroundColor: ForkarTheme.card)
+                    .padding(24)
+                    .liquidGlass(cornerRadius: 24, glowColor: ForkarTheme.accent)
                     .padding(.horizontal)
                     
                     // Switch login / register
@@ -296,8 +300,14 @@ struct CustomTextField: View {
                 .disableAutocorrection(true)
             #endif
         }
-        .padding(.horizontal, 4)
-        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .background(ForkarTheme.card)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(ForkarTheme.border, lineWidth: 1)
+        )
     }
 }
 
@@ -323,7 +333,13 @@ struct CustomSecureField: View {
                 .disableAutocorrection(true)
             #endif
         }
-        .padding(.horizontal, 4)
-        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .background(ForkarTheme.card)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(ForkarTheme.border, lineWidth: 1)
+        )
     }
 }

@@ -66,14 +66,12 @@ struct SetupWizardView: View {
                 // Navigation Buttons
                 HStack(spacing: 16) {
                     if step > 0 && step < 2 {
-                        Button("back_btn".localized) {
+                        Button(action: {
                             withAnimation { step -= 1 }
+                        }) {
+                            Text("back_btn".localized)
                         }
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundColor(ForkarTheme.text)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 16)
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.5))
+                        .buttonStyle(SecondaryButtonStyle())
                     }
                     
                     Button(action: {
@@ -85,13 +83,12 @@ struct SetupWizardView: View {
                                 .frame(maxWidth: .infinity)
                         } else {
                             Text(step == 2 ? "finish_btn".localized : "next_btn".localized)
-                                .font(.system(size: 14, weight: .black))
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 4)
                         }
                     }
-                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(isNextDisabled || isSaving)
                 }
                 .padding(.horizontal, 24)
@@ -112,42 +109,38 @@ struct SetupWizardView: View {
     }
     
     private func nextStep() {
-        if step == 0 {
-            withAnimation { step += 1 }
-        } else if step == 1 {
-            saveProfile()
+        if step < 2 {
+            withAnimation {
+                step += 1
+            }
         } else {
-            presentationMode.wrappedValue.dismiss()
+            completeSetup()
         }
     }
     
-    private func saveProfile() {
+    private func completeSetup() {
         isSaving = true
-        errorMessage = nil
-        
         Task {
             do {
-                let cleanAvatar = avatarUrl.trimmingCharacters(in: .whitespacesAndNewlines)
-                try await authManager.updateProfile(
-                    fullName: fullName.trimmingCharacters(in: .whitespacesAndNewlines),
-                    avatarUrl: cleanAvatar.isEmpty ? nil : cleanAvatar,
-                    company: company.trimmingCharacters(in: .whitespacesAndNewlines),
-                    role: selectedRole
+                try await authManager.completeUserProfile(
+                    fullName: fullName,
+                    avatarUrl: avatarUrl.isEmpty ? nil : avatarUrl,
+                    role: selectedRole,
+                    company: company.isEmpty ? nil : company
                 )
                 await MainActor.run {
                     isSaving = false
-                    withAnimation { step += 1 }
+                    isPresented = false
                 }
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = error.localizedDescription
                 }
             }
         }
     }
     
-    // MARK: - Step Subviews
+    // MARK: - Wizard Steps
     
     private var stepBasicInfo: some View {
         VStack(spacing: 16) {
@@ -173,8 +166,13 @@ struct SetupWizardView: View {
                 
                 TextField("full_name_placeholder".localized, text: $fullName)
                     .foregroundColor(ForkarTheme.text)
-                    .padding(.horizontal, 4)
-                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                    .padding()
+                    .background(ForkarTheme.card)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ForkarTheme.border, lineWidth: 1)
+                    )
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
@@ -186,8 +184,13 @@ struct SetupWizardView: View {
                 
                 TextField("avatar_url_placeholder".localized, text: $avatarUrl)
                     .foregroundColor(ForkarTheme.text)
-                    .padding(.horizontal, 4)
-                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                    .padding()
+                    .background(ForkarTheme.card)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ForkarTheme.border, lineWidth: 1)
+                    )
             }
             .padding(.horizontal, 24)
         }
@@ -230,8 +233,13 @@ struct SetupWizardView: View {
                             .font(.caption)
                             .foregroundColor(ForkarTheme.textSub)
                     }
-                    .padding(.horizontal, 4)
-                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                    .padding()
+                    .background(ForkarTheme.card)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ForkarTheme.border, lineWidth: 1)
+                    )
                 }
             }
             .padding(.horizontal, 24)
@@ -244,8 +252,13 @@ struct SetupWizardView: View {
                 
                 TextField("company_placeholder".localized, text: $company)
                     .foregroundColor(ForkarTheme.text)
-                    .padding(.horizontal, 4)
-                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                    .padding()
+                    .background(ForkarTheme.card)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ForkarTheme.border, lineWidth: 1)
+                    )
             }
             .padding(.horizontal, 24)
         }

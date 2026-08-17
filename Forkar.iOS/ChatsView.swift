@@ -96,7 +96,7 @@ struct ChatsView: View {
                             }
                         }
                         .padding(32)
-                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
+                        .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent)
                         .padding(.horizontal, 20)
                         .onAppear {
                             unlockChats()
@@ -308,8 +308,9 @@ struct ChatRoomRowView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(ForkarTheme.textSub)
         }
-        .padding()
-        .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 2.0, backgroundColor: ForkarTheme.card)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .liquidGlass(cornerRadius: 14, glowColor: room.is_group ? ForkarTheme.accent2 : ForkarTheme.accent)
         .onAppear {
             if !room.is_group {
                 Task {
@@ -361,7 +362,12 @@ struct CreateGroupSheetView: View {
                         
                         TextField("Ej. Club de Lectura, Hacks, etc.", text: $groupName)
                             .padding()
-                            .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                            .background(ForkarTheme.card)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(ForkarTheme.border, lineWidth: 1)
+                            )
                             .disabled(isCreating)
                     }
                     .padding(.horizontal)

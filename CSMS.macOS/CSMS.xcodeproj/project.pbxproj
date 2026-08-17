@@ -15,7 +15,6 @@
 		9B0000192A00000100000001 /* ChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B00001A2A00000100000001 /* ChatsView.swift */; };
 		9B00001B2A00000100000001 /* XtrapsBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B00001C2A00000100000001 /* XtrapsBackground.swift */; };
 		9B00001D2A00000100000001 /* SecurityAndNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B00001E2A00000100000001 /* SecurityAndNotificationManager.swift */; };
-		9B00001F2A00000100000001 /* ShineUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0000202A00000100000001 /* ShineUI.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +26,6 @@
 		9B00001A2A00000100000001 /* ChatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsView.swift; sourceTree = "<group>"; };
 		9B00001C2A00000100000001 /* XtrapsBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XtrapsBackground.swift; sourceTree = "<group>"; };
 		9B00001E2A00000100000001 /* SecurityAndNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityAndNotificationManager.swift; sourceTree = "<group>"; };
-		9B0000202A00000100000001 /* ShineUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShineUI.swift; sourceTree = "<group>"; };
 		9B0000032A00000100000001 /* CSMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -61,7 +59,6 @@
 				9B00001A2A00000100000001 /* ChatsView.swift */,
 				9B00001C2A00000100000001 /* XtrapsBackground.swift */,
 				9B00001E2A00000100000001 /* SecurityAndNotificationManager.swift */,
-				9B0000202A00000100000001 /* ShineUI.swift */,
 			);
 			path = .;
 			sourceTree = "<group>";
@@ -139,7 +136,6 @@
 				9B0000192A00000100000001 /* ChatsView.swift in Sources */,
 				9B00001B2A00000100000001 /* XtrapsBackground.swift in Sources */,
 				9B00001D2A00000100000001 /* SecurityAndNotificationManager.swift in Sources */,
-				9B00001F2A00000100000001 /* ShineUI.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
