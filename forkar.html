@@ -1064,9 +1064,42 @@
         import {
             getCategories, getPosts, createPost, uploadMediaToStorage,
             getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials,
-            getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints,
-            rankPostsByTaste
+            getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints
         } from './forkar.js';
+
+        // 🧠 ALGORITMO DE AFINIDAD Y RANKING INTEGRADO
+        function calculateTasteMatchScore(post, userPreferences = []) {
+            if (!userPreferences || userPreferences.length === 0) return 0;
+            let score = 0;
+            const postText = `${post.title || ''} ${post.content || ''}`.toLowerCase();
+            const postCategory = post.category_id || (post.category?.id) || '';
+
+            userPreferences.forEach(prefCatId => {
+                const cleanPref = prefCatId.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (postCategory && postCategory.toLowerCase().includes(cleanPref)) {
+                    score += 100;
+                }
+                if (cleanPref.length >= 3) {
+                    for (let len = 3; len <= 4; len++) {
+                        for (let i = 0; i <= cleanPref.length - len; i++) {
+                            const sub = cleanPref.substring(i, i + len);
+                            if (postText.includes(sub)) score += 5;
+                        }
+                    }
+                }
+            });
+            return score;
+        }
+
+        function rankPostsByTaste(posts, userPreferences = []) {
+            if (!userPreferences || userPreferences.length === 0) return posts;
+            return [...posts].sort((a, b) => {
+                const scoreA = calculateTasteMatchScore(a, userPreferences);
+                const scoreB = calculateTasteMatchScore(b, userPreferences);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            });
+        }
 
         import { getBrowserHash, regenerateBrowserHash } from './cookie-utils.js';
 
