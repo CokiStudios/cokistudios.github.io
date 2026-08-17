@@ -13,7 +13,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── CATEGORÍAS GLOBALES & TASTE MATCHING ───
-export const DEFAULT_CATEGORIES = [
+const DEFAULT_CATEGORIES = [
     { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '💬', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
     { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '🎮', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
     { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '💻', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
@@ -345,6 +345,7 @@ export {
     unbindBrowserHash,
     restoreSessionFromBrowserHash,
     getBrowserHash,
-    regenerateBrowserHash
+    regenerateBrowserHash,
+    DEFAULT_CATEGORIES
 };
 
