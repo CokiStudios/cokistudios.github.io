@@ -113,6 +113,40 @@ extension View {
     }
 }
 
+// MARK: - Button Styles
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 24)
+            .background(ForkarTheme.primaryGradient)
+            .cornerRadius(12)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .shadow(color: ForkarTheme.accent.opacity(configuration.isPressed ? 0.2 : 0.4), radius: 10, y: 4)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(ForkarTheme.text)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 24)
+            .background(ForkarTheme.card)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(ForkarTheme.border, lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Circle Avatar Placeholder
 struct CircleAvatarPlaceholder: View {
     let initials: String
