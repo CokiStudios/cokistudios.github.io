@@ -109,7 +109,10 @@ data class UserMetadata(
     @SerializedName("avatar_url") val avatarUrl: String?,
     val picture: String?,
     val company: String?,
-    val role: String?
+    val role: String?,
+    @SerializedName("favorite_categories") val favoriteCategories: List<String>? = null,
+    @SerializedName("has_passkey") val hasPasskey: Boolean = false,
+    @SerializedName("migrated_v2") val migratedV2: Boolean = false
 ) {
     val displayName: String
         get() = fullName ?: name ?: "Usuario"

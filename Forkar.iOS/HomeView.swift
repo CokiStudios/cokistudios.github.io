@@ -153,7 +153,7 @@ struct HomeView: View {
                                 }
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 8, trailing: 16))
                             }
                             .onDelete(perform: deletePostAtIndex)
                         }

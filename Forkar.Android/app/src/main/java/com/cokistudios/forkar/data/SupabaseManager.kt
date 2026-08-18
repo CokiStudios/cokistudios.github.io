@@ -41,6 +41,9 @@ class SupabaseManager private constructor(context: Context) {
     var sessionToken by mutableStateOf<String?>(null)
         private set
 
+    var refreshToken by mutableStateOf<String?>(null)
+        private set
+
     val isLoggedIn: Boolean
         get() = sessionToken != null
 
@@ -55,6 +58,7 @@ class SupabaseManager private constructor(context: Context) {
 
     init {
         sessionToken = sharedPrefs.getString("supabase_session_token", null)
+        refreshToken = sharedPrefs.getString("supabase_refresh_token", null)
         val userJson = sharedPrefs.getString("supabase_current_user", null)
         if (userJson != null) {
             try {
@@ -67,17 +71,30 @@ class SupabaseManager private constructor(context: Context) {
             managerScope.launch {
                 restoreSessionFromDeviceHash()
             }
+        } else if (refreshToken != null) {
+            // Refrescar token proactivamente para evitar expiración JWT
+            managerScope.launch {
+                refreshAuthSession()
+            }
         }
     }
 
-    private fun saveSession(token: String?, user: SupabaseUser?) {
+    fun saveSession(token: String?, user: SupabaseUser?, refresh: String? = null) {
         sessionToken = token
         currentUser = user
+        if (refresh != null) {
+            refreshToken = refresh
+        }
         sharedPrefs.edit().apply {
             if (token != null) {
                 putString("supabase_session_token", token)
             } else {
                 remove("supabase_session_token")
+            }
+            if (refresh != null) {
+                putString("supabase_refresh_token", refresh)
+            } else if (token == null) {
+                remove("supabase_refresh_token")
             }
             if (user != null) {
                 putString("supabase_current_user", gson.toJson(user))
@@ -93,11 +110,38 @@ class SupabaseManager private constructor(context: Context) {
         }
     }
 
+    suspend fun refreshAuthSession(): Boolean = withContext(Dispatchers.IO) {
+        val currentRefresh = refreshToken ?: return@withContext false
+        try {
+            val path = "/auth/v1/token"
+            val queryParams = mapOf("grant_type" to "refresh_token")
+            val json = JSONObject().apply {
+                put("refresh_token", currentRefresh)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val request = makeRequest(path, "POST", body, queryParams)
+
+            client.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string() ?: ""
+                if (response.isSuccessful && responseBody.isNotBlank()) {
+                    val authResponse = gson.fromJson(responseBody, SupabaseAuthResponse::class.java)
+                    withContext(Dispatchers.Main) {
+                        saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
+                    }
+                    return@withContext true
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Failed to refresh token: ${e.message}")
+        }
+        return@withContext false
+    }
+
     fun logout() {
         managerScope.launch {
             unbindDeviceHash()
         }
-        saveSession(null, null)
+        saveSession(null, null, null)
     }
 
     suspend fun bindDeviceHash(userId: String, email: String): Unit = withContext(Dispatchers.IO) {
@@ -250,7 +294,7 @@ class SupabaseManager private constructor(context: Context) {
 
             val authResponse = gson.fromJson(responseBody, SupabaseAuthResponse::class.java)
             withContext(Dispatchers.Main) {
-                saveSession(authResponse.accessToken, authResponse.user)
+                saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
             }
         }
     }
