@@ -73,8 +73,10 @@ struct PostDetailView: View {
                                                 .foregroundColor(ForkarTheme.accent)
                                                 .padding(.vertical, 8)
                                                 .padding(.horizontal, 12)
+                                                .background(ForkarTheme.card)
+                                                .cornerRadius(8)
+                                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ForkarTheme.border, lineWidth: 1))
                                         }
-                                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 2.5))
                                         
                                         // Follow Button
                                         Button(action: {
@@ -83,12 +85,14 @@ struct PostDetailView: View {
                                             }
                                         }) {
                                             Text(isFollowingAuthor ? "Siguiendo" : "Seguir")
-                                                .font(.system(size: 11, weight: .black))
+                                                .font(.system(size: 12, weight: .bold))
                                                 .foregroundColor(isFollowingAuthor ? ForkarTheme.text : .white)
-                                                .padding(.vertical, 6)
+                                                .padding(.vertical, 8)
                                                 .padding(.horizontal, 14)
+                                                .background(isFollowingAuthor ? ForkarTheme.card : ForkarTheme.accent)
+                                                .cornerRadius(8)
+                                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(isFollowingAuthor ? ForkarTheme.border : Color.clear, lineWidth: 1))
                                         }
-                                        .buttonStyle(ShineButtonStyle(backgroundColor: isFollowingAuthor ? ForkarTheme.card : ForkarTheme.accent, borderLineWidth: 2.0, shadowOffset: 2.5))
                                     }
                                 }
                             }
@@ -275,133 +279,24 @@ struct PostDetailView: View {
                     .background(ForkarTheme.bg.opacity(0.85))
                 }
             }
-            
-            // Custom ShineAlerts
-            ShineAlertView(isPresented: $showReportPostDialog) {
-                VStack(spacing: 16) {
-                    Text("Reportar Publicación")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
-                        .foregroundColor(.black)
-                    Text("Selecciona el motivo del reporte:")
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundColor(.gray)
-                    
-                    VStack(spacing: 10) {
-                        Button(action: {
-                            reportPost(reason: "spam")
-                            showReportPostDialog = false
-                        }) {
-                            Text("Spam / Publicidad")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                        
-                        Button(action: {
-                            reportPost(reason: "harassment")
-                            showReportPostDialog = false
-                        }) {
-                            Text("Acoso / Agresión")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                        
-                        Button(action: {
-                            reportPost(reason: "inappropriate")
-                            showReportPostDialog = false
-                        }) {
-                            Text("Contenido inapropiado")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                        
-                        Button(action: {
-                            reportPost(reason: "other")
-                            showReportPostDialog = false
-                        }) {
-                            Text("Otro motivo")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                    }
-                }
+            .confirmationDialog("Reportar Publicación", isPresented: $showReportPostDialog, titleVisibility: .visible) {
+                Button("Spam / Publicidad") { reportPost(reason: "spam") }
+                Button("Acoso / Agresión") { reportPost(reason: "harassment") }
+                Button("Contenido inapropiado") { reportPost(reason: "inappropriate") }
+                Button("Otro motivo") { reportPost(reason: "other") }
+                Button("Cancelar", role: .cancel) { }
             }
-            
-            ShineAlertView(isPresented: $showReportCommentDialog) {
-                VStack(spacing: 16) {
-                    Text("Reportar Comentario")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
-                        .foregroundColor(.black)
-                    Text("Selecciona el motivo del reporte:")
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundColor(.gray)
-                    
-                    VStack(spacing: 10) {
-                        Button(action: {
-                            reportComment(reason: "spam")
-                            showReportCommentDialog = false
-                        }) {
-                            Text("Spam / Publicidad")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                        
-                        Button(action: {
-                            reportComment(reason: "harassment")
-                            showReportCommentDialog = false
-                        }) {
-                            Text("Acoso / Agresión")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                        
-                        Button(action: {
-                            reportComment(reason: "inappropriate")
-                            showReportCommentDialog = false
-                        }) {
-                            Text("Contenido inapropiado")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                        
-                        Button(action: {
-                            reportComment(reason: "other")
-                            showReportCommentDialog = false
-                        }) {
-                            Text("Otro motivo")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
-                        .foregroundColor(.black)
-                    }
-                }
+            .confirmationDialog("Reportar Comentario", isPresented: $showReportCommentDialog, titleVisibility: .visible) {
+                Button("Spam / Publicidad") { reportComment(reason: "spam") }
+                Button("Acoso / Agresión") { reportComment(reason: "harassment") }
+                Button("Contenido inapropiado") { reportComment(reason: "inappropriate") }
+                Button("Otro motivo") { reportComment(reason: "other") }
+                Button("Cancelar", role: .cancel) { }
             }
-            
-            ShineAlertView(isPresented: $showSuccessAlert) {
-                VStack(spacing: 16) {
-                    Text("Reporte Enviado")
-                        .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundColor(.black)
-                    Text("Gracias por reportar. Revisaremos el contenido lo antes posible.")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    
-                    Button(action: {
-                        showSuccessAlert = false
-                    }) {
-                        Text("Entendido")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.0, shadowOffset: 3.0))
-                }
+            .alert("Reporte Enviado", isPresented: $showSuccessAlert) {
+                Button("Entendido", role: .cancel) { }
+            } message: {
+                Text("Gracias por reportar. Revisaremos el contenido lo antes posible.")
             }
         }
         .navigationTitle("Publicación")

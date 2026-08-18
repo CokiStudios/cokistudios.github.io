@@ -157,13 +157,12 @@ struct CreatePostView: View {
                             } else {
                                 Image(systemName: "paperplane.fill")
                                 Text("Publicar en la Comunidad")
-                                    .font(.system(size: 15, weight: .black))
+                                    .font(.system(size: 15, weight: .bold))
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
                     }
-                    .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(isLoading)
                     .padding()
                 }
