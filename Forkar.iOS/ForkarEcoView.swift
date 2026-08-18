@@ -318,21 +318,32 @@ struct EcoQRScannerView: View {
     }
 }
 
-// MARK: - Native QR Code Generator Sheet
+import CoreImage.CIFilterBuiltins
+
+// MARK: - Native Dynamic Random QR Code Generator Sheet
 struct MyEcoQRCodeSheet: View {
     @Environment(\.presentationMode) var presentationMode
     let userId: String
     let userName: String
     let points: Int
     
+    @State private var dynamicNonce = UUID().uuidString.prefix(8)
+    @State private var timeRemaining = 30
+    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    private var qrPayload: String {
+        // Formato seguro y aleatorio: forkar_eco://claim?user=<userId>&pts=50&nonce=<random_token>&ts=<timestamp>
+        "forkar_eco://claim?user=\(userId)&name=\(userName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? userName)&pts=50&token=\(dynamicNonce)&ts=\(Int(Date().timeIntervalSince1970))"
+    }
+    
     var body: some View {
         ZStack {
             ForkarTheme.bg.ignoresSafeArea()
             XtrapsBackground(strokeColor: Color.emerald.opacity(0.2)).ignoresSafeArea()
             
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 HStack {
-                    Text("Tu Código QR Forkar Eco")
+                    Text("Código QR Dinámico Eco")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(ForkarTheme.text)
                     Spacer()
@@ -346,33 +357,67 @@ struct MyEcoQRCodeSheet: View {
                 Spacer()
                 
                 VStack(spacing: 16) {
+                    // Imagen generada mediante CoreImage CIFilter
                     ZStack {
                         RoundedRectangle(cornerRadius: 20)
                             .fill(Color.white)
-                            .frame(width: 220, height: 220)
-                            .shadow(color: Color.emerald.opacity(0.3), radius: 15)
+                            .frame(width: 230, height: 230)
+                            .shadow(color: Color.emerald.opacity(0.35), radius: 15)
                         
-                        Image(systemName: "qrcode")
-                            .resizable()
-                            .interpolation(.none)
-                            .frame(width: 180, height: 180)
-                            .foregroundColor(.black)
+                        if let qrImage = generateQRCode(from: qrPayload) {
+                            Image(uiImage: qrImage)
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 190, height: 190)
+                        } else {
+                            Image(systemName: "qrcode")
+                                .resizable()
+                                .frame(width: 180, height: 180)
+                                .foregroundColor(.black)
+                        }
                     }
                     
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Text(userName)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(ForkarTheme.text)
-                        Text("\(points) Puntos Eco Acumulados")
+                        
+                        Text("\(points) Puntos Eco Disponibles")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(Color.emerald)
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 11))
+                            Text("Código aleatorio seguro (Renueva en \(timeRemaining)s)")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundColor(ForkarTheme.textSub)
+                        .padding(.top, 2)
                     }
                 }
                 .padding(24)
                 .liquidGlass(cornerRadius: 24, glowColor: Color.emerald)
                 
-                Text("Muestra este código en comercios y estaciones aliadas para redimir o acumular puntos.")
-                    .font(.system(size: 13))
+                Button(action: {
+                    dynamicNonce = UUID().uuidString.prefix(8)
+                    timeRemaining = 30
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.clockwise")
+                        Text("Regenerar Código Ahora")
+                    }
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Color.emerald)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color.emerald.opacity(0.12))
+                    .cornerRadius(10)
+                }
+                
+                Text("Muestra este código en la app de validación de comercios o estaciones aliadas para validar tus puntos.")
+                    .font(.system(size: 12))
                     .foregroundColor(ForkarTheme.textSub)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -380,6 +425,29 @@ struct MyEcoQRCodeSheet: View {
                 Spacer()
             }
         }
+        .onReceive(timer) { _ in
+            if timeRemaining > 1 {
+                timeRemaining -= 1
+            } else {
+                dynamicNonce = UUID().uuidString.prefix(8)
+                timeRemaining = 30
+            }
+        }
+    }
+    
+    private func generateQRCode(from string: String) -> UIImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        filter.correctionLevel = "M"
+        
+        guard let outputImage = filter.outputImage else { return nil }
+        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            return UIImage(cgImage: cgImage)
+        }
+        return nil
     }
 }
 
