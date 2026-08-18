@@ -212,8 +212,16 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
-    // Store in standard UserDefaults to persist language choice
-    @AppStorage("app_language") var currentLanguage: AppLanguage = .spanish
+    @Published var currentLanguage: AppLanguage {
+        didSet {
+            UserDefaults.standard.set(currentLanguage.rawValue, forKey: "app_language")
+        }
+    }
+    
+    init() {
+        let saved = UserDefaults.standard.string(forKey: "app_language") ?? AppLanguage.spanish.rawValue
+        self.currentLanguage = AppLanguage(rawValue: saved) ?? .spanish
+    }
     
     func translate(_ key: String) -> String {
         let translations: [AppLanguage: [String: String]] = [
@@ -323,7 +331,4 @@ struct MultiplatformNavigationStack<Content: View>: View {
         #endif
     }
 }
-
-// MARK: - PostCardView alias for backwards compatibility
-typealias PostCardView = PostRowView
 
