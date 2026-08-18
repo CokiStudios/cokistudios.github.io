@@ -73,17 +73,20 @@ struct CreatePostView: View {
                             
                             // Title input
                             Text("Título")
-                                .font(.system(size: 16, weight: .black))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(ForkarTheme.text)
                             
                             TextField("Escribe un título descriptivo...", text: $title)
                                 .foregroundColor(ForkarTheme.text)
-                                .padding(.horizontal, 4)
-                                .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .background(ForkarTheme.card)
+                                .cornerRadius(12)
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
                             
                             // Content input
                             Text("Contenido")
-                                .font(.system(size: 16, weight: .black))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(ForkarTheme.text)
                             
                             ZStack(alignment: .topLeading) {
@@ -98,10 +101,12 @@ struct CreatePostView: View {
                                 
                                 TextEditor(text: $content)
                                     .foregroundColor(ForkarTheme.text)
-                                    .padding(8)
+                                    .padding(10)
                                     .frame(minHeight: 140)
                                     .scrollContentBackground(.hidden)
-                                    .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                                    .background(ForkarTheme.card)
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
                             }
                             
                             // Image URL input
@@ -111,8 +116,11 @@ struct CreatePostView: View {
                             
                             TextField("https://ejemplo.com/imagen.jpg", text: $imageUrl)
                                 .foregroundColor(ForkarTheme.text)
-                                .padding(.horizontal, 4)
-                                .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .background(ForkarTheme.card)
+                                .cornerRadius(12)
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
                             
                             // Video URL input
                             Text("URL de Video MP4 (opcional)")
@@ -121,8 +129,11 @@ struct CreatePostView: View {
                             
                             TextField("https://ejemplo.com/video.mp4", text: $videoUrl)
                                 .foregroundColor(ForkarTheme.text)
-                                .padding(.horizontal, 4)
-                                .shineInlineCard(borderLineWidth: 1.5, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .background(ForkarTheme.card)
+                                .cornerRadius(12)
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
                             
                             if !errorMessage.isEmpty {
                                 Text(errorMessage)

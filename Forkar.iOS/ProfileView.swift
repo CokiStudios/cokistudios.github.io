@@ -98,8 +98,9 @@ struct ProfileView: View {
                                 }
                                 .padding(.top, 8)
                             }
+                            .padding(20)
                             .frame(maxWidth: .infinity)
-                            .shineInlineCard(borderLineWidth: 2.8, shadowOffset: 5.5, backgroundColor: ForkarTheme.card)
+                            .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent)
                             .padding(.horizontal)
                             
                             // User's Posts list
@@ -123,7 +124,7 @@ struct ProfileView: View {
                                         .foregroundColor(ForkarTheme.textSub)
                                         .frame(maxWidth: .infinity, alignment: .center)
                                         .padding(.vertical, 30)
-                                        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 4.0, backgroundColor: ForkarTheme.card)
+                                        .liquidGlass(cornerRadius: 16, glowColor: ForkarTheme.accent)
                                         .padding(.horizontal)
                                 } else {
                                     ForEach(userPosts) { post in

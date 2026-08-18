@@ -165,18 +165,41 @@ struct HomeView: View {
                     }
                 }
                 
-                // Floating Action Button to create a post
+                // Floating Action Button (Clean Liquid Glass + Gradient)
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        ShineColorButton(iconSystemName: "plus", iconColor: .white) {
+                        Button(action: {
                             if authManager.isLoggedIn {
                                 showCreatePost = true
                             } else {
                                 showLogin = true
                             }
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(ForkarTheme.primaryGradient)
+                                    .frame(width: 56, height: 56)
+                                    .shadow(color: ForkarTheme.accent.opacity(0.45), radius: 12, y: 6)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1.5
+                                            )
+                                    )
+                                
+                                Image(systemName: "plus")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
                         }
+                        .buttonStyle(PlainButtonStyle())
                         .padding()
                     }
                 }
@@ -255,7 +278,8 @@ struct HomeView: View {
             }
         }
     }
-        private func loadPosts() async {
+    
+    private func loadPosts() async {
         do {
             var fetched = try await authManager.fetchPosts(categoryId: selectedCategory?.id, query: searchQuery)
             if let userTastes = authManager.currentUser?.user_metadata?.company?.components(separatedBy: ",") {
@@ -267,7 +291,7 @@ struct HomeView: View {
         }
     }
     
-    private func deletePostAtIndex(at offsets: IndexSet) {
+    private func deletePostAtIndex(offsets: IndexSet) {
         for index in offsets {
             let post = posts[index]
             if post.user_id == authManager.currentUser?.id {
@@ -324,30 +348,30 @@ struct SearchBarView: View {
     }
 }
 
-// MARK: - Post Row View with Liquid Glass Aesthetic
-struct PostRowView: View {
+// MARK: - Post Card View
+struct PostCardView: View {
     let post: Post
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header: Author Info + Category Tag
-            HStack {
-                // Author Avatar/Initials
+        VStack(alignment: .leading, spacing: 14) {
+            // Header: Author Avatar, Name, Category
+            HStack(spacing: 12) {
                 if let avatarURL = post.author_avatar, let url = URL(string: avatarURL) {
                     AsyncImage(url: url) { image in
                         image.resizable()
                     } placeholder: {
                         CircleAvatarPlaceholder(initials: post.initials)
                     }
-                    .frame(width: 34, height: 34)
+                    .frame(width: 38, height: 38)
                     .clipShape(Circle())
                 } else {
                     CircleAvatarPlaceholder(initials: post.initials)
+                        .frame(width: 38, height: 38)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(post.author_name)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(ForkarTheme.text)
                     Text(post.formattedDate)
                         .font(.system(size: 11))
@@ -356,23 +380,18 @@ struct PostRowView: View {
                 
                 Spacer()
                 
-                // Category Tag
                 if let cat = post.category {
                     Text(cat.name)
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .padding(.vertical, 4)
                         .padding(.horizontal, 10)
                         .background(cat.themeColor.opacity(0.15))
                         .foregroundColor(cat.themeColor)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(cat.themeColor.opacity(0.3), lineWidth: 1)
-                        )
+                        .cornerRadius(6)
                 }
             }
             
-            // Title & Content Preview
+            // Post Title & Snippet
             VStack(alignment: .leading, spacing: 6) {
                 Text(post.title)
                     .font(.system(size: 16, weight: .bold))
@@ -385,19 +404,23 @@ struct PostRowView: View {
                     .lineLimit(3)
             }
             
-            // Media preview indicator if present
-            if post.image_url != nil || post.video_url != nil {
-                HStack(spacing: 6) {
-                    Image(systemName: post.video_url != nil ? "video.fill" : "photo.fill")
-                        .font(.system(size: 11))
-                    Text(post.video_url != nil ? "Video adjunto" : "Foto adjunta")
-                        .font(.system(size: 11, weight: .medium))
+            // 🖼️ Media Full Preview (Fotos / Videos adjuntos)
+            if let imageURL = post.image_url, let url = URL(string: imageURL) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(maxHeight: 220)
+                        .clipped()
+                        .cornerRadius(12)
+                } placeholder: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.2))
+                            .frame(height: 140)
+                        ProgressView()
+                    }
                 }
-                .foregroundColor(ForkarTheme.accent)
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
-                .background(ForkarTheme.accent.opacity(0.1))
-                .cornerRadius(8)
             }
             
             Divider()
@@ -424,42 +447,6 @@ struct PostRowView: View {
             }
         }
         .padding(16)
-        .background(
-            ZStack {
-                if #available(iOS 15.0, macOS 12.0, *) {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(.ultraThinMaterial)
-                } else {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(ForkarTheme.card)
-                }
-            }
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.2), Color.white.opacity(0.04)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
-        .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
-    }
-}
-
-struct CircleAvatarPlaceholder: View {
-    let initials: String
-    
-    var body: some View {
-        Text(initials)
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(ForkarTheme.accent)
-            .frame(width: 34, height: 34)
-            .background(ForkarTheme.accent.opacity(0.15))
-            .clipShape(Circle())
-            .overlay(Circle().stroke(ForkarTheme.accent.opacity(0.3), lineWidth: 1))
+        .liquidGlass(cornerRadius: 18, glowColor: ForkarTheme.accent)
     }
 }

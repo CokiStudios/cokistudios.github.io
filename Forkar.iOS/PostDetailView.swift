@@ -122,6 +122,47 @@ struct PostDetailView: View {
                                 .foregroundColor(ForkarTheme.text)
                                 .textSelection(.enabled)
                             
+                            // 🖼️ Foto o Video Adjunto en Tamaño Completo
+                            if let imageURL = post.image_url, let url = URL(string: imageURL) {
+                                AsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: .infinity)
+                                        .cornerRadius(14)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                        )
+                                } placeholder: {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color.black.opacity(0.25))
+                                            .frame(height: 200)
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                            }
+                            
+                            if let videoURL = post.video_url, let url = URL(string: videoURL) {
+                                Link(destination: url) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "video.fill")
+                                        Text("Reproducir Video Adjunto")
+                                    }
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(ForkarTheme.accent)
+                                    .cornerRadius(12)
+                                    .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 8, y: 3)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            
                             // Like/Action bar
                             HStack(spacing: 24) {
                                 Button(action: {
@@ -137,18 +178,25 @@ struct PostDetailView: View {
                                         Image(systemName: isLiked ? "heart.fill" : "heart")
                                             .foregroundColor(isLiked ? .red : ForkarTheme.textSub)
                                         Text("\(likesCount) Likes")
+                                            .font(.system(size: 13, weight: .bold))
                                             .foregroundColor(ForkarTheme.text)
                                     }
-                                    .font(.system(size: 12, weight: .black))
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
+                                    .background(ForkarTheme.card)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(ForkarTheme.border, lineWidth: 1)
+                                    )
                                 }
-                                .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.card, borderLineWidth: 2.0, shadowOffset: 3.0))
+                                .buttonStyle(PlainButtonStyle())
                                 
                                 Spacer()
                             }
                         }
-                        .shineInlineCard(borderLineWidth: 2.8, shadowOffset: 5.0, backgroundColor: ForkarTheme.card)
+                        .padding(20)
+                        .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent)
                         
                         // Comments Title
                         Text("Comentarios (\(comments.count))")
@@ -196,7 +244,12 @@ struct PostDetailView: View {
                             .foregroundColor(ForkarTheme.text)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
-                            .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 0.0, backgroundColor: ForkarTheme.card)
+                            .background(ForkarTheme.card)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(ForkarTheme.border, lineWidth: 1)
+                            )
                         
                         Button(action: {
                             if authManager.isLoggedIn {
@@ -209,16 +262,14 @@ struct PostDetailView: View {
                         }) {
                             Image(systemName: "paperplane.fill")
                                 .foregroundColor(.white)
-                                .frame(width: 38, height: 38)
-                                .background(ForkarTheme.accent)
+                                .frame(width: 40, height: 40)
+                                .background(ForkarTheme.primaryGradient)
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.black, lineWidth: 2.0))
-                                .background(Circle().fill(Color.black).offset(x: 2, y: 2))
+                                .shadow(color: ForkarTheme.accent.opacity(0.4), radius: 6, y: 2)
                         }
                         .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .padding(.trailing, 2)
-                        .padding(.bottom, 2)
                     }
+                    .padding()
                     .padding(.horizontal)
                     .padding(.vertical, 12)
                     .background(ForkarTheme.bg.opacity(0.85))
@@ -631,6 +682,7 @@ struct CommentRowView: View {
                 .foregroundColor(ForkarTheme.text)
                 .padding(.leading, 32)
         }
-        .shineInlineCard(borderLineWidth: 2.0, shadowOffset: 3.5, backgroundColor: ForkarTheme.card)
+        .padding(14)
+        .liquidGlass(cornerRadius: 14, glowColor: ForkarTheme.accent)
     }
 }
