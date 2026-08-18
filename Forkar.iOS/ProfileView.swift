@@ -214,43 +214,19 @@ struct ProfileView: View {
                             showLogin = true
                         }) {
                             Text("Iniciar Sesión / Registrarse")
-                                .font(.system(size: 15, weight: .black))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 4)
                         }
-                        .buttonStyle(ShineButtonStyle(backgroundColor: ForkarTheme.accent, borderLineWidth: 2.5, shadowOffset: 4.5))
+                        .buttonStyle(PrimaryButtonStyle())
                         .padding(.horizontal, 32)
                     }
                 }
-                
-                // Shine UI Custom Brand Alert Confirmation
-                ShineAlertView(isPresented: $showLogoutConfirmation) {
-                    VStack(spacing: 16) {
-                        Text("¿Cerrar Sesión?")
-                            .font(.system(size: 22, weight: .black, design: .rounded))
-                            .foregroundColor(.black)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("¿Estás seguro de que quieres salir de tu cuenta de Coki Studios?")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        
-                        HStack(spacing: 24) {
-                            ShineColorButton(iconSystemName: "xmark", iconColor: .red) {
-                                showLogoutConfirmation = false
-                            }
-                            
-                            ShineColorButton(iconSystemName: "checkmark", iconColor: .green) {
-                                showLogoutConfirmation = false
-                                authManager.logout()
-                            }
-                        }
-                        .padding(.top, 8)
-                    }
+            }
+            .alert("¿Cerrar Sesión?", isPresented: $showLogoutConfirmation) {
+                Button("Cancelar", role: .cancel) { }
+                Button("Cerrar Sesión", role: .destructive) {
+                    authManager.logout()
                 }
+            } message: {
+                Text("¿Estás seguro de que quieres salir de tu cuenta de Coki Studios?")
             }
             .navigationTitle("Mi Perfil")
             #if os(iOS)
