@@ -5,6 +5,10 @@ struct ForkarEcoView: View {
     @EnvironmentObject var authManager: SupabaseManager
     @StateObject private var nfcReader = NFCReaderManager()
     
+    @State private var co2Saved: Double = UserDefaults.standard.double(forKey: "forkar_co2_saved")
+    @State private var ecoPoints: Int = UserDefaults.standard.integer(forKey: "forkar_eco_points")
+    @State private var showSuccessAlert = false
+    @State private var alertMessage = ""
     @State private var showQRScanner = false
     @State private var showMyQRCode = false
     @State private var qrScanResult: String? = nil
