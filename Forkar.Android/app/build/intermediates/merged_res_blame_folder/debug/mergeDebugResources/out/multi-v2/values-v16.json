@@ -4,7 +4,7 @@
             "outputFile": "com.cokistudios.forkar.app-mergeDebugResources-50:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\canin\\.gradle\\caches\\8.9\\transforms\\80602d478ee3cf93617664271a4fa094\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
+                    "source": "/Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

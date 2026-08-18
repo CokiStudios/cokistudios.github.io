@@ -415,6 +415,36 @@ fun PostCardView(
             overflow = TextOverflow.Ellipsis
         )
 
+        // Photo / Media Attachment preview
+        if (!post.imageUrl.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            SubcomposeAsyncImage(
+                model = post.imageUrl,
+                contentDescription = "Post Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = IndigoPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                error = {
+                    // Fallback silently if image fails to load
+                }
+            )
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
         Divider(color = borderColor)
         Spacer(modifier = Modifier.height(12.dp))

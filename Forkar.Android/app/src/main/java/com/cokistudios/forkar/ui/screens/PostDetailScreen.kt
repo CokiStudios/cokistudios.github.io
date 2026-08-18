@@ -269,6 +269,33 @@ fun PostDetailScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
 
+                        // Full Post Photo
+                        if (!post.imageUrl.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            SubcomposeAsyncImage(
+                                model = post.imageUrl,
+                                contentDescription = "Post Photo",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+                                loading = {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(220.dp)
+                                            .background(if (isDark) Color(0xFF1E293B) else Color(0xFFE2E8F0)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = IndigoPrimary,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                }
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Like Action Row

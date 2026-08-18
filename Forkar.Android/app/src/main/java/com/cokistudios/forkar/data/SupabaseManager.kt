@@ -230,7 +230,7 @@ class SupabaseManager private constructor(context: Context) {
             .header("apikey", anonKey)
 
         val token = sessionToken
-        if (token != null) {
+        if (token != null && !token.startsWith("device_hash_session_") && token.count { it == '.' } == 2) {
             requestBuilder.header("Authorization", "Bearer $token")
         } else {
             requestBuilder.header("Authorization", "Bearer $anonKey")

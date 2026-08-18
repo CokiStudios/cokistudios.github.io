@@ -4,24 +4,7 @@
             "outputFile": "com.cokistudios.forkar.app-mergeDebugResources-50:/values-sq/values-sq.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\canin\\.gradle\\caches\\8.9\\transforms\\80602d478ee3cf93617664271a4fa094\\transformed\\core-1.12.0\\res\\values-sq\\values-sq.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,154,256,354,451,559,670,792",
-                        "endColumns": "98,101,97,96,107,110,121,100",
-                        "endOffsets": "149,251,349,446,554,665,787,888"
-                    },
-                    "to": {
-                        "startLines": "2,3,4,5,6,7,8,79",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,204,306,404,501,609,720,8276",
-                        "endColumns": "98,101,97,96,107,110,121,100",
-                        "endOffsets": "199,301,399,496,604,715,837,8372"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\canin\\.gradle\\caches\\8.9\\transforms\\32518de75f5eab1576a193c5071d045d\\transformed\\ui-release\\res\\values-sq\\values-sq.xml",
+                    "source": "/Users/jerix/.gradle/caches/8.9/transforms/32518de75f5eab1576a193c5071d045d/transformed/ui-release/res/values-sq/values-sq.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -38,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\canin\\.gradle\\caches\\8.9\\transforms\\7e7dfa694eb35cd6f31bd1bfbb483f74\\transformed\\material3-release\\res\\values-sq\\values-sq.xml",
+                    "source": "/Users/jerix/.gradle/caches/8.9/transforms/7e7dfa694eb35cd6f31bd1bfbb483f74/transformed/material3-release/res/values-sq/values-sq.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -55,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\canin\\.gradle\\caches\\8.9\\transforms\\159e4ff430d705c3402becd100240a6e\\transformed\\foundation-release\\res\\values-sq\\values-sq.xml",
+                    "source": "/Users/jerix/.gradle/caches/8.9/transforms/159e4ff430d705c3402becd100240a6e/transformed/foundation-release/res/values-sq/values-sq.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -69,6 +52,23 @@
                         "startOffsets": "8641,8739",
                         "endColumns": "97,98",
                         "endOffsets": "8734,8833"
+                    }
+                },
+                {
+                    "source": "/Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/res/values-sq/values-sq.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,154,256,354,451,559,670,792",
+                        "endColumns": "98,101,97,96,107,110,121,100",
+                        "endOffsets": "149,251,349,446,554,665,787,888"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,79",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,204,306,404,501,609,720,8276",
+                        "endColumns": "98,101,97,96,107,110,121,100",
+                        "endOffsets": "199,301,399,496,604,715,837,8372"
                     }
                 }
             ]

@@ -25,6 +25,8 @@ data class Post(
     val content: String,
     @SerializedName("likes_count") val likesCount: Int = 0,
     @SerializedName("comments_count") val commentsCount: Int = 0,
+    @SerializedName("image_url") val imageUrl: String? = null,
+    @SerializedName("video_url") val videoUrl: String? = null,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String?,
     val category: Category?
