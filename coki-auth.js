@@ -469,6 +469,30 @@ async function loginWithPasskey() {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🔐 VALIDACIÓN DE ACCESO PRIVADO CS MAIL (SUPABASE SERVER-SIDE)
+// ═══════════════════════════════════════════════════════════════
+
+async function hasAdminMailAccess() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+        if (!user || !user.email) return false;
+        
+        const email = user.email.toLowerCase().trim();
+        const allowedEmails = ['cokistudiosllc@gmail.com', 'jerixortixdev@gmail.com', 'ceosupport@cokistudios.com'];
+        
+        // Comprobar rol de administrador o email verificado en Supabase
+        const isAuthorizedEmail = allowedEmails.includes(email);
+        const isAdminRole = user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'Founder / entrepreneur';
+        
+        return isAuthorizedEmail || isAdminRole;
+    } catch (e) {
+        console.error('Error checking admin mail access in Supabase:', e);
+        return false;
+    }
+}
+
 export {
     supabase,
     registerCokiAccount,
@@ -490,6 +514,7 @@ export {
     DEFAULT_CATEGORIES,
     isPasskeySupported,
     registerPasskey,
-    loginWithPasskey
+    loginWithPasskey,
+    hasAdminMailAccess
 };
 

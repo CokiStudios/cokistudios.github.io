@@ -354,7 +354,7 @@
         <header class="mail-header-bar">
             <div style="font-size:13px; font-weight:700; color:var(--text-sub); display:flex; align-items:center; gap:8px;">
                 <span>🔒 Sesión Corporativa Encriptada</span>
-                <span style="font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(16,185,129,0.15); color:#10b981;">Conectado</span>
+                <span id="session-badge" style="font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(16,185,129,0.15); color:#10b981;">Verificando...</span>
             </div>
 
             <div style="display:flex; gap:10px; align-items:center;">
@@ -366,8 +366,8 @@
 
         <div class="mail-frame-wrapper">
             <!-- Portal Card Directo Seguro -->
-            <div class="fallback-overlay">
-                <div class="portal-card">
+            <div class="fallback-overlay" id="access-container">
+                <div class="portal-card" id="authorized-card" style="display:none;">
                     <div class="portal-icon">✉️</div>
                     <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 8px;">Acceso a Zoho Mail CS</h1>
                     <p style="font-size: 13.5px; color: var(--text-sub); line-height: 1.6;">
@@ -387,9 +387,50 @@
                         Protegido bajo la red de seguridad de Coki Studios LLC
                     </div>
                 </div>
+
+                <div class="portal-card" id="unauthorized-card" style="display:none; border-color:rgba(239, 68, 68, 0.4);">
+                    <div class="portal-icon" style="background:linear-gradient(135deg, #ef4444, #b91c1c);">🚫</div>
+                    <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 8px;">Acceso Restringido</h1>
+                    <p style="font-size: 13.5px; color: var(--text-sub); line-height: 1.6; margin-bottom: 20px;">
+                        El correo corporativo de Zoho Mail solo está disponible para cuentas administrativas autorizadas de <strong>Coki Studios LLC</strong> (<span style="color:#818cf8;">cokistudiosllc@gmail.com</span> / <span style="color:#818cf8;">jerixortixdev@gmail.com</span>).
+                    </p>
+                    <a href="coki-dashboard.html" class="btn-launch" style="background:linear-gradient(135deg, #6366f1, #4f46e5);">
+                        <span>←</span> Volver al Dashboard
+                    </a>
+                </div>
             </div>
         </div>
     </main>
 
+    <script type="module">
+        import { hasAdminMailAccess, getCurrentCokiUser } from './coki-auth.js';
+
+        async function verifyAccess() {
+            const hasAccess = await hasAdminMailAccess();
+            const sessionBadge = document.getElementById('session-badge');
+            const authCard = document.getElementById('authorized-card');
+            const unauthCard = document.getElementById('unauthorized-card');
+
+            if (hasAccess) {
+                if (sessionBadge) {
+                    sessionBadge.textContent = 'Acceso Autorizado';
+                    sessionBadge.style.color = '#10b981';
+                    sessionBadge.style.background = 'rgba(16,185,129,0.15)';
+                }
+                if (authCard) authCard.style.display = 'block';
+                if (unauthCard) unauthCard.style.display = 'none';
+            } else {
+                if (sessionBadge) {
+                    sessionBadge.textContent = 'No Autorizado';
+                    sessionBadge.style.color = '#ef4444';
+                    sessionBadge.style.background = 'rgba(239,68,68,0.15)';
+                }
+                if (authCard) authCard.style.display = 'none';
+                if (unauthCard) unauthCard.style.display = 'block';
+            }
+        }
+
+        verifyAccess();
+    </script>
 </body>
 </html>

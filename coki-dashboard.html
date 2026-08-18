@@ -558,7 +558,7 @@
         <div class="section-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2 class="section-title" style="margin-bottom:0;">Juegos y Aplicaciones vinculadas</h2>
-                <a href="cs-mail.html" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:#818cf8; text-decoration:none; padding:6px 12px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <a id="btn-cs-mail" href="cs-mail.html" style="display:none; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:#818cf8; text-decoration:none; padding:6px 12px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
                     <span>📬</span> Abrir CS Mail (Zoho) ↗
                 </a>
             </div>
@@ -614,7 +614,7 @@
     </div>
 
     <script type="module">
-        import { getCurrentCokiUser, logoutCoki, updateCokiProfile, registerPasskey } from './coki-auth.js';
+        import { getCurrentCokiUser, logoutCoki, updateCokiProfile, registerPasskey, hasAdminMailAccess } from './coki-auth.js';
         import { getUserConnectedApps, revokeConnectedApp } from './oauth-server.js';
         import { checkAndShowSetupWizard } from './coki-extensions.js';
 
@@ -718,6 +718,13 @@
                 selectedCategories = JSON.parse(localStorage.getItem('forkar_user_tastes') || '["cat-general", "cat-gaming"]');
             }
             renderCategoryPreferences();
+
+            // 🔐 VERIFICACIÓN DE ACCESO CS MAIL EN SUPABASE
+            const canAccessMail = await hasAdminMailAccess();
+            const mailBtn = document.getElementById('btn-cs-mail');
+            if (mailBtn) {
+                mailBtn.style.display = canAccessMail ? 'inline-flex' : 'none';
+            }
 
             // 🚀 VERIFICAR SI EL USUARIO YA ESTÁ MIGRADO
             checkUserMigrationStatus();
