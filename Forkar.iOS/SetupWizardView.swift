@@ -122,19 +122,20 @@ struct SetupWizardView: View {
         isSaving = true
         Task {
             do {
-                try await authManager.completeUserProfile(
+                try await authManager.updateProfile(
                     fullName: fullName,
                     avatarUrl: avatarUrl.isEmpty ? nil : avatarUrl,
-                    role: selectedRole,
-                    company: company.isEmpty ? nil : company
+                    company: company.isEmpty ? nil : company,
+                    role: selectedRole
                 )
                 await MainActor.run {
                     isSaving = false
-                    isPresented = false
+                    presentationMode.wrappedValue.dismiss()
                 }
             } catch {
                 await MainActor.run {
                     isSaving = false
+                    errorMessage = error.localizedDescription
                 }
             }
         }
