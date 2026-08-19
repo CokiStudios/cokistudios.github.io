@@ -1,5 +1,6 @@
 import SwiftUI
 import WatchKit
+import WatchConnectivity
 
 // MARK: - Models
 struct WatchChatRoom: Identifiable, Codable, Hashable {
@@ -33,7 +34,7 @@ struct WatchChatMessage: Identifiable, Codable, Hashable {
 }
 
 // MARK: - Supabase Watch Manager
-class WatchSupabaseManager: ObservableObject {
+class WatchSupabaseManager: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = WatchSupabaseManager()
     
     let baseURL = "https://cmkumxprmmhuinxfppxl.supabase.co"
@@ -44,12 +45,41 @@ class WatchSupabaseManager: ObservableObject {
     @Published var rooms: [WatchChatRoom] = []
     @Published var isLoading = false
     
-    init() {
+    override init() {
+        super.init()
         if let storedEmail = UserDefaults.standard.string(forKey: "cs_watch_user_email") {
             currentUserEmail = storedEmail
         }
         if let storedId = UserDefaults.standard.string(forKey: "cs_watch_user_id"), let uuid = UUID(uuidString: storedId) {
             currentUserId = uuid
+        }
+        setupWatchConnectivity()
+    }
+    
+    private func setupWatchConnectivity() {
+        if WCSession.isSupported() {
+            let session = WCSession.default
+            session.delegate = self
+            session.activate()
+        }
+    }
+    
+    // WCSessionDelegate
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    
+    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        DispatchQueue.main.async {
+            if let email = applicationContext["user_email"] as? String {
+                self.currentUserEmail = email
+                UserDefaults.standard.set(email, forKey: "cs_watch_user_email")
+            }
+            if let idStr = applicationContext["user_id"] as? String, let uuid = UUID(uuidString: idStr) {
+                self.currentUserId = uuid
+                UserDefaults.standard.set(idStr, forKey: "cs_watch_user_id")
+            }
+            Task {
+                await self.fetchRooms()
+            }
         }
     }
     

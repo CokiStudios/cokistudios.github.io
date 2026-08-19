@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import WatchConnectivity
 
 struct CSMSChatRoom: Codable, Identifiable {
     let id: UUID
@@ -20,11 +21,49 @@ struct CSMSChatMessage: Codable, Identifiable {
     let created_at: String
 }
 
-class SupabaseManager: ObservableObject {
+class SupabaseManager: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = SupabaseManager()
     
     let baseURL = "https://cmkumxprmmhuinxfppxl.supabase.co"
     let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
+    
+    @Published var currentUserEmail: String = "ceosupport@cokistudios.com"
+    @Published var currentUserId: UUID = UUID(uuidString: "88888888-4444-4444-4444-121212121212") ?? UUID()
+    
+    override init() {
+        super.init()
+        setupWatchConnectivity()
+    }
+    
+    // MARK: - WatchConnectivity Setup
+    private func setupWatchConnectivity() {
+        if WCSession.isSupported() {
+            let session = WCSession.default
+            session.delegate = self
+            session.activate()
+        }
+    }
+    
+    func syncSessionToWatch() {
+        guard WCSession.isSupported() && WCSession.default.activationState == .activated else { return }
+        let context: [String: Any] = [
+            "user_email": currentUserEmail,
+            "user_id": currentUserId.uuidString
+        ]
+        try? WCSession.default.updateApplicationContext(context)
+    }
+    
+    // WCSessionDelegate
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if activationState == .activated {
+            syncSessionToWatch()
+        }
+    }
+    
+    func sessionDidBecomeInactive(_ session: WCSession) {}
+    func sessionDidDeactivate(_ session: WCSession) {
+        WCSession.default.activate()
+    }
     
     private func makeRequest(path: String, method: String = "GET", body: Data? = null, queryItems: [URLQueryItem] = []) -> URLRequest {
         var components = URLComponents(string: "\(baseURL)\(path)")!
