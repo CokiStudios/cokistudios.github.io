@@ -225,29 +225,28 @@ struct WatchChatDetailView: View {
         "Revisando Forkar 🌿"
     ]
     
+    @State private var showQuickRepliesSheet = false
+    
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 8) {
                     // Quick Action Bar
-                    HStack {
-                        Menu {
-                            ForEach(quickReplies, id: \.self) { reply in
-                                Button(reply) {
-                                    sendQuickReply(reply)
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                Image(systemName: "bolt.fill")
-                                    .foregroundColor(.yellow)
-                                Text("Respuestas")
-                                    .font(.system(size: 11, weight: .bold))
-                            }
-                            .padding(.vertical, 4)
+                    HStack(spacing: 6) {
+                        Button(action: {
+                            showQuickRepliesSheet = true
+                        }) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.yellow)
+                                .frame(width: 32, height: 32)
+                                .background(Color(white: 0.15))
+                                .clipShape(Circle())
                         }
+                        .buttonStyle(PlainButtonStyle())
                         
-                        TextField("Dictar...", text: $quickText)
+                        TextField("Mensaje...", text: $quickText)
+                            .font(.system(size: 12))
                             .onSubmit {
                                 sendQuickReply(quickText)
                                 quickText = ""
@@ -295,6 +294,36 @@ struct WatchChatDetailView: View {
                 .padding(.horizontal, 4)
             }
             .navigationTitle(room.displayName)
+            .sheet(isPresented: $showQuickRepliesSheet) {
+                ScrollView {
+                    VStack(spacing: 6) {
+                        Text("Respuestas Rápidas")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.bottom, 4)
+                        
+                        ForEach(quickReplies, id: \.self) { reply in
+                            Button(action: {
+                                showQuickRepliesSheet = false
+                                sendQuickReply(reply)
+                            }) {
+                                HStack {
+                                    Text(reply)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 10)
+                                .background(Color(white: 0.16))
+                                .cornerRadius(10)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding(8)
+                }
+            }
             .task {
                 await loadMessages()
                 if let last = messages.last {
