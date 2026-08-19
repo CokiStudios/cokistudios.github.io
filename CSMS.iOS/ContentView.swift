@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var isLoading = false
     @State private var showCreateGroup = false
     @State private var newGroupName = ""
+    @State private var isCreating = false
     @State private var showLogin = false
     
     var body: some View {
@@ -294,7 +295,8 @@ struct ConversationView: View {
                                 .padding(.vertical, 40)
                             } else {
                                 ForEach(messages) { msg in
-                                    let isMine = msg.sender_id == manager.currentUserId.uuidString
+                                    let currentUserIdString = manager.currentUser?.id.uuidString ?? ""
+                                    let isMine = msg.sender_id == currentUserIdString
                                     
                                     HStack {
                                         if isMine { Spacer() }
