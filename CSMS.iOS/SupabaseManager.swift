@@ -65,7 +65,7 @@ class SupabaseManager: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.activate()
     }
     
-    private func makeRequest(path: String, method: String = "GET", body: Data? = null, queryItems: [URLQueryItem] = []) -> URLRequest {
+    private func makeRequest(path: String, method: String = "GET", body: Data? = nil, queryItems: [URLQueryItem] = []) -> URLRequest {
         var components = URLComponents(string: "\(baseURL)\(path)")!
         if !queryItems.isEmpty {
             components.queryItems = queryItems
