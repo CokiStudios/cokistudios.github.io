@@ -10,12 +10,14 @@
 		8A0000012A00000100000001 /* CSMSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000022A00000100000001 /* CSMSApp.swift */; };
 		8A0000032A00000100000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000042A00000100000001 /* ContentView.swift */; };
 		8A0000052A00000100000001 /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000062A00000100000001 /* SupabaseManager.swift */; };
+		8A0000162A00000100000001 /* ForkarTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000172A00000100000001 /* ForkarTheme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		8A0000022A00000100000001 /* CSMSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSMSApp.swift; sourceTree = "<group>"; };
 		8A0000042A00000100000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8A0000062A00000100000001 /* SupabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseManager.swift; sourceTree = "<group>"; };
+		8A0000172A00000100000001 /* ForkarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarTheme.swift; sourceTree = "<group>"; };
 		8A0000072A00000100000001 /* CSMS_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CSMS_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A0000082A00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -45,6 +47,7 @@
 				8A0000022A00000100000001 /* CSMSApp.swift */,
 				8A0000042A00000100000001 /* ContentView.swift */,
 				8A0000062A00000100000001 /* SupabaseManager.swift */,
+				8A0000172A00000100000001 /* ForkarTheme.swift */,
 				8A0000082A00000100000001 /* Info.plist */,
 			);
 			path = .;
@@ -118,6 +121,7 @@
 				8A0000012A00000100000001 /* CSMSApp.swift in Sources */,
 				8A0000032A00000100000001 /* ContentView.swift in Sources */,
 				8A0000052A00000100000001 /* SupabaseManager.swift in Sources */,
+				8A0000162A00000100000001 /* ForkarTheme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
