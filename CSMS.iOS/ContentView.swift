@@ -7,7 +7,7 @@ struct ContentView: View {
     @State private var isLoading = false
     @State private var showCreateGroup = false
     @State private var newGroupName = ""
-    @State private var isCreating = false
+    @State private var showLogin = false
     
     var body: some View {
         NavigationStack {
@@ -15,7 +15,81 @@ struct ContentView: View {
                 ForkarTheme.bg.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    if isLoading && rooms.isEmpty {
+                    // Profile Bar
+                    if let user = manager.currentUser {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(ForkarTheme.primaryGradient)
+                                    .frame(width: 36, height: 36)
+                                Text(user.email?.prefix(1).uppercased() ?? "U")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.user_metadata?.full_name ?? user.email ?? "Usuario")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(ForkarTheme.text)
+                                Text(user.email ?? "")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(ForkarTheme.textSub)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                manager.logout()
+                            }) {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    .font(.system(size: 15))
+                                    .foregroundColor(ForkarTheme.textSub)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.04))
+                    }
+                    
+                    if !manager.isLoggedIn {
+                        Spacer()
+                        VStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(ForkarTheme.accent.opacity(0.15))
+                                    .frame(width: 80, height: 80)
+                                Image(systemName: "lock.shield.fill")
+                                    .font(.system(size: 36))
+                                    .foregroundColor(ForkarTheme.accent)
+                            }
+                            
+                            Text("Inicia sesión en CSMS")
+                                .font(.title3.bold())
+                                .foregroundColor(ForkarTheme.text)
+                            
+                            Text("Para sincronizar tus chats con Forkar y Apple Watch, inicia sesión con tu cuenta de Coki Studios.")
+                                .font(.subheadline)
+                                .foregroundColor(ForkarTheme.textSub)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
+                            
+                            Button(action: { showLogin = true }) {
+                                HStack {
+                                    Image(systemName: "person.badge.key.fill")
+                                    Text("Iniciar Sesión")
+                                }
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 28)
+                                .background(ForkarTheme.accent)
+                                .cornerRadius(14)
+                                .shadow(color: ForkarTheme.accent.opacity(0.3), radius: 10, y: 4)
+                            }
+                            .padding(.top, 8)
+                        }
+                        Spacer()
+                    } else if isLoading && rooms.isEmpty {
                         Spacer()
                         ProgressView("Cargando salas CSMS...")
                             .tint(ForkarTheme.accent)
@@ -97,14 +171,20 @@ struct ContentView: View {
             .toolbarBackground(ForkarTheme.bg, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showCreateGroup = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 24))
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundColor(ForkarTheme.accent)
+                if manager.isLoggedIn {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: { showCreateGroup = true }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 24))
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundColor(ForkarTheme.accent)
+                        }
                     }
                 }
+            }
+            .sheet(isPresented: $showLogin) {
+                LoginView()
+                    .environmentObject(manager)
             }
             .sheet(isPresented: $showCreateGroup) {
                 NavigationStack {
