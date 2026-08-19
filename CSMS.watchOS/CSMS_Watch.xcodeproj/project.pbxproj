@@ -69,7 +69,7 @@
 			name = "CSMS_Watch";
 			productName = "CSMS_Watch";
 			productReference = 9E0000032A00000100000001 /* CSMS_Watch.app */;
-			productType = "com.apple.product-type.application.watchapp2";
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
