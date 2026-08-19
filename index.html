@@ -8,6 +8,15 @@
         if (localStorage.getItem('coki-theme') === 'light') {
             document.documentElement.classList.add('light-theme');
         }
+        // Intercept OAuth callback hash if Supabase defaults to root URL
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+            const redirectApp = new URLSearchParams(window.location.search).get('app_redirect');
+            if (redirectApp === 'csms' || window.location.hash.includes('csms')) {
+                window.location.href = 'csms://oauth' + window.location.hash;
+            } else if (redirectApp === 'forkar' || window.location.hash.includes('forkar')) {
+                window.location.href = 'forkar://oauth' + window.location.hash;
+            }
+        }
     </script>
     <meta name="description" content="Coki Studios crea herramientas digitales que conectan personas y hacen el mundo más accesible. Descubre Horizon Maps, OurCommonHome y CS ID.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
