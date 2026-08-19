@@ -59,6 +59,59 @@ struct LoginView: View {
                                     .cornerRadius(12)
                                     .foregroundColor(ForkarTheme.text)
                             }
+                        } else {
+                            // Google & GitHub OAuth Buttons
+                            VStack(spacing: 12) {
+                                Button(action: {
+                                    handleOAuth(provider: "google")
+                                }) {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "safari.fill")
+                                        Text("Continuar con Google")
+                                            .font(.system(size: 14, weight: .bold))
+                                    }
+                                    .foregroundColor(ForkarTheme.text)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.white.opacity(0.06))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Button(action: {
+                                    handleOAuth(provider: "github")
+                                }) {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "terminal.fill")
+                                        Text("Continuar con GitHub")
+                                            .font(.system(size: 14, weight: .bold))
+                                    }
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.black.opacity(0.5))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                            .padding(.bottom, 6)
+                            
+                            HStack {
+                                VStack { Divider().background(Color.white.opacity(0.15)) }
+                                Text("o con tu correo")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(ForkarTheme.textSub)
+                                    .padding(.horizontal, 4)
+                                VStack { Divider().background(Color.white.opacity(0.15)) }
+                            }
                         }
                         
                         VStack(alignment: .leading, spacing: 6) {
@@ -144,6 +197,26 @@ struct LoginView: View {
                 isLoading = false
                 dismiss()
             } catch {
+                errorMessage = error.localizedDescription
+                isLoading = false
+            }
+        }
+    }
+    
+    private func handleOAuth(provider: String) {
+        isLoading = true
+        errorMessage = ""
+        Task {
+            do {
+                try await manager.signInWithOAuth(provider: provider)
+                isLoading = false
+                dismiss()
+            } catch {
+                let nsError = error as NSError
+                if nsError.domain == ASWebAuthenticationSessionErrorDomain && nsError.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                    isLoading = false
+                    return
+                }
                 errorMessage = error.localizedDescription
                 isLoading = false
             }

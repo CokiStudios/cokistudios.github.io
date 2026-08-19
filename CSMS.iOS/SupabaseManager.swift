@@ -212,6 +212,78 @@ class SupabaseManager: NSObject, ObservableObject, WCSessionDelegate {
         try await login(email: email, password: password)
     }
     
+    // MARK: - OAuth API
+    @MainActor
+    func signInWithOAuth(provider: String) async throws {
+        let authURL = URL(string: "\(baseURL)/auth/v1/authorize?provider=\(provider)&redirect_to=csms://oauth")!
+        let callbackScheme = "csms"
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            let session = ASWebAuthenticationSession(url: authURL, callbackURLScheme: callbackScheme) { callbackURL, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                guard let callbackURL = callbackURL else {
+                    continuation.resume(throwing: NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No callback URL"]))
+                    return
+                }
+                
+                Task {
+                    do {
+                        try await self.handleOAuthCallback(url: callbackURL)
+                        continuation.resume()
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+            
+            session.presentationContextProvider = CSMSPresentationAnchorProvider.shared
+            session.prefersEphemeralWebBrowserSession = false
+            session.start()
+        }
+    }
+    
+    private func handleOAuthCallback(url: URL) async throws {
+        guard let fragment = url.fragment else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid callback URL"])
+        }
+        
+        var parameters: [String: String] = [:]
+        let pairs = fragment.components(separatedBy: "&")
+        for pair in pairs {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                parameters[parts[0]] = parts[1].removingPercentEncoding
+            }
+        }
+        
+        guard let accessToken = parameters["access_token"] else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing access token in callback"])
+        }
+        
+        try await loginWithToken(accessToken: accessToken)
+    }
+    
+    func loginWithToken(accessToken: String) async throws {
+        let path = "/auth/v1/user"
+        var request = makeRequest(path: path, method: "GET")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al obtener perfil de usuario"])
+        }
+        
+        let user = try JSONDecoder().decode(SupabaseUser.self, from: data)
+        await MainActor.run {
+            self.currentUser = user
+            self.sessionToken = accessToken
+        }
+    }
+    
     @MainActor
     func logout() {
         self.currentUser = nil
@@ -286,5 +358,21 @@ class SupabaseManager: NSObject, ObservableObject, WCSessionDelegate {
             return true
         }
         return false
+    }
+}
+
+// MARK: - Presentation Anchor Provider
+class CSMSPresentationAnchorProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    static let shared = CSMSPresentationAnchorProvider()
+    
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        #if os(macOS)
+        return NSApplication.shared.windows.first { $0.isKeyWindow } ?? NSApplication.shared.windows.first ?? ASPresentationAnchor()
+        #else
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first { $0.activationState == .foregroundActive } as? UIWindowScene
+        let window = windowScene?.windows.first { $0.isKeyWindow } ?? windowScene?.windows.first
+        return window ?? ASPresentationAnchor()
+        #endif
     }
 }

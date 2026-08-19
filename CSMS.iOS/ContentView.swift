@@ -168,6 +168,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("CSMS Chats")
+            .navigationBarTitleDisplayMode(.large)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(ForkarTheme.bg, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)

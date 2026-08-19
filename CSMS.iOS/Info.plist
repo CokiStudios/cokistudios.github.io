@@ -20,5 +20,16 @@
     <string>2</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.cokistudios.csms.ios</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>csms</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
