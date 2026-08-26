@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forkar Eco Hub Program — Coki Studios & Sostenibilidad</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+    <meta name="description" content="Forkar Eco Hub Program: Ahorra CO2 en cada viaje, acumula Puntos Eco, canjea recompensas sustentables y valida estaciones con QR o NFC.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --card: rgba(13, 17, 23, 0.85);
+            --border: rgba(16, 185, 129, 0.2);
+            --border-glow: rgba(16, 185, 129, 0.35);
+            --accent: #10b981;
+            --accent-glow: #34d399;
+            --emerald: #10b981;
+            --green: #22c55e;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --card: rgba(255, 255, 255, 0.95);
+            --border: rgba(16, 185, 129, 0.25);
+            --border-glow: rgba(16, 185, 129, 0.3);
+            --accent: #059669;
+            --accent-glow: #10b981;
+            --emerald: #059669;
+            --green: #16a34a;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(6, 9, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        html.light-theme nav { background: rgba(248, 250, 252, 0.85); }
+
+        .nav-inner {
+            max-width: 1100px; margin: 0 auto; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 68px;
+        }
+
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo {
+            width: 36px; height: 36px; background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: white; font-weight: 900;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+        .nav-title { font-weight: 800; font-size: 17px; color: var(--text); }
+        .nav-badge {
+            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+            background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid var(--border);
+        }
+
+        .nav-right { display: flex; align-items: center; gap: 12px; }
+        .nav-link {
+            font-size: 14px; font-weight: 600; color: var(--text-sub); text-decoration: none;
+            padding: 6px 12px; border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+
+        .lang-select {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+            color: var(--text); font-family: inherit; font-size: 13px; font-weight: 600;
+            padding: 6px 10px; border-radius: 8px; cursor: pointer; outline: none;
+        }
+        html.light-theme .lang-select { background: rgba(0, 0, 0, 0.03); }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+
+        /* ── HERO ── */
+        .hero {
+            padding: 60px 24px 40px; text-align: center; max-width: 900px; margin: 0 auto;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
+            color: var(--emerald); background: rgba(16, 185, 129, 0.12); padding: 6px 16px;
+            border-radius: 99px; border: 1px solid var(--border); margin-bottom: 24px;
+        }
+        .hero-title {
+            font-size: clamp(32px, 5vw, 48px); font-weight: 900; line-height: 1.15;
+            margin-bottom: 20px; letter-spacing: -0.02em;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-sub {
+            font-size: 17px; color: var(--text-sub); line-height: 1.6; max-width: 700px; margin: 0 auto 36px;
+        }
+
+        /* ── METRICS GRID ── */
+        .metrics-grid {
+            max-width: 1000px; margin: 0 auto 50px; padding: 0 24px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+        }
+        .metric-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 24px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s;
+        }
+        .metric-card:hover { transform: translateY(-3px); border-color: var(--emerald); }
+        .metric-val {
+            font-size: 36px; font-weight: 900; color: var(--emerald); font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 6px;
+        }
+        .metric-label { font-size: 13px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* ── ACTIONS BAR ── */
+        .actions-bar {
+            max-width: 800px; margin: 0 auto 60px; padding: 0 24px;
+            display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+        }
+        .btn-action {
+            padding: 14px 28px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 10px; transition: all 0.25s; border: none;
+            text-decoration: none; font-family: inherit;
+        }
+        .btn-primary-eco {
+            background: linear-gradient(135deg, #10b981, #059669); color: white;
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.35);
+        }
+        .btn-primary-eco:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5); }
+        .btn-secondary-eco {
+            background: rgba(255, 255, 255, 0.06); color: var(--text); border: 1px solid var(--border);
+        }
+        .btn-secondary-eco:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+
+        /* ── SECTION REWARDS & STATIONS ── */
+        .section-container {
+            max-width: 1000px; margin: 0 auto 60px; padding: 0 24px;
+        }
+        .section-header { margin-bottom: 24px; text-align: left; }
+        .section-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; color: var(--text); }
+        .section-desc { font-size: 14px; color: var(--text-sub); }
+
+        .rewards-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+        }
+        .reward-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+            padding: 24px; display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.25s;
+        }
+        .reward-card:hover { border-color: var(--emerald); transform: translateY(-3px); }
+        .reward-icon { font-size: 32px; margin-bottom: 14px; }
+        .reward-name { font-size: 17px; font-weight: 800; margin-bottom: 6px; color: var(--text); }
+        .reward-desc { font-size: 13px; color: var(--text-sub); margin-bottom: 20px; line-height: 1.5; }
+        .reward-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+        .reward-cost { font-weight: 900; font-size: 15px; color: #f59e0b; }
+        .btn-redeem {
+            padding: 8px 16px; border-radius: 10px; background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--emerald); color: var(--emerald); font-weight: 700; font-size: 13px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-redeem:hover { background: var(--emerald); color: white; }
+
+        .stations-list { display: flex; flex-direction: column; gap: 12px; }
+        .station-item {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; transition: all 0.2s;
+        }
+        .station-item:hover { border-color: var(--emerald); }
+        .station-info { display: flex; align-items: center; gap: 14px; }
+        .station-icon {
+            width: 42px; height: 42px; border-radius: 12px; background: rgba(16, 185, 129, 0.15);
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .station-name { font-weight: 700; font-size: 15px; color: var(--text); }
+        .station-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+        .station-status {
+            font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px;
+            background: rgba(16, 185, 129, 0.15); color: var(--emerald);
+        }
+
+        /* ── MODAL ── */
+        .eco-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+            display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+        }
+        .eco-modal.active { display: flex; }
+        .eco-modal-box {
+            background: var(--card); border: 1.5px solid var(--border-glow); border-radius: 24px;
+            max-width: 440px; width: 100%; padding: 32px; text-align: center; position: relative;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+        .modal-close-btn {
+            position: absolute; top: 18px; right: 18px; background: none; border: none;
+            color: var(--text-sub); font-size: 20px; cursor: pointer;
+        }
+
+        footer {
+            margin-top: auto; border-top: 1px solid var(--border); padding: 32px 24px;
+            text-align: center; font-size: 13px; color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── NAV ── -->
+    <nav>
+        <div class="nav-inner">
+            <a href="forkar.html" class="nav-brand">
+                <div class="nav-logo">🌿</div>
+                <div>
+                    <span class="nav-title">Forkar Eco Hub</span>
+                    <span class="nav-badge">Program</span>
+                </div>
+            </a>
+            <div class="nav-right">
+                <a href="forkar.html" class="nav-link" data-i18n="btn_back_forkar">← Volver a Forkar</a>
+                <a href="messenger.html" class="nav-link" data-i18n="nav_csms">CSMS</a>
+                <a href="dashboard.html" class="nav-link" data-i18n="nav_account">Mi Cuenta</a>
+                
+                <select id="lang-switcher" class="lang-select" aria-label="Idioma">
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="pt">🇧🇷 PT</option>
+                </select>
+
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="hero-badge" data-i18n="eco_badge">🌱 Programa de Impacto & Sostenibilidad Global</div>
+        <h1 class="hero-title">
+            Reduce tu huella de carbono con cada <br><span class="gradient-text">Trayecto Compartido en Forkar</span>
+        </h1>
+        <p class="hero-sub" data-i18n="eco_hero_sub">
+            Cada viaje en bicicleta, caminata registrada o carpooling verificado genera Eco Puntos y ahorra kilogramos de CO₂ medibles en tiempo real.
+        </p>
+
+        <div class="actions-bar">
+            <button class="btn-action btn-primary-eco" id="btn-open-scanner" data-i18n="btn_scan_qr">
+                <span>📷</span> Escanear QR de Estación
+            </button>
+            <button class="btn-action btn-secondary-eco" id="btn-open-myqr" data-i18n="btn_my_qr">
+                <span>🏷️</span> Generar mi Código Eco
+            </button>
+        </div>
+    </section>
+
+    <!-- ── METRICS GRID ── -->
+    <section class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-val" id="metric-co2">24.5 kg</div>
+            <div class="metric-label" data-i18n="eco_stat_co2">CO₂ Ahorrado Global</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val" id="metric-points">120 pts</div>
+            <div class="metric-label" data-i18n="eco_stat_points">Puntos Eco Generados</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val" id="metric-trips">18</div>
+            <div class="metric-label" data-i18n="eco_stat_trips">Trayectos Verificados</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val" id="metric-trees">3 🌳</div>
+            <div class="metric-label" data-i18n="eco_stat_trees">Árboles Equivalentes</div>
+        </div>
+    </section>
+
+    <!-- ── REWARDS STORE ── -->
+    <section class="section-container">
+        <div class="section-header">
+            <h2 class="section-title" data-i18n="eco_rewards_title">Eco Rewards Store</h2>
+            <p class="section-desc" data-i18n="eco_rewards_sub">Canjea tus Puntos Eco acumulados por recompensas reales de sostenibilidad:</p>
+        </div>
+
+        <div class="rewards-grid">
+            <div class="reward-card">
+                <div class="reward-icon">☕</div>
+                <div class="reward-name" data-i18n="reward_coffee">Café Orgánico de Comercio Justo</div>
+                <div class="reward-desc" data-i18n="reward_coffee_desc">Canjeable en cafeterías aliadas locales.</div>
+                <div class="reward-footer">
+                    <span class="reward-cost">50 Eco Puntos</span>
+                    <button class="btn-redeem" onclick="redeemReward('Café Orgánico', 50)">Canjear</button>
+                </div>
+            </div>
+
+            <div class="reward-card">
+                <div class="reward-icon">🌱</div>
+                <div class="reward-name" data-i18n="reward_seeds">Kit de Semillas Nativas</div>
+                <div class="reward-desc" data-i18n="reward_seeds_desc">Planta tu propio jardín de polinizadores urbanos.</div>
+                <div class="reward-footer">
+                    <span class="reward-cost">80 Eco Puntos</span>
+                    <button class="btn-redeem" onclick="redeemReward('Kit de Semillas', 80)">Canjear</button>
+                </div>
+            </div>
+
+            <div class="reward-card">
+                <div class="reward-icon">🚲</div>
+                <div class="reward-name" data-i18n="reward_pass">Pase de 1 Día Bici Urbana</div>
+                <div class="reward-desc" data-i18n="reward_pass_desc">Acceso ilimitado a estaciones de bicicletas compartidas.</div>
+                <div class="reward-footer">
+                    <span class="reward-cost">100 Eco Puntos</span>
+                    <button class="btn-redeem" onclick="redeemReward('Pase de 1 Día Bici', 100)">Canjear</button>
+                </div>
+            </div>
+
+            <div class="reward-card">
+                <div class="reward-icon">🌳</div>
+                <div class="reward-name" data-i18n="reward_tree">Certificado de Siembra de Árbol</div>
+                <div class="reward-desc" data-i18n="reward_tree_desc">Siembra un árbol nativo verificado en reservas ecológicas.</div>
+                <div class="reward-footer">
+                    <span class="reward-cost">200 Eco Puntos</span>
+                    <button class="btn-redeem" onclick="redeemReward('Siembra de Árbol', 200)">Canjear</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── STATIONS NETWORK ── -->
+    <section class="section-container">
+        <div class="section-header">
+            <h2 class="section-title" data-i18n="eco_stations_title">Red de Estaciones & Puntos de Validación Eco</h2>
+            <p class="section-desc" data-i18n="eco_stations_sub">Valida tu llegada mediante código QR o etiquetas NFC para acreditar tus puntos:</p>
+        </div>
+
+        <div class="stations-list">
+            <div class="station-item">
+                <div class="station-info">
+                    <div class="station-icon">📍</div>
+                    <div>
+                        <div class="station-name" data-i18n="station_central">Estación Central Coki Park</div>
+                        <div class="station-meta">QR Check-in • +10 Puntos • -1.2kg CO₂</div>
+                    </div>
+                </div>
+                <span class="station-status">Activa 🟢</span>
+            </div>
+
+            <div class="station-item">
+                <div class="station-info">
+                    <div class="station-icon">🏫</div>
+                    <div>
+                        <div class="station-name" data-i18n="station_north">Eco Estación Campus Norte</div>
+                        <div class="station-meta">NFC & QR • +15 Puntos • -2.0kg CO₂</div>
+                    </div>
+                </div>
+                <span class="station-status">Activa 🟢</span>
+            </div>
+
+            <div class="station-item">
+                <div class="station-info">
+                    <div class="station-icon">🚴</div>
+                    <div>
+                        <div class="station-name" data-i18n="station_green">Punto de Carga Ciclovía Verde</div>
+                        <div class="station-meta">Solar Hub • +20 Puntos • -3.5kg CO₂</div>
+                    </div>
+                </div>
+                <span class="station-status">Activa 🟢</span>
+            </div>
+
+            <div class="station-item">
+                <div class="station-info">
+                    <div class="station-icon">🚇</div>
+                    <div>
+                        <div class="station-name" data-i18n="station_subway">Hub Intermodal Estación Metro</div>
+                        <div class="station-meta">Multi-Modal • +25 Puntos • -4.0kg CO₂</div>
+                    </div>
+                </div>
+                <span class="station-status">Activa 🟢</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── QR MODAL ── -->
+    <div class="eco-modal" id="qr-modal">
+        <div class="eco-modal-box">
+            <button class="modal-close-btn" id="btn-close-modal">✕</button>
+            <h3 style="font-size:20px; font-weight:800; margin-bottom:12px;" id="modal-title">Código Eco de Usuario</h3>
+            <div id="modal-qr-container" style="background:#fff; padding:20px; border-radius:16px; display:inline-block; margin:16px 0;">
+                <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=FORKAR_ECO_USER_SESSION" alt="QR Eco" style="width:180px;height:180px;display:block;">
+            </div>
+            <p style="font-size:13px; color:var(--text-sub);" id="modal-desc">Presenta este código en cualquier estación o validador para sumar puntos.</p>
+        </div>
+    </div>
+
+    <!-- ── FOOTER ── -->
+    <footer>
+        <p>© 2026 Coki Studios LLC — Forkar Eco Hub Program. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- ── SCRIPT I18N & THEME ── -->
+    <script type="module">
+        let translations = {};
+
+        async function loadTranslations() {
+            try {
+                const res = await fetch('translations.json');
+                translations = await res.json();
+                const savedLang = localStorage.getItem('coki-lang') || 'es';
+                const switcher = document.getElementById('lang-switcher');
+                if (switcher) switcher.value = savedLang;
+                applyLanguage(savedLang);
+            } catch (e) {
+                console.warn('Error loading translations.json:', e);
+            }
+        }
+
+        function applyLanguage(lang) {
+            if (!translations[lang]) return;
+            localStorage.setItem('coki-lang', lang);
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+        }
+
+        document.getElementById('lang-switcher')?.addEventListener('change', (e) => {
+            applyLanguage(e.target.value);
+        });
+
+        loadTranslations();
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
+
+        // Modal Handlers
+        const qrModal = document.getElementById('qr-modal');
+        document.getElementById('btn-open-myqr')?.addEventListener('click', () => {
+            document.getElementById('modal-title').textContent = 'Tu Código Eco de Usuario';
+            document.getElementById('modal-desc').textContent = 'Presenta este código en cualquier estación para registrar tu trayecto.';
+            document.getElementById('qr-image').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=FORKAR_ECO_USER_' + Date.now();
+            qrModal.classList.add('active');
+        });
+
+        document.getElementById('btn-open-scanner')?.addEventListener('click', () => {
+            const station = prompt('Ingresa el código o ID de la estación para validar tu trayecto (ej. EST-CENTRAL-01):');
+            if (station) {
+                alert('🎉 ¡Trayecto registrado en ' + station + '!\n+15 Eco Puntos acreditados\n-2.5 kg CO₂ ahorrados');
+                const co2El = document.getElementById('metric-co2');
+                const ptsEl = document.getElementById('metric-points');
+                if (co2El) co2El.textContent = '27.0 kg';
+                if (ptsEl) ptsEl.textContent = '135 pts';
+            }
+        });
+
+        document.getElementById('btn-close-modal')?.addEventListener('click', () => {
+            qrModal.classList.remove('active');
+        });
+
+        window.redeemReward = (rewardName, cost) => {
+            if (confirm(`¿Deseas canjear "${rewardName}" por ${cost} Puntos Eco?`)) {
+                alert(`🎉 ¡Canje exitoso! Hemos generado tu cupón para "${rewardName}".`);
+            }
+        };
+    </script>
+</body>
+</html>
