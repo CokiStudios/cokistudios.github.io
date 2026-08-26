@@ -336,13 +336,23 @@
             }
         });
 
-        // 🔑 PASSKEY BIOMETRIC LOGIN
+        // 🔑 PASSKEY & COKI MASTER KEY LOGIN (CUENTA UNIVERSAL)
         document.getElementById('btn-coki-passkey')?.addEventListener('click', async () => {
             const btn = document.getElementById('btn-coki-passkey');
             btn.disabled = true;
-            btn.innerHTML = '⏳ Verificando datos biométricos...';
+            btn.innerHTML = '⏳ Verificando credenciales de cuenta...';
 
-            const res = await loginWithPasskey();
+            let res = await loginWithPasskey();
+            
+            // Si requiere Master Key porque es un nuevo dispositivo
+            if (!res.success && res.needsMasterKey) {
+                const enteredKey = prompt('🔑 Ingresa tu Coki Master Key Universal de Cuenta (Ej: CSK-XXXX-XXXX-XXXX):');
+                if (enteredKey) {
+                    btn.innerHTML = '⏳ Validando Coki Master Key...';
+                    res = await loginWithPasskey(enteredKey);
+                }
+            }
+
             if (res.success) {
                 let redirect = new URLSearchParams(window.location.search).get('redirect');
                 if (!redirect) {
@@ -351,9 +361,9 @@
                 }
                 window.location.href = redirect || '/coki-dashboard.html';
             } else {
-                alert('❌ ' + res.error);
+                alert('❌ ' + (res.error || 'No se pudo verificar la Passkey de cuenta.'));
                 btn.disabled = false;
-                btn.innerHTML = '<span style="font-size: 18px;">🔑</span> Iniciar sesión con Passkey (Touch ID / Face ID)';
+                btn.innerHTML = '<span style="font-size: 18px;">🔑</span> Iniciar sesión con Passkey / Master Key';
             }
         });
 

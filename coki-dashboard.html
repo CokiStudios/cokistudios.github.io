@@ -594,18 +594,33 @@
                 </div>
             </div>
 
-            <!-- 🔑 GESTIÓN DE PASSKEYS (FACE ID / TOUCH ID) -->
-            <div style="margin-bottom: 24px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center;">🔑</div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 15px; color: var(--text);">Passkey Biométrica (Face ID / Touch ID)</div>
-                        <div style="font-size: 12px; color: var(--text-sub); margin-top: 2px;" id="passkey-status-text">Inicia sesión al instante sin contraseñas usando tu huella o rostro.</div>
+            <!-- 🔑 GESTIÓN DE PASSKEYS & COKI MASTER KEY DE CUENTA -->
+            <div style="margin-bottom: 24px; background: rgba(0,0,0,0.2); border: 1.5px solid var(--border-glow); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="font-size: 26px; width: 48px; height: 48px; border-radius: 14px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center;">🔑</div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 16px; color: var(--text);">Coki Passkey & Master Key de Cuenta</div>
+                            <div style="font-size: 12.5px; color: var(--text-sub); margin-top: 2px;" id="passkey-status-text">
+                                Inicia sesión sin contraseña y accede desde cualquier dispositivo sin depender del hardware local.
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-register-passkey" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 4px 15px rgba(99,102,241,0.3);">
+                        🔑 Generar / Activar Passkey de Cuenta
+                    </button>
+                </div>
+                <div id="master-key-display-box" style="display: none; background: rgba(99,102,241,0.08); border: 1px dashed var(--accent); border-radius: 12px; padding: 12px 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tu Coki Master Key Universal:</span>
+                            <div id="user-master-key-text" style="font-family: monospace; font-size: 16px; font-weight: 900; color: #38bdf8; letter-spacing: 2px; margin-top: 2px;">CSK-XXXX-XXXX-XXXX</div>
+                        </div>
+                        <button type="button" id="btn-copy-master-key" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                            Copiar Clave
+                        </button>
                     </div>
                 </div>
-                <button type="button" id="btn-register-passkey" style="padding: 10px 18px; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent); color: white; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
-                    ➕ Vincular Passkey
-                </button>
             </div>
 
             <button id="btn-save" class="btn-primary">Guardar cambios y preferencias</button>
@@ -858,17 +873,31 @@
         document.getElementById('btn-register-passkey')?.addEventListener('click', async () => {
             const btn = document.getElementById('btn-register-passkey');
             btn.disabled = true;
-            btn.textContent = '⏳ Verificando biometría...';
+            btn.textContent = '⏳ Vinculando a tu cuenta...';
 
             const res = await registerPasskey();
             if (res.success) {
-                alert('🎉 ¡Passkey vinculada con éxito! Ahora puedes iniciar sesión con Face ID / Touch ID.');
+                alert('🎉 ¡Passkey & Coki Master Key activadas para tu cuenta!\n\nGuarda tu Master Key para poder iniciar sesión desde cualquier navegador sin depender de tu dispositivo actual.');
+                if (res.masterKey) {
+                    const box = document.getElementById('master-key-display-box');
+                    const text = document.getElementById('user-master-key-text');
+                    if (box && text) {
+                        box.style.display = 'block';
+                        text.textContent = res.masterKey;
+                    }
+                }
                 loadUser();
             } else {
                 btn.disabled = false;
-                btn.textContent = '➕ Vincular Passkey';
-                alert('❌ Error al vincular Passkey: ' + res.error);
+                btn.textContent = '🔑 Generar / Activar Passkey de Cuenta';
+                alert('❌ ' + res.error);
             }
+        });
+
+        document.getElementById('btn-copy-master-key')?.addEventListener('click', () => {
+            const keyText = document.getElementById('user-master-key-text').textContent;
+            navigator.clipboard.writeText(keyText);
+            alert('📋 Coki Master Key copiada al portapapeles: ' + keyText);
         });
 
         document.getElementById('btn-save').addEventListener('click', async () => {

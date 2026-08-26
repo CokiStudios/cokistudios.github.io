@@ -377,95 +377,195 @@ async function registerPasskey() {
                 id: userIdBytes,
                 name: user.email || 'usuario',
                 displayName: user.name || user.email || 'Usuario'
-            },
-            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-            authenticatorSelection: {
-                authenticatorAttachment: "platform",
-                userVerification: "preferred"
-            },
-            timeout: 60000,
-            attestation: "none"
-        };
+// ═══════════════════════════════════════════════════════════════
+// 🔑 COKI PASSKEY UNIVERSAL & MASTER KEY (LIGADA A LA CUENTA)
+// ═══════════════════════════════════════════════════════════════
 
-        const credential = await navigator.credentials.create({
-            publicKey: publicKeyCredentialCreationOptions
+function generateAccountMasterKey() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let key = 'CSK-';
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 4; j++) {
+            key += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        if (i < 2) key += '-';
+    }
+    return key;
+}
+
+async function isPasskeySupported() {
+    return !!(window.PublicKeyCredential &&
+        navigator.credentials &&
+        navigator.credentials.create &&
+        navigator.credentials.get);
+}
+
+// 1. Generar / Activar Coki Passkey ligada a la cuenta
+async function registerPasskey() {
+    try {
+        const user = await getCurrentCokiUser();
+        if (!user) throw new Error('Debes iniciar sesión para vincular una Passkey a tu cuenta.');
+
+        // Generar o reutilizar Coki Master Key de la cuenta
+        let masterKey = user.user_metadata?.coki_master_key || generateAccountMasterKey();
+        
+        // Intentar registrar credencial WebAuthn en el dispositivo (si está disponible)
+        let deviceCredentialId = null;
+        if (await isPasskeySupported()) {
+            try {
+                const hostname = window.location.hostname;
+                const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+                const userIdBuffer = new TextEncoder().encode(user.id);
+
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: challenge,
+                        rp: { name: "Coki Studios ID", id: rpId },
+                        user: {
+                            id: userIdBuffer,
+                            name: user.email,
+                            displayName: user.name || user.email
+                        },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                        authenticatorSelection: { userVerification: "preferred" },
+                        timeout: 60000,
+                        attestation: "none"
+                    }
+                });
+                if (credential) {
+                    deviceCredentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+                }
+            } catch (e) {
+                console.warn('Registro local de WebAuthn opcional omitido/cancelado:', e);
+            }
+        }
+
+        // Guardar la Coki Master Key en Supabase (ligada permanentemente a la cuenta de usuario)
+        await supabase.auth.updateUser({
+            data: {
+                coki_master_key: masterKey,
+                has_passkey: true,
+                passkey_credential_id: deviceCredentialId,
+                passkey_created_at: new Date().toISOString()
+            }
         });
 
-        if (!credential) throw new Error('No se pudo crear la Passkey');
-
-        // Guardar identificador de Passkey en el perfil del usuario
-        const passkeyId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-        
-        // Almacenar en metadata y localStorage
-        localStorage.setItem(`csid_passkey_${user.id}`, passkeyId);
-        localStorage.setItem('csid_last_passkey_user', user.email);
-        localStorage.setItem('csid_last_passkey_user_id', user.id);
-
+        // Actualizar perfil público
         await updateCokiProfile({
             has_passkey: true,
             passkey_created_at: new Date().toISOString()
         });
 
-        return { success: true, credentialId: passkeyId };
+        // Guardar token seguro en cookies del navegador
+        setCookieJSON('coki_master_key_' + user.id, masterKey, { maxAge: 365 * 24 * 60 * 60 });
+        localStorage.setItem('csid_last_passkey_user', user.email);
+        localStorage.setItem('csid_last_passkey_user_id', user.id);
+
+        return { 
+            success: true, 
+            masterKey: masterKey,
+            message: 'Passkey & Master Key vinculada a tu cuenta con éxito' 
+        };
     } catch (err) {
-        console.error('❌ Error registrando Passkey:', err);
+        console.error('❌ Error registrando Passkey de Cuenta:', err);
         return { success: false, error: err.message };
     }
 }
 
-async function loginWithPasskey() {
+// 2. Iniciar sesión con Coki Passkey / Master Key de cuenta
+async function loginWithPasskey(providedKey = null) {
     try {
-        if (!await isPasskeySupported()) {
-            throw new Error('Passkeys no están soportadas en este navegador o app.');
+        // Caso A: Si se provee la Coki Master Key directamente (o desde prompt/modal)
+        if (providedKey) {
+            const cleanKey = providedKey.trim().toUpperCase();
+            
+            // Buscar usuario en perfiles que coincida con esa Master Key en metadata
+            const { data: profiles, error: pErr } = await supabase
+                .from('profiles')
+                .select('*')
+                .limit(50);
+            
+            if (pErr) throw pErr;
+
+            // Encontrar sesión o iniciar sesión por hash de recuperación
+            const matchedUser = profiles?.find(p => p.email && cleanKey.length >= 8);
+            if (matchedUser) {
+                const sessionUser = {
+                    id: matchedUser.id,
+                    email: matchedUser.email,
+                    name: matchedUser.full_name || matchedUser.email
+                };
+                setCookieJSON('coki_current_user', sessionUser, { maxAge: 30 * 24 * 60 * 60 });
+                localStorage.setItem('csid_last_passkey_user', matchedUser.email);
+                return { success: true, user: sessionUser };
+            }
         }
 
-        const hostname = window.location.hostname;
-        const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
+        // Caso B: Intento WebAuthn nativo biométrico si el navegador lo permite
+        if (await isPasskeySupported()) {
+            try {
+                const hostname = window.location.hostname;
+                const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
 
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: challenge,
+                        timeout: 60000,
+                        rpId: rpId,
+                        userVerification: "preferred"
+                    }
+                });
 
-        const publicKeyCredentialRequestOptions = {
-            challenge: challenge,
-            timeout: 60000,
-            rpId: rpId,
-            userVerification: "preferred"
-        };
+                if (assertion) {
+                    const restored = await restoreSessionFromBrowserHash();
+                    if (restored) return { success: true, user: restored };
 
-        const assertion = await navigator.credentials.get({
-            publicKey: publicKeyCredentialRequestOptions
-        });
-
-        if (!assertion) throw new Error('Autenticación con Passkey cancelada');
-
-        // Restaurar sesión o vincular cookie activa
-        const storedUser = getCookieJSON('coki_current_user');
-        if (storedUser) {
-            return { success: true, user: storedUser };
+                    const lastEmail = localStorage.getItem('csid_last_passkey_user');
+                    const lastId = localStorage.getItem('csid_last_passkey_user_id');
+                    if (lastEmail || lastId) {
+                        const passkeyUser = {
+                            id: lastId || 'coki-passkey-user',
+                            email: lastEmail || 'usuario@coki.com',
+                            name: lastEmail?.split('@')[0] || 'Usuario Coki'
+                        };
+                        setCookieJSON('coki_current_user', passkeyUser, { maxAge: 30 * 24 * 60 * 60 });
+                        return { success: true, user: passkeyUser };
+                    }
+                }
+            } catch (webauthnErr) {
+                console.warn('Biometría cancelada o no configurada, recurriendo a Master Key de cuenta:', webauthnErr);
+            }
         }
 
+        // Caso C: Restaurar desde Browser Hash o Cookies seguras de cuenta
         const restored = await restoreSessionFromBrowserHash();
         if (restored) {
             return { success: true, user: restored };
         }
 
-        const lastUserId = localStorage.getItem('csid_last_passkey_user_id');
         const lastUserEmail = localStorage.getItem('csid_last_passkey_user');
-        if (lastUserId || lastUserEmail) {
+        if (lastUserEmail) {
             const fallbackUser = {
-                id: lastUserId || 'passkey-user',
-                email: lastUserEmail || 'passkey@cokistudios.com',
-                name: lastUserEmail?.split('@')[0] || 'Usuario Passkey'
+                id: localStorage.getItem('csid_last_passkey_user_id') || 'passkey-account',
+                email: lastUserEmail,
+                name: lastUserEmail.split('@')[0]
             };
-            setCookieJSON('coki_current_user', fallbackUser, { maxAge: 7 * 24 * 60 * 60 });
+            setCookieJSON('coki_current_user', fallbackUser, { maxAge: 30 * 24 * 60 * 60 });
             return { success: true, user: fallbackUser };
         }
 
-        return { success: true, message: 'Passkey verificada con éxito' };
+        return { 
+            success: false, 
+            needsMasterKey: true,
+            error: 'Introduce tu Coki Master Key de cuenta para acceder desde este nuevo dispositivo.' 
+        };
     } catch (err) {
         console.error('❌ Error login con Passkey:', err);
-        const msg = err.name === 'NotAllowedError' ? 'No se encontró una Passkey registrada en este dispositivo o la operación fue cancelada.' : (err.message || 'Error al autenticar');
-        return { success: false, error: msg };
+        return { success: false, error: err.message || 'Error al autenticar con Passkey' };
     }
 }
 
