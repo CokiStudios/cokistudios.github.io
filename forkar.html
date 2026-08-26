@@ -792,6 +792,12 @@
                     style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:var(--text-sub); transition:color 0.2s;"
                     onmouseover="this.style.color='var(--text)'"
                     onmouseout="this.style.color='var(--text-sub)'">CSMS</a>
+                <select id="lang-switcher" class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="pt">🇧🇷 PT</option>
+                </select>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
                 <a href="dashboard.html" id="nav-profile">
                     <div id="nav-avatar">U</div>
@@ -1554,6 +1560,36 @@
                 alert('⚠️ No se pudo registrar el reto eco: ' + res.error);
             }
         };
+
+        // 🌐 I18N SUPPORT
+        let translations = {};
+        async function initI18n() {
+            try {
+                const res = await fetch('translations.json');
+                translations = await res.json();
+                const savedLang = localStorage.getItem('coki-lang') || 'es';
+                const switcher = document.getElementById('lang-switcher');
+                if (switcher) switcher.value = savedLang;
+                applyLang(savedLang);
+            } catch (e) {
+                console.warn('translations.json not found:', e);
+            }
+        }
+
+        function applyLang(lang) {
+            if (!translations[lang]) return;
+            localStorage.setItem('coki-lang', lang);
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) el.textContent = translations[lang][key];
+            });
+        }
+
+        document.getElementById('lang-switcher')?.addEventListener('change', (e) => {
+            applyLang(e.target.value);
+        });
+
+        initI18n();
     </script>
 
 </body>
