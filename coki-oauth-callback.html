@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesando — Coki Studios</title>
+    <script>
+        // Redirigir inmediatamente preservando el hash del token
+        const targetUrl = 'oauth-callback.html' + window.location.search + window.location.hash;
+        window.location.replace(targetUrl);
+    </script>
+</head>
+<body style="background:#06090f;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <p>Redirigiendo a autenticación...</p>
+</body>
+</html>
