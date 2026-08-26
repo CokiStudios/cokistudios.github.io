@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesando — Coki Studios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <svg class="spinner w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <h1 class="text-xl font-semibold text-slate-700">Conectando con Coki Studios...</h1>
+    </div>
+
+    <script type="module">
+        import { handleCokiOAuthCallback } from './coki-auth.js';
+        import { getCookie, deleteCookie } from './cookie-utils.js';
+
+        async function process() {
+            // Check if there is a hash with access_token (e.g. #access_token=... or redirect params)
+            const hash = window.location.hash;
+            const params = new URLSearchParams(window.location.search);
+            const redirectApp = params.get('app_redirect') || sessionStorage.getItem('coki_oauth_app');
+
+            if (hash && hash.includes('access_token')) {
+                // If it's a mobile app OAuth redirect flow
+                if (redirectApp === 'csms' || hash.includes('csms')) {
+                    window.location.href = 'csms://oauth' + hash;
+                    return;
+                } else if (redirectApp === 'forkar' || hash.includes('forkar')) {
+                    window.location.href = 'forkar://oauth' + hash;
+                    return;
+                }
+            }
+
+            const result = await handleCokiOAuthCallback();
+            
+            if (result.success) {
+                // 🍪 Leer pending OAuth de cookie
+                const pending = getCookie('coki_oauth_pending');
+                if (pending) {
+                    deleteCookie('coki_oauth_pending');
+                    window.location.href = '/authorize.html' + pending;
+                } else {
+                    window.location.href = '/dashboard.html';
+                }
+            } else {
+                alert('Error: ' + result.error);
+                window.location.href = '/register.html';
+            }
+        }
+        
+        process();
+    </script>
+</body>
+</html>

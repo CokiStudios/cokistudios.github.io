@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta CSID</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+    <meta name="description" content="Inicia sesión o crea tu cuenta CSID para acceder a todas nuestras aplicaciones de forma segura.">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --bg2: #0d1117;
+            --card: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.07);
+            --border-glow: rgba(99,102,241,0.4);
+            --accent: #6366f1;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #475569;
+        }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --bg2: #f1f5f9;
+            --card: rgba(0,0,0,0.02);
+            --card-hover: rgba(0,0,0,0.04);
+            --border: rgba(0,0,0,0.06);
+            --border-glow: rgba(99,102,241,0.3);
+            --accent: #4f46e5;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background-image:
+                linear-gradient(rgba(99,102,241,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        body::after {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3C/svg%3E");
+            background-repeat: repeat-y;
+            background-size: 100% 600px;
+            background-position: center top;
+            pointer-events: none;
+            animation: moveBackground 25s linear infinite;
+        }
+        html.light-theme body::after {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3C/svg%3E");
+        }
+
+        @keyframes moveBackground {
+            from { background-position: center 0px; }
+            to { background-position: center 600px; }
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-header { text-align: center; margin-bottom: 32px; }
+        .auth-logo {
+            width: 56px; height: 56px; background: var(--accent);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 24px; color: white;
+            margin: 0 auto 16px; box-shadow: 0 0 40px rgba(99,102,241,0.3);
+        }
+        .auth-header h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .auth-header h1 span { background: linear-gradient(135deg, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .auth-header p { color: var(--text-sub); font-size: 15px; }
+
+        .auth-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 24px; overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            flex: 1; padding: 18px; text-align: center; font-size: 15px; font-weight: 600;
+            background: transparent; border: none; cursor: pointer; color: var(--text-muted);
+            border-bottom: 2px solid transparent; transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+        .tab-btn:hover { color: var(--text-sub); }
+        .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); background: rgba(255,255,255,0.02); }
+
+        .panel { padding: 32px; display: none; }
+        .panel.active { display: block; }
+
+        .social-btns { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .btn-social {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; border: 1px solid var(--border); font-family: 'Outfit', sans-serif;
+        }
+        .btn-google { background: rgba(255,255,255,0.03); color: var(--text); }
+        .btn-google:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+        .btn-github { background: #18181b; color: white; border-color: transparent; }
+        .btn-github:hover { background: #27272a; }
+
+        .divider { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .divider span { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 8px; }
+        .form-input {
+            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 16px; color: var(--text);
+            font-family: 'Outfit', sans-serif; font-size: 15px; transition: all 0.2s; outline: none;
+        }
+        .form-input:focus { border-color: var(--border-glow); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .form-options { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 24px; }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-sub); cursor: pointer; }
+        .checkbox-label input { accent-color: var(--accent); width: 16px; height: 16px; }
+        .link { font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: none; transition: color 0.2s; cursor: pointer; background: none; border: none; font-family: 'Outfit', sans-serif; }
+        .link:hover { color: #818cf8; text-decoration: underline; }
+
+        .btn-primary {
+            width: 100%; padding: 14px; background: var(--accent); color: white;
+            border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: all 0.25s; font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+        }
+        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.3); }
+
+        .back-link { text-align: center; margin-top: 24px; }
+
+        .hidden { display: none !important; }
+        .floating-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-logo">C</div>
+            <h1>CS <span>ID</span></h1>
+            <p>Tu llave de entrada a todos nuestros juegos y comunidades</p>
+        </div>
+
+        <div class="auth-card" id="main-card">
+            <div class="tabs">
+                <button id="tab-login" class="tab-btn active">Iniciar sesión</button>
+                <button id="tab-register" class="tab-btn">Crear cuenta</button>
+            </div>
+
+            <!-- 🔐 LOGIN -->
+            <div id="panel-login" class="panel active">
+                <div class="social-btns">
+                    <button id="btn-coki-passkey" type="button" class="btn-social" style="grid-column: span 2; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2)); border: 1.5px solid var(--border-glow); color: var(--text); font-weight: 700;">
+                        <span style="font-size: 18px;">🔑</span>
+                        Iniciar sesión con Passkey (Touch ID / Face ID)
+                    </button>
+                    <button id="btn-coki-google" class="btn-social btn-google">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continuar con Google
+                    </button>
+                    <button id="btn-coki-github" class="btn-social btn-github">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        Continuar con GitHub
+                    </button>
+                </div>
+
+                <div class="divider"><span>o usa tu correo</span></div>
+
+                <form id="form-login">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="login-email" required class="form-input" placeholder="tu@email.com">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" id="login-password" required class="form-input" placeholder="••••••••">
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="remember-me">
+                            Recordarme
+                        </label>
+                        <button type="button" id="btn-forgot" class="link">¿Olvidaste tu contraseña?</button>
+                    </div>
+                    <button type="submit" class="btn-primary">Entrar a mi cuenta</button>
+                </form>
+            </div>
+
+            <!-- 📝 REGISTRO -->
+            <div id="panel-register" class="panel">
+                <form id="form-register">
+                    <div class="form-group">
+                        <label class="form-label">Nombre completo</label>
+                        <input type="text" id="reg-name" required class="form-input" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="reg-email" required class="form-input" placeholder="tu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" id="reg-password" required minlength="6" class="form-input" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Biografía / Estado (opcional)</label>
+                        <input type="text" id="reg-company" class="form-input" placeholder="Escribe algo sobre ti...">
+                    </div>
+                    <div class="form-group" style="margin: 16px 0;">
+                        <!-- reCAPTCHA v2 Widget Container -->
+                        <div class="g-recaptcha" data-sitekey="6Le3vn0tAAAAAFEX_QW1m9M5Qe6a1oCek7j1krsK" data-theme="dark" style="transform: scale(0.92); transform-origin: 0 0;"></div>
+                    </div>
+                    <label class="checkbox-label" style="margin: 16px 0;">
+                        <input type="checkbox" id="reg-terms" required>
+                        <span>Acepto los <a href="#" class="link">términos</a> y <a href="#" class="link">privacidad</a></span>
+                    </label>
+                    <button type="submit" class="btn-primary" style="background:#10b981;box-shadow:0 4px 12px rgba(16,185,129,0.2)">Crear CSID</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 🔑 RECUPERAR CONTRASEÑA -->
+        <div class="auth-card hidden" id="panel-forgot">
+            <div style="padding:32px;">
+                <h3 style="font-size:20px;font-weight:800;margin-bottom:8px;">Recuperar contraseña</h3>
+                <p style="color:var(--text-sub);font-size:14px;margin-bottom:24px;">Te enviaremos un link para restablecer tu acceso de forma segura.</p>
+                <form id="form-forgot">
+                    <div class="form-group">
+                        <input type="email" id="forgot-email" required class="form-input" placeholder="tu@email.com">
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-bottom:16px;">Enviar link</button>
+                    <button type="button" id="btn-back-login" class="link" style="width:100%;text-align:center;color:var(--text-muted)">← Volver al login</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html" class="link" style="color:var(--text-muted)">← Volver a Coki Studios</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            registerCokiAccount, loginCokiAccount, loginCokiWithOAuth,
+            resetCokiPassword, getCurrentCokiUser, loginWithPasskey
+        } from './coki-auth.js';
+        import { setCookie, getCookie, deleteCookie } from './cookie-utils.js';
+
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const panelLogin = document.getElementById('panel-login');
+        const panelRegister = document.getElementById('panel-register');
+        const panelForgot = document.getElementById('panel-forgot');
+        const mainCard = document.getElementById('main-card');
+
+        tabLogin.addEventListener('click', () => {
+            tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+            panelLogin.classList.add('active'); panelRegister.classList.remove('active');
+        });
+
+        tabRegister.addEventListener('click', () => {
+            tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+            panelRegister.classList.add('active'); panelLogin.classList.remove('active');
+        });
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.textContent = 'Iniciando...';
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const remember = document.getElementById('remember-me').checked;
+            
+            const result = await loginCokiAccount(email, password);
+            
+            if (result.success) {
+                let redirect = new URLSearchParams(window.location.search).get('redirect');
+                if (!redirect) {
+                    const pending = getCookie('coki_oauth_pending');
+                    if (pending) { deleteCookie('coki_oauth_pending'); redirect = 'authorize.html' + pending; }
+                }
+                window.location.href = redirect || '/dashboard.html';
+            } else {
+                alert('❌ ' + result.error);
+                btn.disabled = false; btn.textContent = 'Entrar a mi cuenta';
+            }
+        });
+
+        // 🔑 PASSKEY & COKI MASTER KEY LOGIN (CUENTA UNIVERSAL)
+        document.getElementById('btn-coki-passkey')?.addEventListener('click', async () => {
+            const btn = document.getElementById('btn-coki-passkey');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Verificando credenciales de cuenta...';
+
+            let res = await loginWithPasskey();
+            
+            // Si requiere Master Key porque es un nuevo dispositivo
+            if (!res.success && res.needsMasterKey) {
+                const enteredKey = prompt('🔑 Ingresa tu CS Master Key Universal de Cuenta (Ej: CSK-XXXX-XXXX-XXXX):');
+                if (enteredKey) {
+                    btn.innerHTML = '⏳ Validando CS Master Key...';
+                    res = await loginWithPasskey(enteredKey);
+                }
+            }
+
+            if (res.success) {
+                let redirect = new URLSearchParams(window.location.search).get('redirect');
+                if (!redirect) {
+                    const pending = getCookie('coki_oauth_pending');
+                    if (pending) { deleteCookie('coki_oauth_pending'); redirect = 'authorize.html' + pending; }
+                }
+                window.location.href = redirect || '/dashboard.html';
+            } else {
+                alert('❌ ' + (res.error || 'No se pudo verificar la Passkey de cuenta.'));
+                btn.disabled = false;
+                btn.innerHTML = '<span style="font-size: 18px;">🔑</span> Iniciar sesión con Passkey / Master Key';
+            }
+        });
+
+        document.getElementById('form-register').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 🛡️ VALIDAR RECAPTCHA
+            const recaptchaResponse = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : null;
+            if (!recaptchaResponse) {
+                alert('⚠️ Por favor, completa la verificación "No soy un robot" de reCAPTCHA.');
+                return;
+            }
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.textContent = 'Creando...';
+            
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const company = document.getElementById('reg-company').value;
+            
+            const result = await registerCokiAccount(email, password, { full_name: name, company: company || 'Coki Studios' });
+            
+            if (result.success) { 
+                alert('✅ ' + result.message); 
+                if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+                tabLogin.click(); 
+            } 
+            else { 
+                alert('❌ ' + result.error); 
+                if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+            }
+            btn.disabled = false; btn.textContent = 'Crear CSID';
+        });
+
+        document.getElementById('btn-coki-google').addEventListener('click', () => loginCokiWithOAuth('google'));
+        document.getElementById('btn-coki-github').addEventListener('click', () => loginCokiWithOAuth('github'));
+
+        document.getElementById('btn-forgot').addEventListener('click', () => { mainCard.classList.add('hidden'); panelForgot.classList.remove('hidden'); });
+        document.getElementById('btn-back-login').addEventListener('click', () => { panelForgot.classList.add('hidden'); mainCard.classList.remove('hidden'); });
+
+        document.getElementById('form-forgot').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const result = await resetCokiPassword(email);
+            if (result.success) { alert('✅ ' + result.message); document.getElementById('btn-back-login').click(); } 
+            else { alert('❌ ' + result.error); }
+        });
+
+        const init = async () => {
+            const user = await getCurrentCokiUser();
+            if (user) {
+                const redirect = new URLSearchParams(window.location.search).get('redirect') || '/dashboard.html';
+                window.location.href = redirect;
+            }
+        };
+        init();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
+    </script>
+</body>
+</html>

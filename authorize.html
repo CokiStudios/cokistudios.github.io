@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autorizar acceso — CSID</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --bg2: #0d1117;
+            --card: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.07);
+            --border-glow: rgba(99,102,241,0.4);
+            --accent: #6366f1;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #475569;
+        }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --bg2: #f1f5f9;
+            --card: rgba(0,0,0,0.02);
+            --card-hover: rgba(0,0,0,0.04);
+            --border: rgba(0,0,0,0.06);
+            --border-glow: rgba(99,102,241,0.3);
+            --accent: #4f46e5;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: var(--card-hover); }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background-image:
+                linear-gradient(rgba(99,102,241,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        body::after {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3C/svg%3E");
+            background-repeat: repeat-y;
+            background-size: 100% 600px;
+            background-position: center top;
+            pointer-events: none;
+            animation: moveBackground 25s linear infinite;
+        }
+        html.light-theme body::after {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3C/svg%3E");
+        }
+
+        @keyframes moveBackground {
+            from { background-position: center 0px; }
+            to { background-position: center 600px; }
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-header { text-align: center; margin-bottom: 32px; }
+        .auth-logo {
+            width: 56px; height: 56px; background: var(--accent);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 24px; color: white;
+            margin: 0 auto 16px; box-shadow: 0 0 40px rgba(99,102,241,0.3);
+        }
+        .auth-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+        .auth-header h1 span { background: linear-gradient(135deg, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .auth-header p { color: var(--text-sub); font-size: 14px; }
+
+        .auth-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 24px; overflow: hidden; padding: 32px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        /* 🔐 STATE 1: NOT LOGGED IN */
+        #login-section p { color: var(--text-sub); font-size: 15px; text-align: center; margin-bottom: 24px; line-height: 1.6; }
+        #login-section p strong { color: var(--text); }
+        .btn-primary {
+            width: 100%; padding: 14px; background: var(--accent); color: white; display: block; text-align: center;
+            border: none; border-radius: 12px; font-size: 15px; font-weight: 700; text-decoration: none;
+            cursor: pointer; transition: all 0.25s; font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+        }
+        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.3); }
+
+        /* ✅ STATE 2: LOGGED IN */
+        #consent-section { display: none; }
+        
+        .user-card {
+            display: flex; align-items: center; gap: 16px; padding: 16px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 16px; margin-bottom: 24px;
+        }
+        .user-avatar {
+            width: 44px; height: 44px; border-radius: 12px; background: rgba(99,102,241,0.15);
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+            font-weight: 700; color: var(--accent); overflow: hidden; flex-shrink: 0;
+        }
+        .user-name { font-weight: 800; color: var(--text); font-size: 16px; }
+        .user-email { color: var(--text-sub); font-size: 13px; }
+
+        .consent-info { text-align: center; margin-bottom: 24px; color: var(--text-sub); font-size: 15px; line-height: 1.6; }
+        .consent-info strong { color: var(--text); font-weight: 800; font-size: 16px; }
+
+        .scopes-box {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; margin-bottom: 24px;
+        }
+        .scopes-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px; }
+        .scope-item { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+        .scope-item:last-child { margin-bottom: 0; }
+        .scope-icon {
+            width: 20px; height: 20px; border-radius: 50%; background: rgba(16,185,129,0.1);
+            color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        .actions { display: flex; gap: 12px; }
+        .btn-deny {
+            flex: 1; padding: 14px; background: transparent; color: var(--text-sub);
+            border: 1px solid var(--border); border-radius: 12px; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif;
+        }
+        .btn-deny:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+        .debug-box {
+            background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2);
+            color: #fcd34d; border-radius: 16px; padding: 16px; margin-bottom: 24px;
+            font-family: monospace; font-size: 11px; display: none; white-space: pre-wrap;
+        }
+        .floating-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="xtraps-bg rainbow">
+        <div class="xtraps-wave"></div>
+    </div>
+    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-logo">C</div>
+            <h1>CS <span>ID</span></h1>
+            <p>Autorización de acceso seguro</p>
+        </div>
+
+        <div id="debug-info" class="debug-box">
+            <strong>Debug Info:</strong><br><span id="debug-text"></span>
+        </div>
+
+        <!-- 🔐 ESTADO 1: NO LOGUEADO -->
+        <div class="auth-card" id="login-section">
+            <p>Primero inicia sesión en tu cuenta de <strong>CSID</strong> para autorizar a esta aplicación.</p>
+            <a href="register.html" class="btn-primary" id="login-link">Iniciar sesión</a>
+        </div>
+
+        <!-- ✅ ESTADO 2: LOGUEADO -->
+        <div id="consent-section">
+            <div class="user-card">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <div>
+                    <div class="user-name" id="user-name">Usuario</div>
+                    <div class="user-email" id="user-email">email@coki.com</div>
+                </div>
+            </div>
+
+            <div class="auth-card">
+                <div class="consent-info">
+                    <strong id="client-name">App Externa</strong> quiere acceder a tu CSID.
+                </div>
+                
+                <div class="scopes-box">
+                    <div class="scopes-title">Permisos solicitados:</div>
+                    <div class="scope-item">
+                        <div class="scope-icon">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        Tu correo electrónico
+                    </div>
+                    <div class="scope-item">
+                        <div class="scope-icon">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        Tu nombre y foto de perfil
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="btn-deny" class="btn-deny">Denegar</button>
+                    <button id="btn-approve" class="btn-primary" style="flex:1;">Autorizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getCurrentCokiUser } from './coki-auth.js';
+        import { handleAuthorizeRequest, approveAuthorization } from './oauth-server.js';
+        import { setCookie } from './cookie-utils.js';
+
+        function showDebug(msg) {
+            const box = document.getElementById('debug-info');
+            const text = document.getElementById('debug-text');
+            box.style.display = 'block';
+            text.textContent += msg + '\n';
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeChallenge = urlParams.get('code_challenge');
+
+        if (!codeChallenge) {
+            alert('Error: URL inválida. Falta code_challenge.');
+            throw new Error('Missing code_challenge');
+        }
+
+        let validation;
+        try {
+            validation = await handleAuthorizeRequest(urlParams);
+        } catch (e) {
+            alert('Error crítico: ' + e.message);
+            throw e;
+        }
+
+        if (!validation || !validation.valid) {
+            const errMsg = (validation?.error_description) || (validation?.error) || 'Unknown error';
+            alert('Error OAuth: ' + errMsg);
+            throw new Error(validation?.error || 'unknown');
+        }
+
+        document.getElementById('client-name').textContent = validation.client_name || 'App Externa';
+
+        const loginLink = document.getElementById('login-link');
+        if (loginLink) loginLink.href = `register.html?redirect=${encodeURIComponent(window.location.href)}`;
+
+        async function checkSession() {
+            const user = await getCurrentCokiUser();
+            if (user) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('consent-section').style.display = 'block';
+                
+                document.getElementById('user-name').textContent = user.name || user.email || 'Usuario';
+                document.getElementById('user-email').textContent = user.email;
+                
+                const avatar = document.getElementById('user-avatar');
+                if (user.picture) {
+                    avatar.innerHTML = `<img src="${user.picture}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
+                } else {
+                    avatar.textContent = (user.name || user.email).charAt(0).toUpperCase();
+                }
+            } else {
+                setCookie('coki_oauth_pending', window.location.search, { maxAge: 600 });
+            }
+        }
+        checkSession();
+
+        document.getElementById('btn-approve').addEventListener('click', async () => {
+            const user = await getCurrentCokiUser();
+            if (!user) return alert('Error: Sesión perdida');
+            const userData = { id: user.id, email: user.email, name: user.name || user.email || 'Usuario', picture: user.picture };
+            const result = await approveAuthorization(codeChallenge, userData);
+            if (result.success) window.location.href = result.redirect_url;
+            else alert('Error: ' + (result.error_description || result.error));
+        });
+
+        document.getElementById('btn-deny').addEventListener('click', () => {
+            const redirectUri = urlParams.get('redirect_uri');
+            const state = urlParams.get('state');
+            const url = new URL(redirectUri);
+            url.searchParams.set('error', 'access_denied');
+            url.searchParams.set('error_description', 'User denied authorization');
+            if (state) url.searchParams.set('state', state);
+            window.location.href = url.toString();
+        });
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
+    </script>
+</body>
+</html>

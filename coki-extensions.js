@@ -109,7 +109,7 @@ export function renderMentionsInDOM() {
 
         // Reemplazamos el texto plano por una etiqueta <a> que apunte a CSMS
         const replaced = html.replace(mentionRegex, (match, username) => {
-            return `<a href="coki-messenger.html?new_chat=${encodeURIComponent(username)}" style="color: var(--accent); text-decoration: none; font-weight: 600; padding: 0 2px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${match}</a>`;
+            return `<a href="messenger.html?new_chat=${encodeURIComponent(username)}" style="color: var(--accent); text-decoration: none; font-weight: 600; padding: 0 2px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${match}</a>`;
         });
 
         if (html !== replaced) {

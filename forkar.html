@@ -784,16 +784,16 @@
                     style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:#10b981; display:inline-flex; align-items:center; gap:4px; transition:color 0.2s;"
                     onmouseover="this.style.color='#34d399'"
                     onmouseout="this.style.color='#10b981'">🌿 Nuestro Hogar Común</a>
-                <a href="coki-messenger.html"
+                <a href="messenger.html"
                     style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:var(--text-sub); transition:color 0.2s;"
                     onmouseover="this.style.color='var(--text)'"
                     onmouseout="this.style.color='var(--text-sub)'">CSMS</a>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
-                <a href="coki-dashboard.html" id="nav-profile">
+                <a href="dashboard.html" id="nav-profile">
                     <div id="nav-avatar">U</div>
                     <span id="nav-name">Mi cuenta</span>
                 </a>
-                <a href="coki-register.html" id="nav-login">Iniciar sesión</a>
+                <a href="register.html" id="nav-login">Iniciar sesión</a>
             </div>
         </div>
     </nav>
@@ -967,7 +967,7 @@
                 <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,9,15,0.6)); border:1px solid rgba(16,185,129,0.3); border-radius:16px; padding:20px; text-align:center; margin-bottom:20px;">
                     <p style="font-size:12px; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Mi Ahorro CO₂ en Forkar</p>
                     <div style="font-size:42px; font-weight:900; color:white;" id="modal-co2-total">0.0 kg</div>
-                    <p style="font-size:13px; color:var(--text-sub); margin-top:4px;">Iniciativas completadas en la red de Coki Studios</p>
+                    <p style="font-size:13px; color:var(--text-sub); margin-top:4px;">Iniciativas completadas en la red de CS</p>
                 </div>
 
                 <!-- 🍪 SECCIÓN HASH DE NAVEGADOR -->
@@ -1260,7 +1260,7 @@
 
         window.openModal = () => {
             if (!currentUser) {
-                window.location.href = 'coki-register.html?redirect=' + encodeURIComponent(window.location.href);
+                window.location.href = 'register.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
             document.getElementById('modal-post').classList.add('open');

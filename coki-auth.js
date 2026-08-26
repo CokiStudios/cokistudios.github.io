@@ -150,7 +150,7 @@ async function loginCokiWithOAuth(provider) {
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
-            redirectTo: window.location.origin + '/coki-oauth-callback.html',
+            redirectTo: window.location.origin + '/oauth-callback.html',
             scopes: provider === 'google' ? 'profile email' : undefined
         }
     });

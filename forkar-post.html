@@ -603,11 +603,11 @@
             </a>
             <div class="nav-right">
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
-                <a href="coki-dashboard.html" id="nav-profile" style="display: flex;">
+                <a href="dashboard.html" id="nav-profile" style="display: flex;">
                     <div id="nav-avatar"></div>
                     <span id="nav-name">Cargando...</span>
                 </a>
-                <a href="coki-register.html" id="nav-login" style="display: none;">Iniciar sesión</a>
+                <a href="register.html" id="nav-login" style="display: none;">Iniciar sesión</a>
             </div>
         </div>
     </nav>
@@ -635,7 +635,7 @@
 
             <div id="login-prompt" class="login-prompt" style="display: none;">
                 <p>Para unirte a la conversación, necesitas iniciar sesión.</p>
-                <a href="coki-register.html">Iniciar sesión con CSID →</a>
+                <a href="register.html">Iniciar sesión con CSID →</a>
             </div>
 
             <div id="comments-list" class="comments-list">
@@ -950,7 +950,7 @@
 
         window.toggleLike = async () => {
             if (!currentUser) {
-                window.location.href = 'coki-register.html?redirect=' + encodeURIComponent(window.location.href);
+                window.location.href = 'register.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
 
@@ -973,7 +973,7 @@
 
         window.toggleFollowUser = async (userId) => {
             if (!currentUser) {
-                window.location.href = 'coki-register.html?redirect=' + encodeURIComponent(window.location.href);
+                window.location.href = 'register.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
 
