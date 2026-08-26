@@ -128,7 +128,7 @@ struct ForkarEcoView: View {
                         
                         // Retos
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("RETOS ECOLÓGICOS FORKAR")
+                            Text("RETOS ECOLÓGICOS DIARIOS")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(ForkarTheme.textSub)
                                 .padding(.horizontal)
@@ -144,23 +144,67 @@ struct ForkarEcoView: View {
                             EcoActionCard(title: "🔌 Reciclaje RAEE", desc: "Entrega de electrónicos en desuso (+3.5 kg CO₂)", pts: 70) {
                                 completeAction(co2: 3.5, pts: 70, title: "Reciclaje RAEE")
                             }
+                            
+                            EcoActionCard(title: "🌳 Siembra & Cuidado de Árboles", desc: "Participa en jornadas ambientales (+5.0 kg CO₂)", pts: 100) {
+                                completeAction(co2: 5.0, pts: 100, title: "Siembra y Cuidado Verde")
+                            }
+                        }
+                        
+                        // Tienda de Recompensas Eco
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("TIENDA DE RECOMPENSAS ECO")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(ForkarTheme.textSub)
+                                Spacer()
+                                Text("\(ecoPoints) pts disponibles")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(Color.emerald)
+                            }
+                            .padding(.horizontal)
+                            
+                            EcoRewardCard(
+                                title: "☕ Café Orgánico Local (Cota)",
+                                desc: "Canjeable en cafeterías aliadas del municipio",
+                                cost: 150,
+                                userPoints: ecoPoints
+                            ) {
+                                redeemReward(cost: 150, title: "Café Orgánico Local")
+                            }
+                            
+                            EcoRewardCard(
+                                title: "🌱 Kit de Semillas Nativas",
+                                desc: "Especies autóctonas para tu huerta o jardín",
+                                cost: 250,
+                                userPoints: ecoPoints
+                            ) {
+                                redeemReward(cost: 250, title: "Kit de Semillas Nativas")
+                            }
+                            
+                            EcoRewardCard(
+                                title: "🎟️ Pase Día Parque Ecológico",
+                                desc: "Entrada libre para caminata guiada ambiental",
+                                cost: 400,
+                                userPoints: ecoPoints
+                            ) {
+                                redeemReward(cost: 400, title: "Pase Día Parque Ecológico")
+                            }
                         }
                         
                         // Puntos de Recolección (Map Preview)
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("MAPA VERDE DE RECOLECCIÓN (COTA)")
+                            Text("MAPA VERDE DE ESTACIONES (COTA)")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(ForkarTheme.textSub)
                             
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("🟢 Centro de Acopio Municipal").font(.system(size: 13, weight: .bold))
-                                Text("🔵 Punto Verde Parque Principal").font(.system(size: 13, weight: .bold))
-                                Text("🟠 Punto RAEE Electrónicos").font(.system(size: 13, weight: .bold))
+                            VStack(spacing: 8) {
+                                EcoStationMapRow(icon: "leaf.fill", name: "Punto Verde Parque Principal", desc: "Plásticos, Cartón y Compostaje", color: Color.emerald)
+                                EcoStationMapRow(icon: "bicycle", name: "Estación Bici Cota Sostenible", desc: "Ciclorruta y Préstamo Verde", color: Color.blue)
+                                EcoStationMapRow(icon: "bolt.batteryblock.fill", name: "Punto RAEE Electrónicos", desc: "Baterías, Cables y Computadores", color: Color.orange)
+                                EcoStationMapRow(icon: "arrow.3.trianglepath", name: "Centro de Acopio Municipal", desc: "Recolección Masiva", color: Color.purple)
                             }
-                            .foregroundColor(ForkarTheme.text)
-                            .font(.subheadline)
                         }
-                        .padding(20)
+                        .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .liquidGlass(cornerRadius: 16, glowColor: Color.emerald)
                         .padding(.horizontal)
@@ -232,6 +276,20 @@ struct ForkarEcoView: View {
         WidgetCenter.shared.reloadAllTimelines()
         
         alertMessage = "¡Reto Registrado! 🌿\nHas registrado \"\(title)\": +\(String(format: "%.1f", co2)) kg CO₂ ahorrados y +\(pts) Puntos Eco."
+        showSuccessAlert = true
+        
+    private func redeemReward(cost: Int, title: String) {
+        guard ecoPoints >= cost else {
+            alertMessage = "Puntos insuficientes ⚠️\nNecesitas \(cost) Puntos Eco para canjear \"\(title)\"."
+            showSuccessAlert = true
+            return
+        }
+        
+        ecoPoints -= cost
+        UserDefaults.standard.set(ecoPoints, forKey: "forkar_eco_points")
+        WidgetCenter.shared.reloadAllTimelines()
+        
+        alertMessage = "¡Recompensa Canjeada! 🎉\nHas canjeado \"\(title)\" por \(cost) Puntos Eco. Muestra tu código QR en el establecimiento aliado."
         showSuccessAlert = true
         
         DynamicIslandEcoManager.shared.updateEcoLiveActivity(co2: co2Saved, pts: ecoPoints)
@@ -482,6 +540,90 @@ struct EcoActionCard: View {
         .padding(16)
         .liquidGlass(cornerRadius: 14, glowColor: Color.emerald)
         .padding(.horizontal)
+    }
+}
+
+// MARK: - Eco Reward Store Card
+struct EcoRewardCard: View {
+    let title: String
+    let desc: String
+    let cost: Int
+    let userPoints: Int
+    let onRedeem: () -> Void
+    
+    var canAfford: Bool {
+        userPoints >= cost
+    }
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(ForkarTheme.text)
+                Text(desc)
+                    .font(.system(size: 11))
+                    .foregroundColor(ForkarTheme.textSub)
+            }
+            Spacer()
+            
+            Button(action: onRedeem) {
+                HStack(spacing: 4) {
+                    Image(systemName: "gift.fill")
+                    Text("\(cost) pts")
+                }
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(canAfford ? .white : .gray)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(canAfford ? Color.emerald : Color.white.opacity(0.08))
+                .cornerRadius(10)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(canAfford ? Color.emerald : Color.white.opacity(0.1), lineWidth: 1))
+            }
+            .disabled(!canAfford)
+        }
+        .padding(14)
+        .liquidGlass(cornerRadius: 14, glowColor: canAfford ? Color.emerald : ForkarTheme.accent)
+        .padding(.horizontal)
+    }
+}
+
+// MARK: - Eco Station Map Row
+struct EcoStationMapRow: View {
+    let icon: String
+    let name: String
+    let desc: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(color)
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(ForkarTheme.text)
+                Text(desc)
+                    .font(.system(size: 11))
+                    .foregroundColor(ForkarTheme.textSub)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "location.fill")
+                .font(.system(size: 12))
+                .foregroundColor(color)
+        }
+        .padding(10)
+        .background(Color.white.opacity(0.03))
+        .cornerRadius(10)
     }
 }
 
