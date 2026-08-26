@@ -866,7 +866,7 @@
                     <input class="form-input" type="text" id="dm-search-user" placeholder="Escribe un nombre o correo...">
                 </div>
                 <div class="form-group">
-                    <label>Desarrolladores y Usuarios</label>
+                    <label>Contactos y Usuarios de Coki Studios</label>
                     <div class="users-checklist" id="dm-users-list">
                         <!-- Users list with checkboxes -->
                     </div>
@@ -1882,6 +1882,21 @@
             const day = date.getDate();
             const month = date.getMonth() + 1;
             return `${day}/${month}`;
+        }
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
         }
 
         // Initialize App

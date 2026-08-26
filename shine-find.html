@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shine Find Browser — El Navegador de Coki Studios</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
     <meta name="description" content="Shine Find: Navegador ultrarrápido basado en CEF / Chromium con protección Sentinel, integración nativa CSID y optimización Eco Hub.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/xtraps.css">
@@ -23,6 +28,28 @@
             --text-sub: #94a3b8;
             --text-muted: #64748b;
         }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --card: rgba(255, 255, 255, 0.9);
+            --card-hover: rgba(0, 0, 0, 0.03);
+            --border: rgba(56, 189, 248, 0.35);
+            --accent: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.2);
+            --purple: #7c3aed;
+            --emerald: #059669;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: rgba(0,0,0,0.05); }
 
         body {
             font-family: 'Outfit', sans-serif;
@@ -209,6 +236,7 @@
                 <a href="forkar.html" class="nav-link">Forkar</a>
                 <a href="products.html" class="nav-link">Productos</a>
                 <a href="coki-dashboard.html" class="nav-link">Mi CSID</a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
                 <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-cta">Descargar CEF Build ⚡</a>
             </div>
         </div>
@@ -313,6 +341,20 @@
                 mockup.style.borderColor = 'var(--border)';
                 mockup.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-glow)';
             }
+        }
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
         }
     </script>
 </body>

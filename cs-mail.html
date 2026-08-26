@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS Mail Web • Coki Studios & Zoho Mail</title>
+    <script>
+        if (localStorage.getItem('coki-theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
     <link rel="icon" href="https://avatars.githubusercontent.com/u/161494639?s=200&v=4">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +26,27 @@
             --text-sub: #94a3b8;
             --text-muted: #64748b;
         }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --sidebar-bg: #f1f5f9;
+            --card: rgba(0, 0, 0, 0.02);
+            --border: rgba(0, 0, 0, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            --accent: #4f46e5;
+            --accent-glow: #7c3aed;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        .theme-toggle-btn {
+            background: none; border: none; cursor: pointer;
+            width: 32px; height: 32px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s; font-size: 15px;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: rgba(0,0,0,0.05); }
 
         * {
             box-sizing: border-box;
@@ -358,9 +384,8 @@
             </div>
 
             <div style="display:flex; gap:10px; align-items:center;">
-                <a href="https://mail.zoho.com/zm/" target="_blank" style="padding:6px 14px; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; font-weight:700; text-decoration:none; transition:all 0.2s;">
-                    Abrir en Pestaña Completa ↗
-                </a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <a href="https://mail.zoho.com/zm/" target="_blank" style="font-size:12px; font-weight:700; color:var(--accent); text-decoration:none; padding:5px 12px; border-radius:6px; background:rgba(99,102,241,0.1); border:1px solid var(--border);">Abrir en pestaña nueva ↗</a>
             </div>
         </header>
 
@@ -431,6 +456,20 @@
         }
 
         verifyAccess();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
+                updateToggleIcon();
+            });
+        }
     </script>
 </body>
 </html>
