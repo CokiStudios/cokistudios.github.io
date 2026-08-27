@@ -1,19 +1,38 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-38:12
-INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-38:12
-INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-38:12
-INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-38:12
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-41:12
+INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-41:12
+INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-41:12
+INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:1-41:12
+MERGED from [androidx.camera:camera-video:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3880fd21ece0e8a207775eebe6079d2b/transformed/camera-video-1.3.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.camera:camera-view:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/193148f46aa6bc3dc40a7a513976c90f/transformed/camera-view-1.3.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.camera:camera-lifecycle:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/54ef4eee1035a68609559edd25647b71/transformed/camera-lifecycle-1.3.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:17:1-36:12
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:17:1-36:12
+MERGED from [com.google.mlkit:barcode-scanning:17.2.0] /Users/jerix/.gradle/caches/8.9/transforms/a598a748ca04e4d716eaa91300c8c14f/transformed/barcode-scanning-17.2.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:2:1-18:12
+MERGED from [com.google.mlkit:barcode-scanning-common:17.0.0] /Users/jerix/.gradle/caches/8.9/transforms/a10136ec85302d7d4387809e9e8b332a/transformed/barcode-scanning-common-17.0.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:2:1-18:12
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:2:1-26:12
+MERGED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:16:1-24:12
+MERGED from [com.google.mlkit:vision-interfaces:16.2.0] /Users/jerix/.gradle/caches/8.9/transforms/281af0167151b18b22af661e9b7f8edc/transformed/vision-interfaces-16.2.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] /Users/jerix/.gradle/caches/8.9/transforms/9b44f7870caf6151b2ba4e440c790cc2/transformed/play-services-tasks-18.0.2/AndroidManifest.xml:2:1-6:12
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:16:1-26:12
 MERGED from [androidx.navigation:navigation-common:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/684aedb9855b6a8edbd0c0afd4dbe361/transformed/navigation-common-2.7.7/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/bbc98c960495ca61b7e5cdc9e67ac412/transformed/navigation-runtime-2.7.7/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-common-ktx:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/a961f4d539154815063012dc3837fc6a/transformed/navigation-common-ktx-2.7.7/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/97370bccbc30d7d0944b1a988e41712e/transformed/navigation-runtime-ktx-2.7.7/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-compose:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/1cd452228c78ce8acfa4d0de405cd797/transformed/navigation-compose-2.7.7/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-compose:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/1b90863e58a06884c77273951d039ca2/transformed/coil-compose-2.5.0/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-compose-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/2285e299e3a8feab1f05045d03da27f3/transformed/coil-compose-base-2.5.0/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/b2f967e1666bf06e5fb793178441db76/transformed/coil-2.5.0/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/8c302c54d27afede763714ce74f343a2/transformed/coil-base-2.5.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/ba4f6176cb6d637cee4a22c87e1b6eaa/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.appcompat:appcompat:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/e4ca3713270cb0ef7bd2cad3b56744d3/transformed/appcompat-1.6.1/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.fragment:fragment:1.3.6] /Users/jerix/.gradle/caches/8.9/transforms/01264e7fd25a1bc6e7c618e08d17f6de/transformed/fragment-1.3.6/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.activity:activity:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/09a1ad4176d828179cec19e77d632455/transformed/activity-1.8.2/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.activity:activity-ktx:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/2ac2136ee157454cca30f945edb1f141/transformed/activity-ktx-1.8.2/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] /Users/jerix/.gradle/caches/8.9/transforms/7e7dfa694eb35cd6f31bd1bfbb483f74/transformed/material3-release/AndroidManifest.xml:17:1-22:12
-MERGED from [io.coil-kt:coil-compose:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/1b90863e58a06884c77273951d039ca2/transformed/coil-compose-2.5.0/AndroidManifest.xml:2:1-7:12
-MERGED from [io.coil-kt:coil-compose-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/2285e299e3a8feab1f05045d03da27f3/transformed/coil-compose-base-2.5.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material:material-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/8f6eaf615825c54b192fce9ae7c0384a/transformed/material-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/d0e936baeb962c54f54dad400e9db81c/transformed/material-icons-core-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material:material-icons-extended-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/b31eb093aacc562778e27c0c32113be9/transformed/material-icons-extended-release/AndroidManifest.xml:2:1-7:12
@@ -32,25 +51,29 @@ MERGED from [androidx.compose.ui:ui-graphics-android:1.6.1] /Users/jerix/.gradle
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/b693d72261e37c1c41ec78b03583594f/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:17:1-28:12
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/003e0ed2906f3f90a45192dd21fada95/transformed/ui-tooling-release/AndroidManifest.xml:17:1-28:12
 MERGED from [androidx.activity:activity-compose:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/f5f0ef2e2f0d3f96e4d62aa01c8e02c8/transformed/activity-compose-1.8.2/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/jerix/.gradle/caches/8.9/transforms/f8199e82c8b2571ca9da4b48ad0a4f00/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/jerix/.gradle/caches/8.9/transforms/03c49f2bb61e24ee6eb9b4c291beb8bf/transformed/emoji2-1.3.0/AndroidManifest.xml:17:1-35:12
 MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/1adad49ecc785bc77bc83ed32e45d57f/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/ae3c61039637965f3835acd15abb2de7/transformed/lifecycle-livedata-core-ktx-2.7.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/4f5394a2f6816da3c2f73c96d70477d6/transformed/lifecycle-livedata-core-2.7.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/a9657823a5e80c8cebfc3ca564988e80/transformed/lifecycle-viewmodel-savedstate-2.7.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/afa2dbdd49eaee440dbd7698e0cf4cab/transformed/lifecycle-viewmodel-ktx-2.7.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.loader:loader:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/0777404b62e1c5c28f2ef6569179631f/transformed/loader-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/0bc75ab3d9568464a99d785fe58e4ee5/transformed/lifecycle-livedata-2.7.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] /Users/jerix/.gradle/caches/8.9/transforms/c28f4c2466207a5462c13f3528447e59/transformed/savedstate-ktx-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/jerix/.gradle/caches/8.9/transforms/8d871a4440a8e0ccdac5fd92020fff8f/transformed/savedstate-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/eed9fe2dcab262226f77e1645ad6623d/transformed/lifecycle-viewmodel-2.7.0/AndroidManifest.xml:17:1-22:12
-MERGED from [io.coil-kt:coil:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/b2f967e1666bf06e5fb793178441db76/transformed/coil-2.5.0/AndroidManifest.xml:2:1-7:12
-MERGED from [io.coil-kt:coil-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/8c302c54d27afede763714ce74f343a2/transformed/coil-base-2.5.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/2999c8e9a8a44ef96d329af211c06828/transformed/lifecycle-runtime-2.7.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/e553d1917d0a6056684875178f3d4866/transformed/lifecycle-runtime-ktx-2.7.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/29f0b33b506c28170b654c98c7d2ccbe/transformed/lifecycle-viewmodel-compose-2.7.0/AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.accompanist:accompanist-drawablepainter:0.32.0] /Users/jerix/.gradle/caches/8.9/transforms/83acfa2c25e011f7ce74c7d216206845/transformed/accompanist-drawablepainter-0.32.0/AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.compose.ui:ui-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/32518de75f5eab1576a193c5071d045d/transformed/ui-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.autofill:autofill:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/2013ca6da0b2fa715617672340c74ca4/transformed/autofill-1.0.0/AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/ba4f6176cb6d637cee4a22c87e1b6eaa/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/jerix/.gradle/caches/8.9/transforms/cddf6bcbb1f965cfc1af61ff96ef36d1/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/jerix/.gradle/caches/8.9/transforms/6a9de542df98d749e409af09ddd0d4c2/transformed/vectordrawable-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/2b35b59a414e2ba7113ba32dd3118c87/transformed/drawerlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/0f88db875f96a21a4087abcc8fe52c54/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/60a2f059a854eb74e8bc78e1837db8ae/transformed/customview-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:17:1-30:12
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/83017bfd8b9b54cf501283b7764999e0/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.core:core-ktx:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/b9e1f06c318e64288f7328b0e130f50c/transformed/core-ktx-1.12.0/AndroidManifest.xml:2:1-7:12
@@ -60,10 +83,17 @@ MERGED from [androidx.annotation:annotation-experimental:1.4.0] /Users/jerix/.gr
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/a052a7f38ae93cceea7a1785fe684346/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/3a5c415b14d92379fc81f9cb858cbb69/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/jerix/.gradle/caches/8.9/transforms/8ce6e966fa04b6ec8f38eb596eedc8fc/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:15:1-38:12
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:15:1-41:12
+MERGED from [com.google.android.datatransport:transport-api:2.2.1] /Users/jerix/.gradle/caches/8.9/transforms/5bedadc9adb3e4792abc627778c7a945/transformed/transport-api-2.2.1/AndroidManifest.xml:15:1-22:12
+MERGED from [com.google.firebase:firebase-components:16.1.0] /Users/jerix/.gradle/caches/8.9/transforms/a39fd405ace6b353ad2ada1178972066/transformed/firebase-components-16.1.0/AndroidManifest.xml:15:1-23:12
+MERGED from [com.google.firebase:firebase-encoders-json:17.1.0] /Users/jerix/.gradle/caches/8.9/transforms/9a57c82b75d83b4e962b14dd7449787d/transformed/firebase-encoders-json-17.1.0/AndroidManifest.xml:15:1-23:12
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3102fe31d6e21789ac80444f3ab0982d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/f9380ab9a1bb2086d779ed3c27784b6d/transformed/startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/5b5c7ee7900e03121756e92e6deac707/transformed/tracing-1.0.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/jerix/.gradle/caches/8.9/transforms/e89d9d50fed6f5974ef71def16c04b25/transformed/exifinterface-1.3.6/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/6a9a46d4a7e316cf1fd5250bdb8b96d7/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.android.odml:image:1.0.0-beta1] /Users/jerix/.gradle/caches/8.9/transforms/98d41287ae30b60447ef583df92d70f5/transformed/image-1.0.0-beta1/AndroidManifest.xml:2:1-9:12
 	package
 		INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml
 	android:versionName
@@ -76,11 +106,45 @@ MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/jerix/.gradle/ca
 		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:2:11-69
 uses-permission#android.permission.INTERNET
 ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:5:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:26:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:26:5-67
 	android:name
 		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:5:22-64
+uses-permission#android.permission.CAMERA
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:6:5-65
+	android:name
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:6:22-62
+uses-feature#android.hardware.camera
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:7:5-85
+	android:required
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:7:58-82
+	android:name
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:7:19-57
+uses-feature#android.hardware.camera.autofocus
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:8:5-95
+	android:required
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:8:68-92
+	android:name
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:8:19-67
 application
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:7:5-36:19
-INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:7:5-36:19
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:10:5-39:19
+INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:10:5-39:19
+MERGED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:8:5-24:19
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:8:5-24:19
+MERGED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] /Users/jerix/.gradle/caches/8.9/transforms/9b44f7870caf6151b2ba4e440c790cc2/transformed/play-services-tasks-18.0.2/AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] /Users/jerix/.gradle/caches/8.9/transforms/9b44f7870caf6151b2ba4e440c790cc2/transformed/play-services-tasks-18.0.2/AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:20:5-24:19
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:20:5-24:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/b693d72261e37c1c41ec78b03583594f/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/b693d72261e37c1c41ec78b03583594f/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/003e0ed2906f3f90a45192dd21fada95/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
@@ -93,74 +157,108 @@ MERGED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transfor
 MERGED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:28:5-89
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/a052a7f38ae93cceea7a1785fe684346/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/a052a7f38ae93cceea7a1785fe684346/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:28:5-36:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:28:5-36:19
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:25:5-39:19
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:25:5-39:19
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3102fe31d6e21789ac80444f3ab0982d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3102fe31d6e21789ac80444f3ab0982d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/f9380ab9a1bb2086d779ed3c27784b6d/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/f9380ab9a1bb2086d779ed3c27784b6d/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
+MERGED from [com.google.android.odml:image:1.0.0-beta1] /Users/jerix/.gradle/caches/8.9/transforms/98d41287ae30b60447ef583df92d70f5/transformed/image-1.0.0-beta1/AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.odml:image:1.0.0-beta1] /Users/jerix/.gradle/caches/8.9/transforms/98d41287ae30b60447ef583df92d70f5/transformed/image-1.0.0-beta1/AndroidManifest.xml:7:5-20
 	android:extractNativeLibs
 		INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:12:9-35
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:15:9-35
 	android:label
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:10:9-41
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:13:9-41
 	android:roundIcon
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:11:9-54
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:14:9-54
 	tools:targetApi
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:14:9-29
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:17:9-29
 	android:icon
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:9:9-43
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:12:9-43
 	android:allowBackup
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:8:9-35
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:11:9-35
 	android:theme
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:13:9-71
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:16:9-71
 activity#com.cokistudios.ecovalidator.MainActivity
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:16:9-35:20
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:19:9-38:20
 	android:launchMode
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:19:13-44
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:22:13-44
 	android:exported
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:18:13-36
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:21:13-36
 	android:configChanges
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:20:13-74
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:23:13-74
 	android:name
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:17:13-41
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:20:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:21:13-24:29
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:24:13-27:29
 action#android.intent.action.MAIN
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:22:17-69
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:25:17-69
 	android:name
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:22:25-66
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:25:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:23:17-77
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:26:17-77
 	android:name
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:23:27-74
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:26:27-74
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:oauth+data:scheme:forkar
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:27:13-34:29
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:30:13-37:29
 	android:label
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:27:28-58
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:30:28-58
 action#android.intent.action.VIEW
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:28:17-69
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:31:17-69
 	android:name
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:28:25-66
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:31:25-66
 category#android.intent.category.DEFAULT
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:29:17-76
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:32:17-76
 	android:name
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:29:27-73
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:32:27-73
 category#android.intent.category.BROWSABLE
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:30:17-78
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:33:17-78
 	android:name
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:30:27-75
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:33:27-75
 data
-ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:31:17-33:44
+ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:34:17-36:44
 	android:host
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:33:21-41
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:36:21-41
 	android:scheme
-		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:32:21-44
+		ADDED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml:35:21-44
 uses-sdk
 INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml
 INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml
+MERGED from [androidx.camera:camera-video:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3880fd21ece0e8a207775eebe6079d2b/transformed/camera-video-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-video:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3880fd21ece0e8a207775eebe6079d2b/transformed/camera-video-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-view:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/193148f46aa6bc3dc40a7a513976c90f/transformed/camera-view-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-view:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/193148f46aa6bc3dc40a7a513976c90f/transformed/camera-view-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-lifecycle:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/54ef4eee1035a68609559edd25647b71/transformed/camera-lifecycle-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-lifecycle:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/54ef4eee1035a68609559edd25647b71/transformed/camera-lifecycle-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [com.google.mlkit:barcode-scanning:17.2.0] /Users/jerix/.gradle/caches/8.9/transforms/a598a748ca04e4d716eaa91300c8c14f/transformed/barcode-scanning-17.2.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:barcode-scanning:17.2.0] /Users/jerix/.gradle/caches/8.9/transforms/a598a748ca04e4d716eaa91300c8c14f/transformed/barcode-scanning-17.2.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:6:5-44
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:barcode-scanning-common:17.0.0] /Users/jerix/.gradle/caches/8.9/transforms/a10136ec85302d7d4387809e9e8b332a/transformed/barcode-scanning-common-17.0.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:barcode-scanning-common:17.0.0] /Users/jerix/.gradle/caches/8.9/transforms/a10136ec85302d7d4387809e9e8b332a/transformed/barcode-scanning-common-17.0.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:6:5-44
+MERGED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:18:5-43
+MERGED from [com.google.mlkit:vision-interfaces:16.2.0] /Users/jerix/.gradle/caches/8.9/transforms/281af0167151b18b22af661e9b7f8edc/transformed/vision-interfaces-16.2.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:vision-interfaces:16.2.0] /Users/jerix/.gradle/caches/8.9/transforms/281af0167151b18b22af661e9b7f8edc/transformed/vision-interfaces-16.2.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] /Users/jerix/.gradle/caches/8.9/transforms/9b44f7870caf6151b2ba4e440c790cc2/transformed/play-services-tasks-18.0.2/AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-tasks:18.0.2] /Users/jerix/.gradle/caches/8.9/transforms/9b44f7870caf6151b2ba4e440c790cc2/transformed/play-services-tasks-18.0.2/AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:18:5-43
 MERGED from [androidx.navigation:navigation-common:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/684aedb9855b6a8edbd0c0afd4dbe361/transformed/navigation-common-2.7.7/AndroidManifest.xml:20:5-44
 MERGED from [androidx.navigation:navigation-common:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/684aedb9855b6a8edbd0c0afd4dbe361/transformed/navigation-common-2.7.7/AndroidManifest.xml:20:5-44
 MERGED from [androidx.navigation:navigation-runtime:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/bbc98c960495ca61b7e5cdc9e67ac412/transformed/navigation-runtime-2.7.7/AndroidManifest.xml:20:5-44
@@ -171,16 +269,26 @@ MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.7] /Users/jerix/.gra
 MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/97370bccbc30d7d0944b1a988e41712e/transformed/navigation-runtime-ktx-2.7.7/AndroidManifest.xml:5:5-44
 MERGED from [androidx.navigation:navigation-compose:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/1cd452228c78ce8acfa4d0de405cd797/transformed/navigation-compose-2.7.7/AndroidManifest.xml:5:5-44
 MERGED from [androidx.navigation:navigation-compose:2.7.7] /Users/jerix/.gradle/caches/8.9/transforms/1cd452228c78ce8acfa4d0de405cd797/transformed/navigation-compose-2.7.7/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/1b90863e58a06884c77273951d039ca2/transformed/coil-compose-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/1b90863e58a06884c77273951d039ca2/transformed/coil-compose-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/2285e299e3a8feab1f05045d03da27f3/transformed/coil-compose-base-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/2285e299e3a8feab1f05045d03da27f3/transformed/coil-compose-base-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/b2f967e1666bf06e5fb793178441db76/transformed/coil-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/b2f967e1666bf06e5fb793178441db76/transformed/coil-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/8c302c54d27afede763714ce74f343a2/transformed/coil-base-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/8c302c54d27afede763714ce74f343a2/transformed/coil-base-2.5.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/ba4f6176cb6d637cee4a22c87e1b6eaa/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/ba4f6176cb6d637cee4a22c87e1b6eaa/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/e4ca3713270cb0ef7bd2cad3b56744d3/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/e4ca3713270cb0ef7bd2cad3b56744d3/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.fragment:fragment:1.3.6] /Users/jerix/.gradle/caches/8.9/transforms/01264e7fd25a1bc6e7c618e08d17f6de/transformed/fragment-1.3.6/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.3.6] /Users/jerix/.gradle/caches/8.9/transforms/01264e7fd25a1bc6e7c618e08d17f6de/transformed/fragment-1.3.6/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.activity:activity:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/09a1ad4176d828179cec19e77d632455/transformed/activity-1.8.2/AndroidManifest.xml:20:5-44
 MERGED from [androidx.activity:activity:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/09a1ad4176d828179cec19e77d632455/transformed/activity-1.8.2/AndroidManifest.xml:20:5-44
 MERGED from [androidx.activity:activity-ktx:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/2ac2136ee157454cca30f945edb1f141/transformed/activity-ktx-1.8.2/AndroidManifest.xml:5:5-44
 MERGED from [androidx.activity:activity-ktx:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/2ac2136ee157454cca30f945edb1f141/transformed/activity-ktx-1.8.2/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material3:material3-android:1.2.0] /Users/jerix/.gradle/caches/8.9/transforms/7e7dfa694eb35cd6f31bd1bfbb483f74/transformed/material3-release/AndroidManifest.xml:20:5-44
 MERGED from [androidx.compose.material3:material3-android:1.2.0] /Users/jerix/.gradle/caches/8.9/transforms/7e7dfa694eb35cd6f31bd1bfbb483f74/transformed/material3-release/AndroidManifest.xml:20:5-44
-MERGED from [io.coil-kt:coil-compose:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/1b90863e58a06884c77273951d039ca2/transformed/coil-compose-2.5.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-compose:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/1b90863e58a06884c77273951d039ca2/transformed/coil-compose-2.5.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-compose-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/2285e299e3a8feab1f05045d03da27f3/transformed/coil-compose-base-2.5.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-compose-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/2285e299e3a8feab1f05045d03da27f3/transformed/coil-compose-base-2.5.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material:material-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/8f6eaf615825c54b192fce9ae7c0384a/transformed/material-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material:material-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/8f6eaf615825c54b192fce9ae7c0384a/transformed/material-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/d0e936baeb962c54f54dad400e9db81c/transformed/material-icons-core-release/AndroidManifest.xml:5:5-44
@@ -217,26 +325,30 @@ MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /Users/jerix/.gradle/
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/003e0ed2906f3f90a45192dd21fada95/transformed/ui-tooling-release/AndroidManifest.xml:20:5-44
 MERGED from [androidx.activity:activity-compose:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/f5f0ef2e2f0d3f96e4d62aa01c8e02c8/transformed/activity-compose-1.8.2/AndroidManifest.xml:5:5-44
 MERGED from [androidx.activity:activity-compose:1.8.2] /Users/jerix/.gradle/caches/8.9/transforms/f5f0ef2e2f0d3f96e4d62aa01c8e02c8/transformed/activity-compose-1.8.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/jerix/.gradle/caches/8.9/transforms/f8199e82c8b2571ca9da4b48ad0a4f00/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/jerix/.gradle/caches/8.9/transforms/f8199e82c8b2571ca9da4b48ad0a4f00/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/jerix/.gradle/caches/8.9/transforms/03c49f2bb61e24ee6eb9b4c291beb8bf/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/jerix/.gradle/caches/8.9/transforms/03c49f2bb61e24ee6eb9b4c291beb8bf/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/1adad49ecc785bc77bc83ed32e45d57f/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/1adad49ecc785bc77bc83ed32e45d57f/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/ae3c61039637965f3835acd15abb2de7/transformed/lifecycle-livedata-core-ktx-2.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/ae3c61039637965f3835acd15abb2de7/transformed/lifecycle-livedata-core-ktx-2.7.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/4f5394a2f6816da3c2f73c96d70477d6/transformed/lifecycle-livedata-core-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/4f5394a2f6816da3c2f73c96d70477d6/transformed/lifecycle-livedata-core-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/a9657823a5e80c8cebfc3ca564988e80/transformed/lifecycle-viewmodel-savedstate-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/a9657823a5e80c8cebfc3ca564988e80/transformed/lifecycle-viewmodel-savedstate-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/afa2dbdd49eaee440dbd7698e0cf4cab/transformed/lifecycle-viewmodel-ktx-2.7.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/afa2dbdd49eaee440dbd7698e0cf4cab/transformed/lifecycle-viewmodel-ktx-2.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/0777404b62e1c5c28f2ef6569179631f/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/0777404b62e1c5c28f2ef6569179631f/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/0bc75ab3d9568464a99d785fe58e4ee5/transformed/lifecycle-livedata-2.7.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/0bc75ab3d9568464a99d785fe58e4ee5/transformed/lifecycle-livedata-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] /Users/jerix/.gradle/caches/8.9/transforms/c28f4c2466207a5462c13f3528447e59/transformed/savedstate-ktx-1.2.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] /Users/jerix/.gradle/caches/8.9/transforms/c28f4c2466207a5462c13f3528447e59/transformed/savedstate-ktx-1.2.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/jerix/.gradle/caches/8.9/transforms/8d871a4440a8e0ccdac5fd92020fff8f/transformed/savedstate-1.2.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/jerix/.gradle/caches/8.9/transforms/8d871a4440a8e0ccdac5fd92020fff8f/transformed/savedstate-1.2.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/eed9fe2dcab262226f77e1645ad6623d/transformed/lifecycle-viewmodel-2.7.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/eed9fe2dcab262226f77e1645ad6623d/transformed/lifecycle-viewmodel-2.7.0/AndroidManifest.xml:20:5-44
-MERGED from [io.coil-kt:coil:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/b2f967e1666bf06e5fb793178441db76/transformed/coil-2.5.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/b2f967e1666bf06e5fb793178441db76/transformed/coil-2.5.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/8c302c54d27afede763714ce74f343a2/transformed/coil-base-2.5.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-base:2.5.0] /Users/jerix/.gradle/caches/8.9/transforms/8c302c54d27afede763714ce74f343a2/transformed/coil-base-2.5.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/2999c8e9a8a44ef96d329af211c06828/transformed/lifecycle-runtime-2.7.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/2999c8e9a8a44ef96d329af211c06828/transformed/lifecycle-runtime-2.7.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] /Users/jerix/.gradle/caches/8.9/transforms/e553d1917d0a6056684875178f3d4866/transformed/lifecycle-runtime-ktx-2.7.0/AndroidManifest.xml:20:5-44
@@ -249,12 +361,16 @@ MERGED from [androidx.compose.ui:ui-android:1.6.1] /Users/jerix/.gradle/caches/8
 MERGED from [androidx.compose.ui:ui-android:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/32518de75f5eab1576a193c5071d045d/transformed/ui-release/AndroidManifest.xml:5:5-44
 MERGED from [androidx.autofill:autofill:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/2013ca6da0b2fa715617672340c74ca4/transformed/autofill-1.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.autofill:autofill:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/2013ca6da0b2fa715617672340c74ca4/transformed/autofill-1.0.0/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/ba4f6176cb6d637cee4a22c87e1b6eaa/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
-MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/ba4f6176cb6d637cee4a22c87e1b6eaa/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/jerix/.gradle/caches/8.9/transforms/cddf6bcbb1f965cfc1af61ff96ef36d1/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/jerix/.gradle/caches/8.9/transforms/cddf6bcbb1f965cfc1af61ff96ef36d1/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/jerix/.gradle/caches/8.9/transforms/6a9de542df98d749e409af09ddd0d4c2/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/jerix/.gradle/caches/8.9/transforms/6a9de542df98d749e409af09ddd0d4c2/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/2b35b59a414e2ba7113ba32dd3118c87/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/2b35b59a414e2ba7113ba32dd3118c87/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/0f88db875f96a21a4087abcc8fe52c54/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/0f88db875f96a21a4087abcc8fe52c54/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/60a2f059a854eb74e8bc78e1837db8ae/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/60a2f059a854eb74e8bc78e1837db8ae/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/83017bfd8b9b54cf501283b7764999e0/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
@@ -273,6 +389,16 @@ MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/jerix/.gradle/cach
 MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/3a5c415b14d92379fc81f9cb858cbb69/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/jerix/.gradle/caches/8.9/transforms/8ce6e966fa04b6ec8f38eb596eedc8fc/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/jerix/.gradle/caches/8.9/transforms/8ce6e966fa04b6ec8f38eb596eedc8fc/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-api:2.2.1] /Users/jerix/.gradle/caches/8.9/transforms/5bedadc9adb3e4792abc627778c7a945/transformed/transport-api-2.2.1/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-api:2.2.1] /Users/jerix/.gradle/caches/8.9/transforms/5bedadc9adb3e4792abc627778c7a945/transformed/transport-api-2.2.1/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.firebase:firebase-components:16.1.0] /Users/jerix/.gradle/caches/8.9/transforms/a39fd405ace6b353ad2ada1178972066/transformed/firebase-components-16.1.0/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-components:16.1.0] /Users/jerix/.gradle/caches/8.9/transforms/a39fd405ace6b353ad2ada1178972066/transformed/firebase-components-16.1.0/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-encoders-json:17.1.0] /Users/jerix/.gradle/caches/8.9/transforms/9a57c82b75d83b4e962b14dd7449787d/transformed/firebase-encoders-json-17.1.0/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-encoders-json:17.1.0] /Users/jerix/.gradle/caches/8.9/transforms/9a57c82b75d83b4e962b14dd7449787d/transformed/firebase-encoders-json-17.1.0/AndroidManifest.xml:19:5-21:41
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3102fe31d6e21789ac80444f3ab0982d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3102fe31d6e21789ac80444f3ab0982d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/jerix/.gradle/caches/8.9/transforms/f9380ab9a1bb2086d779ed3c27784b6d/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
@@ -281,10 +407,90 @@ MERGED from [androidx.tracing:tracing:1.0.0] /Users/jerix/.gradle/caches/8.9/tra
 MERGED from [androidx.tracing:tracing:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/5b5c7ee7900e03121756e92e6deac707/transformed/tracing-1.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/jerix/.gradle/caches/8.9/transforms/e89d9d50fed6f5974ef71def16c04b25/transformed/exifinterface-1.3.6/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/jerix/.gradle/caches/8.9/transforms/e89d9d50fed6f5974ef71def16c04b25/transformed/exifinterface-1.3.6/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/6a9a46d4a7e316cf1fd5250bdb8b96d7/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/jerix/.gradle/caches/8.9/transforms/6a9a46d4a7e316cf1fd5250bdb8b96d7/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.odml:image:1.0.0-beta1] /Users/jerix/.gradle/caches/8.9/transforms/98d41287ae30b60447ef583df92d70f5/transformed/image-1.0.0-beta1/AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.odml:image:1.0.0-beta1] /Users/jerix/.gradle/caches/8.9/transforms/98d41287ae30b60447ef583df92d70f5/transformed/image-1.0.0-beta1/AndroidManifest.xml:5:5-44
 	android:targetSdkVersion
 		INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /Users/jerix/cokistudios.github.io/ForkarEcoValidator.Android/app/src/main/AndroidManifest.xml
+service#androidx.camera.core.impl.MetadataHolderService
+ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:24:9-33:19
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:29:9-33:78
+MERGED from [androidx.camera:camera-core:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/1b6c71c92a147a9d396f7206a3506969/transformed/camera-core-1.3.1/AndroidManifest.xml:29:9-33:78
+	tools:node
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:29:13-31
+	android:enabled
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:26:13-36
+	android:exported
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:27:13-37
+	tools:ignore
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:28:13-75
+	android:name
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:25:13-75
+meta-data#androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER
+ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:30:13-32:89
+	android:value
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:32:17-86
+	android:name
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/c6c6055cdac2c581d7ebf11a644e5732/transformed/camera-camera2-1.3.1/AndroidManifest.xml:31:17-103
+service#com.google.mlkit.common.internal.MlKitComponentDiscoveryService
+ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:15:9-23:19
+MERGED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:15:9-23:19
+	android:exported
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:11:13-37
+	tools:targetApi
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:19:13-32
+	android:directBootAware
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:17:13-43
+	android:name
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:10:13-91
+meta-data#com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar
+ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:12:13-14:85
+	android:value
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:14:17-82
+	android:name
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] /Users/jerix/.gradle/caches/8.9/transforms/990c041cbbdd97ed90ec86592493d42a/transformed/play-services-mlkit-barcode-scanning-18.3.0/AndroidManifest.xml:13:17-120
+meta-data#com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar
+ADDED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:12:13-14:85
+	android:value
+		ADDED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:14:17-82
+	android:name
+		ADDED from [com.google.mlkit:vision-common:17.3.0] /Users/jerix/.gradle/caches/8.9/transforms/d8c695d9aa8f135ef6c4f215f044534d/transformed/vision-common-17.3.0/AndroidManifest.xml:13:17-124
+provider#com.google.mlkit.common.internal.MlKitInitProvider
+ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:9:9-13:38
+	android:authorities
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:11:13-69
+	android:exported
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:12:13-37
+	android:initOrder
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:13:13-35
+	android:name
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:10:13-78
+meta-data#com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar
+ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:20:13-22:85
+	android:value
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:22:17-82
+	android:name
+		ADDED from [com.google.mlkit:common:18.9.0] /Users/jerix/.gradle/caches/8.9/transforms/c28495e637fe862a1ed3fa95e478dd14/transformed/common-18.9.0/AndroidManifest.xml:21:17-120
+activity#com.google.android.gms.common.api.GoogleApiActivity
+ADDED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:20:9-22:45
+	android:exported
+		ADDED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:22:19-43
+	android:theme
+		ADDED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:21:19-78
+	android:name
+		ADDED from [com.google.android.gms:play-services-base:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/661654bd3d14344cebe1f98299643f32/transformed/play-services-base-18.1.0/AndroidManifest.xml:20:19-85
+meta-data#com.google.android.gms.version
+ADDED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:21:9-23:69
+	android:value
+		ADDED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:23:13-66
+	android:name
+		ADDED from [com.google.android.gms:play-services-basement:18.1.0] /Users/jerix/.gradle/caches/8.9/transforms/baf9fe20b77af0cc717af108d1e5c0b1/transformed/play-services-basement-18.1.0/AndroidManifest.xml:22:13-58
 activity#androidx.activity.ComponentActivity
 ADDED from [androidx.compose.ui:ui-test-manifest:1.6.1] /Users/jerix/.gradle/caches/8.9/transforms/b693d72261e37c1c41ec78b03583594f/transformed/ui-test-manifest-1.6.1/AndroidManifest.xml:23:9-25:39
 	android:exported
@@ -345,6 +551,40 @@ uses-permission#com.cokistudios.ecovalidator.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMI
 ADDED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.12.0] /Users/jerix/.gradle/caches/8.9/transforms/80602d478ee3cf93617664271a4fa094/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:25:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:22:5-79
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:25:22-76
+service#com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
+ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:29:9-35:19
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:36:9-38:40
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:36:9-38:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:31:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:30:13-103
+meta-data#backend:com.google.android.datatransport.cct.CctBackendFactory
+ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:32:13-34:39
+	android:value
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:34:17-36
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/jerix/.gradle/caches/8.9/transforms/dc144926deaebd72609e32f48e1aca67/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:33:17-94
+service#com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:26:9-30:19
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:28:13-37
+	android:permission
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:29:13-69
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:27:13-117
+receiver#com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
+ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:32:9-34:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:34:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] /Users/jerix/.gradle/caches/8.9/transforms/e25bb78b70da80eb739eaf2b5bcdb0d6/transformed/transport-runtime-2.2.6/AndroidManifest.xml:33:13-132
 meta-data#androidx.profileinstaller.ProfileInstallerInitializer
 ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/jerix/.gradle/caches/8.9/transforms/3102fe31d6e21789ac80444f3ab0982d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
 	android:value

@@ -1,8 +1,18 @@
 package com.cokistudios.ecovalidator
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,14 +28,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
 
 // ── Theme Colors ──
 val BgDark = Color(0xFF06090F)
@@ -68,9 +87,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EcoValidatorApp() {
+    val context = LocalContext.current
     val stations = remember {
         listOf(
             EcoStation("1", "Punto Verde Parque Principal", "Cota", "Compostaje & Plásticos", 50, 2.5, Icons.Default.Eco, EmeraldGreen),
@@ -89,6 +108,19 @@ fun EcoValidatorApp() {
     var showScanDialog by remember { mutableStateOf(false) }
     var showManualDialog by remember { mutableStateOf(false) }
     var manualToken by remember { mutableStateOf("") }
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
+            if (granted) showScanDialog = true
+        }
+    )
 
     val recentValidations = remember {
         mutableStateListOf(
@@ -99,9 +131,17 @@ fun EcoValidatorApp() {
 
     fun processValidation(token: String) {
         val timeNow = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        val displayUser = if (token.contains("user=") || token.contains("name=")) {
+            token.substringAfter("name=").substringBefore("&").replace("+", " ")
+        } else if (token.isNotBlank()) {
+            "QR: $token"
+        } else {
+            "Usuario QR Verificado"
+        }
+
         val claim = ValidatedClaim(
             stationName = selectedStation.name,
-            userName = if (token.isNotBlank()) "Token: $token" else "Usuario QR Verificado",
+            userName = displayUser,
             points = selectedStation.points,
             co2Kg = selectedStation.co2SavedKg,
             time = timeNow
@@ -190,7 +230,7 @@ fun EcoValidatorApp() {
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color.White.copy(alpha = 0.08f))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
@@ -251,7 +291,13 @@ fun EcoValidatorApp() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
-                    onClick = { showScanDialog = true },
+                    onClick = {
+                        if (hasCameraPermission) {
+                            showScanDialog = true
+                        } else {
+                            launcher.launch(Manifest.permission.CAMERA)
+                        }
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
@@ -260,7 +306,7 @@ fun EcoValidatorApp() {
                 ) {
                     Icon(Icons.Default.QrCodeScanner, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Validar QR", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Escanear Cámara QR", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
                 }
 
                 OutlinedButton(
@@ -273,7 +319,7 @@ fun EcoValidatorApp() {
                 ) {
                     Icon(Icons.Default.Pin, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Token Manual", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Text("Token Manual", fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
                 }
             }
 
@@ -327,45 +373,50 @@ fun EcoValidatorApp() {
             }
         }
 
-        // ── QR Scanner Simulation Dialog ──
+        // ── Real CameraX + ML Kit QR Scanner Dialog ──
         if (showScanDialog) {
             AlertDialog(
                 onDismissRequest = { showScanDialog = false },
                 containerColor = CardBg,
-                title = { Text("Escanear Código QR", color = Color.White, fontWeight = FontWeight.Bold) },
+                title = { Text("Escanear Código QR en Vivo", color = Color.White, fontWeight = FontWeight.Bold) },
                 text = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                         Box(
                             modifier = Modifier
-                                .size(140.dp)
-                                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+                                .size(240.dp)
+                                .clip(RoundedCornerShape(16.dp))
                                 .border(2.dp, EmeraldGreen, RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.QrCode2, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(90.dp))
+                            RealCameraQRScanner(
+                                onScanned = { qrText ->
+                                    processValidation(qrText)
+                                    showScanDialog = false
+                                }
+                            )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            "Simulando lectura de cámara para validar el código del usuario en ${selectedStation.name}",
+                            "Apunta la cámara al código QR de la estación o del usuario para acreditar automáticamente.",
                             color = TextSub,
-                            fontSize = 12.5.sp
+                            fontSize = 12.sp
                         )
                     }
                 },
                 confirmButton = {
                     Button(
                         onClick = {
-                            processValidation("QR_VALIDATED_SESSION")
+                            processValidation("SIMULATED_QR_SESSION_${System.currentTimeMillis()}")
                             showScanDialog = false
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen)
                     ) {
-                        Text("Confirmar y Acreditar")
+                        Text("Simular Escaneo")
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showScanDialog = false }) {
-                        Text("Cancelar", color = TextSub)
+                        Text("Cerrar", color = TextSub)
                     }
                 }
             )
@@ -415,4 +466,77 @@ fun EcoValidatorApp() {
             )
         }
     }
+}
+
+@OptIn(ExperimentalGetImage::class)
+@Composable
+fun RealCameraQRScanner(onScanned: (String) -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var hasScanned by remember { mutableStateOf(false) }
+
+    AndroidView(
+        factory = { ctx ->
+            val previewView = PreviewView(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+
+            val executor = Executors.newSingleThreadExecutor()
+
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                val barcodeScanner = BarcodeScanning.getClient()
+
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+
+                imageAnalysis.setAnalyzer(executor) { imageProxy ->
+                    val mediaImage = imageProxy.image
+                    if (mediaImage != null && !hasScanned) {
+                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                        barcodeScanner.process(image)
+                            .addOnSuccessListener { barcodes ->
+                                for (barcode in barcodes) {
+                                    val rawValue = barcode.rawValue
+                                    if (!rawValue.isNullOrBlank() && !hasScanned) {
+                                        hasScanned = true
+                                        onScanned(rawValue)
+                                        break
+                                    }
+                                }
+                            }
+                            .addOnCompleteListener {
+                                imageProxy.close()
+                            }
+                    } else {
+                        imageProxy.close()
+                    }
+                }
+
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        imageAnalysis
+                    )
+                } catch (exc: Exception) {
+                    Log.e("CameraQRScanner", "Use case binding failed", exc)
+                }
+            }, ContextCompat.getMainExecutor(ctx))
+
+            previewView
+        },
+        modifier = Modifier.fillMaxSize()
+    )
 }
