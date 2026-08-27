@@ -1,0 +1,4 @@
+com.cokistudios.forkar.test.app-androidTest-0 C:\Users\canin\AntiGravedad\cokistudios.github.io\Forkar.Android\app\build\generated\res\resValues\androidTest\debug
+com.cokistudios.forkar.test.app-mergeDebugAndroidTestResources-1 C:\Users\canin\AntiGravedad\cokistudios.github.io\Forkar.Android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.cokistudios.forkar.test.app-mergeDebugAndroidTestResources-2 C:\Users\canin\AntiGravedad\cokistudios.github.io\Forkar.Android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.cokistudios.forkar.test.app-debugAndroidTest-3 C:\Users\canin\AntiGravedad\cokistudios.github.io\Forkar.Android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
