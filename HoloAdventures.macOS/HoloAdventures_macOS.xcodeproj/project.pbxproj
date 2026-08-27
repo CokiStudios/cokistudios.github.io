@@ -1,0 +1,278 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9C0000012A00000100000001 /* HoloAdventuresMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0000022A00000100000001 /* HoloAdventuresMacApp.swift */; };
+		9C0000032A00000100000001 /* HoloGameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0000042A00000100000001 /* HoloGameScene.swift */; };
+		9C0000052A00000100000001 /* AngelHelium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0000062A00000100000001 /* AngelHelium.swift */; };
+		9C0000072A00000100000001 /* Forkbot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0000082A00000100000001 /* Forkbot.swift */; };
+		9C0000092A00000100000001 /* LevelData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C00000A2A00000100000001 /* LevelData.swift */; };
+		9C00000B2A00000100000001 /* HoloMacGameContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C00000C2A00000100000001 /* HoloMacGameContainerView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		9C0000022A00000100000001 /* HoloAdventuresMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoloAdventuresMacApp.swift; sourceTree = "<group>"; };
+		9C0000042A00000100000001 /* HoloGameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoloGameScene.swift; sourceTree = "<group>"; };
+		9C0000062A00000100000001 /* AngelHelium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entities/AngelHelium.swift; sourceTree = "<group>"; };
+		9C0000082A00000100000001 /* Forkbot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entities/Forkbot.swift; sourceTree = "<group>"; };
+		9C00000A2A00000100000001 /* LevelData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levels/LevelData.swift; sourceTree = "<group>"; };
+		9C00000C2A00000100000001 /* HoloMacGameContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/HoloMacGameContainerView.swift; sourceTree = "<group>"; };
+		9C00000D2A00000100000001 /* HoloAdventures_macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HoloAdventures_macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9C00000E2A00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9C00000F2A00000100000001 /* HoloAdventures_macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HoloAdventures_macOS.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9C0000102A00000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9C0000112A00000100000001 = {
+			isa = PBXGroup;
+			children = (
+				9C0000122A00000100000001 /* HoloAdventures_macOS */,
+				9C0000132A00000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9C0000122A00000100000001 /* HoloAdventures_macOS */ = {
+			isa = PBXGroup;
+			children = (
+				9C0000022A00000100000001 /* HoloAdventuresMacApp.swift */,
+				9C0000042A00000100000001 /* HoloGameScene.swift */,
+				9C0000062A00000100000001 /* AngelHelium.swift */,
+				9C0000082A00000100000001 /* Forkbot.swift */,
+				9C00000A2A00000100000001 /* LevelData.swift */,
+				9C00000C2A00000100000001 /* HoloMacGameContainerView.swift */,
+				9C00000E2A00000100000001 /* Info.plist */,
+				9C00000F2A00000100000001 /* HoloAdventures_macOS.entitlements */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		9C0000132A00000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9C00000D2A00000100000001 /* HoloAdventures_macOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9C0000142A00000100000001 /* HoloAdventures_macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9C0000152A00000100000001 /* Build configuration list for PBXNativeTarget "HoloAdventures_macOS" */;
+			buildPhases = (
+				9C0000162A00000100000001 /* Sources */,
+				9C0000102A00000100000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HoloAdventures_macOS;
+			productName = HoloAdventures_macOS;
+			productReference = 9C00000D2A00000100000001 /* HoloAdventures_macOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9C0000172A00000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					9C0000142A00000100000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 9C0000182A00000100000001 /* Build configuration list for PBXProject "HoloAdventures_macOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9C0000112A00000100000001;
+			productRefGroup = 9C0000132A00000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9C0000142A00000100000001 /* HoloAdventures_macOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9C0000162A00000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9C0000012A00000100000001 /* HoloAdventuresMacApp.swift in Sources */,
+				9C0000032A00000100000001 /* HoloGameScene.swift in Sources */,
+				9C0000052A00000100000001 /* AngelHelium.swift in Sources */,
+				9C0000072A00000100000001 /* Forkbot.swift in Sources */,
+				9C0000092A00000100000001 /* LevelData.swift in Sources */,
+				9C00000B2A00000100000001 /* HoloMacGameContainerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9C0000192A00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDEFINED_VARIABLES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9C00001A2A00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDEFINED_VARIABLES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9C00001B2A00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HoloAdventures_macOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Holo Adventures";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.adventure-games";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holoentertainment.adventures.mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9C00001C2A00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HoloAdventures_macOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Holo Adventures";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.adventure-games";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.holoentertainment.adventures.mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9C0000182A00000100000001 /* Build configuration list for PBXProject "HoloAdventures_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9C0000192A00000100000001 /* Debug */,
+				9C00001A2A00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9C0000152A00000100000001 /* Build configuration list for PBXNativeTarget "HoloAdventures_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9C00001B2A00000100000001 /* Debug */,
+				9C00001C2A00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 9C0000172A00000100000001 /* Project object */;
+}
