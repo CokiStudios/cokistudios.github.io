@@ -26,19 +26,18 @@ export async function initGlobalI18n() {
 }
 
 export function applyGlobalLanguage(lang) {
-    if (!globalTranslations[lang]) return;
+    if (!globalTranslations || !globalTranslations[lang]) return;
     localStorage.setItem('coki-lang', lang);
     
-    // Actualizar todos los elementos con data-i18n
+    // Actualizar todos los elementos con data-i18n siempre con innerHTML para procesar tags como <br> y <span>
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (globalTranslations[lang][key]) {
+        const translation = globalTranslations[lang][key];
+        if (translation !== undefined && translation !== null) {
             if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                el.placeholder = globalTranslations[lang][key];
-            } else if (globalTranslations[lang][key].includes('<') && globalTranslations[lang][key].includes('>')) {
-                el.innerHTML = globalTranslations[lang][key];
+                el.placeholder = translation;
             } else {
-                el.textContent = globalTranslations[lang][key];
+                el.innerHTML = translation;
             }
         }
     });
