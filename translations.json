@@ -55,7 +55,6 @@
     "auth_google": "Continuar con Google",
     "auth_github": "Continuar con GitHub",
     "home_badge": "Plataforma activa · Making the world Shine",
-    "home_hero_title": "Construimos el mundo<br><span>del futuro, juntos</span>",
     "home_hero_sub": "Ecosistema conectado e identidad digital inteligente para todos tus juegos y comunidades.",
     "btn_shine_demo": "Probar Shine UI Menu",
     "btn_join_community": "Únete a la comunidad",
@@ -121,7 +120,9 @@
     "logon_password_label": "Contraseña",
     "logon_btn_continue": "Continuar",
     "logon_or_divider": "O continúa con",
-    "logon_passkey_btn": "Desbloquear con Master Key / Biométrica"
+    "logon_passkey_btn": "Desbloquear con Master Key / Biométrica",
+    "home_hero_line1": "Construimos el mundo",
+    "home_hero_line2": "del futuro, juntos"
   },
   "en": {
     "nav_home": "Home",
@@ -179,7 +180,6 @@
     "auth_google": "Continue with Google",
     "auth_github": "Continue with GitHub",
     "home_badge": "Active Platform · Making the world Shine",
-    "home_hero_title": "Building the world<br><span>of the future, together</span>",
     "home_hero_sub": "Connected ecosystem and smart digital identity for all your games and communities.",
     "btn_shine_demo": "Try Shine UI Menu",
     "btn_join_community": "Join the Community",
@@ -245,7 +245,9 @@
     "logon_password_label": "Password",
     "logon_btn_continue": "Continue",
     "logon_or_divider": "Or continue with",
-    "logon_passkey_btn": "Unlock with Master Key / Biometrics"
+    "logon_passkey_btn": "Unlock with Master Key / Biometrics",
+    "home_hero_line1": "Building the world",
+    "home_hero_line2": "of the future, together"
   },
   "fr": {
     "nav_home": "Accueil",
@@ -303,7 +305,6 @@
     "auth_google": "Continuer avec Google",
     "auth_github": "Continuer avec GitHub",
     "home_badge": "Plateforme active · Making the world Shine",
-    "home_hero_title": "Nous construisons le monde<br><span>du futur, ensemble</span>",
     "home_hero_sub": "Écosystème connecté et identité numérique intelligente pour tous vos jeux et communautés.",
     "btn_shine_demo": "Tester le menu Shine UI",
     "btn_join_community": "Rejoindre la communauté",
@@ -369,7 +370,9 @@
     "logon_password_label": "Mot de passe",
     "logon_btn_continue": "Continuer",
     "logon_or_divider": "Ou continuer avec",
-    "logon_passkey_btn": "Déverrouiller avec Master Key / Biométrie"
+    "logon_passkey_btn": "Déverrouiller avec Master Key / Biométrie",
+    "home_hero_line1": "Nous construisons le monde",
+    "home_hero_line2": "du futur, ensemble"
   },
   "pt": {
     "nav_home": "Início",
@@ -427,7 +430,6 @@
     "auth_google": "Continuar com Google",
     "auth_github": "Continuar com GitHub",
     "home_badge": "Plataforma ativa · Making the world Shine",
-    "home_hero_title": "Construímos o mundo<br><span>do futuro, juntos</span>",
     "home_hero_sub": "Ecossistema conectado e identidade digital inteligente para todos os seus jogos e comunidades.",
     "btn_shine_demo": "Experimentar Shine UI Menu",
     "btn_join_community": "Junte-se à comunidade",
@@ -493,6 +495,8 @@
     "logon_password_label": "Senha",
     "logon_btn_continue": "Continuar",
     "logon_or_divider": "Ou continuar com",
-    "logon_passkey_btn": "Desbloquear com Master Key / Biometria"
+    "logon_passkey_btn": "Desbloquear com Master Key / Biometria",
+    "home_hero_line1": "Construímos o mundo",
+    "home_hero_line2": "do futuro, juntos"
   }
 }
