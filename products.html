@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos — Coki Studios</title>
     <meta name="description"
-        content="Descubre los productos de Coki Studios: Horizon Maps, OurCommonHome, Forkar, Shine Find y CSID. Herramientas que hacen el mundo más accesible.">
+        content="Descubre los productos de Coki Studios: Horizon Maps, Forkar, CSMS, Shine Find Browser y CSID.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script>
@@ -81,43 +81,6 @@
             overflow-x: hidden;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background-image: linear-gradient(rgba(99, 102, 241, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.025) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3C/svg%3E");
-            background-repeat: repeat-y;
-            background-size: 100% 600px;
-            background-position: center top;
-            pointer-events: none;
-            animation: moveBackground 25s linear infinite;
-        }
-
-        html.light-theme body::after {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3C/svg%3E");
-        }
-
-        @keyframes moveBackground {
-            from {
-                background-position: center 0px;
-            }
-
-            to {
-                background-position: center 600px;
-            }
-        }
-
         /* ── NAV ── */
         nav {
             position: sticky;
@@ -128,6 +91,7 @@
             border-bottom: 1px solid var(--border);
             padding: 0 24px;
         }
+        html.light-theme nav { background: rgba(248, 250, 252, 0.85); }
 
         .nav-inner {
             max-width: 1100px;
@@ -166,7 +130,8 @@
 
         .nav-links {
             display: flex;
-            gap: 4px;
+            align-items: center;
+            gap: 8px;
         }
 
         .nav-link {
@@ -186,7 +151,7 @@
 
         .nav-link.active {
             color: var(--text);
-            background: rgba(99, 102, 241, 0.1);
+            background: rgba(99, 102, 241, 0.12);
         }
 
         .nav-cta {
@@ -239,7 +204,7 @@
         .page-header p {
             font-size: 17px;
             color: var(--text-sub);
-            max-width: 500px;
+            max-width: 540px;
             margin: 0 auto;
             line-height: 1.7;
         }
@@ -256,13 +221,13 @@
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
 
         .product-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: 22px;
             text-decoration: none;
             color: inherit;
             display: flex;
@@ -275,31 +240,15 @@
         .product-card:hover {
             border-color: var(--border-glow);
             transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
         }
 
         .product-preview {
-            aspect-ratio: 16/9;
+            height: 160px;
             overflow: hidden;
             position: relative;
             background: var(--bg2);
             flex-shrink: 0;
-        }
-
-        .product-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.85;
-            transition: opacity 0.3s;
-        }
-
-        .product-card:hover .product-preview img {
-            opacity: 1;
-        }
-
-        .product-preview-placeholder {
-            width: 100%;
-            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -310,7 +259,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 50%;
+            height: 40%;
             background: linear-gradient(to top, var(--bg2), transparent);
         }
 
@@ -386,6 +335,9 @@
             border-radius: 10px;
             text-decoration: none;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-visit:hover {
@@ -414,28 +366,15 @@
             border-color: rgba(255, 255, 255, 0.15);
         }
 
-        .btn-soon {
-            flex: 1;
-            text-align: center;
-            padding: 10px 16px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: default;
-        }
-
         /* ── FEATURED CARD ── */
         .product-card.featured {
             grid-column: 1 / -1;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1.2fr;
         }
 
         .product-card.featured .product-preview {
-            aspect-ratio: auto;
+            height: 100%;
             min-height: 220px;
         }
 
@@ -491,7 +430,7 @@
             }
 
             .product-card.featured .product-preview {
-                aspect-ratio: 16/9;
+                height: 160px;
             }
         }
     </style>
@@ -502,15 +441,16 @@
     <!-- ── NAV ── -->
     <nav>
         <div class="nav-inner">
-            <a href="index" class="nav-brand">
+            <a href="index.html" class="nav-brand">
                 <div class="nav-logo">C</div>
                 <span class="nav-brand-name">Coki Studios</span>
             </a>
             <div class="nav-links">
-                <a href="index" class="nav-link">Inicio</a>
-                <a href="products" class="nav-link active">Productos</a>
-                <a href="forkar" class="nav-link">Forkar</a>
-                <a href="coki-developer" class="nav-link">Developers</a>
+                <a href="index.html" class="nav-link" data-i18n="nav_home">Inicio</a>
+                <a href="products.html" class="nav-link active" data-i18n="nav_products">Productos</a>
+                <a href="forkar.html" class="nav-link" data-i18n="nav_forkar">Forkar</a>
+                <a href="messenger.html" class="nav-link" data-i18n="nav_csms">CSMS</a>
+                <a href="developer.html" class="nav-link" data-i18n="nav_developers">Developers</a>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
                     <option value="es">🇪🇸 ES</option>
                     <option value="en">🇺🇸 EN</option>
@@ -519,206 +459,205 @@
                 </select>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
             </div>
-            <a href="coki-register" class="nav-cta">CSID</a>
+            <a href="register.html" class="nav-cta">CSID</a>
         </div>
     </nav>
 
     <!-- ── PAGE HEADER ── -->
     <div class="page-header">
-        <div class="label">Ecosistema Coki</div>
-        <h1>Nuestros <span>Productos</span></h1>
-        <p>Herramientas diseñadas para conectar personas, facilitar el acceso a la información y hacer el mundo más
-            brillante.</p>
+        <div class="label" data-i18n="prod_page_label">Ecosistema Coki</div>
+        <h1 data-i18n="prod_page_title">Nuestros <span>Productos</span></h1>
+        <p data-i18n="prod_page_desc">Herramientas diseñadas para conectar personas, facilitar el acceso a la información y hacer el mundo más brillante.</p>
     </div>
 
     <!-- ── PRODUCTS SECTION ── -->
+    <div class="products-section">
+        <div class="products-grid">
 
+            <!-- 1. HorizonMaps -->
+            <div class="product-card">
+                <div class="product-preview" style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(6,9,15,0.8));">
+                    <span style="font-size:56px;opacity:0.8;">🗺️</span>
+                    <div class="preview-gradient"></div>
+                </div>
+                <div class="product-body">
+                    <div class="product-icon-row">
+                        <div class="product-icon" style="background:rgba(56,189,248,0.12);">🗺️</div>
+                        <div class="product-name" data-i18n="card_maps_title">Horizon Maps</div>
+                    </div>
+                    <div class="product-desc" data-i18n="card_maps_desc">App de mapas con integración Android Auto. Navegación inteligente, accesible y diseñada para el día a día.</div>
+                    <div class="product-tags">
+                        <span class="product-tag">Maps</span>
+                        <span class="product-tag">Android Auto</span>
+                        <span class="product-tag" data-i18n="card_maps_tag">🌍 Geolocalización</span>
+                    </div>
+                    <div class="product-actions">
+                        <a href="https://anonymus-devop.github.io/HorizonMaps/" target="_blank" class="btn-visit" style="background:rgba(56,189,248,0.8)" data-i18n="btn_visit_site">Visitar sitio →</a>
+                        <a href="https://github.com/anonymus-devop/HorizonMaps" target="_blank" class="btn-github" title="GitHub">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-    <!-- HorizonMaps -->
-    <div class="product-card">
-        <div class="product-preview">
-            <div class="product-preview-placeholder"
-                style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(6,9,15,0.8));">
-                <span style="font-size:56px;opacity:0.6;">🗺️</span>
+            <!-- 2. Forkar -->
+            <div class="product-card">
+                <div class="product-preview" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,9,15,0.8));">
+                    <span style="font-size:56px;opacity:0.8;">💬</span>
+                    <div class="preview-gradient"></div>
+                </div>
+                <div class="product-body">
+                    <div class="product-icon-row">
+                        <div class="product-icon" style="background:rgba(139,92,246,0.12);">💬</div>
+                        <div class="product-name" data-i18n="card_forkar_title">Forkar</div>
+                    </div>
+                    <div class="product-desc" data-i18n="card_forkar_desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas, resuelven dudas y se conectan.</div>
+                    <div class="product-tags">
+                        <span class="product-tag">Comunidad</span>
+                        <span class="product-tag">Foro</span>
+                        <span class="product-tag" data-i18n="card_forkar_tag">📣 Comunidad & Eco</span>
+                    </div>
+                    <div class="product-actions">
+                        <a href="forkar.html" class="btn-visit" style="background:rgba(139,92,246,0.8)" data-i18n="btn_enter_forkar">Entrar a Forkar →</a>
+                    </div>
+                </div>
             </div>
-            <div class="preview-gradient"></div>
-        </div>
-        <div class="product-body">
-            <div class="product-icon-row">
-                <div class="product-icon" style="background:rgba(56,189,248,0.12);">🗺️</div>
-                <div class="product-name">Horizon Maps</div>
+
+            <!-- 3. CSMS Messenger -->
+            <div class="product-card">
+                <div class="product-preview" style="background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(6,9,15,0.8));">
+                    <span style="font-size:56px;opacity:0.8;">⚡</span>
+                    <div class="preview-gradient"></div>
+                </div>
+                <div class="product-body">
+                    <div class="product-icon-row">
+                        <div class="product-icon" style="background:rgba(99,102,241,0.12);">⚡</div>
+                        <div class="product-name" data-i18n="card_csms_title">CSMS Messenger</div>
+                    </div>
+                    <div class="product-desc" data-i18n="card_csms_desc">Mensajería privada ultrarrápida y sincronizada en tiempo real entre iOS, Apple Watch, Mac y Web.</div>
+                    <div class="product-tags">
+                        <span class="product-tag">iOS / WatchOS</span>
+                        <span class="product-tag">Cloud Sync</span>
+                        <span class="product-tag" data-i18n="card_csms_tag">💬 Mensajería Privada</span>
+                    </div>
+                    <div class="product-actions">
+                        <a href="messenger.html" class="btn-visit" style="background:rgba(99,102,241,0.8)">Abrir CSMS →</a>
+                    </div>
+                </div>
             </div>
-            <div class="product-desc">App de mapas con integración Android Auto. Navegación inteligente, accesible y
-                diseñada para el día a día.</div>
-            <div class="product-tags">
-                <span class="product-tag">Maps</span>
-                <span class="product-tag">Android Auto</span>
-                <span class="product-tag">Mobile</span>
+
+            <!-- 4. Shine Find Browser (CEF) - Destacado Limpio -->
+            <div class="product-card featured" style="border-color:rgba(56,189,248,0.4);">
+                <div class="product-preview" style="background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(6,9,15,0.85));">
+                    <span style="font-size:64px;opacity:0.9;">🌐</span>
+                    <div class="preview-gradient"></div>
+                </div>
+                <div class="product-body">
+                    <div class="product-icon-row">
+                        <div class="product-icon" style="background:rgba(56,189,248,0.15);color:#38bdf8;">🌐</div>
+                        <div class="product-name">Shine Find Browser</div>
+                    </div>
+                    <div class="product-desc" data-i18n="shine_browser_desc">
+                        El navegador web nativo de Coki Studios impulsado por Chromium Embedded Framework (CEF C++). Integra el escudo Sentinel Anti-Rastreadores, aceleración GPU y autenticación passkey con CSID.
+                    </div>
+                    <div class="product-tags">
+                        <span class="product-tag">CEF / Chromium</span>
+                        <span class="product-tag">macOS Liquid Glass</span>
+                        <span class="product-tag">Sentinel Shield</span>
+                        <span class="product-tag">CSID Autologin</span>
+                    </div>
+                    <div class="product-actions">
+                        <a href="shine-find.html" class="btn-visit" style="background:linear-gradient(135deg,#38bdf8,#8b5cf6);" data-i18n="btn_explore_demo">Explorar Demo →</a>
+                        <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="btn-github" title="GitHub">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="product-actions">
-                <a href="https://anonymus-devop.github.io/HorizonMaps/" target="_blank" class="btn-visit"
-                    style="background:rgba(56,189,248,0.75)">Visitar sitio →</a>
-                <a href="https://github.com/anonymus-devop/HorizonMaps" target="_blank" class="btn-github">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                    </svg>
-                </a>
+
+            <!-- 5. CSID -->
+            <div class="product-card">
+                <div class="product-preview" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,9,15,0.8));">
+                    <span style="font-size:56px;opacity:0.8;">🪪</span>
+                    <div class="preview-gradient"></div>
+                </div>
+                <div class="product-body">
+                    <div class="product-icon-row">
+                        <div class="product-icon" style="background:rgba(99,102,241,0.12);">🪪</div>
+                        <div class="product-name">CSID</div>
+                    </div>
+                    <div class="product-desc" data-i18n="csid_prod_desc">Tu cuenta única para acceder de forma rápida y segura a todos los juegos y aplicaciones de Coki Studios.</div>
+                    <div class="product-tags">
+                        <span class="product-tag">Perfil Único</span>
+                        <span class="product-tag">Master Key</span>
+                        <span class="product-tag">Passkey</span>
+                    </div>
+                    <div class="product-actions">
+                        <a href="dashboard.html" class="btn-visit" data-i18n="btn_my_csid">Mi CSID →</a>
+                    </div>
+                </div>
             </div>
+
+            <!-- 6. Forkar Eco Hub Program -->
+            <div class="product-card">
+                <div class="product-preview" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(6,9,15,0.8));">
+                    <span style="font-size:56px;opacity:0.8;">🌿</span>
+                    <div class="preview-gradient"></div>
+                </div>
+                <div class="product-body">
+                    <div class="product-icon-row">
+                        <div class="product-icon" style="background:rgba(16,185,129,0.12);">🌿</div>
+                        <div class="product-name">Forkar Eco Hub</div>
+                    </div>
+                    <div class="product-desc" data-i18n="eco_hero_sub">Ahorra CO₂, acumula Puntos Eco, canjea recompensas sustentables y valida estaciones con QR o NFC.</div>
+                    <div class="product-tags">
+                        <span class="product-tag">Sostenibilidad</span>
+                        <span class="product-tag">Cota • Chía • Bogotá</span>
+                        <span class="product-tag">QR & NFC</span>
+                    </div>
+                    <div class="product-actions">
+                        <a href="eco-hub.html" class="btn-visit" style="background:#10b981;">Abrir Eco Hub →</a>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Forkar (ex Coki Social) -->
-    <div class="product-card">
-        <div class="product-preview">
-            <div class="product-preview-placeholder"
-                style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,9,15,0.8));">
-                <span style="font-size:56px;opacity:0.6;">💬</span>
+    <!-- ── FOOTER ── -->
+    <footer>
+        <div class="footer-inner">
+            <div class="nav-brand" style="text-decoration:none;">
+                <div class="nav-logo" style="width:28px;height:28px;font-size:12px;">C</div>
+                <span style="font-size:13px;font-weight:600;color:var(--text-sub);">Coki Studios</span>
             </div>
-            <div class="preview-gradient"></div>
+            <div class="footer-links">
+                <a href="index.html" class="footer-link" data-i18n="nav_home">Inicio</a>
+                <a href="forkar.html" class="footer-link" data-i18n="nav_forkar">Forkar</a>
+                <a href="messenger.html" class="footer-link" data-i18n="nav_csms">CSMS</a>
+                <a href="dashboard.html" class="footer-link" data-i18n="nav_account">Mi Cuenta</a>
+                <a href="mailto:cokistudiosllc@gmail.com" class="footer-link" data-i18n="nav_contact">Contacto</a>
+            </div>
+            <div class="footer-copy">© 2026 Coki Studios LLC</div>
         </div>
-        <div class="product-body">
-            <div class="product-icon-row">
-                <div class="product-icon" style="background:rgba(139,92,246,0.12);">💬</div>
-                <div class="product-name">Forkar</div>
-            </div>
-            <div class="product-desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas,
-                resuelven dudas y se conectan.</div>
-            <div class="product-tags">
-                <span class="product-tag">Comunidad</span>
-                <span class="product-tag">Foro</span>
-                <span class="product-tag">CSID</span>
-            </div>
-            <div class="product-actions">
-                <a href="forkar.html" class="btn-visit" style="background:rgba(139,92,246,0.75)">Entrar a Forkar →</a>
-            </div>
-        </div>
-    </div>
+    </footer>
 
-    <!-- Shine Find -->
-    <div class="product-card">
-        <div class="product-preview">
-            <div class="product-preview-placeholder"
-                style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,9,15,0.8));">
-                <img src="https://github.com/user-attachments/assets/ea5e2b3f-8613-4bfe-9459-837482c047cb"
-                    alt="Shine Find" style="width:80px;height:80px;object-fit:contain;opacity:0.7;"
-                    onerror="this.style.display='none'">
-            </div>
-            <div class="preview-gradient"></div>
-        </div>
-        <div class="product-body">
-            <div class="product-icon-row">
-                <div class="product-icon" style="background:rgba(245,158,11,0.12);">✨</div>
-                <div class="product-name">Shine Find</div>
-            </div>
-            <div class="product-desc">Encuentra webs, navega, busca, crea e innova. Un explorador moderno con diseño
-                Liquid Glass para macOS.</div>
-            <div class="product-tags">
-                <span class="product-tag">macOS</span>
-                <span class="product-tag">Liquid Glass</span>
-                <span class="product-tag">Navegador</span>
-            </div>
-            <div class="product-actions">
-                <span class="btn-soon">Próximamente</span>
-                <a href="https://github.com/CokiStudios/ShineFind" target="_blank" class="btn-github">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                    </svg>
-                    <!-- Shine Find Browser (CEF) -->
-                    <div class="product-card featured" style="border-color:rgba(56,189,248,0.4);">
-                        <div class="product-preview">
-                            <div class="product-preview-placeholder"
-                                style="background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(6,9,15,0.85));">
-                                <span style="font-size:56px;opacity:0.8;">🌐</span>
-                            </div>
-                            <div class="preview-gradient"></div>
-                        </div>
-                        <div class="product-body">
-                            <div class="product-icon-row">
-                                <div class="product-icon" style="background:rgba(56,189,248,0.15);color:#38bdf8;">🌐
-                                </div>
-                                <div class="product-name">Shine Find Browser</div>
-                            </div>
-                            <div class="product-desc">
-                                El navegador web nativo de Coki Studios impulsado por Chromium Embedded Framework (CEF
-                                C++). Integra el escudo Sentinel Anti-Rastreadores, aceleración GPU y autenticación
-                                passkey con CSID.
-                            </div>
-                            <div class="product-tags">
-                                <span class="product-tag">CEF / Chromium</span>
-                                <span class="product-tag">Escudo Sentinel</span>
-                                <span class="product-tag">CSID Autologin</span>
-                            </div>
-                            <div class="product-actions">
-                                <a href="shine-find.html" class="btn-visit"
-                                    style="background:linear-gradient(135deg,#38bdf8,#8b5cf6);">Explorar Demo →</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- CSID -->
-                    <div class="product-card">
-                        <div class="product-preview">
-                            <div class="product-preview-placeholder"
-                                style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,9,15,0.8));">
-                                <span style="font-size:56px;opacity:0.6;">🪪</span>
-                            </div>
-                            <div class="preview-gradient"></div>
-                        </div>
-                        <div class="product-body">
-                            <div class="product-icon-row">
-                                <div class="product-icon" style="background:rgba(99,102,241,0.12);">🪪</div>
-                                <div class="product-name">CSID</div>
-                            </div>
-                            <div class="product-desc">Tu cuenta única para acceder de forma rápida y segura a todos los
-                                juegos y aplicaciones de Coki Studios.</div>
-                            <div class="product-tags">
-                                <span class="product-tag">Perfil Único</span>
-                                <span class="product-tag">Seguridad</span>
-                            </div>
-                            <div class="product-actions">
-                                <a href="dashboard.html" class="btn-visit">Mi CSID →</a>
-                            </div>
-                        </div>
-                    </div>
-
-            </div>
-        </div>
-
-        <!-- ── FOOTER ── -->
-        <footer>
-            <div class="footer-inner">
-                <div class="nav-brand" style="text-decoration:none;">
-                    <div class="nav-logo" style="width:28px;height:28px;font-size:12px;">C</div>
-                    <span style="font-size:13px;font-weight:600;color:var(--text-sub);">Coki Studios</span>
-                </div>
-                <div class="footer-links">
-                    <a href="index.html" class="footer-link">Inicio</a>
-                    <a href="forkar.html" class="footer-link">Forkar</a>
-                    <a href="messenger.html" class="footer-link">CSMS</a>
-                    <a href="mailto:cokistudiosllc@gmail.com" class="footer-link">Contacto</a>
-                </div>
-                <div class="footer-copy">© 2026 Coki Studios LLC</div>
-            </div>
-        </footer>
-
-        <script>
-            const themeToggle = document.getElementById('theme-toggle');
-            const updateToggleIcon = () => {
-                const isLight = document.documentElement.classList.contains('light-theme');
-                themeToggle.textContent = isLight ? '🌙' : '☀️';
-            };
-            if (themeToggle) {
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const updateToggleIcon = () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+        };
+        if (themeToggle) {
+            updateToggleIcon();
+            themeToggle.addEventListener('click', () => {
+                const wasLight = document.documentElement.classList.toggle('light-theme');
+                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
                 updateToggleIcon();
-                themeToggle.addEventListener('click', () => {
-                    const wasLight = document.documentElement.classList.toggle('light-theme');
-                    localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                    updateToggleIcon();
-                });
-            }
-        </script>
-<script type="module" src="i18n.js"></script>
+            });
+        }
+    </script>
+    <script type="module" src="i18n.js"></script>
 </body>
 
 </html>

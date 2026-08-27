@@ -196,14 +196,14 @@
     <div class="auth-container">
         <div class="auth-header">
             <div class="auth-logo">C</div>
-            <h1>CS <span>ID</span></h1>
-            <p>Tu llave de entrada a todos nuestros juegos y comunidades</p>
+            <h1 data-i18n="logon_title">Bienvenido a tu CSID</h1>
+            <p data-i18n="logon_subtitle">Tu llave maestra para todo el ecosistema Coki Studios</p>
         </div>
 
         <div class="auth-card" id="main-card">
             <div class="tabs">
-                <button id="tab-login" class="tab-btn active">Iniciar sesión</button>
-                <button id="tab-register" class="tab-btn">Crear cuenta</button>
+                <button id="tab-login" class="tab-btn active" data-i18n="logon_tab_signin">Iniciar sesión</button>
+                <button id="tab-register" class="tab-btn" data-i18n="logon_tab_signup">Crear cuenta</button>
             </div>
 
             <!-- 🔐 LOGIN -->
@@ -211,7 +211,7 @@
                 <div class="social-btns">
                     <button id="btn-coki-passkey" type="button" class="btn-social btn-passkey" style="grid-column: span 2;">
                         <span style="font-size: 18px;">🔑</span>
-                        Iniciar sesión con Passkey (Touch ID / Face ID)
+                        <span data-i18n="auth_passkey">Iniciar sesión con Passkey / Master Key</span>
                     </button>
                     <button id="btn-coki-google" class="btn-social btn-google">
                         <svg width="20" height="20" viewBox="0 0 24 24">
@@ -220,11 +220,11 @@
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
-                        Continuar con Google
+                        <span data-i18n="auth_google">Continuar con Google</span>
                     </button>
                     <button id="btn-coki-github" class="btn-social btn-github">
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        Continuar con GitHub
+                        <span data-i18n="auth_github">Continuar con GitHub</span>
                     </button>
                 </div>
 
@@ -232,11 +232,11 @@
 
                 <form id="form-login">
                     <div class="form-group">
-                        <label class="form-label">Email</label>
+                        <label class="form-label" data-i18n="logon_email_label">Email</label>
                         <input type="email" id="login-email" required class="form-input" placeholder="tu@email.com">
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label">Contraseña</label>
+                        <label class="form-label" data-i18n="logon_password_label">Contraseña</label>
                         <input type="password" id="login-password" required class="form-input" placeholder="••••••••">
                     </div>
                     <div class="form-options">
@@ -258,11 +258,11 @@
                         <input type="text" id="reg-name" required class="form-input" placeholder="Tu nombre">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Email</label>
+                        <label class="form-label" data-i18n="logon_email_label">Email</label>
                         <input type="email" id="reg-email" required class="form-input" placeholder="tu@email.com">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Contraseña</label>
+                        <label class="form-label" data-i18n="logon_password_label">Contraseña</label>
                         <input type="password" id="reg-password" required minlength="6" class="form-input" placeholder="Mínimo 6 caracteres">
                     </div>
                     <div class="form-group">
