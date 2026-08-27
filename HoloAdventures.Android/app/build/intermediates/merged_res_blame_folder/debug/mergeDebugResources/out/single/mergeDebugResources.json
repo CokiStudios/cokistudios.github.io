@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.holoentertainment.adventures.app-debug-65:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.holoentertainment.adventures.app-main-67:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.holoentertainment.adventures.app-debug-65:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.holoentertainment.adventures.app-main-67:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.holoentertainment.adventures.app-debug-65:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.holoentertainment.adventures.app-main-67:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.holoentertainment.adventures.app-debug-65:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.holoentertainment.adventures.app-main-67:/mipmap-xxhdpi/ic_launcher.png"
+    }
+]
