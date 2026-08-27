@@ -122,7 +122,17 @@
     "logon_or_divider": "O continúa con",
     "logon_passkey_btn": "Desbloquear con Master Key / Biométrica",
     "home_hero_line1": "Construimos el mundo",
-    "home_hero_line2": "del futuro, juntos"
+    "home_hero_line2": "del futuro, juntos",
+    "terms_title": "Legal & Privacidad",
+    "terms_subtitle": "Términos Oficiales de Servicio y Política de Privacidad de Coki Studios LLC",
+    "terms_tab_terms": "📜 Términos y Condiciones",
+    "terms_tab_privacy": "🔒 Política de Privacidad",
+    "shine_hero_badge": "🚀 Motor Chromium Embedded Framework (CEF C++)",
+    "shine_hero_title": "Navegación inteligente con máxima privacidad",
+    "shine_hero_sub": "El explorador web nativo con escudo Sentinel, integración universal CSID y soporte de temas adaptable.",
+    "shine_btn_download": "Descargar para macOS",
+    "shine_btn_features": "Ver Características",
+    "btn_back_home": "← Volver al Inicio"
   },
   "en": {
     "nav_home": "Home",
@@ -247,7 +257,17 @@
     "logon_or_divider": "Or continue with",
     "logon_passkey_btn": "Unlock with Master Key / Biometrics",
     "home_hero_line1": "Building the world",
-    "home_hero_line2": "of the future, together"
+    "home_hero_line2": "of the future, together",
+    "terms_title": "Legal & Privacy",
+    "terms_subtitle": "Official Terms of Service and Privacy Policy of Coki Studios LLC",
+    "terms_tab_terms": "📜 Terms & Conditions",
+    "terms_tab_privacy": "🔒 Privacy Policy",
+    "shine_hero_badge": "🚀 Chromium Embedded Framework Engine (CEF C++)",
+    "shine_hero_title": "Smart browsing with complete privacy",
+    "shine_hero_sub": "The native web browser featuring Sentinel Shield, universal CSID integration, and adaptive theme support.",
+    "shine_btn_download": "Download for macOS",
+    "shine_btn_features": "View Features",
+    "btn_back_home": "← Back to Home"
   },
   "fr": {
     "nav_home": "Accueil",
@@ -372,7 +392,17 @@
     "logon_or_divider": "Ou continuer avec",
     "logon_passkey_btn": "Déverrouiller avec Master Key / Biométrie",
     "home_hero_line1": "Nous construisons le monde",
-    "home_hero_line2": "du futur, ensemble"
+    "home_hero_line2": "du futur, ensemble",
+    "terms_title": "Mentions Légales & Confidentialité",
+    "terms_subtitle": "Conditions Générales d'Utilisation et Politique de Confidentialité de Coki Studios LLC",
+    "terms_tab_terms": "📜 Conditions Générales",
+    "terms_tab_privacy": "🔒 Politique de Confidentialité",
+    "shine_hero_badge": "🚀 Moteur Chromium Embedded Framework (CEF C++)",
+    "shine_hero_title": "Navigation intelligente en toute confidentialité",
+    "shine_hero_sub": "Le navigateur web natif avec bouclier Sentinel, intégration universelle CSID et thèmes adaptatifs.",
+    "shine_btn_download": "Télécharger pour macOS",
+    "shine_btn_features": "Voir les fonctionnalités",
+    "btn_back_home": "← Retour à l'Accueil"
   },
   "pt": {
     "nav_home": "Início",
@@ -497,6 +527,16 @@
     "logon_or_divider": "Ou continuar com",
     "logon_passkey_btn": "Desbloquear com Master Key / Biometria",
     "home_hero_line1": "Construímos o mundo",
-    "home_hero_line2": "do futuro, juntos"
+    "home_hero_line2": "do futuro, juntos",
+    "terms_title": "Legal & Privacidade",
+    "terms_subtitle": "Termos Oficiais de Serviço e Política de Privacidade da Coki Studios LLC",
+    "terms_tab_terms": "📜 Termos e Condições",
+    "terms_tab_privacy": "🔒 Política de Privacidade",
+    "shine_hero_badge": "🚀 Motor Chromium Embedded Framework (CEF C++)",
+    "shine_hero_title": "Navegação inteligente com máxima privacidade",
+    "shine_hero_sub": "O navegador web nativo com escudo Sentinel, integração universal CSID e temas adaptáveis.",
+    "shine_btn_download": "Baixar para macOS",
+    "shine_btn_features": "Ver Recursos",
+    "btn_back_home": "← Voltar ao Início"
   }
 }

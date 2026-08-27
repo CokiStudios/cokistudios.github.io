@@ -126,7 +126,7 @@
 
     <nav>
         <div class="nav-inner">
-            <a href="index.html" class="nav-brand">
+            <a href="index" class="nav-brand">
                 <div class="nav-logo"><img src="assets/cs-logo.png" alt="CS Logo"></div>
                 <span>Coki Studios</span>
             </a>
@@ -138,20 +138,20 @@
                     <option value="pt">🇧🇷 PT</option>
                 </select>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
-                <a href="index.html" style="color:var(--text-sub);text-decoration:none;font-weight:600;font-size:14px;">← Volver al Inicio</a>
+                <a href="index" style="color:var(--text-sub);text-decoration:none;font-weight:600;font-size:14px;"><span data-i18n="btn_back_home">← Volver al Inicio</span></a>
             </div>
         </div>
     </nav>
 
     <div class="legal-container">
         <div class="legal-header">
-            <h1>Legal & Privacidad</h1>
-            <p>Términos Oficiales de Servicio y Política de Privacidad de Coki Studios LLC</p>
+            <h1 data-i18n="terms_title">Legal & Privacidad</h1>
+            <p data-i18n="terms_subtitle">Términos Oficiales de Servicio y Política de Privacidad de Coki Studios LLC</p>
         </div>
 
         <div class="legal-tabs">
-            <button class="tab-btn active" onclick="showTab('terms')">📜 Términos y Condiciones</button>
-            <button class="tab-btn" onclick="showTab('privacy')">🔒 Política de Privacidad</button>
+            <button class="tab-btn active" onclick="showTab('terms')"><span data-i18n="terms_tab_terms">📜 Términos y Condiciones</span></button>
+            <button class="tab-btn" onclick="showTab('privacy')"><span data-i18n="terms_tab_privacy">🔒 Política de Privacidad</span></button>
         </div>
 
         <!-- TAB 1: TÉRMINOS Y CONDICIONES -->
