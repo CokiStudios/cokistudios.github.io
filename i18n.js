@@ -35,6 +35,8 @@ export function applyGlobalLanguage(lang) {
         if (globalTranslations[lang][key]) {
             if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                 el.placeholder = globalTranslations[lang][key];
+            } else if (globalTranslations[lang][key].includes('<') && globalTranslations[lang][key].includes('>')) {
+                el.innerHTML = globalTranslations[lang][key];
             } else {
                 el.textContent = globalTranslations[lang][key];
             }

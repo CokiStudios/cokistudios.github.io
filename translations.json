@@ -9,7 +9,6 @@
     "nav_login": "Iniciar Sesión",
     "nav_terms": "Términos y Privacidad",
     "nav_contact": "Contacto",
-    
     "eco_title": "Forkar Eco Hub Program",
     "eco_badge": "🌱 Red Regional de Sostenibilidad • Cota, Chía y Bogotá",
     "eco_hero_title": "Puntos de Acopio y Rutas Sostenibles en Cota, Chía y Bogotá",
@@ -18,7 +17,6 @@
     "eco_stat_points": "Puntos Eco Generados",
     "eco_stat_trips": "Validaciones en Estaciones",
     "eco_stat_trees": "Árboles Equivalentes",
-    
     "eco_rewards_title": "Eco Rewards Store",
     "eco_rewards_sub": "Canjea tus Puntos Eco acumulados por recompensas reales de sostenibilidad:",
     "reward_coffee": "Café Orgánico de Comercio Justo",
@@ -29,10 +27,8 @@
     "reward_pass_desc": "Acceso ilimitado a estaciones y rutas compartidas.",
     "reward_tree": "Certificado de Siembra en Reserva del Majuy",
     "reward_tree_desc": "Siembra un árbol nativo verificado en el Cerro del Majuy (Cota/Chía).",
-    
     "eco_stations_title": "Red de Puntos de Acopio Reales (Cota • Chía • Bogotá)",
     "eco_stations_sub": "Valida tu llegada mediante código QR o etiquetas NFC para acreditar tus puntos:",
-    
     "station_cota_central": "Punto Verde Parque Principal (Cota)",
     "station_cota_central_meta": "Separación de Plásticos, Cartón y Compostaje Comunitario",
     "station_cota_bici": "Estación Bici Cota Sostenible (Vía Siberia)",
@@ -47,19 +43,23 @@
     "station_bogota_portal_meta": "Conexión Bogotá - Cota • Biciestación y Reciclaje",
     "station_bogota_suba": "Punto Limpio Portal Suba / Corpas (Bogotá)",
     "station_bogota_suba_meta": "Conexión Suba - Chía / Cota • Canje de Residuos",
-
     "btn_claim": "Canjear Recompensa",
     "btn_scan_qr": "Escanear QR de Estación",
     "btn_my_qr": "Generar mi Código Eco",
     "btn_back_forkar": "← Volver a Forkar",
-
     "auth_signin": "Iniciar sesión",
     "auth_signup": "Crear cuenta",
     "auth_email": "Email",
     "auth_password": "Contraseña",
     "auth_passkey": "Iniciar sesión con Passkey / Master Key",
     "auth_google": "Continuar con Google",
-    "auth_github": "Continuar con GitHub"
+    "auth_github": "Continuar con GitHub",
+    "home_badge": "Plataforma activa · Making the world Shine",
+    "home_hero_title": "Construimos el mundo<br><span>del futuro, juntos</span>",
+    "home_hero_sub": "Ecosistema conectado e identidad digital inteligente para todos tus juegos y comunidades.",
+    "btn_shine_demo": "Probar Shine UI Menu",
+    "btn_join_community": "Únete a la comunidad",
+    "btn_your_csid": "Tu CSID"
   },
   "en": {
     "nav_home": "Home",
@@ -71,7 +71,6 @@
     "nav_login": "Sign In",
     "nav_terms": "Terms & Privacy",
     "nav_contact": "Contact",
-
     "eco_title": "Forkar Eco Hub Program",
     "eco_badge": "🌱 Regional Sustainability Network • Cota, Chía & Bogotá",
     "eco_hero_title": "Real Collection Points & Sustainable Routes in Cota, Chía & Bogotá",
@@ -80,7 +79,6 @@
     "eco_stat_points": "Eco Points Earned",
     "eco_stat_trips": "Station Validations",
     "eco_stat_trees": "Equivalent Trees",
-
     "eco_rewards_title": "Eco Rewards Store",
     "eco_rewards_sub": "Redeem your accumulated Eco Points for real sustainability rewards:",
     "reward_coffee": "Fair Trade Organic Coffee",
@@ -91,10 +89,8 @@
     "reward_pass_desc": "Unlimited access to shared stations and bike routes.",
     "reward_tree": "Majuy Ecological Reserve Tree Certificate",
     "reward_tree_desc": "Plant a verified native tree in Mount Majuy Reserve (Cota/Chía).",
-
     "eco_stations_title": "Real Eco Collection Hubs Network (Cota • Chía • Bogotá)",
     "eco_stations_sub": "Validate your arrival via QR code or NFC tags to credit your points:",
-    
     "station_cota_central": "Main Park Green Hub (Cota)",
     "station_cota_central_meta": "Plastics, Cardboard & Community Composting",
     "station_cota_bici": "Cota Sustainable Bike Station (Siberia Route)",
@@ -109,19 +105,23 @@
     "station_bogota_portal_meta": "Bogotá - Cota Link • Bike Station & Waste Drop-off",
     "station_bogota_suba": "Suba Portal Green Drop-off (Bogotá)",
     "station_bogota_suba_meta": "Suba - Chía / Cota Route • Material Exchange",
-
     "btn_claim": "Redeem Reward",
     "btn_scan_qr": "Scan Station QR",
     "btn_my_qr": "Generate My Eco Code",
     "btn_back_forkar": "← Back to Forkar",
-
     "auth_signin": "Sign In",
     "auth_signup": "Create Account",
     "auth_email": "Email",
     "auth_password": "Password",
     "auth_passkey": "Sign in with Passkey / Master Key",
     "auth_google": "Continue with Google",
-    "auth_github": "Continue with GitHub"
+    "auth_github": "Continue with GitHub",
+    "home_badge": "Active Platform · Making the world Shine",
+    "home_hero_title": "Building the world<br><span>of the future, together</span>",
+    "home_hero_sub": "Connected ecosystem and smart digital identity for all your games and communities.",
+    "btn_shine_demo": "Try Shine UI Menu",
+    "btn_join_community": "Join the Community",
+    "btn_your_csid": "Your CSID"
   },
   "fr": {
     "nav_home": "Accueil",
@@ -133,7 +133,6 @@
     "nav_login": "Connexion",
     "nav_terms": "Conditions & Confidentialité",
     "nav_contact": "Contact",
-
     "eco_title": "Programme Forkar Eco Hub",
     "eco_badge": "🌱 Réseau Régional de Durabilité • Cota, Chía et Bogotá",
     "eco_hero_title": "Points de Collecte Réels et Itinéraires Durables (Cota • Chía • Bogotá)",
@@ -142,7 +141,6 @@
     "eco_stat_points": "Points Éco Gagnés",
     "eco_stat_trips": "Validations en Stations",
     "eco_stat_trees": "Arbres Équivalents",
-
     "eco_rewards_title": "Boutique de Récompenses Éco",
     "eco_rewards_sub": "Échangez vos Points Éco contre de véritables récompenses durables :",
     "reward_coffee": "Café Biologique Équitable",
@@ -153,10 +151,8 @@
     "reward_pass_desc": "Accès illimité aux pistes et stations cyclables.",
     "reward_tree": "Certificat de Plantation Réserve du Majuy",
     "reward_tree_desc": "Plantez un arbre indigène certifié sur le mont Majuy (Cota/Chía).",
-
     "eco_stations_title": "Réseau de Points de Collecte Réels (Cota • Chía • Bogotá)",
     "eco_stations_sub": "Validez votre arrivée par QR code ou balise NFC pour créditer vos points :",
-    
     "station_cota_central": "Point Vert Parc Principal (Cota)",
     "station_cota_central_meta": "Plastiques, Carton et Compostage Communautaire",
     "station_cota_bici": "Station Vélo Cota Durable (Route Siberia)",
@@ -171,19 +167,23 @@
     "station_bogota_portal_meta": "Liaison Bogotá - Cota • Station Vélo & Tri",
     "station_bogota_suba": "Point Propre Portal Suba (Bogotá)",
     "station_bogota_suba_meta": "Liaison Suba - Chía / Cota • Échange de Déchets",
-
     "btn_claim": "Échanger Récompense",
     "btn_scan_qr": "Scanner QR Station",
     "btn_my_qr": "Générer mon Code Éco",
     "btn_back_forkar": "← Retour à Forkar",
-
     "auth_signin": "Connexion",
     "auth_signup": "Créer un compte",
     "auth_email": "Email",
     "auth_password": "Mot de passe",
     "auth_passkey": "Se connecter avec Passkey / Master Key",
     "auth_google": "Continuer avec Google",
-    "auth_github": "Continuer avec GitHub"
+    "auth_github": "Continuer avec GitHub",
+    "home_badge": "Plateforme active · Making the world Shine",
+    "home_hero_title": "Nous construisons le monde<br><span>du futur, ensemble</span>",
+    "home_hero_sub": "Écosystème connecté et identité numérique intelligente pour tous vos jeux et communautés.",
+    "btn_shine_demo": "Tester le menu Shine UI",
+    "btn_join_community": "Rejoindre la communauté",
+    "btn_your_csid": "Votre CSID"
   },
   "pt": {
     "nav_home": "Início",
@@ -195,7 +195,6 @@
     "nav_login": "Entrar",
     "nav_terms": "Termos e Privacidade",
     "nav_contact": "Contato",
-
     "eco_title": "Programa Forkar Eco Hub",
     "eco_badge": "🌱 Rede Regional de Sustentabilidade • Cota, Chía e Bogotá",
     "eco_hero_title": "Pontos de Coleta Reais e Rotas Sustentáveis em Cota, Chía e Bogotá",
@@ -204,7 +203,6 @@
     "eco_stat_points": "Pontos Eco Gerados",
     "eco_stat_trips": "Validações em Estações",
     "eco_stat_trees": "Árvores Equivalentes",
-
     "eco_rewards_title": "Loja de Recompensas Eco",
     "eco_rewards_sub": "Troque seus Pontos Eco por recompensas reais de sustentabilidade:",
     "reward_coffee": "Café Orgânico Comércio Justo",
@@ -215,10 +213,8 @@
     "reward_pass_desc": "Acesso ilimitado a estações e rotas compartilhadas.",
     "reward_tree": "Certificado de Plantio na Reserva do Majuy",
     "reward_tree_desc": "Plante uma árvore nativa verificada no Morro do Majuy (Cota/Chía).",
-
     "eco_stations_title": "Rede de Pontos de Coleta Reais (Cota • Chía • Bogotá)",
     "eco_stations_sub": "Valide sua chegada por QR code ou NFC para creditar seus pontos:",
-    
     "station_cota_central": "Ponto Verde Praça Principal (Cota)",
     "station_cota_central_meta": "Separação de Plásticos, Papelão e Compostagem",
     "station_cota_bici": "Estação Bici Cota Sustentável (Rota Siberia)",
@@ -233,18 +229,22 @@
     "station_bogota_portal_meta": "Conexão Bogotá - Cota • Bicicletário e Reciclagem",
     "station_bogota_suba": "Ponto Limpo Portal Suba (Bogotá)",
     "station_bogota_suba_meta": "Conexão Suba - Chía / Cota • Troca de Resíduos",
-
     "btn_claim": "Resgatar Recompensa",
     "btn_scan_qr": "Escanear QR da Estação",
     "btn_my_qr": "Gerar meu Código Eco",
     "btn_back_forkar": "← Voltar ao Forkar",
-
     "auth_signin": "Entrar",
     "auth_signup": "Criar conta",
     "auth_email": "E-mail",
     "auth_password": "Senha",
     "auth_passkey": "Entrar com Passkey / Master Key",
     "auth_google": "Continuar com Google",
-    "auth_github": "Continuar com GitHub"
+    "auth_github": "Continuar com GitHub",
+    "home_badge": "Plataforma ativa · Making the world Shine",
+    "home_hero_title": "Construímos o mundo<br><span>do futuro, juntos</span>",
+    "home_hero_sub": "Ecossistema conectado e identidade digital inteligente para todos os seus jogos e comunidades.",
+    "btn_shine_demo": "Experimentar Shine UI Menu",
+    "btn_join_community": "Junte-se à comunidade",
+    "btn_your_csid": "Seu CSID"
   }
 }
