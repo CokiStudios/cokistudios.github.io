@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════════════
+# 🎮 Holo Arcade — Built with Looping Compile (.loop)
+# Powered by hiOP IDE & CS Looping Graphics Engine
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.engine as game
+
+define app "HoloArcade2D" version 1.0:
+    create window with title "Holo Arcade Adventure" and size (720, 480)
+    set theme to "dark_neon"
+    
+    set player_name to "Angel Helium"
+    set engine_status to "Looping Compile v2.0 Active"
+    
+    print "⚡ Initializing Looping Core Engine..."
+    print "Player spawned:", player_name
+    
+    # ── UI HUD Elements ──
+    draw card at (30, 30) with size (260, 110) and title "Holo Arcade Live" and text "Engine: Looping Runtime\nStatus: 60 FPS Stable"
+    draw button at (30, 160) with text "Pulse Core Energy" and action "pulse_boost"
+
+    # ── 2D Sprite Entities ──
+    spawn sprite "AngelHelium" at (120, 380) with color "#38bdf8" and size (32, 44)
+    spawn sprite "CorruptedForkbot" at (480, 380) with color "#ef4444" and size (32, 44)
+    
+    print "🎮 Press [A/D or Arrow Keys] to Move & [Space/W] to Float Jump!"
