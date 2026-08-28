@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hiOP by CS — Official Looping Compile IDE</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Monaco Editor / VSCode Web Engine -->
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --ide-bg: #0d1117;
+            --activity-bar-bg: #090d14;
+            --sidebar-bg: #06090f;
+            --editor-bg: #0a0e17;
+            --panel-bg: #080c14;
+            --status-bar-bg: #6366f1;
+            --accent: #6366f1;
+            --accent-cyan: #38bdf8;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--ide-bg);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Top Title Bar ── */
+        .title-bar {
+            height: 38px;
+            background: #06080d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border-color);
+            user-select: none;
+        }
+
+        .title-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .cs-addon-badge {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .title-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-run {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-run:hover { opacity: 0.9; }
+
+        /* ── Main IDE Layout ── */
+        .ide-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 1. Left Activity Bar (VS Code styled) */
+        .activity-bar {
+            width: 48px;
+            background: var(--activity-bar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+            gap: 18px;
+        }
+
+        .activity-icon {
+            font-size: 18px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .activity-icon.active, .activity-icon:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* 2. File Explorer Sidebar */
+        .sidebar {
+            width: 220px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-tree {
+            padding: 8px 0;
+            list-style: none;
+        }
+
+        .file-item {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .file-item:hover, .file-item.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        /* 3. Editor & Live Viewport Split */
+        .editor-workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .code-pane {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            background: var(--editor-bg);
+        }
+
+        .editor-tabs {
+            height: 36px;
+            background: #080c14;
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-item {
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--editor-bg);
+            border-right: 1px solid var(--border-color);
+            border-top: 2px solid var(--accent-cyan);
+            color: var(--text-main);
+        }
+
+        #monaco-container {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* 4. Live Runtime Preview & Terminal Panel */
+        .preview-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+        }
+
+        .preview-header {
+            height: 36px;
+            background: #06080d;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .preview-viewport {
+            flex: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #04060a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
+        }
+
+        /* 5. Terminal Console */
+        .terminal-pane {
+            flex: 0.8;
+            border-top: 1px solid var(--border-color);
+            background: #06090e;
+            display: flex;
+            flex-direction: column;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .terminal-header {
+            padding: 6px 16px;
+            background: #04060a;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-logs {
+            flex: 1;
+            padding: 10px 16px;
+            overflow-y: auto;
+            color: #a5b4fc;
+            line-height: 1.6;
+        }
+
+        .log-error { color: #ef4444; }
+        .log-success { color: #10b981; }
+        .log-system { color: #38bdf8; }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            height: 24px;
+            background: var(--status-bar-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Title Bar -->
+    <div class="title-bar">
+        <div class="title-brand">
+            <span>hiOP</span>
+            <span class="cs-addon-badge">CS LOOPING RUNTIME v2.0</span>
+            <span style="color:var(--text-muted);font-weight:normal;">— arcade.loop</span>
+        </div>
+        <div class="title-actions">
+            <button class="btn-run" id="btn-run-code">
+                <span>▶</span> Run .loop
+            </button>
+        </div>
+    </div>
+
+    <!-- Main IDE Workspace -->
+    <div class="ide-body">
+        
+        <!-- Activity Bar -->
+        <div class="activity-bar">
+            <div class="activity-icon active" title="Explorer">📁</div>
+            <div class="activity-icon" title="Search">🔍</div>
+            <div class="activity-icon" title="Looping Package Manager">📦</div>
+            <div class="activity-icon" title="CS Extensions Addon">⚡</div>
+            <div class="activity-icon" title="Settings">⚙️</div>
+        </div>
+
+        <!-- Explorer Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">Holo Project</div>
+            <ul class="file-tree">
+                <li class="file-item active" data-file="arcade.loop">📜 arcade.loop</li>
+                <li class="file-item" data-file="dashboard.loop">📜 dashboard.loop</li>
+                <li class="file-item" data-file="config.loop">⚙️ config.loop</li>
+            </ul>
+        </div>
+
+        <!-- Editor & Live Output Split -->
+        <div class="editor-workspace">
+            
+            <!-- Code Editor -->
+            <div class="code-pane">
+                <div class="editor-tabs">
+                    <div class="tab-item">
+                        <span>📜</span>
+                        <span id="active-tab-name">arcade.loop</span>
+                    </div>
+                </div>
+                <div id="monaco-container"></div>
+            </div>
+
+            <!-- Live Preview Viewport & Terminal -->
+            <div class="preview-pane">
+                <div class="preview-header">
+                    <span>LIVE VIEWPORT (LoopEngine & LoopUI)</span>
+                    <span style="font-family:'JetBrains Mono';font-size:11px;color:#38bdf8;">60 FPS READY</span>
+                </div>
+                
+                <div class="preview-viewport">
+                    <canvas id="gameCanvas" width="720" height="480"></canvas>
+                </div>
+
+                <!-- Integrated Terminal Console -->
+                <div class="terminal-pane">
+                    <div class="terminal-header">TERMINAL — Looping Compile Core Output</div>
+                    <div class="terminal-logs" id="terminal-logs">
+                        <div>[hiOP] Looping Engine Initialized. Ready to compile .loop code.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <div class="status-bar">
+        <div>Ready • Looping Compile (.loop) • UTF-8</div>
+        <div>Holo Entertainment by CS • Exclusive IDE Core</div>
+    </div>
+
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+    <script type="module">
+        import { LoopingInterpreter } from './LoopingEngine/looping_core.js';
+
+        const sampleCodes = {
+            "arcade.loop": `# ═══════════════════════════════════════════════════════════════
+# 🎮 Holo Arcade — Built with Looping Compile (.loop)
+# Powered by hiOP IDE & CS Looping Graphics Engine
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.engine as game
+
+define app "HoloArcade2D" version 1.0:
+    create window with title "Holo Arcade Adventure" and size (720, 480)
+    set theme to "dark_neon"
+    
+    set player_name to "Angel Helium"
+    set engine_status to "Looping Compile v2.0 Active"
+    
+    print "⚡ Initializing Looping Core Engine..."
+    print "Player spawned:", player_name
+    
+    # ── UI HUD Elements ──
+    draw card at (30, 30) with size (260, 110) and title "Holo Arcade Live" and text "Engine: Looping Runtime\\nStatus: 60 FPS Stable"
+    draw button at (30, 160) with text "Pulse Core Energy" and action "pulse_boost"
+
+    # ── 2D Sprite Entities ──
+    spawn sprite "AngelHelium" at (120, 380) with color "#38bdf8" and size (32, 44)
+    spawn sprite "CorruptedForkbot" at (480, 380) with color "#ef4444" and size (32, 44)
+    
+    print "🎮 Press [A/D or Arrow Keys] to Move & [Space/W] to Float Jump!"`,
+
+            "dashboard.loop": `# ═══════════════════════════════════════════════════════════════
+# 📊 Neon Dashboard — Built with Looping Compile (.loop)
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+
+define app "NeonDashboard" version 1.0:
+    create window with title "Looping Analytics" and size (720, 480)
+    set theme to "dark_neon"
+    
+    set total_users to 1420
+    set server_status to "Online (CSID Connected)"
+    
+    draw card at (40, 40) with size (300, 120) and title "Active Users" and text "Total Connected: 1,420\\nNetwork: Coki Studios Cloud"
+    draw card at (380, 40) with size (300, 120) and title "CSID Passkey Auth" and text "Security: High\\nMaster Key: Enabled"
+    
+    draw button at (40, 180) with text "Refresh Metrics" and action "refresh"
+    draw button at (220, 180) with text "Export Report" and action "export"
+    
+    print "📊 Neon Dashboard rendered successfully!"`
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const terminalLogs = document.getElementById('terminal-logs');
+
+        function appendLog(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.textContent = `> ${msg}`;
+            if (type === 'error') div.className = 'log-error';
+            if (type === 'success') div.className = 'log-success';
+            if (type === 'system') div.className = 'log-system';
+            terminalLogs.appendChild(div);
+            terminalLogs.scrollTop = terminalLogs.scrollHeight;
+        }
+
+        const interpreter = new LoopingInterpreter(canvas, appendLog);
+
+        // Initialize Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            // Register .loop language syntax
+            monaco.languages.register({ id: 'looping' });
+            monaco.languages.setMonarchTokensProvider('looping', {
+                keywords: [
+                    'define', 'app', 'version', 'import', 'create', 'window', 'with', 'title', 'and', 'size',
+                    'set', 'theme', 'to', 'print', 'draw', 'card', 'button', 'text', 'action',
+                    'spawn', 'sprite', 'color', 'at', 'when', 'is', 'clicked', 'loop', 'for', 'from'
+                ],
+                tokenizer: {
+                    root: [
+                        [/#.*$/, 'comment'],
+                        [/".*?"/, 'string'],
+                        [/\b\d+\b/, 'number'],
+                        [/[a-zA-Z_]\w*/, {
+                            cases: {
+                                '@keywords': 'keyword',
+                                '@default': 'identifier'
+                            }
+                        }]
+                    ]
+                }
+            });
+
+            const editor = monaco.editor.create(document.getElementById('monaco-container'), {
+                value: sampleCodes["arcade.loop"],
+                language: 'looping',
+                theme: 'vs-dark',
+                fontSize: 13,
+                fontFamily: 'JetBrains Mono, monospace',
+                minimap: { enabled: false },
+                automaticLayout: true
+            });
+
+            // Run button event
+            document.getElementById('btn-run-code').addEventListener('click', () => {
+                const code = editor.getValue();
+                interpreter.execute(code);
+            });
+
+            // Switch files
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.file-item').forEach(f => f.classList.remove('active'));
+                    item.classList.add('active');
+                    const fileName = item.getAttribute('data-file');
+                    document.getElementById('active-tab-name').textContent = fileName;
+                    if (sampleCodes[fileName]) {
+                        editor.setValue(sampleCodes[fileName]);
+                        interpreter.execute(sampleCodes[fileName]);
+                    }
+                });
+            });
+
+            // Auto-run on boot
+            setTimeout(() => {
+                interpreter.execute(editor.getValue());
+            }, 300);
+        });
+    </script>
+</body>
+</html>
