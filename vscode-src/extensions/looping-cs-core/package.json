@@ -1,0 +1,72 @@
+{
+  "name": "looping-cs-core",
+  "displayName": "L∞ping Compile — CS Proprietary Core",
+  "description": "Official runtime, language server, live previewer, and compiler for Looping Compile (.loop) by Coki Studios",
+  "version": "2.0.0",
+  "publisher": "cokistudios",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "looping",
+        "aliases": ["Looping Compile", "looping", "loop"],
+        "extensions": [".loop"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "looping",
+        "scopeName": "source.loop",
+        "path": "./syntaxes/looping.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "looping.runActiveFile",
+        "title": "L∞ping: Run in Live Viewport",
+        "icon": "$(play)"
+      },
+      {
+        "command": "looping.buildBinary",
+        "title": "L∞ping: Compile to Native Executable",
+        "icon": "$(gear)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "looping.runActiveFile",
+          "group": "navigation",
+          "when": "resourceExtname == .loop"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "looping-explorer",
+          "title": "L∞ping Core",
+          "icon": "$(symbol-constant)"
+        }
+      ]
+    },
+    "views": {
+      "looping-explorer": [
+        {
+          "id": "looping-panel",
+          "name": "CS Runtime Core (Proprietary)"
+        }
+      ]
+    }
+  }
+}

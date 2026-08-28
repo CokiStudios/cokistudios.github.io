@@ -1,0 +1,74 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Looping Compile",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#commands" },
+    { "include": "#graphics" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.loop",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.line.double-slash.loop",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.loop",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.loop",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.loop",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.loop",
+          "match": "\\b(define|app|version|import|as|when|is|clicked|loop|for|from|to|set|with|and|at|size|color|title|text|action)\\b"
+        }
+      ]
+    },
+    "commands": {
+      "patterns": [
+        {
+          "name": "support.function.loop",
+          "match": "\\b(print|create window|display notification|wait|seconds|load|save)\\b"
+        }
+      ]
+    },
+    "graphics": {
+      "patterns": [
+        {
+          "name": "entity.name.function.graphics.loop",
+          "match": "\\b(draw card|draw button|draw text|spawn sprite|on render|loop\\.ui|loop\\.engine)\\b"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.loop"
+}
