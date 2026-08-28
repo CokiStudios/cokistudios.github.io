@@ -1,0 +1,25 @@
+{
+  "nameShort": "hiOP",
+  "nameLong": "hiOP by CS — Looping Studio",
+  "applicationName": "hiop",
+  "dataFolderName": ".hiop",
+  "win32MutexName": "hiop",
+  "licenseName": "Proprietary",
+  "licenseUrl": "https://cokistudios.com/terms",
+  "win32DirName": "hiOP by CS",
+  "win32NameVersion": "hiOP by CS",
+  "win32AppUserModelId": "CokiStudios.hiOP",
+  "win32ShellNameShort": "hiOP",
+  "darwinBundleIdentifier": "com.cokistudios.hiop",
+  "reportIssueUrl": "mailto:cokistudiosllc@gmail.com",
+  "urlProtocol": "hiop",
+  "extensionAllowedProposedApi": [
+    "cokistudios.looping-cs-core"
+  ],
+  "builtInExtensions": [
+    {
+      "name": "looping-cs-core",
+      "version": "2.0.0"
+    }
+  ]
+}
