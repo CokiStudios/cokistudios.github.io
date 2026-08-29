@@ -341,43 +341,6 @@ async function verifyCokiOTP(email, code) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🔑 WEBAUTHN / PASSKEYS INTEGRATION (Face ID, Touch ID, Windows Hello)
-// ═══════════════════════════════════════════════════════════════
-
-async function isPasskeySupported() {
-    return window.PublicKeyCredential !== undefined &&
-           typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function' &&
-           await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-}
-
-async function registerPasskey() {
-    try {
-        const user = await getCurrentCokiUser();
-        if (!user) throw new Error('Debes iniciar sesión para vincular una Passkey');
-
-        if (!await isPasskeySupported()) {
-            throw new Error('Tu dispositivo o navegador no soporta Passkeys / Biometría.');
-        }
-
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-
-        const userIdBytes = new TextEncoder().encode(user.id);
-
-        const hostname = window.location.hostname;
-        const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
-
-        const publicKeyCredentialCreationOptions = {
-            challenge: challenge,
-            rp: {
-                name: "CSID - Coki Studios",
-                id: rpId
-            },
-            user: {
-                id: userIdBytes,
-                name: user.email || 'usuario',
-                displayName: user.name || user.email || 'Usuario'
-// ═══════════════════════════════════════════════════════════════
 // 🔑 COKI PASSKEY UNIVERSAL & MASTER KEY (LIGADA A LA CUENTA)
 // ═══════════════════════════════════════════════════════════════
 
