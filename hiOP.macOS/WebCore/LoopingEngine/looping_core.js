@@ -154,25 +154,31 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 2. App & Console Meta Definition
+        // 2. App & Console Meta Definition (Supports: define app "Name" or define app as Name)
         if (line.startsWith('define app')) {
-            const match = line.match(/define app ["'](.*?)["']/);
-            if (match) this.log(`🚀 Registered Game Title: "${match[1]}" for Shine Loop Console`, 'info');
+            let appName = 'HoloApp';
+            const quoteMatch = line.match(/define app\s*(?:as)?\s*["'](.*?)["']/);
+            const asMatch = line.match(/define app\s+as\s+([A-Za-z0-9_]+)/);
+            if (quoteMatch) appName = quoteMatch[1];
+            else if (asMatch) appName = asMatch[1];
+            
+            this.log(`🚀 Registered Game Title: "${appName}" for Shine Loop Console`, 'info');
             return;
         }
 
         // 3. Theme configuration
-        if (line.startsWith('set theme to')) {
-            const match = line.match(/set theme to ["'](.*?)["']/);
+        if (line.startsWith('set theme to') || line.startsWith('set theme as')) {
+            const match = line.match(/set theme (?:to|as) ["'](.*?)["']/);
             if (match) this.theme = match[1];
             return;
         }
 
-        // 4. Variables: set <var> to <value>
-        if (line.startsWith('set ') && line.includes(' to ')) {
-            const parts = line.replace('set ', '').split(' to ');
+        // 4. Variables: set <var> to <value> OR set <var> as <value>
+        if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
+            const delimiter = line.includes(' to ') ? ' to ' : ' as ';
+            const parts = line.replace('set ', '').split(delimiter);
             const varName = parts[0].trim();
-            const valExpr = parts[1].trim();
+            const valExpr = parts.slice(1).join(delimiter).trim();
             this.variables[varName] = this.evaluateExpression(valExpr);
             return;
         }
