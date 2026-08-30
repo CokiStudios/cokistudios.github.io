@@ -11,8 +11,8 @@ export class LoopingInterpreter {
         this.terminalOutput = terminalOutput || console.log;
         
         // Virtual Machine & System State
-        this.systemOS = "Holo Looping OoS 1.0 (Linux Gaming Core)";
-        this.hardwareTarget = "Shine Loop Console (Holo Entertainment / CS)";
+        this.systemTarget = "Holo Looping Runtime Core";
+        this.targetPlatform = "Shine Loop Game Runtime";
         
         this.variables = {};
         this.functions = {};
@@ -126,9 +126,7 @@ export class LoopingInterpreter {
     // ── AST & Lexer Compiler ──
     execute(code) {
         this.reset();
-        this.log(`🌌 Booting ${this.systemOS}...`, "system");
-        this.log(`🎮 Initializing Target Hardware: ${this.hardwareTarget}`, "system");
-        this.log("⚡ Compiling Looping (.loop) Source Code...", "info");
+        this.log("⚡ Compiling Looping (.loop) Source Code...", "system");
         
         const lines = code.split('\n');
         
