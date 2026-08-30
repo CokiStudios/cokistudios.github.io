@@ -302,8 +302,9 @@ export class LoopingInterpreter {
     }
 
     evaluateExpression(expr) {
+        if (expr === undefined || expr === null) return '';
+        expr = String(expr).trim();
         if (!expr) return '';
-        expr = expr.trim();
         
         // Literal String in double quotes
         if (expr.startsWith('"') && expr.endsWith('"')) {
@@ -321,9 +322,13 @@ export class LoopingInterpreter {
         if (expr === 'true') return true;
         if (expr === 'false') return false;
 
-        // Variable lookup
+        // Variable lookup (with recursive resolution if needed)
         if (this.variables.hasOwnProperty(expr)) {
-            return this.variables[expr];
+            let val = this.variables[expr];
+            if (typeof val === 'string' && this.variables.hasOwnProperty(val)) {
+                return this.variables[val];
+            }
+            return val;
         }
 
         return expr;
