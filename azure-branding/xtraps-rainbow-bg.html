@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xtraps Rainbow Background Generator (1920x1080) — Coki Studios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #040711;
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* 1920x1080 Exact Full HD Stage */
+        #stage-container {
+            position: relative;
+            width: 1920px;
+            height: 1080px;
+            background: radial-gradient(circle at 50% 50%, #080e22 0%, #040711 75%, #020308 100%);
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Ambient Glow Spheres */
+        .glow-sphere {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            opacity: 0.28;
+        }
+
+        .glow-1 {
+            top: 10%;
+            left: 15%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+        }
+
+        .glow-2 {
+            bottom: 10%;
+            right: 15%;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, #06b6d4 0%, transparent 70%);
+        }
+
+        .glow-3 {
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+        }
+
+        /* Controls Overlay (Hidden on Export / Screenshot) */
+        #toolbar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 18, 31, 0.88);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 24px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stage-container">
+        <!-- Ambient Neon Glows -->
+        <div class="glow-sphere glow-1"></div>
+        <div class="glow-sphere glow-2"></div>
+        <div class="glow-sphere glow-3"></div>
+
+        <!-- Animated Rainbow Xtraps Canvas -->
+        <canvas id="xtrapsCanvas" width="1920" height="1080"></canvas>
+    </div>
+
+    <!-- UI Toolbar -->
+    <div id="toolbar">
+        <span style="font-weight:700; font-size:13px; color:#38bdf8;">🌈 Xtraps Rainbow HD (1920x1080)</span>
+        <button class="btn" id="btn-download">
+            <span>💾</span> Descargar Fondo JPG para Azure Entra ID
+        </button>
+        <button class="btn btn-secondary" id="btn-toggle-anim">
+            <span id="pause-icon">⏸️</span> Pausar / Reanudar
+        </button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('xtrapsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let phase = 0;
+        let isRunning = true;
+
+        // Rainbow Xtraps Waves Configuration
+        const waves = [
+            // Red / Orange Glow Wave
+            { amplitude: 110, freq: 0.0022, speed: 0.012, width: 4.5, color: '#ef4444', phaseOffset: 0, opacity: 0.85 },
+            // Amber / Golden Wave
+            { amplitude: 130, freq: 0.0026, speed: -0.015, width: 3.5, color: '#f59e0b', phaseOffset: Math.PI * 0.35, opacity: 0.9 },
+            // Emerald Green Wave
+            { amplitude: 150, freq: 0.0019, speed: 0.018, width: 4, color: '#10b981', phaseOffset: Math.PI * 0.7, opacity: 0.85 },
+            // Cyan / Blue Wave
+            { amplitude: 170, freq: 0.0028, speed: -0.013, width: 5, color: '#06b6d4', phaseOffset: Math.PI * 1.05, opacity: 0.95 },
+            // Indigo Wave
+            { amplitude: 140, freq: 0.0021, speed: 0.016, width: 4.5, color: '#6366f1', phaseOffset: Math.PI * 1.4, opacity: 0.9 },
+            // Violet / Purple Wave
+            { amplitude: 160, freq: 0.0025, speed: -0.019, width: 4, color: '#a855f7', phaseOffset: Math.PI * 1.75, opacity: 0.88 },
+            // Pink Neon Highlight Wave
+            { amplitude: 120, freq: 0.0031, speed: 0.021, width: 3, color: '#ec4899', phaseOffset: Math.PI * 2.1, opacity: 0.95 }
+        ];
+
+        function drawWave(w) {
+            ctx.beginPath();
+            
+            // Neon Glow Layer
+            ctx.shadowColor = w.color;
+            ctx.shadowBlur = 24;
+            ctx.strokeStyle = w.color;
+            ctx.globalAlpha = w.opacity;
+            ctx.lineWidth = w.width;
+
+            for (let x = 0; x <= canvas.width; x += 3) {
+                // Harmonic Multi-frequency Sine Wave
+                const yOffset = Math.sin(x * w.freq + phase * (w.speed * 40) + w.phaseOffset) * w.amplitude +
+                                Math.cos(x * (w.freq * 1.6) + phase * 0.4) * (w.amplitude * 0.35);
+                
+                const y = (canvas.height * 0.52) + yOffset;
+
+                if (x === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1.0;
+        }
+
+        function render() {
+            // Clear Frame with deep dark blue tint
+            ctx.fillStyle = 'rgba(4, 7, 17, 0.25)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw all rainbow Xtraps
+            for (let i = 0; i < waves.length; i++) {
+                drawWave(waves[i]);
+            }
+
+            // Subtle Cyber Grid Overlay
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.025)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 60) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 60) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            if (isRunning) {
+                phase += 0.01;
+                requestAnimationFrame(render);
+            }
+        }
+
+        render();
+
+        // 1. Download Exact JPG for Azure Entra ID
+        document.getElementById('btn-download').addEventListener('click', () => {
+            // Render full pristine frame to an export canvas
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = 1920;
+            exportCanvas.height = 1080;
+            const expCtx = exportCanvas.getContext('2d');
+
+            // Solid Background
+            const bgGrad = expCtx.createRadialGradient(960, 540, 0, 960, 540, 1200);
+            bgGrad.addColorStop(0, '#080e22');
+            bgGrad.addColorStop(0.75, '#040711');
+            bgGrad.addColorStop(1, '#020308');
+            expCtx.fillStyle = bgGrad;
+            expCtx.fillRect(0, 0, 1920, 1080);
+
+            // Copy Current Frame
+            expCtx.drawImage(canvas, 0, 0);
+
+            // Export as JPG (Azure Entra ID requires JPG <= 300KB)
+            const jpgData = exportCanvas.toDataURL('image/jpeg', 0.88);
+            const link = document.createElement('a');
+            link.download = 'coki-xtraps-rainbow-entra-bg.jpg';
+            link.href = jpgData;
+            link.click();
+        });
+
+        // 2. Pause / Resume animation
+        document.getElementById('btn-toggle-anim').addEventListener('click', () => {
+            isRunning = !isRunning;
+            document.getElementById('pause-icon').textContent = isRunning ? '⏸️' : '▶️';
+            if (isRunning) render();
+        });
+    </script>
+</body>
+</html>
