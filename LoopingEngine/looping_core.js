@@ -177,10 +177,10 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 5. Print output: print "..."
+        // 5. Print output: print "...", var1, var2
         if (line.startsWith('print ')) {
             const expr = line.replace('print ', '').trim();
-            const val = this.evaluateExpression(expr);
+            const val = this.parsePrint(expr);
             this.log(val, 'output');
             return;
         }
@@ -297,12 +297,63 @@ export class LoopingInterpreter {
 
     evaluateExpression(expr) {
         if (!expr) return '';
-        if ((expr.startsWith('"') && expr.endsWith('"')) || (expr.startsWith("'") && expr.endsWith("'"))) {
+        expr = expr.trim();
+        
+        // Literal String in double quotes
+        if (expr.startsWith('"') && expr.endsWith('"')) {
             return expr.slice(1, -1);
         }
-        if (!isNaN(expr)) return Number(expr);
-        if (this.variables.hasOwnProperty(expr)) return this.variables[expr];
+        // Literal String in single quotes
+        if (expr.startsWith("'") && expr.endsWith("'")) {
+            return expr.slice(1, -1);
+        }
+        // Numbers
+        if (!isNaN(expr) && expr !== '') {
+            return Number(expr);
+        }
+        // Boolean
+        if (expr === 'true') return true;
+        if (expr === 'false') return false;
+
+        // Variable lookup
+        if (this.variables.hasOwnProperty(expr)) {
+            return this.variables[expr];
+        }
+
         return expr;
+    }
+
+    parsePrint(rawExpr) {
+        // Split comma-separated arguments while respecting quoted strings
+        const args = [];
+        let current = '';
+        let inQuotes = false;
+        let quoteChar = '';
+
+        for (let i = 0; i < rawExpr.length; i++) {
+            const char = rawExpr[i];
+            if ((char === '"' || char === "'") && (i === 0 || rawExpr[i - 1] !== '\\')) {
+                if (!inQuotes) {
+                    inQuotes = true;
+                    quoteChar = char;
+                } else if (quoteChar === char) {
+                    inQuotes = false;
+                }
+            }
+
+            if (char === ',' && !inQuotes) {
+                args.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        if (current.trim()) {
+            args.push(current.trim());
+        }
+
+        const evaluated = args.map(arg => this.evaluateExpression(arg));
+        return evaluated.join(' ');
     }
 
     triggerEvent(event, data) {
