@@ -364,10 +364,11 @@
         <div>Holo Entertainment by CS • Exclusive IDE Core</div>
     </div>
 
-    <!-- Monaco Editor Loader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+    <!-- Monaco Editor Loader (Fast Multi-CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <script type="module">
-        import { LoopingInterpreter } from './LoopingEngine/looping_core.js?v=2.0.2';
+        import { LoopingInterpreter } from './LoopingEngine/looping_core.js?v=2.0.3';
 
         const sampleCodes = {
             "arcade.loop": `# ═══════════════════════════════════════════════════════════════
@@ -436,7 +437,7 @@ define app "NeonDashboard" version 1.0:
         const interpreter = new LoopingInterpreter(canvas, appendLog);
 
         // Initialize Monaco Editor
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
             // Register .loop language syntax
             monaco.languages.register({ id: 'looping' });
