@@ -640,8 +640,8 @@ export class LoopingInterpreter {
         ctx.beginPath(); ctx.moveTo(0, h - 44); ctx.lineTo(w, h - 44); ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // 5. Render Bubbly Dot (CS Own Dynamic Island - Design Guide p.17)
-        if (this.bubblyDot && this.bubblyDot.active) {
+        // 5. Render Bubbly Dot (CS Own Dynamic Island - Design Guide p.17: Exclusively for Phones & UI OS)
+        if (this.bubblyDot && this.bubblyDot.active && ['hi!ui', 'stock', 'xui', 'flui', 'phone'].includes(this.uiProfile)) {
             this.bubblyDot.pulse += 0.05;
             const dotW = 210;
             const dotH = 34;

@@ -1,44 +1,40 @@
 # ═══════════════════════════════════════════════════════════════
-# [HOLO LOOPING OoS] System Dashboard v2.0
-# Built using CS Design Guide Architecture (Pages 4, 5, 9, 10, 17)
-# Hardware Target: Shine Loop Console & Shine Devices
+# [HOLO LOOPING OoS] Shine Poortloop System Dashboard v2.0
+# Hardware: Shine Poortloop (Portable Handheld Gaming Console)
+# Sub-division of Holo Entertainment by Coki Studios (Pages 9 & 11)
 # ═══════════════════════════════════════════════════════════════
 
 import loop.ui as ui
 import loop.engine as game
 
-define app "ShineLoopDashboard" version 2.0:
-    create window with title "Shine Loop Console -- Holo Looping OoS" and size (720, 480)
-    
-    # ── UI System Profile & Theme (CS Design Guide p.4, 5, 10) ──
-    set ui_profile to "xui"
+define app "ShinePoortloopHome" version 2.0:
+    create window with title "Shine Poortloop -- Holo Looping OoS" and size (720, 480)
     set theme to "frosted_aqua_a17"
     
-    set system_kernel to "Holo Looping OoS v1.0 (Linux Gaming Core)"
-    set device_target to "Shine Loop Handheld / Console"
-    set active_user to "Coki Studios Developer"
+    set console_model to "Shine Poortloop (Handheld Gaming Console)"
+    set kernel_version to "Holo Looping OoS 1.0 (Low-Latency Linux Core)"
+    set battery_level to "94% [Battery Powered]"
+    set active_player to "Angel Helium"
     
-    # ── Bubbly Dot Active Status (CS Design Guide p.17) ──
-    spawn bubbly_dot with text "Holo Audio: Chiptune Wave Active" and state "music"
+    print "[BOOT] Starting Shine Poortloop Gaming Subsystem..."
+    print "[HARDWARE] Form Factor: Handheld Console (Steam Deck Style)"
+    print "[INPUT] Controller: Integrated Shine Poortloop Keypad (P1/P2, Z1/Z2, D-Pad)"
+    print "[PLAYER] Active:", active_player
     
-    print "[BOOT] Initializing Holo Looping OoS Gaming System..."
-    print "[PROFILE] UI System Profile: XUI (Vulkan 240Hz Ready)"
-    print "[USER] Active Profile:", active_user
-    
-    # ── Top Status Header (Frosted Glass Aqua A17) ──
-    draw card at (30, 60) with size (660, 65) and title "COKI STUDIOS // SHINE LOOP CONSOLE" and text "Kernel: Holo Looping OoS 1.0 | Engine: Looping Compile v2.0 | UI: XUI Glass"
+    # ── Console Top Bar (Battery, Gamepad, Kernel Status) ──
+    draw card at (30, 25) with size (660, 60) and title "SHINE POORTLOOP // HOLO ENTERTAINMENT" and text "Kernel: Holo Looping OoS 1.0 | Display: 60Hz Direct V-Sync | Battery: 94%"
 
-    # ── Game Library Carousel (CS Design Guide p.9) ──
-    draw card at (30, 140) with size (315, 155) and title "[GAME 01] Holo Arcade 2D" and text "Genre: Platformer Action\nGamepad: Shine Poortloop (P1/P2/Z1/Z2)\nStatus: 60 FPS Low-Latency"
-    draw button at (50, 240) with text "LAUNCH GAME" and action "launch_arcade"
+    # ── Loop OS Home Game Carousel (Design Guide p.9) ──
+    draw card at (30, 100) with size (315, 175) and title "[GAME 01] Holo Arcade 2D" and text "Genre: 2D Cyber Platformer\nEngine: Looping Compile v2.0\nStatus: Ready to Launch"
+    draw button at (50, 215) with text "PLAY [A]" and action "launch_arcade"
 
-    draw card at (375, 140) with size (315, 155) and title "[GAME 02] Forkar Arena" and text "Genre: Cyberpunk Multiplayer\nNetwork: Coki Cloud Sync\nPhysics: 60Hz OoS Subsystem"
-    draw button at (395, 240) with text "ENTER ARENA" and action "launch_forkar"
+    draw card at (375, 100) with size (315, 175) and title "[GAME 02] Forkar Arena" and text "Genre: Arena Action\nEngine: Looping 60Hz Subsystem\nStatus: Installed on NVMe"
+    draw button at (395, 215) with text "PLAY [A]" and action "launch_forkar"
 
-    # ── System Telemetry & Wearable Bridge (CS Design Guide p.11, 17) ──
-    draw card at (30, 310) with size (660, 105) and title "HARDWARE SPECS & PERIPHERALS" and text "RAM: 1.2GB Free | GPU: Vulkan Pipeline | Storage: 64GB NVMe\nPeripherals: Shine Clocked Connected | Bubbly Dot: Active"
+    # ── Poortloop Hardware Telemetry (Pure Gaming Console Specs) ──
+    draw card at (30, 290) with size (660, 125) and title "SHINE POORTLOOP HARDWARE TELEMETRY" and text "APU: Quad-Core Low Latency | GPU: Vulkan Native Driver | RAM: 4GB LPDDR5\nControls: Dual Analog, D-Pad, P1/P2 Grip Buttons, Z1/Z2 Triggers\nStorage: 64GB Internal Fast NVMe | Optical: Shine Loop Blu-disk Slot"
 
-    # ── Hardware Sound Synthesizer Chime ──
-    play tone at 587 Hz for 100 ms
+    # ── Hardware Chime on Boot ──
+    play tone at 587 Hz for 80 ms
 
-    print "[READY] Shine Loop Dashboard fully operational."
+    print "[READY] Shine Poortloop Home ready for gamepad input."
