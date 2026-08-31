@@ -250,9 +250,10 @@ export class LoopingInterpreter {
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
             
             const name = nameMatch ? nameMatch[1] : 'Entity';
-            const isPlayer = name.toLowerCase().includes('angel') || name.toLowerCase().includes('player');
+            const isPlayer = name.toLowerCase().includes('angel') || name.toLowerCase().includes('player') || name.toLowerCase().includes('forky');
 
             const sprite = {
+                type: 'sprite',
                 name: name,
                 isPlayer: isPlayer,
                 x: posMatch ? parseFloat(posMatch[1]) : 100,
@@ -260,8 +261,8 @@ export class LoopingInterpreter {
                 vx: 0,
                 vy: 0,
                 speed: 260,
-                w: sizeMatch ? parseFloat(sizeMatch[1]) : 32,
-                h: sizeMatch ? parseFloat(sizeMatch[2]) : 44,
+                w: sizeMatch ? parseFloat(sizeMatch[1]) : 34,
+                h: sizeMatch ? parseFloat(sizeMatch[2]) : 46,
                 color: colorMatch ? colorMatch[1] : (isPlayer ? '#38bdf8' : '#ef4444'),
                 isJumping: false,
                 glowPulse: 0
@@ -271,7 +272,45 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 10. Particle System / Spark emitter: emit particles at (x, y) with color "..."
+        // 10. Spawn Static Platform: spawn platform at (x, y) with size (w, h) and color "..."
+        if (line.startsWith('spawn platform')) {
+            const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
+            const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
+            const colorMatch = line.match(/color ["'](.*?)["']/);
+
+            const platform = {
+                type: 'platform',
+                x: posMatch ? parseFloat(posMatch[1]) : 200,
+                y: posMatch ? parseFloat(posMatch[2]) : 300,
+                w: sizeMatch ? parseFloat(sizeMatch[1]) : 160,
+                h: sizeMatch ? parseFloat(sizeMatch[2]) : 18,
+                color: colorMatch ? colorMatch[1] : '#6366f1'
+            };
+            this.gameEntities.push(platform);
+            this.log(`🧱 Platform Placed at (${platform.x}, ${platform.y})`, 'info');
+            return;
+        }
+
+        // 11. Spawn Collectible Star/Coin: spawn coin at (x, y) with points <val>
+        if (line.startsWith('spawn coin') || line.startsWith('spawn star')) {
+            const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
+            const pointsMatch = line.match(/points\s+(\d+)/);
+
+            const coin = {
+                type: 'coin',
+                x: posMatch ? parseFloat(posMatch[1]) : 300,
+                y: posMatch ? parseFloat(posMatch[2]) : 250,
+                r: 10,
+                points: pointsMatch ? parseInt(pointsMatch[1]) : 100,
+                collected: false,
+                floatOffset: Math.random() * 10
+            };
+            this.gameEntities.push(coin);
+            this.log(`⭐ Collectible Placed at (${coin.x}, ${coin.y}) [${coin.points} pts]`, 'info');
+            return;
+        }
+
+        // 12. Particle System / Spark emitter: emit particles at (x, y) with color "..."
         if (line.startsWith('emit particles')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const colorMatch = line.match(/color ["'](.*?)["']/);
@@ -434,10 +473,35 @@ export class LoopingInterpreter {
                     entity.isJumping = false;
                 }
 
+                // Platform collisions
+                for (let other of this.gameEntities) {
+                    if (other.type === 'platform') {
+                        // Check if landing on top of platform
+                        if (entity.x + entity.w > other.x && entity.x < other.x + other.w) {
+                            if (entity.y + entity.h >= other.y && entity.y + entity.h <= other.y + other.h + 12 && entity.vy >= 0) {
+                                entity.y = other.y - entity.h;
+                                entity.vy = 0;
+                                entity.isJumping = false;
+                            }
+                        }
+                    } else if (other.type === 'coin' && !other.collected) {
+                        // Collect coin on overlap
+                        const cx = other.x;
+                        const cy = other.y;
+                        if (entity.x + entity.w >= cx - other.r && entity.x <= cx + other.r &&
+                            entity.y + entity.h >= cy - other.r && entity.y <= cy + other.r) {
+                            other.collected = true;
+                            this.score += other.points;
+                            this.spawnParticleBurst(cx, cy, '#fbbf24', 20);
+                            this.log(`⭐ Coin Collected! Score: +${other.points} (Total: ${this.score})`, 'success');
+                        }
+                    }
+                }
+
                 // Screen edge clamp
                 if (entity.x < 0) entity.x = 0;
                 if (this.canvas && entity.x + entity.w > this.canvas.width) entity.x = this.canvas.width - entity.w;
-            } else {
+            } else if (entity.type === 'sprite') {
                 // Autonomous AI Patrol for Enemy NPCs
                 if (!entity.patrolDir) entity.patrolDir = 1;
                 entity.x += entity.patrolDir * 60 * dt;
@@ -538,20 +602,59 @@ export class LoopingInterpreter {
             }
         }
 
-        // 6. Render Game Sprites
-        for (let sprite of this.gameEntities) {
-            ctx.fillStyle = sprite.color;
-            ctx.shadowColor = sprite.color;
-            ctx.shadowBlur = 14 + Math.sin(sprite.glowPulse) * 4;
-            this.roundRect(ctx, sprite.x, sprite.y, sprite.w, sprite.h, 8, true, false);
-            
-            // Name tag above sprite
-            ctx.fillStyle = '#f1f5f9';
-            ctx.font = 'bold 11px Outfit, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(sprite.name, sprite.x + sprite.w / 2, sprite.y - 8);
-            ctx.textAlign = 'left';
-            ctx.shadowBlur = 0;
+        // 6. Render Game Entities (Platforms, Coins & Sprites)
+        for (let entity of this.gameEntities) {
+            if (entity.type === 'platform') {
+                // Neon Platform
+                const pGrad = ctx.createLinearGradient(entity.x, entity.y, entity.x, entity.y + entity.h);
+                pGrad.addColorStop(0, entity.color);
+                pGrad.addColorStop(1, 'rgba(15, 23, 42, 0.9)');
+                ctx.fillStyle = pGrad;
+                ctx.strokeStyle = '#818cf8';
+                ctx.lineWidth = 1.5;
+                this.roundRect(ctx, entity.x, entity.y, entity.w, entity.h, 6, true, true);
+            } else if (entity.type === 'coin' && !entity.collected) {
+                // Spinning Neon Star/Coin
+                const floatY = entity.y + Math.sin(this.lastTime * 0.005 + entity.floatOffset) * 4;
+                ctx.fillStyle = '#fbbf24';
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(entity.x, floatY, entity.r, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText("★", entity.x, floatY + 3.5);
+                ctx.textAlign = 'left';
+                ctx.shadowBlur = 0;
+            } else if (entity.type === 'sprite') {
+                ctx.fillStyle = entity.color;
+                ctx.shadowColor = entity.color;
+                ctx.shadowBlur = 14 + Math.sin(entity.glowPulse) * 4;
+                this.roundRect(ctx, entity.x, entity.y, entity.w, entity.h, 8, true, false);
+                
+                // Name tag above sprite
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = 'bold 11px Outfit, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(entity.name, entity.x + entity.w / 2, entity.y - 8);
+                ctx.textAlign = 'left';
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // 7. Render Score Counter (if score > 0)
+        if (this.score > 0) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1.5;
+            this.roundRect(ctx, w - 160, 24, 135, 40, 10, true, true);
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px Outfit, sans-serif';
+            ctx.fillText(`★ SCORE: ${this.score}`, w - 145, 49);
         }
 
         // 7. Render Particle Bursts
