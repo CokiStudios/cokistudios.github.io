@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// [L] LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
+//  LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
 // Next-Gen Game Programming Language for "Shine Loop" & "Holo Looping OoS"
 // Developed by Holo Entertainment (Sub-division of Coki Studios)
 // ═══════════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ export class LoopingInterpreter {
     // ── AST & Lexer Compiler ──
     execute(code) {
         this.reset();
-        this.log("[SYS] Compiling Looping (.loop) Source Code...", "system");
+        this.log(" Compiling Looping (.loop) Source Code...", "system");
         
         const lines = code.split('\n');
         
@@ -137,7 +137,7 @@ export class LoopingInterpreter {
             try {
                 this.parseLine(line);
             } catch (err) {
-                this.log(`[ERROR] [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
+                this.log(` [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
                 return false;
             }
         }
@@ -150,7 +150,7 @@ export class LoopingInterpreter {
     parseLine(line) {
         // 1. Module Imports
         if (line.startsWith('import ')) {
-            this.log(`[MODULE] Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
+            this.log(` Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
             return;
         }
 
@@ -200,7 +200,7 @@ export class LoopingInterpreter {
                 this.canvas.height = parseInt(sizeMatch[2]);
             }
             if (titleMatch) {
-                this.log(`[DISPLAY] Shine Loop Display Mode: "${titleMatch[1]}" (${this.canvas.width}x${this.canvas.height})`, 'info');
+                this.log(` Shine Loop Display Mode: "${titleMatch[1]}" (${this.canvas.width}x${this.canvas.height})`, 'info');
             }
             return;
         }
@@ -268,7 +268,7 @@ export class LoopingInterpreter {
                 glowPulse: 0
             };
             this.gameEntities.push(sprite);
-            this.log(`[SPRITE] Entity Spawned on Shine Loop Stage: "${sprite.name}"`, 'info');
+            this.log(` Entity Spawned on Shine Loop Stage: "${sprite.name}"`, 'info');
             return;
         }
 
@@ -287,7 +287,7 @@ export class LoopingInterpreter {
                 color: colorMatch ? colorMatch[1] : '#6366f1'
             };
             this.gameEntities.push(platform);
-            this.log(`[PLATFORM] Platform Placed at (${platform.x}, ${platform.y})`, 'info');
+            this.log(` Platform Placed at (${platform.x}, ${platform.y})`, 'info');
             return;
         }
 
@@ -306,7 +306,7 @@ export class LoopingInterpreter {
                 floatOffset: Math.random() * 10
             };
             this.gameEntities.push(coin);
-            this.log(`[STAR] Collectible Placed at (${coin.x}, ${coin.y}) [${coin.points} pts]`, 'info');
+            this.log(` Collectible Placed at (${coin.x}, ${coin.y}) [${coin.points} pts]`, 'info');
             return;
         }
 
@@ -412,7 +412,7 @@ export class LoopingInterpreter {
                 if (item.type === 'button') {
                     if (data.x >= item.x && data.x <= item.x + item.w &&
                         data.y >= item.y && data.y <= item.y + item.h) {
-                        this.log(`[GAME] Gamepad Trigger: [${item.text}] Activated!`, 'success');
+                        this.log(` Gamepad Trigger: [${item.text}] Activated!`, 'success');
                         this.spawnParticleBurst(data.x, data.y, '#38bdf8', 25);
                     }
                 }
@@ -493,7 +493,7 @@ export class LoopingInterpreter {
                             other.collected = true;
                             this.score += other.points;
                             this.spawnParticleBurst(cx, cy, '#fbbf24', 20);
-                            this.log(`[STAR] Coin Collected! Score: +${other.points} (Total: ${this.score})`, 'success');
+                            this.log(` Coin Collected! Score: +${other.points} (Total: ${this.score})`, 'success');
                         }
                     }
                 }

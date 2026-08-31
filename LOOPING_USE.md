@@ -1,4 +1,4 @@
-# [L] Looping Programming Language — Official Syntax & Reference Guide
+# Looping Programming Language — Official Syntax & Reference Guide
 > **Language Specification v2.0**  
 > *Developed by Holo Entertainment (Sub-division of Coki Studios)*  
 > *Target Hardware & OS: Shine Loop Console • Holo Looping OoS (Linux Gaming Subsystem)*
@@ -25,7 +25,7 @@ Su filosofía combina la legibilidad humana del pseudocódigo con la potencia de
 
 ---
 
-## [MODULE] 3. Módulos e Importaciones
+## 3. Módulos e Importaciones
 Para habilitar subsistemas de interfaz de usuario o motor de física/juegos:
 
 ```loop
@@ -36,7 +36,7 @@ import loop.audio as sound
 
 ---
 
-## [APP] 4. Definición de la Aplicación
+## 4. Definición de la Aplicación
 Toda aplicación o juego en Looping se declara mediante el bloque `define app`:
 
 ```loop
@@ -46,7 +46,7 @@ define app "NombreDelJuego" version 1.0:
 
 ---
 
-## [PLATFORM] 5. Variables y Tipos de Datos
+## 5. Variables y Tipos de Datos
 Las variables se declaran y asignan con la instrucción `set <nombre> to <valor>`:
 
 ```loop
@@ -70,14 +70,14 @@ set theme to "dark_neon"
 Para imprimir información o variables en la terminal de depuración:
 
 ```loop
-print "[SYS] Inicializando sistema..."
+print "Inicializando sistema..."
 print player_name
 print "Velocidad actual:", player_speed
 ```
 
 ---
 
-## [DISPLAY] 7. Ventana y Lienzo Gráfico (Display)
+## 7. Ventana y Lienzo Gráfico (Display)
 Crea la ventana de renderizado con tamaño personalizado:
 
 ```loop
@@ -88,7 +88,7 @@ create window with title "Holo Arcade Adventure" and size (720, 480)
 
 ---
 
-## [UI] 8. Interfaz de Usuario (UI & HUD)
+## 8. Interfaz de Usuario (UI & HUD)
 
 ### 🪟 Tarjetas Glassmorphism (`draw card`)
 Dibuja cajas translúcidas con desenfoque, bordes neón y texto formateado:
@@ -96,15 +96,15 @@ Dibuja cajas translúcidas con desenfoque, bordes neón y texto formateado:
 draw card at (30, 30) with size (270, 115) and title "Shine Loop Status" and text "Engine: Looping v2.0\nFPS: 60 Estables"
 ```
 
-### [BTN] Botones Interactivos (`draw button`)
+### Botones Interactivos (`draw button`)
 Crea botones con degradado neón que responden a clics y eventos de gamepad:
 ```loop
-draw button at (30, 160) with text "[SYS] Activar Propulsor" and action "pulse_boost"
+draw button at (30, 160) with text "Activar Propulsor" and action "pulse_boost"
 ```
 
 ---
 
-## [SPRITE] 9. Motor de Videojuegos y Entidades (2D Sprites)
+## 9. Motor de Videojuegos y Entidades (2D Sprites)
 
 ### [GAME] Spawn de Entidades (`spawn sprite`)
 Genera jugadores, enemigos o plataformas en el escenario con físicas automáticas:
@@ -167,12 +167,12 @@ define app "HoloArcade2D" version 2.0:
     set player_name to "Angel Helium"
     set high_score to 14500
     
-    print "[SYS] Compilando entorno Looping..."
+    print "Compilando entorno Looping..."
     print "[GAME] Jugador listo:", player_name
     
     # ── Elementos HUD en pantalla ──
     draw card at (30, 30) with size (270, 115) and title "Shine Loop Console" and text "Engine: Looping Runtime\nStatus: 60 FPS Stable"
-    draw button at (30, 160) with text "[SYS] Pulso de Energía" and action "pulse_boost"
+    draw button at (30, 160) with text "Pulso de Energía" and action "pulse_boost"
 
     # ── Entidades en Escena ──
     spawn sprite "AngelHelium" at (120, 380) with color "#38bdf8" and size (34, 46)

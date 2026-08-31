@@ -14,13 +14,13 @@ define app "HoloArcade2D" version 2.0:
     set player_name to "Angel Helium"
     set console_target to "Shine Loop Handheld / Console"
     
-    print "[SYS] Booting Holo Looping OoS Linux Gaming Subsystem..."
+    print "Booting Holo Looping OoS Linux Gaming Subsystem..."
     print "[GAME] Target Platform:", console_target
-    print "[USER] Player Active:", player_name
+    print "Player Active:", player_name
     
     # ── UI HUD Glassmorphism Elements ──
     draw card at (30, 30) with size (260, 110) and title "Shine Loop Console" and text "OS: Holo Looping OoS\nPipeline: 60 FPS Low-Latency\nStatus: Gamepad Synced"
-    draw button at (30, 155) with text "[SYS] Pulse Core Blast" and action "pulse_boost"
+    draw button at (30, 155) with text "Pulse Core Blast" and action "pulse_boost"
 
     # ── Floating Platforms ──
     spawn platform at (200, 330) with size (150, 16) and color "#6366f1"

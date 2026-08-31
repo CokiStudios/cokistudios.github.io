@@ -602,7 +602,7 @@
                 Volver a Forkar
             </a>
             <div class="nav-right">
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <a href="dashboard.html" id="nav-profile" style="display: flex;">
                     <div id="nav-avatar"></div>
                     <span id="nav-name">Cargando...</span>
@@ -643,7 +643,7 @@
             </div>
 
             <div id="comments-empty" class="empty-state" style="display: none;">
-                <div style="font-size:32px; margin-bottom:12px; opacity:0.5;">[LOG]</div>
+                <div style="font-size:32px; margin-bottom:12px; opacity:0.5;"></div>
                 <p>No hay comentarios aún. Sé el primero en opinar.</p>
             </div>
         </div>
@@ -848,7 +848,7 @@
                 </div>
             `;
 
-            // [APP] Procesamos las Menciones en el DOM de la publicación
+            // Procesamos las Menciones en el DOM de la publicación
             renderMentionsInDOM();
 
             loadComments();
@@ -902,7 +902,7 @@
                 `;
             }).join('');
 
-            // [APP] Procesamos las Menciones en el DOM de todos los comentarios cargados
+            // Procesamos las Menciones en el DOM de todos los comentarios cargados
             renderMentionsInDOM();
         }
 
@@ -1076,7 +1076,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

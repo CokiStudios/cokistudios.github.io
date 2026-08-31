@@ -504,7 +504,7 @@
 
     <div class="page-wrap">
 
-        <!-- [APP] BANNER / FORMULARIO DE MIGRACIÓN PARA USUARIOS NO MIGRADOS -->
+        <!-- BANNER / FORMULARIO DE MIGRACIÓN PARA USUARIOS NO MIGRADOS -->
         <div id="migration-card" style="display: none; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 24px; padding: 28px; margin-bottom: 32px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
             <div style="display: flex; align-items: flex-start; gap: 18px; margin-bottom: 20px;">
                 <div style="font-size: 38px; line-height: 1;"></div>
@@ -527,7 +527,7 @@
 
             <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end;">
                 <button id="btn-complete-migration" style="padding: 12px 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.2s;">
-                    [APP] Completar Migración de Cuenta
+                    Completar Migración de Cuenta
                 </button>
             </div>
         </div>
@@ -747,7 +747,7 @@
                 mailBtn.style.display = canAccessMail ? 'inline-flex' : 'none';
             }
 
-            // [APP] VERIFICAR SI EL USUARIO YA ESTÁ MIGRADO
+            // VERIFICAR SI EL USUARIO YA ESTÁ MIGRADO
             checkUserMigrationStatus();
 
             loadConnectedApps();
@@ -828,7 +828,7 @@
                 loadUser();
             } else {
                 btn.disabled = false;
-                btn.textContent = '[APP] Completar Migración de Cuenta';
+                btn.textContent = 'Completar Migración de Cuenta';
                 alert(' Error al migrar: ' + result.error);
             }
         });
