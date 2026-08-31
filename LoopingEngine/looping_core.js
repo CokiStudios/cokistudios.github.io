@@ -745,10 +745,15 @@ export class LoopingInterpreter {
                 ctx.fillText(elem.title, elem.x + 18, elem.y + 32);
 
                 ctx.fillStyle = '#94a3b8';
-                ctx.font = '12px Outfit, sans-serif';
-                const lines = elem.text.split('\n');
+                ctx.font = '12px Outfit, monospace, sans-serif';
+                // Unescape literal \n strings if passed from .loop file
+                const rawText = String(elem.text || '').replace(/\\n/g, '\n');
+                const lines = rawText.split('\n');
                 for (let i = 0; i < lines.length; i++) {
-                    ctx.fillText(lines[i], elem.x + 18, elem.y + 60 + (i * 20));
+                    const lineY = elem.y + 60 + (i * 22);
+                    if (lineY < elem.y + elem.h - 10) {
+                        ctx.fillText(lines[i], elem.x + 18, lineY);
+                    }
                 }
             } else if (elem.type === 'button') {
                 const btnGrad = ctx.createLinearGradient(elem.x, elem.y, elem.x + elem.w, elem.y + elem.h);
