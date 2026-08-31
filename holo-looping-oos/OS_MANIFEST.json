@@ -1,0 +1,11 @@
+{
+  "os_name": "Holo Looping OoS",
+  "version": "1.0.0-LTS",
+  "kernel_base": "Linux 6.6.x Gaming LTS",
+  "display_server": "Gamescope / Wayland (60Hz Low Latency)",
+  "runtime": "Looping Native Compile Engine v2.0",
+  "target_console": "Shine Loop Console",
+  "publisher": "Holo Entertainment by Coki Studios",
+  "default_launcher": "/home/player/dashboard.loop",
+  "build_timestamp": "2026-08-31T00:38:19Z"
+}
