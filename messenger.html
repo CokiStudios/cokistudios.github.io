@@ -757,7 +757,7 @@
                     <option value="fr"> FR</option>
                     <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <a href="dashboard" id="nav-profile">
                     <div id="nav-avatar">U</div>
                     <span id="nav-name">Mi cuenta</span>
@@ -775,7 +775,7 @@
                 <div class="sidebar-header">
                     <h2 data-i18n="csms_chats_tab">Chats</h2>
                     <div class="header-actions">
-                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email">[LOG]</button>
+                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email"></button>
                         <button id="btn-new-group" title="Nuevo Grupo"></button>
                     </div>
                 </div>
@@ -790,7 +790,7 @@
             <div class="messenger-chat">
                 <!-- Welcome Splash -->
                 <div class="welcome-splash" id="welcome-splash">
-                    <div class="splash-logo">[LOG]</div>
+                    <div class="splash-logo"></div>
                     <h3 data-i18n="csms_title">Bienvenido a CSMS</h3>
                     <p data-i18n="csms_no_chat_selected">Selecciona una conversación, busca a un amigo por su correo electrónico o crea un nuevo grupo para chatear en tiempo real.</p>
                 </div>
@@ -851,7 +851,7 @@
             <div class="modal-body">
                 <!-- Opción 1: Enviar por correo exacto -->
                 <div class="form-group" style="background: rgba(99, 102, 241, 0.08); padding: 14px; border-radius: 14px; border: 1px solid var(--border-glow);">
-                    <label style="color: var(--accent); font-weight: 800;">[MAIL] Escribir a un Correo Electrónico</label>
+                    <label style="color: var(--accent); font-weight: 800;"> Escribir a un Correo Electrónico</label>
                     <div style="display: flex; gap: 8px; margin-top: 6px;">
                         <input class="form-input" type="email" id="dm-email-input" placeholder="amigo@correo.com">
                         <button type="button" id="btn-start-by-email" style="padding: 10px 16px; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; white-space: nowrap;">
@@ -962,7 +962,7 @@
             const themeToggle = document.getElementById('theme-toggle');
             const updateToggleIcon = () => {
                 const isLight = document.documentElement.classList.contains('light-theme');
-                themeToggle.textContent = isLight ? '' : '️';
+                themeToggle.textContent = isLight ? '' : '';
             };
             if (themeToggle) {
                 updateToggleIcon();
@@ -1074,7 +1074,7 @@
             if (rooms.length === 0) {
                 list.innerHTML = `
                     <div style="padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 13px;">
-                        No tienes salas de chat. ¡Comienza un chat directo haciendo clic en el icono [LOG] superior!
+                        No tienes salas de chat. ¡Comienza un chat directo haciendo clic en el icono  superior!
                     </div>
                 `;
                 return;
@@ -1894,7 +1894,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

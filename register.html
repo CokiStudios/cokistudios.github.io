@@ -191,7 +191,7 @@
     </style>
 </head>
 <body>
-    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema">️</button>
+    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
 
     <div class="auth-container">
         <div class="auth-header">
@@ -206,11 +206,11 @@
                 <button id="tab-register" class="tab-btn" data-i18n="logon_tab_signup">Crear cuenta</button>
             </div>
 
-            <!-- [SECURE] LOGIN -->
+            <!--  LOGIN -->
             <div id="panel-login" class="panel active">
                 <div class="social-btns">
                     <button id="btn-coki-passkey" type="button" class="btn-social btn-passkey" style="grid-column: span 2;">
-                        <span style="font-size: 18px;">[AUTH]</span>
+                        <span style="font-size: 18px;"></span>
                         <span data-i18n="auth_passkey">Iniciar sesión con Passkey / Master Key</span>
                     </button>
                     <button id="btn-coki-google" class="btn-social btn-google">
@@ -291,7 +291,7 @@
             </div>
         </div>
 
-        <!-- [AUTH] RECUPERAR CONTRASEÑA -->
+        <!--  RECUPERAR CONTRASEÑA -->
         <div class="auth-card hidden" id="panel-forgot">
             <div style="padding:32px;">
                 <h3 style="font-size:20px;font-weight:800;margin-bottom:8px;">Recuperar contraseña</h3>
@@ -354,24 +354,24 @@
                 }
                 window.location.href = redirect || '/dashboard.html';
             } else {
-                alert('[ERROR] ' + result.error);
+                alert(' ' + result.error);
                 btn.disabled = false; btn.textContent = 'Entrar a mi cuenta';
             }
         });
 
-        // [AUTH] PASSKEY & COKI MASTER KEY LOGIN (CUENTA UNIVERSAL)
+        //  PASSKEY & COKI MASTER KEY LOGIN (CUENTA UNIVERSAL)
         document.getElementById('btn-coki-passkey')?.addEventListener('click', async () => {
             const btn = document.getElementById('btn-coki-passkey');
             btn.disabled = true;
-            btn.innerHTML = '⏳ Verificando credenciales de cuenta...';
+            btn.innerHTML = ' Verificando credenciales de cuenta...';
 
             let res = await loginWithPasskey();
             
             // Si requiere Master Key porque es un nuevo dispositivo
             if (!res.success && res.needsMasterKey) {
-                const enteredKey = prompt('[AUTH] Ingresa tu CS Master Key Universal de Cuenta (Ej: CSK-XXXX-XXXX-XXXX):');
+                const enteredKey = prompt(' Ingresa tu CS Master Key Universal de Cuenta (Ej: CSK-XXXX-XXXX-XXXX):');
                 if (enteredKey) {
-                    btn.innerHTML = '⏳ Validando CS Master Key...';
+                    btn.innerHTML = ' Validando CS Master Key...';
                     res = await loginWithPasskey(enteredKey);
                 }
             }
@@ -384,19 +384,19 @@
                 }
                 window.location.href = redirect || '/dashboard.html';
             } else {
-                alert('[ERROR] ' + (res.error || 'No se pudo verificar la Passkey de cuenta.'));
+                alert(' ' + (res.error || 'No se pudo verificar la Passkey de cuenta.'));
                 btn.disabled = false;
-                btn.innerHTML = '<span style="font-size: 18px;">[AUTH]</span> Iniciar sesión con Passkey / Master Key';
+                btn.innerHTML = '<span style="font-size: 18px;"></span> Iniciar sesión con Passkey / Master Key';
             }
         });
 
         document.getElementById('form-register').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // ️ VALIDAR RECAPTCHA
+            //  VALIDAR RECAPTCHA
             const recaptchaResponse = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : null;
             if (!recaptchaResponse) {
-                alert('️ Por favor, completa la verificación "No soy un robot" de reCAPTCHA.');
+                alert(' Por favor, completa la verificación "No soy un robot" de reCAPTCHA.');
                 return;
             }
 
@@ -416,7 +416,7 @@
                 tabLogin.click(); 
             } 
             else { 
-                alert('[ERROR] ' + result.error); 
+                alert(' ' + result.error); 
                 if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
             }
             btn.disabled = false; btn.textContent = 'Crear CSID';
@@ -434,7 +434,7 @@
             const email = document.getElementById('forgot-email').value;
             const result = await resetCokiPassword(email);
             if (result.success) { alert('[OK] ' + result.message); document.getElementById('btn-back-login').click(); } 
-            else { alert('[ERROR] ' + result.error); }
+            else { alert(' ' + result.error); }
         });
 
         const init = async () => {
@@ -449,7 +449,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            themeToggle.textContent = isLight ? '' : '️';
+            themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

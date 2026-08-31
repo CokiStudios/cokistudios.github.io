@@ -242,8 +242,8 @@
                     <option value="fr"> FR</option>
                     <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
-                <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-cta">Descargar CEF Build [SYS]</a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+                <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-cta">Descargar CEF Build </a>
             </div>
         </div>
     </nav>
@@ -275,13 +275,13 @@
 
                 <div class="browser-actions">
                     <button id="opt-btn" class="nooted-toggle-btn" onclick="toggleOptimizationMode()" title="Optimizaciones Avanzadas de Rendimiento y Memoria">
-                        <span>[SYS]</span> Optimizaciones: OFF
+                        <span></span> Optimizaciones: OFF
                     </button>
                     <div class="shield-badge" title="Sentinel Shield Activo">
-                        <span>️</span> 14 Bloqueados
+                        <span></span> 14 Bloqueados
                     </div>
                     <div class="csid-indicator" title="CSID Sincronizado">
-                        <span>🪪</span> CSID Conectado
+                        <span></span> CSID Conectado
                     </div>
                 </div>
             </div>
@@ -295,19 +295,19 @@
     <!-- ── FEATURES GRID ── -->
     <section class="features-grid">
         <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(56,189,248,0.12);color:var(--accent);">[SYS]</div>
+            <div class="feature-icon" style="background:rgba(56,189,248,0.12);color:var(--accent);"></div>
             <h3 class="feature-title">Motor CEF Chromium Core</h3>
             <p class="feature-desc">Construido directamente sobre Chromium Embedded Framework (CEF C++), ofreciendo compatibilidad total con estándares web modernos y aceleración por GPU pura.</p>
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(16,185,129,0.12);color:var(--emerald);">️</div>
+            <div class="feature-icon" style="background:rgba(16,185,129,0.12);color:var(--emerald);"></div>
             <h3 class="feature-title">Escudo Sentinel Anti-Rastreadores</h3>
             <p class="feature-desc">Bloqueador nativo de scripts invasivos, cookies de terceros y malware a nivel de red antes de que se procesen en la CPU.</p>
         </div>
 
         <div class="feature-card" style="border-color:rgba(56, 189, 248, 0.4);">
-            <div class="feature-icon" style="background:rgba(56, 189, 248, 0.15);color:var(--accent);">️</div>
+            <div class="feature-icon" style="background:rgba(56, 189, 248, 0.15);color:var(--accent);"></div>
             <h3 class="feature-title">Optimizaciones Avanzadas del Navegador</h3>
             <p class="feature-desc">Diseñado para maximizar el rendimiento en cualquier equipo. Control dinámico de decodificación de video, gestión inteligente de VRAM Swap y fallback eficiente para evitar congelamientos.</p>
         </div>
@@ -315,7 +315,7 @@
 
     <!-- ── FOOTER ── -->
     <footer>
-        <p>© 2026 Coki Studios LLC — Shine Find Browser Engine (CEF Build v1.0). Todos los derechos reservados.</p>
+        <p> 2026 Coki Studios LLC — Shine Find Browser Engine (CEF Build v1.0). Todos los derechos reservados.</p>
     </footer>
 
     <script>
@@ -336,13 +336,13 @@
             const mockup = document.querySelector('.browser-mockup');
 
             if (optimizationActive) {
-                btn.innerHTML = '<span>[SYS]</span> Optimizaciones: ON';
+                btn.innerHTML = '<span></span> Optimizaciones: ON';
                 btn.classList.add('active');
                 mockup.style.borderColor = 'var(--accent)';
                 mockup.style.boxShadow = '0 25px 80px rgba(56, 189, 248, 0.3), 0 0 35px rgba(56, 189, 248, 0.4)';
-                alert('[SYS] OPTIMIZACIONES DEL NAVEGADOR ACTIVADAS:\n\n1. Desactivación inteligente de decodificación HW de video para prevenir congelamientos\n2. Modo de bajo consumo de GPU / Metal VSM Fallback\n3. Gestión dinámica de VRAM y reducción de consumo de memoria\n4. Composición optimizada de interfaz');
+                alert(' OPTIMIZACIONES DEL NAVEGADOR ACTIVADAS:\n\n1. Desactivación inteligente de decodificación HW de video para prevenir congelamientos\n2. Modo de bajo consumo de GPU / Metal VSM Fallback\n3. Gestión dinámica de VRAM y reducción de consumo de memoria\n4. Composición optimizada de interfaz');
             } else {
-                btn.innerHTML = '<span>[SYS]</span> Optimizaciones: OFF';
+                btn.innerHTML = '<span></span> Optimizaciones: OFF';
                 btn.classList.remove('active');
                 mockup.style.borderColor = 'var(--border)';
                 mockup.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-glow)';
@@ -352,7 +352,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

@@ -256,7 +256,7 @@
                     <option value="pt"> PT</option>
                 </select>
 
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
             </div>
         </div>
     </nav>
@@ -276,7 +276,7 @@
                 <span></span> Escanear QR de Estación
             </button>
             <button class="btn-action btn-secondary-eco" id="btn-open-myqr" data-i18n="btn_my_qr">
-                <span>️</span> Generar mi Código Eco
+                <span></span> Generar mi Código Eco
             </button>
         </div>
     </section>
@@ -384,7 +384,7 @@
 
             <div class="station-item">
                 <div class="station-info">
-                    <div class="station-icon">[SYS]</div>
+                    <div class="station-icon"></div>
                     <div>
                         <div class="station-name" data-i18n="station_cota_raee">Punto RAEE Electrónicos (Alcaldía de Cota)</div>
                         <div class="station-meta" data-i18n="station_cota_raee_meta">Reciclaje Seguro de Baterías, Cables y Hardware</div>
@@ -396,7 +396,7 @@
             <!--  CHÍA -->
             <div class="station-item">
                 <div class="station-info">
-                    <div class="station-icon">️</div>
+                    <div class="station-icon"></div>
                     <div>
                         <div class="station-name" data-i18n="station_chia_centro">Centro de Acopio y Reciclaje Chía Centro</div>
                         <div class="station-meta" data-i18n="station_chia_centro_meta">Av. Pradilla • Punto Masivo de Materiales Aprovechables</div>
@@ -430,7 +430,7 @@
 
             <div class="station-item">
                 <div class="station-info">
-                    <div class="station-icon">️</div>
+                    <div class="station-icon"></div>
                     <div>
                         <div class="station-name" data-i18n="station_bogota_suba">Punto Limpio Portal Suba / Corpas (Bogotá)</div>
                         <div class="station-meta" data-i18n="station_bogota_suba_meta">Conexión Suba - Chía / Cota • Canje de Residuos</div>
@@ -455,7 +455,7 @@
 
     <!-- ── FOOTER ── -->
     <footer>
-        <p>© 2026 Coki Studios LLC — Forkar Eco Hub Program. Todos los derechos reservados.</p>
+        <p> 2026 Coki Studios LLC — Forkar Eco Hub Program. Todos los derechos reservados.</p>
     </footer>
 
     <!-- ── SCRIPT I18N & THEME ── -->
@@ -496,7 +496,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

@@ -341,7 +341,7 @@
         </div>
 
         <a href="https://mail.zoho.com/zm/#mail/compose" target="_blank" class="btn-compose">
-            <span>️</span> Redactar Correo
+            <span></span> Redactar Correo
         </a>
 
         <nav class="folder-list">
@@ -349,7 +349,7 @@
                 <span class="folder-icon"></span> Bandeja de Entrada
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/starred" target="_blank" class="folder-item">
-                <span class="folder-icon">[STAR]</span> Destacados
+                <span class="folder-icon"></span> Destacados
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/sent" target="_blank" class="folder-item">
                 <span class="folder-icon"></span> Enviados
@@ -358,7 +358,7 @@
                 <span class="folder-icon"></span> Borradores
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/trash" target="_blank" class="folder-item">
-                <span class="folder-icon">️</span> Papelera
+                <span class="folder-icon"></span> Papelera
             </a>
         </nav>
 
@@ -370,7 +370,7 @@
             <div class="account-email">ceosupport@cokistudios.com</div>
             <div class="footer-actions">
                 <a href="dashboard" class="footer-link">← Dashboard</a>
-                <a href="https://accounts.zoho.com" target="_blank" class="footer-link">Zoho Account ↗</a>
+                <a href="https://accounts.zoho.com" target="_blank" class="footer-link">Zoho Account </a>
             </div>
         </div>
     </aside>
@@ -390,8 +390,8 @@
                     <option value="fr"> FR</option>
                     <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
-                <a href="https://mail.zoho.com/zm/" target="_blank" style="font-size:12px; font-weight:700; color:var(--accent); text-decoration:none; padding:5px 12px; border-radius:6px; background:rgba(99,102,241,0.1); border:1px solid var(--border);">Abrir en pestaña nueva ↗</a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+                <a href="https://mail.zoho.com/zm/" target="_blank" style="font-size:12px; font-weight:700; color:var(--accent); text-decoration:none; padding:5px 12px; border-radius:6px; background:rgba(99,102,241,0.1); border:1px solid var(--border);">Abrir en pestaña nueva </a>
             </div>
         </header>
 
@@ -399,7 +399,7 @@
             <!-- Portal Card Directo Seguro -->
             <div class="fallback-overlay" id="access-container">
                 <div class="portal-card" id="authorized-card" style="display:none;">
-                    <div class="portal-icon">[MAIL]</div>
+                    <div class="portal-icon"></div>
                     <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 8px;">Acceso a Zoho Mail CS</h1>
                     <p style="font-size: 13.5px; color: var(--text-sub); line-height: 1.6;">
                         Tu buzón corporativo de <strong>Coki Studios LLC</strong> está configurado y activo en la nube de Zoho Mail.
@@ -466,7 +466,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

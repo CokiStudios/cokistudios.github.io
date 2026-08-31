@@ -581,7 +581,7 @@
             const audit = runNeuralSecurityAudit(name, website, redirectUris);
 
             if (!audit.approved) {
-                badge.textContent = `[ERROR] Riesgo Detectado (${audit.confidence}%)`;
+                badge.textContent = ` Riesgo Detectado (${audit.confidence}%)`;
                 badge.className = 'app-badge badge-inactive';
                 text.textContent = `La Red Neuronal Sentinel bloqueó el registro: Tu sitio web o Redirect URIs deben usar HTTPS seguro y contar con un dominio calificado. (Confianza de Seguridad: ${audit.confidence}%)`;
                 showToast('Bloqueado por el Sistema Neuronal de Seguridad', 'error');
