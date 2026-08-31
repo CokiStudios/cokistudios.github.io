@@ -154,6 +154,25 @@ class LoopingCLI {
             return;
         }
 
+        // 3. UI System Profile & Target Device Configuration (CS Design Guide p.5, 10, 14)
+        // Profiles: hi!UI (Gama A), stock (Nomad), XUI (Gama X), FlUI (i / Fold)
+        if (line.startsWith('set ui_profile to') || line.startsWith('set ui_profile as') || line.startsWith('set ui to')) {
+            const match = line.match(/set (?:ui_profile|ui) (?:to|as) ["'](.*?)["']/);
+            const profile = match ? match[1].toUpperCase() : 'STOCK';
+            console.log(`${CYAN}[CS DESIGN UI]${RESET} UI Profile Active: ${BOLD}${profile}${RESET} (Hardware Spec Loaded)`);
+            return;
+        }
+
+        // 4. Bubbly Dot Component (CS Own Dynamic Island - Design Guide p.17)
+        if (line.startsWith('spawn bubbly_dot') || line.startsWith('draw bubbly_dot')) {
+            const textMatch = line.match(/text ["'](.*?)["']/);
+            const stateMatch = line.match(/state ["'](.*?)["']/);
+            const text = textMatch ? textMatch[1] : 'Audio Active';
+            const state = stateMatch ? stateMatch[1].toUpperCase() : 'MUSIC';
+            console.log(`${GREEN}[BUBBLY DOT]${RESET} Active Notch [${state}]: "${text}"`);
+            return;
+        }
+
         // 3. Variable assignments
         if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
             const delimiter = line.includes(' to ') ? ' to ' : ' as ';

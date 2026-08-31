@@ -1,36 +1,44 @@
 # ═══════════════════════════════════════════════════════════════
-# [HOLO LOOPING OoS] System Dashboard & Game Launcher
-# Proprietary Console UI for Shine Loop (Holo Entertainment)
+# [HOLO LOOPING OoS] System Dashboard v2.0
+# Built using CS Design Guide Architecture (Pages 4, 5, 9, 10, 17)
+# Hardware Target: Shine Loop Console & Shine Devices
 # ═══════════════════════════════════════════════════════════════
 
 import loop.ui as ui
 import loop.engine as game
 
-define app "ShineLoopDashboard" version 1.0:
+define app "ShineLoopDashboard" version 2.0:
     create window with title "Shine Loop Console -- Holo Looping OoS" and size (720, 480)
-    set theme to "dark_neon"
     
-    set system_name to "Holo Looping OoS 1.0 (Linux Core)"
-    set device_model to "Shine Loop Handheld / Console"
-    set memory_status to "1.2 GB / 4.0 GB Available"
-    set battery_status to "98% [AC Connected]"
+    # ── UI System Profile & Theme (CS Design Guide p.4, 5, 10) ──
+    set ui_profile to "xui"
+    set theme to "frosted_aqua_a17"
+    
+    set system_kernel to "Holo Looping OoS v1.0 (Linux Gaming Core)"
+    set device_target to "Shine Loop Handheld / Console"
     set active_user to "Coki Studios Developer"
     
-    print "[BOOT] Initializing Holo Looping OoS Gaming System..."
-    print "[SYSTEM] Platform:", device_model
-    print "User:", active_user
+    # ── Bubbly Dot Active Status (CS Design Guide p.17) ──
+    spawn bubbly_dot with text "Holo Audio: Chiptune Wave Active" and state "music"
     
-    # ── Console Top Status Bar ──
-    draw card at (30, 25) with size (660, 65) and title "COKI STUDIOS // SHINE LOOP CONSOLE" and text "Kernel: Holo Looping OoS 1.0 | Engine: Looping Compile v2.0 | 60 FPS"
+    print "[BOOT] Initializing Holo Looping OoS Gaming System..."
+    print "[PROFILE] UI System Profile: XUI (Vulkan 240Hz Ready)"
+    print "[USER] Active Profile:", active_user
+    
+    # ── Top Status Header (Frosted Glass Aqua A17) ──
+    draw card at (30, 60) with size (660, 65) and title "COKI STUDIOS // SHINE LOOP CONSOLE" and text "Kernel: Holo Looping OoS 1.0 | Engine: Looping Compile v2.0 | UI: XUI Glass"
 
-    # ── Main Game Titles (Library Cards) ──
-    draw card at (30, 110) with size (315, 150) and title "[GAME 01] Holo Arcade 2D" and text "Genre: Platformer Action\nStatus: Ready to Launch\nFPS: 60 Low-Latency"
-    draw button at (50, 205) with text "LAUNCH GAME" and action "launch_arcade"
+    # ── Game Library Carousel (CS Design Guide p.9) ──
+    draw card at (30, 140) with size (315, 155) and title "[GAME 01] Holo Arcade 2D" and text "Genre: Platformer Action\nGamepad: Shine Poortloop (P1/P2/Z1/Z2)\nStatus: 60 FPS Low-Latency"
+    draw button at (50, 240) with text "LAUNCH GAME" and action "launch_arcade"
 
-    draw card at (375, 110) with size (315, 150) and title "[GAME 02] Forkar Arena" and text "Genre: Cyberpunk Multiplayer\nStatus: Network Connected\nServer: Coki Cloud"
-    draw button at (395, 205) with text "ENTER ARENA" and action "launch_forkar"
+    draw card at (375, 140) with size (315, 155) and title "[GAME 02] Forkar Arena" and text "Genre: Cyberpunk Multiplayer\nNetwork: Coki Cloud Sync\nPhysics: 60Hz OoS Subsystem"
+    draw button at (395, 240) with text "ENTER ARENA" and action "launch_forkar"
 
-    # ── System Telemetry HUD ──
-    draw card at (30, 280) with size (660, 130) and title "SYSTEM TELEMETRY & HARDWARE" and text "RAM: 1.2GB Free | GPU: Vulkan Pipeline | Storage: 64GB NVMe\nGamepad: Shine Loop Controller (Synced via DirectInput/HID)\nCompiler: Looping Native Engine 2.0"
+    # ── System Telemetry & Wearable Bridge (CS Design Guide p.11, 17) ──
+    draw card at (30, 310) with size (660, 105) and title "HARDWARE SPECS & PERIPHERALS" and text "RAM: 1.2GB Free | GPU: Vulkan Pipeline | Storage: 64GB NVMe\nPeripherals: Shine Clocked Connected | Bubbly Dot: Active"
+
+    # ── Hardware Sound Synthesizer Chime ──
+    play tone at 587 Hz for 100 ms
 
     print "[READY] Shine Loop Dashboard fully operational."

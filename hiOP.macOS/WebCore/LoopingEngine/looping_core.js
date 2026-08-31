@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// [L] LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
+//  LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
 // Next-Gen Game Programming Language for "Shine Loop" & "Holo Looping OoS"
 // Developed by Holo Entertainment (Sub-division of Coki Studios)
 // ═══════════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ export class LoopingInterpreter {
     // ── AST & Lexer Compiler ──
     execute(code) {
         this.reset();
-        this.log("[SYS] Compiling Looping (.loop) Source Code...", "system");
+        this.log(" Compiling Looping (.loop) Source Code...", "system");
         
         const lines = code.split('\n');
         
@@ -137,7 +137,7 @@ export class LoopingInterpreter {
             try {
                 this.parseLine(line);
             } catch (err) {
-                this.log(`[ERROR] [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
+                this.log(` [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
                 return false;
             }
         }
@@ -150,7 +150,7 @@ export class LoopingInterpreter {
     parseLine(line) {
         // 1. Module Imports
         if (line.startsWith('import ')) {
-            this.log(`[MODULE] Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
+            this.log(` Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
             return;
         }
 
@@ -166,14 +166,40 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 3. Theme configuration
+        // 3. UI System Profile & Target Device Configuration (CS Design Guide p.5, 10, 14)
+        // Profiles: hi!UI (Gama A), stock (Nomad), XUI (Gama X), FlUI (i / Fold)
+        if (line.startsWith('set ui_profile to') || line.startsWith('set ui_profile as') || line.startsWith('set ui to')) {
+            const match = line.match(/set (?:ui_profile|ui) (?:to|as) ["'](.*?)["']/);
+            if (match) {
+                this.uiProfile = match[1].toLowerCase();
+                this.log(`[CS DESIGN UI] UI Profile Set: "${this.uiProfile.toUpperCase()}" (Theme Specs Loaded)`, 'info');
+            }
+            return;
+        }
+
+        // 4. Theme configuration & Frosted Glass Acrílico Aqua A17 (CS Design Guide p.4)
         if (line.startsWith('set theme to') || line.startsWith('set theme as')) {
             const match = line.match(/set theme (?:to|as) ["'](.*?)["']/);
             if (match) this.theme = match[1];
             return;
         }
 
-        // 4. Variables: set <var> to <value> OR set <var> as <value>
+        // 5. Bubbly Dot Component (CS Own Dynamic Island - Design Guide p.17)
+        // Syntax: spawn bubbly_dot with text "..." and state "music|call|record|connect"
+        if (line.startsWith('spawn bubbly_dot') || line.startsWith('draw bubbly_dot')) {
+            const textMatch = line.match(/text ["'](.*?)["']/);
+            const stateMatch = line.match(/state ["'](.*?)["']/);
+            this.bubblyDot = {
+                active: true,
+                text: textMatch ? textMatch[1] : 'Shine Audio Active',
+                state: stateMatch ? stateMatch[1] : 'music',
+                pulse: 0
+            };
+            this.log(`[BUBBLY DOT] Active on Top Notch: [${this.bubblyDot.state.toUpperCase()}] "${this.bubblyDot.text}"`, 'info');
+            return;
+        }
+
+        // 6. Variables: set <var> to <value> OR set <var> as <value>
         if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
             const delimiter = line.includes(' to ') ? ' to ' : ' as ';
             const parts = line.replace('set ', '').split(delimiter);
@@ -200,12 +226,59 @@ export class LoopingInterpreter {
                 this.canvas.height = parseInt(sizeMatch[2]);
             }
             if (titleMatch) {
-                this.log(`[DISPLAY] Shine Loop Display Mode: "${titleMatch[1]}" (${this.canvas.width}x${this.canvas.height})`, 'info');
+                this.log(` Shine Loop Display Mode: "${titleMatch[1]}" (${this.canvas.width}x${this.canvas.height})`, 'info');
             }
             return;
         }
 
-        // 7. Draw Card UI: draw card at (x, y) with size (w, h) and title "..." and text "..."
+        // 7. System Calls & Kernel Control: syscall <name> with args "..."
+        if (line.startsWith('syscall')) {
+            const match = line.match(/syscall\s+([A-Za-z0-9_]+)(?:\s+with\s+args\s+["'](.*?)["'])?/);
+            if (match) {
+                const callName = match[1];
+                const args = match[2] || '';
+                this.log(`[KERNEL SYSCALL] 0x${Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase()} :: ${callName}(${args}) -> OK`, 'system');
+            }
+            return;
+        }
+
+        // 8. Process Spawner / Multitasking: spawn process "name" with priority <int>
+        if (line.startsWith('spawn process')) {
+            const nameMatch = line.match(/spawn process ["'](.*?)["']/);
+            const prioMatch = line.match(/priority\s+(\d+)/);
+            const procName = nameMatch ? nameMatch[1] : 'task_daemon';
+            const pid = Math.floor(1000 + Math.random() * 9000);
+            this.log(`[PROCESS SCHEDULER] PID ${pid} [${procName}] Started (Priority: ${prioMatch ? prioMatch[1] : 10})`, 'info');
+            return;
+        }
+
+        // 9. Hardware Sound Generator: play tone at <freq> Hz for <duration> ms
+        if (line.startsWith('play tone')) {
+            const freqMatch = line.match(/play tone at\s+(\d+)\s*Hz/i);
+            const durMatch = line.match(/for\s+(\d+)\s*ms/i);
+            const freq = freqMatch ? parseInt(freqMatch[1]) : 440;
+            const dur = durMatch ? parseInt(durMatch[1]) : 100;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (dur / 1000));
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + (dur / 1000));
+                }
+            } catch (e) {}
+            this.log(`[AUDIO HARDWARE] Sound Synthesizer: ${freq}Hz (${dur}ms)`, 'system');
+            return;
+        }
+
+        // 10. Draw Card UI: draw card at (x, y) with size (w, h) and title "..." and text "..."
         if (line.startsWith('draw card at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
@@ -224,7 +297,7 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 8. Draw Button UI: draw button at (x, y) with text "..." and action "..."
+        // 11. Draw Button UI: draw button at (x, y) with text "..." and action "..."
         if (line.startsWith('draw button at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const textMatch = line.match(/text ["'](.*?)["']/);
@@ -268,7 +341,7 @@ export class LoopingInterpreter {
                 glowPulse: 0
             };
             this.gameEntities.push(sprite);
-            this.log(`[SPRITE] Entity Spawned on Shine Loop Stage: "${sprite.name}"`, 'info');
+            this.log(` Entity Spawned on Shine Loop Stage: "${sprite.name}"`, 'info');
             return;
         }
 
@@ -287,7 +360,7 @@ export class LoopingInterpreter {
                 color: colorMatch ? colorMatch[1] : '#6366f1'
             };
             this.gameEntities.push(platform);
-            this.log(`[PLATFORM] Platform Placed at (${platform.x}, ${platform.y})`, 'info');
+            this.log(` Platform Placed at (${platform.x}, ${platform.y})`, 'info');
             return;
         }
 
@@ -306,7 +379,7 @@ export class LoopingInterpreter {
                 floatOffset: Math.random() * 10
             };
             this.gameEntities.push(coin);
-            this.log(`[STAR] Collectible Placed at (${coin.x}, ${coin.y}) [${coin.points} pts]`, 'info');
+            this.log(` Collectible Placed at (${coin.x}, ${coin.y}) [${coin.points} pts]`, 'info');
             return;
         }
 
@@ -412,7 +485,7 @@ export class LoopingInterpreter {
                 if (item.type === 'button') {
                     if (data.x >= item.x && data.x <= item.x + item.w &&
                         data.y >= item.y && data.y <= item.y + item.h) {
-                        this.log(`[GAME] Gamepad Trigger: [${item.text}] Activated!`, 'success');
+                        this.log(` Gamepad Trigger: [${item.text}] Activated!`, 'success');
                         this.spawnParticleBurst(data.x, data.y, '#38bdf8', 25);
                     }
                 }
@@ -493,7 +566,7 @@ export class LoopingInterpreter {
                             other.collected = true;
                             this.score += other.points;
                             this.spawnParticleBurst(cx, cy, '#fbbf24', 20);
-                            this.log(`[STAR] Coin Collected! Score: +${other.points} (Total: ${this.score})`, 'success');
+                            this.log(` Coin Collected! Score: +${other.points} (Total: ${this.score})`, 'success');
                         }
                     }
                 }
@@ -567,13 +640,66 @@ export class LoopingInterpreter {
         ctx.beginPath(); ctx.moveTo(0, h - 44); ctx.lineTo(w, h - 44); ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // 5. Render UI HUD Cards & Buttons
+        // 5. Render Bubbly Dot (CS Own Dynamic Island - Design Guide p.17)
+        if (this.bubblyDot && this.bubblyDot.active) {
+            this.bubblyDot.pulse += 0.05;
+            const dotW = 210;
+            const dotH = 34;
+            const dotX = (w - dotW) / 2;
+            const dotY = 12;
+
+            // Pill Notch Container (Pure Black with Neon Border)
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+            ctx.lineWidth = 1.5;
+            this.roundRect(ctx, dotX, dotY, dotW, dotH, 17, true, true);
+
+            // Dynamic Equalizer Icon / Indicator
+            if (this.bubblyDot.state === 'music') {
+                ctx.fillStyle = '#38bdf8';
+                for (let b = 0; b < 3; b++) {
+                    const barH = 8 + Math.sin(this.bubblyDot.pulse + b * 1.5) * 6;
+                    ctx.fillRect(dotX + 16 + (b * 6), dotY + (dotH - barH) / 2, 3, barH);
+                }
+            } else {
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(dotX + 22, dotY + dotH / 2, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Notification text
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 11px Outfit, sans-serif';
+            ctx.fillText(this.bubblyDot.text, dotX + 42, dotY + 21);
+        }
+
+        // 6. Render UI HUD Cards & Buttons (Frosted Glass / Acrílico Aqua A17 - Design Guide p.4)
         for (let elem of this.renderQueue) {
             if (elem.type === 'card') {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
-                ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
-                ctx.lineWidth = 1.5;
-                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 14, true, true);
+                // Frosted Glass Acrílico Aqua Gradient
+                const cardGrad = ctx.createLinearGradient(elem.x, elem.y, elem.x + elem.w, elem.y + elem.h);
+                if (this.uiProfile === 'flui') {
+                    // FlUI (Fold / Flex) Ultra Violet Theme
+                    cardGrad.addColorStop(0, 'rgba(30, 27, 75, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(15, 23, 42, 0.88)');
+                } else if (this.uiProfile === 'xui') {
+                    // XUI (Gama X) Cyber Neon Cyan Theme
+                    cardGrad.addColorStop(0, 'rgba(8, 47, 73, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(15, 23, 42, 0.88)');
+                } else {
+                    // Default / hi!UI Acrílico Aqua Glass
+                    cardGrad.addColorStop(0, 'rgba(15, 23, 42, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(30, 41, 59, 0.85)');
+                }
+
+                ctx.fillStyle = cardGrad;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+                ctx.lineWidth = 1.2;
+                ctx.shadowColor = 'rgba(56, 189, 248, 0.12)';
+                ctx.shadowBlur = 16;
+                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 16, true, true);
+                ctx.shadowBlur = 0;
 
                 ctx.fillStyle = '#38bdf8';
                 ctx.font = 'bold 15px Outfit, sans-serif';

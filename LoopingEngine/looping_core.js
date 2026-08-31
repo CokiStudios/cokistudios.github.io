@@ -166,14 +166,40 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 3. Theme configuration
+        // 3. UI System Profile & Target Device Configuration (CS Design Guide p.5, 10, 14)
+        // Profiles: hi!UI (Gama A), stock (Nomad), XUI (Gama X), FlUI (i / Fold)
+        if (line.startsWith('set ui_profile to') || line.startsWith('set ui_profile as') || line.startsWith('set ui to')) {
+            const match = line.match(/set (?:ui_profile|ui) (?:to|as) ["'](.*?)["']/);
+            if (match) {
+                this.uiProfile = match[1].toLowerCase();
+                this.log(`[CS DESIGN UI] UI Profile Set: "${this.uiProfile.toUpperCase()}" (Theme Specs Loaded)`, 'info');
+            }
+            return;
+        }
+
+        // 4. Theme configuration & Frosted Glass Acrílico Aqua A17 (CS Design Guide p.4)
         if (line.startsWith('set theme to') || line.startsWith('set theme as')) {
             const match = line.match(/set theme (?:to|as) ["'](.*?)["']/);
             if (match) this.theme = match[1];
             return;
         }
 
-        // 4. Variables: set <var> to <value> OR set <var> as <value>
+        // 5. Bubbly Dot Component (CS Own Dynamic Island - Design Guide p.17)
+        // Syntax: spawn bubbly_dot with text "..." and state "music|call|record|connect"
+        if (line.startsWith('spawn bubbly_dot') || line.startsWith('draw bubbly_dot')) {
+            const textMatch = line.match(/text ["'](.*?)["']/);
+            const stateMatch = line.match(/state ["'](.*?)["']/);
+            this.bubblyDot = {
+                active: true,
+                text: textMatch ? textMatch[1] : 'Shine Audio Active',
+                state: stateMatch ? stateMatch[1] : 'music',
+                pulse: 0
+            };
+            this.log(`[BUBBLY DOT] Active on Top Notch: [${this.bubblyDot.state.toUpperCase()}] "${this.bubblyDot.text}"`, 'info');
+            return;
+        }
+
+        // 6. Variables: set <var> to <value> OR set <var> as <value>
         if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
             const delimiter = line.includes(' to ') ? ' to ' : ' as ';
             const parts = line.replace('set ', '').split(delimiter);
@@ -614,13 +640,66 @@ export class LoopingInterpreter {
         ctx.beginPath(); ctx.moveTo(0, h - 44); ctx.lineTo(w, h - 44); ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // 5. Render UI HUD Cards & Buttons
+        // 5. Render Bubbly Dot (CS Own Dynamic Island - Design Guide p.17)
+        if (this.bubblyDot && this.bubblyDot.active) {
+            this.bubblyDot.pulse += 0.05;
+            const dotW = 210;
+            const dotH = 34;
+            const dotX = (w - dotW) / 2;
+            const dotY = 12;
+
+            // Pill Notch Container (Pure Black with Neon Border)
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+            ctx.lineWidth = 1.5;
+            this.roundRect(ctx, dotX, dotY, dotW, dotH, 17, true, true);
+
+            // Dynamic Equalizer Icon / Indicator
+            if (this.bubblyDot.state === 'music') {
+                ctx.fillStyle = '#38bdf8';
+                for (let b = 0; b < 3; b++) {
+                    const barH = 8 + Math.sin(this.bubblyDot.pulse + b * 1.5) * 6;
+                    ctx.fillRect(dotX + 16 + (b * 6), dotY + (dotH - barH) / 2, 3, barH);
+                }
+            } else {
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(dotX + 22, dotY + dotH / 2, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Notification text
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 11px Outfit, sans-serif';
+            ctx.fillText(this.bubblyDot.text, dotX + 42, dotY + 21);
+        }
+
+        // 6. Render UI HUD Cards & Buttons (Frosted Glass / Acrílico Aqua A17 - Design Guide p.4)
         for (let elem of this.renderQueue) {
             if (elem.type === 'card') {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
-                ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
-                ctx.lineWidth = 1.5;
-                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 14, true, true);
+                // Frosted Glass Acrílico Aqua Gradient
+                const cardGrad = ctx.createLinearGradient(elem.x, elem.y, elem.x + elem.w, elem.y + elem.h);
+                if (this.uiProfile === 'flui') {
+                    // FlUI (Fold / Flex) Ultra Violet Theme
+                    cardGrad.addColorStop(0, 'rgba(30, 27, 75, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(15, 23, 42, 0.88)');
+                } else if (this.uiProfile === 'xui') {
+                    // XUI (Gama X) Cyber Neon Cyan Theme
+                    cardGrad.addColorStop(0, 'rgba(8, 47, 73, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(15, 23, 42, 0.88)');
+                } else {
+                    // Default / hi!UI Acrílico Aqua Glass
+                    cardGrad.addColorStop(0, 'rgba(15, 23, 42, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(30, 41, 59, 0.85)');
+                }
+
+                ctx.fillStyle = cardGrad;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+                ctx.lineWidth = 1.2;
+                ctx.shadowColor = 'rgba(56, 189, 248, 0.12)';
+                ctx.shadowBlur = 16;
+                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 16, true, true);
+                ctx.shadowBlur = 0;
 
                 ctx.fillStyle = '#38bdf8';
                 ctx.font = 'bold 15px Outfit, sans-serif';
