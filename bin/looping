@@ -302,6 +302,68 @@ class LoopingCLI {
         console.log(`${YELLOW}[TARGET] Ready for Holo Looping OoS & Shine Loop Console${RESET}\n`);
     }
 
+    compileToApk(filePath, outputApkPath) {
+        if (!fs.existsSync(filePath)) {
+            console.error(`${RED}[ERROR] Source file not found: ${filePath}${RESET}`);
+            process.exit(1);
+        }
+
+        this.printBanner();
+        console.log(`${CYAN}[APK BUILD] Compiling .loop to Native Android Application Package (APK)...${RESET}`);
+        
+        const sourceCode = fs.readFileSync(filePath, 'utf8');
+        const appName = this.appName || path.basename(filePath, '.loop');
+        const targetApk = outputApkPath || `${appName}.apk`;
+        
+        const androidAssetsDir = path.join(process.cwd(), 'Forkar.Android/app/src/main/assets');
+        if (!fs.existsSync(androidAssetsDir)) {
+            fs.mkdirSync(androidAssetsDir, { recursive: true });
+        }
+
+        // Package game HTML + source into Android Assets
+        const gameHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>${appName}</title>
+    <style>
+        body { margin: 0; background: #06090f; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; touch-action: none; }
+        canvas { width: 100vw; height: 100vh; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="720" height="480"></canvas>
+    <script type="module">
+        import { LoopingInterpreter } from 'https://cokistudios.com/LoopingEngine/looping_core.js?v=2.0.4';
+        const canvas = document.getElementById('gameCanvas');
+        const runtime = new LoopingInterpreter(canvas, console.log);
+        runtime.execute(${JSON.stringify(sourceCode)});
+    </script>
+</body>
+</html>`;
+
+        fs.writeFileSync(path.join(androidAssetsDir, 'loop_game.html'), gameHtml, 'utf8');
+        console.log(`${GREEN}[PACKAGER] Injected .loop engine into Android Host Assets${RESET}`);
+        console.log(`${CYAN}[BUILDING] Executing Gradle Android APK Packager...${RESET}`);
+
+        import('child_process').then(({ exec }) => {
+            exec('./gradlew assembleDebug', { cwd: path.join(process.cwd(), 'Forkar.Android') }, (err, stdout, stderr) => {
+                const builtApkPath = path.join(process.cwd(), 'Forkar.Android/app/build/outputs/apk/debug/app-debug.apk');
+                if (fs.existsSync(builtApkPath)) {
+                    fs.copyFileSync(builtApkPath, path.join(process.cwd(), targetApk));
+                    console.log(`\n${GREEN}${BOLD}[SUCCESS] Android APK Generated Successfully!${RESET}`);
+                    console.log(`${YELLOW}Output APK:${RESET} ${BOLD}${path.join(process.cwd(), targetApk)}${RESET}`);
+                    console.log(`${PURPLE}Target Device: Any Android Phone / Shine Phone (A, Nomad, 1A, Fold)${RESET}\n`);
+                } else {
+                    console.log(`\n${GREEN}${BOLD}[SUCCESS] Asset Packaged for Android Host!${RESET}`);
+                    console.log(`${CYAN}Android Assets Output:${RESET} ${path.join(androidAssetsDir, 'loop_game.html')}`);
+                    console.log(`${YELLOW}Run './Forkar.Android/gradlew assembleDebug' to produce the standalone .apk${RESET}\n`);
+                }
+            });
+        });
+    }
+
     launchGUI(filePath) {
         if (!fs.existsSync(filePath)) {
             console.error(`${RED}[ERROR] Source file not found: ${filePath}${RESET}`);
@@ -341,6 +403,7 @@ if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log(`${BOLD}Usage:${RESET}`);
     console.log(`  looping <file.loop>               Run .loop script directly in terminal`);
     console.log(`  looping --gui <file.loop>         Launch native desktop window (GUI / Canvas)`);
+    console.log(`  looping --apk <file.loop> [-o]    Package .loop game directly into Android APK`);
     console.log(`  looping run <file.loop>           Execute with Holo Looping Runtime`);
     console.log(`  looping build <file.loop> [-o]    Compile to Standalone Executable Game`);
     console.log(`  looping --version                 Display Looping version info\n`);
@@ -352,17 +415,27 @@ if (args.includes('--version') || args.includes('-v')) {
     process.exit(0);
 }
 
-if (args.includes('--gui') || args.includes('-g')) {
+if (args.includes('--apk')) {
+    const file = args.find(a => a.endsWith('.loop')) || args[1];
+    let output = null;
+    const outIdx = args.indexOf('-o');
+    if (outIdx !== -1 && args[outIdx + 1]) output = args[outIdx + 1];
+    cli.compileToApk(file, output);
+} else if (args.includes('--gui') || args.includes('-g')) {
     const file = args.find(a => a.endsWith('.loop')) || args[1];
     cli.launchGUI(file);
 } else {
     const command = args[0];
     if (command === 'build' || command === 'compile') {
         const file = args[1];
-        let output = null;
-        const outIdx = args.indexOf('-o');
-        if (outIdx !== -1 && args[outIdx + 1]) output = args[outIdx + 1];
-        cli.compileToStandalone(file, output);
+        if (args.includes('--apk')) {
+            cli.compileToApk(file);
+        } else {
+            let output = null;
+            const outIdx = args.indexOf('-o');
+            if (outIdx !== -1 && args[outIdx + 1]) output = args[outIdx + 1];
+            cli.compileToStandalone(file, output);
+        }
     } else if (command === 'run') {
         cli.runFile(args[1]);
     } else {
