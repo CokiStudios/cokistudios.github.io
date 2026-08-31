@@ -1,0 +1,48 @@
+# ═══════════════════════════════════════════════════════════════
+# [HOLO ADVENTURE] Demo de Conditionals, Inputs & Python Math
+# Built in Looping Engine v2.0.4 for Shine Loop Console
+# ═══════════════════════════════════════════════════════════════
+
+import loop.engine as engine
+use python "math"
+
+define app "HoloMathDemo" version 2.0:
+    create window with title "Holo Looping -- Math & Input System" and size (800, 520)
+    set theme to "frosted_aqua_a17"
+    set ui_profile to "xui"
+    
+    # ── Variables & Python Math ──
+    set hero_name to "Angel"
+    set base_power to 10
+    set bonus to math.pow(2, 4)
+    set total_power to base_power + bonus
+    set distance to math.sqrt(144)
+    
+    print "[MATH] Base Power:", base_power
+    print "[MATH] Math.pow(2, 4):", bonus
+    print "[MATH] Total Power Calculated:", total_power
+    print "[MATH] Distance Calculated:", distance
+    
+    # ── Header con Frosted Glass ──
+    draw card at (20, 20) with size (760, 60) and title "LOOPING ENGINE // PYTHON MATH & CONDITIONALS" and text "Engine: Looping v2.0.4 | Status: Verbose Pipeline Active | Hero: Angel"
+
+    # ── Input Interactivo del Usuario ──
+    draw card at (20, 95) with size (360, 240) and title "CAMPO DE ENTRADA (INPUT)" and text "Escribe tu comando o nombre de héroe:\nEl motor almacena en la variable 'player_input'."
+    draw input at (40, 210) with size (320, 40) and placeholder "Escribe un comando..." and var "player_input"
+    draw button at (40, 270) with text "ENVIAR COMANDO" and action "submit_cmd"
+
+    # ── Panel de Lógica Condicional ──
+    draw card at (400, 95) with size (380, 240) and title "EVALUACIÓN DE CONDICIONALES" and text "Condición: if total_power >= 20\nResultado: El héroe está en Modo Furia (Supercharged).\nDistance check: sqrt(144) = 12 km"
+    
+    # ── Condicionales al estilo Python ──
+    if total_power >= 20 do print "[CONDITION TRUE] Hero is supercharged with power:", total_power
+    if distance == 12 do print "[CONDITION TRUE] Exact destination reached: 12 km"
+
+    # ── Spawns de Videojuego (Plataforma y Jugador) ──
+    spawn platform at (420, 310) with size (340, 16) and color "#38bdf8"
+    spawn sprite "Hero" at (500, 240) with color "#6366f1" and size (34, 44)
+    
+    # ── Hardware Tone ──
+    play tone at 587 Hz for 100 ms
+    
+    print "[READY] Demo de Inputs y Matemáticas en ejecución."

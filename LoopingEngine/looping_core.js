@@ -238,7 +238,42 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 6. Variables: set <var> to <value> OR set <var> as <value>
+        // 6. Conditional Logic (Python-style: if <cond> do <action> OR if <cond>:)
+        if (line.startsWith('if ')) {
+            const conditionMatch = line.match(/^if\s+(.*?)\s+(?:then|do)\s+(.*)$/i);
+            if (conditionMatch) {
+                const condition = conditionMatch[1];
+                const action = conditionMatch[2];
+                if (this.evaluateCondition(condition)) {
+                    this.log(`[IF TRUE] Executing: ${action}`, 'system');
+                    this.parseLine(action);
+                }
+                return;
+            }
+        }
+
+        // 7. Input Field UI Component: draw input at (x, y) with size (w, h) and placeholder "..." and var "..."
+        if (line.startsWith('draw input at')) {
+            const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
+            const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
+            const placeMatch = line.match(/placeholder ["'](.*?)["']/);
+            const varMatch = line.match(/var ["'](.*?)["']/);
+
+            this.renderQueue.push({
+                type: 'input',
+                x: posMatch ? parseInt(posMatch[1]) : 50,
+                y: posMatch ? parseInt(posMatch[2]) : 200,
+                w: sizeMatch ? parseInt(sizeMatch[1]) : 260,
+                h: sizeMatch ? parseInt(sizeMatch[2]) : 40,
+                placeholder: placeMatch ? placeMatch[1] : 'Type here...',
+                targetVar: varMatch ? varMatch[1] : 'user_input',
+                value: ''
+            });
+            this.log(`[UI INPUT] Rendered text field (Target Var: ${varMatch ? varMatch[1] : 'input'})`, 'info');
+            return;
+        }
+
+        // 8. Variables: set <var> to <value> OR set <var> as <value>
         if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
             const delimiter = line.includes(' to ') ? ' to ' : ' as ';
             const parts = line.replace('set ', '').split(delimiter);
@@ -452,6 +487,27 @@ export class LoopingInterpreter {
         }
     }
 
+    evaluateCondition(cond) {
+        cond = cond.trim();
+        // Operators: ==, !=, >=, <=, >, <
+        const ops = ['==', '!=', '>=', '<=', '>', '<'];
+        for (let op of ops) {
+            if (cond.includes(op)) {
+                const parts = cond.split(op);
+                const left = this.evaluateExpression(parts[0]);
+                const right = this.evaluateExpression(parts[1]);
+
+                if (op === '==') return left == right;
+                if (op === '!=') return left != right;
+                if (op === '>=') return Number(left) >= Number(right);
+                if (op === '<=') return Number(left) <= Number(right);
+                if (op === '>') return Number(left) > Number(right);
+                if (op === '<') return Number(left) < Number(right);
+            }
+        }
+        return Boolean(this.evaluateExpression(cond));
+    }
+
     evaluateExpression(expr) {
         if (expr === undefined || expr === null) return '';
         expr = String(expr).trim();
@@ -472,6 +528,35 @@ export class LoopingInterpreter {
         // Boolean
         if (expr === 'true') return true;
         if (expr === 'false') return false;
+
+        // Python Math Module Borrowing (e.g. math.sin, math.cos, math.floor, math.sqrt, math.random, pow)
+        if (expr.startsWith('math.') || expr.includes(' + ') || expr.includes(' - ') || expr.includes(' * ') || expr.includes(' / ')) {
+            try {
+                // Replace variables in expression
+                let resolvedExpr = expr;
+                for (let k in this.variables) {
+                    const regex = new RegExp(`\\b${k}\\b`, 'g');
+                    resolvedExpr = resolvedExpr.replace(regex, this.variables[k]);
+                }
+                
+                // Map Python math names to JS Math
+                resolvedExpr = resolvedExpr
+                    .replace(/math\.pi/g, Math.PI.toString())
+                    .replace(/math\.e/g, Math.E.toString())
+                    .replace(/math\.sqrt/g, 'Math.sqrt')
+                    .replace(/math\.pow/g, 'Math.pow')
+                    .replace(/math\.sin/g, 'Math.sin')
+                    .replace(/math\.cos/g, 'Math.cos')
+                    .replace(/math\.floor/g, 'Math.floor')
+                    .replace(/math\.ceil/g, 'Math.ceil')
+                    .replace(/math\.round/g, 'Math.round')
+                    .replace(/math\.random/g, 'Math.random')
+                    .replace(/math\.abs/g, 'Math.abs');
+
+                const mathResult = Function(`"use strict"; return (${resolvedExpr});`)();
+                return mathResult;
+            } catch(e) {}
+        }
 
         // Variable lookup (with recursive resolution if needed)
         if (this.variables.hasOwnProperty(expr)) {
@@ -769,6 +854,16 @@ export class LoopingInterpreter {
                 ctx.textAlign = 'center';
                 ctx.fillText(elem.text, elem.x + elem.w / 2, elem.y + 26);
                 ctx.textAlign = 'left';
+            } else if (elem.type === 'input') {
+                // Frosted Glass Text Input Field
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+                ctx.lineWidth = 1.2;
+                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 10, true, true);
+
+                ctx.fillStyle = elem.value ? '#ffffff' : '#64748b';
+                ctx.font = '13px Outfit, sans-serif';
+                ctx.fillText(elem.value || elem.placeholder, elem.x + 14, elem.y + 25);
             }
         }
 

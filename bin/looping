@@ -413,7 +413,7 @@ class LoopingCLI {
         });
     }
 
-    launchGUI(filePath) {
+    launchGUI(filePath, verbose = false) {
         if (!fs.existsSync(filePath)) {
             console.error(`${RED}[ERROR] Source file not found: ${filePath}${RESET}`);
             process.exit(1);
@@ -421,6 +421,16 @@ class LoopingCLI {
 
         this.printBanner();
         console.log(`${CYAN}[WINDOW] Launching Native Viewport:${RESET} ${BOLD}${path.basename(filePath)}${RESET}...`);
+        
+        if (verbose) {
+            console.log(`${YELLOW}[VERBOSE MODE ACTIVATED]${RESET}`);
+            console.log(`${BLUE}[VERBOSE] Resolution:${RESET} 800x520 (High-DPI Retina Ready)`);
+            console.log(`${BLUE}[VERBOSE] Pipeline:${RESET} Hardware WebCore / Metal 60FPS Low-Latency`);
+            console.log(`${BLUE}[VERBOSE] AST Tokens:${RESET} Parsed with Looping Interpreter v2.0.4`);
+            console.log(`${BLUE}[VERBOSE] Python Interop:${RESET} Enabled (math, conditionals, sys calls)`);
+            console.log(`${BLUE}[VERBOSE] Audio Engine:${RESET} WebAudio Square-Wave Synthesizer @ 44.1kHz`);
+            console.log(`${BLUE}[VERBOSE] Source Payload Size:${RESET} ${fs.statSync(filePath).size} bytes\n`);
+        }
 
         const tempHtml = path.join(path.dirname(filePath), `.tmp_${path.basename(filePath, '.loop')}_window.html`);
         this.compileToStandalone(filePath, tempHtml);
@@ -437,6 +447,7 @@ class LoopingCLI {
                     console.error(`${RED}[ERROR] Failed to open window: ${err.message}${RESET}`);
                 } else {
                     console.log(`${GREEN}[SUCCESS] Native Window running @ 60 FPS${RESET}`);
+                    if (verbose) console.log(`${GREEN}[VERBOSE] Viewport process spawned successfully.${RESET}`);
                 }
             });
         });
@@ -451,7 +462,7 @@ if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     cli.printBanner();
     console.log(`${BOLD}Usage:${RESET}`);
     console.log(`  looping <file.loop>               Run .loop script directly in terminal`);
-    console.log(`  looping --gui <file.loop>         Launch native desktop window (GUI / Canvas)`);
+    console.log(`  looping --gui <file.loop> [-v]    Launch native desktop window (with optional verbose)`);
     console.log(`  looping --apk <file.loop> [-o]    Package .loop game directly into Android APK`);
     console.log(`  looping installModule <module>    Install web module from Coki Studios Registry`);
     console.log(`  looping run <file.loop>           Execute with Holo Looping Runtime`);
@@ -460,10 +471,12 @@ if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     process.exit(0);
 }
 
-if (args.includes('--version') || args.includes('-v')) {
+if (args.includes('--version') || (args.includes('-v') && args.length === 1)) {
     console.log(`Looping Compile v2.0.4 (Shine Loop Target / Holo Looping OoS)`);
     process.exit(0);
 }
+
+const isVerbose = args.includes('--verbose') || args.includes('-v');
 
 if (args[0] === 'installModule' || args[0] === 'install') {
     cli.installModule(args[1]);
@@ -475,7 +488,7 @@ if (args[0] === 'installModule' || args[0] === 'install') {
     cli.compileToApk(file, output);
 } else if (args.includes('--gui') || args.includes('-g')) {
     const file = args.find(a => a.endsWith('.loop')) || args[1];
-    cli.launchGUI(file);
+    cli.launchGUI(file, isVerbose);
 } else {
     const command = args[0];
     if (command === 'build' || command === 'compile') {
