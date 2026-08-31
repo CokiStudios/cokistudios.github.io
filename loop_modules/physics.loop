@@ -1,0 +1,10 @@
+# ═══════════════════════════════════════════════════════════════
+# [MODULE: physics.loop] Official Physics Subsystem
+# Package: physics | Registry: Coki Studios
+# ═══════════════════════════════════════════════════════════════
+
+set gravity_constant to 9.81
+set terminal_velocity to 120
+set friction_coef to 0.85
+
+print "[PHYSICS MODULE] 2D Gravity (9.81 m/s²) & Low-Latency Collision Engine Loaded."

@@ -280,6 +280,19 @@ class LoopingCLI {
             .replace('export class LoopingInterpreter', 'class LoopingInterpreter')
             .replace(/export\s+/g, '');
 
+        // Collect all installed modules in ./loop_modules/
+        const modulesMap = {};
+        const modulesDir = path.join(process.cwd(), 'loop_modules');
+        if (fs.existsSync(modulesDir)) {
+            const files = fs.readdirSync(modulesDir);
+            for (let f of files) {
+                if (f.endsWith('.loop')) {
+                    const modKey = path.basename(f, '.loop');
+                    modulesMap[modKey] = fs.readFileSync(path.join(modulesDir, f), 'utf8');
+                }
+            }
+        }
+
         const standaloneTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -301,6 +314,7 @@ class LoopingCLI {
         ${engineSource}
         const canvas = document.getElementById('gameCanvas');
         const runtime = new LoopingInterpreter(canvas, console.log);
+        runtime.modules = ${JSON.stringify(modulesMap)};
         const code = ${JSON.stringify(sourceCode)};
         runtime.execute(code);
     </script>

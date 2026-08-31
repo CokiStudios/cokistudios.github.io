@@ -187,9 +187,15 @@ export class LoopingInterpreter {
     }
 
     parseLine(line) {
-        // 1. Module Imports
+        // 1. Module Imports & Package Ecosystem (from ./loop_modules/ or built-ins)
         if (line.startsWith('import ')) {
-            this.log(` Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
+            const modulePath = line.replace('import ', '').trim();
+            this.log(`[MODULE LOADER] Linked Module: ${modulePath}`, 'system');
+            
+            // Check if module exists in registered modules or storage
+            if (this.modules && this.modules[modulePath]) {
+                this.execute(this.modules[modulePath]);
+            }
             return;
         }
 
