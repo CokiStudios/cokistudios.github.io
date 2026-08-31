@@ -243,6 +243,36 @@ class LoopingCLI {
         console.log(`${GREEN}✅ Standalone Game Executable Generated:${RESET} ${BOLD}${out}${RESET}`);
         console.log(`${YELLOW}🎮 Ready to play directly in any browser or deploy to Shine Loop OS!${RESET}\n`);
     }
+
+    launchGUI(filePath) {
+        if (!fs.existsSync(filePath)) {
+            console.error(`${RED}❌ Error: Source file not found: ${filePath}${RESET}`);
+            process.exit(1);
+        }
+
+        this.printBanner();
+        console.log(`${CYAN}🖥️  Launching Native Window for:${RESET} ${BOLD}${path.basename(filePath)}${RESET}...`);
+
+        const tempHtml = path.join(path.dirname(filePath), `.tmp_${path.basename(filePath, '.loop')}_window.html`);
+        this.compileToStandalone(filePath, tempHtml);
+
+        // Open native window via macOS / Linux desktop launcher
+        import('child_process').then(({ exec }) => {
+            const cmd = process.platform === 'darwin' 
+                ? `open "${tempHtml}"` 
+                : process.platform === 'win32' 
+                    ? `start "" "${tempHtml}"` 
+                    : `xdg-open "${tempHtml}"`;
+            
+            exec(cmd, (err) => {
+                if (err) {
+                    console.error(`${RED}❌ Failed to open window: ${err.message}${RESET}`);
+                } else {
+                    console.log(`${GREEN}✨ Native Game Window Launched Successfully!${RESET}`);
+                }
+            });
+        });
+    }
 }
 
 // ── CLI Dispatcher ──
@@ -253,6 +283,7 @@ if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     cli.printBanner();
     console.log(`${BOLD}Usage:${RESET}`);
     console.log(`  looping <file.loop>               Run .loop script directly in terminal`);
+    console.log(`  looping --gui <file.loop>         Launch native desktop window (GUI / Canvas)`);
     console.log(`  looping run <file.loop>           Execute with Holo Looping Runtime`);
     console.log(`  looping build <file.loop> [-o]    Compile to Standalone Executable Game`);
     console.log(`  looping --version                 Display Looping version info\n`);
@@ -264,17 +295,20 @@ if (args.includes('--version') || args.includes('-v')) {
     process.exit(0);
 }
 
-const command = args[0];
-
-if (command === 'build' || command === 'compile') {
-    const file = args[1];
-    let output = null;
-    const outIdx = args.indexOf('-o');
-    if (outIdx !== -1 && args[outIdx + 1]) output = args[outIdx + 1];
-    cli.compileToStandalone(file, output);
-} else if (command === 'run') {
-    cli.runFile(args[1]);
+if (args.includes('--gui') || args.includes('-g')) {
+    const file = args.find(a => a.endsWith('.loop')) || args[1];
+    cli.launchGUI(file);
 } else {
-    // Default: run file
-    cli.runFile(command);
+    const command = args[0];
+    if (command === 'build' || command === 'compile') {
+        const file = args[1];
+        let output = null;
+        const outIdx = args.indexOf('-o');
+        if (outIdx !== -1 && args[outIdx + 1]) output = args[outIdx + 1];
+        cli.compileToStandalone(file, output);
+    } else if (command === 'run') {
+        cli.runFile(args[1]);
+    } else {
+        cli.runFile(command);
+    }
 }
