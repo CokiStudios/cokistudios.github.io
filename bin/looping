@@ -276,6 +276,10 @@ class LoopingCLI {
         const sourceCode = fs.readFileSync(filePath, 'utf8');
         const out = outputPath || filePath.replace('.loop', '.html');
 
+        const engineSource = fs.readFileSync(path.join(__dirname, '../LoopingEngine/looping_core.js'), 'utf8')
+            .replace('export class LoopingInterpreter', 'class LoopingInterpreter')
+            .replace(/export\s+/g, '');
+
         const standaloneTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -293,8 +297,8 @@ class LoopingCLI {
     <div id="canvas-wrapper">
         <canvas id="gameCanvas" width="800" height="520"></canvas>
     </div>
-    <script type="module">
-        import { LoopingInterpreter } from '/LoopingEngine/looping_core.js';
+    <script>
+        ${engineSource}
         const canvas = document.getElementById('gameCanvas');
         const runtime = new LoopingInterpreter(canvas, console.log);
         const code = ${JSON.stringify(sourceCode)};
