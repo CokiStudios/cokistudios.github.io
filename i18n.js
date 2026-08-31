@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// 🌐 COKI STUDIOS GLOBAL I18N SYSTEM (MULTI-LANGUAGE + SUPABASE)
+//  COKI STUDIOS GLOBAL I18N SYSTEM (MULTI-LANGUAGE + SUPABASE)
 // Sincronización local y en la nube en user_metadata de Supabase
 // ═══════════════════════════════════════════════════════════════
 
@@ -18,7 +18,7 @@ export async function initGlobalI18n() {
         
         let initialLang = localStorage.getItem('coki-lang') || 'es';
 
-        // ☁️ 1. Verificar si hay usuario conectado y obtener su idioma de Supabase
+        // ️ 1. Verificar si hay usuario conectado y obtener su idioma de Supabase
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user && user.user_metadata && user.user_metadata.preferred_language) {
@@ -42,7 +42,7 @@ export async function initGlobalI18n() {
 
         applyGlobalLanguage(initialLang);
     } catch (e) {
-        console.warn('⚠️ No se pudo cargar translations.json:', e);
+        console.warn('️ No se pudo cargar translations.json:', e);
     }
 }
 
@@ -69,7 +69,7 @@ export function applyGlobalLanguage(lang) {
     });
 }
 
-// ☁️ Guarda el idioma seleccionado directamente en Supabase (user_metadata)
+// ️ Guarda el idioma seleccionado directamente en Supabase (user_metadata)
 export async function syncLanguageToSupabase(lang) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -80,9 +80,9 @@ export async function syncLanguageToSupabase(lang) {
                 }
             });
             if (error) {
-                console.warn('⚠️ No se pudo sincronizar el idioma en Supabase:', error.message);
+                console.warn('️ No se pudo sincronizar el idioma en Supabase:', error.message);
             } else {
-                console.log(`☁️ Idioma '${lang}' guardado en la cuenta CSID (${user.email})`);
+                console.log(`️ Idioma '${lang}' guardado en la cuenta CSID (${user.email})`);
             }
         }
     } catch (e) {

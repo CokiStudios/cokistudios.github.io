@@ -73,7 +73,7 @@ Bash (Linux/macOS):
 ```yaml
 # TEMPORARY: loop the suite to reproduce a flaky failure. Remove before merge.
 # Replace <suite name> with the suite you're investigating (e.g. "Agents Window").
-- name: 🧪 Smoke test flakiness probe (TEMPORARY)
+- name:  Smoke test flakiness probe (TEMPORARY)
   if: ${{ inputs.electron_tests }}
   timeout-minutes: 60
   run: |

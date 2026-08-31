@@ -132,12 +132,12 @@
             </a>
             <div class="nav-right">
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es">🇪🇸 ES</option>
-                    <option value="en">🇺🇸 EN</option>
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="pt">🇧🇷 PT</option>
+                    <option value="es"> ES</option>
+                    <option value="en"> EN</option>
+                    <option value="fr"> FR</option>
+                    <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
                 <a href="index" style="color:var(--text-sub);text-decoration:none;font-weight:600;font-size:14px;"><span data-i18n="btn_back_home">← Volver al Inicio</span></a>
             </div>
         </div>
@@ -150,8 +150,8 @@
         </div>
 
         <div class="legal-tabs">
-            <button class="tab-btn active" onclick="showTab('terms')"><span data-i18n="terms_tab_terms">📜 Términos y Condiciones</span></button>
-            <button class="tab-btn" onclick="showTab('privacy')"><span data-i18n="terms_tab_privacy">🔒 Política de Privacidad</span></button>
+            <button class="tab-btn active" onclick="showTab('terms')"><span data-i18n="terms_tab_terms"> Términos y Condiciones</span></button>
+            <button class="tab-btn" onclick="showTab('privacy')"><span data-i18n="terms_tab_privacy"> Política de Privacidad</span></button>
         </div>
 
         <!-- TAB 1: TÉRMINOS Y CONDICIONES -->
@@ -260,7 +260,7 @@ Sitio web: https://cokistudios.github.io
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
         };
         if (themeToggle) {
             updateToggleIcon();

@@ -112,7 +112,7 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
-        /* 🔐 STATE 1: NOT LOGGED IN */
+        /* [SECURE] STATE 1: NOT LOGGED IN */
         #login-section p { color: var(--text-sub); font-size: 15px; text-align: center; margin-bottom: 24px; line-height: 1.6; }
         #login-section p strong { color: var(--text); }
         .btn-primary {
@@ -123,7 +123,7 @@
         }
         .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.3); }
 
-        /* ✅ STATE 2: LOGGED IN */
+        /* [OK] STATE 2: LOGGED IN */
         #consent-section { display: none; }
         
         .user-card {
@@ -180,7 +180,7 @@
     <div class="xtraps-bg rainbow">
         <div class="xtraps-wave"></div>
     </div>
-    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema">️</button>
     <div class="auth-container">
         <div class="auth-header">
             <div class="auth-logo">C</div>
@@ -192,13 +192,13 @@
             <strong>Debug Info:</strong><br><span id="debug-text"></span>
         </div>
 
-        <!-- 🔐 ESTADO 1: NO LOGUEADO -->
+        <!-- [SECURE] ESTADO 1: NO LOGUEADO -->
         <div class="auth-card" id="login-section">
             <p>Primero inicia sesión en tu cuenta de <strong>CSID</strong> para autorizar a esta aplicación.</p>
             <a href="register" class="btn-primary" id="login-link">Iniciar sesión</a>
         </div>
 
-        <!-- ✅ ESTADO 2: LOGUEADO -->
+        <!-- [OK] ESTADO 2: LOGUEADO -->
         <div id="consent-section">
             <div class="user-card">
                 <div class="user-avatar" id="user-avatar">U</div>
@@ -319,7 +319,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            themeToggle.textContent = isLight ? '🌙' : '☀️';
+            themeToggle.textContent = isLight ? '' : '️';
         };
         if (themeToggle) {
             updateToggleIcon();

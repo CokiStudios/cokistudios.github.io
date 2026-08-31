@@ -62,7 +62,7 @@ Launches VS Code via Playwright Electron, opens the chat panel, sends a message 
 | `--force` | — | Skip build mode mismatch confirmation prompt. |
 | `--ci` | — | CI mode: write Markdown summary to `ci-summary.md` (implies `--no-cache`, `--heap-snapshots`, `--cleanup-diagnostics`). |
 | `--heap-snapshots` | — | Take heap snapshots after each run (slow; auto-enabled in `--ci` mode). |
-| `--gc-object-stats` | — | **GC deep-dives only.** Enables V8 `gc_stats` tracing (per-type heap object dump on every GC). ⚠️ Corrupts all timing metrics — a major GC landing mid-request adds ~550ms — so never use it for benchmarking. Off by default; prefer heap snapshots for memory analysis. |
+| `--gc-object-stats` | — | **GC deep-dives only.** Enables V8 `gc_stats` tracing (per-type heap object dump on every GC). ️ Corrupts all timing metrics — a major GC landing mid-request adds ~550ms — so never use it for benchmarking. Off by default; prefer heap snapshots for memory analysis. |
 | `--cleanup-diagnostics` | — | Delete heap snapshots, CPU profiles, and traces to save disk. During runs, only the latest run's files are kept; after comparison, files for non-regressed scenarios are deleted. Auto-enabled in `--ci` mode. |
 | `--setting <k=v>` | — | Set a VS Code setting override for all builds (repeatable). |
 | `--test-setting <k=v>` | — | Set a VS Code setting override for the test build only. |
@@ -202,7 +202,7 @@ These are reported but **informational only** (won't fail CI):
 
 ### Statistics
 
-Results use **IQR-based outlier removal** and **median** (not mean) to handle startup jitter. The **coefficient of variation (cv)** is reported — under 15% is stable, over 15% gets a ⚠ warning. Baseline comparison uses **Welch's t-test** on raw run values to determine statistical significance before flagging regressions. Use 5+ runs to get stable results.
+Results use **IQR-based outlier removal** and **median** (not mean) to handle startup jitter. The **coefficient of variation (cv)** is reported — under 15% is stable, over 15% gets a  warning. Baseline comparison uses **Welch's t-test** on raw run values to determine statistical significance before flagging regressions. Use 5+ runs to get stable results.
 
 ## Memory leak check
 

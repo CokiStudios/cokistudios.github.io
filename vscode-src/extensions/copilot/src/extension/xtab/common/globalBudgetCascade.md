@@ -443,7 +443,7 @@ so the current file's clip cap is
 
 ```
 cfBudget = floor(T · share_cf) + finalSurplus ≤ T · (Σ all shares) − C_cascade
-⇒ C_cf + C_cascade ≤ T · (Σ all shares)        (total bounded by the pool)        ✅
+⇒ C_cf + C_cascade ≤ T · (Σ all shares)        (total bounded by the pool)        [OK]
 ```
 
 and since `finalSurplus ≥ 0`, `cfBudget ≥ floor(T · share_cf)` — the current file

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>0286BD13-7FC6-4A5C-8D49-28013FAA3760</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>0286BD13-7FC6-4A5C-8D49-28013FAA3760.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>hiOP project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>hiOP</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>809809220.29732203</real>
+			<key>timeStoppedRecording</key>
+			<real>809809220.83473802</real>
+			<key>title</key>
+			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>0286BD13-7FC6-4A5C-8D49-28013FAA3760</string>
+		</dict>
+		<key>996A0BFC-D283-4C9A-9ADE-5A788047C645</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>996A0BFC-D283-4C9A-9ADE-5A788047C645.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>hiOP project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>hiOP</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>809808727.74868703</real>
+			<key>timeStoppedRecording</key>
+			<real>809808728.56648397</real>
+			<key>title</key>
+			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>996A0BFC-D283-4C9A-9ADE-5A788047C645</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

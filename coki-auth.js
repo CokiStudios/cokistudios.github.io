@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏢 COKI STUDIOS AUTH SYSTEM v2 — Con Cookies
+//  COKI STUDIOS AUTH SYSTEM v2 — Con Cookies
 // Registro, login y gestión de usuarios de Coki Studios
 // ═══════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON, getBrowserHash, regenerateBrowserHash } from './cookie-utils.js';
 
-// 🔧 CONFIGURACIÓN SUPABASE
+//  CONFIGURACIÓN SUPABASE
 const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ';
 
@@ -14,18 +14,18 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── CATEGORÍAS GLOBALES & TASTE MATCHING ───
 const DEFAULT_CATEGORIES = [
-    { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '💬', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
-    { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '🎮', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
-    { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '💻', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
-    { id: 'cat-eco', name: 'Forkman Eco Hub', slug: 'eco', color: '#10b981', icon: '🌱', keywords: ['eco', 'planeta', 'recicla', 'bici', 'co2', 'arbol', 'huella', 'energia', 'ambiente', 'forkman'] },
-    { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '🎨', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
-    { id: 'cat-music', name: 'Música & Audio', slug: 'music', color: '#a855f7', icon: '🎵', keywords: ['musica', 'cancion', 'sonido', 'audio', 'track', 'album', 'ritmo', 'playlist', 'estilo'] },
-    { id: 'cat-science', name: 'Ciencia & Futuro', slug: 'science', color: '#14b8a6', icon: '🔬', keywords: ['ciencia', 'espacio', 'ia', 'robot', 'futuro', 'tecnologia', 'universo', 'innovacion'] },
-    { id: 'cat-help', name: 'Ayuda & Preguntas', slug: 'help', color: '#ef4444', icon: '❓', keywords: ['ayuda', 'pregunta', 'error', 'problema', 'duda', 'soporte', 'como', 'resolver'] }
+    { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '[LOG]', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
+    { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '[GAME]', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
+    { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
+    { id: 'cat-eco', name: 'Forkman Eco Hub', slug: 'eco', color: '#10b981', icon: '', keywords: ['eco', 'planeta', 'recicla', 'bici', 'co2', 'arbol', 'huella', 'energia', 'ambiente', 'forkman'] },
+    { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '[UI]', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
+    { id: 'cat-music', name: 'Música & Audio', slug: 'music', color: '#a855f7', icon: '', keywords: ['musica', 'cancion', 'sonido', 'audio', 'track', 'album', 'ritmo', 'playlist', 'estilo'] },
+    { id: 'cat-science', name: 'Ciencia & Futuro', slug: 'science', color: '#14b8a6', icon: '', keywords: ['ciencia', 'espacio', 'ia', 'robot', 'futuro', 'tecnologia', 'universo', 'innovacion'] },
+    { id: 'cat-help', name: 'Ayuda & Preguntas', slug: 'help', color: '#ef4444', icon: '', keywords: ['ayuda', 'pregunta', 'error', 'problema', 'duda', 'soporte', 'como', 'resolver'] }
 ];
 
 // ═══════════════════════════════════════════════════════════════
-// 📝 REGISTRO DE USUARIOS COKI STUDIOS
+//  REGISTRO DE USUARIOS COKI STUDIOS
 // ═══════════════════════════════════════════════════════════════
 
 async function registerCokiAccount(email, password, metadata = {}) {
@@ -45,11 +45,11 @@ async function registerCokiAccount(email, password, metadata = {}) {
     });
     
     if (error) {
-        console.error('❌ Error registro Coki:', error);
+        console.error('[ERROR] Error registro Coki:', error);
         return { success: false, error: error.message };
     }
     
-    console.log('✅ Cuenta Coki creada:', data.user.email);
+    console.log('[OK] Cuenta Coki creada:', data.user.email);
     return { 
         success: true, 
         user: data.user,
@@ -64,11 +64,11 @@ async function loginCokiAccount(email, password) {
     });
     
     if (error) {
-        console.error('❌ Error login Coki:', error);
+        console.error('[ERROR] Error login Coki:', error);
         return { success: false, error: error.message };
     }
     
-    // 🍪 GUARDAR EN COOKIES (7 días)
+    //  GUARDAR EN COOKIES (7 días)
     setCookieJSON('coki_current_user', {
         id: data.user.id,
         email: data.user.email,
@@ -82,10 +82,10 @@ async function loginCokiAccount(email, password) {
         setCookie('coki_refresh_token', data.session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
     }
     
-    // 🔑 Vincular Hash de Navegador en Supabase
+    // [AUTH] Vincular Hash de Navegador en Supabase
     await bindBrowserHash(data.user.id, data.user.email);
 
-    console.log('✅ Sesión Coki iniciada:', data.user.email);
+    console.log('[OK] Sesión Coki iniciada:', data.user.email);
     return { success: true, session: data.session, user: data.user };
 }
 
@@ -100,10 +100,10 @@ async function bindBrowserHash(userId, email) {
                 user_email: email,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'device_hash' });
-        if (error) console.warn('⚠️ Error al vincular Browser Hash:', error.message);
-        else console.log('🔑 Browser Hash vinculado en cookies:', hash);
+        if (error) console.warn('️ Error al vincular Browser Hash:', error.message);
+        else console.log('[AUTH] Browser Hash vinculado en cookies:', hash);
     } catch (e) {
-        console.warn('⚠️ Error bindBrowserHash:', e);
+        console.warn('️ Error bindBrowserHash:', e);
     }
 }
 
@@ -114,9 +114,9 @@ async function unbindBrowserHash() {
             .from('user_device_hashes')
             .delete()
             .eq('device_hash', hash);
-        if (error) console.warn('⚠️ Error al desvincular Browser Hash:', error.message);
+        if (error) console.warn('️ Error al desvincular Browser Hash:', error.message);
     } catch (e) {
-        console.warn('⚠️ Error unbindBrowserHash:', e);
+        console.warn('️ Error unbindBrowserHash:', e);
     }
 }
 
@@ -138,10 +138,10 @@ async function restoreSessionFromBrowserHash() {
             metadata: { restored_from_hash: true }
         };
         setCookieJSON('coki_current_user', restoredUser, { maxAge: 7 * 24 * 60 * 60 });
-        console.log('🔄 Sesión restaurada desde Browser Hash Cookie:', data.user_email);
+        console.log(' Sesión restaurada desde Browser Hash Cookie:', data.user_email);
         return restoredUser;
     } catch (e) {
-        console.warn('⚠️ Error restoreSessionFromBrowserHash:', e);
+        console.warn('️ Error restoreSessionFromBrowserHash:', e);
         return null;
     }
 }
@@ -156,7 +156,7 @@ async function loginCokiWithOAuth(provider) {
     });
     
     if (error) {
-        console.error('❌ Error OAuth externo:', error);
+        console.error('[ERROR] Error OAuth externo:', error);
         return { success: false, error: error.message };
     }
     
@@ -172,7 +172,7 @@ async function handleCokiOAuthCallback() {
     
     const user = session.user;
     
-    // 🍪 GUARDAR EN COOKIES
+    //  GUARDAR EN COOKIES
     setCookieJSON('coki_current_user', {
         id: user.id,
         email: user.email,
@@ -212,7 +212,7 @@ async function updateCokiProfile(updates) {
         return { success: false, error: error.message };
     }
     
-    // 🍪 ACTUALIZAR COOKIE
+    //  ACTUALIZAR COOKIE
     const current = getCookieJSON('coki_current_user') || {};
     setCookieJSON('coki_current_user', {
         ...current,
@@ -238,7 +238,7 @@ async function logoutCoki() {
     await unbindBrowserHash();
     const { error } = await supabase.auth.signOut();
     
-    // 🍪 LIMPIAR TODAS LAS COOKIES DE COKI
+    //  LIMPIAR TODAS LAS COOKIES DE COKI
     deleteCookie('coki_current_user');
     deleteCookie('coki_access_token');
     deleteCookie('coki_refresh_token');
@@ -267,18 +267,18 @@ async function getCurrentCokiUser() {
             };
         }
 
-        // 🔄 MIGRACIÓN AUTOMÁTICA Y LIMPIEZA DE SESIONES OBSOLETAS
+        //  MIGRACIÓN AUTOMÁTICA Y LIMPIEZA DE SESIONES OBSOLETAS
         if (error && (error.message?.includes('Invalid Refresh Token') || error.message?.includes('JWT') || error.status === 401 || error.status === 400)) {
-            console.warn('⚠️ Sesión de base de datos anterior detectada. Limpiando tokens obsoletos...');
+            console.warn('️ Sesión de base de datos anterior detectada. Limpiando tokens obsoletos...');
             deleteCookie('coki_access_token');
             deleteCookie('coki_refresh_token');
             await supabase.auth.signOut().catch(() => {});
         }
     } catch (e) {
-        console.warn('⚠️ Error verificando usuario Supabase:', e);
+        console.warn('️ Error verificando usuario Supabase:', e);
     }
     
-    // 🍪 FALLBACK: Leer de cookies o restaurar por Browser Hash
+    //  FALLBACK: Leer de cookies o restaurar por Browser Hash
     const stored = getCookieJSON('coki_current_user');
     if (stored) return stored;
 
@@ -286,9 +286,9 @@ async function getCurrentCokiUser() {
     return restored || null;
 }
 
-// 🎧 Escuchar cambios de auth
+//  Escuchar cambios de auth
 supabase.auth.onAuthStateChange((event, session) => {
-    console.log('🔔 Coki Auth event:', event);
+    console.log(' Coki Auth event:', event);
     
     if (event === 'SIGNED_IN' && session) {
         const user = session.user;
@@ -319,7 +319,7 @@ async function sendCokiOTP(email) {
         if (!response.ok) throw new Error(data.error || 'Error al enviar OTP');
         return { success: true, message: data.message };
     } catch (err) {
-        console.error('❌ Error sendCokiOTP:', err);
+        console.error('[ERROR] Error sendCokiOTP:', err);
         return { success: false, error: err.message };
     }
 }
@@ -335,13 +335,13 @@ async function verifyCokiOTP(email, code) {
         if (!response.ok || !data.valid) throw new Error(data.error || 'Código OTP inválido');
         return { success: true, message: data.message };
     } catch (err) {
-        console.error('❌ Error verifyCokiOTP:', err);
+        console.error('[ERROR] Error verifyCokiOTP:', err);
         return { success: false, error: err.message };
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🔑 COKI PASSKEY UNIVERSAL & MASTER KEY (LIGADA A LA CUENTA)
+// [AUTH] COKI PASSKEY UNIVERSAL & MASTER KEY (LIGADA A LA CUENTA)
 // ═══════════════════════════════════════════════════════════════
 
 function generateAccountMasterKey() {
@@ -432,7 +432,7 @@ async function registerPasskey() {
             message: 'Passkey & Master Key vinculada a tu cuenta con éxito' 
         };
     } catch (err) {
-        console.error('❌ Error registrando Passkey de Cuenta:', err);
+        console.error('[ERROR] Error registrando Passkey de Cuenta:', err);
         return { success: false, error: err.message };
     }
 }
@@ -527,13 +527,13 @@ async function loginWithPasskey(providedKey = null) {
             error: 'Introduce tu Coki Master Key de cuenta para acceder desde este nuevo dispositivo.' 
         };
     } catch (err) {
-        console.error('❌ Error login con Passkey:', err);
+        console.error('[ERROR] Error login con Passkey:', err);
         return { success: false, error: err.message || 'Error al autenticar con Passkey' };
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🔐 VALIDACIÓN DE ACCESO PRIVADO CS MAIL (SUPABASE SERVER-SIDE)
+// [SECURE] VALIDACIÓN DE ACCESO PRIVADO CS MAIL (SUPABASE SERVER-SIDE)
 // ═══════════════════════════════════════════════════════════════
 
 async function hasAdminMailAccess() {

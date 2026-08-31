@@ -772,7 +772,7 @@ function linearRegressionSlope(values) {
 function summarize(values, label, unit) {
 	const s = robustStats(values);
 	if (!s) { return `  ${label}: (no data)`; }
-	const cv = s.cv > 0.15 ? ` cv=${(s.cv * 100).toFixed(0)}%⚠` : ` cv=${(s.cv * 100).toFixed(0)}%`;
+	const cv = s.cv > 0.15 ? ` cv=${(s.cv * 100).toFixed(0)}%` : ` cv=${(s.cv * 100).toFixed(0)}%`;
 	const outliers = s.nOutliers > 0 ? ` (${s.nOutliers} outlier${s.nOutliers > 1 ? 's' : ''} removed)` : '';
 	return `  ${label}: median=${s.median}${unit}, p95=${s.p95}${unit},${cv}${outliers} [n=${s.n}]`;
 }

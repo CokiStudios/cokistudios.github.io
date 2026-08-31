@@ -241,7 +241,7 @@ before retrying.
   npx @playwright/cli -s=$PW_SESSION press Enter
 
   # Long / arbitrary text via stdin (avoids any shell-quoting headaches):
-  printf 'multi-line prompt\nwith backticks `x`\nand emoji 🎉' | "$PASTE"
+  printf 'multi-line prompt\nwith backticks `x`\nand emoji ' | "$PASTE"
 
   # Append without clearing:
   "$PASTE" --append " continued text"
@@ -254,7 +254,7 @@ before retrying.
   "$PASTE" --session "$PW_SESSION" "..."
   ```
 
-  The helper prints a single JSON line on stdout: `{ok, actualLength, expectedLength, viewLineCount, firstViewLine, error?}`. Exit 0 on success, 1 on verify failure, 2 on argument errors. Tested reliable across 20+ sequential pastes including unicode (中文), emoji (🎉), backticks, ampersands, embedded quotes, and newlines.
+  The helper prints a single JSON line on stdout: `{ok, actualLength, expectedLength, viewLineCount, firstViewLine, error?}`. Exit 0 on success, 1 on verify failure, 2 on argument errors. Tested reliable across 20+ sequential pastes including unicode (中文), emoji (), backticks, ampersands, embedded quotes, and newlines.
 
   **Why a helper script and not just docs:** the inline recipe involves a multi-line `node -e` heredoc with embedded JS template literals, which is exactly the kind of code that gets miscopied. There are also three non-obvious correctness traps the helper handles internally:
   1. Monaco's `native-edit-context` doesn't react to `fill` or `type`, only to actual paste events (or per-key `press`).

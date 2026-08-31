@@ -491,12 +491,12 @@
                 <a href="messenger" class="nav-link">CSMS</a>
                 <span id="nav-email" class="nav-email">...</span>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es">🇪🇸 ES</option>
-                    <option value="en">🇺🇸 EN</option>
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="pt">🇧🇷 PT</option>
+                    <option value="es"> ES</option>
+                    <option value="en"> EN</option>
+                    <option value="fr"> FR</option>
+                    <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
                 <button id="btn-logout" class="btn-logout">Salir</button>
             </div>
         </div>
@@ -504,10 +504,10 @@
 
     <div class="page-wrap">
 
-        <!-- 🚀 BANNER / FORMULARIO DE MIGRACIÓN PARA USUARIOS NO MIGRADOS -->
+        <!-- [APP] BANNER / FORMULARIO DE MIGRACIÓN PARA USUARIOS NO MIGRADOS -->
         <div id="migration-card" style="display: none; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(99, 102, 241, 0.4); border-radius: 24px; padding: 28px; margin-bottom: 32px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
             <div style="display: flex; align-items: flex-start; gap: 18px; margin-bottom: 20px;">
-                <div style="font-size: 38px; line-height: 1;">✨</div>
+                <div style="font-size: 38px; line-height: 1;"></div>
                 <div>
                     <h2 style="font-size: 20px; font-weight: 800; color: #818cf8; margin-bottom: 6px;">¡Bienvenido a la nueva era de CSID & Forkar!</h2>
                     <p style="font-size: 14px; color: var(--text-sub); line-height: 1.6;">
@@ -518,7 +518,7 @@
 
             <div style="margin-bottom: 20px;">
                 <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text); margin-bottom:12px;">
-                    🎯 Selecciona tus categorías favoritas para completar tu migración:
+                     Selecciona tus categorías favoritas para completar tu migración:
                 </label>
                 <div id="migration-categories-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
                     <!-- Inyectado por JS -->
@@ -527,7 +527,7 @@
 
             <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end;">
                 <button id="btn-complete-migration" style="padding: 12px 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.2s;">
-                    🚀 Completar Migración de Cuenta
+                    [APP] Completar Migración de Cuenta
                 </button>
             </div>
         </div>
@@ -565,7 +565,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2 class="section-title" style="margin-bottom:0;">Juegos y Aplicaciones vinculadas</h2>
                 <a id="btn-cs-mail" href="cs-mail" style="display:none; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:#818cf8; text-decoration:none; padding:6px 12px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
-                    <span>📬</span> Abrir CS Mail (Zoho) ↗
+                    <span></span> Abrir CS Mail (Zoho) ↗
                 </a>
             </div>
             <div id="apps-list" class="apps-list">
@@ -587,10 +587,10 @@
                 </div>
             </div>
 
-            <!-- 🧠 SELECTOR DE GUSTOS Y CATEGORÍAS FAVORITAS -->
+            <!--  SELECTOR DE GUSTOS Y CATEGORÍAS FAVORITAS -->
             <div style="margin-bottom: 24px;">
                 <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:8px;">
-                    🎯 Mis Categorías y Temas de Interés (Algoritmo de Feed)
+                     Mis Categorías y Temas de Interés (Algoritmo de Feed)
                 </label>
                 <p style="font-size:13px; color:var(--text-sub); margin-bottom:14px;">
                     Elige tus temas favoritos. Nuestro algoritmo emparejará las letras, palabras y publicaciones afines a tus gustos en Forkar y CSMS.
@@ -600,11 +600,11 @@
                 </div>
             </div>
 
-            <!-- 🔑 GESTIÓN DE PASSKEYS & COKI MASTER KEY DE CUENTA -->
+            <!-- [AUTH] GESTIÓN DE PASSKEYS & COKI MASTER KEY DE CUENTA -->
             <div style="margin-bottom: 24px; background: rgba(0,0,0,0.2); border: 1.5px solid var(--border-glow); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="font-size: 26px; width: 48px; height: 48px; border-radius: 14px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center;">🔑</div>
+                        <div style="font-size: 26px; width: 48px; height: 48px; border-radius: 14px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center;">[AUTH]</div>
                         <div>
                             <div style="font-weight: 800; font-size: 16px; color: var(--text);">CS Passkey & Master Key de Cuenta</div>
                             <div style="font-size: 12.5px; color: var(--text-sub); margin-top: 2px;" id="passkey-status-text">
@@ -613,7 +613,7 @@
                         </div>
                     </div>
                     <button type="button" id="btn-register-passkey" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 4px 15px rgba(99,102,241,0.3);">
-                        🔑 Generar / Activar Passkey de Cuenta
+                        [AUTH] Generar / Activar Passkey de Cuenta
                     </button>
                 </div>
                 <div id="master-key-display-box" style="display: none; background: rgba(99,102,241,0.08); border: 1px dashed var(--accent); border-radius: 12px; padding: 12px 16px;">
@@ -640,14 +640,14 @@
         import { checkAndShowSetupWizard } from './coki-extensions.js';
 
         const DEFAULT_CATEGORIES = [
-            { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '💬', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
-            { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '🎮', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
-            { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '💻', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
-            { id: 'cat-eco', name: 'Forkman Eco Hub', slug: 'eco', color: '#10b981', icon: '🌱', keywords: ['eco', 'planeta', 'recicla', 'bici', 'co2', 'arbol', 'huella', 'energia', 'ambiente', 'forkman'] },
-            { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '🎨', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
-            { id: 'cat-music', name: 'Música & Audio', slug: 'music', color: '#a855f7', icon: '🎵', keywords: ['musica', 'cancion', 'sonido', 'audio', 'track', 'album', 'ritmo', 'playlist', 'estilo'] },
-            { id: 'cat-science', name: 'Ciencia & Futuro', slug: 'science', color: '#14b8a6', icon: '🔬', keywords: ['ciencia', 'espacio', 'ia', 'robot', 'futuro', 'tecnologia', 'universo', 'innovacion'] },
-            { id: 'cat-help', name: 'Ayuda & Preguntas', slug: 'help', color: '#ef4444', icon: '❓', keywords: ['ayuda', 'pregunta', 'error', 'problema', 'duda', 'soporte', 'como', 'resolver'] }
+            { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '[LOG]', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
+            { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '[GAME]', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
+            { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
+            { id: 'cat-eco', name: 'Forkman Eco Hub', slug: 'eco', color: '#10b981', icon: '', keywords: ['eco', 'planeta', 'recicla', 'bici', 'co2', 'arbol', 'huella', 'energia', 'ambiente', 'forkman'] },
+            { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '[UI]', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
+            { id: 'cat-music', name: 'Música & Audio', slug: 'music', color: '#a855f7', icon: '', keywords: ['musica', 'cancion', 'sonido', 'audio', 'track', 'album', 'ritmo', 'playlist', 'estilo'] },
+            { id: 'cat-science', name: 'Ciencia & Futuro', slug: 'science', color: '#14b8a6', icon: '', keywords: ['ciencia', 'espacio', 'ia', 'robot', 'futuro', 'tecnologia', 'universo', 'innovacion'] },
+            { id: 'cat-help', name: 'Ayuda & Preguntas', slug: 'help', color: '#ef4444', icon: '', keywords: ['ayuda', 'pregunta', 'error', 'problema', 'duda', 'soporte', 'como', 'resolver'] }
         ];
 
         let currentUser = null;
@@ -672,7 +672,7 @@
                         transition: all 0.2s ease;
                         user-select: none;
                     ">
-                        <span style="font-size: 20px;">${cat.icon || '🏷️'}</span>
+                        <span style="font-size: 20px;">${cat.icon || '️'}</span>
                         <div style="flex: 1;">
                             <div style="font-weight: 700; font-size: 13px; color: ${isSelected ? '#818cf8' : 'var(--text)'};">${cat.name}</div>
                             <div style="font-size: 10px; color: var(--text-muted);">${cat.keywords.slice(0, 3).join(', ')}...</div>
@@ -689,7 +689,7 @@
                             color: white;
                             font-size: 10px;
                             font-weight: bold;
-                        ">${isSelected ? '✓' : ''}</div>
+                        ">${isSelected ? '' : ''}</div>
                     </div>
                 `;
             }).join('');
@@ -726,9 +726,9 @@
             if (user.metadata?.has_passkey) {
                 const statusText = document.getElementById('passkey-status-text');
                 const btnPasskey = document.getElementById('btn-register-passkey');
-                if (statusText) statusText.textContent = '✅ Passkey biométrica activa en este dispositivo.';
+                if (statusText) statusText.textContent = '[OK] Passkey biométrica activa en este dispositivo.';
                 if (btnPasskey) {
-                    btnPasskey.textContent = '🔄 Actualizar Passkey';
+                    btnPasskey.textContent = ' Actualizar Passkey';
                     btnPasskey.style.borderColor = '#10b981';
                 }
             }
@@ -740,14 +740,14 @@
             }
             renderCategoryPreferences();
 
-            // 🔐 VERIFICACIÓN DE ACCESO CS MAIL EN SUPABASE
+            // [SECURE] VERIFICACIÓN DE ACCESO CS MAIL EN SUPABASE
             const canAccessMail = await hasAdminMailAccess();
             const mailBtn = document.getElementById('btn-cs-mail');
             if (mailBtn) {
                 mailBtn.style.display = canAccessMail ? 'inline-flex' : 'none';
             }
 
-            // 🚀 VERIFICAR SI EL USUARIO YA ESTÁ MIGRADO
+            // [APP] VERIFICAR SI EL USUARIO YA ESTÁ MIGRADO
             checkUserMigrationStatus();
 
             loadConnectedApps();
@@ -791,9 +791,9 @@
                         user-select: none;
                         transition: all 0.15s ease;
                     ">
-                        <span>${cat.icon || '🏷️'}</span>
+                        <span>${cat.icon || '️'}</span>
                         <span style="font-size: 13px; font-weight: 600; color: ${isSelected ? '#ffffff' : 'var(--text-sub)'}; flex: 1;">${cat.name}</span>
-                        <span style="font-size: 12px; color: ${isSelected ? '#818cf8' : 'transparent'}; font-weight: bold;">${isSelected ? '✓' : ''}</span>
+                        <span style="font-size: 12px; color: ${isSelected ? '#818cf8' : 'transparent'}; font-weight: bold;">${isSelected ? '' : ''}</span>
                     </div>
                 `;
             }).join('');
@@ -824,12 +824,12 @@
 
             if (result.success) {
                 localStorage.setItem('forkar_user_tastes', JSON.stringify(migrationSelectedCategories));
-                alert('🎉 ¡Tu cuenta ha sido migrada con éxito al nuevo sistema global!');
+                alert(' ¡Tu cuenta ha sido migrada con éxito al nuevo sistema global!');
                 loadUser();
             } else {
                 btn.disabled = false;
-                btn.textContent = '🚀 Completar Migración de Cuenta';
-                alert('❌ Error al migrar: ' + result.error);
+                btn.textContent = '[APP] Completar Migración de Cuenta';
+                alert('[ERROR] Error al migrar: ' + result.error);
             }
         });
 
@@ -865,8 +865,8 @@
         window.revokeApp = async (clientId) => {
             if (!confirm('¿Seguro que quieres desvincular esta aplicación?')) return;
             const success = await revokeConnectedApp(currentUser.id, clientId);
-            if (success) { alert('✅ Cuenta desvinculada'); loadConnectedApps(); }
-            else alert('❌ Error al desvincular');
+            if (success) { alert('[OK] Cuenta desvinculada'); loadConnectedApps(); }
+            else alert('[ERROR] Error al desvincular');
         };
 
         loadUser();
@@ -883,7 +883,7 @@
 
             const res = await registerPasskey();
             if (res.success) {
-                alert('🎉 ¡Passkey & CS Master Key activadas para tu cuenta!\n\nGuarda tu Master Key para poder iniciar sesión desde cualquier navegador sin depender de tu dispositivo actual.');
+                alert(' ¡Passkey & CS Master Key activadas para tu cuenta!\n\nGuarda tu Master Key para poder iniciar sesión desde cualquier navegador sin depender de tu dispositivo actual.');
                 if (res.masterKey) {
                     const box = document.getElementById('master-key-display-box');
                     const text = document.getElementById('user-master-key-text');
@@ -895,15 +895,15 @@
                 loadUser();
             } else {
                 btn.disabled = false;
-                btn.textContent = '🔑 Generar / Activar Passkey de Cuenta';
-                alert('❌ ' + res.error);
+                btn.textContent = '[AUTH] Generar / Activar Passkey de Cuenta';
+                alert('[ERROR] ' + res.error);
             }
         });
 
         document.getElementById('btn-copy-master-key')?.addEventListener('click', () => {
             const keyText = document.getElementById('user-master-key-text').textContent;
             navigator.clipboard.writeText(keyText);
-            alert('📋 CS Master Key copiada al portapapeles: ' + keyText);
+            alert(' CS Master Key copiada al portapapeles: ' + keyText);
         });
 
         document.getElementById('btn-save').addEventListener('click', async () => {
@@ -919,17 +919,17 @@
             });
 
             if (result.success) {
-                alert('✅ ¡Perfil y preferencias de categorías guardadas con éxito!');
+                alert('[OK] ¡Perfil y preferencias de categorías guardadas con éxito!');
                 loadUser();
             } else {
-                alert('❌ ' + result.error);
+                alert('[ERROR] ' + result.error);
             }
         });
 
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            themeToggle.textContent = isLight ? '🌙' : '☀️';
+            themeToggle.textContent = isLight ? '' : '️';
         };
         if (themeToggle) {
             updateToggleIcon();

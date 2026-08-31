@@ -7,7 +7,7 @@
 > code is the files cited inline.
 > Last updated: 2026-06-17.
 
-**Status:** ✅ done — runtime downloader and the per-platform build
+**Status:** [OK] done — runtime downloader and the per-platform build
 pipeline both landed. Unit tests green (16 across `resolveSdkTarget` +
 `AgentSdkDownloader` in
 [`agentSdkDownloader.test.ts`](../../test/node/agentSdkDownloader.test.ts)),

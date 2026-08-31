@@ -35,7 +35,7 @@ Bridge: SDK Provider B → MultiSpanProcessor._spanProcessors.push(bridge)
   → onDidCompleteSpan → Debug Panel + File Logger
 ```
 
-**⚠️ SDK Internal Access Warning**: The bridge accesses `_delegate._activeSpanProcessor._spanProcessors` — internal properties of the OTel SDK v2 `BasicTracerProvider`. This is necessary because v2 removed the public `addSpanProcessor()` API. The SDK itself uses this same pattern in `forceFlush()`. This may break on OTel SDK major version upgrades — the bridge includes a runtime guard that degrades gracefully.
+**️ SDK Internal Access Warning**: The bridge accesses `_delegate._activeSpanProcessor._spanProcessors` — internal properties of the OTel SDK v2 `BasicTracerProvider`. This is necessary because v2 removed the public `addSpanProcessor()` API. The SDK itself uses this same pattern in `forceFlush()`. This may break on OTel SDK major version upgrades — the bridge includes a runtime guard that degrades gracefully.
 
 ### Span Hierarchies
 

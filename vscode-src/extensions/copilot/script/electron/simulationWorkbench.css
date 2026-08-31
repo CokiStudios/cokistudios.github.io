@@ -102,7 +102,7 @@
 }
 
 .test-renderer .runner-status.running::before {
-	content: '🏃';
+	content: '';
 }
 
 .test-renderer .runner-status.running {
@@ -118,7 +118,7 @@
 }
 
 .test-renderer .runner-status.finished::before {
-	content: '🏁';
+	content: '';
 }
 
 .test-renderer .runner-status.cancelled::before {
@@ -130,7 +130,7 @@
 }
 
 .test-renderer .runner-status.not-run::before {
-	content: '🔘';
+	content: '[BTN]';
 }
 
 .test-renderer .test-score {

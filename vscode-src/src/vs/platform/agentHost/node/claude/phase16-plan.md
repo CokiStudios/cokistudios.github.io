@@ -35,7 +35,7 @@ Resolve a Claude session's customizations (agents, skills, slash commands, MCP s
 
 ## Prerequisites
 
-- Phase 11 (customizations surface, projector, `ISdkResolvedCustomizations` snapshot) ✅.
+- Phase 11 (customizations surface, projector, `ISdkResolvedCustomizations` snapshot) [OK].
 - `pluginParsers.ts` exports `parseAgentFile` / `parseSkillFile` / `readSkills` / `readMarkdownComponents` / `parseMcpServerDefinitionMap` (verified present).
 - No external dependencies.
 
@@ -45,34 +45,34 @@ Build a Claude-specific disk resolver that reuses the shared frontmatter/MCP par
 
 ## Steps
 
-1. ✓ **Claude disk-scan resolver.** New module under `node/claude/customizations/` that walks Claude's roots (scoped by `cwd` + user home) and parses each file via `pluginParsers.ts` into discovered entries carrying the real `file:` URI + parsed name/description + source-kind (agent/skill/command). Reuse `readSkills` / `readMarkdownComponents` / `parseAgentFile` / `parseSkillFile`; commands use **flat `<name>.md`** discovery (not `<dir>/SKILL.md`).
+1.  **Claude disk-scan resolver.** New module under `node/claude/customizations/` that walks Claude's roots (scoped by `cwd` + user home) and parses each file via `pluginParsers.ts` into discovered entries carrying the real `file:` URI + parsed name/description + source-kind (agent/skill/command). Reuse `readSkills` / `readMarkdownComponents` / `parseAgentFile` / `parseSkillFile`; commands use **flat `<name>.md`** discovery (not `<dir>/SKILL.md`).
    - Files: create `node/claude/customizations/claudeSessionCustomizationDiscovery.ts`
    - Depends on: none
    - Done when: a unit test points the resolver at a temp tree (`~/.claude/agents/a.md`, `.claude/skills/s/SKILL.md`, `.claude/commands/c.md`) and gets entries with the correct real URIs + names.
 
-2. ✓ **Claude MCP-from-JSON scanner.** Read `~/.claude/settings.json`, `<cwd>/.claude/settings.json`, `<cwd>/.mcp.json`; call `parseMcpServerDefinitionMap` ([pluginParsers.ts](../../../agentPlugins/common/pluginParsers.ts)); emit `McpServerCustomization[]` with the real source-file URI (+ `range` for the entry span where feasible). Pre-materialize entries carry config but no live connection status.
+2.  **Claude MCP-from-JSON scanner.** Read `~/.claude/settings.json`, `<cwd>/.claude/settings.json`, `<cwd>/.mcp.json`; call `parseMcpServerDefinitionMap` ([pluginParsers.ts](../../../agentPlugins/common/pluginParsers.ts)); emit `McpServerCustomization[]` with the real source-file URI (+ `range` for the entry span where feasible). Pre-materialize entries carry config but no live connection status.
    - Files: `node/claude/customizations/claudeSessionCustomizationDiscovery.ts` (or a sibling `claudeMcpDiscovery.ts`)
    - Depends on: none (parallel with step 1)
    - Done when: a unit test parses a `settings.json` with `mcpServers` and yields entries with real URIs.
 
-3. ✓ **Discovered → protocol mapper.** Convert discovered entries into `Customization` objects: `DirectoryCustomization` containers (agents/skills/commands) with child `uri` = real source file, plus top-level `McpServerCustomization`. Mirror CopilotAgent's `toDiscoveredChildCustomization` shape ([copilotAgent.ts:2258-2310](../copilot/copilotAgent.ts#L2258)).
+3.  **Discovered → protocol mapper.** Convert discovered entries into `Customization` objects: `DirectoryCustomization` containers (agents/skills/commands) with child `uri` = real source file, plus top-level `McpServerCustomization`. Mirror CopilotAgent's `toDiscoveredChildCustomization` shape ([copilotAgent.ts:2258-2310](../copilot/copilotAgent.ts#L2258)).
    - Files: `node/claude/customizations/claudeSessionCustomizationDiscovery.ts` (mapper section)
    - Depends on: steps 1, 2
    - Done when: mapper output validates against the `Customization` union ([state.ts](../../common/state/protocol/channels-session/state.ts)); child URIs are real files.
 
-4. ✓ **Rework `projectSessionCustomizations` / add `buildDiscoveredCustomizations`.** Pre-materialize (no SDK) → `synced ∪ discovered`. Post-materialize (SDK snapshot) → `synced ∪ (discovered ∩ SDK-known by (name,type)) ∪ sdkOnlyFallback`, where `sdkOnlyFallback` is the SDK-known names with no matching disk entry, rendered **non-editable** via a `claude-internal:` URI (Decision D2).
+4.  **Rework `projectSessionCustomizations` / add `buildDiscoveredCustomizations`.** Pre-materialize (no SDK) → `synced ∪ discovered`. Post-materialize (SDK snapshot) → `synced ∪ (discovered ∩ SDK-known by (name,type)) ∪ sdkOnlyFallback`, where `sdkOnlyFallback` is the SDK-known names with no matching disk entry, rendered **non-editable** via a `claude-internal:` URI (Decision D2).
    - Files: [claudeSessionCustomizationsProjector.ts](./customizations/claudeSessionCustomizationsProjector.ts)
    - Depends on: step 3
    - Done when: unit tests cover both modes incl. the per-type name match (commands+skills filtered by the SDK command-name set; agents by agent set; MCP by server set) and the non-editable SDK-only fallback entries.
 
-5. ✓ **Wire resolver into `ClaudeAgentSession.getSessionCustomizations`.** Replaced `_sdkBundler`: scan disk (project + user) via `scanClaudeDiskCustomizations` + `scanClaudeMcpServers`, build via `buildDiscoveredCustomizations` (SDK snapshot used as filter post-materialize), project via `projectSessionCustomizations`. Session now requires `@IFileService` + `@INativeEnvironmentService`.
+5.  **Wire resolver into `ClaudeAgentSession.getSessionCustomizations`.** Replaced `_sdkBundler`: scan disk (project + user) via `scanClaudeDiskCustomizations` + `scanClaudeMcpServers`, build via `buildDiscoveredCustomizations` (SDK snapshot used as filter post-materialize), project via `projectSessionCustomizations`. Session now requires `@IFileService` + `@INativeEnvironmentService`.
    - Files: [claudeAgentSession.ts](./claudeAgentSession.ts), [claudeAgent.ts](./claudeAgent.ts) (construct/own the resolver per session)
    - Depends on: steps 3, 4
    - Done when: `getSessionCustomizations` on a provisional session returns real-URI disk items; on a materialized session it filters by the SDK set.
 
-6. ✓ **Watcher-backed refresh.** `ClaudeCustomizationWatcher` (in the discovery module) watches `<cwd>/.claude` + `<userHome>/.claude` (recursive) and `<cwd>` (non-recursive, trigger narrowed to `.mcp.json`) via `fileService.watch` + `onDidFilesChange`, debounced (`RunOnceScheduler`, 300ms; injectable for tests). Constructed in the session ctor (covers the provisional window) and registered as a session disposable; its `onDidChange` fires `_onDidCustomizationsChange`.
+6.  **Watcher-backed refresh.** `ClaudeCustomizationWatcher` (in the discovery module) watches `<cwd>/.claude` + `<userHome>/.claude` (recursive) and `<cwd>` (non-recursive, trigger narrowed to `.mcp.json`) via `fileService.watch` + `onDidFilesChange`, debounced (`RunOnceScheduler`, 300ms; injectable for tests). Constructed in the session ctor (covers the provisional window) and registered as a session disposable; its `onDidChange` fires `_onDidCustomizationsChange`.
 
-7. ✓ **Retire the stub bundler + fix `_resolveAgentName`.** The non-editable SDK-only fallback now lives in `buildDiscoveredCustomizations` (Step 4), so `ClaudeSdkCustomizationBundler` (the synthetic-tree writer) was fully **dead** — deleted along with its test; `CLAUDE_SDK_DEFAULT_AGENT_NAME` relocated into the discovery module (its only consumer). `_resolveAgentName` is now async: for a real `file:` agent it parses the frontmatter `name` via `parseAgentFile` (the SDK keys agents by frontmatter name, not filename; falls back to the basename on read failure); for a `claude-internal:` URI it decodes the name from the path. Both materialize + resume-rebuild call sites updated to await it.
+7.  **Retire the stub bundler + fix `_resolveAgentName`.** The non-editable SDK-only fallback now lives in `buildDiscoveredCustomizations` (Step 4), so `ClaudeSdkCustomizationBundler` (the synthetic-tree writer) was fully **dead** — deleted along with its test; `CLAUDE_SDK_DEFAULT_AGENT_NAME` relocated into the discovery module (its only consumer). `_resolveAgentName` is now async: for a real `file:` agent it parses the frontmatter `name` via `parseAgentFile` (the SDK keys agents by frontmatter name, not filename; falls back to the basename on read failure); for a `claude-internal:` URI it decodes the name from the path. Both materialize + resume-rebuild call sites updated to await it.
 
 8. **Tests.** New resolver/mapper/projector tests; update `FakeQuery` (which throws for `supportedAgents()`/`mcpServerStatus()` — [claudeAgent.test.ts:~459](../../test/node/claudeAgent.test.ts#L459)) to model SDK snapshots; update/replace the existing bundler tests; add the pre- vs post-materialize projection tests.
    - Files: create `test/node/claudeSessionCustomizationDiscovery.test.ts`; modify [claudeAgent.test.ts](../../test/node/claudeAgent.test.ts); delete/replace `test/node/customizations/claudeSdkCustomizationBundler.test.ts`
@@ -175,11 +175,11 @@ _Status: in progress — Steps 1–7 of 8 complete (resolver + SDK filter + wiri
 
 ### Council review (Steps 1–3, 2 models: GPT-5.5 + Opus 4.6)
 Must-fixes found and **resolved**:
-- 🔴 `readSkills` precedence was nondeterministic (parallel `Promise.all` over dirs with a shared `seen` set → user could shadow project). **Fixed:** scan each scope independently, merge project-first via a per-kind name map. Covered by the precedence test.
-- 🔴 `readSkills(userHome, …)` could match a spurious `<userHome>/SKILL.md` via the no-skills fallback. **Fixed:** pass the real `<scope>/.claude/skills` dir as `pluginRoot`.
-- 🔴 commands were folded into a `skills` container whose URI misrepresented their source. **Fixed:** commands now get their own `DirectoryCustomization` (`contents: Skill`, `uri: .claude/commands`).
-- 🟡 array-valued MCP configs passed the object guard. **Fixed:** added `Array.isArray(config)` exclusion. Covered by test.
-- 🟡 test gaps (precedence, flat `.mcp.json`, settings-without-`mcpServers`, array config) — **all added.**
+-  `readSkills` precedence was nondeterministic (parallel `Promise.all` over dirs with a shared `seen` set → user could shadow project). **Fixed:** scan each scope independently, merge project-first via a per-kind name map. Covered by the precedence test.
+-  `readSkills(userHome, …)` could match a spurious `<userHome>/SKILL.md` via the no-skills fallback. **Fixed:** pass the real `<scope>/.claude/skills` dir as `pluginRoot`.
+-  commands were folded into a `skills` container whose URI misrepresented their source. **Fixed:** commands now get their own `DirectoryCustomization` (`contents: Skill`, `uri: .claude/commands`).
+-  array-valued MCP configs passed the object guard. **Fixed:** added `Array.isArray(config)` exclusion. Covered by test.
+-  test gaps (precedence, flat `.mcp.json`, settings-without-`mcpServers`, array config) — **all added.**
 
 ### Deviations from the plan
 - Step 1 resolver is a free function (not a class) — matches `pluginParsers.ts` style; the watcher (Step 6) will wrap it.
@@ -212,11 +212,11 @@ Must-fixes found and **resolved**:
 
 ### Council review (Steps 4–7, 3 models: GPT-5.5 + Opus 4.6 + GPT-5.3-Codex)
 Consensus + single-but-evidenced findings, all **resolved**:
-- 🔴 **(all 3) stale projector test.** `customizations/claudeSessionCustomizationsProjector.test.ts` still called the old single-optional signature (`undefined` / a bare `Customization`) after Step 4 widened it to `readonly Customization[]` — compile error + would crash on `push(...undefined)`. **Fixed:** updated all four call sites to `[]` / `[entry]`.
-- 🟡 **(Codex) default agent not hidden when on disk.** `CLAUDE_SDK_DEFAULT_AGENT_NAME` was only suppressed in the SDK-only fallback loop, so a real `~/.claude/agents/general-purpose.md` could still surface post-materialize. **Fixed:** skip it in the disk-match agent loop too.
-- 🟢 renamed `seenSkills` → `seenCommandNames` + added a D3 comment (the set tracks the SDK's single command-name space matched by both disk skills and commands).
-- 🟡 *(SDK-only commands route to the skills container)* — acknowledged as inherent: `supportedCommands()` doesn't distinguish skill vs command, and these entries are non-editable anyway, so the container is cosmetic. Left as-is per D3.
-- 🟡 *(no scan cache; rescans per fetch)* — accepted; the watcher gates refetch frequency and the sets are small. Not worth a cache layer now.
+-  **(all 3) stale projector test.** `customizations/claudeSessionCustomizationsProjector.test.ts` still called the old single-optional signature (`undefined` / a bare `Customization`) after Step 4 widened it to `readonly Customization[]` — compile error + would crash on `push(...undefined)`. **Fixed:** updated all four call sites to `[]` / `[entry]`.
+-  **(Codex) default agent not hidden when on disk.** `CLAUDE_SDK_DEFAULT_AGENT_NAME` was only suppressed in the SDK-only fallback loop, so a real `~/.claude/agents/general-purpose.md` could still surface post-materialize. **Fixed:** skip it in the disk-match agent loop too.
+-  renamed `seenSkills` → `seenCommandNames` + added a D3 comment (the set tracks the SDK's single command-name space matched by both disk skills and commands).
+-  *(SDK-only commands route to the skills container)* — acknowledged as inherent: `supportedCommands()` doesn't distinguish skill vs command, and these entries are non-editable anyway, so the container is cosmetic. Left as-is per D3.
+-  *(no scan cache; rescans per fetch)* — accepted; the watcher gates refetch frequency and the sets are small. Not worth a cache layer now.
 
 ### Type-safety catch (post-review)
 `runTests` (esbuild) is transpile-only and the LSP/`Core - Typecheck` watch showed **stale** diagnostics, so an authoritative `npm run typecheck-client` was run — it surfaced **3 real type errors** that the green test run had masked: (1) `agent: { uri: agentFile }` needed `.toString()` (config wants a string URI); (2) `buildCtxWith` didn't return the new required `ITestContext.fileService` (inlined its file service like `createTestContext`); (3) the discovery test's `mcp` literal needed an explicit `McpServerCustomization[]` annotation. All fixed; `typecheck-client` now clean. **138 green** across the three suites.
@@ -225,19 +225,19 @@ Consensus + single-but-evidenced findings, all **resolved**:
 - Bundler tests: **deleted** (Step 7). Pre/post-materialize projection: covered by the discovery suite's SDK-filter test + the projector suite. Agent-name resolution: covered by the new materialize test.
 - `FakeQuery` SDK-snapshot *success-path* modeling (live post-materialize filter end-to-end) is **deferred to the E2E** (launch skill) — the filter logic itself is exhaustively unit-tested via `buildDiscoveredCustomizations`, and the existing *swallows SDK snapshot failure* test covers the failure path.
 
-### E2E (launch skill — Agents window, real product) ✓
+### E2E (launch skill — Agents window, real product) 
 Launched the Agents window from sources (`launch.sh --agents`) signed-in, drove it with `@playwright/cli`, with two real agents already on disk at `~/.claude/agents/{dead-code-detector,unit-test-writer}.md` (user scope).
-- ✅ **Disk scan surfaces real files.** The composer's agent picker ("Pick Mode, Agent") lists both real agents; the header shows **"Agents 2" / "Skills 13"** counts from the scan (user + project scope).
-- ✅ **Real names + descriptions parsed.** "Configure Custom Agents…" opens the **"Agent Customizations for Claude [Agent Host]"** dialog listing both agents with their **full real frontmatter descriptions** (the old stub bundler had none) — confirming `scanClaudeDiskCustomizations` parsed the actual files.
-- ✅ **Editable real file opens (not a stub).** Clicking the `dead-code-detector` entry logged `customizationsDebug.log … [user] /Users/tyleonha/.claude/agents/dead-code-detector.md` and `renderer.log … [text file model] resolve() - enter file:///Users/tyleonha/.claude/agents/dead-code-detector.md` — i.e. the workbench opened the **real** `~/.claude/agents/dead-code-detector.md` for editing, the core requirement. (Old behaviour opened a synthetic `claude-discovered/<hash>/…` stub.)
-- ✅ **No regressions in logs.** `agenthost.log` shows no customization/scan/`_resolveAgentName` errors and no `claude-discovered` stub-bundler activity (only unrelated launcher noise: `vscode-userdata` provider + sticky-bit).
+- [OK] **Disk scan surfaces real files.** The composer's agent picker ("Pick Mode, Agent") lists both real agents; the header shows **"Agents 2" / "Skills 13"** counts from the scan (user + project scope).
+- [OK] **Real names + descriptions parsed.** "Configure Custom Agents…" opens the **"Agent Customizations for Claude [Agent Host]"** dialog listing both agents with their **full real frontmatter descriptions** (the old stub bundler had none) — confirming `scanClaudeDiskCustomizations` parsed the actual files.
+- [OK] **Editable real file opens (not a stub).** Clicking the `dead-code-detector` entry logged `customizationsDebug.log … [user] /Users/tyleonha/.claude/agents/dead-code-detector.md` and `renderer.log … [text file model] resolve() - enter file:///Users/tyleonha/.claude/agents/dead-code-detector.md` — i.e. the workbench opened the **real** `~/.claude/agents/dead-code-detector.md` for editing, the core requirement. (Old behaviour opened a synthetic `claude-discovered/<hash>/…` stub.)
+- [OK] **No regressions in logs.** `agenthost.log` shows no customization/scan/`_resolveAgentName` errors and no `claude-discovered` stub-bundler activity (only unrelated launcher noise: `vscode-userdata` provider + sticky-bit).
 - Scenarios 2 (post-materialize filter) and 4 (live watcher) were left to the exhaustive unit coverage (`buildDiscoveredCustomizations` filter tests + the debounced watcher test) rather than a full SDK materialize run.
 - Launch gotcha (recorded in repo memory): macOS `$TMPDIR` is too long for the IPC `.sock` (`listen EINVAL`) — relaunch with a short `TMPDIR=/tmp/...`.
 
 ### Post-review correction — commands are skills (D3 revised)
 The initial implementation modelled a separate "commands" category (`Command` kind + a `.claude/commands` container). The customizations spec (§3) is explicit: commands are *a variant of skills, treated internally as skills*. **Removed** the `Command` kind and the commands container; the resolver still scans `.claude/commands/*.md` but folds the results into skills (collected after skills so skills win same-name conflicts). Tests updated (commands-folded-into-skills + a skill-wins-over-same-named-command priority test); **139 green**.
 
-### E2E — skills (follow-up to the agents-only first pass) ✓
+### E2E — skills (follow-up to the agents-only first pass) 
 Re-launched against the vscode repo (whose `.claude/skills` → `.agents/skills` symlink exposes the `launch` skill at workspace scope). The Claude session's **"Skills 13"** = 1 workspace (`launch`) + 12 user-scope (`~/.claude/skills/*`), each with its real parsed description. Clicking `launch` opened the **real workspace file** `renderer.log: [text file model] resolve() - enter file:///Users/…/vscode/.claude/skills/launch/SKILL.md` — confirming workspace-scope skills resolve through the symlinked layout and open for editing.
 
 ### Per-scope containers (Workspace vs User)

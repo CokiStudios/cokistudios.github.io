@@ -33,7 +33,7 @@
                     <div>
                         <h2 id="user-name" class="text-xl font-bold text-slate-800">Usuario</h2>
                         <p id="user-email" class="text-slate-500">email@coki.com</p>
-                        <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">✓ Verificado por Coki Studios</span>
+                        <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full"> Verificado por Coki Studios</span>
                     </div>
                 </div>
                 <button id="btn-logout" class="w-full py-3 border-2 border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors">Cerrar sesión</button>
@@ -54,7 +54,7 @@
             const codeVerifier = generateCode(128);
             const codeChallenge = await sha256(codeVerifier);
 
-            // 🍪 Guardar code_verifier en cookie (10 minutos)
+            //  Guardar code_verifier en cookie (10 minutos)
             setCookie('coki_oauth_code_verifier', codeVerifier, { maxAge: 600 });
 
             const authUrl = new URL(COKI_AUTH_URL);
@@ -66,7 +66,7 @@
             authUrl.searchParams.set('code_challenge_method', 'S256');
             authUrl.searchParams.set('state', generateCode(16));
 
-            console.log('🔗 Auth URL:', authUrl.toString());
+            console.log(' Auth URL:', authUrl.toString());
             window.location.href = authUrl.toString();
         });
 
@@ -82,7 +82,7 @@
 
             if (!code) return;
 
-            // 🍪 Leer code_verifier de cookie
+            //  Leer code_verifier de cookie
             const codeVerifier = getCookie('coki_oauth_code_verifier');
             if (!codeVerifier) {
                 alert('Error: PKCE verifier perdido');
@@ -99,7 +99,7 @@
                 return;
             }
 
-            // 🍪 Guardar tokens en cookies (7 días)
+            //  Guardar tokens en cookies (7 días)
             setCookie('coki_access_token', result.access_token, { maxAge: 7 * 24 * 60 * 60 });
             setCookie('coki_id_token', result.id_token, { maxAge: 7 * 24 * 60 * 60 });
 

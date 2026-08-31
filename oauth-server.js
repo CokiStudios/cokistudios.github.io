@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏢 COKI STUDIOS OAUTH SERVER v4 — Con Cookies
+//  COKI STUDIOS OAUTH SERVER v4 — Con Cookies
 // ═══════════════════════════════════════════════════════════════
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -11,7 +11,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ═══════════════════════════════════════════════════════════════
-// 🔐 UTILIDADES CRYPTO (PKCE + Tokens)
+// [SECURE] UTILIDADES CRYPTO (PKCE + Tokens)
 // ═══════════════════════════════════════════════════════════════
 
 function generateCode(length = 32) {
@@ -83,11 +83,11 @@ async function generateJWE(payload, secretKeyStr = 'coki_studios_super_secret_jw
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ✅ VALIDAR CLIENTE desde Supabase
+// [OK] VALIDAR CLIENTE desde Supabase
 // ═══════════════════════════════════════════════════════════════
 
 async function validateClient(clientId, redirectUri) {
-    console.log('🔍 validateClient:', { clientId, redirectUri });
+    console.log(' validateClient:', { clientId, redirectUri });
     
     const { data: client, error } = await supabase
         .from('oauth_clients')
@@ -97,15 +97,15 @@ async function validateClient(clientId, redirectUri) {
         .single();
     
     if (error || !client) {
-        console.log('❌ Cliente no encontrado:', error);
+        console.log('[ERROR] Cliente no encontrado:', error);
         return { valid: false, error: 'invalid_client', error_description: 'Client not registered or inactive' };
     }
     
-    console.log('📋 Cliente encontrado:', client.client_name);
-    console.log('🔗 Redirect URIs registrados:', client.redirect_uris);
+    console.log(' Cliente encontrado:', client.client_name);
+    console.log(' Redirect URIs registrados:', client.redirect_uris);
     
     if (!client.redirect_uris.includes(redirectUri)) {
-        console.log('❌ Redirect URI no coincide:', redirectUri);
+        console.log('[ERROR] Redirect URI no coincide:', redirectUri);
         return { valid: false, error: 'invalid_redirect_uri', error_description: 'Redirect URI not allowed: ' + redirectUri };
     }
     
@@ -113,7 +113,7 @@ async function validateClient(clientId, redirectUri) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🔑 FUNCIONES PÚBLICAS DEL OAUTH SERVER
+// [AUTH] FUNCIONES PÚBLICAS DEL OAUTH SERVER
 // ═══════════════════════════════════════════════════════════════
 
 async function handleAuthorizeRequest(urlParams) {
@@ -125,7 +125,7 @@ async function handleAuthorizeRequest(urlParams) {
     const codeChallengeMethod = urlParams.get('code_challenge_method') || 'S256';
     const state = urlParams.get('state');
     
-    console.log('📥 handleAuthorizeRequest:', { clientId, redirectUri, responseType, scope, codeChallenge });
+    console.log(' handleAuthorizeRequest:', { clientId, redirectUri, responseType, scope, codeChallenge });
     
     if (!clientId || !redirectUri || !codeChallenge) {
         return { error: 'invalid_request', error_description: 'Missing parameters' };
@@ -135,12 +135,12 @@ async function handleAuthorizeRequest(urlParams) {
     }
     
     redirectUri = decodeURIComponent(redirectUri);
-    console.log('🔗 redirect_uri decodificado:', redirectUri);
+    console.log(' redirect_uri decodificado:', redirectUri);
     
     const validation = await validateClient(clientId, redirectUri);
     if (!validation.valid) return validation;
     
-    // 🍪 GUARDAR REQUEST EN COOKIE (10 minutos)
+    //  GUARDAR REQUEST EN COOKIE (10 minutos)
     const requests = getCookieJSON('coki_auth_requests') || {};
     requests[codeChallenge] = {
         client_id: clientId,
@@ -154,31 +154,31 @@ async function handleAuthorizeRequest(urlParams) {
     };
     setCookieJSON('coki_auth_requests', requests, { maxAge: 600 });
     
-    console.log('💾 Request guardado en cookie:', requests[codeChallenge]);
+    console.log(' Request guardado en cookie:', requests[codeChallenge]);
     
     return { valid: true, client_name: validation.client.client_name, client_logo: validation.client.logo_url };
 }
 
 async function approveAuthorization(codeChallenge, userData) {
-    console.log('🚀 approveAuthorization:', { codeChallenge, userId: userData.id });
+    console.log('[APP] approveAuthorization:', { codeChallenge, userId: userData.id });
     
-    // 🍪 LEER REQUEST DE COOKIE
+    //  LEER REQUEST DE COOKIE
     const requests = getCookieJSON('coki_auth_requests') || {};
     const request = requests[codeChallenge];
     
     if (!request) {
-        console.log('❌ Request no encontrado en cookies');
+        console.log('[ERROR] Request no encontrado en cookies');
         return { error: 'request_expired', error_description: 'Authorization request expired' };
     }
     
-    console.log('📋 Request encontrado:', request);
+    console.log(' Request encontrado:', request);
     
     const authCode = 'coki_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
     
-    console.log('📝 Code generado:', authCode);
-    console.log('🔗 redirect_uri a guardar:', request.redirect_uri);
+    console.log(' Code generado:', authCode);
+    console.log(' redirect_uri a guardar:', request.redirect_uri);
     
     const { data, error } = await supabase.from('oauth_codes').insert({
         code: authCode,
@@ -191,13 +191,13 @@ async function approveAuthorization(codeChallenge, userData) {
     });
     
     if (error) {
-        console.error('❌ Error guardando code:', error);
+        console.error('[ERROR] Error guardando code:', error);
         return { error: 'server_error', error_description: 'Could not create authorization code: ' + error.message };
     }
     
-    console.log('✅ Code guardado en Supabase');
+    console.log('[OK] Code guardado en Supabase');
     
-    // 🍪 LIMPIAR REQUEST
+    //  LIMPIAR REQUEST
     delete requests[codeChallenge];
     setCookieJSON('coki_auth_requests', requests, { maxAge: 600 });
     
@@ -205,13 +205,13 @@ async function approveAuthorization(codeChallenge, userData) {
     redirectUrl.searchParams.set('code', authCode);
     if (request.state) redirectUrl.searchParams.set('state', request.state);
     
-    console.log('🚀 Redirigiendo a:', redirectUrl.toString());
+    console.log('[APP] Redirigiendo a:', redirectUrl.toString());
     
     return { success: true, redirect_url: redirectUrl.toString() };
 }
 
 async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
-    console.log('🔄 exchangeCodeForToken:', { code, redirectUri });
+    console.log(' exchangeCodeForToken:', { code, redirectUri });
     
     const { data: codeData, error: findError } = await supabase
         .from('oauth_codes')
@@ -222,7 +222,7 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         .single();
     
     if (findError || !codeData) {
-        console.log('❌ Code no encontrado o expirado:', findError);
+        console.log('[ERROR] Code no encontrado o expirado:', findError);
         return { error: 'invalid_grant', error_description: 'Code invalid or expired' };
     }
 
@@ -234,25 +234,25 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         .single();
 
     if (clientError || !clientData) {
-        console.log('❌ Client not found for code:', clientError);
+        console.log('[ERROR] Client not found for code:', clientError);
         return { error: 'invalid_client', error_description: 'Client not found' };
     }
 
     codeData.oauth_clients = clientData;
     
-    console.log('📋 Code encontrado:', codeData.code);
+    console.log(' Code encontrado:', codeData.code);
     
     let storedRedirectUri = codeData.redirect_uri;
     let receivedRedirectUri = redirectUri;
     
     if (storedRedirectUri !== receivedRedirectUri) {
-        console.log('❌ Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
+        console.log('[ERROR] Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
         return { error: 'invalid_grant', error_description: 'Redirect URI mismatch' };
     }
     
     const expectedChallenge = await sha256(codeVerifier);
     if (expectedChallenge !== codeData.code_challenge) {
-        console.log('❌ PKCE verification failed');
+        console.log('[ERROR] PKCE verification failed');
         return { error: 'invalid_grant', error_description: 'PKCE verification failed' };
     }
     

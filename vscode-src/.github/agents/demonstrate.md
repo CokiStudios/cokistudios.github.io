@@ -94,19 +94,19 @@ If you are typing into a monaco input and you can't use the standard methods, fo
 
 1. **Take a page snapshot** to identify the editor structure in the accessibility tree
 2. **Find the parent `code` role element** that wraps the Monaco editor
-   - ❌ DO NOT click on `textarea` or `textbox` elements - these are overlaid by Monaco's rendering
-   - ✅ DO click on the `code` role element that is the parent container
+   - [ERROR] DO NOT click on `textarea` or `textbox` elements - these are overlaid by Monaco's rendering
+   - [OK] DO click on the `code` role element that is the parent container
 3. **Click on the `code` element** to focus the editor - this properly delegates focus to Monaco's internal text handling
 4. **Verify focus** by checking that the nested textbox element has the `[active]` attribute in a new snapshot
 5. **Use `page.keyboard.press()` for EACH character individually** - standard Playwright `type()` or `fill()` methods don't work with Monaco editors since they intercept keyboard events at the page level
 
 **Example:**
 ```js
-// ❌ WRONG - this will fail with timeout
+// [ERROR] WRONG - this will fail with timeout
 await page.locator('textarea').click();
 await page.locator('textarea').fill('text');
 
-// ✅ CORRECT
+// [OK] CORRECT
 await page.locator('[role="code"]').click();
 await page.keyboard.press('t');
 await page.keyboard.press('e');

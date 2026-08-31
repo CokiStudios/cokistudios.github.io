@@ -219,14 +219,14 @@ Starting sessions web server on port 9542…
 Server ready.
 
 ▶ Scenario: Repository picker opens when submitting without a repo
-  ✅   step 1: Click button "Cloud"
-  ✅   step 2: Type "build the project" in the chat input
-  ✅   step 3: Press Enter to submit
-  ✅   step 4: Verify the repository picker dropdown is visible
+  [OK]   step 1: Click button "Cloud"
+  [OK]   step 2: Type "build the project" in the chat input
+  [OK]   step 3: Press Enter to submit
+  [OK]   step 4: Verify the repository picker dropdown is visible
 
 ▶ Scenario: Switching to Cloud target disables the Add Run Action button
-  ✅   step 1: Click button "Cloud"
-  ✅   step 2: Click button "Local"
+  [OK]   step 1: Click button "Cloud"
+  [OK]   step 2: Click button "Local"
 
 Results: 6 passed, 0 failed
 ```

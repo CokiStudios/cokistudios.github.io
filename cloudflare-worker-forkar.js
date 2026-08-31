@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * 🌐 CLOUDFLARE WORKER: FORKAR SUBDOMAIN ROUTER & PROXY
+ *  CLOUDFLARE WORKER: FORKAR SUBDOMAIN ROUTER & PROXY
  * Subdominio: forkar.cokistudios.com
  * Destino Origen: cokistudios.com / cokistudios.github.io
  * ═══════════════════════════════════════════════════════════════

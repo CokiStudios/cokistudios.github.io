@@ -43,7 +43,7 @@
             const result = await handleCokiOAuthCallback();
             
             if (result.success) {
-                // 🍪 Leer pending OAuth de cookie
+                //  Leer pending OAuth de cookie
                 const pending = getCookie('coki_oauth_pending');
                 if (pending) {
                     deleteCookie('coki_oauth_pending');

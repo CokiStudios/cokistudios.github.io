@@ -42,13 +42,13 @@ extensions/copilot/src/platform/otel/
 │   ├── noopOtelService.ts      # Zero-cost no-op (used by chatLib / tests)
 │   ├── inMemoryOTelService.ts  # ← actually under node/, see below
 │   ├── agentOTelEnv.ts         # deriveCopilotCliOTelEnv / deriveClaudeOTelEnv
-│   ├── genAiAttributes.ts      # ⚠ Single source of truth for attribute keys & enums
+│   ├── genAiAttributes.ts      #  Single source of truth for attribute keys & enums
 │   ├── genAiEvents.ts          # Event emitter helpers (emit*Event)
 │   ├── genAiMetrics.ts         # GenAiMetrics class
 │   ├── messageFormatters.ts    # truncateForOTel, normalizeProviderMessages, toSystemInstructions, …
 │   ├── workspaceOTelMetadata.ts
 │   ├── sessionUtils.ts
-│   └── index.ts                # ⚠ Public barrel — re-export new helpers/constants here
+│   └── index.ts                #  Public barrel — re-export new helpers/constants here
 └── node/
     ├── otelServiceImpl.ts      # NodeOTelService + DiagnosticSpanExporter + FilteredSpanExporter + EXPORTABLE_OPERATION_NAMES
     ├── inMemoryOTelService.ts  # InMemoryOTelService (used when OTel is disabled — feeds debug panel only)
@@ -230,7 +230,7 @@ For sub-process env vars, also update:
 The bridge (`copilotCliBridgeSpanProcessor.ts`) reaches into `_delegate._activeSpanProcessor._spanProcessors` — internal OTel SDK v2 state. This is documented as a known risk. If you touch it:
 
 - Keep the runtime guard that degrades gracefully if the internal shape changes.
-- Update the **⚠ SDK Internal Access Warning** block in `agent_monitoring_arch.md` if the access pattern changes.
+- Update the ** SDK Internal Access Warning** block in `agent_monitoring_arch.md` if the access pattern changes.
 - Add a unit test in `copilotCliBridgeSpanProcessor.spec.ts`.
 
 ## 8. Validation
@@ -262,11 +262,11 @@ These are documented in `agent_monitoring_arch.md` — preserve them:
 
 ## 10. Anti-Patterns to Reject
 
-- ❌ Importing `@opentelemetry/api` (or any `@opentelemetry/*` package) from anywhere other than `node/otelServiceImpl.ts`, `fileExporters.ts`, or the CLI bridge processor type imports.
-- ❌ Hard-coded attribute keys: `'copilot_chat.hook_type'` instead of `CopilotChatAttr.HOOK_TYPE`.
-- ❌ Hard-coded provider strings: `'github'` / `'anthropic'` / `'gemini'` instead of `GenAiProviderName.*`.
-- ❌ Magic `SpanStatusCode` numbers (`code: 1`, `code: 2`) — use the enum.
-- ❌ Emitting any free-form content attribute without passing it through `truncateForOTel` — OTLP batches will silently drop or fail.
-- ❌ Logging full prompt / response / system-instruction bodies without `config.captureContent` gating (these are pattern 2 above).
-- ❌ Adding a span operation name without deciding whether it's exportable (`EXPORTABLE_OPERATION_NAMES`).
-- ❌ Updating instrumentation without updating `agent_monitoring.md` / `agent_monitoring_arch.md` in the same change.
+- [ERROR] Importing `@opentelemetry/api` (or any `@opentelemetry/*` package) from anywhere other than `node/otelServiceImpl.ts`, `fileExporters.ts`, or the CLI bridge processor type imports.
+- [ERROR] Hard-coded attribute keys: `'copilot_chat.hook_type'` instead of `CopilotChatAttr.HOOK_TYPE`.
+- [ERROR] Hard-coded provider strings: `'github'` / `'anthropic'` / `'gemini'` instead of `GenAiProviderName.*`.
+- [ERROR] Magic `SpanStatusCode` numbers (`code: 1`, `code: 2`) — use the enum.
+- [ERROR] Emitting any free-form content attribute without passing it through `truncateForOTel` — OTLP batches will silently drop or fail.
+- [ERROR] Logging full prompt / response / system-instruction bodies without `config.captureContent` gating (these are pattern 2 above).
+- [ERROR] Adding a span operation name without deciding whether it's exportable (`EXPORTABLE_OPERATION_NAMES`).
+- [ERROR] Updating instrumentation without updating `agent_monitoring.md` / `agent_monitoring_arch.md` in the same change.

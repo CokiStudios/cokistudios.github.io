@@ -149,12 +149,12 @@
                 <a href="forkar" class="nav-link">Comunidad</a>
                 <a href="dashboard" class="nav-link">Mi Cuenta</a>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es">🇪🇸 ES</option>
-                    <option value="en">🇺🇸 EN</option>
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="pt">🇧🇷 PT</option>
+                    <option value="es"> ES</option>
+                    <option value="en"> EN</option>
+                    <option value="fr"> FR</option>
+                    <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
             </div>
         </div>
     </nav>
@@ -165,7 +165,7 @@
 
         <!-- ACCESO DENEGADO -->
         <div id="access-denied" class="access-denied" style="display:none;">
-            <div class="access-denied-icon">🛡️</div>
+            <div class="access-denied-icon">️</div>
             <h2>Acceso Restringido</h2>
             <p>Esta consola es únicamente accesible para moderadores y administradores oficiales de Coki Studios.</p>
             <a href="forkar" class="btn btn-green" style="display:inline-block; text-decoration:none;">Volver a la Comunidad</a>
@@ -214,7 +214,7 @@
                 return;
             }
 
-            console.log('👤 Current User:', currentUser);
+            console.log('[USER] Current User:', currentUser);
 
             // 1. Verificar el rol en la base de datos
             const { data: roleData, error: roleError } = await supabase
@@ -223,7 +223,7 @@
                 .eq('user_id', currentUser.id)
                 .maybeSingle();
 
-            console.log('🛡️ Role Query Result:', { roleData, roleError });
+            console.log('️ Role Query Result:', { roleData, roleError });
 
             userRole = roleData?.role || 'user';
 
@@ -284,7 +284,7 @@
             if (reports.length === 0) {
                 container.innerHTML = `
                     <div style="text-align:center; padding:60px; background:var(--card); border:1px dashed var(--border); border-radius:16px;">
-                        <span style="font-size:36px;">🎉</span>
+                        <span style="font-size:36px;"></span>
                         <h3 style="margin-top:12px; font-size:16px;">¡Todo limpio!</h3>
                         <p style="color:var(--text-sub); font-size:14px; margin-top:4px;">No hay reportes pendientes de revisión.</p>
                     </div>
@@ -324,7 +324,7 @@
                                 <div class="reported-body">${contentBody}</div>
                             </div>
                             
-                            ${r.details ? `<div style="font-size:13px; color:var(--text-sub); margin-top:8px;">📝 Detalles adicionales: <span style="color:var(--text); font-style:italic;">"${esc(r.details)}"</span></div>` : ''}
+                            ${r.details ? `<div style="font-size:13px; color:var(--text-sub); margin-top:8px;"> Detalles adicionales: <span style="color:var(--text); font-style:italic;">"${esc(r.details)}"</span></div>` : ''}
                         </div>
                         <div class="report-actions">
                             <button class="btn btn-ghost" onclick="resolveReport('${r.id}', 'dismissed')">Desestimar</button>
@@ -406,7 +406,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            themeToggle.textContent = isLight ? '🌙' : '☀️';
+            themeToggle.textContent = isLight ? '' : '️';
         };
         if (themeToggle) {
             updateToggleIcon();

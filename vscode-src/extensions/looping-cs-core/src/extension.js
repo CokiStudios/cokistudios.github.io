@@ -3,7 +3,7 @@ const vscode = require('vscode');
 let currentPanel = undefined;
 
 function activate(context) {
-    console.log('⚡ CS Looping Proprietary Core Active in VS Code');
+    console.log('[SYS] CS Looping Proprietary Core Active in VS Code');
 
     // 1. Command: Run .loop in Live Viewport Webview
     let runDisposable = vscode.commands.registerCommand('looping.runActiveFile', function () {
@@ -25,7 +25,7 @@ function activate(context) {
 
     // 2. Command: Build Native Binary
     let buildDisposable = vscode.commands.registerCommand('looping.buildBinary', function () {
-        vscode.window.showInformationMessage('⚡ Compiling .loop with CS Proprietary Compiler Engine -> Target: Universal Native Binary (Mac/iOS/Droid)...');
+        vscode.window.showInformationMessage('[SYS] Compiling .loop with CS Proprietary Compiler Engine -> Target: Universal Native Binary (Mac/iOS/Droid)...');
     });
 
     context.subscriptions.push(runDisposable, buildDisposable);
@@ -106,7 +106,7 @@ function getWebviewContent(code) {
         function parseAndRun(code) {
             gameEntities = [];
             renderQueue = [];
-            log('⚡ Parsing .loop source code...');
+            log('[SYS] Parsing .loop source code...');
 
             const lines = code.split('\\n');
             for (let line of lines) {
@@ -133,7 +133,7 @@ function getWebviewContent(code) {
                     });
                 }
             }
-            log('✅ Running at 60 FPS in Live Viewport.');
+            log('[OK] Running at 60 FPS in Live Viewport.');
         }
 
         function gameLoop() {

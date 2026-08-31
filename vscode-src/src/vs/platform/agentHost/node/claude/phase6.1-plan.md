@@ -75,15 +75,15 @@ Order: **A → B → C → E → D → F → G**.
 
 | Cycle | Scope | Files |
 |---|---|---|
-| A ✓ | Doc corrections (zero code) | [CONTEXT.md](./CONTEXT.md) |
-| B ✓ | Auth conformance (C3 + C4) | [claudeAgent.ts](./claudeAgent.ts) |
-| C ✓ | Send-seam uuid (C1) | [claudeAgent.ts](./claudeAgent.ts) |
-| E ✓ | Materialize + metadata coherence (C2 + I2 + I7 + I8) | [claudeAgent.ts](./claudeAgent.ts), [claudeSessionConfigKeys.ts](../../common/claudeSessionConfigKeys.ts) |
-| D ✓ | Catalog completeness (I3 + I4 + I5 + I6 + I9) | [claudeAgent.ts](./claudeAgent.ts) |
-| F ✓ | Mapper widening: 'assistant' canonical (I1) | [claudeMapSessionEvents.ts](./claudeMapSessionEvents.ts) |
+| A  | Doc corrections (zero code) | [CONTEXT.md](./CONTEXT.md) |
+| B  | Auth conformance (C3 + C4) | [claudeAgent.ts](./claudeAgent.ts) |
+| C  | Send-seam uuid (C1) | [claudeAgent.ts](./claudeAgent.ts) |
+| E  | Materialize + metadata coherence (C2 + I2 + I7 + I8) | [claudeAgent.ts](./claudeAgent.ts), [claudeSessionConfigKeys.ts](../../common/claudeSessionConfigKeys.ts) |
+| D  | Catalog completeness (I3 + I4 + I5 + I6 + I9) | [claudeAgent.ts](./claudeAgent.ts) |
+| F  | Mapper widening: 'assistant' canonical (I1) | [claudeMapSessionEvents.ts](./claudeMapSessionEvents.ts) |
 | G | Stale phase-plan refresh (N1) | [phase5-plan.md](./phase5-plan.md), [phase6-plan.md](./phase6-plan.md), [roadmap.md](./roadmap.md) |
 
-### Cycle A ✓ — Mapping doc corrections (CONTEXT.md only)
+### Cycle A  — Mapping doc corrections (CONTEXT.md only)
 
 *Completed. See [Implementation Notes](#implementation-notes) for the decisions taken and the resulting CONTEXT.md changes.*
 
@@ -99,7 +99,7 @@ Order: **A → B → C → E → D → F → G**.
 
 **Risk:** None (doc-only). Decisions in this cycle constrain Cycles D and E.
 
-### Cycle B ✓ — Auth conformance (M13 / C3 + C4)
+### Cycle B  — Auth conformance (M13 / C3 + C4)
 
 *Completed. See [Implementation Notes](#implementation-notes) for the resulting code changes.*
 
@@ -114,7 +114,7 @@ Order: **A → B → C → E → D → F → G**.
 
 **Risk:** Test breakage (grep `'Claude proxy is not running'`); workbench-side handlers matching the message.
 
-### Cycle C ✓ — Send-seam uuid (M1 / C1)
+### Cycle C  — Send-seam uuid (M1 / C1)
 
 *Completed. See [Implementation Notes](#implementation-notes) for the resulting code changes.*
 
@@ -126,7 +126,7 @@ Order: **A → B → C → E → D → F → G**.
 
 **Risk:** Pre-existing transcripts have SDK-random uuids; one-time discontinuity. No callers depend on this yet (Phase 6.5 deferred).
 
-### Cycle E ✓ — Materialize + metadata coherence (M11 / C2 + I2 + I7 + I8)
+### Cycle E  — Materialize + metadata coherence (M11 / C2 + I2 + I7 + I8)
 
 *Completed. See [Implementation Notes](#implementation-notes) for the resulting code changes.*
 
@@ -152,7 +152,7 @@ The largest cycle. Unifying insight: provisional state, materialize-time config 
 3. Must verify `CCAModel.id` ↔ SDK `Options.model` format compatibility before landing.
 4. Tests on the materialize `Options` shape break.
 
-### Cycle D ✓ — Catalog completeness (M12 / I3 + I4 + I5 + I6 + I9)
+### Cycle D  — Catalog completeness (M12 / I3 + I4 + I5 + I6 + I9)
 
 **Files:** [claudeAgent.ts](./claudeAgent.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts), [CONTEXT.md](./CONTEXT.md)
 
@@ -172,7 +172,7 @@ The largest cycle. Unifying insight: provisional state, materialize-time config 
 2. ~~Verify CCAModel exposes thinking-capability data.~~ Verified — `CCAModelSupports` exposes `min_thinking_budget`/`max_thinking_budget` (types.d.ts:208-214). No `supportedReasoningEfforts` field on Anthropic CCAModel rows; D3 must synth the 5-value `ClaudeEffortLevel` enum directly when the model supports adaptive thinking.
 3. Tests on the model filter shape may break (D2). — *No code change in D2; ignore.*
 
-### Cycle F ✓ — Mapper widening: 'assistant' canonical (M8 / I1)
+### Cycle F  — Mapper widening: 'assistant' canonical (M8 / I1)
 
 *Completed. See [Implementation Notes](#implementation-notes) for the resulting code changes.*
 
@@ -187,7 +187,7 @@ The largest cycle. Unifying insight: provisional state, materialize-time config 
 
 **Risk:** UI render glitches if reconciliation order is wrong. Phase 6's `canUseTool: deny` keeps `'assistant'` messages text-only in practice — safer landing zone than Phase 7. Phase 7 directly depends on this fix.
 
-### Cycle G ✓ — Stale phase-plan + roadmap refresh (NIT, doc-only)
+### Cycle G  — Stale phase-plan + roadmap refresh (NIT, doc-only)
 
 **Files:** [phase5-plan.md](./phase5-plan.md), [phase6-plan.md](./phase6-plan.md), [roadmap.md](./roadmap.md)
 

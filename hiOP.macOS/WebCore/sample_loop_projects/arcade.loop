@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════
-# 🎮 Holo Arcade — Built with Looping Compile (.loop)
+# [GAME] Holo Arcade — Built with Looping Compile (.loop)
 # Powered by Shine Loop Console & Holo Looping OoS 1.0 (Linux Gaming Core)
 # Sub-division of Holo Entertainment by Coki Studios
 # ═══════════════════════════════════════════════════════════════
@@ -14,13 +14,13 @@ define app "HoloArcade2D" version 2.0:
     set player_name to "Angel Helium"
     set console_target to "Shine Loop Handheld / Console"
     
-    print "⚡ Booting Holo Looping OoS Linux Gaming Subsystem..."
-    print "🎮 Target Platform:", console_target
-    print "👤 Player Active:", player_name
+    print "[SYS] Booting Holo Looping OoS Linux Gaming Subsystem..."
+    print "[GAME] Target Platform:", console_target
+    print "[USER] Player Active:", player_name
     
     # ── UI HUD Glassmorphism Elements ──
     draw card at (30, 30) with size (260, 110) and title "Shine Loop Console" and text "OS: Holo Looping OoS\nPipeline: 60 FPS Low-Latency\nStatus: Gamepad Synced"
-    draw button at (30, 155) with text "⚡ Pulse Core Blast" and action "pulse_boost"
+    draw button at (30, 155) with text "[SYS] Pulse Core Blast" and action "pulse_boost"
 
     # ── Floating Platforms ──
     spawn platform at (200, 330) with size (150, 16) and color "#6366f1"
@@ -35,4 +35,4 @@ define app "HoloArcade2D" version 2.0:
     spawn sprite "AngelHelium" at (120, 380) with color "#38bdf8" and size (34, 46)
     spawn sprite "CorruptedForkbot" at (480, 380) with color "#ef4444" and size (34, 46)
     
-    print "🎮 Controls: [A/D] Move • [W/Space] Float Jump • Collect ★ Stars to Score!"
+    print "[GAME] Controls: [A/D] Move • [W/Space] Float Jump • Collect * Stars to Score!"

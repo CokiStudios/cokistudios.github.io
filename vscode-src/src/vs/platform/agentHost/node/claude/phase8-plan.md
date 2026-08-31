@@ -47,7 +47,7 @@ Per-file undo is DB-backed: the workbench reads before/after content via `resour
 
 ## Steps
 
-### Step 1 — Move `FileEditTracker` to `node/shared/` ✓
+### Step 1 — Move `FileEditTracker` to `node/shared/` 
 
 **Files:** `node/copilot/fileEditTracker.ts` → `node/shared/fileEditTracker.ts`, then update importers.
 
@@ -67,7 +67,7 @@ Also update test files that import from the old path:
 
 ---
 
-### Step 2 — Add edit-tool helpers to `claudeToolDisplay.ts` ✓
+### Step 2 — Add edit-tool helpers to `claudeToolDisplay.ts` 
 
 **Files:** `node/claude/claudeToolDisplay.ts`, `test/node/claudeToolDisplay.test.ts`
 
@@ -118,7 +118,7 @@ Add to the existing snapshot test in `claudeToolDisplay.test.ts`.
 
 ---
 
-### Step 3 — Extend `ClaudeMapperState` with file-edit cache ✓
+### Step 3 — Extend `ClaudeMapperState` with file-edit cache 
 
 **Files:** `node/claude/claudeMapSessionEvents.ts`, `test/node/claudeMapSessionEvents.test.ts`
 
@@ -186,7 +186,7 @@ Add mapper tests:
 
 ---
 
-### Step 4 — Add `FileEditTracker` to `ClaudeAgentSession` ✓
+### Step 4 — Add `FileEditTracker` to `ClaudeAgentSession` 
 
 **Files:** `node/claude/claudeAgentSession.ts`
 
@@ -286,7 +286,7 @@ async handlePostToolUse(toolUseId: string, currentTurnId: string): Promise<void>
 
 ---
 
-### Step 5 — Wire hooks in `ClaudeAgent._materializeProvisional` + add DI ✓
+### Step 5 — Wire hooks in `ClaudeAgent._materializeProvisional` + add DI 
 
 **Files:** `node/claude/claudeAgent.ts`, registration in `node/agentHostMain.ts` or `node/agentHost.ts` (wherever `ClaudeAgent` is registered)
 
@@ -373,7 +373,7 @@ get _currentTurnId(): string {
 
 ---
 
-### Step 6 — Tests ✓ (unit; integration Test I + verify-claude-logs.sh deferred — see Implementation Notes)
+### Step 6 — Tests  (unit; integration Test I + verify-claude-logs.sh deferred — see Implementation Notes)
 
 **Files:** `test/node/claudeAgent.test.ts`, `test/node/claudeMapSessionEvents.test.ts`, `test/node/claudeAgent.integrationTest.ts`, `smoke.md`, `scripts/verify-claude-logs.sh`
 

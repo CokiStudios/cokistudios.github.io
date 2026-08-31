@@ -602,7 +602,7 @@
                 Volver a Forkar
             </a>
             <div class="nav-right">
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
                 <a href="dashboard.html" id="nav-profile" style="display: flex;">
                     <div id="nav-avatar"></div>
                     <span id="nav-name">Cargando...</span>
@@ -643,7 +643,7 @@
             </div>
 
             <div id="comments-empty" class="empty-state" style="display: none;">
-                <div style="font-size:32px; margin-bottom:12px; opacity:0.5;">💬</div>
+                <div style="font-size:32px; margin-bottom:12px; opacity:0.5;">[LOG]</div>
                 <p>No hay comentarios aún. Sé el primero en opinar.</p>
             </div>
         </div>
@@ -655,7 +655,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div style="font-size: 18px; font-weight: bold;">Reportar contenido</div>
                 <button onclick="closeReportModal()"
-                    style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;">✕</button>
+                    style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;"></button>
             </div>
             <div>
                 <input type="hidden" id="report-target-id">
@@ -772,7 +772,7 @@
             if (!postData) {
                 document.getElementById('post-container').innerHTML = `
                     <div class="empty-state">
-                        <div style="font-size:40px;margin-bottom:12px;">🚫</div>
+                        <div style="font-size:40px;margin-bottom:12px;"></div>
                         <p style="color:var(--text);font-weight:700;margin-bottom:8px;">Publicación no encontrada</p>
                         <a href="forkar.html" style="color:var(--accent);text-decoration:none;font-size:14px;">Volver a Forkar →</a>
                     </div>
@@ -848,7 +848,7 @@
                 </div>
             `;
 
-            // 🚀 Procesamos las Menciones en el DOM de la publicación
+            // [APP] Procesamos las Menciones en el DOM de la publicación
             renderMentionsInDOM();
 
             loadComments();
@@ -902,7 +902,7 @@
                 `;
             }).join('');
 
-            // 🚀 Procesamos las Menciones en el DOM de todos los comentarios cargados
+            // [APP] Procesamos las Menciones en el DOM de todos los comentarios cargados
             renderMentionsInDOM();
         }
 
@@ -1068,7 +1068,7 @@
             if (error) {
                 alert('Error al enviar el reporte: ' + error.message);
             } else {
-                alert('✅ Reporte enviado con éxito. Gracias por ayudarnos a mantener la comunidad limpia.');
+                alert('[OK] Reporte enviado con éxito. Gracias por ayudarnos a mantener la comunidad limpia.');
                 closeReportModal();
             }
         };
@@ -1076,7 +1076,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
         };
         if (themeToggle) {
             updateToggleIcon();

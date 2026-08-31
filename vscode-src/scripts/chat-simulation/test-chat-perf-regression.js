@@ -1120,7 +1120,7 @@ function generateCISummary(jsonReport, baseline, opts) {
 	}
 	lines.push('');
 	if (jsonReport.mismatchedBuildMode) {
-		lines.push('> **⚠ Build mode mismatch:** The test and baseline builds use different build modes.');
+		lines.push('> ** Build mode mismatch:** The test and baseline builds use different build modes.');
 		lines.push('> Results may not be directly comparable. For apples-to-apples comparisons,');
 		lines.push('> use the same build type for both (e.g. `--production-build` with a local');
 		lines.push('> baseline path, or two version strings).');
@@ -1643,7 +1643,7 @@ async function main() {
 
 	if (isMismatchedBuildMode) {
 		console.log('');
-		console.log(`[chat-simulation] ⚠ WARNING: Build mode mismatch — test is ${testBuildMode}, baseline is ${baselineBuildMode}.`);
+		console.log(`[chat-simulation]  WARNING: Build mode mismatch — test is ${testBuildMode}, baseline is ${baselineBuildMode}.`);
 		console.log('[chat-simulation]   Results may not be directly comparable. For apples-to-apples');
 		console.log('[chat-simulation]   comparisons, use the same build type for both.');
 		if (testBuildMode === 'dev') {
@@ -1784,7 +1784,7 @@ async function printComparison(jsonReport, opts) {
 		console.log(`[chat-simulation] =========== Baseline Comparison (threshold: ${(opts.threshold * 100).toFixed(0)}%) ===========`);
 		console.log(`[chat-simulation] Baseline: ${baseline.baselineBuildVersion || baseline.timestamp}`);
 		if (jsonReport.mismatchedBuildMode) {
-			console.log(`[chat-simulation] ⚠ Note: build mode mismatch — test is ${jsonReport.buildMode}, baseline differs.`);
+			console.log(`[chat-simulation]  Note: build mode mismatch — test is ${jsonReport.buildMode}, baseline differs.`);
 			console.log('[chat-simulation]   Results may not be directly comparable.');
 		}
 		console.log('');

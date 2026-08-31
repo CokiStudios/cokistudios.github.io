@@ -33,7 +33,7 @@ of the existing `RequestLogger` infrastructure.
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                       TrajectoryLoggerAdapter                                    │
 │  ┌─────────────────────────────────────────────────────────────────────────┐    │
-│  │  TRACKING STATE (⚠️ UNBOUNDED - Memory Leak Risk)                       │    │
+│  │  TRACKING STATE (️ UNBOUNDED - Memory Leak Risk)                       │    │
 │  │  ├── processedEntries: Set<string>         # entry IDs already synced   │    │
 │  │  ├── processedToolCalls: Set<string>       # tool call IDs processed    │    │
 │  │  ├── lastUserMessageBySession: Map<sessionId, hash>                     │    │
@@ -52,7 +52,7 @@ of the existing `RequestLogger` infrastructure.
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                           TrajectoryLogger                                       │
 │  ┌─────────────────────────────────────────────────────────────────────────┐    │
-│  │  TRAJECTORY STORAGE (⚠️ UNBOUNDED)                                      │    │
+│  │  TRAJECTORY STORAGE (️ UNBOUNDED)                                      │    │
 │  │  ├── trajectories: Map<sessionId, TrajectoryBuilder>                    │    │
 │  │  │       └── steps: ITrajectoryStep[]                                   │    │
 │  │  └── subagentTrajectories: Map<sessionId, IAgentTrajectory>             │    │
@@ -81,7 +81,7 @@ private async _addEntry(entry: LoggedInfo): Promise<boolean> {
     this._entries.push(entry);
     const maxEntries = this._configService.getConfig(ConfigKey.Advanced.RequestLoggerMaxEntries);
     if (this._entries.length > maxEntries) {
-        this._entries.shift();  // ✅ Bounded - evicts oldest
+        this._entries.shift();  // [OK] Bounded - evicts oldest
     }
     // ...
 }
@@ -97,7 +97,7 @@ private async _addEntry(entry: LoggedInfo): Promise<boolean> {
 - Steps accumulate within builders
 
 ```typescript
-// ⚠️ Unbounded storage - never auto-cleared
+// ️ Unbounded storage - never auto-cleared
 private readonly trajectories = new Map<string, TrajectoryBuilder>();
 private subagentTrajectories = new Map<string, IAgentTrajectory>();
 ```
@@ -107,15 +107,15 @@ private subagentTrajectories = new Map<string, IAgentTrajectory>();
 **Purpose**: Bridge between RequestLogger events and TrajectoryLogger.
 
 **Storage Pattern**:
-- **WeakMaps** for token→sessionId mapping (GC-friendly ✅)
-- **Sets/Maps** for deduplication tracking (⚠️ Unbounded)
+- **WeakMaps** for token→sessionId mapping (GC-friendly [OK])
+- **Sets/Maps** for deduplication tracking (️ Unbounded)
 
 ```typescript
-// ✅ GC-friendly - tokens can be collected
+// [OK] GC-friendly - tokens can be collected
 private sessionMap = new WeakMap<CapturingToken, string>();
 private tokenToSessionId = new WeakMap<CapturingToken, string>();
 
-// ⚠️ UNBOUNDED - grows indefinitely
+// ️ UNBOUNDED - grows indefinitely
 private processedEntries = new Set<string>();      // entry.id strings
 private processedToolCalls = new Set<string>();    // tool call ID strings
 private lastUserMessageBySession = new Map<string, string>();
@@ -214,7 +214,7 @@ This enables:
 │  ┌────────────────────────────────────────────────────────────────────────────┐│
 │  │████████████████████████████████████████████████████████████████████████████││
 │  └────────────────────────────────────────────────────────────────────────────┘│
-│       ⚠️ UNBOUNDED - keeps all entry IDs ever seen                             │
+│       ️ UNBOUNDED - keeps all entry IDs ever seen                             │
 │                                                                                 │
 │  ─────────────────────────────────────────────────────────────────────────────  │
 │                                                                                 │
@@ -222,7 +222,7 @@ This enables:
 │  ┌────────────────────────────────────────────────────────────────────────────┐│
 │  │████████████████████████████████████████████████████████████████████████████││
 │  └────────────────────────────────────────────────────────────────────────────┘│
-│       ⚠️ UNBOUNDED - accumulates all sessions until clearTrajectory()          │
+│       ️ UNBOUNDED - accumulates all sessions until clearTrajectory()          │
 │                                                                                 │
 └────────────────────────────────────────────────────────────────────────────────┘
                                                                     Time →
@@ -244,7 +244,7 @@ This creates **orphaned references** that can never be cleaned up.
 ```
 Time T1: Entry "abc123" logged → adapter tracks in processedEntries
 Time T2: RequestLogger evicts "abc123" (hit max entries)
-Time T3: processedEntries still contains "abc123" forever ❌
+Time T3: processedEntries still contains "abc123" forever [ERROR]
 
 Result: Set grows unboundedly with orphaned string IDs
 ```
@@ -420,11 +420,11 @@ src/
 
 | Component | Storage Pattern | Bounded? | Cleanup Mechanism |
 |-----------|----------------|----------|-------------------|
-| RequestLogger._entries | Array | ✅ Yes | Auto-shift oldest |
-| TrajectoryLogger.trajectories | Map | ❌ No | Manual clearTrajectory() |
-| Adapter.processedEntries | Set | ❌ No | **None (memory leak)** |
-| Adapter.processedToolCalls | Set | ❌ No | **None (memory leak)** |
-| Adapter.sessionMap | WeakMap | ✅ Yes | GC when token collected |
+| RequestLogger._entries | Array | [OK] Yes | Auto-shift oldest |
+| TrajectoryLogger.trajectories | Map | [ERROR] No | Manual clearTrajectory() |
+| Adapter.processedEntries | Set | [ERROR] No | **None (memory leak)** |
+| Adapter.processedToolCalls | Set | [ERROR] No | **None (memory leak)** |
+| Adapter.sessionMap | WeakMap | [OK] Yes | GC when token collected |
 
 **Key Insight**: The adapter serves as a "translation layer" that watches RequestLogger events 
 and populates TrajectoryLogger. However, its deduplication tracking (Sets/Maps) grows unboundedly, 

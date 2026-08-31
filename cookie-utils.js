@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// 🍪 COOKIE UTILITIES — Reemplaza localStorage/sessionStorage
+//  COOKIE UTILITIES — Reemplaza localStorage/sessionStorage
 // Escalable para 1K+ usuarios con expiración y seguridad
 // ═══════════════════════════════════════════════════════════════
 

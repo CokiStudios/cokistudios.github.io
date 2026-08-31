@@ -63,7 +63,7 @@ The accept-gate validates the *extracted content* (file present AND non-trivial)
 
 A queue-time checkbox **"Use legacy OSS Notice"** (parameter `VSCODE_USE_LEGACY_OSS_NOTICE`, default `false`) is the instant rollback. When checked, it derives `VSCODE_OVERWRITE_TPN=false`, and `downloadNotice.ts` skips the overwrite so the legacy notice ships — no code change or redeploy needed.
 
-> ⚠️ `downloadNotice.ts` normalizes the flag with `.trim().toLowerCase()` before comparing, so YAML casing (`true`/`false` vs `True`/`False`) can't break the rollback lever. The pipeline still derives `VSCODE_OVERWRITE_TPN` as a lowercase string literal (`'true'`/`'false'`) for clarity. See the comment in `product-build-variables.yml`.
+> ️ `downloadNotice.ts` normalizes the flag with `.trim().toLowerCase()` before comparing, so YAML casing (`true`/`false` vs `True`/`False`) can't break the rollback lever. The pipeline still derives `VSCODE_OVERWRITE_TPN` as a lowercase string literal (`'true'`/`'false'`) for clarity. See the comment in `product-build-variables.yml`.
 
 ### Diagnosing a build
 

@@ -383,7 +383,7 @@ first word and proper nouns only - *"Start new session,"* not *"Start New
 Session."* It's calmer, friendlier, and quicker to scan. Report it as *"this is
 Title Case - make it sentence case,"* a tone fix, not a reword.
 
-> **⚠️ Known conflict - reconcile later.** This sentence-case guidance is the
+> **️ Known conflict - reconcile later.** This sentence-case guidance is the
 > intended modern-UI direction, but it **contradicts** the repo-wide coding
 > guideline that mandates title-style capitalization for command labels, buttons,
 > and menu items (see
@@ -403,7 +403,7 @@ Title Case - make it sentence case,"* a tone fix, not a reword.
 Lead with the **role / tier / ramp**, not the number - then name the principle so
 the fix lands everywhere, not just here. The number is a symptom.
 
-| ❌ Don't say | ✅ Do say | Principle |
+| [ERROR] Don't say | [OK] Do say | Principle |
 |----------------------|--------------------------|-----------|
 | "border-radius should be 6, not 8" | "this is an **Inner** surface rounded at the **Outer** tier" | 5 · Elevation |
 | "this menu corner is too sharp" | "this **overlay** should be on the **Outer** radius tier" | 5 · Elevation |

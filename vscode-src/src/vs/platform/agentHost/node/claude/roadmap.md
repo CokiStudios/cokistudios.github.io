@@ -33,7 +33,7 @@ directly.
                                   │
                                   ▼
                   ┌──────────────────────────────────┐
-                  │  ICopilotApiService              │  ← Phase 1 ✅
+                  │  ICopilotApiService              │  ← Phase 1 [OK]
                   │   token mint • CAPI • SSE        │
                   │   raw MessageStreamEvent yield   │  ← Phase 1.5
                   └──────────────────────────────────┘
@@ -130,14 +130,14 @@ live mapper exists and can be factored to share with the replay path.
   rare, the mapping is reconstructible, and a wider mapper return type
   would tax every caller forever to optimize a cold path.
 
-### Phase 1 — `ICopilotApiService` ✅ **DONE**
+### Phase 1 — `ICopilotApiService` [OK] **DONE**
 
 Foundational gateway to the Copilot CAPI: token mint + cache + invalidation,
 `messages` (streaming + non-streaming), `models`, abort propagation, SSE body
 cancellation. Lives at `node/shared/copilotApiService.ts`. Fully unit-tested
 (70 tests). Council-reviewed and hardened (C1/C2/S1/S2 fixes applied).
 
-### Phase 1.5 — Widen `ICopilotApiService` to raw Anthropic events ✅ **DONE**
+### Phase 1.5 — Widen `ICopilotApiService` to raw Anthropic events [OK] **DONE**
 
 Widened `messages()` from text-only deltas to the full
 `Anthropic.MessageStreamEvent` stream. Replaced bespoke request/response types
@@ -192,7 +192,7 @@ interface ICopilotApiService {
 - Where does **model ID translation** live? Tentatively the proxy (Phase 2),
   so `model` in `MessageCreateParams` stays an opaque string here.
 
-### Phase 2 — `IClaudeProxyService` (local proxy) ✅ **DONE**
+### Phase 2 — `IClaudeProxyService` (local proxy) [OK] **DONE**
 
 A local HTTP server that speaks Anthropic's `/v1/messages`, `/v1/models`, and
 `/v1/messages/count_tokens` wire format on the inbound side, and
@@ -264,7 +264,7 @@ Exit criteria: `curl` against the proxy with `Bearer <nonce>.test` returns the
 same payload shape Anthropic would, and `ICopilotApiService` sees the right
 calls.
 
-### Phase 3 — Ground the SDK contract in the production reference ✅ **DONE**
+### Phase 3 — Ground the SDK contract in the production reference [OK] **DONE**
 
 The Copilot extension already ships a working integration of
 `@anthropic-ai/claude-agent-sdk` 0.2.112 with a local proxy. That implementation
@@ -379,7 +379,7 @@ Phase 4, (b) the deferred-concerns map for later phases, and (c) the one
 remaining open question (byte-equivalence) with a concrete plan to close it
 in Phase 4. No throw-away code committed.
 
-### Phase 4 — `ClaudeAgent` skeleton implementing `IAgent` ✅ **DONE**
+### Phase 4 — `ClaudeAgent` skeleton implementing `IAgent` [OK] **DONE**
 
 Landed in [#313780](https://github.com/microsoft/vscode/pull/313780)
 (commit `7211c0f3746`). Live-system smoke completed 2026-05-01 — see
@@ -444,7 +444,7 @@ round-trip correctly.
 Exit criteria: a workbench client sees the Claude provider listed, can pick
 a Claude model, but can't yet send a message.
 
-### Phase 5 — Session lifecycle: create / dispose / list / shutdown ✅ **DONE**
+### Phase 5 — Session lifecycle: create / dispose / list / shutdown [OK] **DONE**
 
 Implement the lifecycle methods that don't require live LLM traffic.
 **Provisional / materialize is the load-bearing model in this phase**
@@ -465,7 +465,7 @@ are therefore **invisible to other workbench clients** until materialised.
   pre-materialise persistence (Phase 5's `_provisionalSessions` map carries
   the in-memory state). The SDK starts lazily on first `sendMessage`
   (Phase 6).
-- **`createSession({ fork })` — deferred to Phase 6.5 (now ✅ done).** At
+- **`createSession({ fork })` — deferred to Phase 6.5 (now [OK] done).** At
   Phase 5 the fork branch threw `TODO: Phase 6.5`; it now forks the SDK
   transcript on demand. See "Phase 6.5 — Fork" below.
 - `disposeSession(session)` — tear down the session's `Query` (if alive),
@@ -519,7 +519,7 @@ restarts find materialised sessions; externally-created Claude Code
 sessions appear; agent host can shut down cleanly. Fork is deferred to
 Phase 6.5.
 
-### Phase 6 — `sendMessage` + streaming progress events (single-turn, no tools) ✅ **DONE**
+### Phase 6 — `sendMessage` + streaming progress events (single-turn, no tools) [OK] **DONE**
 
 Wire the proxy + SDK from Phase 3 into a real session. **Port the lifecycle
 machinery from `claudeCodeAgent.ts`:**
@@ -604,9 +604,9 @@ canned Anthropic stream → verify the resulting `AgentSignal` sequence.
 Exit criteria: a workbench client sends "hi" and sees a streamed assistant
 response in the UI.
 
-### Phase 6.5 — Fork ✅ **DONE**
+### Phase 6.5 — Fork [OK] **DONE**
 
-> **Status:** ✅ done. `createSession({ fork })` is implemented and
+> **Status:** [OK] done. `createSession({ fork })` is implemented and
 > live-E2E verified (fork-and-continue + restart restore, 2026-06-24).
 > Implementation contract / retrospective:
 > [phase6.5-plan.md](./phase6.5-plan.md). The summary below stays
@@ -730,7 +730,7 @@ flag.
 
 ### Phase 6.7 — Restore Checkpoint via in-place `truncateSession`
 
-> **Status:** ✅ done. In-place `truncateSession` for Claude is implemented
+> **Status:** [OK] done. In-place `truncateSession` for Claude is implemented
 > and live-E2E verified — both "Restore Checkpoint" (point-restore via
 > `resumeSessionAt`) and "Start Over" (remove-all via `deleteSession` +
 > same-id recreate), 2026-06-26. Implementation contract / retrospective:
@@ -944,7 +944,7 @@ the option-(a) fallback test). CONTEXT M10 and the Phase 13 note are corrected
 to reference `resumeSessionAt`. No transcript-file shape inference and no
 URI→id alias layer.
 
-### Phase 7 — Tool calls + permission + user input ✅ **DONE**
+### Phase 7 — Tool calls + permission + user input [OK] **DONE**
 
 Wire the SDK's tool-use loop through to the agent host's tool infrastructure.
 **Transcript-only in this phase** — file edit tracking is Phase 8.
@@ -1007,7 +1007,7 @@ Exit criteria: a real "read this file" prompt completes end-to-end.
   — see roadmap.md` marker at the call site so the upgrade path stays
   discoverable. Implement when Phase N introduces multi-action plan UX.
 
-### Phase 8 — File edit tracking ✅ **DONE**
+### Phase 8 — File edit tracking [OK] **DONE**
 
 Build the Claude analog of `fileEditTracker.ts` from `node/copilot/`.
 
@@ -1033,7 +1033,7 @@ client-side accept of one and reject of the other behaves correctly.
 Exit criteria: file diffs render in the workbench; per-file accept/reject
 works.
 
-### Phase 8.5 — Rich tool-call rendering parity with Copilot ✅ **DONE**
+### Phase 8.5 — Rich tool-call rendering parity with Copilot [OK] **DONE**
 
 Claude's tool-call cards today only carry the static display name from
 [`claudeToolDisplay.ts`](./claudeToolDisplay.ts) (`"Run shell command"`,
@@ -1129,7 +1129,7 @@ invocation, terminal tools render in the terminal renderer, search
 tools render in the search renderer. Adding a new SDK tool means
 adding one row to `TOOL_ROWS` and updating the snapshot test.
 
-### Phase 9 — Abort + steering + model change + shutdown polish ✅ **DONE**
+### Phase 9 — Abort + steering + model change + shutdown polish [OK] **DONE**
 
 Implementation contract: [phase9-plan.md](./phase9-plan.md). Unit tests
 green, type-check / layer-check clean, and live E2E (Scenarios A–D from
@@ -1210,7 +1210,7 @@ restart), killed subprocess triggers recovery.
 
 Exit criteria: parity with Copilot agent on stop / steer / switch model.
 
-### Phase 10 — Client-provided tools (in-process MCP) ✅ **DONE**
+### Phase 10 — Client-provided tools (in-process MCP) [OK] **DONE**
 
 The Claude SDK exposes **two distinct MCP entry points** that classify into
 different M11 buckets — do not conflate them:
@@ -1257,7 +1257,7 @@ Exit criteria: client tools callable from a Claude session.
   Check what `ideMcpServer.ts` does.
 - Idle timeout for the MCP gateway — sensible default?
 
-### Phase 10.5 — Unified `ClaudeAgentSession` lifecycle ✅ **DONE**
+### Phase 10.5 — Unified `ClaudeAgentSession` lifecycle [OK] **DONE**
 
 Structural follow-up to Phase 10. The dual-map session pattern
 (`_provisionalSessions` + `_sessions`) is the direct source of every
@@ -1359,7 +1359,7 @@ assertion with the real translation.
 Exit criteria: an MCP server's `elicit/create` renders a form (or URL prompt)
 in the Agents window and the user's answer is delivered back to the server.
 
-### Phase 11 — Customizations / plugins (full surface) ✅ **DONE**
+### Phase 11 — Customizations / plugins (full surface) [OK] **DONE**
 
 Shipped in PR #318113. Two-tier model:
 
@@ -1418,7 +1418,7 @@ Shipped in PR #318113. Two-tier model:
 
 Full step-by-step plan: [phase11-plan.md](./phase11-plan.md).
 
-### Phase 12 — Subagents ✅ **DONE**
+### Phase 12 — Subagents [OK] **DONE**
 
 Subagents are inner sessions spawned by the SDK (e.g. when the model
 delegates to a sub-task). The protocol has first-class support; we need to
@@ -1494,7 +1494,7 @@ appendix; both flows rendered as specified.
 
 Exit criteria: subagent sessions are first-class for clients.
 
-### Phase 13 — Session restoration (no in-place truncate) ✅ **DONE**
+### Phase 13 — Session restoration (no in-place truncate) [OK] **DONE**
 
 > **Execution order:** lands immediately after Phase 9 to unblock chat
 > restoration and self-hosting. See "Execution order (non-numeric)" above.
@@ -1592,7 +1592,7 @@ fork end-to-end ships in Phase 6.5.
 
 Exit criteria: ready to enable for external preview.
 
-### Phase 15 — SDK distribution via `product.json` + main.vscode-cdn.net ✅ **DONE**
+### Phase 15 — SDK distribution via `product.json` + main.vscode-cdn.net [OK] **DONE**
 
 > **Implementation contract / retrospective:
 > [phase15-plan.md](./phase15-plan.md).** That file documents what
@@ -1812,7 +1812,7 @@ curated built-in agents/skills tier are generated declaratively inline,
 no stub files on disk); `createSession` lifecycle (provisional, cold) is
 unchanged. **Shipped.**
 
-### Phase 17 — User/workspace hooks + Claude-native plugins via disk scan ✅ **DONE**
+### Phase 17 — User/workspace hooks + Claude-native plugins via disk scan [OK] **DONE**
 
 > **Status:** both parts shipped. Part A (hooks) landed as PR #322637; Part B
 > (native plugins) landed as PR #322766. Both are surface-only (no
@@ -1991,9 +1991,9 @@ unchanged. Shipped as two PRs: Part A (hooks, #322637) then Part B
 (native plugins, #322766). Detailed implementation contract:
 [phase17-plan.md](./phase17-plan.md).
 
-### Phase 18 — Transport-branched model source (SDK discovery workaround) ✅ **DONE**
+### Phase 18 — Transport-branched model source (SDK discovery workaround) [OK] **DONE**
 
-> **Status:** ✅ done (revised 2026-06-24). The original "unify the model path on
+> **Status:** [OK] done (revised 2026-06-24). The original "unify the model path on
 > `Query.supportedModels()` via the SDK's gateway model-discovery" approach
 > is **abandoned** — a confirmed Claude Agent SDK bug makes it unworkable
 > (below). Phase 18 is re-scoped to the small structural seam the eventual
@@ -2100,9 +2100,9 @@ no SDK bug exposure, no picker regression); the native branch is a typed
 reuse. Re-routing proxied onto `supportedModels()` is a documented
 couple-lines follow-up gated on the upstream SDK fix.
 
-### Phase 19 — Direct (non-proxied) Claude access (BYO Anthropic) ✅ **DONE**
+### Phase 19 — Direct (non-proxied) Claude access (BYO Anthropic) [OK] **DONE**
 
-> **Status:** ✅ done. Native (BYO-Anthropic) turns authenticate on the user's
+> **Status:** [OK] done. Native (BYO-Anthropic) turns authenticate on the user's
 > own credentials from the subprocess env — `ANTHROPIC_API_KEY`, or a
 > subscription OAuth token in `CLAUDE_CODE_OAUTH_TOKEN` (from `claude
 > setup-token`). The interactive `claude login` keychain session is NOT used in

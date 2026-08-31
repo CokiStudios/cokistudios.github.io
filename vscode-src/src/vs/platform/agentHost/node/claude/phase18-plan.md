@@ -67,7 +67,7 @@ discovery-`supportedModels()`.
 
 ## Prerequisites
 
-- Phases 4–6 ✅ (`ClaudeAgent`, proxy, `_refreshModels` exist).
+- Phases 4–6 [OK] (`ClaudeAgent`, proxy, `_refreshModels` exist).
 - No new dependencies. No SDK behavior relied on (this phase keeps proxied on
   CAPI exactly as today).
 
@@ -83,7 +83,7 @@ changes — no new env vars, no enumeration query, no proxy edits.
 
 ## Steps
 
-1. **Add `_isProxyEnabled()` + branch the model refresh.** ✓ Introduce
+1. **Add `_isProxyEnabled()` + branch the model refresh.**  Introduce
    `private _isProxyEnabled(): boolean { return true; /* TODO(Phase 19): read RootConfigState ClaudeUseCopilotProxy */ }`.
    In `_refreshModels` (optionally rename to `_resolveModels`), branch: if proxy
    → existing CAPI path; else → `throw new Error('TODO: Phase 19')`.
@@ -91,7 +91,7 @@ changes — no new env vars, no enumeration query, no proxy edits.
    - Depends on: none.
    - Done when: `models` observable still populates from CAPI in proxy mode; a unit test that forces the native branch (e.g. via a test seam or by temporarily flipping the helper) asserts it throws `TODO: Phase 19`.
 
-2. **Factor the effort/config-schema helper for reuse.** ✓ Ensure the effort
+2. **Factor the effort/config-schema helper for reuse.**  Ensure the effort
    schema construction used by `toAgentModelInfo` is a standalone function
    (`createClaudeThinkingLevelSchema` already is) callable from a future
    `ModelInfo` projection, so Phase 19 doesn't duplicate it. No behavior change.
@@ -184,7 +184,7 @@ changes — no new env vars, no enumeration query, no proxy edits.
 
 ### What shipped
 
-- **Step 1 ✓** — `claudeAgent.ts`: added `private _isProxyEnabled(): boolean`
+- **Step 1 ** — `claudeAgent.ts`: added `private _isProxyEnabled(): boolean`
   (hardcoded `true`, `TODO(Phase 19)` to read RootConfigState
   `ClaudeUseCopilotProxy`). Extracted the transport branch as a **pure exported
   function** `resolveClaudeModelList(isProxyEnabled, fetchProxyModels)` —
@@ -194,7 +194,7 @@ changes — no new env vars, no enumeration query, no proxy edits.
   → `is_chat_default` sort → `toAgentModelInfo`, behind the `tokenAtStart`
   stale-write guard). The pure function (not a private method) is the test seam,
   per the repo guideline against testing private methods directly.
-- **Step 2 ✓ (no code change)** — `createClaudeThinkingLevelSchema` and
+- **Step 2  (no code change)** — `createClaudeThinkingLevelSchema` and
   `isClaudeEffortLevel` are already standalone exports in
   [common/claudeModelConfig.ts](../../common/claudeModelConfig.ts), and
   `toAgentModelInfo` already builds its `configSchema` via the former. The helper

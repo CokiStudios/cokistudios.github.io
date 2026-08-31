@@ -52,8 +52,8 @@ The foundational layer. It may import from the sessions **services** layer, but 
 > **Note:** The desktop bootstrap entry `src/vs/sessions/electron-browser/sessions.ts` has its own, **more restrictive** rule: it may import only `vs/base/~`, `vs/base/parts/*/~`, `vs/platform/*/~`, `vs/sessions/~`, and `vs/sessions/sessions.desktop.main.js`.
 
 **Cannot import from:**
-- ❌ `vs/sessions/contrib/*` — no contrib dependencies
-- ❌ `vs/sessions/contrib/providers/*` — no provider dependencies
+- [ERROR] `vs/sessions/contrib/*` — no contrib dependencies
+- [ERROR] `vs/sessions/contrib/providers/*` — no provider dependencies
 
 ---
 
@@ -69,8 +69,8 @@ Service layer sits alongside core. Provides shared service interfaces and implem
 - `vs/workbench/contrib/*/~`
 
 **Cannot import from:**
-- ❌ `vs/sessions/contrib/*` — no contrib dependencies
-- ❌ `vs/sessions/contrib/providers/*` — no provider dependencies
+- [ERROR] `vs/sessions/contrib/*` — no contrib dependencies
+- [ERROR] `vs/sessions/contrib/providers/*` — no provider dependencies
 
 ---
 
@@ -85,7 +85,7 @@ Feature contributions like `chat`, `sessions`, `changes`, `terminal`, etc.
 - `vs/sessions/contrib/*/~` (sibling contributions)
 
 **Cannot import from:**
-- ❌ `vs/sessions/contrib/providers/*/~` — **providers are isolated from non-provider contribs**
+- [ERROR] `vs/sessions/contrib/providers/*/~` — **providers are isolated from non-provider contribs**
 
 ---
 
@@ -119,7 +119,7 @@ Entry points can import from all sessions layers: `sessions/~`, `services/*/~`, 
 ## Key Constraint
 
 ```
-contrib/*  ──✕──▶  contrib/providers/*
+contrib/*  ────▶  contrib/providers/*
 ```
 
 Non-provider contributions **must not** import from provider code. If a provider exposes a symbol needed by non-provider code, that symbol should be extracted to a shared location (`vs/sessions/services/`, `vs/sessions/common/`, or a shared contrib module).

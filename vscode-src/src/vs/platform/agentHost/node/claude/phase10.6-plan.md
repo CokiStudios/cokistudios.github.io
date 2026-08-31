@@ -87,7 +87,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
 
 ## Steps
 
-1. ✓ **Create the pure projection module `claudeElicitation.ts`.**
+1.  **Create the pure projection module `claudeElicitation.ts`.**
    - Files: `src/vs/platform/agentHost/node/claude/claudeElicitation.ts` (create)
    - Depends on: none
    - Contents (all exported functions get JSDoc):
@@ -119,7 +119,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
    - Done when: `npm run typecheck-client` passes and the module has no imports
      of `ClaudeAgentSession` or any SDK callback type (pure).
 
-2. ✓ **Create the bridge `claudeElicitationBridge.ts`.**
+2.  **Create the bridge `claudeElicitationBridge.ts`.**
    - Files: `src/vs/platform/agentHost/node/claude/claudeElicitationBridge.ts` (create)
    - Depends on: step 1
    - Export `handleElicitation(deps, sessionId, request, options)` where `deps`
@@ -143,7 +143,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
        `{ action: 'decline' }`, anything else → `{ action: 'cancel' }`.
    - Done when: unit tests in step 7 pass against a fake session.
 
-3. ✓ **Add `onElicitation` to `IBuildOptionsInput` and project it; delete the stub.**
+3.  **Add `onElicitation` to `IBuildOptionsInput` and project it; delete the stub.**
    - Files: `claudeSdkOptions.ts` (modify)
    - Depends on: none (type-only) — can land with step 4
    - Add `readonly onElicitation: OnElicitation;` beside
@@ -153,7 +153,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
    - Done when: `claudeSdkOptions.test.ts` compiles after its `buildOptions`
      call sites drop the `logElicitation` arg (see step 8).
 
-4. ✓ **Thread `onElicitation` through `IMaterializeContext` and both build sites.**
+4.  **Thread `onElicitation` through `IMaterializeContext` and both build sites.**
    - Files: `claudeAgentSession.ts` (modify)
    - Depends on: step 3
    - Add `readonly onElicitation: OnElicitation;` to
@@ -163,7 +163,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
      `logElicitation` lambdas (line 459 and the resume-rebuild equivalent).
    - Done when: `npm run typecheck-client` passes.
 
-5. ✓ **Add `_makeOnElicitation` in `ClaudeAgent` and pass it at every materialize.**
+5.  **Add `_makeOnElicitation` in `ClaudeAgent` and pass it at every materialize.**
    - Files: `claudeAgent.ts` (modify)
    - Depends on: steps 2, 4
    - Add `_makeOnElicitation(sdkSessionId)` beside `_makeCanUseTool` (line 969),
@@ -174,7 +174,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
    - Done when: `npm run typecheck-client` passes; `claudeAgent.integrationTest.ts`
      "canUseTool / onElicitation closures wired through" still finds a function.
 
-6. ✓ **Replace Phase-7 Test 18 stub assertions with real-translation assertions.**
+6.  **Replace Phase-7 Test 18 stub assertions with real-translation assertions.**
    - Files: `test/node/claudeAgent.test.ts` (~line 5358), `test/node/claudeAgent.integrationTest.ts` (~line 737)
    - Depends on: steps 3-5
    - Both existing tests invoke the **captured** `Options.onElicitation`
@@ -191,7 +191,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
      translation.
    - Done when: `scripts/test.sh --grep "onElicitation"` passes.
 
-7. ✓ **Unit tests for the projection module and bridge.**
+7.  **Unit tests for the projection module and bridge.**
    - Files: `test/node/claudeElicitation.test.ts` (create)
    - Depends on: steps 1-2
    - Model on `test/node/codex/codexElicitationMapper.test.ts` (deepStrictEqual
@@ -203,7 +203,7 @@ and the inline `{ action: 'cancel' }` stub are deleted.
      `respondToUserInputRequest(Cancel)`.
    - Done when: `scripts/test.sh --grep "claudeElicitation"` passes.
 
-8. ✓ **Adapt `claudeSdkOptions.test.ts` to the new `buildOptions` signature.**
+8.  **Adapt `claudeSdkOptions.test.ts` to the new `buildOptions` signature.**
    - Files: `test/node/claudeSdkOptions.test.ts` (modify)
    - Depends on: step 3
    - Drop the `logElicitation` positional arg from every `buildOptions(...)` call

@@ -1,6 +1,6 @@
 # Phase 2 Plan — `IClaudeProxyService`
 
-**Status:** ✅ done. Shipped `ClaudeProxyService` + helpers + tests +
+**Status:** [OK] done. Shipped `ClaudeProxyService` + helpers + tests +
 DI registration in `agentHostMain.ts`. Council-reviewed and hardened
 (F1/F2 race fixes applied; F3 test coverage added). Smoke-validated
 end-to-end against real CAPI for all three surfaces (`GET /v1/models`,
@@ -96,7 +96,7 @@ detection) but is structurally different in two ways:
 
 ## 1.5. Pre-Phase 2 dependency: widen Phase 1 error contract
 
-**Status:** ✅ done (verified live against CAPI).
+**Status:** [OK] done (verified live against CAPI).
 
 Phase 1 originally threw plain `Error` instances on both failure
 paths, which discarded the upstream `status` + Anthropic error

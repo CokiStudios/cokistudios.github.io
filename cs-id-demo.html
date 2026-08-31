@@ -226,7 +226,7 @@
         <!-- Header -->
         <div class="arcade-header">
             <div class="arcade-title">
-                🐶 COKI & FORKMAN: XTRAPS QUEST
+                 COKI & FORKMAN: XTRAPS QUEST
             </div>
             <div class="csid-badge">
                 <span style="width:8px;height:8px;background:#fbbf24;border-radius:50%;"></span>
@@ -363,7 +363,7 @@
             document.getElementById('u-name').textContent = currentUser.name;
             document.getElementById('u-email').textContent = currentUser.email;
             document.getElementById('u-avatar').src = selectedHero === 'coki' ? 'assets/coki_dog.png' : 'assets/forkman.png';
-            document.getElementById('active-char-label').textContent = selectedHero === 'coki' ? '🐶 Coki' : '👤 Forkman';
+            document.getElementById('active-char-label').textContent = selectedHero === 'coki' ? ' Coki' : '[USER] Forkman';
 
             highScore = localStorage.getItem('csid_quest_score_' + currentUser.email) || 0;
             document.getElementById('high-score').textContent = highScore;
@@ -509,9 +509,9 @@
                         highScore = score;
                         localStorage.setItem('csid_quest_score_' + currentUser.email, highScore);
                         document.getElementById('high-score').textContent = highScore;
-                        alert('🎉 ¡NUEVO RÉCORD COKI ID! Energía acumulada: ' + score);
+                        alert(' ¡NUEVO RÉCORD COKI ID! Energía acumulada: ' + score);
                     } else {
-                        alert('💥 ¡Impacto detectado! Puntuación final: ' + score);
+                        alert(' ¡Impacto detectado! Puntuación final: ' + score);
                     }
                     setTimeout(startGame, 500);
                     return;

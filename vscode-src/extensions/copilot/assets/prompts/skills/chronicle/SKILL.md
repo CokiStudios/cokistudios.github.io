@@ -52,7 +52,7 @@ Format the result grouped by work stream (branch/feature). Use exactly this stru
 ```
 Standup for <date>:
 
-**✅ Done**
+**[OK] Done**
 
 **Feature name** (`branch-name` branch, `repo-name`)
   - 3-7 words describing the status
@@ -60,7 +60,7 @@ Standup for <date>:
   - Merged: [#123](https://github.com/owner/repo/pull/123) or No PR found
   - Session: `full-session-id`
 
-**🚧 In Progress**
+** In Progress**
 
 **Feature name** (`branch-name` branch, `repo-name`)
   - 3-7 words describing the current state of work

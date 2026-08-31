@@ -24,7 +24,7 @@ function injectWizardHTML() {
     const wizardHTML = `
         <div id="coki-setup-wizard" style="position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif;">
             <div style="background: #0d1117; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; width: 90%; max-width: 400px; color: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
-                <h2 style="margin-bottom: 10px; font-size: 24px; font-weight: 800;">¡Bienvenido a Coki Studios! 🎉</h2>
+                <h2 style="margin-bottom: 10px; font-size: 24px; font-weight: 800;">¡Bienvenido a Coki Studios! </h2>
                 <p style="color: #94a3b8; margin-bottom: 24px; font-size: 14px; line-height: 1.5;">Completa tu perfil para que la comunidad pueda conocerte e interactuar contigo.</p>
                 
                 <div style="margin-bottom: 16px;">

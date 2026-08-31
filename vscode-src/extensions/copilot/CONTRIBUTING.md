@@ -37,8 +37,8 @@ Be sure to scan through the [most popular](https://github.com/microsoft/vscode/i
 
 If you find your issue already exists, make relevant comments and add your [reaction](https://github.com/blog/2119-add-reactions-to-pull-requests-issues-and-comments). Use a reaction in place of a "+1" comment:
 
-* 👍 - upvote
-* 👎 - downvote
+*  - upvote
+*  - downvote
 
 If you cannot find an existing issue that describes your bug or feature, create a new issue using the guidelines below.
 
@@ -304,7 +304,7 @@ To easily see the details of requests made by Copilot Chat, run the command "Sho
 
 The view also has entries for tool calls on their own, and a prompt-tsx debug view that opens in the Simple Browser.
 
-> 🚨 **Note**: This log is also very helpful in troubleshooting issues, and we will appreciate if you share it when filing an issue about the agent's behavior. But, this log may contain personal information such as the contents of your files or terminal output. Please review the contents carefully before sharing it with anyone else.
+> [ALERT] **Note**: This log is also very helpful in troubleshooting issues, and we will appreciate if you share it when filing an issue about the agent's behavior. But, this log may contain personal information such as the contents of your files or terminal output. Please review the contents carefully before sharing it with anyone else.
 
 ## API updates
 

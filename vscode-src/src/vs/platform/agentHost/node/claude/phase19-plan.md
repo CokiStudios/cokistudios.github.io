@@ -59,7 +59,7 @@ unchanged default.
 
 ## Prerequisites
 
-- **Phase 18 ✅** — the seam exists: `resolveClaudeModelList(isProxyEnabled,
+- **Phase 18 [OK]** — the seam exists: `resolveClaudeModelList(isProxyEnabled,
   fetchProxyModels)` throws `TODO: Phase 19` on the native branch;
   `_isProxyEnabled()` is hardcoded `true`; `_fetchProxyModels(token)` is the
   CAPI path; `createClaudeThinkingLevelSchema` / `isClaudeEffortLevel` are
@@ -91,7 +91,7 @@ commercial-metadata overlay.
 
 ## Steps
 
-1. ✓ **Add the `ClaudeUseCopilotProxy` root config key.** Extend
+1.  **Add the `ClaudeUseCopilotProxy` root config key.** Extend
    `AgentHostConfigKey` and `agentHostCustomizationConfigSchema` with a boolean
    property (`schemaProperty<boolean>({ type: 'boolean', …, default: true })`),
    mirroring `EnableCustomTerminalTool` / `RubberDuck`. Do **not** add it to
@@ -102,7 +102,7 @@ commercial-metadata overlay.
    - Depends on: none.
    - Done when: `getRootValue(agentHostCustomizationConfigSchema, ClaudeUseCopilotProxy)` returns `true` when unset, `false` when persisted `false`.
 
-2. ✓ **Define the `ClaudeTransport` union.** A discriminated union
+2.  **Define the `ClaudeTransport` union.** A discriminated union
    `{ kind: 'proxy'; handle: IClaudeProxyHandle } | { kind: 'native' }`. Place
    it in a small new module [claudeTransport.ts](./claudeTransport.ts) so
    `claudeAgent.ts`, `claudeAgentSession.ts`, and `claudeSdkOptions.ts` share
@@ -111,7 +111,7 @@ commercial-metadata overlay.
    - Depends on: none.
    - Done when: type compiles; no consumers yet.
 
-3. ✓ **Refactor `buildOptions` / `buildSubprocessEnv` to consume the transport.**
+3.  **Refactor `buildOptions` / `buildSubprocessEnv` to consume the transport.**
    Replace the `proxyHandle: IClaudeProxyHandle` parameter on `buildOptions`
    with `transport: ClaudeTransport`. Proxy branch: identical env (set
    `ANTHROPIC_BASE_URL` = `handle.baseUrl`, `ANTHROPIC_AUTH_TOKEN` =
@@ -124,7 +124,7 @@ commercial-metadata overlay.
    - Depends on: step 2.
    - Done when: proxy-branch option/env output is byte-identical to today (snapshot test); native-branch env omits proxy vars and preserves `ANTHROPIC_API_KEY`.
 
-4. ✓ **Thread the transport through materialization.** Replace
+4.  **Thread the transport through materialization.** Replace
    `IMaterializeContext.proxyHandle` with `transport: ClaudeTransport`. Update
    `materialize()` and the rematerializer closure to pass `ctx.transport` into
    `buildOptions`.
@@ -132,7 +132,7 @@ commercial-metadata overlay.
    - Depends on: step 3.
    - Done when: both materialize and rematerialize compile with `transport` and the proxied path's captured `Options` are unchanged.
 
-5. ✓ **Flip `_isProxyEnabled()` to the real config read + reactivity.** Resolve a
+5.  **Flip `_isProxyEnabled()` to the real config read + reactivity.** Resolve a
    `_transportMode: 'proxy' | 'native'` field in the constructor from
    `getRootValue(...) ?? true`. Subscribe to `onDidRootConfigChange`: re-read,
    update `_transportMode`, and on change re-run `_refreshModels()` and
@@ -143,7 +143,7 @@ commercial-metadata overlay.
    - Depends on: step 1.
    - Done when: a unit test flipping the root value updates `_transportMode` and re-refreshes models; in-flight sessions are untouched.
 
-6. ✓ **Make auth / protected-resources / credits transport-aware.** In native
+6.  **Make auth / protected-resources / credits transport-aware.** In native
    mode: `authenticate()` does **not** call `IClaudeProxyService.start`;
    `_ensureAuthenticated()` returns the native transport without requiring a
    proxy handle; `getProtectedResources()` omits
@@ -158,7 +158,7 @@ commercial-metadata overlay.
    - Depends on: steps 4, 5.
    - Done when: native mode never calls `start`, never subscribes credits, omits the Copilot resource, never throws `AHP_AUTH_REQUIRED`; the overlay carries the transport tag; proxied path unchanged.
 
-7. ✓ **Build the native model source.** Add
+7.  **Build the native model source.** Add
    `IClaudeAgentSdkService.supportedModels(opts): Promise<readonly ModelInfo[]>`
    that owns the ephemeral lifecycle `startup({ options }) → warm.query(<a
    prompt iterable that never yields>) → query.supportedModels() → teardown`
@@ -183,7 +183,7 @@ commercial-metadata overlay.
    - Depends on: step 6.
    - Done when: a native turn's `ChatUsage` has no `_meta.copilotUsage` and carries SDK usage/cost; `apiKeySource` is logged/surfaced.
 
-9. ✓ **Tests.** Make `FakeQuery.supportedModels()` programmable (it throws
+9.  **Tests.** Make `FakeQuery.supportedModels()` programmable (it throws
    today); add `supportedModelsResult` to `FakeClaudeAgentSdkService`. Replace
    the Phase 18 `TODO: Phase 19` native-branch assertion with a native
    projection assertion. Add: transport resolution from the root value;

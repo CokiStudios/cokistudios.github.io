@@ -225,10 +225,10 @@ If `start-watch-tasks` is already running, use its diagnostics. Start it or run 
 - Only surround arrow function parameters when necessary:
 
 ```javascript
-x => x + x                    // ✓ Correct
-(x, y) => x + y              // ✓ Correct
-<T>(x: T, y: T) => x === y   // ✓ Correct
-(x) => x + x                 // ✗ Wrong
+x => x + x                    //  Correct
+(x, y) => x + y              //  Correct
+<T>(x: T, y: T) => x === y   //  Correct
+(x) => x + x                 //  Wrong
 ```
 
 ### Code Structure

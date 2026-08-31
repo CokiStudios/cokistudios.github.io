@@ -4,7 +4,7 @@
 > Last updated: 2026-05-15 after 3-model council (GPT-5.5, Claude Opus 4.6,
 > GPT-5.3-Codex). Pre-grilling draft.
 
-**Status:** ✅ **DONE** (merged to main; E2E verified live)
+**Status:** [OK] **DONE** (merged to main; E2E verified live)
 
 ## Goal
 
@@ -89,7 +89,7 @@ D5).
 
 ## Steps
 
-1. ✓ **Extend `TOOL_ROWS` and add helpers in `claudeToolDisplay.ts`.**
+1.  **Extend `TOOL_ROWS` and add helpers in `claudeToolDisplay.ts`.**
    - Add `toolKind?: 'terminal' | 'subagent' | 'search'` and
      `language?: string` columns to `ClaudeToolRow`. Populate:
      - `Bash`, `BashOutput`, `KillBash` → `toolKind: 'terminal'`,
@@ -120,7 +120,7 @@ D5).
    - Done when: snapshot test (Step 6) lists every tool row × all
      five helper outputs.
 
-2. ✓ **Wire `claudeCanUseTool.ts` (live permission path).**
+2.  **Wire `claudeCanUseTool.ts` (live permission path).**
    - In `dispatchCanUseTool` (lines 105–135), replace
      `invocationMessage: displayName` with
      `getClaudeInvocationMessage(toolName, displayName, input)`.
@@ -134,7 +134,7 @@ D5).
    - Done when: Bash permission card carries the actual command
      (verified by integration test added in Step 7).
 
-3. ✓ **Patch `sessionPermissions.ts` to forward `_meta` into Ready.**
+3.  **Patch `sessionPermissions.ts` to forward `_meta` into Ready.**
    - In `createToolReadyAction` (lines ~175–201), copy `state._meta`
      onto the emitted `SessionToolCallReady` action so the
      `pending_confirmation → ready` transition preserves
@@ -150,7 +150,7 @@ D5).
      [`sessionPermissions.test.ts`](../../test/node/sessionPermissions.test.ts)
      if a fixture exists; otherwise add a focused test).
 
-4. ✓ **Wire `claudeMapSessionEvents.ts` (live event path) and extract
+4.  **Wire `claudeMapSessionEvents.ts` (live event path) and extract
    `ClaudeToolCallRegistry`.**
    - Create new file
      [`claudeToolCallRegistry.ts`](./claudeToolCallRegistry.ts)
@@ -208,7 +208,7 @@ D5).
        lookup/forget/drain in isolation (mirrors
        `claudeSubagentRegistry.test.ts`).
 
-5. ✓ **Wire `claudeReplayMapper.ts` (replay path).**
+5.  **Wire `claudeReplayMapper.ts` (replay path).**
    - In `_openToolUse` (lines ~257–281):
      - Parse `block.input` (already a `Record<string, unknown>`).
      - Replace `invocationMessage: displayName` with
@@ -242,7 +242,7 @@ D5).
      shows the same rich invocation / pastTense / `_meta` as the
      live row from Step 4.
 
-6. ✓ **Wire `claudeSubagentSignals.ts` (inner subagent path).**
+6.  **Wire `claudeSubagentSignals.ts` (inner subagent path).**
    - In `emitInnerAssistantSignals` (lines ~250–270), the inner
      `tool_use` branch:
      - Stamp `_meta: buildClaudeToolMeta(block.name)` on the
@@ -264,7 +264,7 @@ D5).
      with `toolKind: 'search'` / no `toolKind` (verified in
      [`claudeSubagentSignals.test.ts`](../../test/node/claudeSubagentSignals.test.ts)).
 
-7. ✓ **Snapshot + behavior tests.**
+7.  **Snapshot + behavior tests.**
    - Extend
      [`claudeToolDisplay.test.ts`](../../test/node/claudeToolDisplay.test.ts)
      with one snapshot test mapping every tool row to

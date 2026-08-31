@@ -96,7 +96,7 @@ discovery/projection layer — `Options.plugins` and the SDK loading path are
 
 ## Steps
 
-1. ✓ **Export the minimal shared hook-parser surface.** `parseHooksJson` and
+1.  **Export the minimal shared hook-parser surface.** `parseHooksJson` and
    `makeHookCustomization` are currently **private** in `pluginParsers.ts`
    (~L246, ~L651); only `readJsonFile` (~L762) and `parsePlugin` (~L1109) are exported.
    Export the two hook helpers (and the `IParsedHookGroup` type if not already public)
@@ -107,7 +107,7 @@ discovery/projection layer — `Options.plugins` and the SDK loading path are
    - Done when: `parseHooksJson` / `makeHookCustomization` importable from
      `node/claude/`; `pluginParsers.test.ts` covers the now-public surface.
 
-2. ✓ **Hook scanner `scan/claudeHookScan.ts`.** Mirror `claudeMcpScan.ts`: read the
+2.  **Hook scanner `scan/claudeHookScan.ts`.** Mirror `claudeMcpScan.ts`: read the
    `hooks` block from `<cwd>/.claude/settings.json`,
    `<cwd>/.claude/settings.local.json`, and `~/.claude/settings.json` (project-first
    precedence) via `readJsonFile`; skip a scope whose `disableAllHooks === true`; call
@@ -150,7 +150,7 @@ discovery/projection layer — `Options.plugins` and the SDK loading path are
    - Done when: pipeline exposes the loaded-plugin list; unit/integration test asserts
      it is populated from a stubbed init.
 
-5. **Projection: hooks + native plugins in the discovery mapper.** *(hooks half ✓;
+5. **Projection: hooks + native plugins in the discovery mapper.** *(hooks half ;
    native-plugin half pending Part B)* In `claudeSessionCustomizationDiscovery.ts`:
    - add a `hooks` input to `mapDiscoveredCustomizations`; wrap per-scope hooks in a
      `DirectoryCustomization` (`contents: CustomizationType.Hook`, `writable: true`,
@@ -168,7 +168,7 @@ discovery/projection layer — `Options.plugins` and the SDK loading path are
      pre-materialize; post-materialize a plugin absent from `sdk.plugins` is hidden,
      hooks are not.
 
-6. **Wire scanners into `getSessionCustomizations`.** *(hooks wired ✓;
+6. **Wire scanners into `getSessionCustomizations`.** *(hooks wired ;
    `scanClaudeNativePlugins` pending Part B)* Extend the existing
    `Promise.all` (~L841) with `scanClaudeHooks(...)` and `scanClaudeNativePlugins(...)`,
    pass results into `mapDiscoveredCustomizations` / `buildDiscoveredCustomizations`,
@@ -180,7 +180,7 @@ discovery/projection layer — `Options.plugins` and the SDK loading path are
      materialized hides unloaded native plugins; `Options.plugins` is unchanged from
      today.
 
-7. ✓ **Watcher coverage check (no new triggers).** `ClaudeCustomizationWatcher`
+7.  **Watcher coverage check (no new triggers).** `ClaudeCustomizationWatcher`
    already watches `<cwd>/.claude` and `~/.claude` recursively (~L363), covering
    `settings.json`, `settings.local.json`, `@skills-dir` plugins, and
    `~/.claude/plugins/cache`. Confirm with a test; add an explicit trigger only if a
@@ -191,7 +191,7 @@ discovery/projection layer — `Options.plugins` and the SDK loading path are
    - Done when: a watcher test shows a `settings.json` hooks/`enabledPlugins` edit fires
      `onDidChange`.
 
-8. **Tests.** *(hook scanner + projection tests ✓; native-plugin tests pending Part B)*
+8. **Tests.** *(hook scanner + projection tests ; native-plugin tests pending Part B)*
    New scanner tests + extend discovery tests (see Verification).
    - Files: `test/node/customizations/scan/claudeHookScan.test.ts` (create),
      `test/node/customizations/scan/claudeNativePluginScan.test.ts` (create),
@@ -473,7 +473,7 @@ container, never as duplicate standalone rows (Decision PB-8). **Both** resolver
 
 #### Part B Steps
 
-3. ✓ **Native-plugin scanner `scan/claudeNativePluginScan.ts`** *(create)*.
+3.  **Native-plugin scanner `scan/claudeNativePluginScan.ts`** *(create)*.
    - `scanClaudeNativePlugins(workingDirectory, userHome, fileService, logService)` reads
      `enabledPlugins` from the same three settings files as `claudeHookScan.ts`
      (`<cwd>/.claude/settings.json`, `<cwd>/.claude/settings.local.json`,
@@ -493,7 +493,7 @@ container, never as duplicate standalone rows (Decision PB-8). **Both** resolver
    - Depends on: none (parser already exported). Done when: unit test resolves a temp
      marketplace-cache + a `@skills-dir` plugin to real-URI children; missing/ambiguous skipped.
 
-4. ✓ **Capture `system/init.plugins` in `claudeSdkPipeline.ts`** *(modify)*.
+4.  **Capture `system/init.plugins` in `claudeSdkPipeline.ts`** *(modify)*.
    - Add `private _initPlugins: readonly { name: string; path: string }[] = []`. Set it on the
      init branch (`claudeSdkPipeline.ts` ~L507) **unconditionally** — i.e. NOT gated behind the
      existing `!this._isResumed` guard, so a resumed/re-init session re-captures the latest list
@@ -505,7 +505,7 @@ container, never as duplicate standalone rows (Decision PB-8). **Both** resolver
    - Done when: a pipeline test asserts `snapshotResolvedCustomizations().plugins` is populated
      from a stubbed init message.
 
-5. ✓ **Projection: plugin containers + post-materialize filter** in
+5.  **Projection: plugin containers + post-materialize filter** in
    `claudeSessionCustomizationDiscovery.ts` *(modify)*.
    - Add a `nativePlugins: readonly IResolvedNativePlugin[]` param to both
      `mapDiscoveredCustomizations` and `buildDiscoveredCustomizations`.
@@ -522,7 +522,7 @@ container, never as duplicate standalone rows (Decision PB-8). **Both** resolver
    - Depends on: steps 3, 4. Done when: discovery test shows a plugin container pre-materialize;
      post-materialize a plugin absent from `sdk.plugins` is hidden, hooks/rules are not.
 
-5b. ✓ **De-duplicate `@skills-dir` plugins from the standalone skill scan** in
+5b.  **De-duplicate `@skills-dir` plugins from the standalone skill scan** in
    `scan/claudeAgentSkillScan.ts` *(modify)* (Decision PB-8).
    - When walking `<scope>/.claude/skills/`, **skip any immediate `<name>/` dir that contains a
      readable `.claude-plugin/plugin.json`** — that dir is a native plugin, so its skills belong
@@ -533,20 +533,20 @@ container, never as duplicate standalone rows (Decision PB-8). **Both** resolver
      with a `.claude/skills/<name>/.claude-plugin/plugin.json` present yields no standalone Skill
      for `<name>`.
 
-6. ✓ **Wire `scanClaudeNativePlugins` into `getSessionCustomizations`** in `claudeAgentSession.ts`
+6.  **Wire `scanClaudeNativePlugins` into `getSessionCustomizations`** in `claudeAgentSession.ts`
    *(modify)*.
    - Extend the `Promise.all` (~L841) with
      `scanClaudeNativePlugins(this.workingDirectory, userHome, this._fileService, this._logService)`;
      pass the result into `buildDiscoveredCustomizations`. **No `Options.plugins`/materialize
      change.** Depends on: steps 3, 5.
 
-7. ✓ **Watcher** — no production change expected. `ClaudeCustomizationWatcher` already watches
+7.  **Watcher** — no production change expected. `ClaudeCustomizationWatcher` already watches
    `<cwd>/.claude` + `<userHome>/.claude` recursively (~L363), covering `settings*.json`,
    `~/.claude/plugins/cache`, and `@skills-dir`. Add a test asserting an `enabledPlugins` edit
    fires `onDidChange`; add an explicit trigger only if a resolved root falls outside those
    subtrees.
 
-8. ✓ **Tests** *(create + modify)* — see Part B Verification.
+8.  **Tests** *(create + modify)* — see Part B Verification.
 
 #### Part B Files to Modify or Create
 

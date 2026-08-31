@@ -18,30 +18,30 @@ Status: ready
 
 The eight implementation subsections in §3 are the steps. Walked in TDD order so each step's red→green is bounded by a coherent group of behaviors from §5. The §3.x subheading is the canonical name; the `Done when` clause and `Files` list collapse the existing §2 / §3 / §5 cross-references into one place per step.
 
-1. ✓ **§3.2 — Pending state on `ClaudeAgentSession`**
+1.  **§3.2 — Pending state on `ClaudeAgentSession`**
     - Files: [claudeAgentSession.ts](claudeAgentSession.ts).
     - Done when: `_pendingPermissions` / `_pendingUserInputs` maps exist; `requestPermission`, `respondToPermissionRequest`, `requestUserInput`, `respondToUserInputRequest`, `setPermissionMode`, `_denyAllPending` are implemented per §3.2; `override dispose()` calls `_denyAllPending()` before `super.dispose()`. Test 17 from §5.2 (dispose with parked permission unblocks SDK) goes red→green here using a tiny in-memory test that constructs a session and dispose-then-asserts; agent-driven tests come later.
-2. ✓ **§3.3 — Mapper extensions for `tool_use` / `tool_result`**
+2.  **§3.3 — Mapper extensions for `tool_use` / `tool_result`**
     - Files: [claudeMapSessionEvents.ts](claudeMapSessionEvents.ts), [claudeAgentSession.ts](claudeAgentSession.ts) (mapperState init), [../../test/node/claudeMapSessionEvents.test.ts](../../test/node/claudeMapSessionEvents.test.ts), [../../test/node/claudeMapSessionEventsTestUtils.ts](../../test/node/claudeMapSessionEventsTestUtils.ts).
     - Done when: `IClaudeMapperState` carries `activeToolBlocks`, `toolCallTurnIds`, `toolCallNames`; `content_block_start { tool_use }` emits `SessionToolCallStart`; `input_json_delta` emits `SessionToolCallDelta`; `content_block_stop` drains `activeToolBlocks` and `currentBlockParts`; synthetic `user` messages with `tool_result` content emit `SessionToolCallComplete`; unknown `tool_use_id` warns and drops. Tests 8, 9, 10, 11 from §5.2 go red→green here.
-3. ✓ **§4 — `claudeToolDisplay.ts` helper module**
+3.  **§4 — `claudeToolDisplay.ts` helper module**
     - Files: [claudeToolDisplay.ts](claudeToolDisplay.ts) (new), [../../test/node/claudeToolDisplay.test.ts](../../test/node/claudeToolDisplay.test.ts) (new).
     - Done when: `getClaudePermissionKind`, `getClaudeToolDisplayName`, `extractPermissionPath` exported; mapping table from §4 implemented; `mcp__*` prefix and unknown-tool defensive default both behave per §4. New unit test snapshots the table.
-4. ✓ **§3.4 — `_handleCanUseTool` flow on `ClaudeAgent`**
+4.  **§3.4 — `_handleCanUseTool` flow on `ClaudeAgent`**
     - Files: [claudeAgent.ts](claudeAgent.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
     - Done when: `canUseTool` closure captures `sessionId` and dispatches into `_handleCanUseTool`; live `permissionMode` is re-read via `_readSessionPermissionMode`; `bypassPermissions`, `acceptEdits`, and `plan` shortcuts behave per §3.4; default path fires `pending_confirmation` and parks on `session.requestPermission(toolUseId)`. Tests 1, 2, 3, 4, 5, 6, 7 from §5.2 go red→green here. The Phase-6 deny stub at [claudeAgent.ts:436-440](claudeAgent.ts#L436) is removed.
-5. ✓ **§3.5 — `INTERACTIVE_CLAUDE_TOOLS` user-input flow (`AskUserQuestion` + `ExitPlanMode`)**
+5.  **§3.5 — `INTERACTIVE_CLAUDE_TOOLS` user-input flow (`AskUserQuestion` + `ExitPlanMode`)**
     - Files: [claudeAgent.ts](claudeAgent.ts), [claudeAgentSession.ts](claudeAgentSession.ts), [claudeToolDisplay.ts](claudeToolDisplay.ts) (export `INTERACTIVE_CLAUDE_TOOLS`), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
     - Done when: `INTERACTIVE_CLAUDE_TOOLS = new Set(['AskUserQuestion', 'ExitPlanMode'])` exported from [claudeToolDisplay.ts](claudeToolDisplay.ts); `_handleCanUseTool` dispatches via `INTERACTIVE_CLAUDE_TOOLS.has(toolName)`; `AskUserQuestion` → carousel `requestUserInput` per §3.5a; `ExitPlanMode` → simple 2-button Approve/Deny `requestUserInput` per §3.5b that on Approve calls `session.setPermissionMode('acceptEdits')` then returns `{ behavior: 'allow', updatedInput: input }`, on Deny returns `{ behavior: 'deny', message: 'The user declined the plan, maybe ask why?' }`. **Simple production-mirror; richer `IExitPlanModeResponse` shape deferred per roadmap.md.** The implementation MUST drop a `// TODO(claude-future): adopt richer IExitPlanModeResponse shape — see roadmap.md` marker at the handler site. The plan mapping table in §4 marks BOTH tools as "(special-cased — does not produce `pending_confirmation`)". Tests 12, 13 from §5.2 (carousel) plus new tests 12b, 13b (ExitPlanMode Approve flips mode + allow; Deny → `deny` with the production wording) go red→green here.
-6. ✓ **§3.6 / §3.8 — `permissionMode` propagation + `respondTo*` agent dispatch**
+6.  **§3.6 / §3.8 — `permissionMode` propagation + `respondTo*` agent dispatch**
     - Files: [claudeAgent.ts](claudeAgent.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
     - Done when: `Options.permissionMode` is seeded from `_readSessionPermissionMode(provisional.sessionUri)` at materialize; `sendMessage` calls `entry.setPermissionMode(this._readSessionPermissionMode(session))` before `entry.send(...)`; `respondToPermissionRequest` and `respondToUserInputRequest` iterate `_sessions.values()` and short-circuit on first match; `FakeQuery.setPermissionMode` is recordable. Tests 14, 15, 16 from §5.2 go red→green here.
     - **Implementation Notes (Step 6).** `_readSessionPermissionMode` was changed to return `PermissionMode | undefined` (was `PermissionMode` with a `'default'` fallback). Three call sites carry the fallback chain: `Options.permissionMode` at materialize uses `?? this._resolvePermissionMode(provisional.config)` (production AgentService seeds `state.config` so live wins; test fixtures that bypass that layer rely on the createSession-time fallback); the persisted-metadata write uses the same chain; `_handleCanUseTool` keeps `?? 'default'` for the canUseTool gate. `sendMessage` forwards live mode via `entry.setPermissionMode(this._readSessionPermissionMode(session) ?? 'default')` ONLY when the entry was NOT just-materialized — the just-materialized turn already has the live value via `Options.permissionMode`, so a redundant SDK control-channel call would just record an extra mode in `FakeQuery.recordedPermissionModes`. Tests 14 + 15 (unknown-id silent for both `respondToPermissionRequest` and `respondToUserInputRequest`) shipped in Steps 4 + 5; Test 16 here exercises the live mid-session forward (turn 1 default; `updateSessionConfig({ permissionMode: 'acceptEdits' })`; turn 2 records `['acceptEdits']`). Test 16b additionally pins the materialize-time live read (state seeded with `permissionMode: 'plan'` BEFORE first `sendMessage`; `Options.permissionMode === 'plan'`). The §3.8 portions (`respondTo*` dispatchers + `FakeQuery.setPermissionMode` recordable) graduated to Steps 4 + 5 to keep the round-trip assertion shape working there. Two race tests ("dispose racing _writeCustomizationDirectory" + "agent.dispose() during a racing first sendMessage") needed `IAgentConfigurationService` added to their bespoke `ServiceCollection` since the live read at materialize now reaches into it. After Step 6: 72/72 tests green in claudeAgent.test.ts.
-7. ✓ **§3.7 — `onElicitation` cancel stub**
+7.  **§3.7 — `onElicitation` cancel stub**
     - Files: [claudeAgent.ts](claudeAgent.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
     - Done when: `Options.onElicitation` is wired to a closure that logs and returns `{ action: 'cancel' }`. Test 18 from §5.2 goes red→green here.
     - **Implementation Notes (Step 7).** Wired `Options.onElicitation` immediately after `canUseTool` in `_materializeProvisional`'s Options object. Closure logs `[Claude] declining elicitation from MCP server (Phase 7 stub): {request.message}` at info level and returns `{ action: 'cancel' }`. `CapturingLogService` extended with an `infos: string[]` channel (was `warns` + `errors` only) so Test 18 can assert the diagnostic line surfaces. Test 18 calls the captured callback with a synthetic `ElicitationRequest` (`{ serverName: 'test-mcp', message: 'Pick a side', mode: 'form' }`) and pins both the `cancel` action and the singleton log entry. Snapshot-style: one `assert.deepStrictEqual` over `{ result, logCount }`. Full MCP wiring deferred to Phase 10. **[Correction 2026-07-14: Phase 10 was rescoped to in-process client tools and never picked up the `onElicitation` replacement; the stub still stands. Real translation is now tracked as [Phase 10.6 in roadmap.md](./roadmap.md).]** After Step 7: 73/73 tests green in claudeAgent.test.ts.
-8. ✓ **§5.3 — Integration test (proxy-backed) + smoke.md row**
+8.  **§5.3 — Integration test (proxy-backed) + smoke.md row**
     - Files: [../../test/node/claudeAgent.integrationTest.ts](../../test/node/claudeAgent.integrationTest.ts), [smoke.md](smoke.md), [scripts/verify-claude-logs.sh](scripts/verify-claude-logs.sh).
     - Done when: the proxy-backed integration test exercises a one-tool `Read` permission round-trip end-to-end against the proxy and asserts the `AgentSignal` sequence; smoke.md gains the Phase-7 row from §7.5; `verify-claude-logs.sh --phase=7` adds the assertions 9–13 from §7.5.
     - **Implementation Notes (Step 8).** Three deliverables landed: (1) `claudeAgent.integrationTest.ts` got a Phase-7 case ("Phase 7 §5.3 — canUseTool / onElicitation closures wired through to Options on materialize") that drives the existing proxy-backed harness through `agent.sendMessage`, then asserts the captured `Options` carries both `canUseTool` and `onElicitation` functions and that calling `onElicitation` returns `{ action: 'cancel' }`. The full content-block tool round-trip with synthetic `tool_result` user messages is covered exhaustively in `claudeAgent.test.ts` (Tests 1–18) — the integration adds value by guaranteeing the new closures survive the materialize → SDK boundary intact when the real proxy is in the loop. Both Phase-6 and Phase-7 integration tests required wiring `IAgentConfigurationService` into the bespoke `ServiceCollection` (same fix as the Step 6 race tests in `claudeAgent.test.ts`), since `_readSessionPermissionMode` now reaches into it from `_materializeProvisional`. (2) `smoke.md` gained a Phase-7 row in the "When to run" table, a §4.1 Phase-7 operator script (4 steps: approve round-trip, action-stream verify, bypass round-trip, AskUserQuestion flow), and a Phase-7+ entry in §7 "Attach to PR" listing `tool-confirm.png`, `tool-complete.png`, `bypass-mode.png`, `ask-user-question.png`, and `tool-actions.log`. (3) `verify-claude-logs.sh` got the §7.5 assertions 9–13: when `PHASE >= 7`, FATAL_PATTERNS expands with the canUseTool-on-disposed-session and unknown-tool_use_id strings, and a new Phase-7 block counts `session/toolCall/start` / `pending_confirmation` / `session/toolCall/complete` actions in the IPC log (asserts ≥1 of each), snapshots them to `$OUT/tool-actions.log`, and best-effort-greps for `setPermissionMode.*bypassPermissions` for §7.5 assertion 13. After Step 8: 75/75 integration tests green (3/3 in the ClaudeAgent suite); 73/73 unit tests green in `claudeAgent.test.ts`.
@@ -982,7 +982,7 @@ The five candidates that survived the council fan-out were resolved during the g
 
 Live status of the implementation. Updated as steps land.
 
-### Step 1 — §3.2 pending state on `ClaudeAgentSession` ✓
+### Step 1 — §3.2 pending state on `ClaudeAgentSession` 
 
 **Files changed.** [claudeAgentSession.ts](claudeAgentSession.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
 
@@ -997,7 +997,7 @@ Live status of the implementation. Updated as steps land.
 
 **Verification.** Test 17 passes; all 57 existing tests in `claudeAgent.test.ts` still pass.
 
-### Step 2 — §3.3 mapper extensions for `tool_use` / `tool_result` ✓
+### Step 2 — §3.3 mapper extensions for `tool_use` / `tool_result` 
 
 **Files changed.** [claudeMapSessionEvents.ts](claudeMapSessionEvents.ts), [claudeAgentSession.ts](claudeAgentSession.ts), [../../test/node/claudeMapSessionEvents.test.ts](../../test/node/claudeMapSessionEvents.test.ts), [../../test/node/claudeMapSessionEventsTestUtils.ts](../../test/node/claudeMapSessionEventsTestUtils.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts) (Phase 6.1 warn-and-drop test rewritten).
 
@@ -1014,7 +1014,7 @@ Live status of the implementation. Updated as steps land.
 
 **Verification.** All 15 mapper unit tests pass. All 56 + the rewritten 1 = 57 `claudeAgent.test.ts` tests still pass. Total agent test count: 77 across the three suites (claudeAgent + claudeMapSessionEvents + claudeToolDisplay).
 
-### Step 3 — §4 `claudeToolDisplay.ts` helper module ✓
+### Step 3 — §4 `claudeToolDisplay.ts` helper module 
 
 **Files added.** [claudeToolDisplay.ts](claudeToolDisplay.ts), [../../test/node/claudeToolDisplay.test.ts](../../test/node/claudeToolDisplay.test.ts).
 
@@ -1028,7 +1028,7 @@ Live status of the implementation. Updated as steps land.
 
 **Verification.** All 5 tests pass; full suite (77 tests) still green.
 
-### Step 4 — §3.4 `_handleCanUseTool` flow on `ClaudeAgent` ✓
+### Step 4 — §3.4 `_handleCanUseTool` flow on `ClaudeAgent` 
 
 **Files changed.** [claudeAgent.ts](claudeAgent.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
 
@@ -1046,7 +1046,7 @@ Live status of the implementation. Updated as steps land.
 
 **Verification.** 65/65 tests pass in `claudeAgent.test.ts` (57 baseline + 8 new); full suite (85 across claudeAgent + claudeMapSessionEvents + claudeToolDisplay) still green.
 
-### Step 5 — §3.5 `INTERACTIVE_CLAUDE_TOOLS` user-input flow ✓
+### Step 5 — §3.5 `INTERACTIVE_CLAUDE_TOOLS` user-input flow 
 
 **Files changed.** [claudeAgent.ts](claudeAgent.ts), [../../test/node/claudeAgent.test.ts](../../test/node/claudeAgent.test.ts).
 

@@ -752,12 +752,12 @@
             </div>
             <div class="nav-right">
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es">🇪🇸 ES</option>
-                    <option value="en">🇺🇸 EN</option>
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="pt">🇧🇷 PT</option>
+                    <option value="es"> ES</option>
+                    <option value="en"> EN</option>
+                    <option value="fr"> FR</option>
+                    <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">☀️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
                 <a href="dashboard" id="nav-profile">
                     <div id="nav-avatar">U</div>
                     <span id="nav-name">Mi cuenta</span>
@@ -775,8 +775,8 @@
                 <div class="sidebar-header">
                     <h2 data-i18n="csms_chats_tab">Chats</h2>
                     <div class="header-actions">
-                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email">💬</button>
-                        <button id="btn-new-group" title="Nuevo Grupo">👥</button>
+                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email">[LOG]</button>
+                        <button id="btn-new-group" title="Nuevo Grupo"></button>
                     </div>
                 </div>
                 <div class="rooms-list" id="rooms-list">
@@ -790,7 +790,7 @@
             <div class="messenger-chat">
                 <!-- Welcome Splash -->
                 <div class="welcome-splash" id="welcome-splash">
-                    <div class="splash-logo">💬</div>
+                    <div class="splash-logo">[LOG]</div>
                     <h3 data-i18n="csms_title">Bienvenido a CSMS</h3>
                     <p data-i18n="csms_no_chat_selected">Selecciona una conversación, busca a un amigo por su correo electrónico o crea un nuevo grupo para chatear en tiempo real.</p>
                 </div>
@@ -819,10 +819,10 @@
                     <div class="attachment-preview-bar" id="attachment-preview-bar">
                         <div class="attachment-preview-info">
                             <img id="attachment-preview-img" class="attachment-preview-thumb" src="" style="display:none;">
-                            <span id="attachment-preview-icon" style="font-size:18px;">📎</span>
+                            <span id="attachment-preview-icon" style="font-size:18px;"></span>
                             <span id="attachment-preview-name">archivo.png</span>
                         </div>
-                        <button class="attachment-remove-btn" id="btn-remove-attachment" title="Quitar adjunto">✕</button>
+                        <button class="attachment-remove-btn" id="btn-remove-attachment" title="Quitar adjunto"></button>
                     </div>
 
                     <div class="message-input-bar">
@@ -846,12 +846,12 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title">Nuevo Mensaje Directo</div>
-                <button class="modal-close" onclick="closeModal('modal-dm')">✕</button>
+                <button class="modal-close" onclick="closeModal('modal-dm')"></button>
             </div>
             <div class="modal-body">
                 <!-- Opción 1: Enviar por correo exacto -->
                 <div class="form-group" style="background: rgba(99, 102, 241, 0.08); padding: 14px; border-radius: 14px; border: 1px solid var(--border-glow);">
-                    <label style="color: var(--accent); font-weight: 800;">✉️ Escribir a un Correo Electrónico</label>
+                    <label style="color: var(--accent); font-weight: 800;">[MAIL] Escribir a un Correo Electrónico</label>
                     <div style="display: flex; gap: 8px; margin-top: 6px;">
                         <input class="form-input" type="email" id="dm-email-input" placeholder="amigo@correo.com">
                         <button type="button" id="btn-start-by-email" style="padding: 10px 16px; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; white-space: nowrap;">
@@ -890,7 +890,7 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title">Crear Nuevo Grupo</div>
-                <button class="modal-close" onclick="closeModal('modal-group')">✕</button>
+                <button class="modal-close" onclick="closeModal('modal-group')"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -920,7 +920,7 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title">Invitar Miembros al Grupo</div>
-                <button class="modal-close" onclick="closeModal('modal-invite')">✕</button>
+                <button class="modal-close" onclick="closeModal('modal-invite')"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -962,7 +962,7 @@
             const themeToggle = document.getElementById('theme-toggle');
             const updateToggleIcon = () => {
                 const isLight = document.documentElement.classList.contains('light-theme');
-                themeToggle.textContent = isLight ? '🌙' : '☀️';
+                themeToggle.textContent = isLight ? '' : '️';
             };
             if (themeToggle) {
                 updateToggleIcon();
@@ -1074,7 +1074,7 @@
             if (rooms.length === 0) {
                 list.innerHTML = `
                     <div style="padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 13px;">
-                        No tienes salas de chat. ¡Comienza un chat directo haciendo clic en el icono 💬 superior!
+                        No tienes salas de chat. ¡Comienza un chat directo haciendo clic en el icono [LOG] superior!
                     </div>
                 `;
                 return;
@@ -1096,7 +1096,7 @@
                 } else {
                     // Group: show group name and group icon
                     displayName = room.name;
-                    displayAvatar = "👥";
+                    displayAvatar = "";
                 }
 
                 const isActive = activeRoom && activeRoom.id === room.id;
@@ -1166,7 +1166,7 @@
                 document.getElementById('btn-invite-members').style.display = 'none';
             } else {
                 displayName = room.name;
-                displayAvatar = "👥";
+                displayAvatar = "";
                 document.getElementById('chat-header-status').textContent = `${room.members.length} miembros`;
                 document.getElementById('btn-invite-members').style.display = 'block';
             }
@@ -1251,7 +1251,7 @@
             } else {
                 attachmentPreviewImg.style.display = 'none';
                 attachmentPreviewIcon.style.display = 'inline-block';
-                attachmentPreviewIcon.textContent = file.type.startsWith('video/') ? '🎬' : '📄';
+                attachmentPreviewIcon.textContent = file.type.startsWith('video/') ? '' : '';
             }
 
             attachmentPreviewBar.style.display = 'flex';
@@ -1308,7 +1308,7 @@
                 const fileName = msg.media_url.split('/').pop() || 'Archivo adjunto';
                 return `
                     <a href="${msg.media_url}" target="_blank" download class="message-file-attachment">
-                        <span style="font-size: 20px;">📄</span>
+                        <span style="font-size: 20px;"></span>
                         <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:600;">
                             ${escHtml(fileName)}
                         </div>
@@ -1447,7 +1447,7 @@
                         user_id: currentUser.id,
                         author_name: authorName,
                         author_avatar: authorAvatar,
-                        content: text || (mediaType === 'image' ? '📷 Foto' : mediaType === 'video' ? '🎬 Video' : '📎 Archivo'),
+                        content: text || (mediaType === 'image' ? ' Foto' : mediaType === 'video' ? ' Video' : ' Archivo'),
                         media_url: mediaUrl,
                         media_type: mediaType
                     });
@@ -1894,7 +1894,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '🌙' : '☀️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
         };
         if (themeToggle) {
             updateToggleIcon();

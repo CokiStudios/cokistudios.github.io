@@ -3,7 +3,7 @@
 [![Versions](https://img.shields.io/npm/v/monaco-editor)](https://www.npmjs.com/package/monaco-editor)
 [![Versions](https://img.shields.io/npm/v/monaco-editor/next)](https://www.npmjs.com/package/monaco-editor)
 [![Feature Requests](https://img.shields.io/github/issues/microsoft/monaco-editor/feature-request.svg)](https://github.com/microsoft/monaco-editor/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
-[![Bugs](https://img.shields.io/github/issues/microsoft/monaco-editor/bug.svg)](https://github.com/microsoft/monaco-editor/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Bugs](https://img.shields.io/github/issues/microsoft/monaco-editor/bug.svg)](https://github.com/microsoft/monaco-editor/issues?utf8=&q=is%3Aissue+is%3Aopen+label%3Abug)
 
 The Monaco Editor is the fully featured code editor from [VS Code](https://github.com/microsoft/vscode). Check out the [VS Code docs](https://code.visualstudio.com/docs/editor/editingevolved) to see some of the supported features.
 
@@ -74,37 +74,37 @@ Create [issues](https://github.com/microsoft/monaco-editor/issues) in this repos
 
 ## FAQ
 
-❓ **What is the relationship between VS Code and the Monaco Editor?**
+ **What is the relationship between VS Code and the Monaco Editor?**
 
 The Monaco Editor is generated straight from VS Code's sources with some shims around services the code needs to make it run in a web browser outside of its home.
 
-❓ **What is the relationship between VS Code's version and the Monaco Editor's version?**
+ **What is the relationship between VS Code's version and the Monaco Editor's version?**
 
 None. The Monaco Editor is a library and it reflects directly the source code.
 
-❓ **I've written an extension for VS Code, will it work on the Monaco Editor in a browser?**
+ **I've written an extension for VS Code, will it work on the Monaco Editor in a browser?**
 
 No.
 
 > Note: If the extension is fully based on the [LSP](https://microsoft.github.io/language-server-protocol/) and if the language server is authored in JavaScript, then it would be possible.
 
-❓ **Why all these web workers and why should I care?**
+ **Why all these web workers and why should I care?**
 
 Language services create web workers to compute heavy stuff outside of the UI thread. They cost hardly anything in terms of resource overhead and you shouldn't worry too much about them, as long as you get them to work (see above the cross-domain case).
 
-❓ **What is this `loader.js`? Can I use `require.js`?**
+ **What is this `loader.js`? Can I use `require.js`?**
 
 It is an AMD loader that we use in VS Code. Yes.
 
-❓ **I see the warning "Could not create web worker". What should I do?**
+ **I see the warning "Could not create web worker". What should I do?**
 
 HTML5 does not allow pages loaded on `file://` to create web workers. Please load the editor with a web server on `http://` or `https://` schemes.
 
-❓ **Is the editor supported in mobile browsers or mobile web app frameworks?**
+ **Is the editor supported in mobile browsers or mobile web app frameworks?**
 
 No.
 
-❓ **Why doesn't the editor support TextMate grammars?**
+ **Why doesn't the editor support TextMate grammars?**
 
 - Please see https://github.com/bolinfest/monaco-tm which puts together `monaco-editor`, `vscode-oniguruma` and `vscode-textmate` to get TM grammar support in the editor.
 

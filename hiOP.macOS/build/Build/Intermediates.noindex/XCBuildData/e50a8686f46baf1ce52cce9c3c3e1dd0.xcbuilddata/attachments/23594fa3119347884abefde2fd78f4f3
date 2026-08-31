@@ -1,0 +1,16 @@
+{
+  "" : {
+    "const-values" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary.swiftconstvalues",
+    "dependencies" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary.d",
+    "diagnostics" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary.dia",
+    "emit-module-dependencies" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary-emit-module.dia",
+    "pch" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOP-primary.swiftdeps"
+  },
+  "/Users/jerix/cokistudios.github.io/hiOP.macOS/hiOPApp.swift" : {
+    "index-unit-output-path" : "/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOPApp.o",
+    "llvm-bc" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOPApp.bc",
+    "object" : "/Users/jerix/cokistudios.github.io/hiOP.macOS/build/Build/Intermediates.noindex/hiOP.build/Release/hiOP.build/Objects-normal/x86_64/hiOPApp.o"
+  }
+}

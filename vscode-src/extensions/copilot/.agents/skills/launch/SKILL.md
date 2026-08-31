@@ -25,7 +25,7 @@ Automate VS Code Insiders with the Copilot Chat extension using `@playwright/cli
 5. **Interact** using element refs
 6. **Re-snapshot** after navigation or state changes
 
-> **📸 Take screenshots for a paper trail.** Use `npx @playwright/cli screenshot --filename=<path>` at key moments — after launch, before/after interactions, and when something goes wrong. Screenshots provide visual proof of what the UI looked like and are invaluable for debugging failures or documenting what was accomplished.
+> ** Take screenshots for a paper trail.** Use `npx @playwright/cli screenshot --filename=<path>` at key moments — after launch, before/after interactions, and when something goes wrong. Screenshots provide visual proof of what the UI looked like and are invaluable for debugging failures or documenting what was accomplished.
 >
 > Save screenshots inside `.vscode-ext-debug/screenshots/` (gitignored) using a timestamped subfolder so each run is isolated and nothing gets overwritten:
 >
@@ -113,7 +113,7 @@ npx @playwright/cli snapshot
 
 **Without `--user-data-dir`**, VS Code detects the running instance, forwards the args to it, and exits immediately — you'll see "Sent env to running instance. Terminating..." and CDP never starts.
 
-> **⚠️ Authentication is required.** The Copilot Chat extension needs an authenticated GitHub session to function. Using a temp directory (e.g., `/tmp/...`) creates a fresh profile with no auth — the agent will hit a "Sign in to use Copilot" wall and model resolution will fail with "Language model unavailable."
+> **️ Authentication is required.** The Copilot Chat extension needs an authenticated GitHub session to function. Using a temp directory (e.g., `/tmp/...`) creates a fresh profile with no auth — the agent will hit a "Sign in to use Copilot" wall and model resolution will fail with "Language model unavailable."
 >
 > **Always use a persistent `--user-data-dir`** like `$PWD/.vscode-ext-debug`. On first use, launch once and sign in manually. Subsequent launches will reuse the auth session.
 

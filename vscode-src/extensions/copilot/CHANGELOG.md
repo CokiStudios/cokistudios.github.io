@@ -2508,11 +2508,11 @@ Set `github.copilot.chat.codesearch.enabled` to enable this behavior. The full l
 
 To help with fixing code or other issues in your workspace, you can now attach problems from the Problems panel to your chat as context for your prompt.
 
-Either drag an item from the Problems panel onto the Chat view, type `#problems` in your prompt, or select the paperclip 📎 button. You can attach specific problems, all problems in a file, or all files in your codebase.
+Either drag an item from the Problems panel onto the Chat view, type `#problems` in your prompt, or select the paperclip  button. You can attach specific problems, all problems in a file, or all files in your codebase.
 
 ### Attach folders as context
 
-Previously, you could attach folders as context by using drag and drop from the Explorer view. Now, you can also attach a folder by selecting the paperclip 📎 icon or by typing `#folder:` followed by the folder name in your chat prompt.
+Previously, you could attach folders as context by using drag and drop from the Explorer view. Now, you can also attach a folder by selecting the paperclip  icon or by typing `#folder:` followed by the folder name in your chat prompt.
 
 ### Collapsed mode for Next Edit Suggestions (Preview)
 
@@ -2555,7 +2555,7 @@ You can attach images in multiple ways:
 
 * Drag and drop images from your OS or from the Explorer view
 * Paste an image from your clipboard
-* Attach a screenshot of the VS Code window (select the **paperclip 📎 button** > **Screenshot Window**)
+* Attach a screenshot of the VS Code window (select the **paperclip  button** > **Screenshot Window**)
 
 A warning is shown if the selected model currently does not have the capability to handle the file type. The only supported model at the moment will be `GPT 4o`, but support for image attachments with `Claude 3.5 Sonnet` and `Gemini 2.0 Flash` will be rolling out soon as well. Currently, the supported image types are `JPEG/JPG`, `PNG`, `GIF`, and `WEBP`.
 
