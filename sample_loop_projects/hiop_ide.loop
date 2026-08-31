@@ -1,0 +1,46 @@
+# ═══════════════════════════════════════════════════════════════
+# [hiOP IDE v2.0] Written in 100% Native Looping (.loop)
+# Built by Coki Studios & Holo Entertainment
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.engine as game
+import loop.editor as code
+
+# ── Interoperabilidad con librerías de Python ──
+use python "os"
+use python "sys"
+
+define app "hiOP_IDE" version 2.0:
+    create window with title "hiOP IDE -- Coki Studios Code Studio" and size (800, 520)
+    set theme to "frosted_aqua_a17"
+    set ui_profile to "xui"
+    
+    set ide_name to "hiOP IDE for Shine OS & Web"
+    set current_file to "main.loop"
+    set status_msg to "Ready • Looping Engine v2.0.4 Online"
+    
+    print "[BOOT] Starting hiOP IDE compiled directly in Looping..."
+    print "[PYTHON BRIDGE] Python Subsystem Ready for Modules"
+    
+    # ── Header & Toolbar de hiOP (Design Guide p.2 & p.9) ──
+    draw card at (20, 20) with size (760, 55) and title "hiOP IDE // COKI STUDIOS" and text "File: main.loop | Target: Shine Loop & Android | Status: Live Editing"
+    
+    # ── Panel de Archivos (Explorador Izquierdo) ──
+    draw card at (20, 85) with size (220, 340) and title "PROYECTO" and text "📁 src/\n  ├── main.loop\n  ├── player.loop\n  └── ui.loop\n📁 loop_modules/\n  └── physics.loop\n📄 OS_MANIFEST.json"
+    
+    draw button at (35, 360) with text "NUEVO ARCHIVO" and action "new_file"
+    
+    # ── Editor de Código Central (Frosted Aqua A17 Glass) ──
+    draw card at (255, 85) with size (525, 340) and title "EDITOR // main.loop" and text "1 | define app 'MyGame':\n2 |     set theme to 'frosted_aqua_a17'\n3 |     spawn sprite 'Hero' at (120, 200)\n4 |     play tone at 440 Hz for 100 ms\n5 |     print 'Game Running @ 60FPS!'"
+
+    draw button at (275, 360) with text "COMPILAR & CORRER [F5]" and action "run_code"
+    draw button at (520, 360) with text "EXPORTAR A APK" and action "build_apk"
+
+    # ── Barra de Estado Inferior ──
+    draw card at (20, 435) with size (760, 50) and title "TERMINAL // LOOPING COMPILE OUTPUT" and text "Build Succeeded (0 Errors) • 60 FPS Low-Latency V-Sync Enabled"
+    
+    # ── Chime de Inicio de hiOP ──
+    play tone at 523 Hz for 80 ms
+    
+    print "[hiOP] IDE listo para desarrollar videojuegos."

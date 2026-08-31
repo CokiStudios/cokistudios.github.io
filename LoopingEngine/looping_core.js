@@ -91,10 +91,49 @@ export class LoopingInterpreter {
         this.canvas.addEventListener('mousedown', (e) => {
             this.isMouseDown = true;
             this.triggerEvent('click', this.mousePos);
+
+            // Interactive Button Click Dispatcher (CS Button System)
+            for (let elem of this.renderQueue) {
+                if (elem.type === 'button') {
+                    if (this.mousePos.x >= elem.x && this.mousePos.x <= elem.x + elem.w &&
+                        this.mousePos.y >= elem.y && this.mousePos.y <= elem.y + elem.h) {
+                        
+                        elem.isPressed = true;
+                        this.log(`[BUTTON CLICK] Triggered action: "${elem.action || elem.text}"`, 'success');
+                        
+                        // Play interactive tactile sound chime (Design Guide p.4 & p.9)
+                        try {
+                            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                            if (AudioCtx) {
+                                const ctx = new AudioCtx();
+                                const osc = ctx.createOscillator();
+                                const gain = ctx.createGain();
+                                osc.frequency.setValueAtTime(659, ctx.currentTime);
+                                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                                osc.connect(gain);
+                                gain.connect(ctx.destination);
+                                osc.start();
+                                osc.stop(ctx.currentTime + 0.08);
+                            }
+                        } catch(e) {}
+
+                        // If action matches a registered function or system command
+                        if (elem.action && typeof this.functions[elem.action] === 'function') {
+                            this.functions[elem.action]();
+                        } else if (elem.action === 'launch_arcade' || elem.action === 'launch_forkar') {
+                            this.log(`[LAUNCHER] Booting game module: ${elem.action} @ 60 FPS...`, 'system');
+                        }
+                    }
+                }
+            }
         });
         
         this.canvas.addEventListener('mouseup', () => {
             this.isMouseDown = false;
+            for (let elem of this.renderQueue) {
+                if (elem.type === 'button') elem.isPressed = false;
+            }
         });
     }
 
