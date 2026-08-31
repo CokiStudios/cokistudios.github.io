@@ -205,7 +205,54 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 7. Draw Card UI: draw card at (x, y) with size (w, h) and title "..." and text "..."
+        // 7. System Calls & Kernel Control: syscall <name> with args "..."
+        if (line.startsWith('syscall')) {
+            const match = line.match(/syscall\s+([A-Za-z0-9_]+)(?:\s+with\s+args\s+["'](.*?)["'])?/);
+            if (match) {
+                const callName = match[1];
+                const args = match[2] || '';
+                this.log(`[KERNEL SYSCALL] 0x${Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase()} :: ${callName}(${args}) -> OK`, 'system');
+            }
+            return;
+        }
+
+        // 8. Process Spawner / Multitasking: spawn process "name" with priority <int>
+        if (line.startsWith('spawn process')) {
+            const nameMatch = line.match(/spawn process ["'](.*?)["']/);
+            const prioMatch = line.match(/priority\s+(\d+)/);
+            const procName = nameMatch ? nameMatch[1] : 'task_daemon';
+            const pid = Math.floor(1000 + Math.random() * 9000);
+            this.log(`[PROCESS SCHEDULER] PID ${pid} [${procName}] Started (Priority: ${prioMatch ? prioMatch[1] : 10})`, 'info');
+            return;
+        }
+
+        // 9. Hardware Sound Generator: play tone at <freq> Hz for <duration> ms
+        if (line.startsWith('play tone')) {
+            const freqMatch = line.match(/play tone at\s+(\d+)\s*Hz/i);
+            const durMatch = line.match(/for\s+(\d+)\s*ms/i);
+            const freq = freqMatch ? parseInt(freqMatch[1]) : 440;
+            const dur = durMatch ? parseInt(durMatch[1]) : 100;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (dur / 1000));
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + (dur / 1000));
+                }
+            } catch (e) {}
+            this.log(`[AUDIO HARDWARE] Sound Synthesizer: ${freq}Hz (${dur}ms)`, 'system');
+            return;
+        }
+
+        // 10. Draw Card UI: draw card at (x, y) with size (w, h) and title "..." and text "..."
         if (line.startsWith('draw card at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
@@ -224,7 +271,7 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 8. Draw Button UI: draw button at (x, y) with text "..." and action "..."
+        // 11. Draw Button UI: draw button at (x, y) with text "..." and action "..."
         if (line.startsWith('draw button at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const textMatch = line.match(/text ["'](.*?)["']/);

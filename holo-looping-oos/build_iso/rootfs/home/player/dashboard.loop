@@ -18,7 +18,7 @@ define app "ShineLoopDashboard" version 1.0:
     
     print "[BOOT] Initializing Holo Looping OoS Gaming System..."
     print "[SYSTEM] Platform:", device_model
-    print "[AUTH] User:", active_user
+    print "User:", active_user
     
     # ── Console Top Status Bar ──
     draw card at (30, 25) with size (660, 65) and title "COKI STUDIOS // SHINE LOOP CONSOLE" and text "Kernel: Holo Looping OoS 1.0 | Engine: Looping Compile v2.0 | 60 FPS"

@@ -194,7 +194,36 @@ class LoopingCLI {
             return;
         }
 
-        // 8. Platforms & Collectibles
+        // 8. System Calls (Kernel Bridge)
+        if (line.startsWith('syscall')) {
+            const match = line.match(/syscall\s+([A-Za-z0-9_]+)(?:\s+with\s+args\s+["'](.*?)["'])?/);
+            const callName = match ? match[1] : 'unknown';
+            const args = match && match[2] ? match[2] : '';
+            console.log(`${CYAN}[KERNEL SYSCALL]${RESET} 0x${Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase()} :: ${callName}(${args}) -> OK`);
+            return;
+        }
+
+        // 9. Process Spawner (Multitasking Scheduler)
+        if (line.startsWith('spawn process')) {
+            const nameMatch = line.match(/spawn process ["'](.*?)["']/);
+            const prioMatch = line.match(/priority\s+(\d+)/);
+            const procName = nameMatch ? nameMatch[1] : 'daemon';
+            const pid = Math.floor(1000 + Math.random() * 9000);
+            console.log(`${PURPLE}[PROCESS]${RESET} PID ${pid} [${procName}] Started (Priority: ${prioMatch ? prioMatch[1] : 10})`);
+            return;
+        }
+
+        // 10. Hardware Sound Generator
+        if (line.startsWith('play tone')) {
+            const freqMatch = line.match(/play tone at\s+(\d+)\s*Hz/i);
+            const durMatch = line.match(/for\s+(\d+)\s*ms/i);
+            const freq = freqMatch ? parseInt(freqMatch[1]) : 440;
+            const dur = durMatch ? parseInt(durMatch[1]) : 100;
+            console.log(`${BLUE}[AUDIO HARDWARE]${RESET} Synthesizer: ${freq}Hz (${dur}ms)`);
+            return;
+        }
+
+        // 11. Platforms & Collectibles
         if (line.startsWith('spawn platform')) {
             console.log(`${BLUE}[PLATFORM]${RESET} Static Platform placed`);
             return;
@@ -204,7 +233,7 @@ class LoopingCLI {
             return;
         }
 
-        // 9. Particles
+        // 12. Particles
         if (line.startsWith('emit particles')) {
             console.log(`${CYAN}[PARTICLES]${RESET} Emitted particle burst`);
             return;
