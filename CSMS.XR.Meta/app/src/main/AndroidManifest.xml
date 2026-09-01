@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Network access -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Meta Quest VR features -->
+    <uses-feature
+        android:name="android.hardware.vr.headtracking"
+        android:required="true"
+        android:version="1" />
+    <uses-feature
+        android:name="oculus.software.handtracking"
+        android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+
+        <!--
+            ImmersiveActivity — Actividad principal para Meta Horizon OS (Quest 2/3/Pro).
+            Esta es la que el usuario lanza desde la pantalla de inicio del Quest.
+            Administra el entorno 3D y los SpatialPanels donde se renderizan
+            las UIs Compose de PanelActivity.
+        -->
+        <activity
+            android:name=".ImmersiveActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Material.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <!-- Indica que esta app es una app VR/inmersiva de Meta Horizon OS -->
+                <category android:name="com.oculus.intent.category.VR" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            PanelActivity — Actividad Compose 2D que se muestra como panel
+            flotante dentro del entorno 3D gestionado por ImmersiveActivity.
+            Un proceso separado evita que crashes de UI afecten el entorno XR.
+        -->
+        <activity
+            android:name=".PanelActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+
+    </application>
+
+</manifest>
