@@ -255,8 +255,8 @@
         .docs-code {
             font-family: 'JetBrains Mono', monospace; font-size: 12px;
             background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-            border-radius: 8px; padding: 12px 16px; margin-top: 12px; color: var(--accent);
-            overflow-x: auto; white-space: nowrap;
+            border-radius: 8px; padding: 12px 16px; margin-top: 12px; color: #38bdf8;
+            overflow-x: auto; white-space: pre-wrap; line-height: 1.6;
         }
 
         @media (max-width: 640px) {
@@ -300,9 +300,35 @@
 
             <!-- DOCS BOX -->
             <div class="docs-box">
-                <h3>Integra CS ID en tu aplicación</h3>
-                <p>Usa el <code>client_id</code> de tu app y redirige al usuario a la siguiente URL de autorización. El sistema maneja el flujo OAuth 2.0 / PKCE automáticamente.</p>
-                <div class="docs-code">https://cokistudios.github.io/authorize.html?client_id=TU_CLIENT_ID&redirect_uri=TU_REDIRECT&response_type=code&scope=openid+profile+email&code_challenge=PKCE_CHALLENGE&code_challenge_method=S256</div>
+                <h3>🔗 Guía Oficial de Conexión OAuth 2.1 / OIDC (CS ID)</h3>
+                <p>Integra autenticación oficial de <strong>Coki Studios ID</strong> en cualquier cliente web, app móvil (iOS / Android) o juego de <strong>Looping</strong> en 3 sencillos pasos:</p>
+                
+                <div style="margin-top: 14px; font-size: 13px; color: var(--text);">
+                    <strong>1. Endpoints Oficiales de CS ID (OAuth Server):</strong>
+                </div>
+                <div class="docs-code"># Authorization Endpoint (Consent Screen)
+GET https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/authorize?client_id=TU_CLIENT_ID&redirect_uri=TU_REDIRECT&response_type=code&scope=openid+profile+email
+
+# Token Exchange Endpoint (Intercambio de Código por Access Token)
+POST https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/token
+Header: Content-Type: application/x-www-form-urlencoded
+Body: grant_type=authorization_code&client_id=TU_CLIENT_ID&client_secret=TU_SECRET&code=AUTH_CODE&redirect_uri=TU_REDIRECT
+
+# OIDC Discovery Metadata
+GET https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/openid-configuration</div>
+
+                <div style="margin-top: 16px; font-size: 13px; color: var(--text);">
+                    <strong>2. Implementación Rápida en JavaScript / TypeScript:</strong>
+                </div>
+                <div class="docs-code">// Iniciar sesión con CS ID
+function loginWithCSID() {
+    const authUrl = "https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/authorize" +
+        "?client_id=" + encodeURIComponent("TU_CLIENT_ID") +
+        "&redirect_uri=" + encodeURIComponent(window.location.origin + "/callback") +
+        "&response_type=code" +
+        "&scope=openid profile email";
+    window.location.href = authUrl;
+}</div>
             </div>
 
             <!-- STATS -->
