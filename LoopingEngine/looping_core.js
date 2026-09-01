@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
+// ♾️ LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
 // Next-Gen Game Programming Language for "Shine Loop" & "Holo Looping OoS"
 // Developed by Holo Entertainment (Sub-division of Coki Studios)
 // ═══════════════════════════════════════════════════════════════
@@ -11,8 +11,8 @@ export class LoopingInterpreter {
         this.terminalOutput = terminalOutput || console.log;
         
         // Virtual Machine & System State
-        this.systemTarget = "Holo Looping Runtime Core";
-        this.targetPlatform = "Shine Loop Game Runtime";
+        this.systemTarget = "🎮 Holo Looping Runtime Core";
+        this.targetPlatform = "🕹️ Shine Loop Game Runtime";
         
         this.variables = {};
         this.functions = {};
