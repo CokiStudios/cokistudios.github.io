@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autorizar acceso — CS ID (Coki Studios)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #06090f;
+            color: #f8fafc;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 36px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 35px rgba(56,189,248,0.15);
+            text-align: center;
+        }
+        .logo-box {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+        }
+        .logo-box img { width: 36px; height: 36px; }
+        h1 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+        p.sub { color: #94a3b8; font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+        .scope-list {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 28px;
+            text-align: left;
+        }
+        .scope-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+        }
+        .scope-item:last-child { margin-bottom: 0; }
+        .scope-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #38bdf8;
+            box-shadow: 0 0 8px #38bdf8;
+        }
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+        .btn-allow {
+            background: linear-gradient(135deg, #38bdf8, #6366f1);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(56,189,248,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-allow:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(56,189,248,0.45); }
+        .btn-deny {
+            background: rgba(255,255,255,0.06);
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+        .btn-deny:hover { background: rgba(255,255,255,0.1); color: #ffffff; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="logo-box">
+            <img src="/assets/cs-logo.png" alt="CS ID">
+        </div>
+        <h1 id="app-title">Autorizar Acceso</h1>
+        <p class="sub"><strong id="client-name">Una aplicación externa</strong> solicita conectarse con tu cuenta oficial de <strong>CS ID</strong>.</p>
+
+        <div class="scope-list">
+            <div class="scope-item">
+                <div class="scope-dot"></div>
+                <span>Acceder a tu nombre de perfil y avatar de Coki Studios</span>
+            </div>
+            <div class="scope-item">
+                <div class="scope-dot"></div>
+                <span>Acceder a tu correo electrónico (@cokistudios.com)</span>
+            </div>
+            <div class="scope-item">
+                <div class="scope-dot"></div>
+                <span>Vincular datos con el ecosistema Shine OS & CS ID</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-allow" id="btn-allow">Permitir Acceso</button>
+            <button class="btn-deny" id="btn-deny">Cancelar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+        const supabase = createClient(
+            'https://cmkumxprmmhuinxfppxl.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ'
+        );
+
+        const params = new URLSearchParams(window.location.search);
+        const authorizationId = params.get('authorization_id') || params.get('auth_id');
+        const clientId = params.get('client_id');
+        const redirectUri = params.get('redirect_uri');
+
+        if (clientId) {
+            document.getElementById('client-name').textContent = clientId.toUpperCase();
+        }
+
+        document.getElementById('btn-allow').addEventListener('click', async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = '/register.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+
+            // Supabase OAuth Server authorization consent approval
+            if (authorizationId) {
+                window.location.href = `https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/consent?authorization_id=${authorizationId}&action=allow`;
+            } else if (redirectUri) {
+                window.location.href = `${redirectUri}?code=auth_cs_${Math.random().toString(36).substring(2)}`;
+            }
+        });
+
+        document.getElementById('btn-deny').addEventListener('click', () => {
+            if (redirectUri) {
+                window.location.href = `${redirectUri}?error=access_denied`;
+            } else {
+                window.history.back();
+            }
+        });
+    </script>
+</body>
+</html>
