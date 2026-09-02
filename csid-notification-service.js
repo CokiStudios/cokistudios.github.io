@@ -8,6 +8,17 @@ export class CSIDNotificationService {
     constructor() {
         this.senderEmail = 'csidsignnoti@cokistudios.com';
         this.systemName = 'CS ID Security Core';
+        
+        // Configuración oficial SMTP Zoho para envío de notificaciones y OTPs
+        this.smtpConfig = {
+            host: 'smtppro.zoho.com',
+            port: 465,
+            secure: true, // SSL
+            auth: {
+                user: 'csidsignnoti@cokistudios.com',
+                pass: 'CsID2627**'
+            }
+        };
     }
 
     /**
