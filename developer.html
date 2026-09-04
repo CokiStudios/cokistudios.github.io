@@ -259,73 +259,64 @@
             overflow-x: auto; white-space: pre-wrap; line-height: 1.6;
         }
 
-        /* ── OAUTH ENDPOINTS CARD ── */
-        .endpoints-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            position: relative;
+        /* ── OAUTH ENDPOINTS (EXACT SUPABASE DESIGN) ── */
+        .endpoints-section {
+            margin-bottom: 44px;
+        }
+        .endpoints-main-title {
+            font-size: 19px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+        }
+        .endpoints-main-desc {
+            color: var(--text-sub); font-size: 14px; margin-bottom: 20px;
+        }
+        .endpoints-table {
+            background: #11151d;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.35);
         }
-        .endpoints-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, #6366f1, #38bdf8, #10b981);
-        }
-        .endpoints-header { margin-bottom: 24px; }
-        .endpoints-title {
-            font-size: 20px; font-weight: 800; color: var(--text);
-            display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
-        }
-        .endpoints-badge {
-            font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
-            background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3);
-            letter-spacing: 0.05em; text-transform: uppercase;
-        }
-        .endpoints-desc { color: var(--text-sub); font-size: 14px; }
-        .endpoints-list { display: grid; gap: 16px; }
-        .endpoint-item {
-            background: rgba(0,0,0,0.25); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px 18px; transition: border-color 0.2s, background 0.2s;
-        }
-        .endpoint-item:hover {
-            border-color: rgba(99,102,241,0.4);
-            background: rgba(0,0,0,0.35);
-        }
-        .endpoint-meta {
+        .endpoints-row {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 8px;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            gap: 24px;
         }
-        .endpoint-name {
-            font-size: 13px; font-weight: 600; color: var(--text);
+        .endpoints-row:last-child {
+            border-bottom: none;
         }
-        .endpoint-method {
-            font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em;
+        .endpoint-col-label {
+            font-size: 14px; font-weight: 500; color: #e2e8f0;
+            width: 220px; flex-shrink: 0;
         }
-        .endpoint-method.get { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
-        .endpoint-method.post { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
-        .endpoint-input-wrap {
-            display: flex; align-items: center; gap: 8px;
+        .endpoint-col-field {
+            flex: 1; display: flex; align-items: center; justify-content: space-between;
+            background: #090c10; border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 6px 8px 6px 16px; gap: 12px;
         }
-        .endpoint-input {
-            flex: 1; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px; padding: 9px 12px; font-family: 'JetBrains Mono', monospace;
-            font-size: 13px; color: #93c5fd; outline: none; transition: border-color 0.2s;
+        .endpoint-url-text {
+            font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #94a3b8;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        .endpoint-input:focus { border-color: var(--accent); }
-        .endpoint-copy-btn {
-            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
-            color: var(--text-sub); border-radius: 8px; padding: 9px 16px;
-            font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            font-family: 'Outfit', sans-serif; white-space: nowrap;
+        .endpoint-btn-copy {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #171c24; border: 1px solid rgba(255,255,255,0.12);
+            color: #cbd5e1; font-family: 'Outfit', sans-serif; font-size: 12px;
+            font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s ease; flex-shrink: 0;
         }
-        .endpoint-copy-btn:hover {
-            background: var(--accent); color: white; border-color: var(--accent);
-            transform: translateY(-1px);
+        .endpoint-btn-copy:hover {
+            background: #232a36; color: #fff; border-color: rgba(255,255,255,0.25);
+        }
+        .endpoint-btn-copy svg {
+            stroke: currentColor;
+        }
+
+        @media (max-width: 768px) {
+            .endpoints-row { flex-direction: column; align-items: stretch; gap: 10px; padding: 16px; }
+            .endpoint-col-label { width: auto; }
+            .endpoint-col-field { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+            .endpoint-btn-copy { align-self: flex-end; }
         }
 
         @media (max-width: 640px) {
@@ -421,61 +412,57 @@ function loginWithCSID() {
             </div>
 
             <!-- OAUTH ENDPOINTS SECTION -->
-            <div class="endpoints-card">
-                <div class="endpoints-header">
-                    <div class="endpoints-title">
-                        <span class="endpoints-badge">OAuth 2.1</span>
-                        OAuth Endpoints
-                    </div>
-                    <p class="endpoints-desc">Share these endpoints with third-party applications that need to integrate with your OAuth 2.1 server.</p>
-                </div>
+            <!-- OAUTH ENDPOINTS SECTION -->
+            <div class="endpoints-section">
+                <div class="endpoints-main-title">OAuth Endpoints</div>
+                <div class="endpoints-main-desc">Share these endpoints with third-party applications that need to integrate with your OAuth 2.1 server.</div>
 
-                <div class="endpoints-list">
+                <div class="endpoints-table">
                     <!-- Authorization endpoint -->
-                    <div class="endpoint-item">
-                        <div class="endpoint-meta">
-                            <span class="endpoint-name">Authorization endpoint</span>
-                            <span class="endpoint-method get">GET</span>
-                        </div>
-                        <div class="endpoint-input-wrap">
-                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/authorize" id="ep-auth">
-                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-auth').value, this)">Copiar</button>
+                    <div class="endpoints-row">
+                        <div class="endpoint-col-label">Authorization endpoint</div>
+                        <div class="endpoint-col-field">
+                            <span class="endpoint-url-text">https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/authorize</span>
+                            <button class="endpoint-btn-copy" onclick="copyText('https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/authorize', this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>Copy</span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- Token endpoint -->
-                    <div class="endpoint-item">
-                        <div class="endpoint-meta">
-                            <span class="endpoint-name">Token endpoint</span>
-                            <span class="endpoint-method post">POST</span>
-                        </div>
-                        <div class="endpoint-input-wrap">
-                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/token" id="ep-token">
-                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-token').value, this)">Copiar</button>
+                    <div class="endpoints-row">
+                        <div class="endpoint-col-label">Token endpoint</div>
+                        <div class="endpoint-col-field">
+                            <span class="endpoint-url-text">https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/token</span>
+                            <button class="endpoint-btn-copy" onclick="copyText('https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/token', this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>Copy</span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- JWKS endpoint -->
-                    <div class="endpoint-item">
-                        <div class="endpoint-meta">
-                            <span class="endpoint-name">JWKS endpoint</span>
-                            <span class="endpoint-method get">GET</span>
-                        </div>
-                        <div class="endpoint-input-wrap">
-                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/jwks" id="ep-jwks">
-                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-jwks').value, this)">Copiar</button>
+                    <div class="endpoints-row">
+                        <div class="endpoint-col-label">JWKS endpoint</div>
+                        <div class="endpoint-col-field">
+                            <span class="endpoint-url-text">https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/jwks.json</span>
+                            <button class="endpoint-btn-copy" onclick="copyText('https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/jwks.json', this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>Copy</span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- OIDC discovery -->
-                    <div class="endpoint-item">
-                        <div class="endpoint-meta">
-                            <span class="endpoint-name">OIDC discovery</span>
-                            <span class="endpoint-method get">GET</span>
-                        </div>
-                        <div class="endpoint-input-wrap">
-                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/openid-configuration" id="ep-oidc">
-                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-oidc').value, this)">Copiar</button>
+                    <div class="endpoints-row">
+                        <div class="endpoint-col-label">OIDC discovery</div>
+                        <div class="endpoint-col-field">
+                            <span class="endpoint-url-text">https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/openid-configuration</span>
+                            <button class="endpoint-btn-copy" onclick="copyText('https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/openid-configuration', this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>Copy</span>
+                            </button>
                         </div>
                     </div>
                 </div>
