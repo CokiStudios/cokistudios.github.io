@@ -11,7 +11,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ═══════════════════════════════════════════════════════════════
-// [SECURE] UTILIDADES CRYPTO (PKCE + Tokens)
+//  UTILIDADES CRYPTO (PKCE + Tokens)
 // ═══════════════════════════════════════════════════════════════
 
 function generateCode(length = 32) {
@@ -97,7 +97,7 @@ async function validateClient(clientId, redirectUri) {
         .single();
     
     if (error || !client) {
-        console.log('[ERROR] Cliente no encontrado:', error);
+        console.log(' Cliente no encontrado:', error);
         return { valid: false, error: 'invalid_client', error_description: 'Client not registered or inactive' };
     }
     
@@ -105,7 +105,7 @@ async function validateClient(clientId, redirectUri) {
     console.log(' Redirect URIs registrados:', client.redirect_uris);
     
     if (!client.redirect_uris.includes(redirectUri)) {
-        console.log('[ERROR] Redirect URI no coincide:', redirectUri);
+        console.log(' Redirect URI no coincide:', redirectUri);
         return { valid: false, error: 'invalid_redirect_uri', error_description: 'Redirect URI not allowed: ' + redirectUri };
     }
     
@@ -113,7 +113,7 @@ async function validateClient(clientId, redirectUri) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// [AUTH] FUNCIONES PÚBLICAS DEL OAUTH SERVER
+//  FUNCIONES PÚBLICAS DEL OAUTH SERVER
 // ═══════════════════════════════════════════════════════════════
 
 async function handleAuthorizeRequest(urlParams) {
@@ -167,7 +167,7 @@ async function approveAuthorization(codeChallenge, userData) {
     const request = requests[codeChallenge];
     
     if (!request) {
-        console.log('[ERROR] Request no encontrado en cookies');
+        console.log(' Request no encontrado en cookies');
         return { error: 'request_expired', error_description: 'Authorization request expired' };
     }
     
@@ -191,7 +191,7 @@ async function approveAuthorization(codeChallenge, userData) {
     });
     
     if (error) {
-        console.error('[ERROR] Error guardando code:', error);
+        console.error(' Error guardando code:', error);
         return { error: 'server_error', error_description: 'Could not create authorization code: ' + error.message };
     }
     
@@ -222,7 +222,7 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         .single();
     
     if (findError || !codeData) {
-        console.log('[ERROR] Code no encontrado o expirado:', findError);
+        console.log(' Code no encontrado o expirado:', findError);
         return { error: 'invalid_grant', error_description: 'Code invalid or expired' };
     }
 
@@ -234,7 +234,7 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         .single();
 
     if (clientError || !clientData) {
-        console.log('[ERROR] Client not found for code:', clientError);
+        console.log(' Client not found for code:', clientError);
         return { error: 'invalid_client', error_description: 'Client not found' };
     }
 
@@ -246,13 +246,13 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     let receivedRedirectUri = redirectUri;
     
     if (storedRedirectUri !== receivedRedirectUri) {
-        console.log('[ERROR] Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
+        console.log(' Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
         return { error: 'invalid_grant', error_description: 'Redirect URI mismatch' };
     }
     
     const expectedChallenge = await sha256(codeVerifier);
     if (expectedChallenge !== codeData.code_challenge) {
-        console.log('[ERROR] PKCE verification failed');
+        console.log(' PKCE verification failed');
         return { error: 'invalid_grant', error_description: 'PKCE verification failed' };
     }
     

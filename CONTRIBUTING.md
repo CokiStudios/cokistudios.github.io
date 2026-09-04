@@ -61,7 +61,7 @@ We follow a structured trunk-based branching workflow:
 ### Android Platforms
 * Language: Kotlin 1.9+ with Jetpack Compose.
 * Networking: Retrofit / OkHttp or Supabase-kt.
-* Target SDK: Latest stable Android API level.
+* Target SDK / Baseline: **Android 17 (A17)** for modern clients and AOSP Shine OS integrations.
 
 ### Web & Identity (CS ID)
 * Core: Modern ES6+ JavaScript, Vanilla CSS for speed and control.

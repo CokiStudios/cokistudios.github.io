@@ -137,7 +137,7 @@
                     <option value="fr"> FR</option>
                     <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">️</button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <a href="index" style="color:var(--text-sub);text-decoration:none;font-weight:600;font-size:14px;"><span data-i18n="btn_back_home">← Volver al Inicio</span></a>
             </div>
         </div>
@@ -240,7 +240,7 @@ Sitio web: https://cokistudios.github.io
     </div>
 
     <footer>
-        © 2026 Coki Studios LLC. Todos los derechos reservados.
+         2026 Coki Studios LLC. Todos los derechos reservados.
     </footer>
 
     <script>
@@ -260,7 +260,7 @@ Sitio web: https://cokistudios.github.io
         const themeToggle = document.getElementById('theme-toggle');
         const updateToggleIcon = () => {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '️';
+            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
         };
         if (themeToggle) {
             updateToggleIcon();

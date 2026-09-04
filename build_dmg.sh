@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-# [MODULE] PROFESSIONAL macOS .DMG GENERATOR WITH APPS DRAG-AND-DROP
+# PROFESSIONAL macOS .DMG GENERATOR WITH APPS DRAG-AND-DROP
 # For hiOP Studio by CS (Looping Compile)
 # ═══════════════════════════════════════════════════════════════
 
@@ -12,7 +12,7 @@ DMG_TEMP="$DIST_DIR/temp-hiOP.dmg"
 VOLUME_NAME="hiOP Studio by CS"
 STAGING_DIR="$DIST_DIR/staging"
 
-echo "[SYS] Starting Professional .DMG build for hiOP Studio by CS..."
+echo "Starting Professional .DMG build for hiOP Studio by CS..."
 
 # 1. Clean previous build artifacts
 mkdir -p "$DIST_DIR"
@@ -30,7 +30,7 @@ xcodebuild -project "$ROOT_DIR/hiOP.macOS/hiOP.xcodeproj" \
 APP_BUNDLE="$ROOT_DIR/hiOP.macOS/build/Build/Products/Release/hiOP.app"
 
 if [ ! -d "$APP_BUNDLE" ]; then
-    echo "[ERROR] Error: App bundle not found at $APP_BUNDLE"
+    echo "Error: App bundle not found at $APP_BUNDLE"
     exit 1
 fi
 
