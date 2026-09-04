@@ -259,10 +259,80 @@
             overflow-x: auto; white-space: pre-wrap; line-height: 1.6;
         }
 
+        /* ── OAUTH ENDPOINTS CARD ── */
+        .endpoints-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .endpoints-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #6366f1, #38bdf8, #10b981);
+        }
+        .endpoints-header { margin-bottom: 24px; }
+        .endpoints-title {
+            font-size: 20px; font-weight: 800; color: var(--text);
+            display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+        }
+        .endpoints-badge {
+            font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+            background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3);
+            letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .endpoints-desc { color: var(--text-sub); font-size: 14px; }
+        .endpoints-list { display: grid; gap: 16px; }
+        .endpoint-item {
+            background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 18px; transition: border-color 0.2s, background 0.2s;
+        }
+        .endpoint-item:hover {
+            border-color: rgba(99,102,241,0.4);
+            background: rgba(0,0,0,0.35);
+        }
+        .endpoint-meta {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .endpoint-name {
+            font-size: 13px; font-weight: 600; color: var(--text);
+        }
+        .endpoint-method {
+            font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em;
+        }
+        .endpoint-method.get { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+        .endpoint-method.post { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+        .endpoint-input-wrap {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .endpoint-input {
+            flex: 1; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 9px 12px; font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; color: #93c5fd; outline: none; transition: border-color 0.2s;
+        }
+        .endpoint-input:focus { border-color: var(--accent); }
+        .endpoint-copy-btn {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            color: var(--text-sub); border-radius: 8px; padding: 9px 16px;
+            font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            font-family: 'Outfit', sans-serif; white-space: nowrap;
+        }
+        .endpoint-copy-btn:hover {
+            background: var(--accent); color: white; border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
         @media (max-width: 640px) {
             .app-card { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr 1fr; }
+            .endpoint-input-wrap { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
@@ -347,6 +417,67 @@ function loginWithCSID() {
                     <div class="stat-label">Scopes Habilitados</div>
                     <div class="stat-value">3</div>
                     <div class="stat-sub">openid, profile, email</div>
+                </div>
+            </div>
+
+            <!-- OAUTH ENDPOINTS SECTION -->
+            <div class="endpoints-card">
+                <div class="endpoints-header">
+                    <div class="endpoints-title">
+                        <span class="endpoints-badge">OAuth 2.1</span>
+                        OAuth Endpoints
+                    </div>
+                    <p class="endpoints-desc">Share these endpoints with third-party applications that need to integrate with your OAuth 2.1 server.</p>
+                </div>
+
+                <div class="endpoints-list">
+                    <!-- Authorization endpoint -->
+                    <div class="endpoint-item">
+                        <div class="endpoint-meta">
+                            <span class="endpoint-name">Authorization endpoint</span>
+                            <span class="endpoint-method get">GET</span>
+                        </div>
+                        <div class="endpoint-input-wrap">
+                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/authorize" id="ep-auth">
+                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-auth').value, this)">Copiar</button>
+                        </div>
+                    </div>
+
+                    <!-- Token endpoint -->
+                    <div class="endpoint-item">
+                        <div class="endpoint-meta">
+                            <span class="endpoint-name">Token endpoint</span>
+                            <span class="endpoint-method post">POST</span>
+                        </div>
+                        <div class="endpoint-input-wrap">
+                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/token" id="ep-token">
+                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-token').value, this)">Copiar</button>
+                        </div>
+                    </div>
+
+                    <!-- JWKS endpoint -->
+                    <div class="endpoint-item">
+                        <div class="endpoint-meta">
+                            <span class="endpoint-name">JWKS endpoint</span>
+                            <span class="endpoint-method get">GET</span>
+                        </div>
+                        <div class="endpoint-input-wrap">
+                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/oauth/jwks" id="ep-jwks">
+                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-jwks').value, this)">Copiar</button>
+                        </div>
+                    </div>
+
+                    <!-- OIDC discovery -->
+                    <div class="endpoint-item">
+                        <div class="endpoint-meta">
+                            <span class="endpoint-name">OIDC discovery</span>
+                            <span class="endpoint-method get">GET</span>
+                        </div>
+                        <div class="endpoint-input-wrap">
+                            <input type="text" readonly class="endpoint-input" value="https://cmkumxprmmhuinxfppxl.supabase.co/auth/v1/.well-known/openid-configuration" id="ep-oidc">
+                            <button class="endpoint-copy-btn" onclick="copyText(document.getElementById('ep-oidc').value, this)">Copiar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
