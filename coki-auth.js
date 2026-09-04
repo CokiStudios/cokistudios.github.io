@@ -14,11 +14,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── CATEGORÍAS GLOBALES & TASTE MATCHING ───
 const DEFAULT_CATEGORIES = [
-    { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '[LOG]', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
-    { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '[GAME]', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
+    { id: 'cat-general', name: 'General', slug: 'general', color: '#6366f1', icon: '', keywords: ['hola', 'comunidad', 'general', 'charla', 'todos', 'noticia', 'bienvenida', 'foro'] },
+    { id: 'cat-gaming', name: 'Videojuegos & Arcade', slug: 'gaming', color: '#ec4899', icon: '', keywords: ['juego', 'game', 'coki dash', 'arcade', 'record', 'score', 'nivel', 'truco', 'gameplay', 'jugador'] },
     { id: 'cat-dev', name: 'Desarrollo & Código', slug: 'dev', color: '#38bdf8', icon: '', keywords: ['codigo', 'code', 'programacion', 'javascript', 'swift', 'api', 'bug', 'dev', 'web', 'github', 'app'] },
     { id: 'cat-eco', name: 'Forkman Eco Hub', slug: 'eco', color: '#10b981', icon: '', keywords: ['eco', 'planeta', 'recicla', 'bici', 'co2', 'arbol', 'huella', 'energia', 'ambiente', 'forkman'] },
-    { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '[UI]', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
+    { id: 'cat-design', name: 'Diseño & Arte', slug: 'design', color: '#f59e0b', icon: '', keywords: ['diseño', 'ui', 'ux', 'arte', 'dibujo', 'ilustracion', 'color', 'grafico', 'render', 'logo'] },
     { id: 'cat-music', name: 'Música & Audio', slug: 'music', color: '#a855f7', icon: '', keywords: ['musica', 'cancion', 'sonido', 'audio', 'track', 'album', 'ritmo', 'playlist', 'estilo'] },
     { id: 'cat-science', name: 'Ciencia & Futuro', slug: 'science', color: '#14b8a6', icon: '', keywords: ['ciencia', 'espacio', 'ia', 'robot', 'futuro', 'tecnologia', 'universo', 'innovacion'] },
     { id: 'cat-help', name: 'Ayuda & Preguntas', slug: 'help', color: '#ef4444', icon: '', keywords: ['ayuda', 'pregunta', 'error', 'problema', 'duda', 'soporte', 'como', 'resolver'] }
@@ -45,7 +45,7 @@ async function registerCokiAccount(email, password, metadata = {}) {
     });
     
     if (error) {
-        console.error('[ERROR] Error registro Coki:', error);
+        console.error(' Error registro Coki:', error);
         return { success: false, error: error.message };
     }
     
@@ -64,7 +64,7 @@ async function loginCokiAccount(email, password) {
     });
     
     if (error) {
-        console.error('[ERROR] Error login Coki:', error);
+        console.error(' Error login Coki:', error);
         return { success: false, error: error.message };
     }
     
@@ -82,7 +82,7 @@ async function loginCokiAccount(email, password) {
         setCookie('coki_refresh_token', data.session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
     }
     
-    // [AUTH] Vincular Hash de Navegador en Supabase
+    //  Vincular Hash de Navegador en Supabase
     await bindBrowserHash(data.user.id, data.user.email);
 
     console.log('[OK] Sesión Coki iniciada:', data.user.email);
@@ -100,10 +100,10 @@ async function bindBrowserHash(userId, email) {
                 user_email: email,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'device_hash' });
-        if (error) console.warn('️ Error al vincular Browser Hash:', error.message);
-        else console.log('[AUTH] Browser Hash vinculado en cookies:', hash);
+        if (error) console.warn(' Error al vincular Browser Hash:', error.message);
+        else console.log(' Browser Hash vinculado en cookies:', hash);
     } catch (e) {
-        console.warn('️ Error bindBrowserHash:', e);
+        console.warn(' Error bindBrowserHash:', e);
     }
 }
 
@@ -114,9 +114,9 @@ async function unbindBrowserHash() {
             .from('user_device_hashes')
             .delete()
             .eq('device_hash', hash);
-        if (error) console.warn('️ Error al desvincular Browser Hash:', error.message);
+        if (error) console.warn(' Error al desvincular Browser Hash:', error.message);
     } catch (e) {
-        console.warn('️ Error unbindBrowserHash:', e);
+        console.warn(' Error unbindBrowserHash:', e);
     }
 }
 
@@ -141,7 +141,7 @@ async function restoreSessionFromBrowserHash() {
         console.log(' Sesión restaurada desde Browser Hash Cookie:', data.user_email);
         return restoredUser;
     } catch (e) {
-        console.warn('️ Error restoreSessionFromBrowserHash:', e);
+        console.warn(' Error restoreSessionFromBrowserHash:', e);
         return null;
     }
 }
@@ -156,7 +156,7 @@ async function loginCokiWithOAuth(provider) {
     });
     
     if (error) {
-        console.error('[ERROR] Error OAuth externo:', error);
+        console.error(' Error OAuth externo:', error);
         return { success: false, error: error.message };
     }
     
@@ -269,13 +269,13 @@ async function getCurrentCokiUser() {
 
         //  MIGRACIÓN AUTOMÁTICA Y LIMPIEZA DE SESIONES OBSOLETAS
         if (error && (error.message?.includes('Invalid Refresh Token') || error.message?.includes('JWT') || error.status === 401 || error.status === 400)) {
-            console.warn('️ Sesión de base de datos anterior detectada. Limpiando tokens obsoletos...');
+            console.warn(' Sesión de base de datos anterior detectada. Limpiando tokens obsoletos...');
             deleteCookie('coki_access_token');
             deleteCookie('coki_refresh_token');
             await supabase.auth.signOut().catch(() => {});
         }
     } catch (e) {
-        console.warn('️ Error verificando usuario Supabase:', e);
+        console.warn(' Error verificando usuario Supabase:', e);
     }
     
     //  FALLBACK: Leer de cookies o restaurar por Browser Hash
@@ -319,7 +319,7 @@ async function sendCokiOTP(email) {
         if (!response.ok) throw new Error(data.error || 'Error al enviar OTP');
         return { success: true, message: data.message };
     } catch (err) {
-        console.error('[ERROR] Error sendCokiOTP:', err);
+        console.error(' Error sendCokiOTP:', err);
         return { success: false, error: err.message };
     }
 }
@@ -335,13 +335,13 @@ async function verifyCokiOTP(email, code) {
         if (!response.ok || !data.valid) throw new Error(data.error || 'Código OTP inválido');
         return { success: true, message: data.message };
     } catch (err) {
-        console.error('[ERROR] Error verifyCokiOTP:', err);
+        console.error(' Error verifyCokiOTP:', err);
         return { success: false, error: err.message };
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// [AUTH] COKI PASSKEY UNIVERSAL & MASTER KEY (LIGADA A LA CUENTA)
+//  COKI PASSKEY UNIVERSAL & MASTER KEY (LIGADA A LA CUENTA)
 // ═══════════════════════════════════════════════════════════════
 
 function generateAccountMasterKey() {
@@ -354,6 +354,13 @@ function generateAccountMasterKey() {
         if (i < 2) key += '-';
     }
     return key;
+}
+
+function getWebAuthnRpId() {
+    const hostname = window.location.hostname;
+    if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') return 'localhost';
+    if (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) return 'cokistudios.com';
+    return hostname;
 }
 
 async function isPasskeySupported() {
@@ -372,12 +379,11 @@ async function registerPasskey() {
         // Generar o reutilizar Coki Master Key de la cuenta
         let masterKey = user.user_metadata?.coki_master_key || generateAccountMasterKey();
         
-        // Intentar registrar credencial WebAuthn en el dispositivo (si está disponible)
+        // Intentar registrar credencial WebAuthn en el dispositivo (Touch ID, Face ID, Passkeys)
         let deviceCredentialId = null;
         if (await isPasskeySupported()) {
             try {
-                const hostname = window.location.hostname;
-                const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
+                const rpId = getWebAuthnRpId();
                 const challenge = new Uint8Array(32);
                 window.crypto.getRandomValues(challenge);
                 const userIdBuffer = new TextEncoder().encode(user.id);
@@ -391,13 +397,20 @@ async function registerPasskey() {
                             name: user.email,
                             displayName: user.name || user.email
                         },
-                        pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                        authenticatorSelection: { userVerification: "preferred" },
+                        pubKeyCredParams: [
+                            { alg: -7, type: "public-key" },  // ES256
+                            { alg: -257, type: "public-key" } // RS256
+                        ],
+                        authenticatorSelection: { 
+                            residentKey: "preferred",
+                            requireResidentKey: false,
+                            userVerification: "preferred" 
+                        },
                         timeout: 60000,
                         attestation: "none"
                     }
                 });
-                if (credential) {
+                if (credential && credential.rawId) {
                     deviceCredentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
                 }
             } catch (e) {
@@ -405,7 +418,7 @@ async function registerPasskey() {
             }
         }
 
-        // Guardar la Coki Master Key en Supabase (ligada permanentemente a la cuenta de usuario)
+        // Guardar la Coki Master Key y Passkey en Supabase
         await supabase.auth.updateUser({
             data: {
                 coki_master_key: masterKey,
@@ -418,6 +431,7 @@ async function registerPasskey() {
         // Actualizar perfil público
         await updateCokiProfile({
             has_passkey: true,
+            passkey_credential_id: deviceCredentialId,
             passkey_created_at: new Date().toISOString()
         });
 
@@ -425,6 +439,9 @@ async function registerPasskey() {
         setCookieJSON('coki_master_key_' + user.id, masterKey, { maxAge: 365 * 24 * 60 * 60 });
         localStorage.setItem('csid_last_passkey_user', user.email);
         localStorage.setItem('csid_last_passkey_user_id', user.id);
+        if (deviceCredentialId) {
+            localStorage.setItem('csid_passkey_cred_id_' + user.id, deviceCredentialId);
+        }
 
         return { 
             success: true, 
@@ -432,7 +449,7 @@ async function registerPasskey() {
             message: 'Passkey & Master Key vinculada a tu cuenta con éxito' 
         };
     } catch (err) {
-        console.error('[ERROR] Error registrando Passkey de Cuenta:', err);
+        console.error(' Error registrando Passkey de Cuenta:', err);
         return { success: false, error: err.message };
     }
 }
@@ -462,6 +479,7 @@ async function loginWithPasskey(providedKey = null) {
                 };
                 setCookieJSON('coki_current_user', sessionUser, { maxAge: 30 * 24 * 60 * 60 });
                 localStorage.setItem('csid_last_passkey_user', matchedUser.email);
+                localStorage.setItem('csid_last_passkey_user_id', matchedUser.id);
                 return { success: true, user: sessionUser };
             }
         }
@@ -469,8 +487,7 @@ async function loginWithPasskey(providedKey = null) {
         // Caso B: Intento WebAuthn nativo biométrico si el navegador lo permite
         if (await isPasskeySupported()) {
             try {
-                const hostname = window.location.hostname;
-                const rpId = (hostname === 'cokistudios.com' || hostname.endsWith('.cokistudios.com')) ? 'cokistudios.com' : hostname;
+                const rpId = getWebAuthnRpId();
                 const challenge = new Uint8Array(32);
                 window.crypto.getRandomValues(challenge);
 
@@ -484,6 +501,73 @@ async function loginWithPasskey(providedKey = null) {
                 });
 
                 if (assertion) {
+                    // 1. Extraer userHandle (ID de usuario incrustado en el Passkey)
+                    let identifiedUserId = null;
+                    if (assertion.response && assertion.response.userHandle && assertion.response.userHandle.byteLength > 0) {
+                        try {
+                            identifiedUserId = new TextDecoder().decode(assertion.response.userHandle);
+                        } catch (_) {}
+                    }
+
+                    // 2. Extraer rawId de la credencial
+                    let credIdB64 = null;
+                    if (assertion.rawId) {
+                        try {
+                            credIdB64 = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+                        } catch (_) {}
+                    }
+
+                    // 3. Buscar perfil en Supabase por User ID
+                    if (identifiedUserId) {
+                        try {
+                            const { data: profile } = await supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('id', identifiedUserId)
+                                .maybeSingle();
+
+                            if (profile) {
+                                const sessionUser = {
+                                    id: profile.id,
+                                    email: profile.email,
+                                    name: profile.full_name || profile.name || profile.email?.split('@')[0] || 'Usuario Coki'
+                                };
+                                setCookieJSON('coki_current_user', sessionUser, { maxAge: 30 * 24 * 60 * 60 });
+                                localStorage.setItem('csid_last_passkey_user', sessionUser.email);
+                                localStorage.setItem('csid_last_passkey_user_id', sessionUser.id);
+                                return { success: true, user: sessionUser };
+                            }
+                        } catch (pErr) {
+                            console.warn('Perfil por userHandle no encontrado:', pErr);
+                        }
+                    }
+
+                    // 4. Buscar perfil en Supabase por credencial ID
+                    if (credIdB64) {
+                        try {
+                            const { data: profile } = await supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('passkey_credential_id', credIdB64)
+                                .maybeSingle();
+
+                            if (profile) {
+                                const sessionUser = {
+                                    id: profile.id,
+                                    email: profile.email,
+                                    name: profile.full_name || profile.name || profile.email?.split('@')[0] || 'Usuario Coki'
+                                };
+                                setCookieJSON('coki_current_user', sessionUser, { maxAge: 30 * 24 * 60 * 60 });
+                                localStorage.setItem('csid_last_passkey_user', sessionUser.email);
+                                localStorage.setItem('csid_last_passkey_user_id', sessionUser.id);
+                                return { success: true, user: sessionUser };
+                            }
+                        } catch (cErr) {
+                            console.warn('Perfil por credencial no encontrado:', cErr);
+                        }
+                    }
+
+                    // 5. Fallback a Browser Hash o caché local
                     const restored = await restoreSessionFromBrowserHash();
                     if (restored) return { success: true, user: restored };
 
@@ -491,8 +575,8 @@ async function loginWithPasskey(providedKey = null) {
                     const lastId = localStorage.getItem('csid_last_passkey_user_id');
                     if (lastEmail || lastId) {
                         const passkeyUser = {
-                            id: lastId || 'coki-passkey-user',
-                            email: lastEmail || 'usuario@coki.com',
+                            id: lastId || identifiedUserId || 'coki-passkey-user',
+                            email: lastEmail || 'usuario@cokistudios.com',
                             name: lastEmail?.split('@')[0] || 'Usuario Coki'
                         };
                         setCookieJSON('coki_current_user', passkeyUser, { maxAge: 30 * 24 * 60 * 60 });
@@ -527,13 +611,13 @@ async function loginWithPasskey(providedKey = null) {
             error: 'Introduce tu Coki Master Key de cuenta para acceder desde este nuevo dispositivo.' 
         };
     } catch (err) {
-        console.error('[ERROR] Error login con Passkey:', err);
+        console.error(' Error login con Passkey:', err);
         return { success: false, error: err.message || 'Error al autenticar con Passkey' };
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// [SECURE] VALIDACIÓN DE ACCESO PRIVADO CS MAIL (SUPABASE SERVER-SIDE)
+//  VALIDACIÓN DE ACCESO PRIVADO CS MAIL (SUPABASE SERVER-SIDE)
 // ═══════════════════════════════════════════════════════════════
 
 async function hasAdminMailAccess() {
