@@ -754,9 +754,11 @@ function loginWithCSID() {
                         .eq('developer_id', currentUser.id);
                     if (error) throw error;
                     showToast('Aplicación actualizada correctamente', 'success');
-                } else {
-                    const clientId = 'coki_' + Array.from(crypto.getRandomValues(new Uint8Array(12)))
-                        .map(b => b.toString(16).padStart(2, '0')).join('');
+                    // Generar un UUIDv4 estándar (requerido obligatoriamente por el servidor OAuth 2.1 de Supabase)
+                    const clientId = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
                     const { error } = await supabase.from('oauth_clients').insert({
                         client_id: clientId,
                         client_name: name,
