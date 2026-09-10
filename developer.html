@@ -741,7 +741,7 @@ function loginWithCSID() {
             try {
                 if (isEditing) {
                     const existingId = document.getElementById('edit-client-id').value;
-                    const { error } = await supabase
+                    const { error: updateErr } = await supabase
                         .from('oauth_clients')
                         .update({
                             client_name: name,
@@ -752,14 +752,15 @@ function loginWithCSID() {
                         })
                         .eq('client_id', existingId)
                         .eq('developer_id', currentUser.id);
-                    if (error) throw error;
+                    if (updateErr) throw updateErr;
                     showToast('Aplicación actualizada correctamente', 'success');
+                } else {
                     // Generar un UUIDv4 estándar (requerido obligatoriamente por el servidor OAuth 2.1 de Supabase)
                     const clientId = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                         const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                         return v.toString(16);
                     });
-                    const { error } = await supabase.from('oauth_clients').insert({
+                    const { error: insertErr } = await supabase.from('oauth_clients').insert({
                         client_id: clientId,
                         client_name: name,
                         redirect_uris: redirectUris,
@@ -769,7 +770,7 @@ function loginWithCSID() {
                         is_active: true,
                         developer_id: currentUser.id
                     });
-                    if (error) throw error;
+                    if (insertErr) throw insertErr;
                     showToast(`App creada. client_id: ${clientId}`, 'success');
                 }
                 setTimeout(() => {
