@@ -41,8 +41,23 @@
 | Plataforma | Tecnología | Ubicación | Características |
 |---|---|---|---|
 | **Web** | HTML5 / Vanilla CSS / JS | [`shine-find.html`](../shine-find.html) | Simulador interactivo con multi-pestañas, barra de marcadores, modal Sentinel Shield y panel de IA. |
-| **macOS** | Swift / SwiftUI / WebKit / CEF | [`ShineFind.macOS/`](./ShineFind.macOS/) | UI Liquid Glass nativa (.ultraThinMaterial), 100% SF Symbols, pestañas con traffic lights integrados. |
+| **macOS** | Swift / SwiftUI / WebKit | [`ShineFind.macOS/`](./ShineFind.macOS/) | Proyecto nativo Xcode [`ShineFind.xcodeproj`](./ShineFind.macOS/ShineFind.xcodeproj), UI Liquid Glass (.ultraThinMaterial), 100% SF Symbols, Universal 2 (Apple Silicon & Intel). |
 | **Windows** | C# / WPF / CefSharp Chromium | [`ShineFind.Windows/`](./ShineFind.Windows/) | Fluent Design Windows 11, glifos vectoriales MDL2, aceleración por hardware y atajos globales. |
+
+---
+
+## 🛠️ Compilación en macOS
+
+```bash
+# Abrir proyecto en Xcode
+open ShineFind/ShineFind.macOS/ShineFind.xcodeproj
+
+# Compilar desde terminal con xcodebuild
+xcodebuild -project ShineFind/ShineFind.macOS/ShineFind.xcodeproj \
+           -scheme ShineFind \
+           -destination 'generic/platform=macOS' \
+           build
+```
 
 ---
 
