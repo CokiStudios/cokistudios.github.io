@@ -6,65 +6,103 @@
         xmlns:cef="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
         xmlns:local="clr-namespace:ShineFind.Windows"
         mc:Ignorable="d"
-        Title="Shine Find Browser — Coki Studios (CEF NootedRed Engine)" Height="720" Width="1280"
+        Title="Shine Find Browser — Coki Studios (CEF Chromium Core)" Height="760" Width="1320"
         Background="#06090F" WindowStartupLocation="CenterScreen">
     
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/> <!-- Tab Bar -->
+            <RowDefinition Height="Auto"/> <!-- Toolbar & Address -->
+            <RowDefinition Height="Auto"/> <!-- Bookmarks Bar -->
+            <RowDefinition Height="*"/>    <!-- Web Viewport -->
+            <RowDefinition Height="Auto"/> <!-- Status Bar -->
         </Grid.RowDefinitions>
 
-        <!-- ── TOOLBAR SUPERIOR (SHINE UI) ── -->
-        <Border Grid.Row="0" Background="#0D121F" BorderBrush="#2538bdf8" BorderThickness="0,0,0,1" Padding="12,8">
+        <!-- ── 1. TAB BAR (FLUENT WINDOWS 11) ── -->
+        <Border Grid.Row="0" Background="#04060A" BorderBrush="#1538BDF8" BorderThickness="0,0,0,1" Padding="10,6,10,0">
+            <StackPanel Orientation="Horizontal">
+                <Button Name="TabForkar" Content="Forkar Hub" Padding="14,6" Margin="0,0,4,0" Background="#0D121F" Foreground="#38BDF8" BorderBrush="#3338BDF8" BorderThickness="1,1,1,0" FontWeight="Bold" FontSize="12" Click="TabForkar_Click"/>
+                <Button Name="TabShineMaps" Content="Shine Maps" Padding="14,6" Margin="0,0,4,0" Background="#080C14" Foreground="#94A3B8" BorderThickness="0" FontSize="12" Click="TabShineMaps_Click"/>
+                <Button Name="TabProducts" Content="Productos" Padding="14,6" Margin="0,0,4,0" Background="#080C14" Foreground="#94A3B8" BorderThickness="0" FontSize="12" Click="TabProducts_Click"/>
+                <Button Name="TabDashboard" Content="Mi CSID" Padding="14,6" Margin="0,0,4,0" Background="#080C14" Foreground="#94A3B8" BorderThickness="0" FontSize="12" Click="TabDashboard_Click"/>
+                <Button Name="BtnNewTab" Content="+" Width="28" Height="26" Margin="4,0,0,0" Background="#152033" Foreground="#94A3B8" BorderThickness="0" FontWeight="Bold" FontSize="14" Click="BtnNewTab_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 2. TOOLBAR PRINCIPAL (SHINE UI) ── -->
+        <Border Grid.Row="1" Background="#0D121F" BorderBrush="#2538BDF8" BorderThickness="0,0,0,1" Padding="12,8">
             <DockPanel LastChildFill="True">
                 <!-- Botones de Navegación -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" Margin="0,0,12,0">
-                    <Button Name="BtnBack" Content="◀" Width="32" Height="32" Margin="0,0,4,0" Background="#1A2235" Foreground="#38BDF8" BorderThickness="0" CornerRadius="8" Click="BtnBack_Click"/>
-                    <Button Name="BtnForward" Content="▶" Width="32" Height="32" Margin="0,0,4,0" Background="#1A2235" Foreground="#38BDF8" BorderThickness="0" CornerRadius="8" Click="BtnForward_Click"/>
-                    <Button Name="BtnReload" Content="🔄" Width="32" Height="32" Margin="0,0,8,0" Background="#1A2235" Foreground="#38BDF8" BorderThickness="0" CornerRadius="8" Click="BtnReload_Click"/>
+                    <Button Name="BtnBack" Width="32" Height="32" Margin="0,0,4,0" Background="#1A2235" Foreground="#38BDF8" BorderThickness="0" Click="BtnBack_Click" ToolTip="Atrás">
+                        <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="12"/>
+                    </Button>
+                    <Button Name="BtnForward" Width="32" Height="32" Margin="0,0,4,0" Background="#1A2235" Foreground="#38BDF8" BorderThickness="0" Click="BtnForward_Click" ToolTip="Adelante">
+                        <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="12"/>
+                    </Button>
+                    <Button Name="BtnReload" Width="32" Height="32" Margin="0,0,8,0" Background="#1A2235" Foreground="#38BDF8" BorderThickness="0" Click="BtnReload_Click" ToolTip="Recargar">
+                        <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="12"/>
+                    </Button>
                 </StackPanel>
 
                 <!-- Status Badges & Controles -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="12,0,0,0">
                     <!-- Toggle Optimizaciones del Navegador -->
-                    <Button Name="BtnOptimization" Content="⚡ Optimizaciones: OFF" Padding="10,4" Margin="0,0,8,0" Background="#2638BDF8" Foreground="#38BDF8" BorderBrush="#6638BDF8" BorderThickness="1" CornerRadius="8" FontWeight="Bold" FontSize="11" Click="BtnOptimization_Click"/>
+                    <Button Name="BtnOptimization" Content="Optimizaciones: OFF" Padding="10,4" Margin="0,0,8,0" Background="#2638BDF8" Foreground="#38BDF8" BorderBrush="#6638BDF8" BorderThickness="1" FontWeight="Bold" FontSize="11" Click="BtnOptimization_Click"/>
                     
                     <!-- Escudo Sentinel Anti-Tracker -->
-                    <Border Padding="8,4" Margin="0,0,8,0" Background="#1F10B981" BorderBrush="#4D10B981" BorderThickness="1" CornerRadius="8">
-                        <TextBlock Text="🛡️ Sentinel Shield: ON" Foreground="#10B981" FontWeight="Bold" FontSize="11"/>
+                    <Border Padding="10,4" Margin="0,0,8,0" Background="#1F10B981" BorderBrush="#4D10B981" BorderThickness="1" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xEA18; " FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#10B981" VerticalAlignment="Center" FontSize="11"/>
+                            <TextBlock Text="Sentinel Shield: 14 Bloqueados" Foreground="#10B981" FontWeight="Bold" FontSize="11"/>
+                        </StackPanel>
                     </Border>
 
                     <!-- CSID Indicator -->
-                    <Border Padding="8,4" Background="#1F38BDF8" BorderBrush="#4D38BDF8" BorderThickness="1" CornerRadius="8">
-                        <TextBlock Text="🪪 CSID Connected" Foreground="#38BDF8" FontWeight="Bold" FontSize="11"/>
-                    </Border>
+                    <Button Name="BtnCSID" Padding="10,4" Background="#1F8B5CF6" BorderBrush="#4D8B5CF6" BorderThickness="1" Click="BtnCSID_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE77B; " FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#A78BFA" VerticalAlignment="Center" FontSize="11"/>
+                            <TextBlock Name="TxtCSID" Text="CS ID Activo" Foreground="#A78BFA" FontWeight="Bold" FontSize="11"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- Barra de Direcciones -->
-                <Border Background="#06090F" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="10" Padding="8,2">
+                <Border Background="#06090F" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="8" Padding="10,4">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="🔒 " VerticalAlignment="Center" Foreground="#10B981"/>
+                        <TextBlock Grid.Column="0" Text="&#xE72E; " FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" VerticalAlignment="Center" Foreground="#10B981" Margin="0,0,6,0"/>
                         <TextBox Grid.Column="1" Name="TxtAddress" Text="https://cokistudios.github.io/forkar.html" Background="Transparent" Foreground="#F1F5F9" BorderThickness="0" FontSize="13" FontFamily="Consolas, JetBrains Mono" VerticalAlignment="Center" KeyDown="TxtAddress_KeyDown"/>
+                        <TextBlock Grid.Column="2" Text="CEF 122" Foreground="#64748B" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="6,0,0,0"/>
                     </Grid>
                 </Border>
             </DockPanel>
         </Border>
 
-        <!-- ── MOTOR DE RENDERIZADO CEF CHROMIUM ── -->
-        <Grid Grid.Row="1" Background="#06090F">
+        <!-- ── 3. BOOKMARKS BAR ── -->
+        <Border Grid.Row="2" Background="#0A0E1A" BorderBrush="#1538BDF8" BorderThickness="0,0,0,1" Padding="12,4">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Forkar Hub" Margin="0,0,8,0" Background="Transparent" Foreground="#94A3B8" BorderThickness="0" FontSize="11" Click="Bookmark_Forkar"/>
+                <Button Content="Shine Maps" Margin="0,0,8,0" Background="Transparent" Foreground="#94A3B8" BorderThickness="0" FontSize="11" Click="Bookmark_Maps"/>
+                <Button Content="Coki Products" Margin="0,0,8,0" Background="Transparent" Foreground="#94A3B8" BorderThickness="0" FontSize="11" Click="Bookmark_Products"/>
+                <Button Content="CSID Dashboard" Margin="0,0,8,0" Background="Transparent" Foreground="#94A3B8" BorderThickness="0" FontSize="11" Click="Bookmark_Dashboard"/>
+                <Button Content="Gemini AI" Margin="0,0,8,0" Background="Transparent" Foreground="#94A3B8" BorderThickness="0" FontSize="11" Click="Bookmark_Gemini"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 4. MOTOR DE RENDERIZADO CEF CHROMIUM ── -->
+        <Grid Grid.Row="3" Background="#06090F">
             <cef:ChromiumWebBrowser Name="Browser" Address="https://cokistudios.github.io/forkar.html"/>
         </Grid>
 
-        <!-- ── FOOTER STATUS BAR ── -->
-        <Border Grid.Row="2" Background="#0A0E1A" BorderBrush="#1F2538bdf8" BorderThickness="0,1,0,0" Padding="12,4">
+        <!-- ── 5. FOOTER STATUS BAR ── -->
+        <Border Grid.Row="4" Background="#0A0E1A" BorderBrush="#1F2538BDF8" BorderThickness="0,1,0,0" Padding="12,4">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Left" Text="Shine Find Browser v1.0 — Powered by Chromium CEF 122 C++ Core Engine" Foreground="#64748B" FontSize="11"/>
+                <TextBlock DockPanel.Dock="Left" Text="Shine Find Browser v2.0 — Powered by Chromium CEF 122 C++ Core Engine &amp; Sentinel Shield" Foreground="#64748B" FontSize="11"/>
                 <TextBlock DockPanel.Dock="Right" Name="TxtStatus" Text="Ready (Hardware Accelerated)" Foreground="#10B981" FontSize="11" FontWeight="Bold"/>
             </DockPanel>
         </Border>

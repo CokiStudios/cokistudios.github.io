@@ -9,47 +9,46 @@
             document.documentElement.classList.add('light-theme');
         }
     </script>
-    <meta name="description" content="Shine Find: Navegador ultrarrápido basado en CEF / Chromium con protección Sentinel, integración nativa CSID y optimización Eco Hub.">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <meta name="description" content="Shine Find: Navegador ultrarrápido basado en CEF / Chromium con protección Sentinel, integración nativa CSID, modo HUD y optimización Eco Hub.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/xtraps.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         
         :root {
-            --bg: #06090f;
-            --card: rgba(13, 17, 23, 0.85);
-            --card-hover: rgba(255, 255, 255, 0.05);
-            --border: rgba(56, 189, 248, 0.25);
+            --bg: #030712;
+            --surface: #0b1120;
+            --card: rgba(15, 23, 42, 0.82);
+            --card-hover: rgba(30, 41, 59, 0.7);
+            --border: rgba(56, 189, 248, 0.22);
+            --border-subtle: rgba(255, 255, 255, 0.08);
             --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.3);
+            --accent-glow: rgba(56, 189, 248, 0.35);
             --purple: #8b5cf6;
             --emerald: #10b981;
-            --text: #f1f5f9;
+            --rose: #f43f5e;
+            --amber: #f59e0b;
+            --text: #f8fafc;
             --text-sub: #94a3b8;
             --text-muted: #64748b;
         }
 
         html.light-theme {
             --bg: #f8fafc;
-            --card: rgba(255, 255, 255, 0.9);
-            --card-hover: rgba(0, 0, 0, 0.03);
+            --surface: #ffffff;
+            --card: rgba(255, 255, 255, 0.92);
+            --card-hover: rgba(241, 245, 249, 0.9);
             --border: rgba(56, 189, 248, 0.35);
+            --border-subtle: rgba(0, 0, 0, 0.08);
             --accent: #0284c7;
-            --accent-glow: rgba(2, 132, 199, 0.2);
+            --accent-glow: rgba(2, 132, 199, 0.22);
             --purple: #7c3aed;
             --emerald: #059669;
+            --rose: #e11d48;
             --text: #0f172a;
             --text-sub: #475569;
             --text-muted: #64748b;
         }
-
-        .theme-toggle-btn {
-            background: none; border: none; cursor: pointer;
-            width: 36px; height: 36px; border-radius: 9px;
-            display: inline-flex; align-items: center; justify-content: center;
-            color: var(--text-sub); transition: all 0.2s; font-size: 16px;
-        }
-        .theme-toggle-btn:hover { color: var(--text); background: rgba(0,0,0,0.05); }
 
         body {
             font-family: 'Outfit', sans-serif;
@@ -59,15 +58,19 @@
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* ── NAV ── */
         nav {
             position: sticky; top: 0; z-index: 100;
-            background: rgba(6, 9, 15, 0.85);
+            background: rgba(3, 7, 18, 0.85);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             padding: 0 24px;
+        }
+        html.light-theme nav {
+            background: rgba(255, 255, 255, 0.88);
         }
         .nav-inner {
             max-width: 1200px; margin: 0 auto;
@@ -76,120 +79,283 @@
         }
         .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
         .nav-logo {
-            width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--purple));
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; color: white; font-size: 16px;
+            width: 38px; height: 38px; background: linear-gradient(135deg, var(--accent), var(--purple));
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; color: white; font-size: 15px;
             box-shadow: 0 0 20px var(--accent-glow);
         }
         .nav-title { font-weight: 800; color: var(--text); font-size: 18px; letter-spacing: -0.02em; }
         .nav-badge {
-            font-size: 11px; font-weight: 700; padding: 2px 8px;
-            background: rgba(56, 189, 248, 0.15); color: var(--accent);
+            font-size: 11px; font-weight: 700; padding: 3px 10px;
+            background: rgba(56, 189, 248, 0.12); color: var(--accent);
             border: 1px solid var(--border); border-radius: 100px;
         }
         .nav-right { display: flex; align-items: center; gap: 16px; }
         .nav-link { color: var(--text-sub); text-decoration: none; font-size: 14px; font-weight: 600; transition: color 0.2s; }
         .nav-link:hover { color: var(--text); }
 
+        .theme-toggle-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); cursor: pointer;
+            width: 38px; height: 38px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-sub); transition: all 0.2s;
+        }
+        .theme-toggle-btn:hover { color: var(--text); background: rgba(56, 189, 248, 0.1); border-color: var(--border); }
+
         .btn-cta {
             background: linear-gradient(135deg, var(--accent), var(--purple));
             color: white; border: none; padding: 10px 20px; border-radius: 12px;
             font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
             transition: all 0.25s; box-shadow: 0 4px 16px var(--accent-glow);
         }
         .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--accent-glow); }
 
         /* ── HERO ── */
         .hero {
-            max-width: 1200px; margin: 0 auto; padding: 60px 24px 40px;
+            max-width: 1240px; margin: 0 auto; padding: 50px 24px 40px;
             text-align: center; position: relative;
         }
         .hero-badge {
             display: inline-flex; align-items: center; gap: 8px;
             background: rgba(56, 189, 248, 0.1); border: 1px solid var(--border);
-            padding: 6px 16px; border-radius: 100px; font-size: 13px; font-weight: 700;
+            padding: 6px 18px; border-radius: 100px; font-size: 13px; font-weight: 700;
             color: var(--accent); margin-bottom: 20px;
         }
         .hero-title {
-            font-size: 52px; font-weight: 900; line-height: 1.1; letter-spacing: -0.03em;
+            font-size: 54px; font-weight: 900; line-height: 1.12; letter-spacing: -0.03em;
             margin-bottom: 20px;
         }
         .gradient-text {
-            background: linear-gradient(135deg, var(--accent), #a855f7, #ec4899);
+            background: linear-gradient(135deg, var(--accent) 0%, #a855f7 50%, #ec4899 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .hero-sub {
-            font-size: 18px; color: var(--text-sub); max-width: 700px; margin: 0 auto 36px;
+            font-size: 18px; color: var(--text-sub); max-width: 740px; margin: 0 auto 36px;
             line-height: 1.6;
         }
 
-        /* ── BROWSER CONTAINER SIMULATOR ── */
+        /* ── BROWSER MOCKUP CONTAINER ── */
         .browser-mockup {
-            max-width: 1000px; margin: 0 auto 60px;
-            background: #090d16; border: 2px solid var(--border);
-            border-radius: 20px; overflow: hidden;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-glow);
-            text-align: left;
+            max-width: 1100px; margin: 0 auto 60px;
+            background: #090e18; border: 1.5px solid var(--border);
+            border-radius: 22px; overflow: hidden;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65), 0 0 45px var(--accent-glow);
+            text-align: left; display: flex; flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        html.light-theme .browser-mockup {
+            background: #ffffff; border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 25px 70px rgba(15, 23, 42, 0.12), 0 0 30px rgba(56, 189, 248, 0.2);
         }
 
-        /* Toolbar Top */
-        .browser-toolbar {
-            background: #0d121f; border-bottom: 1px solid var(--border);
-            padding: 12px 16px; display: flex; align-items: center; gap: 16px;
+        /* 1. Tab Bar */
+        .browser-tabs-bar {
+            background: #060a12; padding: 10px 14px 0;
+            display: flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+            overflow-x: auto; scrollbar-width: none;
         }
-        .window-controls { display: flex; gap: 8px; }
+        html.light-theme .browser-tabs-bar { background: #f1f5f9; }
+        .window-controls { display: flex; gap: 7px; margin-right: 12px; margin-bottom: 8px; }
         .win-dot { width: 12px; height: 12px; border-radius: 50%; }
         .dot-red { background: #ef4444; }
         .dot-yellow { background: #f59e0b; }
         .dot-green { background: #10b981; }
 
+        .browser-tab {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px; border-radius: 12px 12px 0 0;
+            background: rgba(255, 255, 255, 0.03); color: var(--text-sub);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            border: 1px solid transparent; border-bottom: none;
+            transition: all 0.2s; white-space: nowrap; max-width: 200px;
+        }
+        .browser-tab:hover { background: rgba(255, 255, 255, 0.07); color: var(--text); }
+        .browser-tab.active {
+            background: #0f172a; color: var(--accent); font-weight: 700;
+            border-color: var(--border-subtle); border-top: 2px solid var(--accent);
+        }
+        html.light-theme .browser-tab.active {
+            background: #ffffff; color: var(--accent);
+        }
+        .tab-icon { width: 14px; height: 14px; flex-shrink: 0; fill: currentColor; }
+        .tab-close {
+            width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; opacity: 0.6; transition: opacity 0.2s;
+        }
+        .tab-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.15); }
+        .btn-add-tab {
+            width: 28px; height: 28px; border-radius: 8px; background: none; border: none;
+            color: var(--text-sub); cursor: pointer; display: flex; align-items: center;
+            justify-content: center; margin-bottom: 8px; transition: all 0.2s;
+        }
+        .btn-add-tab:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+
+        /* 2. Main Toolbar */
+        .browser-toolbar {
+            background: #0f172a; border-bottom: 1px solid var(--border-subtle);
+            padding: 10px 14px; display: flex; align-items: center; gap: 12px;
+        }
+        html.light-theme .browser-toolbar { background: #ffffff; }
+
+        .nav-buttons { display: flex; align-items: center; gap: 4px; }
+        .nav-btn {
+            width: 32px; height: 32px; border-radius: 8px; background: none; border: none;
+            color: var(--text-sub); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+
         .address-bar-wrap {
-            flex: 1; display: flex; align-items: center; gap: 10px;
-            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border);
-            border-radius: 12px; padding: 8px 16px; font-family: 'JetBrains Mono', monospace;
+            flex: 1; display: flex; align-items: center; gap: 8px;
+            background: rgba(3, 7, 18, 0.75); border: 1px solid var(--border);
+            border-radius: 12px; padding: 7px 14px; font-family: 'JetBrains Mono', monospace;
             font-size: 13px; color: var(--accent); transition: all 0.2s;
         }
+        html.light-theme .address-bar-wrap { background: #f8fafc; }
         .address-bar-wrap:focus-within {
-            border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow);
+            border-color: var(--accent); box-shadow: 0 0 16px var(--accent-glow);
         }
         .address-input {
             flex: 1; background: none; border: none; outline: none;
             color: var(--text); font-family: inherit; font-size: inherit;
         }
 
-        .browser-actions { display: flex; align-items: center; gap: 12px; }
-        .shield-badge {
-            display: flex; align-items: center; gap: 6px; font-size: 12px;
-            font-weight: 700; color: var(--emerald); background: rgba(16, 185, 129, 0.12);
-            padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);
+        .browser-actions { display: flex; align-items: center; gap: 8px; }
+        
+        /* Action Badges */
+        .action-chip {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+            font-weight: 700; padding: 5px 11px; border-radius: 9px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.04);
         }
-        .csid-indicator {
-            display: flex; align-items: center; gap: 6px; font-size: 12px;
-            font-weight: 700; color: var(--accent); background: rgba(56, 189, 248, 0.12);
-            padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);
+        .chip-sentinel {
+            color: var(--emerald); background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.25);
         }
-        .nooted-toggle-btn {
-            display: flex; align-items: center; gap: 6px; font-size: 12px;
-            font-weight: 700; color: #ef4444; background: rgba(239, 68, 68, 0.12);
-            padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.4);
-            cursor: pointer; transition: all 0.2s ease; font-family: 'Outfit', sans-serif;
+        .chip-sentinel:hover { background: rgba(16, 185, 129, 0.22); }
+        .chip-optim {
+            color: var(--accent); background: rgba(56, 189, 248, 0.12);
+            border-color: var(--border);
         }
-        .nooted-toggle-btn:hover { background: rgba(239, 68, 68, 0.25); transform: translateY(-1px); }
-        .nooted-toggle-btn.active {
-            background: #ef4444; color: white; border-color: #f87171;
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        .chip-optim:hover { background: rgba(56, 189, 248, 0.22); }
+        .chip-optim.active {
+            background: var(--accent); color: #020617;
+            box-shadow: 0 0 16px var(--accent-glow);
         }
+        .chip-csid {
+            color: var(--purple); background: rgba(139, 92, 246, 0.12);
+            border-color: rgba(139, 92, 246, 0.25);
+        }
+        .chip-csid:hover { background: rgba(139, 92, 246, 0.22); }
+        .chip-ai {
+            color: #ec4899; background: rgba(236, 72, 153, 0.12);
+            border-color: rgba(236, 72, 153, 0.25);
+        }
+        .chip-ai:hover { background: rgba(236, 72, 153, 0.22); }
 
-        /* Viewport Frame */
+        /* 3. Bookmarks Bar */
+        .bookmarks-bar {
+            background: #0b1120; border-bottom: 1px solid var(--border-subtle);
+            padding: 6px 14px; display: flex; align-items: center; gap: 8px;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        html.light-theme .bookmarks-bar { background: #f8fafc; }
+        .bookmark-btn {
+            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+            border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--text-sub);
+            cursor: pointer; background: none; border: none; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .bookmark-btn:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+        .bm-icon { width: 13px; height: 13px; fill: currentColor; }
+
+        /* 4. Browser Main Stage (Viewport + AI Sidebar) */
+        .browser-stage {
+            display: flex; position: relative; height: 560px;
+            background: #030712; overflow: hidden;
+        }
         .browser-viewport {
-            height: 500px; background: #06090f; position: relative;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 32px; overflow: hidden;
+            flex: 1; height: 100%; position: relative;
+            background: #030712; display: flex; flex-direction: column;
         }
         .iframe-sim {
-            width: 100%; height: 100%; border: none; border-radius: 12px;
-            background: #06090f;
+            width: 100%; height: 100%; border: none;
+            background: #030712;
         }
+
+        /* 5. AI Assistant Sidebar */
+        .ai-sidebar {
+            width: 320px; height: 100%; background: #0b1120;
+            border-left: 1px solid var(--border-subtle);
+            display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative; z-index: 10;
+        }
+        html.light-theme .ai-sidebar { background: #ffffff; }
+        .ai-sidebar.collapsed { display: none; }
+        .ai-sidebar-header {
+            padding: 12px 16px; border-bottom: 1px solid var(--border-subtle);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .ai-title-wrap { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+        .ai-provider-select {
+            display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--border-subtle);
+            background: rgba(0,0,0,0.2);
+        }
+        .ai-pill {
+            flex: 1; padding: 4px 6px; font-size: 11px; font-weight: 700;
+            border-radius: 6px; border: none; cursor: pointer; text-align: center;
+            background: none; color: var(--text-sub); transition: all 0.2s;
+        }
+        .ai-pill.active { background: rgba(56, 189, 248, 0.18); color: var(--accent); }
+        .ai-chat-box {
+            flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+        }
+        .ai-bubble {
+            padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 85%;
+        }
+        .ai-bubble.bot {
+            align-self: flex-start; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .ai-bubble.user {
+            align-self: flex-end; background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: white; font-weight: 500;
+        }
+        .ai-input-wrap {
+            padding: 12px; border-top: 1px solid var(--border-subtle);
+            display: flex; gap: 8px; align-items: center;
+        }
+        .ai-input {
+            flex: 1; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-subtle);
+            border-radius: 8px; padding: 8px 12px; color: var(--text); font-family: inherit; font-size: 12px;
+            outline: none;
+        }
+        .ai-send-btn {
+            width: 32px; height: 32px; border-radius: 8px; background: var(--accent); border: none;
+            color: #020617; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── MODALS (SENTINEL & CSID) ── */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+        }
+        .modal-backdrop.active { opacity: 1; pointer-events: all; }
+        .modal-dialog {
+            background: #0d1424; border: 1px solid var(--border);
+            border-radius: 20px; width: 90%; max-width: 480px; padding: 26px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 35px var(--accent-glow);
+            transform: translateY(20px); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        html.light-theme .modal-dialog { background: #ffffff; }
+        .modal-backdrop.active .modal-dialog { transform: translateY(0); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .modal-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .modal-close { background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 20px; }
 
         /* ── FEATURES GRID ── */
         .features-grid {
@@ -205,10 +371,10 @@
             transform: translateY(-4px); border-color: var(--accent);
             box-shadow: 0 12px 30px rgba(56, 189, 248, 0.15);
         }
-        .feature-icon {
+        .feature-icon-wrap {
             width: 50px; height: 50px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; margin-bottom: 20px;
+            margin-bottom: 20px;
         }
         .feature-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: var(--text); }
         .feature-desc { font-size: 14px; color: var(--text-sub); line-height: 1.6; }
@@ -216,7 +382,7 @@
         /* ── FOOTER ── */
         footer {
             margin-top: auto; border-top: 1px solid var(--border);
-            padding: 32px 24px; text-align: center; color: var(--text-muted); font-size: 14px;
+            padding: 36px 24px; text-align: center; color: var(--text-muted); font-size: 14px;
         }
     </style>
 </head>
@@ -224,7 +390,7 @@
 
     <div class="xtraps-bg rainbow"></div>
 
-    <!-- ── NAV ── -->
+    <!-- ── NAVIGATION BAR ── -->
     <nav>
         <div class="nav-inner">
             <a href="index" class="nav-brand">
@@ -234,135 +400,504 @@
             </a>
             <div class="nav-right">
                 <a href="forkar" class="nav-link">Forkar</a>
+                <a href="shine-maps" class="nav-link">Shine Maps</a>
                 <a href="products" class="nav-link">Productos</a>
                 <a href="dashboard" class="nav-link">Mi CSID</a>
-                <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es"> ES</option>
-                    <option value="en"> EN</option>
-                    <option value="fr"> FR</option>
-                    <option value="pt"> PT</option>
-                </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
-                <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-cta">Descargar CEF Build </a>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">
+                    <svg id="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-cta">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Descargar CEF Build</span>
+                </a>
             </div>
         </div>
     </nav>
 
     <!-- ── HERO ── -->
     <section class="hero">
-        <div class="hero-badge"> Impulsado por Chromium Embedded Framework (CEF)</div>
+        <div class="hero-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>Impulsado por Chromium Embedded Framework (CEF C++)</span>
+        </div>
         <h1 class="hero-title">
-            Navegación ultrarrápida con <br><span class="gradient-text">Protección Sentinel & CSID Nativo</span>
+            Navegación ultrarrápida con <br><span class="gradient-text">Protección Sentinel & CS ID Nativo</span>
         </h1>
         <p class="hero-sub">
-            Shine Find es el navegador web nativo diseñado por Coki Studios. Bloqueo de rastreadores por hardware, renderizado CEF de baja latencia y sincronización total con tu cuenta CSID.
+            Shine Find es el navegador web de última generación diseñado por Coki Studios. Bloqueo de rastreadores por hardware, renderizado CEF de latencia cero, asistente IA multimodelo integrado y sincronización total de sesión universal.
         </p>
 
         <!-- ── BROWSER SIMULATOR INTERACTIVO ── -->
-        <div class="browser-mockup">
-            <div class="browser-toolbar">
+        <div class="browser-mockup" id="browser-container">
+            <!-- 1. Pestañas Superiores -->
+            <div class="browser-tabs-bar">
                 <div class="window-controls">
                     <div class="win-dot dot-red"></div>
                     <div class="win-dot dot-yellow"></div>
                     <div class="win-dot dot-green"></div>
                 </div>
-                
+
+                <div id="tabs-container" style="display:flex; gap:6px; align-items:center;">
+                    <!-- Tabs rendered dynamically -->
+                </div>
+
+                <button class="btn-add-tab" id="btn-add-tab" title="Nueva Pestaña" onclick="addNewTab()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+
+            <!-- 2. Barra de Navegación Principal -->
+            <div class="browser-toolbar">
+                <div class="nav-buttons">
+                    <button class="nav-btn" title="Atrás" onclick="historyBack()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <button class="nav-btn" title="Adelante" onclick="historyForward()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <button class="nav-btn" title="Recargar" onclick="reloadTab()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    </button>
+                </div>
+
                 <div class="address-bar-wrap">
-                    <span style="color:var(--emerald);"> https://</span>
-                    <input type="text" id="sim-url" class="address-input" value="cokistudios.github.io/forkar.html" onkeydown="handleSimNavigate(event)">
-                    <span style="font-size:12px;color:var(--text-muted);">CEF 122.0</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="text" id="sim-url" class="address-input" value="https://cokistudios.github.io/forkar.html" onkeydown="handleSimNavigate(event)">
+                    <span style="font-size:11px; color:var(--text-muted); font-weight:700;">CEF 122</span>
                 </div>
 
                 <div class="browser-actions">
-                    <button id="opt-btn" class="nooted-toggle-btn" onclick="toggleOptimizationMode()" title="Optimizaciones Avanzadas de Rendimiento y Memoria">
-                        <span></span> Optimizaciones: OFF
+                    <!-- Sentinel Shield Button -->
+                    <button class="action-chip chip-sentinel" onclick="openSentinelModal()" title="Ver Protección Sentinel Shield">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span id="shield-count-text">14 Bloqueados</span>
                     </button>
-                    <div class="shield-badge" title="Sentinel Shield Activo">
-                        <span></span> 14 Bloqueados
-                    </div>
-                    <div class="csid-indicator" title="CSID Sincronizado">
-                        <span></span> CSID Conectado
-                    </div>
+
+                    <!-- Optimizations Toggle Button -->
+                    <button id="opt-btn" class="action-chip chip-optim" onclick="toggleOptimizationMode()" title="Optimizaciones Avanzadas de Rendimiento y Memoria">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        <span id="opt-label">Optimizaciones: OFF</span>
+                    </button>
+
+                    <!-- CS ID Indicator Button -->
+                    <button class="action-chip chip-csid" onclick="openCSIDModal()" title="Coki Studios ID">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="13" y2="12"></line><circle cx="16" cy="14" r="2"></circle></svg>
+                        <span id="csid-badge-label">CS ID Activo</span>
+                    </button>
+
+                    <!-- AI Sidebar Toggle Button -->
+                    <button class="action-chip chip-ai" onclick="toggleAISidebar()" title="Abrir Asistente IA">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span>IA Lateral</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="browser-viewport">
-                <iframe id="sim-frame" src="forkar.html" class="iframe-sim"></iframe>
+            <!-- 3. Barra de Marcadores -->
+            <div class="bookmarks-bar">
+                <a href="javascript:void(0)" class="bookmark-btn" onclick="navigateToUrl('https://cokistudios.github.io/forkar.html')">
+                    <svg class="bm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    <span>Forkar Hub</span>
+                </a>
+                <a href="javascript:void(0)" class="bookmark-btn" onclick="navigateToUrl('https://cokistudios.github.io/shine-maps.html')">
+                    <svg class="bm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                    <span>Shine Maps</span>
+                </a>
+                <a href="javascript:void(0)" class="bookmark-btn" onclick="navigateToUrl('https://cokistudios.github.io/products.html')">
+                    <svg class="bm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>Coki Products</span>
+                </a>
+                <a href="javascript:void(0)" class="bookmark-btn" onclick="navigateToUrl('https://cokistudios.github.io/dashboard.html')">
+                    <svg class="bm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <span>CSID Dashboard</span>
+                </a>
+                <a href="javascript:void(0)" class="bookmark-btn" onclick="navigateToUrl('https://gemini.google.com')">
+                    <svg class="bm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <span>Gemini AI</span>
+                </a>
+            </div>
+
+            <!-- 4. Main Stage (Viewport + AI Sidebar) -->
+            <div class="browser-stage">
+                <div class="browser-viewport">
+                    <iframe id="sim-frame" src="forkar.html" class="iframe-sim"></iframe>
+                </div>
+
+                <!-- AI Sidebar Drawer -->
+                <div class="ai-sidebar" id="ai-sidebar">
+                    <div class="ai-sidebar-header">
+                        <div class="ai-title-wrap">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                            <span>Asistente Shine AI</span>
+                        </div>
+                        <button onclick="toggleAISidebar()" style="background:none; border:none; color:var(--text-sub); cursor:pointer;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+
+                    <div class="ai-provider-select">
+                        <button class="ai-pill active" onclick="setAIProvider('Gemini')">Gemini</button>
+                        <button class="ai-pill" onclick="setAIProvider('ChatGPT')">ChatGPT</button>
+                        <button class="ai-pill" onclick="setAIProvider('Claude')">Claude</button>
+                        <button class="ai-pill" onclick="setAIProvider('Personalizada')">Personalizada</button>
+                    </div>
+
+                    <div class="ai-chat-box" id="ai-chat-box">
+                        <div class="ai-bubble bot">
+                            Hola, soy tu asistente inteligente de Shine Find. Puedo resumir páginas, analizar cookies de privacidad o responder preguntas sobre la navegación.
+                        </div>
+                    </div>
+
+                    <div class="ai-input-wrap">
+                        <input type="text" id="ai-query" class="ai-input" placeholder="Pregunta sobre esta web..." onkeydown="if(event.key==='Enter') sendAIMessage()">
+                        <button class="ai-send-btn" onclick="sendAIMessage()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
+    <!-- ── MODAL: SENTINEL SHIELD SECURITY CENTER ── -->
+    <div class="modal-backdrop" id="sentinel-modal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>Sentinel Shield Security Center</span>
+                </div>
+                <button class="modal-close" onclick="closeSentinelModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div style="font-size:14px; color:var(--text-sub); line-height:1.6; margin-bottom:18px;">
+                Protección activa a nivel de red impulsada por Chromium C++. Los scripts invasivos son interceptados antes del procesamiento en memoria.
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); padding:12px 14px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; font-size:13px; color:var(--text);">Cookies de Rastreo de Terceros</span>
+                    <span style="font-weight:800; font-size:13px; color:var(--emerald);">6 Bloqueadas</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); padding:12px 14px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; font-size:13px; color:var(--text);">Scripts de Telemetría e Invasivos</span>
+                    <span style="font-weight:800; font-size:13px; color:var(--emerald);">5 Interceptados</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); padding:12px 14px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; font-size:13px; color:var(--text);">Huella Digital de Canvas / WebGL</span>
+                    <span style="font-weight:800; font-size:13px; color:var(--emerald);">3 Neutralizadas</span>
+                </div>
+            </div>
+            <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:12px; padding:12px 14px; font-size:12px; color:var(--emerald); font-weight:600; display:flex; align-items:center; gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Aislamiento de hardware activo. Rendimiento 100% libre de intrusiones.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL: CS ID UNIVERSAL AUTH ── -->
+    <div class="modal-backdrop" id="csid-modal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="13" y2="12"></line><circle cx="16" cy="14" r="2"></circle></svg>
+                    <span>Coki Studios ID</span>
+                </div>
+                <button class="modal-close" onclick="closeCSIDModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div style="text-align:center; padding:10px 0 20px;">
+                <div id="modal-user-avatar" style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--purple)); color:white; font-size:24px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; box-shadow:0 0 20px var(--accent-glow);">
+                    CS
+                </div>
+                <div id="modal-user-name" style="font-size:18px; font-weight:800; color:var(--text);">Usuario de Coki Studios</div>
+                <div id="modal-user-email" style="font-size:13px; color:var(--text-sub); margin-top:2px;">Sesión sincronizada en la nube</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+                <a href="dashboard" class="btn-cta" style="justify-content:center; border-radius:10px; font-size:13px;">
+                    <span>Gestionar Cuenta en CSID Dashboard</span>
+                </a>
+                <a href="shine-maps" class="btn-cta" style="background:var(--card); border:1px solid var(--border); color:var(--accent); justify-content:center; border-radius:10px; font-size:13px; box-shadow:none;">
+                    <span>Abrir Shine Maps con CS ID</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- ── FEATURES GRID ── -->
     <section class="features-grid">
         <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(56,189,248,0.12);color:var(--accent);"></div>
+            <div class="feature-icon-wrap" style="background:rgba(56,189,248,0.12); color:var(--accent);">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </div>
             <h3 class="feature-title">Motor CEF Chromium Core</h3>
-            <p class="feature-desc">Construido directamente sobre Chromium Embedded Framework (CEF C++), ofreciendo compatibilidad total con estándares web modernos y aceleración por GPU pura.</p>
+            <p class="feature-desc">Construido directamente sobre Chromium Embedded Framework (CEF C++), ofreciendo compatibilidad total con estándares web modernos, renderizado WebGPU y aceleración Metal/DirectX.</p>
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(16,185,129,0.12);color:var(--emerald);"></div>
+            <div class="feature-icon-wrap" style="background:rgba(16,185,129,0.12); color:var(--emerald);">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
             <h3 class="feature-title">Escudo Sentinel Anti-Rastreadores</h3>
-            <p class="feature-desc">Bloqueador nativo de scripts invasivos, cookies de terceros y malware a nivel de red antes de que se procesen en la CPU.</p>
+            <p class="feature-desc">Bloqueador nativo de telemetría invasiva, cookies de terceros y scripts de huella digital a nivel de socket de red antes de que toquen la memoria del dispositivo.</p>
         </div>
 
-        <div class="feature-card" style="border-color:rgba(56, 189, 248, 0.4);">
-            <div class="feature-icon" style="background:rgba(56, 189, 248, 0.15);color:var(--accent);"></div>
-            <h3 class="feature-title">Optimizaciones Avanzadas del Navegador</h3>
-            <p class="feature-desc">Diseñado para maximizar el rendimiento en cualquier equipo. Control dinámico de decodificación de video, gestión inteligente de VRAM Swap y fallback eficiente para evitar congelamientos.</p>
+        <div class="feature-card">
+            <div class="feature-icon-wrap" style="background:rgba(139,92,246,0.12); color:var(--purple);">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="13" y2="12"></line><circle cx="16" cy="14" r="2"></circle></svg>
+            </div>
+            <h3 class="feature-title">Identidad Universal CS ID</h3>
+            <p class="feature-desc">Inicio de sesión universal sin contraseñas redundantes, vinculación de hash de dispositivo y sincronización de historial, marcadores y mapas entre Mac, Windows y móviles.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon-wrap" style="background:rgba(236,72,153,0.12); color:#ec4899);">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+            </div>
+            <h3 class="feature-title">Asistente IA Multimodelo</h3>
+            <p class="feature-desc">Panel lateral con integración nativa de Gemini, ChatGPT, Claude o tu propio endpoint de inferencia local. Resume artículos y responde dudas en tiempo real sin salir de la pestaña.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon-wrap" style="background:rgba(16,185,129,0.12); color:var(--emerald);">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+            </div>
+            <h3 class="feature-title">Eco Hub & Ahorro de CO₂</h3>
+            <p class="feature-desc">Monitor en vivo de huella de carbono y optimización energética con desconexión inteligente de decodificación de video en pestañas en segundo plano.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon-wrap" style="background:rgba(245,158,11,0.12); color:var(--amber);">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <h3 class="feature-title">Formato Seguro .componentsave</h3>
+            <p class="feature-desc">Guarda páginas web, estados de formularios y notas en un archivo autónomo cifrado `.componentsave`, recuperable al instante en cualquier plataforma.</p>
         </div>
     </section>
 
     <!-- ── FOOTER ── -->
     <footer>
-        <p> 2026 Coki Studios LLC — Shine Find Browser Engine (CEF Build v1.0). Todos los derechos reservados.</p>
+        <p>© 2026 Coki Studios LLC — Shine Find Browser Engine (CEF Build v1.0). Todos los derechos reservados.</p>
     </footer>
 
+    <!-- ── SCRIPTS & LOGIC ── -->
     <script>
+        // ── TABS STATE ──
+        let tabs = [
+            { id: 1, title: 'Forkar Hub', url: 'forkar.html', icon: 'chat' },
+            { id: 2, title: 'Shine Maps', url: 'shine-maps.html', icon: 'map' },
+            { id: 3, title: 'Coki Products', url: 'products.html', icon: 'bolt' },
+            { id: 4, title: 'CSID Dashboard', url: 'dashboard.html', icon: 'id' }
+        ];
+        let activeTabId = 1;
+
+        const iconSvgMap = {
+            chat: `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`,
+            map: `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>`,
+            bolt: `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+            id: `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="13" y2="12"></line><circle cx="16" cy="14" r="2"></circle></svg>`,
+            globe: `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`
+        };
+
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = tabs.map(tab => `
+                <div class="browser-tab ${tab.id === activeTabId ? 'active' : ''}" onclick="switchTab(${tab.id})">
+                    ${iconSvgMap[tab.icon] || iconSvgMap.globe}
+                    <span style="overflow:hidden; text-overflow:ellipsis;">${tab.title}</span>
+                    <span class="tab-close" onclick="closeTab(event, ${tab.id})">×</span>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tabId) {
+            activeTabId = tabId;
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                document.getElementById('sim-url').value = tab.url.startsWith('http') ? tab.url : `https://cokistudios.github.io/${tab.url}`;
+                document.getElementById('sim-frame').src = tab.url;
+            }
+            renderTabs();
+        }
+
+        function closeTab(e, tabId) {
+            e.stopPropagation();
+            if (tabs.length === 1) return;
+            tabs = tabs.filter(t => t.id !== tabId);
+            if (activeTabId === tabId) {
+                activeTabId = tabs[0].id;
+            }
+            switchTab(activeTabId);
+        }
+
+        function addNewTab() {
+            const newId = Date.now();
+            tabs.push({
+                id: newId,
+                title: 'Nueva Pestaña',
+                url: 'https://cokistudios.github.io/index.html',
+                icon: 'globe'
+            });
+            switchTab(newId);
+        }
+
+        function navigateToUrl(url) {
+            const curTab = tabs.find(t => t.id === activeTabId);
+            if (curTab) {
+                curTab.url = url;
+                curTab.title = url.split('/').pop().replace('.html', '') || 'Página Web';
+            }
+            document.getElementById('sim-url').value = url;
+            document.getElementById('sim-frame').src = url;
+            renderTabs();
+        }
+
         function handleSimNavigate(e) {
             if (e.key === 'Enter') {
                 let url = document.getElementById('sim-url').value.trim();
                 if (!url.startsWith('http://') && !url.startsWith('https://')) {
                     url = 'https://' + url;
                 }
-                document.getElementById('sim-frame').src = url;
+                navigateToUrl(url);
             }
         }
 
+        function historyBack() {
+            try { document.getElementById('sim-frame').contentWindow.history.back(); } catch(e) {}
+        }
+        function historyForward() {
+            try { document.getElementById('sim-frame').contentWindow.history.forward(); } catch(e) {}
+        }
+        function reloadTab() {
+            const frame = document.getElementById('sim-frame');
+            frame.src = frame.src;
+        }
+
+        // ── OPTIMIZATIONS TOGGLE ──
         let optimizationActive = false;
         function toggleOptimizationMode() {
             optimizationActive = !optimizationActive;
             const btn = document.getElementById('opt-btn');
-            const mockup = document.querySelector('.browser-mockup');
+            const label = document.getElementById('opt-label');
+            const mockup = document.getElementById('browser-container');
 
             if (optimizationActive) {
-                btn.innerHTML = '<span></span> Optimizaciones: ON';
+                label.textContent = 'Optimizaciones: ON';
                 btn.classList.add('active');
                 mockup.style.borderColor = 'var(--accent)';
-                mockup.style.boxShadow = '0 25px 80px rgba(56, 189, 248, 0.3), 0 0 35px rgba(56, 189, 248, 0.4)';
-                alert(' OPTIMIZACIONES DEL NAVEGADOR ACTIVADAS:\n\n1. Desactivación inteligente de decodificación HW de video para prevenir congelamientos\n2. Modo de bajo consumo de GPU / Metal VSM Fallback\n3. Gestión dinámica de VRAM y reducción de consumo de memoria\n4. Composición optimizada de interfaz');
+                mockup.style.boxShadow = '0 25px 80px rgba(56, 189, 248, 0.35), 0 0 35px rgba(56, 189, 248, 0.45)';
+                alert('⚡ OPTIMIZACIONES DE SHINE FIND ACTIVADAS:\n\n1. Desactivación inteligente de decodificación HW de video para prevenir congelamientos.\n2. Modo de bajo consumo Metal / DirectX VSM Fallback.\n3. Gestión dinámica de VRAM y reducción de consumo de memoria.\n4. Composición de interfaz a 120 FPS sin saturación térmica.');
             } else {
-                btn.innerHTML = '<span></span> Optimizaciones: OFF';
+                label.textContent = 'Optimizaciones: OFF';
                 btn.classList.remove('active');
                 mockup.style.borderColor = 'var(--border)';
-                mockup.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-glow)';
+                mockup.style.boxShadow = '0 30px 90px rgba(0, 0, 0, 0.65), 0 0 45px var(--accent-glow)';
             }
         }
 
+        // ── AI SIDEBAR ──
+        let activeAI = 'Gemini';
+        function toggleAISidebar() {
+            const sidebar = document.getElementById('ai-sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function setAIProvider(provider) {
+            activeAI = provider;
+            document.querySelectorAll('.ai-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === provider);
+            });
+            const chatBox = document.getElementById('ai-chat-box');
+            chatBox.innerHTML += `
+                <div class="ai-bubble bot">
+                    Proveedor cambiado a <strong>${provider}</strong>. ¿Qué necesitas consultar?
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function sendAIMessage() {
+            const input = document.getElementById('ai-query');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chatBox = document.getElementById('ai-chat-box');
+            chatBox.innerHTML += `<div class="ai-bubble user">${text}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            setTimeout(() => {
+                let response = `[${activeAI}] He analizado la página actual (${document.getElementById('sim-url').value}). Todos los componentes están optimizados y asegurados bajo el escudo Sentinel.`;
+                if (text.toLowerCase().includes('resum')) {
+                    response = `[${activeAI}] Resumen ejecutivo: Plataforma de alta tecnología desarrollada por Coki Studios con renderizado Chromium CEF C++ y protección anti-rastreadores de baja latencia.`;
+                }
+                chatBox.innerHTML += `<div class="ai-bubble bot">${response}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 600);
+        }
+
+        // ── MODALS (SENTINEL & CSID) ──
+        function openSentinelModal() {
+            document.getElementById('sentinel-modal').classList.add('active');
+        }
+        function closeSentinelModal() {
+            document.getElementById('sentinel-modal').classList.remove('active');
+        }
+
+        function openCSIDModal() {
+            document.getElementById('csid-modal').classList.add('active');
+        }
+        function closeCSIDModal() {
+            document.getElementById('csid-modal').classList.remove('active');
+        }
+
+        // ── THEME TOGGLE ──
         const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
+        const themeIcon = document.getElementById('theme-icon');
+        
+        function updateThemeDisplay() {
             const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
-        };
+            if (isLight) {
+                themeIcon.innerHTML = `
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                `;
+            } else {
+                themeIcon.innerHTML = `
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                `;
+            }
+        }
+
         if (themeToggle) {
-            updateToggleIcon();
+            updateThemeDisplay();
             themeToggle.addEventListener('click', () => {
                 const wasLight = document.documentElement.classList.toggle('light-theme');
                 localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
+                updateThemeDisplay();
             });
         }
+
+        // Initialize tabs on start
+        renderTabs();
     </script>
-<script type="module" src="i18n.js"></script>
 </body>
 </html>
