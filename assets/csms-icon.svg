@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient (Dark Obsidian with deep indigo undertone) -->
+    <radialGradient id="bgCSMS" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#0e1026" />
+      <stop offset="60%" stop-color="#070814" />
+      <stop offset="100%" stop-color="#020308" />
+    </radialGradient>
+
+    <!-- Electric Indigo-Purple Linear Gradient -->
+    <linearGradient id="neonPurple" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="35%" stop-color="#6366f1" />
+      <stop offset="70%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+
+    <!-- Purple Glow Filter matching Shine Maps style -->
+    <filter id="glowPurple" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark Obsidian Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgCSMS)" stroke="#1e1b4b" stroke-width="4" />
+
+  <!-- Subtle Horizon Grid Ring -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#8b5cf6" stroke-opacity="0.06" stroke-width="2" stroke-dasharray="8 8" />
+
+  <!-- CSMS Messenger Minimalist Emblem -->
+  <g filter="url(#glowPurple)">
+    <!-- Main Smooth Chat Bubble with Tail -->
+    <path d="M 160 148 
+             L 352 148 
+             C 402 148, 412 188, 412 236 
+             C 412 284, 402 324, 352 324 
+             L 284 324 
+             L 218 376 
+             C 208 384, 196 376, 196 362 
+             L 196 324 
+             L 160 324 
+             C 110 324, 100 284, 100 236 
+             C 100 188, 110 148, 160 148 Z" 
+          fill="none" 
+          stroke="url(#neonPurple)" 
+          stroke-width="22" 
+          stroke-linejoin="round" 
+          stroke-linecap="round" />
+
+    <!-- Three Minimalist Conversation Dots / Signal -->
+    <circle cx="204" cy="236" r="12" fill="url(#neonPurple)" />
+    <circle cx="256" cy="236" r="12" fill="url(#neonPurple)" />
+    <circle cx="308" cy="236" r="12" fill="url(#neonPurple)" />
+
+    <!-- Top Signal Beacon Dot (Coki Studios signature) -->
+    <circle cx="256" cy="100" r="12" fill="#c084fc" />
+  </g>
+</svg>
