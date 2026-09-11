@@ -1,55 +1,59 @@
 package com.cokistudios.shinemaps.auto
 
 import androidx.car.app.CarContext
-import androidx.car.app.CarToast
 import androidx.car.app.Screen
 import androidx.car.app.model.*
 
 class ShineHomeScreen(carContext: CarContext) : Screen(carContext) {
 
     override fun onGetTemplate(): Template {
-        val pane = Pane.Builder()
-            .addRow(
+        val itemList = ItemList.Builder()
+            .addItem(
                 Row.Builder()
-                    .setTitle("Shine Maps • Conducción")
-                    .addText("Navegación inteligente con Mapbox HD y CS ID")
-                    .build()
-            )
-            .addRow(
-                Row.Builder()
-                    .setTitle("🏠 Casa (CS ID)")
-                    .addText("Ruta rápida hacia el hogar")
-                    .build()
-            )
-            .addRow(
-                Row.Builder()
-                    .setTitle("🏢 Estudio (CS ID)")
-                    .addText("Tráfico en vivo optimizado")
-                    .build()
-            )
-            .addAction(
-                Action.Builder()
-                    .setTitle("Ruta a Casa")
-                    .setBackgroundColor(CarColor.BLUE)
+                    .setTitle("🚗 Iniciar Navegación en Vivo")
+                    .addText("Modo Google Maps con giros en tiempo real, tráfico y ETA")
                     .setOnClickListener {
-                        CarToast.makeText(carContext, "Iniciando ruta a Casa en Shine Maps", CarToast.LENGTH_SHORT).show()
+                        screenManager.push(ShineLiveNavScreen(carContext, "Ruta en Vivo", 4.7110, -74.0721))
                     }
                     .build()
             )
-            .addAction(
-                Action.Builder()
-                    .setTitle("Ruta a Estudio")
-                    .setBackgroundColor(CarColor.SECONDARY)
+            .addItem(
+                Row.Builder()
+                    .setTitle("🏠 Casa (CS ID)")
+                    .addText("Ruta rápida con tráfico en tiempo real")
                     .setOnClickListener {
-                        CarToast.makeText(carContext, "Iniciando ruta a Estudio en Shine Maps", CarToast.LENGTH_SHORT).show()
+                        screenManager.push(ShineLiveNavScreen(carContext, "Casa (CS ID)", 4.6980, -74.0620))
+                    }
+                    .build()
+            )
+            .addItem(
+                Row.Builder()
+                    .setTitle("🏢 Estudio (CS ID)")
+                    .addText("Vía principal y corredores sin congestión")
+                    .setOnClickListener {
+                        screenManager.push(ShineLiveNavScreen(carContext, "Estudio (CS ID)", 4.7230, -74.0510))
                     }
                     .build()
             )
             .build()
 
-        return PaneTemplate.Builder(pane)
+        val actionStrip = ActionStrip.Builder()
+            .addAction(
+                Action.Builder()
+                    .setTitle("▶ Iniciar")
+                    .setBackgroundColor(CarColor.BLUE)
+                    .setOnClickListener {
+                        screenManager.push(ShineLiveNavScreen(carContext, "Navegación Activa", 4.7110, -74.0721))
+                    }
+                    .build()
+            )
+            .build()
+
+        return ListTemplate.Builder()
+            .setSingleList(itemList)
             .setHeaderAction(Action.APP_ICON)
-            .setTitle("Shine Maps")
+            .setTitle("Shine Maps • Android Auto")
+            .setActionStrip(actionStrip)
             .build()
     }
 }
