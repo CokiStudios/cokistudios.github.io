@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient (Dark Obsidian with warm ambient undertone) -->
+    <radialGradient id="bgForkar" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#14110e" />
+      <stop offset="60%" stop-color="#0a0908" />
+      <stop offset="100%" stop-color="#030303" />
+    </radialGradient>
+
+    <!-- Warm Golden Amber Neon Gradient -->
+    <linearGradient id="neonGold" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="80%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#fef08a" />
+    </linearGradient>
+
+    <!-- Golden Glow Filter -->
+    <filter id="glowGold" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark Obsidian Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgForkar)" stroke="#292524" stroke-width="4" />
+
+  <!-- Subtle Horizon Grid Ring -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#f59e0b" stroke-opacity="0.06" stroke-width="2" stroke-dasharray="8 8" />
+
+  <!-- Forkman Minimalist Hood & Fork Silhouette -->
+  <g filter="url(#glowGold)">
+    <!-- Hood Contour Path -->
+    <path d="M 256 120
+             C 210 120 162 165 162 235
+             C 162 300 180 345 220 375
+             L 256 395
+             L 292 375
+             C 332 345 350 300 350 235
+             C 350 165 302 120 256 120 Z"
+          fill="none"
+          stroke="url(#neonGold)"
+          stroke-width="18"
+          stroke-linecap="round"
+          stroke-linejoin="round" />
+
+    <!-- Fork Emblem in Face (3 Tines + Stem) -->
+    <!-- Left Tine -->
+    <path d="M 232 215 L 232 270"
+          stroke="url(#neonGold)"
+          stroke-width="12"
+          stroke-linecap="round" />
+
+    <!-- Center Tine -->
+    <path d="M 256 200 L 256 270"
+          stroke="url(#neonGold)"
+          stroke-width="12"
+          stroke-linecap="round" />
+
+    <!-- Right Tine -->
+    <path d="M 280 215 L 280 270"
+          stroke="url(#neonGold)"
+          stroke-width="12"
+          stroke-linecap="round" />
+
+    <!-- Fork Base & Stem -->
+    <path d="M 232 270
+             C 232 292 248 300 256 300
+             C 264 300 280 292 280 270"
+          fill="none"
+          stroke="url(#neonGold)"
+          stroke-width="12"
+          stroke-linecap="round" />
+
+    <path d="M 256 300 L 256 370"
+          stroke="url(#neonGold)"
+          stroke-width="14"
+          stroke-linecap="round" />
+
+    <!-- Beacon Dot / Eye Focus -->
+    <circle cx="256" cy="165" r="6" fill="#fef08a" />
+  </g>
+</svg>
