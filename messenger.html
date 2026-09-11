@@ -543,8 +543,12 @@
         .modal-title { font-weight: 800; font-size: 17px; }
 
         .modal-close {
-            background: none; border: none; cursor: pointer; color: var(--text-sub); font-size: 18px;
+            background: none; border: none; cursor: pointer; color: var(--text-sub);
+            width: 32px; height: 32px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
         }
+        .modal-close:hover { color: var(--text); background: var(--card-hover); }
 
         .modal-body {
             padding: 20px 24px;
@@ -759,7 +763,9 @@
                     <option value="fr"> FR</option>
                     <option value="pt"> PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
                 <a href="dashboard" id="nav-profile">
                     <div id="nav-avatar">U</div>
                     <span id="nav-name">Mi cuenta</span>
@@ -777,8 +783,12 @@
                 <div class="sidebar-header">
                     <h2 data-i18n="csms_chats_tab">Chats</h2>
                     <div class="header-actions">
-                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email"></button>
-                        <button id="btn-new-group" title="Nuevo Grupo"></button>
+                        <button id="btn-new-dm" title="Nuevo Mensaje Directo o por Email" aria-label="Nuevo Mensaje Directo">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button id="btn-new-group" title="Nuevo Grupo" aria-label="Nuevo Grupo">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </button>
                     </div>
                 </div>
                 <div class="rooms-list" id="rooms-list">
@@ -803,7 +813,9 @@
                 <div class="chat-area" id="chat-area" style="display:none;">
                     <div class="chat-header">
                         <div class="chat-info">
-                            <button class="btn-back" id="btn-chat-back">←</button>
+                            <button class="btn-back" id="btn-chat-back" aria-label="Volver">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                            </button>
                             <div class="room-avatar" id="chat-header-avatar">?</div>
                             <div>
                                 <div class="chat-header-name" id="chat-header-name">Sala de Chat</div>
@@ -811,7 +823,10 @@
                             </div>
                         </div>
                         <div class="chat-header-actions">
-                            <button id="btn-invite-members" style="display:none;">+ Invitar</button>
+                            <button id="btn-invite-members" style="display:none;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:middle;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                                <span>Invitar</span>
+                            </button>
                         </div>
                     </div>
 
@@ -826,7 +841,9 @@
                             <span id="attachment-preview-icon" style="font-size:18px;"></span>
                             <span id="attachment-preview-name">archivo.png</span>
                         </div>
-                        <button class="attachment-remove-btn" id="btn-remove-attachment" title="Quitar adjunto"></button>
+                        <button class="attachment-remove-btn" id="btn-remove-attachment" title="Quitar adjunto" aria-label="Quitar adjunto">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
                     </div>
 
                     <div class="message-input-bar">
@@ -850,7 +867,9 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title">Nuevo Mensaje Directo</div>
-                <button class="modal-close" onclick="closeModal('modal-dm')"></button>
+                <button class="modal-close" onclick="closeModal('modal-dm')" aria-label="Cerrar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
             <div class="modal-body">
                 <!-- Opción 1: Enviar por correo exacto -->
@@ -894,7 +913,9 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title">Crear Nuevo Grupo</div>
-                <button class="modal-close" onclick="closeModal('modal-group')"></button>
+                <button class="modal-close" onclick="closeModal('modal-group')" aria-label="Cerrar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -924,7 +945,9 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title">Invitar Miembros al Grupo</div>
-                <button class="modal-close" onclick="closeModal('modal-invite')"></button>
+                <button class="modal-close" onclick="closeModal('modal-invite')" aria-label="Cerrar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -964,9 +987,11 @@
         async function init() {
             // Theme toggle helper
             const themeToggle = document.getElementById('theme-toggle');
+            const SUN_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+            const MOON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
             const updateToggleIcon = () => {
                 const isLight = document.documentElement.classList.contains('light-theme');
-                themeToggle.textContent = isLight ? '' : '';
+                if (themeToggle) themeToggle.innerHTML = isLight ? MOON_SVG : SUN_SVG;
             };
             if (themeToggle) {
                 updateToggleIcon();
@@ -1892,21 +1917,6 @@
             const day = date.getDate();
             const month = date.getMonth() + 1;
             return `${day}/${month}`;
-        }
-
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
-            });
         }
 
         // Initialize App
