@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Android Auto Navigation Permissions -->
+    <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
+    <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
 
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
@@ -20,6 +24,14 @@
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.ShineMaps"
         tools:targetApi="35">
+
+        <!-- Android Auto Meta-Data -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
 
         <activity
             android:name=".MainActivity"
@@ -47,6 +59,16 @@
                 <data android:scheme="geo" />
             </intent-filter>
         </activity>
+
+        <!-- Android Auto Navigation CarAppService -->
+        <service
+            android:name=".auto.ShineCarAppService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.NAVIGATION" />
+            </intent-filter>
+        </service>
 
     </application>
 
