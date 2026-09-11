@@ -58,6 +58,13 @@ dependencies {
     implementation("androidx.webkit:webkit:1.10.0")
     implementation("com.google.android.gms:play-services-location:21.2.0")
     
+    // Native Map SDK
+    implementation("org.maplibre.gl:android-sdk:11.5.0")
+    
+    // Networking & Async for Mapbox APIs
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     // Android Auto (Android for Cars App Library)
     implementation("androidx.car.app:app:1.4.0")
 }

@@ -1,7 +1,13 @@
 <resources>
     <color name="bg_dark">#020617</color>
     <color name="surface_dark">#0b1220</color>
+    <color name="card_glass">#ea0f172a</color>
     <color name="cyan_primary">#38bdf8</color>
     <color name="cyan_accent">#00f2fe</color>
     <color name="border_subtle">#1e293b</color>
+    <color name="text_primary">#f8fafc</color>
+    <color name="text_sub">#94a3b8</color>
+    <color name="hud_bg">#000000</color>
+    <color name="hud_accent">#00f2fe</color>
+    <color name="rose_accent">#f43f5e</color>
 </resources>
