@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Warm Golden Amber Neon Gradient -->
+    <linearGradient id="neonGold" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="80%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#fef08a" />
+    </linearGradient>
+
+    <!-- Golden Glow Filter -->
+    <filter id="glowGold" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Forkman Official Mascot (Muñequito Oficial de Coki Studios) -->
+  <g filter="url(#glowGold)">
+    <!-- 1. Cabeza: Círculo limpio flotante, sin rostro, separada del cuerpo -->
+    <circle cx="256" cy="115" r="54" 
+            fill="none" 
+            stroke="url(#neonGold)" 
+            stroke-width="22" 
+            stroke-linecap="round" />
+
+    <!-- 2. Cuerpo: Muñequito con silueta idéntica al boceto -->
+    <path d="M 190 236
+             C 210 214, 302 214, 322 236
+             L 378 298
+             C 390 312, 380 334, 360 334
+             C 350 334, 340 326, 332 316
+             L 320 298
+             L 320 342
+             L 344 424
+             C 350 442, 336 458, 316 458
+             C 300 458, 288 446, 282 430
+             L 268 370
+             C 264 354, 248 354, 244 370
+             L 230 430
+             C 224 446, 212 458, 196 458
+             C 176 458, 162 442, 168 424
+             L 192 342
+             L 192 298
+             L 180 316
+             C 172 326, 162 334, 152 334
+             C 132 334, 122 312, 134 298 Z"
+          fill="none"
+          stroke="url(#neonGold)"
+          stroke-width="22"
+          stroke-linejoin="round"
+          stroke-linecap="round" />
+  </g>
+</svg>

@@ -15,8 +15,8 @@
       <stop offset="100%" stop-color="#fef08a" />
     </linearGradient>
 
-    <!-- Golden Glow Filter -->
-    <filter id="glowGold" x="-20%" y="-20%" width="140%" height="140%">
+    <!-- Golden Glow Filter matching Shine Maps style -->
+    <filter id="glowGold" x="-25%" y="-25%" width="150%" height="150%">
       <feGaussianBlur stdDeviation="16" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
@@ -31,56 +31,40 @@
   <!-- Subtle Horizon Grid Ring -->
   <circle cx="256" cy="256" r="160" fill="none" stroke="#f59e0b" stroke-opacity="0.06" stroke-width="2" stroke-dasharray="8 8" />
 
-  <!-- Forkman Minimalist Hood & Fork Silhouette -->
+  <!-- Forkman Minimalist Muñequito (Sin rostro, cabeza separada del cuerpo) -->
   <g filter="url(#glowGold)">
-    <!-- Hood Contour Path -->
-    <path d="M 256 120
-             C 210 120 162 165 162 235
-             C 162 300 180 345 220 375
-             L 256 395
-             L 292 375
-             C 332 345 350 300 350 235
-             C 350 165 302 120 256 120 Z"
+    <!-- 1. Cabeza: Círculo limpio flotante, sin rostro, separada del cuerpo -->
+    <circle cx="256" cy="132" r="46" 
+            fill="none" 
+            stroke="url(#neonGold)" 
+            stroke-width="20" 
+            stroke-linecap="round" />
+
+    <!-- 2. Cuerpo: Muñequito de trazo continuo con silueta idéntica al boceto -->
+    <path d="M 195 246
+             C 214 226, 298 226, 317 246
+             L 366 304
+             C 376 316, 368 334, 350 334
+             C 342 334, 334 328, 326 318
+             L 316 302
+             L 316 338
+             L 338 410
+             C 344 426, 332 440, 314 440
+             C 300 440, 288 430, 284 416
+             L 268 360
+             C 264 346, 248 346, 244 360
+             L 228 416
+             C 224 430, 212 440, 198 440
+             C 180 440, 168 426, 174 410
+             L 196 338
+             L 196 302
+             L 186 318
+             C 178 328, 170 334, 162 334
+             C 144 334, 136 316, 146 304 Z"
           fill="none"
           stroke="url(#neonGold)"
-          stroke-width="18"
-          stroke-linecap="round"
-          stroke-linejoin="round" />
-
-    <!-- Fork Emblem in Face (3 Tines + Stem) -->
-    <!-- Left Tine -->
-    <path d="M 232 215 L 232 270"
-          stroke="url(#neonGold)"
-          stroke-width="12"
+          stroke-width="20"
+          stroke-linejoin="round"
           stroke-linecap="round" />
-
-    <!-- Center Tine -->
-    <path d="M 256 200 L 256 270"
-          stroke="url(#neonGold)"
-          stroke-width="12"
-          stroke-linecap="round" />
-
-    <!-- Right Tine -->
-    <path d="M 280 215 L 280 270"
-          stroke="url(#neonGold)"
-          stroke-width="12"
-          stroke-linecap="round" />
-
-    <!-- Fork Base & Stem -->
-    <path d="M 232 270
-             C 232 292 248 300 256 300
-             C 264 300 280 292 280 270"
-          fill="none"
-          stroke="url(#neonGold)"
-          stroke-width="12"
-          stroke-linecap="round" />
-
-    <path d="M 256 300 L 256 370"
-          stroke="url(#neonGold)"
-          stroke-width="14"
-          stroke-linecap="round" />
-
-    <!-- Beacon Dot / Eye Focus -->
-    <circle cx="256" cy="165" r="6" fill="#fef08a" />
   </g>
 </svg>
