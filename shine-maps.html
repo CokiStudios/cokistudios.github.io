@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Shine Maps — Navegación GPS & Inteligencia Geoespacial | Coki Studios</title>
+    <meta name="description" content="Shine Maps: Navegación GPS de alta precisión con integración CSID, modo HUD para conducción y mapas interactivos inteligentes.">
+    
+    <!-- Open Graph & Icons -->
+    <meta property="og:title" content="Shine Maps — Coki Studios">
+    <meta property="og:description" content="Navegación GPS inteligente con integración nativa CS ID y modo HUD.">
+    <meta property="og:image" content="assets/shine-maps-icon.jpg">
+    <link rel="icon" type="image/jpeg" href="assets/shine-maps-icon.jpg">
+    <link rel="apple-touch-icon" href="assets/shine-maps-icon.jpg">
+
+    <!-- Fonts & Leaflet CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --panel: rgba(13, 17, 23, 0.88);
+            --panel-border: rgba(56, 189, 248, 0.25);
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.35);
+            --purple: #8b5cf6;
+            --emerald: #10b981;
+            --rose: #f43f5e;
+            --amber: #f59e0b;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        html.light-theme {
+            --bg: #f8fafc;
+            --panel: rgba(255, 255, 255, 0.92);
+            --panel-border: rgba(2, 132, 199, 0.25);
+            --accent: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.25);
+            --purple: #7c3aed;
+            --emerald: #059669;
+            --text: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── MAP CONTAINER ── */
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: #06090f;
+        }
+
+        /* Custom Leaflet Controls */
+        .leaflet-bar {
+            border: 1px solid var(--panel-border) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+        }
+        .leaflet-bar a {
+            background: var(--panel) !important;
+            color: var(--text) !important;
+            border-bottom: 1px solid var(--panel-border) !important;
+            backdrop-filter: blur(12px);
+        }
+        .leaflet-bar a:hover {
+            background: var(--accent) !important;
+            color: #000 !important;
+        }
+
+        /* ── FLOATING TOP BAR ── */
+        .top-bar {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .top-bar > * {
+            pointer-events: auto;
+        }
+
+        /* Brand Pill */
+        .brand-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            padding: 8px 16px 8px 10px;
+            border-radius: 50px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+        .brand-pill:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent);
+            box-shadow: 0 12px 40px var(--accent-glow);
+        }
+        .brand-logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--accent);
+        }
+        .brand-title {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .brand-badge {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Search Box */
+        .search-container {
+            flex: 1;
+            max-width: 480px;
+            position: relative;
+        }
+        .search-input-wrap {
+            display: flex;
+            align-items: center;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 50px;
+            padding: 4px 6px 4px 16px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+        }
+        .search-input-wrap:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            padding: 6px 8px;
+        }
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+        .search-clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            display: none;
+        }
+        .search-submit-btn {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            border: none;
+            color: #fff;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .search-submit-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Autocomplete Dropdown */
+        .search-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--panel);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            max-height: 320px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        .search-dropdown.open {
+            display: block;
+        }
+        .search-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.15s;
+        }
+        .search-item:last-child {
+            border-bottom: none;
+        }
+        .search-item:hover {
+            background: rgba(56, 189, 248, 0.12);
+        }
+        .search-item-icon {
+            color: var(--accent);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .search-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .search-item-sub {
+            font-size: 11px;
+            color: var(--text-sub);
+            line-height: 1.3;
+        }
+
+        /* User CS ID Widget */
+        .user-widget {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            padding: 6px 14px 6px 8px;
+            border-radius: 50px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .user-widget:hover {
+            border-color: var(--accent);
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .user-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .user-status {
+            font-size: 10px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .user-status::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--emerald);
+            display: inline-block;
+        }
+
+        /* ── FLOATING CONTROLS (RIGHT) ── */
+        .controls-stack {
+            position: absolute;
+            right: 16px;
+            bottom: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .control-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+        }
+        .control-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+        .control-btn.active {
+            background: var(--accent);
+            color: #06090f;
+            border-color: var(--accent);
+        }
+
+        /* ── NAVIGATION ROUTE PANEL (LEFT) ── */
+        .nav-panel {
+            position: absolute;
+            top: 80px;
+            left: 16px;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            max-height: calc(100vh - 120px);
+            background: var(--panel);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideInLeft 0.3s ease;
+        }
+        .nav-panel.open {
+            display: flex;
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .nav-panel-header {
+            padding: 16px 20px;
+            background: rgba(0,0,0,0.25);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-panel-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-panel-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 4px;
+        }
+        .nav-panel-close:hover {
+            color: var(--text);
+        }
+
+        /* Route Mode Selector */
+        .route-mode-bar {
+            display: flex;
+            padding: 10px 16px;
+            gap: 8px;
+            background: rgba(0,0,0,0.15);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .mode-chip {
+            flex: 1;
+            padding: 7px 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-sub);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-chip.active {
+            background: var(--accent);
+            color: #06090f;
+            border-color: var(--accent);
+        }
+
+        /* Route Summary Stats */
+        .route-stats {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(139,92,246,0.05));
+        }
+        .route-stat-item {
+            text-align: center;
+        }
+        .route-stat-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .route-stat-lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        /* Steps List */
+        .route-steps-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(56,189,248,0.15);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 13px;
+        }
+        .step-desc {
+            font-size: 12px;
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .step-dist {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Route Actions */
+        .route-actions-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--panel-border);
+            display: flex;
+            gap: 10px;
+        }
+        .btn-start-nav {
+            flex: 1;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-start-nav:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+
+        /* ── IN-CAR HUD / DRIVING OVERLAY ── */
+        .hud-overlay {
+            position: fixed;
+            inset: 0;
+            background: #020408;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            color: #fff;
+        }
+        .hud-overlay.open {
+            display: flex;
+        }
+        .hud-overlay.mirrored {
+            transform: scaleY(-1);
+        }
+        .hud-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hud-turn-box {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .hud-turn-icon {
+            font-size: 80px;
+            color: var(--accent);
+            text-shadow: 0 0 30px var(--accent);
+        }
+        .hud-turn-instruction {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .hud-turn-distance {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            color: var(--emerald);
+            margin-top: 6px;
+        }
+        .hud-center-speed {
+            text-align: center;
+            margin: auto 0;
+        }
+        .hud-speed-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 140px;
+            font-weight: 900;
+            line-height: 1;
+            color: var(--accent);
+            text-shadow: 0 0 40px var(--accent-glow);
+        }
+        .hud-speed-unit {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-sub);
+            letter-spacing: 0.1em;
+        }
+        .hud-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hud-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ── SAVED PLACES DRAWER (CS ID) ── */
+        .places-drawer {
+            position: absolute;
+            left: 16px;
+            bottom: 24px;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .saved-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .saved-chip:hover {
+            border-color: var(--accent);
+            background: rgba(56,189,248,0.15);
+            color: var(--accent);
+        }
+
+        /* Live Radar Marker for User */
+        .user-beacon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #38bdf8;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px #38bdf8;
+            position: relative;
+        }
+        .user-beacon::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2px solid #38bdf8;
+            animation: radarPulse 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes radarPulse {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        /* Speedometer Mini Badge */
+        .speedo-badge {
+            position: absolute;
+            left: 16px;
+            top: 80px;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            z-index: 999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .speedo-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .speedo-unit {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+        }
+
+        @media (max-width: 640px) {
+            .brand-title { display: none; }
+            .user-info { display: none; }
+            .places-drawer { display: none; }
+            .hud-turn-instruction { font-size: 22px; }
+            .hud-speed-number { font-size: 90px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MAP CONTAINER -->
+    <div id="map"></div>
+
+    <!-- FLOATING TOP BAR -->
+    <div class="top-bar">
+        <!-- Brand Link -->
+        <a href="products" class="brand-pill" title="Volver al Ecosistema">
+            <img src="assets/shine-maps-icon.jpg" alt="Shine Maps" class="brand-logo-img">
+            <div class="brand-title">
+                Shine Maps
+                <span class="brand-badge">A17 • CSID</span>
+            </div>
+        </a>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-input-wrap">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--text-sub);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" class="search-input" placeholder="Buscar destino, dirección o lugar..." autocomplete="off">
+                <button id="search-clear-btn" class="search-clear-btn" onclick="clearSearch()">✕</button>
+                <button id="search-btn" class="search-submit-btn" onclick="performSearch()">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+            <!-- Results Dropdown -->
+            <div id="search-dropdown" class="search-dropdown"></div>
+        </div>
+
+        <!-- User CS ID Widget -->
+        <div class="user-widget" id="csid-user-widget" onclick="handleUserClick()">
+            <div class="user-avatar" id="csid-avatar">CS</div>
+            <div class="user-info">
+                <div class="user-name" id="csid-name">Iniciar sesión</div>
+                <div class="user-status" id="csid-status">CS ID</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPEEDOMETER BADGE -->
+    <div class="speedo-badge" id="speedo-badge">
+        <span class="speedo-num" id="speed-val">0</span>
+        <span class="speedo-unit">km/h</span>
+    </div>
+
+    <!-- SAVED PLACES DRAWER (CS ID) -->
+    <div class="places-drawer" id="places-drawer">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-sub);letter-spacing:0.05em;">Lugares CS ID:</span>
+        <div class="saved-chip" onclick="goToSaved('home')">
+            <span>🏠</span> <span>Casa</span>
+        </div>
+        <div class="saved-chip" onclick="goToSaved('work')">
+            <span>🏢</span> <span>Estudio</span>
+        </div>
+        <div class="saved-chip" onclick="saveCurrentPlace()">
+            <span>⭐</span> <span>+ Guardar actual</span>
+        </div>
+    </div>
+
+    <!-- CONTROLS STACK (RIGHT) -->
+    <div class="controls-stack">
+        <button class="control-btn" id="btn-locate" onclick="toggleTracking()" title="Mi Ubicación GPS">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="22"></line><line x1="2" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="22" y2="12"></line></svg>
+        </button>
+        <button class="control-btn" id="btn-hud" onclick="openHUD()" title="Modo Conducción / HUD Parabrisas">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="7" y1="12" x2="17" y2="12"></line><polyline points="12 7 17 12 12 17"></polyline></svg>
+        </button>
+        <button class="control-btn" id="btn-layer" onclick="toggleMapLayer()" title="Cambiar Capa de Mapa">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        </button>
+    </div>
+
+    <!-- NAVIGATION ROUTE PANEL (LEFT) -->
+    <div class="nav-panel" id="nav-panel">
+        <div class="nav-panel-header">
+            <div class="nav-panel-title">
+                <span style="color:var(--accent);">🧭</span>
+                <span id="route-dest-name">Destino</span>
+            </div>
+            <button class="nav-panel-close" onclick="closeRoutePanel()">✕</button>
+        </div>
+
+        <!-- Mode Chips -->
+        <div class="route-mode-bar">
+            <div class="mode-chip active" id="mode-driving" onclick="setRouteMode('driving')">🚗 Auto</div>
+            <div class="mode-chip" id="mode-walking" onclick="setRouteMode('walking')">🚶 Caminata</div>
+            <div class="mode-chip" id="mode-cycling" onclick="setRouteMode('cycling')">🚲 Bici</div>
+        </div>
+
+        <!-- Route Summary -->
+        <div class="route-stats">
+            <div class="route-stat-item">
+                <div class="route-stat-val" id="route-time">-- min</div>
+                <div class="route-stat-lbl">Tiempo Estimado</div>
+            </div>
+            <div class="route-stat-item">
+                <div class="route-stat-val" id="route-dist">-- km</div>
+                <div class="route-stat-lbl">Distancia</div>
+            </div>
+        </div>
+
+        <!-- Turn-by-Turn Steps -->
+        <div class="route-steps-scroll" id="route-steps-list">
+            <div style="text-align:center;padding:24px;color:var(--text-sub);font-size:13px;">
+                Calculando indicaciones...
+            </div>
+        </div>
+
+        <div class="route-actions-footer">
+            <button class="btn-start-nav" onclick="openHUD()">
+                <span>🚘</span> Iniciar Navegación HUD
+            </button>
+        </div>
+    </div>
+
+    <!-- IN-CAR HUD OVERLAY -->
+    <div class="hud-overlay" id="hud-overlay">
+        <div class="hud-top">
+            <div class="hud-turn-box">
+                <div class="hud-turn-icon" id="hud-arrow">⬆️</div>
+                <div>
+                    <div class="hud-turn-instruction" id="hud-instrux">Continúa recto por la ruta principal</div>
+                    <div class="hud-turn-distance" id="hud-dist-next">En 400 m</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;">
+                <button class="hud-btn" onclick="toggleHUDMirror()">🪞 Modo Espejo (Parabrisas)</button>
+                <button class="hud-btn" onclick="closeHUD()">✕ Salir</button>
+            </div>
+        </div>
+
+        <div class="hud-center-speed">
+            <div class="hud-speed-number" id="hud-speed">0</div>
+            <div class="hud-speed-unit">KM/H</div>
+        </div>
+
+        <div class="hud-bottom">
+            <div style="font-family:'JetBrains Mono';font-size:20px;color:var(--text-sub);" id="hud-eta">
+                Llegada estimada: --:--
+            </div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent);">
+                Shine Maps • HUD Active
+            </div>
+        </div>
+    </div>
+
+    <!-- LEAFLET & MODULE LOGIC -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="module">
+        import { getCurrentCokiUser, logoutCoki, supabase } from './coki-auth.js';
+
+        // ── STATE ──
+        let map = null;
+        let userMarker = null;
+        let destMarker = null;
+        let routePolyline = null;
+        let currentUser = null;
+        let currentPos = { lat: 4.7110, lng: -74.0721 }; // Bogotá default
+        let isTracking = false;
+        let watchId = null;
+        let currentMode = 'driving';
+        let currentRouteData = null;
+        let currentLayer = 'dark';
+        let tileLayers = {};
+
+        // ── INIT MAP ──
+        function initMap() {
+            map = L.map('map', {
+                center: [currentPos.lat, currentPos.lng],
+                zoom: 13,
+                zoomControl: false
+            });
+
+            // Map Tiles
+            tileLayers.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+                maxZoom: 19,
+                subdomains: 'abcd'
+            });
+
+            tileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 18
+            });
+
+            tileLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            });
+
+            tileLayers.dark.addTo(map);
+
+            // Leaflet Zoom bottom right
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // Click map to set destination
+            map.on('click', (e) => {
+                setDestination(e.latlng.lat, e.latlng.lng, 'Punto seleccionado en mapa');
+            });
+
+            // Try initial GPS location
+            requestLocation(true);
+        }
+
+        // ── GEOLOCATION & TRACKING ──
+        function requestLocation(pan = false) {
+            if (!navigator.geolocation) return;
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    updateUserMarker(pos.coords);
+                    if (pan) map.flyTo([currentPos.lat, currentPos.lng], 15);
+                },
+                (err) => {
+                    console.warn('Geolocation warn:', err.message);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        window.toggleTracking = function() {
+            const btn = document.getElementById('btn-locate');
+            if (isTracking) {
+                if (watchId) navigator.geolocation.clearWatch(watchId);
+                isTracking = false;
+                btn.classList.remove('active');
+            } else {
+                if (!navigator.geolocation) {
+                    alert('Geolocalización no soportada en este navegador.');
+                    return;
+                }
+                isTracking = true;
+                btn.classList.add('active');
+                map.flyTo([currentPos.lat, currentPos.lng], 16);
+
+                watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        updateUserMarker(pos.coords);
+                        if (isTracking) map.panTo([currentPos.lat, currentPos.lng]);
+
+                        // Update speed
+                        const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+                        document.getElementById('speed-val').textContent = speedKmh;
+                        document.getElementById('hud-speed').textContent = speedKmh;
+                    },
+                    (err) => console.warn('Watch err:', err),
+                    { enableHighAccuracy: true }
+                );
+            }
+        };
+
+        function updateUserMarker(coords) {
+            const icon = L.divIcon({
+                className: 'custom-user-icon',
+                html: '<div class="user-beacon"></div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            if (!userMarker) {
+                userMarker = L.marker([coords.latitude, coords.longitude], { icon: icon }).addTo(map);
+            } else {
+                userMarker.setLatLng([coords.latitude, coords.longitude]);
+            }
+        }
+
+        // ── MAP LAYER TOGGLE ──
+        window.toggleMapLayer = function() {
+            map.removeLayer(tileLayers[currentLayer]);
+            if (currentLayer === 'dark') currentLayer = 'satellite';
+            else if (currentLayer === 'satellite') currentLayer = 'street';
+            else currentLayer = 'dark';
+            tileLayers[currentLayer].addTo(map);
+        };
+
+        // ── SEARCH & GEOCODING ──
+        const searchInput = document.getElementById('search-input');
+        const dropdown = document.getElementById('search-dropdown');
+        let searchTimer = null;
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            document.getElementById('search-clear-btn').style.display = val ? 'block' : 'none';
+            clearTimeout(searchTimer);
+            if (val.length < 3) {
+                dropdown.classList.remove('open');
+                return;
+            }
+            searchTimer = setTimeout(() => searchNominatim(val), 400);
+        });
+
+        async function searchNominatim(query) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
+                const res = await fetch(url, { headers: { 'Accept-Language': 'es,en' } });
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    dropdown.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--text-sub);text-align:center;">Sin resultados para "${query}"</div>`;
+                    dropdown.classList.add('open');
+                    return;
+                }
+
+                dropdown.innerHTML = data.map(item => `
+                    <div class="search-item" onclick="selectLocation(${item.lat}, ${item.lon}, '${escapeHtml(item.display_name)}')">
+                        <div class="search-item-icon">📍</div>
+                        <div>
+                            <div class="search-item-title">${escapeHtml(item.name || item.display_name.split(',')[0])}</div>
+                            <div class="search-item-sub">${escapeHtml(item.display_name)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                dropdown.classList.add('open');
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }
+
+        window.selectLocation = function(lat, lon, name) {
+            dropdown.classList.remove('open');
+            searchInput.value = name;
+            setDestination(lat, lon, name);
+        };
+
+        window.clearSearch = function() {
+            searchInput.value = '';
+            document.getElementById('search-clear-btn').style.display = 'none';
+            dropdown.classList.remove('open');
+        };
+
+        window.performSearch = function() {
+            const val = searchInput.value.trim();
+            if (val) searchNominatim(val);
+        };
+
+        // ── ROUTING & NAVIGATION (OSRM) ──
+        async function setDestination(lat, lng, name) {
+            if (destMarker) map.removeLayer(destMarker);
+
+            destMarker = L.marker([lat, lng]).addTo(map);
+            destMarker.bindPopup(`<b>${escapeHtml(name)}</b><br><button onclick="calculateRoute()" style="margin-top:6px;background:var(--accent);color:#000;border:none;padding:4px 8px;border-radius:6px;font-weight:700;cursor:pointer;">Trazar Ruta</button>`).openPopup();
+
+            document.getElementById('route-dest-name').textContent = name.length > 28 ? name.substring(0, 25) + '...' : name;
+            await calculateRoute(lat, lng);
+        }
+
+        window.setRouteMode = function(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-chip').forEach(c => c.classList.remove('active'));
+            document.getElementById('mode-' + mode)?.classList.add('active');
+            if (destMarker) {
+                const pos = destMarker.getLatLng();
+                calculateRoute(pos.lat, pos.lng);
+            }
+        };
+
+        async function calculateRoute(dLat = null, dLng = null) {
+            const dest = dLat && dLng ? { lat: dLat, lng: dLng } : (destMarker ? destMarker.getLatLng() : null);
+            if (!dest) return;
+
+            const panel = document.getElementById('nav-panel');
+            panel.classList.add('open');
+
+            const profile = currentMode === 'walking' ? 'foot' : (currentMode === 'cycling' ? 'bicycle' : 'car');
+            const osrmUrl = `https://router.project-osrm.org/route/v1/${profile}/${currentPos.lng},${currentPos.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
+
+            try {
+                const res = await fetch(osrmUrl);
+                const data = await res.json();
+
+                if (!data.routes || data.routes.length === 0) {
+                    document.getElementById('route-steps-list').innerHTML = `<div style="padding:16px;text-align:center;color:var(--rose);">No se encontró ruta terrestre disponible.</div>`;
+                    return;
+                }
+
+                const route = data.routes[0];
+                currentRouteData = route;
+
+                // Format Stats
+                const distKm = (route.distance / 1000).toFixed(1);
+                const timeMin = Math.round(route.duration / 60);
+                document.getElementById('route-dist').textContent = `${distKm} km`;
+                document.getElementById('route-time').textContent = timeMin > 60 ? `${Math.floor(timeMin/60)}h ${timeMin%60}m` : `${timeMin} min`;
+
+                // ETA
+                const etaDate = new Date(Date.now() + route.duration * 1000);
+                document.getElementById('hud-eta').textContent = `Llegada estimada: ${etaDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+                // Draw Polyline
+                if (routePolyline) map.removeLayer(routePolyline);
+                const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                routePolyline = L.polyline(coords, {
+                    color: '#38bdf8',
+                    weight: 6,
+                    opacity: 0.9,
+                    lineJoin: 'round'
+                }).addTo(map);
+
+                map.fitBounds(routePolyline.getBounds(), { padding: [80, 80] });
+
+                // Render Steps
+                const steps = route.legs[0].steps;
+                const stepsContainer = document.getElementById('route-steps-list');
+                stepsContainer.innerHTML = steps.map((s, idx) => {
+                    const stepDist = s.distance > 1000 ? (s.distance / 1000).toFixed(1) + ' km' : Math.round(s.distance) + ' m';
+                    let icon = '⬆️';
+                    const mod = s.maneuver.modifier || '';
+                    if (mod.includes('right')) icon = '↗️';
+                    else if (mod.includes('left')) icon = '↖️';
+                    else if (mod.includes('uturn')) icon = '↩️';
+
+                    return `
+                        <div class="step-item">
+                            <div class="step-icon">${icon}</div>
+                            <div>
+                                <div class="step-desc">${s.maneuver.instruction || (s.name ? 'Sigue por ' + s.name : 'Continúa recto')}</div>
+                                <div class="step-dist">${stepDist}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Update HUD next turn
+                if (steps.length > 0) {
+                    document.getElementById('hud-instrux').textContent = steps[0].maneuver.instruction || 'Continúa recto';
+                    document.getElementById('hud-dist-next').textContent = `En ${Math.round(steps[0].distance)} m`;
+                }
+
+            } catch (err) {
+                console.error('Route error:', err);
+            }
+        }
+
+        window.closeRoutePanel = function() {
+            document.getElementById('nav-panel').classList.remove('open');
+            if (routePolyline) map.removeLayer(routePolyline);
+            if (destMarker) map.removeLayer(destMarker);
+        };
+
+        // ── IN-CAR HUD MODE ──
+        window.openHUD = function() {
+            document.getElementById('hud-overlay').classList.add('open');
+        };
+
+        window.closeHUD = function() {
+            document.getElementById('hud-overlay').classList.remove('open');
+        };
+
+        window.toggleHUDMirror = function() {
+            document.getElementById('hud-overlay').classList.toggle('mirrored');
+        };
+
+        // ── CS ID AUTH & SAVED PLACES ──
+        async function checkCSID() {
+            currentUser = await getCurrentCokiUser();
+            if (currentUser) {
+                document.getElementById('csid-name').textContent = currentUser.name || currentUser.email.split('@')[0];
+                document.getElementById('csid-status').textContent = 'Conectado';
+                const initial = (currentUser.name || currentUser.email)[0].toUpperCase();
+                document.getElementById('csid-avatar').textContent = initial;
+            } else {
+                document.getElementById('csid-name').textContent = 'Iniciar sesión';
+                document.getElementById('csid-status').textContent = 'Conectar CS ID';
+                document.getElementById('csid-avatar').textContent = 'CS';
+            }
+        }
+
+        window.handleUserClick = async function() {
+            if (currentUser) {
+                if (confirm(`Conectado como: ${currentUser.email}\n\n¿Quieres ver tu panel de cuenta o cerrar sesión?`)) {
+                    window.location.href = 'dashboard';
+                }
+            } else {
+                window.location.href = `register.html?redirect=${encodeURIComponent(window.location.href)}`;
+            }
+        };
+
+        window.goToSaved = function(type) {
+            const saved = JSON.parse(localStorage.getItem('csid_saved_places_' + (currentUser?.id || 'guest')) || '{}');
+            if (saved[type]) {
+                setDestination(saved[type].lat, saved[type].lng, saved[type].name);
+                map.flyTo([saved[type].lat, saved[type].lng], 16);
+            } else {
+                const placeName = prompt(`Aún no tienes guardada tu ubicación de "${type === 'home' ? 'Casa' : 'Estudio'}". Escribe la dirección o ciudad:`);
+                if (placeName) {
+                    searchNominatim(placeName);
+                }
+            }
+        };
+
+        window.saveCurrentPlace = function() {
+            const name = prompt('¿Qué nombre quieres darle a este lugar guardado en tu CS ID? (ej: Casa, Oficina, Gimnasio):');
+            if (!name) return;
+
+            const key = 'csid_saved_places_' + (currentUser?.id || 'guest');
+            const current = JSON.parse(localStorage.getItem(key) || '{}');
+            const targetPos = destMarker ? destMarker.getLatLng() : currentPos;
+
+            current[name.toLowerCase()] = {
+                name: name,
+                lat: targetPos.lat,
+                lng: targetPos.lng,
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem(key, JSON.stringify(current));
+            alert(`Lugar "${name}" guardado exitosamente en tu perfil de CS ID.`);
+        };
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ── BOOTSTRAP ──
+        initMap();
+        checkCSID();
+    </script>
+</body>
+</html>
