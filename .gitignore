@@ -1,3 +1,10 @@
 # Azure Branding tools (Internal / Private assets)
 azure-branding/
 dist-dmg/
+
+# Android Build Outputs & Local configs
+**/.gradle/
+**/build/
+**/local.properties
+.idea/
+

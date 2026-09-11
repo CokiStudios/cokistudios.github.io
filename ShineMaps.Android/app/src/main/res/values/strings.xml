@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Shine Maps</string>
+    <string name="location_permission_rationale">Shine Maps necesita acceso a tu ubicación GPS para navegación precisa y velocímetro en tiempo real.</string>
+</resources>
