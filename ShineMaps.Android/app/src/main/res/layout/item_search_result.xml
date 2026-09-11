@@ -10,11 +10,11 @@
     android:paddingEnd="14dp"
     android:paddingBottom="12dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="📍"
-        android:textSize="18sp" />
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:contentDescription="Ubicacion"
+        android:src="@drawable/ic_pin_drop" />
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -148,6 +148,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSpeedVal: TextView
     private lateinit var cardNavigation: View
     private lateinit var tvInstruction: TextView
+    private lateinit var ivRouteManeuverIcon: ImageView
     private lateinit var tvRouteStats: TextView
     private lateinit var hudOverlay: View
     private lateinit var hudSpeedNumber: TextView
@@ -203,6 +204,7 @@ class MainActivity : AppCompatActivity() {
         rvSearchResults = findViewById(R.id.rvSearchResults)
         tvSpeedVal = findViewById(R.id.tvSpeedVal)
         cardNavigation = findViewById(R.id.cardNavigation)
+        ivRouteManeuverIcon = findViewById(R.id.ivRouteManeuverIcon)
         tvInstruction = findViewById(R.id.tvInstruction)
         tvRouteStats = findViewById(R.id.tvRouteStats)
         hudOverlay = findViewById(R.id.hudOverlay)
@@ -458,12 +460,22 @@ class MainActivity : AppCompatActivity() {
                 val steps = legs.getJSONObject(0).getJSONArray("steps")
                 var firstInstruction = "Continúa por la vía"
                 var firstDistance = 0
+                var maneuverIconRes = R.drawable.ic_turn_straight
 
                 if (steps.length() > 0) {
                     val firstStep = steps.getJSONObject(0)
                     val maneuver = firstStep.getJSONObject("maneuver")
                     firstInstruction = maneuver.optString("instruction", firstInstruction)
                     firstDistance = firstStep.optDouble("distance", 0.0).roundToInt()
+
+                    val mod = maneuver.optString("modifier", "")
+                    val type = maneuver.optString("type", "")
+                    maneuverIconRes = when {
+                        mod.contains("right") || type.contains("right") -> R.drawable.ic_turn_right
+                        mod.contains("left") || type.contains("left") -> R.drawable.ic_turn_left
+                        type.contains("arrive") -> R.drawable.ic_flag
+                        else -> R.drawable.ic_turn_straight
+                    }
                 }
 
                 withContext(Dispatchers.Main) {
@@ -475,6 +487,7 @@ class MainActivity : AppCompatActivity() {
                     val timeMin = (duration / 60).roundToInt()
                     val timeStr = if (timeMin > 60) "${timeMin / 60}h ${timeMin % 60}m" else "$timeMin min"
 
+                    ivRouteManeuverIcon.setImageResource(maneuverIconRes)
                     tvInstruction.text = firstInstruction
                     tvRouteStats.text = "$distKm km • $timeStr estimados"
                     cardNavigation.visibility = View.VISIBLE

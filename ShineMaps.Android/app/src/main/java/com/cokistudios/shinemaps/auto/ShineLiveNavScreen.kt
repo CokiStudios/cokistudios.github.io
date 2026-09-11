@@ -7,6 +7,7 @@ import androidx.car.app.model.*
 import androidx.car.app.navigation.NavigationManager
 import androidx.car.app.navigation.NavigationManagerCallback
 import androidx.car.app.navigation.model.*
+import androidx.core.graphics.drawable.IconCompat
 import com.cokistudios.shinemaps.R
 
 class ShineLiveNavScreen(
@@ -44,7 +45,7 @@ class ShineLiveNavScreen(
                     )
                     .addAction(
                         Action.Builder()
-                            .setTitle("Volver al Inicio")
+                            .setTitle("Volver")
                             .setOnClickListener { screenManager.pop() }
                             .build()
                     )
@@ -66,7 +67,7 @@ class ShineLiveNavScreen(
 
         val routingInfo = RoutingInfo.Builder()
             .setCurrentStep(currentStep, Distance.create(350.0, Distance.UNIT_METERS))
-            .setNextStep(Step.Builder("Luego continúa por Carrera 15").build())
+            .setNextStep(Step.Builder("Luego continua por Carrera 15").build())
             .build()
 
         // ── 2. BOTTOM TRAVEL ESTIMATES (ETA & DISTANCE) ──
@@ -82,20 +83,31 @@ class ShineLiveNavScreen(
             .build()
 
         // ── 3. ACTION STRIP (Google Maps style right controls) ──
+        val volumeIcon = CarIcon.Builder(
+            IconCompat.createWithResource(
+                carContext,
+                if (isMuted) R.drawable.ic_volume_off else R.drawable.ic_volume_up
+            )
+        ).build()
+
         val actionStrip = ActionStrip.Builder()
             .addAction(
                 Action.Builder()
-                    .setTitle(if (isMuted) "🔇" else "🔊")
+                    .setIcon(volumeIcon)
                     .setOnClickListener {
                         isMuted = !isMuted
-                        CarToast.makeText(carContext, if (isMuted) "Voz silenciada" else "Instrucciones de voz activadas", CarToast.LENGTH_SHORT).show()
+                        CarToast.makeText(
+                            carContext,
+                            if (isMuted) "Voz silenciada" else "Instrucciones de voz activadas",
+                            CarToast.LENGTH_SHORT
+                        ).show()
                         invalidate()
                     }
                     .build()
             )
             .addAction(
                 Action.Builder()
-                    .setTitle("✕ Terminar")
+                    .setTitle("Terminar")
                     .setBackgroundColor(CarColor.RED)
                     .setOnClickListener {
                         val navManager = carContext.getCarService(NavigationManager::class.java)
