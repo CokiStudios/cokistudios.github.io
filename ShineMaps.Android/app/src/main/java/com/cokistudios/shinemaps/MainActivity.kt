@@ -26,6 +26,11 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.app.Dialog
+import android.graphics.drawable.ColorDrawable
+import android.view.Window
+import com.cokistudios.shinemaps.data.CSIDManager
+import com.cokistudios.shinemaps.data.CSIDUser
 import com.cokistudios.shinemaps.data.SearchResult
 import com.cokistudios.shinemaps.ui.SearchResultAdapter
 import com.google.android.gms.location.*
@@ -143,6 +148,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etSearch: EditText
     private lateinit var btnClearSearch: ImageView
     private lateinit var btnSearch: ImageView
+    private lateinit var tvCsIdBadge: TextView
     private lateinit var rvSearchResults: RecyclerView
     private lateinit var searchAdapter: SearchResultAdapter
     private lateinit var tvSpeedVal: TextView
@@ -158,6 +164,7 @@ class MainActivity : AppCompatActivity() {
 
     private var searchJob: Job? = null
     private lateinit var prefs: SharedPreferences
+    private lateinit var csidManager: CSIDManager
 
     // ── PERMISSIONS ──
     private val locationPermissionLauncher = registerForActivityResult(
@@ -185,10 +192,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         prefs = getSharedPreferences("shine_maps_prefs", Context.MODE_PRIVATE)
+        csidManager = CSIDManager.getInstance(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         initViews(savedInstanceState)
         setupSearch()
+        setupCsId()
         setupButtons()
         setupChips()
         handleBack()
@@ -201,6 +210,7 @@ class MainActivity : AppCompatActivity() {
         etSearch = findViewById(R.id.etSearch)
         btnClearSearch = findViewById(R.id.btnClearSearch)
         btnSearch = findViewById(R.id.btnSearch)
+        tvCsIdBadge = findViewById(R.id.tvCsIdBadge)
         rvSearchResults = findViewById(R.id.rvSearchResults)
         tvSpeedVal = findViewById(R.id.tvSpeedVal)
         cardNavigation = findViewById(R.id.cardNavigation)
@@ -321,20 +331,35 @@ class MainActivity : AppCompatActivity() {
         locationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
     }
 
-    // ── SEARCH & GEOCODING (MAPBOX NATIVE API) ──
+    // ── SEARCH & LOCATION SUGGESTIONS (MAPBOX PROXIMITY) ──
     private fun setupSearch() {
+        etSearch.setOnClickListener {
+            if (etSearch.text.isNullOrBlank()) {
+                showLocationSuggestions()
+            }
+        }
+
+        etSearch.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus && etSearch.text.isNullOrBlank()) {
+                showLocationSuggestions()
+            }
+        }
+
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val q = s?.toString()?.trim() ?: ""
                 btnClearSearch.visibility = if (q.isNotEmpty()) View.VISIBLE else View.GONE
 
                 searchJob?.cancel()
-                if (q.length < 3) {
-                    rvSearchResults.visibility = View.GONE
+                if (q.isEmpty()) {
+                    showLocationSuggestions()
+                    return
+                }
+                if (q.length < 2) {
                     return
                 }
                 searchJob = lifecycleScope.launch {
-                    delay(350)
+                    delay(300)
                     performGeocoding(q)
                 }
             }
@@ -346,21 +371,94 @@ class MainActivity : AppCompatActivity() {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 hideKeyboard()
                 val q = etSearch.text.toString().trim()
-                if (q.isNotEmpty()) performGeocoding(q)
+                if (q.isNotEmpty()) {
+                    performGeocoding(q)
+                } else {
+                    showLocationSuggestions()
+                }
                 true
             } else false
         }
 
         btnClearSearch.setOnClickListener {
             etSearch.setText("")
-            rvSearchResults.visibility = View.GONE
+            showLocationSuggestions()
         }
 
         btnSearch.setOnClickListener {
             hideKeyboard()
             val q = etSearch.text.toString().trim()
-            if (q.isNotEmpty()) performGeocoding(q)
+            if (q.isNotEmpty()) {
+                performGeocoding(q)
+            } else {
+                showLocationSuggestions()
+            }
         }
+    }
+
+    private fun showLocationSuggestions() {
+        val userLat = currentLocation?.latitude ?: 4.7110
+        val userLng = currentLocation?.longitude ?: -74.0721
+
+        val suggestions = listOf(
+            SearchResult(
+                title = "Gasolineras cercanas",
+                address = "Estaciones de combustible y recarga próximas",
+                latitude = userLat,
+                longitude = userLng,
+                iconRes = R.drawable.ic_local_gas_station,
+                isCategory = true,
+                categoryQuery = "gasolinera"
+            ),
+            SearchResult(
+                title = "Restaurantes y comida",
+                address = "Comida rápida, cafeterías y gastronomía",
+                latitude = userLat,
+                longitude = userLng,
+                iconRes = R.drawable.ic_restaurant,
+                isCategory = true,
+                categoryQuery = "restaurante"
+            ),
+            SearchResult(
+                title = "Parqueaderos",
+                address = "Estacionamientos y parqueaderos seguros",
+                latitude = userLat,
+                longitude = userLng,
+                iconRes = R.drawable.ic_local_parking,
+                isCategory = true,
+                categoryQuery = "parqueadero"
+            ),
+            SearchResult(
+                title = "Farmacias y droguerías",
+                address = "Salud, medicamentos de turno y primeros auxilios",
+                latitude = userLat,
+                longitude = userLng,
+                iconRes = R.drawable.ic_local_pharmacy,
+                isCategory = true,
+                categoryQuery = "farmacia"
+            ),
+            SearchResult(
+                title = "Cafeterías y panaderías",
+                address = "Café de especialidad, bebidas y pastelería",
+                latitude = userLat,
+                longitude = userLng,
+                iconRes = R.drawable.ic_local_cafe,
+                isCategory = true,
+                categoryQuery = "cafeteria"
+            ),
+            SearchResult(
+                title = "Supermercados y tiendas",
+                address = "Mercados, abarrotes y compras rápidas",
+                latitude = userLat,
+                longitude = userLng,
+                iconRes = R.drawable.ic_store,
+                isCategory = true,
+                categoryQuery = "supermercado"
+            )
+        )
+
+        searchAdapter.submitList(suggestions)
+        rvSearchResults.visibility = View.VISIBLE
     }
 
     private fun performGeocoding(query: String) {
@@ -369,7 +467,7 @@ class MainActivity : AppCompatActivity() {
                 val userLat = currentLocation?.latitude ?: 4.7110
                 val userLng = currentLocation?.longitude ?: -74.0721
                 val encoded = URLEncoder.encode(query, "UTF-8")
-                val url = "https://api.mapbox.com/geocoding/v5/mapbox.places/$encoded.json?access_token=$mapboxToken&proximity=$userLng,$userLat&language=es,en&limit=5"
+                val url = "https://api.mapbox.com/geocoding/v5/mapbox.places/$encoded.json?access_token=$mapboxToken&proximity=$userLng,$userLat&language=es,en&limit=8"
 
                 val request = Request.Builder().url(url).build()
                 val response = httpClient.newCall(request).execute()
@@ -387,8 +485,37 @@ class MainActivity : AppCompatActivity() {
                     val lon = center.getDouble(0)
                     val lat = center.getDouble(1)
 
-                    results.add(SearchResult(title, placeName, lat, lon))
+                    // Calculate real distance to current user GPS location
+                    val distArray = FloatArray(1)
+                    Location.distanceBetween(userLat, userLng, lat, lon, distArray)
+                    val distMeters = distArray[0].toDouble()
+
+                    val lower = (title + " " + placeName).lowercase()
+                    val icon = when {
+                        lower.contains("gasolin") || lower.contains("combustible") || lower.contains("petro") || lower.contains("terpel") || lower.contains("primax") || lower.contains("esso") || lower.contains("mobil") || lower.contains("texaco") -> R.drawable.ic_local_gas_station
+                        lower.contains("restauran") || lower.contains("pizza") || lower.contains("burger") || lower.contains("comida") || lower.contains("asador") || lower.contains("grill") -> R.drawable.ic_restaurant
+                        lower.contains("parquea") || lower.contains("parking") || lower.contains("estaciona") -> R.drawable.ic_local_parking
+                        lower.contains("farma") || lower.contains("droguer") || lower.contains("salud") || lower.contains("medic") || lower.contains("cruz") || lower.contains("rebaja") -> R.drawable.ic_local_pharmacy
+                        lower.contains("cafe") || lower.contains("coffee") || lower.contains("panader") -> R.drawable.ic_local_cafe
+                        lower.contains("supermer") || lower.contains("tienda") || lower.contains("exito") || lower.contains("jumbo") || lower.contains("d1") || lower.contains("ara") || lower.contains("carulla") || lower.contains("market") -> R.drawable.ic_store
+                        lower.contains("aeropuerto") || lower.contains("airport") -> R.drawable.ic_car
+                        else -> R.drawable.ic_pin_drop
+                    }
+
+                    results.add(
+                        SearchResult(
+                            title = title,
+                            address = placeName,
+                            latitude = lat,
+                            longitude = lon,
+                            distanceMeters = distMeters,
+                            iconRes = icon
+                        )
+                    )
                 }
+
+                // Sort by distance (closest first)
+                results.sortBy { it.distanceMeters ?: Double.MAX_VALUE }
 
                 withContext(Dispatchers.Main) {
                     if (results.isNotEmpty()) {
@@ -405,9 +532,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onPlaceSelected(result: SearchResult) {
+        if (result.isCategory && !result.categoryQuery.isNullOrBlank()) {
+            etSearch.setText(result.title)
+            btnClearSearch.visibility = View.VISIBLE
+            performGeocoding(result.categoryQuery)
+            return
+        }
+
         hideKeyboard()
         rvSearchResults.visibility = View.GONE
         etSearch.setText(result.title)
+        btnClearSearch.visibility = View.VISIBLE
 
         val target = LatLng(result.latitude, result.longitude)
         activeDestName = result.title
@@ -422,6 +557,162 @@ class MainActivity : AppCompatActivity() {
 
         // Calculate native route
         calculateRoute(target)
+    }
+
+    // ── CS ID AUTHENTICATION ──
+    private fun setupCsId() {
+        updateCsIdBadgeUi()
+
+        tvCsIdBadge.setOnClickListener {
+            if (csidManager.isLoggedIn) {
+                showCsIdProfileDialog()
+            } else {
+                showCsIdAuthDialog()
+            }
+        }
+    }
+
+    private fun updateCsIdBadgeUi() {
+        if (csidManager.isLoggedIn) {
+            val user = csidManager.currentUser
+            tvCsIdBadge.text = user?.initial ?: "CS"
+            tvCsIdBadge.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
+            tvCsIdBadge.setBackgroundResource(R.drawable.bg_control_circle)
+        } else {
+            tvCsIdBadge.text = "CS"
+            tvCsIdBadge.setTextColor(ContextCompat.getColor(this, R.color.cyan_primary))
+            tvCsIdBadge.setBackgroundResource(R.drawable.bg_chip_pill)
+        }
+    }
+
+    private fun showCsIdAuthDialog() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_csid_auth)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+
+        val tabLogin = dialog.findViewById<TextView>(R.id.tabLogin)
+        val tabRegister = dialog.findViewById<TextView>(R.id.tabRegister)
+        val etName = dialog.findViewById<EditText>(R.id.etCsidName)
+        val etEmail = dialog.findViewById<EditText>(R.id.etCsidEmail)
+        val etPassword = dialog.findViewById<EditText>(R.id.etCsidPassword)
+        val tvError = dialog.findViewById<TextView>(R.id.tvCsidError)
+        val btnSubmit = dialog.findViewById<Button>(R.id.btnCsidSubmit)
+        val pbLoading = dialog.findViewById<ProgressBar>(R.id.pbCsidLoading)
+        val btnClose = dialog.findViewById<ImageView>(R.id.btnCsidClose)
+
+        var isLoginMode = true
+
+        fun switchMode(login: Boolean) {
+            isLoginMode = login
+            tvError.visibility = View.GONE
+            if (isLoginMode) {
+                tabLogin.setBackgroundResource(R.drawable.bg_chip_pill)
+                tabLogin.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.cyan_primary))
+                tabRegister.background = null
+                tabRegister.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_sub))
+                etName.visibility = View.GONE
+                btnSubmit.text = "Acceder con CS ID"
+            } else {
+                tabRegister.setBackgroundResource(R.drawable.bg_chip_pill)
+                tabRegister.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.cyan_primary))
+                tabLogin.background = null
+                tabLogin.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_sub))
+                etName.visibility = View.VISIBLE
+                btnSubmit.text = "Crear Cuenta CS ID"
+            }
+        }
+
+        tabLogin.setOnClickListener { switchMode(true) }
+        tabRegister.setOnClickListener { switchMode(false) }
+        btnClose.setOnClickListener { dialog.dismiss() }
+
+        btnSubmit.setOnClickListener {
+            val email = etEmail.text.toString().trim()
+            val pass = etPassword.text.toString().trim()
+            val name = etName.text.toString().trim()
+
+            if (email.isEmpty() || !email.contains("@")) {
+                tvError.text = "Ingresa un correo electrónico válido"
+                tvError.visibility = View.VISIBLE
+                return@setOnClickListener
+            }
+            if (pass.length < 6) {
+                tvError.text = "La contraseña debe tener al menos 6 caracteres"
+                tvError.visibility = View.VISIBLE
+                return@setOnClickListener
+            }
+            if (!isLoginMode && name.isEmpty()) {
+                tvError.text = "Ingresa tu nombre completo"
+                tvError.visibility = View.VISIBLE
+                return@setOnClickListener
+            }
+
+            tvError.visibility = View.GONE
+            btnSubmit.visibility = View.GONE
+            pbLoading.visibility = View.VISIBLE
+
+            lifecycleScope.launch {
+                val result = if (isLoginMode) {
+                    csidManager.login(email, pass)
+                } else {
+                    csidManager.signUp(email, pass, name)
+                }
+
+                pbLoading.visibility = View.GONE
+                btnSubmit.visibility = View.VISIBLE
+
+                result.onSuccess { user ->
+                    updateCsIdBadgeUi()
+                    dialog.dismiss()
+                    Toast.makeText(this@MainActivity, "¡Bienvenido a Shine Maps, ${user.name}!", Toast.LENGTH_SHORT).show()
+                }.onFailure { err ->
+                    tvError.text = err.localizedMessage ?: "Error al autenticar"
+                    tvError.visibility = View.VISIBLE
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun showCsIdProfileDialog() {
+        val user = csidManager.currentUser ?: return
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_csid_profile)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.90).toInt(),
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+
+        val tvInitial = dialog.findViewById<TextView>(R.id.tvProfileInitial)
+        val tvName = dialog.findViewById<TextView>(R.id.tvProfileName)
+        val tvEmail = dialog.findViewById<TextView>(R.id.tvProfileEmail)
+        val btnLogout = dialog.findViewById<View>(R.id.btnProfileLogout)
+        val btnClose = dialog.findViewById<View>(R.id.btnProfileClose)
+
+        tvInitial.text = user.initial
+        tvName.text = user.name
+        tvEmail.text = user.email
+
+        btnLogout.setOnClickListener {
+            csidManager.logout()
+            updateCsIdBadgeUi()
+            dialog.dismiss()
+            Toast.makeText(this, "Sesión de CS ID cerrada", Toast.LENGTH_SHORT).show()
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     // ── NATIVE MAPBOX DIRECTIONS ROUTING ──
@@ -591,7 +882,6 @@ class MainActivity : AppCompatActivity() {
         val lat = prefs.getFloat("${key}_lat", 0f).toDouble()
         val lng = prefs.getFloat("${key}_lng", 0f).toDouble()
         if (lat != 0.0 && lng != 0.0) {
-            val target = LatLng(lat, lng)
             onPlaceSelected(SearchResult(defaultName, defaultName, lat, lng))
         } else {
             Toast.makeText(this, "Usa 'Guardar' para registrar tu $defaultName", Toast.LENGTH_SHORT).show()

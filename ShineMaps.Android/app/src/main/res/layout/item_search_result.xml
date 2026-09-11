@@ -11,21 +11,26 @@
     android:paddingBottom="12dp">
 
     <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:id="@+id/ivPlaceIcon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
         android:contentDescription="Ubicacion"
         android:src="@drawable/ic_pin_drop" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/tvPlaceTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -39,5 +44,19 @@
             android:textColor="@color/text_sub"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvPlaceDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_chip_pill"
+        android:paddingStart="8dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="3dp"
+        android:textColor="@color/cyan_primary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
 </LinearLayout>

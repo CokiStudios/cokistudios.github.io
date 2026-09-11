@@ -83,6 +83,8 @@
                 android:layout_height="34dp"
                 android:layout_marginStart="6dp"
                 android:background="@drawable/bg_chip_pill"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center"
                 android:text="CS"
                 android:textColor="@color/cyan_primary"
