@@ -64,12 +64,66 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private val styles = listOf(
-        "https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1?access_token=",
-        "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12?access_token=",
-        "https://api.mapbox.com/styles/v1/mapbox/navigation-day-v1?access_token="
+    private val styleNames = listOf(
+        "navigation-night-v1",
+        "satellite-streets-v12",
+        "navigation-day-v1"
     )
     private var currentStyleIndex = 0
+
+    private fun getMapboxRasterStyleJson(styleName: String): String {
+        return """
+        {
+          "version": 8,
+          "name": "ShineMapbox",
+          "sources": {
+            "mapbox-tiles": {
+              "type": "raster",
+              "tiles": [
+                "https://api.mapbox.com/styles/v1/mapbox/$styleName/tiles/512/{z}/{x}/{y}@2x?access_token=$mapboxToken"
+              ],
+              "tileSize": 512,
+              "maxzoom": 22
+            }
+          },
+          "layers": [
+            {
+              "id": "mapbox-tiles-layer",
+              "type": "raster",
+              "source": "mapbox-tiles"
+            }
+          ]
+        }
+        """.trimIndent()
+    }
+
+    private fun getFallbackDarkStyleJson(): String {
+        return """
+        {
+          "version": 8,
+          "name": "ShineFallbackDark",
+          "sources": {
+            "carto-dark-tiles": {
+              "type": "raster",
+              "tiles": [
+                "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+                "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+              ],
+              "tileSize": 256,
+              "maxzoom": 19
+            }
+          },
+          "layers": [
+            {
+              "id": "carto-dark-layer",
+              "type": "raster",
+              "source": "carto-dark-tiles"
+            }
+          ]
+        }
+        """.trimIndent()
+    }
 
     // ── NATIVE MAP & GPS STATE ──
     private lateinit var mapView: MapView
@@ -163,6 +217,15 @@ class MainActivity : AppCompatActivity() {
         rvSearchResults.layoutManager = LinearLayoutManager(this)
         rvSearchResults.adapter = searchAdapter
 
+        mapView.addOnDidFailLoadingMapListener { errorMessage ->
+            android.util.Log.e("ShineMaps", "Map failed loading, using fallback: $errorMessage")
+            val fallbackJson = getFallbackDarkStyleJson()
+            map?.setStyle(Style.Builder().fromJson(fallbackJson)) { style ->
+                loadingIndicator.visibility = View.GONE
+                enableLocationComponent(style)
+            }
+        }
+
         mapView.getMapAsync { maplibreMap ->
             this.map = maplibreMap
 
@@ -183,15 +246,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadMapStyle(index: Int) {
-        val styleUrl = styles[index] + mapboxToken
+        val styleName = styleNames[index]
         loadingIndicator.visibility = View.VISIBLE
 
-        map?.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
+        val styleJson = getMapboxRasterStyleJson(styleName)
+        map?.setStyle(Style.Builder().fromJson(styleJson)) { style ->
             loadingIndicator.visibility = View.GONE
             enableLocationComponent(style)
-            // Re-render route if active
-            currentPolyline?.let {
-                // Style reloaded, re-route if needed
+
+            // Re-render annotations if active
+            currentPolyline?.let { poly ->
+                val pts = poly.points
+                currentPolyline = map?.addPolyline(
+                    PolylineOptions().addAll(pts).color(Color.parseColor("#38bdf8")).width(6f)
+                )
+            }
+            destMarker?.let { marker ->
+                val pos = marker.position
+                val title = marker.title
+                destMarker = map?.addMarker(MarkerOptions().position(pos).title(title))
             }
         }
     }
@@ -454,7 +527,7 @@ class MainActivity : AppCompatActivity() {
 
         // Map Layers Toggle
         findViewById<View>(R.id.btnLayers).setOnClickListener {
-            currentStyleIndex = (currentStyleIndex + 1) % styles.size
+            currentStyleIndex = (currentStyleIndex + 1) % styleNames.size
             loadMapStyle(currentStyleIndex)
             val name = when (currentStyleIndex) {
                 0 -> "Modo Nocturno / Shine Dark"
