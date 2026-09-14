@@ -2,7 +2,7 @@ class Looping < Formula
   desc "Official runtime, compiler & module ecosystem for Shine Loop & Holo Looping OoS"
   homepage "https://cokistudios.com"
   url "https://github.com/CokiStudios/cokistudios.github.io/archive/refs/heads/main.tar.gz"
-  version "2.0.4"
+  version "2.1.0"
   license "Proprietary"
 
   depends_on "node"

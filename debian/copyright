@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: looping
+Upstream-Contact: Coki Studios <support@cokistudios.com>
+Source: https://cokistudios.com
+
+Files: *
+Copyright: 2026 Holo Entertainment / Coki Studios
+License: Proprietary-CokiStudios
+ All rights reserved. Looping, Ruuping, Shine Loop Console and Holo Looping OoS
+ are trademarks and proprietary software of Holo Entertainment and Coki Studios.

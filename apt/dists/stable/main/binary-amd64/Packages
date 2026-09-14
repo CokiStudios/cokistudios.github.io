@@ -1,0 +1,36 @@
+Package: looping
+Version: 2.1.0-1
+Architecture: all
+Maintainer: Coki Studios <support@cokistudios.com>
+Installed-Size: 106846
+Depends: nodejs (>= 18.0.0), python3 (>= 3.8), python3-pip
+Filename: pool/main/l/looping/looping_2.1.0-1_all.deb
+Size: 36472134
+MD5sum: 8608ae7d596df5b660bf8b620418463f
+SHA1: 40b2fa6ef2ee76cb34071a8be7333f2694f39622
+SHA256: d4d6cefb14a46de7f8f843583d70101f8093917a35af84969e46b70e89b1995b
+Section: devel
+Priority: optional
+Homepage: https://cokistudios.com
+Description: Official Looping & Ruuping Runtime for Shine Loop Console
+ Looping is a high-performance declarative programming language and
+ multimedia game engine developed by Holo Entertainment & Coki Studios.
+
+Package: looping
+Version: 2.1.0-1
+Architecture: amd64
+Maintainer: Coki Studios <support@cokistudios.com>
+Installed-Size: 106846
+Depends: nodejs (>= 18.0.0), python3 (>= 3.8), python3-pip
+Filename: pool/main/l/looping/looping_2.1.0-1_amd64.deb
+Size: 36472114
+MD5sum: d88d9fdedf3d02ec8ba665b22b029a22
+SHA1: 835bf8690af2fea8165e69dec6165ac37040bc2e
+SHA256: 6bc919aee5ec8d2eebfc6398411f46be4be9804036ef6ab4127f5cfb103d1b8c
+Section: devel
+Priority: optional
+Homepage: https://cokistudios.com
+Description: Official Looping & Ruuping Runtime for Shine Loop Console
+ Looping is a high-performance declarative programming language and
+ multimedia game engine developed by Holo Entertainment & Coki Studios.
+

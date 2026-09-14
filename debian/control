@@ -1,0 +1,23 @@
+Source: looping
+Section: devel
+Priority: optional
+Maintainer: Coki Studios <support@cokistudios.com>
+Build-Depends: debhelper-compat (= 13), nodejs (>= 18.0.0)
+Standards-Version: 4.6.2
+Homepage: https://cokistudios.com
+
+Package: looping
+Architecture: all
+Depends: ${misc:Depends}, nodejs (>= 18.0.0), python3 (>= 3.8), python3-pip
+Recommends: xdg-utils, alsa-utils
+Suggests: code | vscodium
+Description: Official Looping Runtime, Compiler & Engine for Shine Loop Console
+ Looping is a high-performance declarative programming language and
+ multimedia game engine developed by Holo Entertainment & Coki Studios.
+ .
+ Features include:
+  - 60 FPS low-latency canvas viewport & UI subsystem (Frosted Aqua A17)
+  - Bi-directional Python 3 bridge (Zero-copy NumPy/SciPy interop)
+  - Ruuping native Rust compiler integration
+  - Shine Loop Console & Holo Looping OoS 1.0 subsystem targeting
+  - Interactive REPL and instant APK/HTML5 packaging

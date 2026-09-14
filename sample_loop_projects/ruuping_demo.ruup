@@ -1,0 +1,53 @@
+# ═══════════════════════════════════════════════════════════════
+# 🦀 [RUUPING NATIVE DEMO] Looping Language Compiled in Rust
+# Powered by Holo Entertainment (Coki Studios)
+# ═══════════════════════════════════════════════════════════════
+
+import loop.engine as engine
+use python "math"
+
+define app "RuupingBlaze" version 2.1:
+    create window with title "Ruuping Native Rust Engine -- High Performance" and size (800, 520)
+    set theme to "frosted_aqua_a17"
+    set ui_profile to "xui"
+
+    # ── 1. Variables & Rust Native Math ──
+    set engine_name to "Ruuping (Rust Edition)"
+    set fps = 144
+    set latency_ms = 0.45
+    
+    print "🦀 Running in {engine_name} at {fps} FPS with {latency_ms}ms latency!"
+
+    # ── 2. Python Bridge en Rust ──
+    set radius = 12.0
+    set circle_area to py: round(math.pi * (12.0 ** 2), 2)
+    
+    print "[MATH EVAL] Radius:", radius
+    print "[MATH EVAL] Python Circle Area:", circle_area
+
+    # ── 3. Bloque Multilínea Python ──
+    python {
+        import math
+        lat = looping_vars.get('latency_ms', 1.0)
+        speedup = round(16.67 / max(lat, 0.01), 1)
+        print(f"  [Rust-Python Kernel] Calculated Performance Boost: {speedup}x faster!")
+        looping_set('perf_boost', speedup)
+    }
+
+    print "[SYNCED FROM PYTHON] Performance Boost Multiplier: {perf_boost}x"
+
+    # ── 4. Control Flow y Funciones ──
+    function emit_telemetry() {
+        print "  [TELEMETRY] Rust memory footprint: <2MB RSS | Zero GC Pauses"
+    }
+
+    call emit_telemetry()
+
+    # ── 5. Bucle Repetitivo de Alta Frecuencia ──
+    repeat 3 times {
+        print "  -> [BENCHMARK PING {i}] Native Rust Loop cycle OK"
+    }
+
+    # ── 6. Audio & Hardware Syscall ──
+    play tone at 880 Hz for 100 ms
+    print "[RUUPING SUCCESS] Demo completada con éxito en Ruuping Rust Engine!"

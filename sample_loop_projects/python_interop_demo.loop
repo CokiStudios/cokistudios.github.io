@@ -1,0 +1,86 @@
+# ═══════════════════════════════════════════════════════════════
+# ♾️ LOOPING INTEROP & ENGINE DEMO v2.1
+# Proprietary Language for Shine Loop Console & Holo Looping OoS
+# Holo Entertainment (Coki Studios)
+# ═══════════════════════════════════════════════════════════════
+
+import loop.engine as engine
+use python "math"
+use python "os"
+
+define app "LoopingPythonMastery" version 2.1:
+    create window with title "Holo Looping v2.1 -- Python Bridge & Core Lang" and size (800, 520)
+    set ui_profile to "xui"
+    set theme to "frosted_aqua_a17"
+
+    # ── 1. Variables y Asignaciones Shorthand ──
+    set hero_name to "Angel Helium"
+    set level = 15
+    level += 5
+    set base_damage = 45.0
+    
+    print "[HERO INITIALIZED] Name: {hero_name} | Level: {level}"
+
+    # ── 2. Expresiones Matemáticas con Puente a Python ──
+    set crit_multiplier to py: math.sqrt(16) * 1.5
+    set max_damage to base_damage * crit_multiplier
+    set orbit_radius to py: round(math.pi * 10, 2)
+
+    print "[MATH EVAL] Base Damage:", base_damage
+    print "[MATH EVAL] Python Crit Multiplier:", crit_multiplier
+    print "[MATH EVAL] Total Max Damage:", max_damage
+    print "[MATH EVAL] Calculated Orbit Radius:", orbit_radius
+
+    # ── 3. Bloque Multilínea Python con Sincronización Bidireccional ──
+    python {
+        import math
+        # Accedemos a variables de Looping directamente
+        current_lvl = looping_vars.get('level', 1)
+        hero = looping_vars.get('hero_name', 'Hero')
+        
+        # Lógica avanzada en Python
+        calculated_xp = int(current_lvl * 250 + math.pow(current_lvl, 2))
+        rank = "Diamond Commander" if current_lvl >= 20 else "Platinum Guard"
+        
+        print(f"  [Python Kernel] Processing stats for {hero} (Level {current_lvl})...")
+        print(f"  [Python Kernel] Generated XP Target: {calculated_xp} XP | Rank: {rank}")
+        
+        # Guardamos de vuelta en Looping
+        looping_set('target_xp', calculated_xp)
+        looping_set('hero_rank', rank)
+    }
+
+    print "[SYNCED FROM PYTHON] Target XP: {target_xp} | Assigned Rank: {hero_rank}"
+
+    # ── 4. Control Flow: Condicionales y Funciones ──
+    if target_xp >= 5000 do print "[CONDITION] Target XP milestone reached! Tier S unlocked."
+    
+    function play_welcome_chime() {
+        play tone at 659 Hz for 80 ms
+        play tone at 880 Hz for 120 ms
+    }
+
+    call play_welcome_chime()
+
+    # ── 5. Bucle Repetitivo (Repeat Loop) ──
+    repeat 3 times {
+        print "  -> [PULSE] Shine Core Signal Ping {i} OK"
+    }
+
+    # ── 6. Interfaz Gráfica Holográfica (Frosted Glass Aqua A17) ──
+    spawn bubbly_dot with text "Angel Active // Diamond" and state "music"
+    
+    draw card at (20, 20) with size (760, 60) and title "HOLO LOOPING v2.1 // PYTHON INTEGRATION" and text "Target: Shine Loop Console | Python Bridge: Connected | Rank: Diamond Commander"
+
+    draw card at (20, 95) with size (360, 230) and title "HERO STATS & PYTHON BRIDGE" and text "Hero: Angel Helium\nLevel: 20\nMax Damage: 270\nTarget XP: 5400 XP\nRank: Diamond Commander"
+    draw button at (40, 260) with text "ACTIVAR HYPER BOOST" and action "hyper_boost"
+
+    draw card at (400, 95) with size (380, 230) and title "LIVE ARENA VIEWPORT" and text "Physics Engine: 60 FPS Low-Latency V-Sync\nEntities: 1 Player, 1 Boss, 2 Platforms"
+
+    # ── 7. Spawns de Escenario y Entidades ──
+    spawn platform at (420, 300) with size (340, 16) and color "#38bdf8"
+    spawn coin at (580, 250) with points 500
+    spawn sprite "Angel" at (460, 230) with color "#38bdf8" and size (34, 46)
+    spawn sprite "ShadowFork" at (660, 230) with color "#ef4444" and size (34, 46)
+
+    print "[LOOPING SUCCESS] Demo compilada y lista para Shine Loop Console."

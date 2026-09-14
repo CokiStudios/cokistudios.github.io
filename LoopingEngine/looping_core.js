@@ -165,41 +165,150 @@ export class LoopingInterpreter {
     // ── AST & Lexer Compiler ──
     execute(code) {
         this.reset();
-        this.log(" Compiling Looping (.loop) Source Code...", "system");
+        this.log("⚙️ Compiling Looping (.loop) Source Code...", "system");
         
-        const lines = code.split('\n');
-        
-        for (let i = 0; i < lines.length; i++) {
+        const lines = code.split(/\r?\n/);
+        let i = 0;
+
+        while (i < lines.length) {
             let line = lines[i].trim();
+            i++;
+
             if (!line || line.startsWith('#') || line.startsWith('//')) continue;
-            
+
+            // Multiline Python Block: python { ... } OR py: ... end
+            if (line.startsWith('python {') || line === 'python:' || line === 'py:' || line.startsWith('py:begin')) {
+                let pyBlockLines = [];
+                if (line.startsWith('python {') && line.endsWith('}')) {
+                    pyBlockLines.push(line.slice(8, -1).trim());
+                } else {
+                    while (i < lines.length) {
+                        const nextLine = lines[i];
+                        i++;
+                        const trimmedNext = nextLine.trim();
+                        if (trimmedNext === '}' || trimmedNext === 'end' || trimmedNext === 'py:end') {
+                            break;
+                        }
+                        pyBlockLines.push(nextLine);
+                    }
+                }
+                const pyCode = pyBlockLines.join('\n');
+                this.log(`[PYTHON BLOCK] Interpreting embedded Python logic (${pyBlockLines.length} lines)...`, 'system');
+                this.executePythonSimulation(pyCode);
+                continue;
+            }
+
+            // Function Definition: function <name>(<args>) { ... }
+            if (line.startsWith('function ') || line.startsWith('def ')) {
+                const fnMatch = line.match(/(?:function|def)\s+([A-Za-z0-9_]+)\s*\((.*?)\)\s*\{?/);
+                if (fnMatch) {
+                    const fnName = fnMatch[1];
+                    const fnParams = fnMatch[2].split(',').map(s => s.trim()).filter(Boolean);
+                    const bodyLines = [];
+
+                    while (i < lines.length) {
+                        const nextLine = lines[i];
+                        i++;
+                        if (nextLine.trim() === '}' || nextLine.trim() === 'end') break;
+                        bodyLines.push(nextLine);
+                    }
+
+                    this.functions[fnName] = { params: fnParams, body: bodyLines.join('\n') };
+                    this.log(`[FUNCTION] Registered function "${fnName}" (${fnParams.length} args)`, 'info');
+                    continue;
+                }
+            }
+
+            // Loop / Repeat: repeat <N> times { ... } OR loop <N> { ... }
+            if (line.startsWith('repeat ') || line.startsWith('loop ')) {
+                const countMatch = line.match(/(?:repeat|loop)\s+(\d+|[A-Za-z0-9_]+)\s*(?:times)?\s*\{?/i);
+                if (countMatch) {
+                    const countVal = Number(this.evaluateExpression(countMatch[1])) || 0;
+                    const bodyLines = [];
+                    while (i < lines.length) {
+                        const nextLine = lines[i];
+                        i++;
+                        if (nextLine.trim() === '}' || nextLine.trim() === 'end') break;
+                        bodyLines.push(nextLine);
+                    }
+                    const loopScript = bodyLines.join('\n');
+                    for (let c = 0; c < countVal; c++) {
+                        this.variables['i'] = c;
+                        this.variables['loop_index'] = c;
+                        this.executeSubScript(loopScript);
+                    }
+                    continue;
+                }
+            }
+
             try {
                 this.parseLine(line);
             } catch (err) {
-                this.log(` [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
+                this.log(`❌ [Syntax Error at line ${i}]: ${err.message}`, "error");
                 return false;
             }
         }
 
-        this.log(" Compilation Complete! Starting Shine Loop graphics pipeline @ 60FPS...", "success");
+        this.log("✨ Compilation Complete! Starting Shine Loop graphics pipeline @ 60FPS...", "success");
         this.startLoop();
         return true;
     }
 
+    executeSubScript(script) {
+        const lines = script.split(/\r?\n/);
+        for (let l of lines) {
+            let line = l.trim();
+            if (!line || line.startsWith('#') || line.startsWith('//')) continue;
+            this.parseLine(line);
+        }
+    }
+
+    executePythonSimulation(pyCode) {
+        // In browser sandbox environment, run Python math & variable logic
+        try {
+            const lines = pyCode.split('\n');
+            for (let raw of lines) {
+                const line = raw.trim();
+                if (!line || line.startsWith('#')) continue;
+
+                // Handle python assignments: var = expr
+                const assignMatch = line.match(/^([A-Za-z0-9_]+)\s*=\s*(.*)$/);
+                if (assignMatch) {
+                    const k = assignMatch[1];
+                    const v = assignMatch[2];
+                    this.variables[k] = this.evaluateExpression(v);
+                } else if (line.startsWith('print(')) {
+                    const pMatch = line.match(/print\((.*)\)/);
+                    if (pMatch) {
+                        this.log(`[PYTHON] ${this.parsePrint(pMatch[1])}`, 'output');
+                    }
+                }
+            }
+        } catch (e) {
+            this.log(`[PYTHON ERROR] ${e.message}`, 'error');
+        }
+    }
+
     parseLine(line) {
-        // 1. Module Imports & Package Ecosystem (from ./loop_modules/ or built-ins)
-        if (line.startsWith('import ')) {
+        // 1. Module Imports & Package Ecosystem
+        if (line.startsWith('import ') && !line.startsWith('import python ')) {
             const modulePath = line.replace('import ', '').trim();
             this.log(`[MODULE LOADER] Linked Module: ${modulePath}`, 'system');
             
-            // Check if module exists in registered modules or storage
             if (this.modules && this.modules[modulePath]) {
                 this.execute(this.modules[modulePath]);
             }
             return;
         }
 
-        // 2. App & Console Meta Definition (Supports: define app "Name" or define app as Name)
+        // 1.1 Python Imports
+        if (line.startsWith('use python ') || line.startsWith('import python ')) {
+            const pyLib = line.replace(/^(use|import) python /, '').trim().replace(/['"]/g, '');
+            this.log(`[PYTHON BRIDGE] Linked Python Module: ${pyLib}`, 'system');
+            return;
+        }
+
+        // 2. App & Console Meta Definition
         if (line.startsWith('define app')) {
             let appName = 'HoloApp';
             const quoteMatch = line.match(/define app\s*(?:as)?\s*["'](.*?)["']/);
@@ -211,8 +320,7 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 3. UI System Profile & Target Device Configuration (CS Design Guide p.5, 10, 14)
-        // Profiles: hi!UI (Gama A), stock (Nomad), XUI (Gama X), FlUI (i / Fold)
+        // 3. UI System Profile & Target Device Configuration
         if (line.startsWith('set ui_profile to') || line.startsWith('set ui_profile as') || line.startsWith('set ui to')) {
             const match = line.match(/set (?:ui_profile|ui) (?:to|as) ["'](.*?)["']/);
             if (match) {
@@ -222,15 +330,14 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 4. Theme configuration & Frosted Glass Acrílico Aqua A17 (CS Design Guide p.4)
+        // 4. Theme configuration
         if (line.startsWith('set theme to') || line.startsWith('set theme as')) {
             const match = line.match(/set theme (?:to|as) ["'](.*?)["']/);
             if (match) this.theme = match[1];
             return;
         }
 
-        // 5. Bubbly Dot Component (CS Own Dynamic Island - Design Guide p.17)
-        // Syntax: spawn bubbly_dot with text "..." and state "music|call|record|connect"
+        // 5. Bubbly Dot Component
         if (line.startsWith('spawn bubbly_dot') || line.startsWith('draw bubbly_dot')) {
             const textMatch = line.match(/text ["'](.*?)["']/);
             const stateMatch = line.match(/state ["'](.*?)["']/);
@@ -244,7 +351,7 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 6. Conditional Logic (Python-style: if <cond> do <action> OR if <cond>:)
+        // 6. Conditional Logic (if <cond> do <action> OR if <cond> then <action>)
         if (line.startsWith('if ')) {
             const conditionMatch = line.match(/^if\s+(.*?)\s+(?:then|do)\s+(.*)$/i);
             if (conditionMatch) {
@@ -258,7 +365,7 @@ export class LoopingInterpreter {
             }
         }
 
-        // 7. Input Field UI Component: draw input at (x, y) with size (w, h) and placeholder "..." and var "..."
+        // 7. Input Field UI Component
         if (line.startsWith('draw input at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
@@ -279,9 +386,13 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 8. Variables: set <var> to <value> OR set <var> as <value>
-        if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
-            const delimiter = line.includes(' to ') ? ' to ' : ' as ';
+        // 8. Variables: set <var> to <value> OR set <var> as <value> OR set <var> = <value>
+        if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as ') || line.includes(' = '))) {
+            let delimiter = ' to ';
+            if (line.includes(' to ')) delimiter = ' to ';
+            else if (line.includes(' as ')) delimiter = ' as ';
+            else if (line.includes(' = ')) delimiter = ' = ';
+
             const parts = line.replace('set ', '').split(delimiter);
             const varName = parts[0].trim();
             const valExpr = parts.slice(1).join(delimiter).trim();
@@ -289,9 +400,45 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 5. Print output: print "...", var1, var2
-        if (line.startsWith('print ')) {
-            const expr = line.replace('print ', '').trim();
+        // Shorthand assignments: x = 10, x += 5
+        const assignMatch = line.match(/^([A-Za-z0-9_]+)\s*(\+=|-=|\*=|\/=|=)\s*(.*)$/);
+        if (assignMatch && !line.startsWith('create ') && !line.startsWith('draw ') && !line.startsWith('spawn ')) {
+            const varName = assignMatch[1];
+            const op = assignMatch[2];
+            const expr = assignMatch[3];
+            const val = this.evaluateExpression(expr);
+
+            if (op === '=') {
+                this.variables[varName] = val;
+            } else if (op === '+=') {
+                this.variables[varName] = (Number(this.variables[varName]) || 0) + Number(val);
+            } else if (op === '-=') {
+                this.variables[varName] = (Number(this.variables[varName]) || 0) - Number(val);
+            } else if (op === '*=') {
+                this.variables[varName] = (Number(this.variables[varName]) || 0) * Number(val);
+            } else if (op === '/=') {
+                this.variables[varName] = (Number(this.variables[varName]) || 0) / Number(val);
+            }
+            return;
+        }
+
+        // 9. Function Calls: call <fn>()
+        if (line.startsWith('call ')) {
+            const callMatch = line.match(/call\s+([A-Za-z0-9_]+)\s*(?:\((.*?)\))?/);
+            if (callMatch) {
+                const fnName = callMatch[1];
+                if (this.functions[fnName]) {
+                    this.executeSubScript(this.functions[fnName].body);
+                } else {
+                    this.log(`[FUNCTION] Called external "${fnName}"`, 'system');
+                }
+                return;
+            }
+        }
+
+        // 10. Print output
+        if (line.startsWith('print ') || line.startsWith('echo ')) {
+            const expr = line.replace(/^(print|echo)\s+/, '').trim();
             const val = this.parsePrint(expr);
             this.log(val, 'output');
             return;
@@ -514,19 +661,38 @@ export class LoopingInterpreter {
         return Boolean(this.evaluateExpression(cond));
     }
 
+    isSingleQuotedLiteral(expr) {
+        if (!expr || expr.length < 2) return false;
+        const first = expr[0];
+        if (first !== '"' && first !== "'") return false;
+        for (let i = 1; i < expr.length; i++) {
+            if (expr[i] === first && expr[i - 1] !== '\\') {
+                return i === expr.length - 1;
+            }
+        }
+        return false;
+    }
+
     evaluateExpression(expr) {
         if (expr === undefined || expr === null) return '';
         expr = String(expr).trim();
         if (!expr) return '';
+
+        if (expr.startsWith('py:') || expr.startsWith('py ')) {
+            expr = expr.replace(/^(py:\s*|py\s+)/, '').trim();
+        } else if (expr.startsWith('python:') || expr.startsWith('python eval ') || expr.startsWith('python ')) {
+            expr = expr.replace(/^(python eval\s*|python:\s*|python\s+)/, '').trim();
+        }
         
-        // Literal String in double quotes
-        if (expr.startsWith('"') && expr.endsWith('"')) {
-            return expr.slice(1, -1);
+        // Single quoted literal string check
+        if (this.isSingleQuotedLiteral(expr)) {
+            let strContent = expr.slice(1, -1);
+            strContent = strContent.replace(/\{([A-Za-z0-9_]+)\}/g, (match, varKey) => {
+                return this.variables.hasOwnProperty(varKey) ? this.variables[varKey] : match;
+            });
+            return strContent;
         }
-        // Literal String in single quotes
-        if (expr.startsWith("'") && expr.endsWith("'")) {
-            return expr.slice(1, -1);
-        }
+
         // Numbers
         if (!isNaN(expr) && expr !== '') {
             return Number(expr);
@@ -535,14 +701,16 @@ export class LoopingInterpreter {
         if (expr === 'true') return true;
         if (expr === 'false') return false;
 
-        // Python Math Module Borrowing (e.g. math.sin, math.cos, math.floor, math.sqrt, math.random, pow)
-        if (expr.startsWith('math.') || expr.includes(' + ') || expr.includes(' - ') || expr.includes(' * ') || expr.includes(' / ')) {
+        // Python Math Module & Arithmetic Expressions
+        if (expr.startsWith('math.') || expr.includes(' + ') || expr.includes(' - ') || expr.includes(' * ') || expr.includes(' / ') || expr.includes(' % ')) {
             try {
-                // Replace variables in expression
                 let resolvedExpr = expr;
-                for (let k in this.variables) {
+                const varKeys = Object.keys(this.variables).sort((a, b) => b.length - a.length);
+                for (let k of varKeys) {
                     const regex = new RegExp(`\\b${k}\\b`, 'g');
-                    resolvedExpr = resolvedExpr.replace(regex, this.variables[k]);
+                    const val = this.variables[k];
+                    const valRepr = typeof val === 'string' ? JSON.stringify(val) : String(val);
+                    resolvedExpr = resolvedExpr.replace(regex, valRepr);
                 }
                 
                 // Map Python math names to JS Math
@@ -553,11 +721,16 @@ export class LoopingInterpreter {
                     .replace(/math\.pow/g, 'Math.pow')
                     .replace(/math\.sin/g, 'Math.sin')
                     .replace(/math\.cos/g, 'Math.cos')
+                    .replace(/math\.tan/g, 'Math.tan')
                     .replace(/math\.floor/g, 'Math.floor')
                     .replace(/math\.ceil/g, 'Math.ceil')
                     .replace(/math\.round/g, 'Math.round')
+                    .replace(/math\.abs/g, 'Math.abs')
+                    .replace(/math\.min/g, 'Math.min')
+                    .replace(/math\.max/g, 'Math.max')
                     .replace(/math\.random/g, 'Math.random')
-                    .replace(/math\.abs/g, 'Math.abs');
+                    .replace(/math\.log/g, 'Math.log')
+                    .replace(/math\.exp/g, 'Math.exp');
 
                 const mathResult = Function(`"use strict"; return (${resolvedExpr});`)();
                 return mathResult;

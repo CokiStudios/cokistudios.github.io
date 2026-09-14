@@ -1,0 +1,35 @@
+.TH LOOPING 1 "September 2026" "Looping 2.1.0" "Looping Manual"
+.SH NAME
+looping \- High-performance declarative language & multimedia engine for Shine Loop Console
+.SH SYNOPSIS
+.B looping
+[\fIOPTION\fR]... [\fIFILE\fR]
+.br
+.B looping
+\fBrepl\fR
+.br
+.B looping
+\fBbuild\fR \fIFILE\fR [\fB-o\fR \fIOUTPUT\fR]
+.SH DESCRIPTION
+Looping is the official language and runtime designed by Holo Entertainment (Coki Studios) for creating 60 FPS 2D video games, GUI applications, and Python-integrated multimedia experiences.
+.SH OPTIONS
+.TP
+.BR \-\-gui ", " \-g
+Launch the script in a native 60 FPS viewport window.
+.TP
+.BR \-\-apk " \fIFILE\fR [\fB-o\fR \fIOUTPUT\fR]"
+Package a .loop game into a standalone Android APK.
+.TP
+.BR build ", " compile " \fIFILE\fR [\fB-o\fR \fIOUTPUT\fR]"
+Compile the script to a standalone HTML5/DirectX executable.
+.TP
+.BR repl
+Launch the interactive live Looping shell with auto-eval and memory inspector.
+.TP
+.BR eval " \fICODE\fR"
+Evaluate an inline Looping expression or script.
+.TP
+.BR \-\-version ", " \-v
+Print Looping engine version information.
+.SH AUTHOR
+Holo Entertainment / Coki Studios (support@cokistudios.com)

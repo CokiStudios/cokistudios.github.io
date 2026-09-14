@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Shine Launcher
+Comment=Official System Dashboard for Shine Loop Console & Holo Looping OoS
+Exec=looping --gui /usr/lib/looping/sample_loop_projects/shine_launcher.loop
+Icon=looping
+Terminal=false
+Categories=Game;Development;
+StartupNotify=true

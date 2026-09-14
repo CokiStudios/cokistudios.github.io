@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Looping REPL
+Comment=Interactive shell for Looping and Ruuping languages
+Exec=looping repl
+Icon=looping
+Terminal=true
+Categories=Development;IDE;
+StartupNotify=true

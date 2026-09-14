@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	mkdir -p debian/looping/usr/bin
+	mkdir -p debian/looping/usr/lib/looping
+	mkdir -p debian/looping/usr/share/applications
+	mkdir -p debian/looping/usr/share/pixmaps
+	mkdir -p debian/looping/usr/share/man/man1
+	mkdir -p debian/looping/etc/looping
+	
+	cp -r bin/ debian/looping/usr/lib/looping/
+	cp -r LoopingEngine/ debian/looping/usr/lib/looping/
+	cp -r holo-looping-oos/ debian/looping/usr/lib/looping/
+	cp -r loop_modules/ debian/looping/usr/lib/looping/
+	
+	ln -sf /usr/lib/looping/bin/looping debian/looping/usr/bin/looping
+	chmod 755 debian/looping/usr/bin/looping
+	chmod 755 debian/looping/usr/lib/looping/bin/looping

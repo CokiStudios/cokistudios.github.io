@@ -1,0 +1,9 @@
+looping (2.1.0-1) stable; urgency=medium
+
+  * Release Looping v2.1.0 (Win32, Linux & Holo Looping OoS Edition).
+  * Add full Bi-directional Python 3 bridge with automatic module sync.
+  * Integrate Ruuping native Rust compiler subsystem.
+  * Add Shine Launcher official system dashboard.
+  * Include interactive REPL, expression evaluation, and standalone builds.
+
+ -- Coki Studios <support@cokistudios.com>  Sun, 13 Sep 2026 20:00:00 -0500

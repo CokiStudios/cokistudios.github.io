@@ -1,0 +1,18 @@
+[package]
+name = "ruuping"
+version = "2.1.0"
+edition = "2021"
+authors = ["Holo Entertainment (Coki Studios)"]
+description = "🦀 Ruuping — The Blazing Fast Native Rust Engine & Compiler for Looping Language"
+readme = "README.md"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+colored = "2.1"
+regex = "1.10"
+
+[[bin]]
+name = "ruuping"
+path = "src/main.rs"

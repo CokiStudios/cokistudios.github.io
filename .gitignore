@@ -8,3 +8,9 @@ dist-dmg/
 **/local.properties
 .idea/
 
+# Node & Rust Build Outputs
+node_modules/
+ruuping/target/
+.tmp_*
+sample_loop_projects/.tmp_*
+*.lock

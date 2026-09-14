@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|purge)
+        rm -f /usr/bin/looping
+        rm -f /usr/bin/ruuping
+    ;;
+esac
+
+exit 0

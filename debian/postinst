@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        chmod +x /usr/lib/looping/bin/looping || true
+        chmod +x /usr/bin/looping || true
+        if [ -f /usr/lib/looping/bin/ruuping ]; then
+            chmod +x /usr/lib/looping/bin/ruuping || true
+            ln -sf /usr/lib/looping/bin/ruuping /usr/bin/ruuping || true
+        fi
+        
+        # Update desktop database
+        if which update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database -q || true
+        fi
+        
+        echo "======================================================================"
+        echo "♾️ Looping & 🦀 Ruuping Runtime v2.1.0 successfully installed!"
+        echo "Run 'looping --help' or 'looping repl' to get started."
+        echo "======================================================================"
+    ;;
+esac
+
+exit 0

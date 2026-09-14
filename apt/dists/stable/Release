@@ -1,0 +1,22 @@
+Origin: Coki Studios
+Label: Coki Studios Repository
+Suite: stable
+Codename: stable
+Components: main
+Architectures: all amd64
+Description: Official Holo Entertainment & Coki Studios APT Repository for Shine Loop OS
+Date: Mon, 14 Sep 2026 01:09:45 GMT
+MD5Sum:
+ cda585935652b8799e0a2e6721a3b023              695 main/binary-all/Packages
+ 88f637b4985590c37d9d18e32baf4ca3              490 main/binary-all/Packages.gz
+ 6dcc34134e736ac8142da33aa940acf1               50 main/binary-all/Release
+ 28058bdcd712444c4977b898cf38ae02             1394 main/binary-amd64/Packages
+ 9f23a0850ff8c1c97c9714a587418b62              611 main/binary-amd64/Packages.gz
+ 82a1ae90445e5284617f8a8cc3a53fa4               52 main/binary-amd64/Release
+SHA256:
+ dcfe35f99befff19a27513f421fd18684d3e78486c124cf8228d7a64ea963058              695 main/binary-all/Packages
+ 6056b0103611df6e052840af2de30d37fb480ca8a9d65ac0eda352bb9c0ba55c              490 main/binary-all/Packages.gz
+ 5e27b8d68c702f69f9759fb8acce6d548155957beba2eab7f82f0970fd90e6bb               50 main/binary-all/Release
+ 94630e0221aa262450bb7c470bdcfe9ca2877bfd2d709ea9acbad5c856ca06b1             1394 main/binary-amd64/Packages
+ 726ad0a7bf89316ef22867807757ca4aabc0a86870c17b10c4956c3ac4970bfe              611 main/binary-amd64/Packages.gz
+ 5d14a4f1b270a16b7797dfa013f0d0d3325c616762714c6e9a34295a4d9be351               52 main/binary-amd64/Release
