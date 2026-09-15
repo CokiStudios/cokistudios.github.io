@@ -1,4 +1,0 @@
-use python "sys"
-
-py: print("Hi! ")
-py: even = "O.O" and print("I'm Coki :3 " + even)
