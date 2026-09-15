@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>CSMS — Coki Messaging Service (Capacitor App)</title>
+  <link rel="stylesheet" href="csms-style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="csms-root">
+    <!-- Header -->
+    <header class="csms-header">
+      <button id="btn-back" class="btn-back hidden">← Volver</button>
+      <div class="header-titles">
+        <h1 id="header-title">CSMS Capacitor</h1>
+        <p id="header-subtitle">Coki Messaging Service Sincronizado</p>
+      </div>
+      <button id="btn-new-group" class="btn-new-group">+ Grupo</button>
+    </header>
+
+    <!-- Chat Rooms View -->
+    <main id="view-rooms" class="csms-view">
+      <div id="rooms-list" class="rooms-list">
+        <div class="loading-spinner">Cargando chats...</div>
+      </div>
+    </main>
+
+    <!-- Messages Conversation View -->
+    <main id="view-chat" class="csms-view hidden">
+      <div id="messages-list" class="messages-list"></div>
+      
+      <!-- Composer Bar -->
+      <footer class="csms-composer">
+        <input type="text" id="input-msg" placeholder="Escribe un mensaje CSMS..." autocomplete="off">
+        <button id="btn-send-msg" class="btn-send">Enviar</button>
+      </footer>
+    </main>
+
+    <!-- Create Group Modal -->
+    <div id="modal-create-group" class="csms-modal hidden">
+      <div class="modal-card">
+        <h2>💬 Crear Grupo CSMS</h2>
+        <input type="text" id="input-group-name" placeholder="Nombre del grupo (ej: Club Cota)">
+        <div class="modal-actions">
+          <button id="btn-cancel-group" class="btn-secondary">Cancelar</button>
+          <button id="btn-submit-group" class="btn-primary">Crear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="csms-app.js"></script>
+</body>
+</html>

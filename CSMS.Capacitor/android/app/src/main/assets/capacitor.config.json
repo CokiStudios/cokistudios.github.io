@@ -1,0 +1,10 @@
+{
+	"appId": "com.cokistudios.csms",
+	"appName": "CSMS — Coki Messaging Service",
+	"webDir": "dist",
+	"bundledWebRuntime": false,
+	"backgroundColor": "#0F172A",
+	"server": {
+		"androidScheme": "https"
+	}
+}
