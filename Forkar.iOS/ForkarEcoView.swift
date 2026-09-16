@@ -4,6 +4,7 @@ import WidgetKit
 struct ForkarEcoView: View {
     @EnvironmentObject var authManager: SupabaseManager
     @StateObject private var nfcReader = NFCReaderManager()
+    @ObservedObject private var islandManager = DynamicIslandEcoManager.shared
     
     @State private var co2Saved: Double = UserDefaults.standard.double(forKey: "forkar_co2_saved")
     @State private var ecoPoints: Int = UserDefaults.standard.integer(forKey: "forkar_eco_points")
@@ -23,10 +24,15 @@ struct ForkarEcoView: View {
                     VStack(spacing: 20) {
                         // Impact Header & Live Consumption
                         VStack(spacing: 8) {
-                            Text("🌿 FORKAR ECO HUB")
-                                .font(.system(size: 12, weight: .black))
-                                .foregroundColor(Color.emerald)
-                                .tracking(1.5)
+                            HStack(spacing: 6) {
+                                Image(systemName: "leaf.fill")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color.emerald)
+                                Text("FORKAR ECO HUB")
+                                    .font(.system(size: 12, weight: .black))
+                                    .foregroundColor(Color.emerald)
+                                    .tracking(1.5)
+                            }
                             
                             Text("\(co2Saved, specifier: "%.1f") kg")
                                 .font(.system(size: 42, weight: .black))
@@ -38,56 +44,58 @@ struct ForkarEcoView: View {
                             
                             HStack(spacing: 16) {
                                 Label("\(ecoPoints) Puntos Eco", systemImage: "star.fill")
-                                    .font(.system(size: 13, weight: .bold))
+                                    .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(.yellow)
+                                
+                                Label("Nivel Sostenible", systemImage: "shield.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(Color.emerald)
                             }
                             .padding(.top, 4)
                             
-                            // Botones de Acción: Escanear QR Nativo, Ver Mi QR, NFC e Isla
+                            // Acciones Rápidas
                             VStack(spacing: 10) {
-                                HStack(spacing: 10) {
+                                HStack(spacing: 12) {
                                     Button(action: { showQRScanner = true }) {
-                                        HStack(spacing: 6) {
+                                        HStack {
                                             Image(systemName: "qrcode.viewfinder")
-                                                .font(.system(size: 14, weight: .bold))
                                             Text("Escanear QR")
-                                                .font(.system(size: 13, weight: .bold))
                                         }
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 12)
+                                        .padding(.vertical, 14)
                                         .background(
                                             LinearGradient(
-                                                colors: [Color.emerald, Color.green.opacity(0.8)],
+                                                colors: [Color.emerald, Color.green],
                                                 startPoint: .leading,
                                                 endPoint: .trailing
                                             )
                                         )
-                                        .foregroundColor(.white)
                                         .cornerRadius(12)
                                         .shadow(color: Color.emerald.opacity(0.4), radius: 8, y: 3)
                                     }
                                     
                                     Button(action: { showMyQRCode = true }) {
-                                        HStack(spacing: 6) {
+                                        HStack {
                                             Image(systemName: "qrcode")
-                                                .font(.system(size: 14, weight: .bold))
-                                            Text("Mi Código QR")
-                                                .font(.system(size: 13, weight: .bold))
+                                            Text("Mi Código")
                                         }
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(Color.emerald)
                                         .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 12)
-                                        .background(Color.white.opacity(0.08))
-                                        .foregroundColor(ForkarTheme.text)
+                                        .padding(.vertical, 14)
+                                        .background(Color.emerald.opacity(0.15))
                                         .cornerRadius(12)
-                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.emerald.opacity(0.4), lineWidth: 1.5))
                                     }
                                 }
                                 
-                                HStack(spacing: 10) {
-                                    Button(action: scanNFCTag) {
+                                HStack(spacing: 12) {
+                                    Button(action: { scanNFCTag() }) {
                                         HStack(spacing: 4) {
-                                            Image(systemName: "wave.3.right.circle.fill")
-                                            Text("NFC Físico 📶")
+                                            Image(systemName: "wave.3.right")
+                                            Text("NFC Físico")
                                         }
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.white)
@@ -99,23 +107,23 @@ struct ForkarEcoView: View {
                                     }
                                     
                                     Button(action: {
-                                        DynamicIslandEcoManager.shared.startEcoLiveActivity(
+                                        islandManager.toggleEcoLiveActivity(
                                             co2: co2Saved,
                                             pts: ecoPoints,
                                             userName: authManager.currentUser?.email?.components(separatedBy: "@").first?.capitalized ?? "Usuario"
                                         )
                                     }) {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "capsule.portrait.fill")
-                                            Text("Activar Isla 🏝️")
+                                        HStack(spacing: 6) {
+                                            Image(systemName: islandManager.isLiveActivityActive ? "stop.circle.fill" : "capsule.portrait.fill")
+                                            Text(islandManager.isLiveActivityActive ? "Detener Isla" : "Activar Dynamic Island")
                                         }
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)
-                                        .background(Color.purple.opacity(0.3))
+                                        .background(islandManager.isLiveActivityActive ? Color.emerald.opacity(0.35) : Color.purple.opacity(0.3))
                                         .cornerRadius(10)
-                                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.purple.opacity(0.4), lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(islandManager.isLiveActivityActive ? Color.emerald : Color.purple.opacity(0.4), lineWidth: 1))
                                     }
                                 }
                             }
@@ -278,6 +286,13 @@ struct ForkarEcoView: View {
         alertMessage = "¡Reto Registrado! 🌿\nHas registrado \"\(title)\": +\(String(format: "%.1f", co2)) kg CO₂ ahorrados y +\(pts) Puntos Eco."
         showSuccessAlert = true
         
+        DynamicIslandEcoManager.shared.updateEcoLiveActivity(
+            co2: co2Saved,
+            pts: ecoPoints,
+            message: "+\(String(format: "%.1f", co2)) kg CO₂ (\(title))"
+        )
+    }
+        
     private func redeemReward(cost: Int, title: String) {
         guard ecoPoints >= cost else {
             alertMessage = "Puntos insuficientes ⚠️\nNecesitas \(cost) Puntos Eco para canjear \"\(title)\"."
@@ -292,7 +307,11 @@ struct ForkarEcoView: View {
         alertMessage = "¡Recompensa Canjeada! 🎉\nHas canjeado \"\(title)\" por \(cost) Puntos Eco. Muestra tu código QR en el establecimiento aliado."
         showSuccessAlert = true
         
-        DynamicIslandEcoManager.shared.updateEcoLiveActivity(co2: co2Saved, pts: ecoPoints)
+        DynamicIslandEcoManager.shared.updateEcoLiveActivity(
+            co2: co2Saved,
+            pts: ecoPoints,
+            message: "Canje: \(title)"
+        )
     }
 }
 

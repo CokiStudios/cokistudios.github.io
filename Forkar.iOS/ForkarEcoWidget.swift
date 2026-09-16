@@ -96,8 +96,9 @@ struct ForkarEcoActivityWidget: Widget {
                     Circle()
                         .fill(Color.emerald.opacity(0.2))
                         .frame(width: 44, height: 44)
-                    Text("🌿")
-                        .font(.title2)
+                    Image(systemName: "leaf.fill")
+                        .font(.title3)
+                        .foregroundColor(Color.emerald)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -112,10 +113,15 @@ struct ForkarEcoActivityWidget: Widget {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(context.state.ecoPoints) pts")
-                        .font(.system(size: 16, weight: .black))
-                        .foregroundColor(.yellow)
-                    Text("3 min activo")
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.yellow)
+                        Text("\(context.state.ecoPoints) pts")
+                            .font(.system(size: 15, weight: .black))
+                            .foregroundColor(.yellow)
+                    }
+                    Text(context.state.statusMessage)
                         .font(.caption2)
                         .foregroundColor(.gray)
                 }
@@ -128,8 +134,14 @@ struct ForkarEcoActivityWidget: Widget {
                 // Vista Expandida de la Dynamic Island (Al presionar 1 vez / expandir)
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
-                        Text("🌿")
-                            .font(.title2)
+                        ZStack {
+                            Circle()
+                                .fill(Color.emerald.opacity(0.2))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "leaf.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(Color.emerald)
+                        }
                         VStack(alignment: .leading, spacing: 2) {
                             Text("FORKAR ECO")
                                 .font(.system(size: 10, weight: .black))
@@ -143,9 +155,14 @@ struct ForkarEcoActivityWidget: Widget {
                 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("⭐ PUNTOS")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.yellow)
+                        HStack(spacing: 3) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.yellow)
+                            Text("PUNTOS")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.yellow)
+                        }
                         Text("\(context.state.ecoPoints) pts")
                             .font(.system(size: 14, weight: .black))
                             .foregroundColor(.white)
@@ -153,16 +170,21 @@ struct ForkarEcoActivityWidget: Widget {
                 }
                 
                 DynamicIslandExpandedRegion(.center) {
-                    Text("Consumo Ecológico Activo")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(Color.emerald)
+                            .frame(width: 6, height: 6)
+                        Text(context.state.statusMessage)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.85))
+                    }
                 }
                 
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(spacing: 8) {
                         // Resumen de Consumo
                         HStack {
-                            Text("Consumo Ecológico:")
+                            Text("Ahorro de Emisiones:")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundColor(.gray)
                             Text("\(context.state.co2Saved, specifier: "%.2f") kg CO₂")
@@ -202,23 +224,30 @@ struct ForkarEcoActivityWidget: Widget {
             } compactLeading: {
                 // Isla compacta Izquierda
                 HStack(spacing: 4) {
-                    Text("🌿")
-                        .font(.system(size: 12))
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Color.emerald)
                     Text("\(context.state.co2Saved, specifier: "%.1f")k")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(Color.emerald)
                 }
             } compactTrailing: {
                 // Isla compacta Derecha
-                Text("\(context.state.ecoPoints)p")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.yellow)
+                HStack(spacing: 2) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.yellow)
+                    Text("\(context.state.ecoPoints)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.yellow)
+                }
             } minimal: {
                 // Isla mínima
-                Text("🌿")
-                    .font(.system(size: 12))
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(Color.emerald)
             }
-            .widgetURL(URL(string: "forkar://app"))
+            .widgetURL(URL(string: "forkar://ecoscan"))
         }
     }
 }

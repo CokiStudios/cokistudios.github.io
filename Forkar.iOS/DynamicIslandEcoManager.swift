@@ -27,32 +27,59 @@ public struct ForkarEcoActivityAttributes: ActivityAttributes {
 class DynamicIslandEcoManager: ObservableObject {
     static let shared = DynamicIslandEcoManager()
     
+    @Published var isLiveActivityActive: Bool = false
+    
     #if os(iOS)
     private var currentActivity: Activity<ForkarEcoActivityAttributes>? = nil
     #endif
+    
+    init() {
+        #if os(iOS)
+        checkActiveActivities()
+        #endif
+    }
+    
+    private func checkActiveActivities() {
+        #if os(iOS)
+        if let existing = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active }) {
+            self.currentActivity = existing
+            self.isLiveActivityActive = true
+        } else {
+            self.isLiveActivityActive = false
+        }
+        #endif
+    }
     
     func startEcoLiveActivity(co2: Double, pts: Int, userName: String = "Usuario") {
         #if os(iOS)
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         
+        // Si ya existe una Live Activity activa, solo la actualizamos
+        if let existing = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active }) {
+            self.currentActivity = existing
+            DispatchQueue.main.async { self.isLiveActivityActive = true }
+            updateEcoLiveActivity(co2: co2, pts: pts)
+            return
+        }
+        
         let attributes = ForkarEcoActivityAttributes(userName: userName)
         let state = ForkarEcoActivityAttributes.ContentState(
             co2Saved: co2,
             ecoPoints: pts,
-            statusMessage: "Monitoreo Eco en segundo plano (3 min)"
+            statusMessage: "Monitoreo Eco en Tiempo Real"
         )
         
         do {
+            let staleDate = Calendar.current.date(byAdding: .hour, value: 4, to: Date())
             if #available(iOS 16.2, *) {
-                let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(180))
+                let content = ActivityContent(state: state, staleDate: staleDate)
                 currentActivity = try Activity.request(attributes: attributes, content: content, pushType: nil)
             } else {
                 currentActivity = try Activity.request(attributes: attributes, contentState: state, pushType: nil)
             }
             
-            // Finalizar automáticamente después de 3 minutos (180s)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 180) {
-                self.stopEcoLiveActivity(finalCo2: co2, finalPts: pts)
+            DispatchQueue.main.async {
+                self.isLiveActivityActive = true
             }
         } catch {
             let errStr = String(describing: error)
@@ -63,19 +90,30 @@ class DynamicIslandEcoManager: ObservableObject {
         #endif
     }
     
-    func updateEcoLiveActivity(co2: Double, pts: Int) {
+    func updateEcoLiveActivity(co2: Double, pts: Int, message: String = "Impacto Eco Actualizado") {
         #if os(iOS)
+        if currentActivity == nil || currentActivity?.activityState != .active {
+            currentActivity = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active })
+        }
+        
+        guard let activity = currentActivity else { return }
+        
         Task {
             let updatedState = ForkarEcoActivityAttributes.ContentState(
                 co2Saved: co2,
                 ecoPoints: pts,
-                statusMessage: "Impacto Eco Actualizado"
+                statusMessage: message
             )
+            let staleDate = Calendar.current.date(byAdding: .hour, value: 4, to: Date())
             if #available(iOS 16.2, *) {
-                let content = ActivityContent(state: updatedState, staleDate: Date().addingTimeInterval(180))
-                await currentActivity?.update(content)
+                let content = ActivityContent(state: updatedState, staleDate: staleDate)
+                await activity.update(content)
             } else {
-                await currentActivity?.update(using: updatedState)
+                await activity.update(using: updatedState)
+            }
+            
+            await MainActor.run {
+                self.isLiveActivityActive = true
             }
         }
         #endif
@@ -83,19 +121,41 @@ class DynamicIslandEcoManager: ObservableObject {
     
     func stopEcoLiveActivity(finalCo2: Double, finalPts: Int) {
         #if os(iOS)
+        if currentActivity == nil || currentActivity?.activityState != .active {
+            currentActivity = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active })
+        }
+        
+        guard let activity = currentActivity else {
+            DispatchQueue.main.async { self.isLiveActivityActive = false }
+            return
+        }
+        
         Task {
             let finalState = ForkarEcoActivityAttributes.ContentState(
                 co2Saved: finalCo2,
                 ecoPoints: finalPts,
-                statusMessage: "Resumen Guardado"
+                statusMessage: "Resumen Eco Guardado"
             )
             if #available(iOS 16.2, *) {
                 let content = ActivityContent(state: finalState, staleDate: nil)
-                await currentActivity?.end(content, dismissalPolicy: .immediate)
+                await activity.end(content, dismissalPolicy: .immediate)
             } else {
-                await currentActivity?.end(using: finalState, dismissalPolicy: .immediate)
+                await activity.end(using: finalState, dismissalPolicy: .immediate)
+            }
+            
+            await MainActor.run {
+                self.currentActivity = nil
+                self.isLiveActivityActive = false
             }
         }
         #endif
+    }
+    
+    func toggleEcoLiveActivity(co2: Double, pts: Int, userName: String = "Usuario") {
+        if isLiveActivityActive {
+            stopEcoLiveActivity(finalCo2: co2, finalPts: pts)
+        } else {
+            startEcoLiveActivity(co2: co2, pts: pts, userName: userName)
+        }
     }
 }
