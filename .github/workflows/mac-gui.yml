@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       os_version:
-        description: 'Versión de macOS Runner en GitHub'
+        description: 'Versión de macOS Runner (ej: macos-27, macos-latest, macos-15)'
         required: true
         default: 'macos-27'
+        type: string
+      ngrok_token:
+        description: 'Ngrok Authtoken (opcional si ya está en Secrets)'
+        required: false
+        default: ''
         type: string
       session_password:
         description: 'Contraseña para la sesión VNC/Mac'
@@ -39,7 +44,7 @@ jobs:
 
       - name: Conectar túnel Ngrok (si NGROK_AUTHTOKEN está configurado)
         env:
-          NGROK_TOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+          NGROK_TOKEN: ${{ inputs.ngrok_token != '' && inputs.ngrok_token || secrets.NGROK_AUTHTOKEN }}
         run: |
           if [ -n "${NGROK_TOKEN}" ]; then
             echo "⚡ Configurando Ngrok..."
