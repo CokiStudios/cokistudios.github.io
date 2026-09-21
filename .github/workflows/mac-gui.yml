@@ -37,21 +37,24 @@ jobs:
       - name: Configurar credenciales y Servidor de Pantalla (Apple Remote Desktop / VNC)
         run: |
           PASS="${{ inputs.session_password || 'Coki12345!' }}"
-          echo "Configurando contraseña en DirectoryServices..."
-          # El usuario runner por defecto tiene clave vacía en GitHub Actions
-          sudo dscl . -passwd /Users/runner "" "${PASS}" 2>/dev/null || sudo dscl . -passwd /Users/runner "${PASS}" 2>/dev/null || true
+          echo "Configurando contraseña del usuario runner..."
+          sudo sysadminctl -resetPasswordFor runner -newPassword "${PASS}" 2>/dev/null || true
+          echo -e "${PASS}\n${PASS}" | sudo passwd runner 2>/dev/null || true
           
-          # Habilitar Screen Sharing con kickstart oficial de macOS para todos los usuarios
-          echo "Activando Remote Desktop y VNC con kickstart..."
+          echo "Configurando Apple Remote Desktop y VNC con kickstart..."
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -activate -configure -access -on \
-            -allowAccessFor -allUsers \
-            -privs -all \
-            -clientopts -setvnclegacy -vnclegacy yes \
-            -clientopts -setvncpw -vncpw "${PASS}" \
-            -restart -agent 2>/dev/null || true
+            -configure -allowAccessFor -allUsers -privs -all 2>/dev/null || true
+            
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -configure -users runner -access -on -privs -all 2>/dev/null || true
+            
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -configure -clientopts -setvnclegacy -vnclegacy yes -setvncpw -vncpw "${PASS}" 2>/dev/null || true
+            
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate -restart -agent -console 2>/dev/null || true
           
-          # Levantar daemon de screensharing nativo
+          # Habilitar screensharing nativo en macOS
           sudo defaults write /Library/Preferences/com.apple.security.mac.plist AllowScreenSharing -bool true
           sudo launchctl enable system/com.apple.screensharing 2>/dev/null || true
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
@@ -60,27 +63,27 @@ jobs:
         run: |
           echo "🌐 Instalando y levantando noVNC..."
           brew install websockify novnc 2>/dev/null || (git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/novnc && ln -sf /tmp/novnc/utils/novnc_proxy /usr/local/bin/novnc_proxy)
-          # Iniciar proxy de VNC a WebSockets HTTP en puerto 6080
           nohup /usr/local/bin/novnc_proxy --vnc localhost:5900 --listen 6080 > /tmp/novnc.log 2>&1 &
           sleep 3
 
       - name: Conectar túnel Ngrok HTTP (Sin tarjeta de crédito)
         env:
           NGROK_TOKEN: ${{ inputs.ngrok_token != '' && inputs.ngrok_token || secrets.NGROK_AUTHTOKEN }}
+          PASS: ${{ inputs.session_password || 'Coki12345!' }}
         run: |
           if [ -n "${NGROK_TOKEN}" ]; then
             echo "⚡ Configurando Ngrok HTTP..."
             which ngrok >/dev/null 2>&1 || brew install ngrok/ngrok/ngrok
             ngrok config add-authtoken "${NGROK_TOKEN}"
-            # Túnel HTTP estándar (no requiere tarjeta de crédito en cuentas gratis)
             ngrok http 6080 --log=stdout &
             sleep 6
             WEB_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
             echo "================================================================"
             echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA ESTÁ LISTA!"
-            echo "👉 Abre este enlace en Safari o Chrome:"
-            echo "   ${WEB_URL}/vnc.html"
-            echo "   Contraseña: ${{ inputs.session_password || 'Coki12345!' }}"
+            echo "👉 Haz clic directo en este enlace para entrar sin escribir contraseña:"
+            echo "   ${WEB_URL}/vnc.html?autoconnect=true&password=${PASS}"
+            echo ""
+            echo "   (O manual: Usuario: runner | Contraseña: ${PASS})"
             echo "================================================================"
           fi
 
