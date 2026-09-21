@@ -34,17 +34,25 @@ jobs:
       - name: Checkout del proyecto
         uses: actions/checkout@v4
 
-      - name: Configurar credenciales de usuario y VNC
+      - name: Configurar credenciales y Servidor de Pantalla (Apple Remote Desktop / VNC)
         run: |
           PASS="${{ inputs.session_password || 'Coki12345!' }}"
-          echo "runneradmin:${PASS}" | sudo chpasswd 2>/dev/null || true
-          echo "runner:${PASS}" | sudo chpasswd 2>/dev/null || true
-          sudo sysadminctl -secureTokenOn runneradmin -password "${PASS}" 2>/dev/null || true
-
-      - name: Activar Servidor de Pantalla Compartida (VNC nativo de macOS)
-        run: |
+          echo "Configurando contraseña en DirectoryServices..."
+          sudo dscl . -passwd /Users/runner "${PASS}" 2>/dev/null || true
+          sudo dscl . -passwd /Users/runneradmin "${PASS}" 2>/dev/null || true
+          
+          # Habilitar Screen Sharing con kickstart oficial de macOS para todos los usuarios
+          echo "Activando Remote Desktop y VNC con kickstart..."
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate -configure -access -on \
+            -allowAccessFor -allUsers \
+            -privs -all \
+            -clientopts -setvnclegacy -vnclegacy yes \
+            -clientopts -setvncpw -vncpw "${PASS}" \
+            -restart -agent 2>/dev/null || true
+          
+          # Levantar daemon de screensharing nativo
           sudo defaults write /Library/Preferences/com.apple.security.mac.plist AllowScreenSharing -bool true
-          sudo defaults write /var/db/launchd.db/com.apple.launchd/overrides.plist com.apple.screensharing -dict Disabled -bool false
           sudo launchctl enable system/com.apple.screensharing 2>/dev/null || true
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
 
