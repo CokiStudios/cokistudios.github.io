@@ -15,7 +15,7 @@ on:
           - macos-15
           - macos-14
       session_password:
-        description: 'Contraseña para la sesión VNC/Mac'
+        description: 'Contraseña para la sesión VNC/SSH'
         required: false
         default: 'Coki12345!'
         type: string
@@ -29,28 +29,24 @@ jobs:
       - name: Checkout del proyecto
         uses: actions/checkout@v4
 
-      - name: Configurar credenciales y Servidor de Pantalla (Apple Remote Desktop / VNC)
+      - name: Configurar usuario coki, SSH y Pantalla Compartida
         run: |
           PASS="${{ inputs.session_password || 'Coki12345!' }}"
-          echo "Creando usuario administrador coki con contraseña establecida..."
+          echo "Creando usuario administrador coki..."
           sudo sysadminctl -addUser coki -fullName "Coki Developer" -password "${PASS}" -admin 2>/dev/null || true
           sudo dscl . -passwd /Users/coki "${PASS}" 2>/dev/null || true
           sudo dscl . -passwd /Users/runner "${PASS}" 2>/dev/null || true
+
+          # Dar permisos sudo sin password a coki
+          echo "coki ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/coki > /dev/null
           
-          echo "Configurando Apple Remote Desktop y VNC con kickstart..."
-          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -configure -allowAccessFor -allUsers -privs -all 2>/dev/null || true
-            
-          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -configure -users coki,runner -access -on -privs -all 2>/dev/null || true
-            
-          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -configure -clientopts -setvnclegacy -vnclegacy yes -setvncpw -vncpw "${PASS}" 2>/dev/null || true
-            
-          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -activate -restart -agent -console 2>/dev/null || true
-          
+          # Habilitar SSH (Remote Login)
+          echo "Habilitando servicio SSH..."
+          sudo systemsetup -setremotelogin on 2>/dev/null || true
+          sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist 2>/dev/null || true
+
           # Habilitar screensharing nativo en macOS
+          echo "Configurando Screen Sharing..."
           sudo defaults write /Library/Preferences/com.apple.security.mac.plist AllowScreenSharing -bool true
           sudo launchctl enable system/com.apple.screensharing 2>/dev/null || true
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
@@ -61,7 +57,7 @@ jobs:
           sudo sqlite3 "/Library/Application Support/com.apple.TCC/TCC.db" \
             "INSERT OR REPLACE INTO access VALUES('kTCCServiceScreenCapture','com.apple.screensharing.agent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,$(date +%s));" 2>/dev/null || true
 
-      - name: Instalar túnel Bore (TCP puro para VNC)
+      - name: Instalar túnel Bore (TCP puro para SSH y VNC)
         run: |
           echo "⚡ Descargando bore..."
           ARCH=$(uname -m)
@@ -75,53 +71,61 @@ jobs:
           sudo chmod +x /usr/local/bin/bore
           bore --version
 
-      - name: Conectar túnel VNC con Bore (y Pinggy de respaldo)
+      - name: Conectar túneles SSH y VNC con Bore
         env:
           PASS: ${{ inputs.session_password || 'Coki12345!' }}
         run: |
-          echo "🚀 Conectando VNC al puerto 5900 mediante Bore..."
+          echo "🚀 Abriendo túnel SSH (puerto 22)..."
+          nohup bore local 22 --to bore.pub > /tmp/bore_ssh.log 2>&1 &
+          
+          echo "🚀 Abriendo túnel VNC (puerto 5900)..."
           nohup bore local 5900 --to bore.pub > /tmp/bore_vnc.log 2>&1 &
           
-          echo "📡 Levantando túnel de respaldo con Pinggy..."
-          ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -R0:localhost:5900 a.pinggy.io tcp > /tmp/pinggy.log 2>&1 &
-          
           sleep 5
-          BORE_CONN=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_vnc.log | head -n 1)
-          if [ -z "${BORE_CONN}" ]; then
-            sleep 4
-            BORE_CONN=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_vnc.log | head -n 1)
+          BORE_SSH=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_ssh.log | head -n 1)
+          if [ -z "${BORE_SSH}" ]; then
+            sleep 3
+            BORE_SSH=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_ssh.log | head -n 1)
           fi
 
-          PINGGY_CONN=$(grep -oE "tcp://[^ ]+" /tmp/pinggy.log | head -n 1)
+          BORE_VNC=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_vnc.log | head -n 1)
+          if [ -z "${BORE_VNC}" ]; then
+            sleep 3
+            BORE_VNC=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_vnc.log | head -n 1)
+          fi
+
+          SSH_PORT=$(echo "${BORE_SSH}" | cut -d: -f2)
 
           echo ""
           echo "================================================================"
-          echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA VNC ESTÁ LISTA (CON BORE)!"
+          echo "🎉 ¡TU MAC ESTÁ LISTA (SSH Y VNC DISPONIBLES)!"
           echo "================================================================"
           echo ""
-          echo "👉 CONEXIÓN DIRECTA (App Compartir Pantalla o Finder Cmd+K):"
-          echo "   vnc://coki:${PASS}@${BORE_CONN}"
+          echo "💻 OPCIÓN A - Terminal SSH Directa (Control Total):"
+          echo "   ssh -p ${SSH_PORT} coki@bore.pub"
+          echo "   (Contraseña: ${PASS})"
           echo ""
-          echo "👉 O manual en la ventana de login:"
-          echo "   Servidor:           ${BORE_CONN}"
-          echo "   Nombre de usuario:  coki"
-          echo "   Contraseña:         ${PASS}"
+          echo "🌐 OPCIÓN B - SSH Port Forwarding hacia VNC (Recomendada):"
+          echo "   ssh -L 5900:127.0.0.1:5900 -p ${SSH_PORT} coki@bore.pub"
+          echo "   (Luego abres en tu Mac: vnc://localhost:5900)"
           echo ""
-          if [ -n "${PINGGY_CONN}" ]; then
-            echo "👉 Respaldo Pinggy:"
-            echo "   ${PINGGY_CONN}"
-            echo ""
-          fi
+          echo "🖥️ OPCIÓN C - Conexión VNC Directa:"
+          echo "   vnc://coki:${PASS}@${BORE_VNC}"
+          echo ""
           echo "ℹ️ Datos del Runner:"
-          echo "   Usuario principal: coki (y runner)"
+          echo "   Usuario: coki (con permisos root/sudo)"
           echo "   Sistema: $(sw_vers -productName 2>/dev/null || echo macOS) $(sw_vers -productVersion 2>/dev/null) ($(uname -m))"
           echo "================================================================"
           echo ""
+          echo "--- Log Bore SSH ---"
+          cat /tmp/bore_ssh.log
+          echo ""
+          echo "--- Log Bore VNC ---"
           cat /tmp/bore_vnc.log
 
       - name: Mantener sesión viva de macOS
         run: |
-          echo "🖥️ Mac en la nube activa. Conectado por Bore VNC."
+          echo "🖥️ Mac en la nube activa. Conectado por SSH y VNC."
           for i in {1..360}; do
             sleep 60
           done
