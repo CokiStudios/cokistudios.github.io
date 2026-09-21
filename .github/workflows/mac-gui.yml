@@ -62,8 +62,21 @@ jobs:
       - name: Iniciar servidor noVNC (Pantalla en Navegador Web)
         run: |
           echo "🌐 Instalando y levantando noVNC..."
-          brew install websockify novnc 2>/dev/null || (git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/novnc && ln -sf /tmp/novnc/utils/novnc_proxy /usr/local/bin/novnc_proxy)
-          nohup /usr/local/bin/novnc_proxy --vnc localhost:5900 --listen 6080 > /tmp/novnc.log 2>&1 &
+          brew install websockify novnc 2>/dev/null || true
+          
+          if command -v novnc_proxy >/dev/null 2>&1; then
+            NOVNC_BIN="$(command -v novnc_proxy)"
+          elif [ -f /opt/homebrew/bin/novnc_proxy ]; then
+            NOVNC_BIN="/opt/homebrew/bin/novnc_proxy"
+          elif [ -f /usr/local/bin/novnc_proxy ]; then
+            NOVNC_BIN="/usr/local/bin/novnc_proxy"
+          else
+            git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/novnc
+            NOVNC_BIN="/tmp/novnc/utils/novnc_proxy"
+          fi
+          
+          echo "Ejecutando noVNC desde: ${NOVNC_BIN}"
+          nohup "${NOVNC_BIN}" --vnc localhost:5900 --listen 6080 > /tmp/novnc.log 2>&1 &
           sleep 3
 
       - name: Conectar túnel Ngrok HTTP (Sin tarjeta de crédito)
@@ -73,11 +86,15 @@ jobs:
         run: |
           if [ -n "${NGROK_TOKEN}" ]; then
             echo "⚡ Configurando Ngrok HTTP..."
-            which ngrok >/dev/null 2>&1 || brew install ngrok/ngrok/ngrok
+            command -v ngrok >/dev/null 2>&1 || brew install ngrok/ngrok/ngrok
             ngrok config add-authtoken "${NGROK_TOKEN}"
-            ngrok http 6080 --log=stdout &
+            ngrok http 6080 --log=stdout > /tmp/ngrok.log 2>&1 &
             sleep 6
             WEB_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+            if [ -z "${WEB_URL}" ]; then
+              sleep 5
+              WEB_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+            fi
             echo "================================================================"
             echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA ESTÁ LISTA!"
             echo "👉 Haz clic directo en este enlace para entrar sin escribir contraseña:"
@@ -85,16 +102,14 @@ jobs:
             echo ""
             echo "   (O manual: Usuario: runner | Contraseña: ${PASS})"
             echo "================================================================"
+          else
+            echo "❌ Error: NGROK_TOKEN no está definido."
+            exit 1
           fi
-
-      - name: Iniciar túnel Tmate (Respaldo directo para terminal y web)
-        uses: mxschmitt/action-tmate@v3
-        with:
-          detached: true
 
       - name: Mantener sesión viva de macOS
         run: |
-          echo "🖥️ Mac en la nube activa. Conéctate con VNC o por Tmate."
+          echo "🖥️ Mac en la nube activa. Conéctate con el enlace de noVNC en tu navegador."
           for i in {1..360}; do
             sleep 60
           done
