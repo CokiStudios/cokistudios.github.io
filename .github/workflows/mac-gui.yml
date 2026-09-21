@@ -4,10 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       os_version:
-        description: 'Versión de macOS Runner (ej: macos-27, macos-latest, macos-15)'
+        description: 'Versión de macOS Runner'
         required: true
-        default: 'macos-27'
-        type: string
+        default: 'macos-latest'
+        type: choice
+        options:
+          - macos-latest
+          - macos-15
+          - macos-14
       ngrok_token:
         description: 'Ngrok Authtoken (opcional si ya está en Secrets)'
         required: false
@@ -22,7 +26,7 @@ on:
 jobs:
   remote-mac:
     name: Sesion Mac GUI
-    runs-on: ${{ inputs.os_version || 'macos-27' }}
+    runs-on: ${{ inputs.os_version || 'macos-latest' }}
     timeout-minutes: 360 # Hasta 6 horas gratis de sesión continua
     steps:
       - name: Checkout del proyecto
