@@ -1,0 +1,70 @@
+name: Mac GUI Remote Desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      os_version:
+        description: 'Versión de macOS Runner en GitHub'
+        required: true
+        default: 'macos-27'
+        type: string
+      session_password:
+        description: 'Contraseña para la sesión VNC/Mac'
+        required: false
+        default: 'Coki12345!'
+        type: string
+
+jobs:
+  remote-mac:
+    name: Sesion Mac GUI
+    runs-on: ${{ inputs.os_version || 'macos-27' }}
+    timeout-minutes: 360 # Hasta 6 horas gratis de sesión continua
+    steps:
+      - name: Checkout del proyecto
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales de usuario y VNC
+        run: |
+          PASS="${{ inputs.session_password || 'Coki12345!' }}"
+          echo "runneradmin:${PASS}" | sudo chpasswd 2>/dev/null || true
+          echo "runner:${PASS}" | sudo chpasswd 2>/dev/null || true
+          sudo sysadminctl -secureTokenOn runneradmin -password "${PASS}" 2>/dev/null || true
+
+      - name: Activar Servidor de Pantalla Compartida (VNC nativo de macOS)
+        run: |
+          sudo defaults write /Library/Preferences/com.apple.security.mac.plist AllowScreenSharing -bool true
+          sudo defaults write /var/db/launchd.db/com.apple.launchd/overrides.plist com.apple.screensharing -dict Disabled -bool false
+          sudo launchctl enable system/com.apple.screensharing 2>/dev/null || true
+          sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
+
+      - name: Conectar túnel Ngrok (si NGROK_AUTHTOKEN está configurado)
+        env:
+          NGROK_TOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+        run: |
+          if [ -n "${NGROK_TOKEN}" ]; then
+            echo "⚡ Configurando Ngrok..."
+            brew install ngrok/ngrok/ngrok
+            ngrok config add-authtoken "${NGROK_TOKEN}"
+            ngrok tcp 5900 --log=stdout &
+            sleep 6
+            TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+            echo "================================================================"
+            echo "🎉 URL DE CONEXIÓN VNC:"
+            echo "👉 ${TUNNEL_URL}"
+            echo "En tu Mac abre Finder > Cmd + K y escribe: vnc://${TUNNEL_URL#tcp://}"
+            echo "================================================================"
+          else
+            echo "ℹ️ NGROK_AUTHTOKEN no configurado en Secrets. Puedes usar tmate abajo."
+          fi
+
+      - name: Iniciar túnel Tmate (Respaldo directo para terminal y web)
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+
+      - name: Mantener sesión viva de macOS
+        run: |
+          echo "🖥️ Mac en la nube activa. Conéctate con VNC o por Tmate."
+          for i in {1..360}; do
+            sleep 60
+          done
