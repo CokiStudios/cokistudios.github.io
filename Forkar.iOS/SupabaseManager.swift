@@ -1037,6 +1037,40 @@ class SupabaseManager: ObservableObject {
 
     // MARK: - Forkar Eco Hub API
     @MainActor
+    func fetchUserEcoImpact(userId: String? = nil) async throws -> (co2: Double, points: Int) {
+        let targetId = userId ?? currentUser?.id.uuidString
+        let path = "/rest/v1/forkman_user_eco"
+        let items: [URLQueryItem]
+        if let uid = targetId {
+            items = [
+                URLQueryItem(name: "select", value: "*"),
+                URLQueryItem(name: "user_id", value: "eq.\(uid)")
+            ]
+        } else {
+            items = [
+                URLQueryItem(name: "select", value: "*"),
+                URLQueryItem(name: "order", value: "created_at.desc"),
+                URLQueryItem(name: "limit", value: "50")
+            ]
+        }
+        let req = makeRequest(path: path, queryItems: items)
+        let (data, res) = try await URLSession.shared.data(for: req)
+        guard let httpRes = res as? HTTPURLResponse, (200...299).contains(httpRes.statusCode),
+              let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return (0.0, 0)
+        }
+        var sumCo2: Double = 0
+        var sumPts: Int = 0
+        for item in list {
+            if let c = item["co2_saved"] as? Double { sumCo2 += c }
+            else if let cStr = item["co2_saved"] as? String, let c = Double(cStr) { sumCo2 += c }
+            if let p = item["points_earned"] as? Int { sumPts += p }
+            else if let pStr = item["points_earned"] as? String, let p = Int(pStr) { sumPts += p }
+        }
+        return (sumCo2, sumPts)
+    }
+
+    @MainActor
     func logUserEcoImpact(actionId: String, co2Saved: Double, pointsEarned: Int) async throws -> Bool {
         guard let user = currentUser else { return false }
         

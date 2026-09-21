@@ -46,6 +46,17 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
 
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 // ── Theme Colors ──
 val BgDark = Color(0xFF06090F)
 val CardBg = Color(0xFF0D121F)
@@ -90,6 +101,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun EcoValidatorApp() {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val httpClient = remember { OkHttpClient() }
+
+    val supabaseUrl = "https://slwtxwogffkchuvxwyud.supabase.co"
+    val anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsd3R4d29nZmZrY2h1dnh3eXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNzMzNDUsImV4cCI6MjA2Njc0OTM0NX0.07_m_T4kYQW9hJ35G0JbO0CqWsmYFkZ-G5ZcR2aN50g"
+
     val stations = remember {
         listOf(
             EcoStation("1", "Punto Verde Parque Principal", "Cota", "Compostaje & Plásticos", 50, 2.5, Icons.Default.Eco, EmeraldGreen),
@@ -129,6 +146,73 @@ fun EcoValidatorApp() {
         )
     }
 
+    val fetchRealData = {
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val req = Request.Builder()
+                    .url("$supabaseUrl/rest/v1/forkman_user_eco?select=*&order=created_at.desc&limit=25")
+                    .header("apikey", anonKey)
+                    .header("Authorization", "Bearer $anonKey")
+                    .get()
+                    .build()
+
+                httpClient.newCall(req).execute().use { response ->
+                    val body = response.body?.string() ?: ""
+                    if (response.isSuccessful && body.isNotBlank()) {
+                        val arr = JSONArray(body)
+                        var sumPts = 0
+                        var sumCo2 = 0.0
+                        val remoteList = mutableListOf<ValidatedClaim>()
+
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.getJSONObject(i)
+                            val pts = obj.optInt("points_earned", 50)
+                            val co2 = obj.optDouble("co2_saved", 2.5)
+                            val createdAt = obj.optString("created_at")
+                            val timePart = if (createdAt.length >= 16) createdAt.substring(11, 16) else "Hoy"
+
+                            sumPts += pts
+                            sumCo2 += co2
+
+                            val uId = obj.optString("user_id")
+                            val display = if (uId.length > 8) uId.take(8) + "..." else uId
+
+                            remoteList.add(
+                                ValidatedClaim(
+                                    stationName = selectedStation.name,
+                                    userName = "Usuario Eco ($display)",
+                                    points = pts,
+                                    co2Kg = co2,
+                                    time = timePart,
+                                    isApproved = true
+                                )
+                            )
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            if (sumPts > 0) totalPoints = sumPts
+                            if (sumCo2 > 0.0) totalCo2 = sumCo2
+                            if (remoteList.isNotEmpty()) {
+                                recentValidations.clear()
+                                recentValidations.addAll(remoteList)
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Keep local state
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        fetchRealData()
+        while (true) {
+            delay(5000)
+            fetchRealData()
+        }
+    }
+
     fun processValidation(token: String) {
         val timeNow = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
         val displayUser = if (token.contains("user=") || token.contains("name=")) {
@@ -139,16 +223,57 @@ fun EcoValidatorApp() {
             "Usuario QR Verificado"
         }
 
+        val rawUserId = if (token.contains("user=")) {
+            token.substringAfter("user=").substringBefore("&")
+        } else {
+            "00000000-0000-0000-0000-000000000001"
+        }
+
+        val parsedPts = if (token.contains("pts=")) {
+            token.substringAfter("pts=").substringBefore("&").toIntOrNull() ?: selectedStation.points
+        } else {
+            selectedStation.points
+        }
+
+        val co2Kg = selectedStation.co2SavedKg
+
         val claim = ValidatedClaim(
             stationName = selectedStation.name,
             userName = displayUser,
-            points = selectedStation.points,
-            co2Kg = selectedStation.co2SavedKg,
+            points = parsedPts,
+            co2Kg = co2Kg,
             time = timeNow
         )
         recentValidations.add(0, claim)
-        totalPoints += selectedStation.points
-        totalCo2 += selectedStation.co2SavedKg
+        totalPoints += parsedPts
+        totalCo2 += co2Kg
+
+        // Post to Supabase forkman_user_eco
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply {
+                    put("user_id", rawUserId)
+                    put("co2_saved", co2Kg)
+                    put("points_earned", parsedPts)
+                }
+                val reqBody = json.toString().toRequestBody("application/json".toMediaType())
+                val postReq = Request.Builder()
+                    .url("$supabaseUrl/rest/v1/forkman_user_eco")
+                    .header("apikey", anonKey)
+                    .header("Authorization", "Bearer $anonKey")
+                    .header("Prefer", "return=representation")
+                    .post(reqBody)
+                    .build()
+
+                httpClient.newCall(postReq).execute().use { response ->
+                    if (response.isSuccessful) {
+                        fetchRealData()
+                    }
+                }
+            } catch (e: Exception) {
+                // Keep local claim
+            }
+        }
     }
 
     Scaffold(

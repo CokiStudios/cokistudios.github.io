@@ -886,8 +886,13 @@
         <p>© 2026 Coki Studios LLC — Forkar Eco Hub Program. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- ── SCRIPT I18N, THEME & DYNAMIC ISLAND ── -->
-    <script type="module">
+    <!-- ── SCRIPT I18N, THEME, SUPABASE & REAL ECO METRICS ── -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://slwtxwogffkchuvxwyud.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsd3R4d29nZmZrY2h1dnh3eXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNzMzNDUsImV4cCI6MjA2Njc0OTM0NX0.07_m_T4kYQW9hJ35G0JbO0CqWsmYFkZ-G5ZcR2aN50g';
+        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
         let translations = {};
 
         // App state
@@ -1000,6 +1005,43 @@
             }
         }
 
+        async function fetchRealEcoMetrics() {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase
+                    .from('forkman_user_eco')
+                    .select('co2_saved, points_earned');
+                
+                if (!error && data && data.length > 0) {
+                    const sumCo2 = data.reduce((acc, c) => acc + (parseFloat(c.co2_saved) || 0), 0);
+                    const sumPts = data.reduce((acc, c) => acc + (parseInt(c.points_earned) || 0), 0);
+                    state.co2Saved = Math.max(state.co2Saved, Number(sumCo2.toFixed(1)));
+                    state.ecoPoints = Math.max(state.ecoPoints, sumPts);
+                    state.tripsCount = Math.max(state.tripsCount, data.length);
+                    state.treesEquiv = Math.max(state.treesEquiv, Math.floor(state.co2Saved / 10));
+                    updateAllMetrics();
+                }
+            } catch (err) {
+                console.warn('Error fetching real eco data:', err);
+            }
+        }
+
+        // Realtime sync from Supabase
+        if (supabase) {
+            fetchRealEcoMetrics();
+            setInterval(fetchRealEcoMetrics, 5000);
+            try {
+                supabase
+                    .channel('realtime_eco_hub_sync')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'forkman_user_eco' }, () => {
+                        fetchRealEcoMetrics();
+                    })
+                    .subscribe();
+            } catch (e) {
+                console.warn('Realtime channel error:', e);
+            }
+        }
+
         function toggleIsland(expand) {
             if (expand !== undefined) {
                 island.classList.toggle('expanded', expand);
@@ -1031,12 +1073,27 @@
             }
         });
 
-        // Modal Handlers
+        // Modal Handlers & Eco Validator QR Generator
         const qrModal = document.getElementById('qr-modal');
-        function openUserQR() {
+        async function openUserQR() {
+            let userId = 'user_' + Math.random().toString(36).substring(2, 8);
+            let userName = 'Usuario Forkar';
+            if (supabase) {
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        userId = user.id;
+                        userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario Forkar';
+                    }
+                } catch(e) {}
+            }
+            const cleanName = encodeURIComponent(userName);
+            const token = 'tok_' + Date.now();
+            const qrUri = `forkar_eco://claim?user=${userId}&name=${cleanName}&pts=50&token=${token}`;
+
             document.getElementById('modal-title').textContent = 'Tu Código Eco de Usuario';
-            document.getElementById('modal-desc').textContent = 'Presenta este código en cualquier estación para registrar tu trayecto.';
-            document.getElementById('qr-image').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=FORKAR_ECO_USER_' + Date.now();
+            document.getElementById('modal-desc').textContent = 'Presenta este código en Forkar Eco Validator (Android o iOS) para sumar puntos.';
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrUri)}`;
             qrModal.classList.add('active');
         }
 
@@ -1046,17 +1103,35 @@
             openUserQR();
         });
 
-        function triggerStationScan() {
-            const station = prompt('Ingresa el código o ID de la estación para validar tu trayecto (ej. EST-CENTRAL-01):', 'EST-COTA-CENTRAL');
+        async function triggerStationScan() {
+            const station = prompt('Ingresa el código o nombre de la estación para validar tu trayecto (ej. Punto Verde Parque Principal):', 'Punto Verde Parque Principal');
             if (station) {
-                state.ecoPoints += 15;
-                state.co2Saved += 2.5;
-                state.tripsCount += 1;
-                state.treesEquiv = Math.floor(state.co2Saved / 8);
+                const addedPts = 50;
+                const addedCo2 = 2.5;
 
-                updateAllMetrics(`¡+15 pts! Registrado en ${station}`);
+                state.ecoPoints += addedPts;
+                state.co2Saved += addedCo2;
+                state.tripsCount += 1;
+                state.treesEquiv = Math.floor(state.co2Saved / 10);
+                updateAllMetrics(`¡+${addedPts} pts! Registrado en ${station}`);
                 toggleIsland(true);
-                alert(`¡Trayecto registrado en ${station}!\n+15 Eco Puntos acreditados\n-2.5 kg CO₂ ahorrados`);
+
+                if (supabase) {
+                    try {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        const uid = user ? user.id : '00000000-0000-0000-0000-000000000001';
+                        await supabase.from('forkman_user_eco').insert({
+                            user_id: uid,
+                            co2_saved: addedCo2,
+                            points_earned: addedPts
+                        });
+                        fetchRealEcoMetrics();
+                    } catch(e) {
+                        console.warn('Error logging to Supabase:', e);
+                    }
+                }
+
+                alert(`¡Trayecto registrado en ${station}!\n+${addedPts} Eco Puntos acreditados\n-${addedCo2} kg CO₂ ahorrados`);
             }
         }
 

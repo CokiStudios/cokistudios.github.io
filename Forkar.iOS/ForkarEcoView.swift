@@ -235,6 +235,20 @@ struct ForkarEcoView: View {
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenEcoQRScanner"))) { _ in
                 showQRScanner = true
             }
+            .onAppear {
+                Task {
+                    await refreshEcoImpactAsync()
+                }
+            }
+            .task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(nanoseconds: 3_500_000_000)
+                    await refreshEcoImpactAsync()
+                }
+            }
+            .refreshable {
+                await refreshEcoImpactAsync()
+            }
             .onChange(of: scenePhase) { newPhase in
                 if newPhase == .background {
                     DynamicIslandEcoManager.shared.startEcoLiveActivity(
@@ -248,6 +262,27 @@ struct ForkarEcoView: View {
     }
     
     @Environment(\.scenePhase) private var scenePhase
+    
+    @MainActor
+    private func refreshEcoImpactAsync() async {
+        do {
+            let impact = try await authManager.fetchUserEcoImpact()
+            if impact.co2 > 0.0 || impact.points > 0 {
+                self.co2Saved = impact.co2
+                self.ecoPoints = impact.points
+                UserDefaults.standard.set(self.co2Saved, forKey: "forkar_co2_saved")
+                UserDefaults.standard.set(self.ecoPoints, forKey: "forkar_eco_points")
+                WidgetCenter.shared.reloadAllTimelines()
+                DynamicIslandEcoManager.shared.updateEcoLiveActivity(
+                    co2: self.co2Saved,
+                    pts: self.ecoPoints,
+                    message: "Sincronizado"
+                )
+            }
+        } catch {
+            // Fallback to local
+        }
+    }
     
     private func handleScannedQR(_ code: String) {
         if code.contains("RAEE") || code.contains("raee") {
@@ -291,6 +326,15 @@ struct ForkarEcoView: View {
             pts: ecoPoints,
             message: "+\(String(format: "%.1f", co2)) kg CO₂ (\(title))"
         )
+        
+        Task {
+            _ = try? await authManager.logUserEcoImpact(
+                actionId: UUID().uuidString,
+                co2Saved: co2,
+                pointsEarned: pts
+            )
+            await refreshEcoImpactAsync()
+        }
     }
         
     private func redeemReward(cost: Int, title: String) {

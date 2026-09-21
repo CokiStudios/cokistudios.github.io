@@ -118,6 +118,14 @@ fun EcoHubScreen(
 
     LaunchedEffect(Unit) {
         loadData()
+        while (true) {
+            kotlinx.coroutines.delay(3500)
+            val (freshCo2, freshPts) = manager.fetchUserEcoImpact()
+            if (freshCo2 > 0.0 || freshPts > 0) {
+                co2Saved = freshCo2
+                pointsEarned = freshPts
+            }
+        }
     }
 
     Scaffold(
@@ -315,6 +323,7 @@ fun EcoHubScreen(
                                                         if (success) {
                                                             co2Saved += action.co2Impact
                                                             pointsEarned += action.pointsEarned
+                                                            loadData()
                                                             Toast.makeText(context, "🌿 Reto completado: +${action.co2Impact} kg CO₂", Toast.LENGTH_SHORT).show()
                                                         } else {
                                                             Toast.makeText(context, "⚠️ Error al registrar reto", Toast.LENGTH_SHORT).show()

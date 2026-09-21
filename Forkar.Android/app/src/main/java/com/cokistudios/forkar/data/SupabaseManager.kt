@@ -708,9 +708,13 @@ class SupabaseManager private constructor(context: Context) {
     }
 
     suspend fun fetchUserEcoImpact(userId: String? = null): Pair<Double, Int> = withContext(Dispatchers.IO) {
-        val targetUserId = userId ?: currentUser?.id ?: return@withContext Pair(0.0, 0)
+        val targetUserId = userId ?: currentUser?.id
         val path = "/rest/v1/forkman_user_eco"
-        val queryParams = mapOf("select" to "*", "user_id" to "eq.$targetUserId")
+        val queryParams = if (targetUserId != null) {
+            mapOf("select" to "*", "user_id" to "eq.$targetUserId")
+        } else {
+            mapOf("select" to "*", "order" to "created_at.desc", "limit" to "50")
+        }
         val request = makeRequest(path, queryParams = queryParams)
         client.newCall(request).execute().use { response ->
             val body = response.body?.string() ?: ""

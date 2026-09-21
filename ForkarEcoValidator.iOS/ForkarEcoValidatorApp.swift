@@ -341,9 +341,103 @@ struct ValidatorContentView: View {
                     Text("Puntos acreditados con éxito.")
                 }
             }
+            .onAppear {
+                Task {
+                    await fetchRealValidationsFromSupabase()
+                }
+            }
+            .refreshable {
+                await fetchRealValidationsFromSupabase()
+            }
         }
     }
     
+    // MARK: - Supabase Live Sync
+    private let supabaseUrl = "https://slwtxwogffkchuvxwyud.supabase.co"
+    private let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsd3R4d29nZmZrY2h1dnh3eXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNzMzNDUsImV4cCI6MjA2Njc0OTM0NX0.07_m_T4kYQW9hJ35G0JbO0CqWsmYFkZ-G5ZcR2aN50g"
+
+    private func uploadValidationToSupabase(userId: String, co2Kg: Double, points: Int) {
+        guard let url = URL(string: "\(supabaseUrl)/rest/v1/forkman_user_eco") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("return=representation", forHTTPHeaderField: "Prefer")
+        
+        let validUuid = UUID(uuidString: userId) != nil ? userId : "00000000-0000-0000-0000-000000000001"
+        let body: [String: Any] = [
+            "user_id": validUuid,
+            "co2_saved": co2Kg,
+            "points_earned": points
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        Task {
+            do {
+                let (_, response) = try await URLSession.shared.data(for: request)
+                if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+                    await fetchRealValidationsFromSupabase()
+                }
+            } catch {
+                print("Supabase eco validation upload error: \(error)")
+            }
+        }
+    }
+
+    @MainActor
+    private func fetchRealValidationsFromSupabase() async {
+        guard let url = URL(string: "\(supabaseUrl)/rest/v1/forkman_user_eco?select=*&order=created_at.desc&limit=25") else { return }
+        var request = URLRequest(url: url)
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+                  let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]], !list.isEmpty else { return }
+            
+            var totalPts = 0
+            var totalCo2 = 0.0
+            var loadedClaims: [ValidatedEcoClaim] = []
+            
+            for item in list {
+                let pts = item["points_earned"] as? Int ?? 50
+                let co2: Double
+                if let d = item["co2_saved"] as? Double { co2 = d }
+                else if let s = item["co2_saved"] as? String, let d = Double(s) { co2 = d }
+                else { co2 = 2.5 }
+                
+                totalPts += pts
+                totalCo2 += co2
+                
+                let uid = item["user_id"] as? String ?? "Usuario"
+                let shortUid = uid.count > 8 ? String(uid.prefix(8)) + "..." : uid
+                
+                loadedClaims.append(
+                    ValidatedEcoClaim(
+                        userId: uid,
+                        userName: "Usuario Forkar (\(shortUid))",
+                        stationName: currentStation.name,
+                        points: pts,
+                        co2EstimatedKg: co2,
+                        token: "remote",
+                        isApproved: true,
+                        statusText: "Validado en Supabase"
+                    )
+                )
+            }
+            
+            self.totalValidatedPoints = totalPts
+            self.totalCO2KgSaved = totalCo2
+            if !loadedClaims.isEmpty {
+                self.recentValidations = loadedClaims
+            }
+        } catch {
+            print("Error fetching validations from Supabase: \(error)")
+        }
+    }
+
     // MARK: - Validation Engine
     private func validateAndProcessQRCode(_ qrString: String) {
         // Haptic Feedback
@@ -419,6 +513,9 @@ struct ValidatorContentView: View {
         totalValidatedPoints += points
         totalCO2KgSaved += co2Kg
         showSuccessAlert = true
+        
+        // Upload to real Supabase
+        uploadValidationToSupabase(userId: userId, co2Kg: co2Kg, points: points)
     }
 }
 
