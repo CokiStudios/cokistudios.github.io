@@ -26,9 +26,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Search
 import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
+import com.cokistudios.forkar.ui.theme.PurpleAccent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -78,7 +80,8 @@ fun HomeScreen(
     manager: SupabaseManager,
     onPostClick: (Post) -> Unit,
     onCreatePostClick: () -> Unit,
-    onLoginRequired: () -> Unit
+    onLoginRequired: () -> Unit,
+    onNavigateToCSMS: () -> Unit = {}
 ) {
     var posts = remember { mutableStateListOf<Post>() }
     var categories = remember { mutableStateListOf<Category>() }
@@ -131,7 +134,25 @@ fun HomeScreen(
                 title = "Forkar",
                 subtitle = "Comunidad Coki Studios",
                 icon = Icons.Default.Home,
-                iconColor = IndigoPrimary
+                iconColor = IndigoPrimary,
+                actions = {
+                    IconButton(onClick = onNavigateToCSMS) {
+                        Box(contentAlignment = Alignment.TopEnd) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "CSMS Chat",
+                                tint = PurpleAccent,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF10B981))
+                            )
+                        }
+                    }
+                }
             )
         },
 

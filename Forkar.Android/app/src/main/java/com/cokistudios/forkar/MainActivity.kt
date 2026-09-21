@@ -44,7 +44,9 @@ import kotlinx.coroutines.launch
 import com.cokistudios.forkar.ui.components.XtrapsBackground
 import com.cokistudios.forkar.ui.components.LiquidGlassNavigationBar
 import com.cokistudios.forkar.ui.components.LiquidNavItem
+import com.cokistudios.forkar.ui.screens.CSMSScreen
 import com.cokistudios.forkar.ui.screens.EcoHubScreen
+import com.cokistudios.forkar.ui.theme.PurpleAccent
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Email
 
@@ -166,6 +168,7 @@ fun MainContainerScreen(
         listOf(
             LiquidNavItem("Inicio", Icons.Default.Home, IndigoPrimary),
             LiquidNavItem("Eco Hub", Icons.Default.Star, Color(0xFF10B981)),
+            LiquidNavItem("CSMS", Icons.Default.Email, PurpleAccent),
             LiquidNavItem("Mi Perfil", Icons.Default.Person, IndigoPrimary)
         )
     }
@@ -194,13 +197,18 @@ fun MainContainerScreen(
                     manager = manager,
                     onPostClick = onPostClick,
                     onCreatePostClick = onCreatePostClick,
-                    onLoginRequired = onLoginRequired
+                    onLoginRequired = onLoginRequired,
+                    onNavigateToCSMS = { selectedTab = 2 }
                 )
                 1 -> EcoHubScreen(
                     manager = manager,
                     onLoginRequired = onLoginRequired
                 )
-                2 -> ProfileScreen(
+                2 -> CSMSScreen(
+                    manager = manager,
+                    onLoginRequired = onLoginRequired
+                )
+                3 -> ProfileScreen(
                     manager = manager,
                     onLoginClick = onLoginRequired,
                     onPostClick = onPostClick

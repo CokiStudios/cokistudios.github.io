@@ -40,6 +40,7 @@ fun LiquidGlassTopBar(
     subtitle: String? = null,
     icon: ImageVector? = null,
     iconColor: Color = Color(0xFF6366F1),
+    onIconClick: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val glassBg = Brush.linearGradient(
@@ -73,16 +74,20 @@ fun LiquidGlassTopBar(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (icon != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(iconColor.copy(alpha = 0.40f), iconColor.copy(alpha = 0.18f))
-                                )
+                    val iconBoxModifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(iconColor.copy(alpha = 0.40f), iconColor.copy(alpha = 0.18f))
                             )
-                            .border(1.2.dp, iconColor.copy(alpha = 0.70f), CircleShape),
+                        )
+                        .border(1.2.dp, iconColor.copy(alpha = 0.70f), CircleShape)
+                        .then(
+                            if (onIconClick != null) Modifier.clickable { onIconClick() } else Modifier
+                        )
+                    Box(
+                        modifier = iconBoxModifier,
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -199,6 +204,13 @@ fun LiquidGlassNavigationBar(
                         label = "textColor"
                     )
 
+                    val isDense = items.size >= 4
+                    val hPadding = if (isDense) 8.dp else 14.dp
+                    val vPadding = if (isDense) 7.dp else 8.dp
+                    val iconSize = if (isDense) 18.dp else 20.dp
+                    val textSize = if (isDense) 11.5.sp else 13.sp
+                    val spacerWidth = if (isDense) 4.dp else 6.dp
+
                     Box(
                         modifier = Modifier
                             .scale(scale)
@@ -206,7 +218,7 @@ fun LiquidGlassNavigationBar(
                             .background(pillBg)
                             .border(1.2.dp, pillBorder, RoundedCornerShape(22.dp))
                             .clickable { onItemSelected(index) }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                            .padding(horizontal = hPadding, vertical = vPadding),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(
@@ -217,12 +229,12 @@ fun LiquidGlassNavigationBar(
                                 imageVector = item.icon,
                                 contentDescription = item.title,
                                 tint = if (isSelected) item.accentColor else Color(0xFFCBD5E1),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(iconSize)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(spacerWidth))
                             Text(
                                 text = item.title,
-                                fontSize = 13.sp,
+                                fontSize = textSize,
                                 fontWeight = if (isSelected) FontWeight.Black else FontWeight.ExtraBold,
                                 color = textColor
                             )

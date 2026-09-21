@@ -795,7 +795,6 @@ class SupabaseManager private constructor(context: Context) {
 
     // MARK: - CSMS / Chat API
     suspend fun fetchChatRooms(): List<JSONObject> = withContext(Dispatchers.IO) {
-        val user = currentUser ?: return@withContext emptyList()
         val path = "/rest/v1/chat_rooms"
         val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
         val request = makeRequest(path, queryParams = queryParams)
@@ -812,12 +811,13 @@ class SupabaseManager private constructor(context: Context) {
     }
 
     suspend fun createGroupChat(name: String): Boolean = withContext(Dispatchers.IO) {
-        val user = currentUser ?: throw IOException("Inicia sesión para crear grupos CSMS")
+        val user = currentUser
+        val createdBy = user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
         val path = "/rest/v1/chat_rooms"
         val bodyJson = JSONObject().apply {
             put("name", name)
             put("is_group", true)
-            put("created_by", user.id)
+            put("created_by", createdBy)
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
@@ -847,11 +847,12 @@ class SupabaseManager private constructor(context: Context) {
     }
 
     suspend fun sendChatMessage(roomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
-        val user = currentUser ?: throw IOException("Inicia sesión para enviar mensajes")
+        val user = currentUser
+        val senderId = user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
         val path = "/rest/v1/chat_messages"
         val bodyJson = JSONObject().apply {
             put("room_id", roomId)
-            put("sender_id", user.id)
+            put("sender_id", senderId)
             put("content", content)
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())

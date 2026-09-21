@@ -18,8 +18,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -52,6 +55,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cokistudios.forkar.data.SupabaseManager
@@ -105,7 +109,8 @@ fun CSMSScreen(
                     chatList.addAll(
                         listOf(
                             CSMSChat("csms-global", "💬 Comunidad Coki Studios Global", "Canal de chat sincronizado Web, iOS & Android 2.0", "Ahora", 0, true),
-                            CSMSChat("csms-eco", "🌿 Eco Hub Cota & Cundinamarca", "¿Quién se suma al reto de reciclar RAEE hoy?", "10:42 AM", 0, true)
+                            CSMSChat("csms-eco", "🌿 Eco Hub Cota & Cundinamarca", "¿Quién se suma al reto de reciclar RAEE hoy?", "10:42 AM", 0, true),
+                            CSMSChat("csms-forkar", "🚗 Forkar Carpooling & Rutas", "Coordina viajes seguros y comparte trayectos ecológicos", "09:15 AM", 0, true)
                         )
                     )
                 } else {
@@ -197,9 +202,10 @@ fun CSMSScreen(
                     subtitle = "Sincronizado en tiempo real",
                     icon = Icons.Default.ArrowBack,
                     iconColor = Color.White,
+                    onIconClick = { activeChat = null },
                     actions = {
-                        IconButton(onClick = { activeChat = null }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                        IconButton(onClick = { activeChat?.id?.let { loadMessages(it) } }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Recargar mensajes", tint = PurpleAccent)
                         }
                     }
                 )
@@ -293,11 +299,7 @@ fun CSMSScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        if (!manager.isLoggedIn) {
-                                            onLoginRequired()
-                                        } else {
-                                            activeChat = chat
-                                        }
+                                        activeChat = chat
                                     },
                                 shape = RoundedCornerShape(18.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.85f)),
@@ -364,10 +366,19 @@ fun CSMSScreen(
                 }
             } else {
                 // ── CONVERSATION CHAT VIEW ──
+                val listState = rememberLazyListState()
+
+                LaunchedEffect(activeMessages.size) {
+                    if (activeMessages.isNotEmpty()) {
+                        listState.animateScrollToItem(activeMessages.size - 1)
+                    }
+                }
+
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     LazyColumn(
+                        state = listState,
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 16.dp),
@@ -432,6 +443,26 @@ fun CSMSScreen(
                     }
 
                     // Bottom Composer Bar
+                    val sendMessageAction = {
+                        if (!manager.isLoggedIn) {
+                            onLoginRequired()
+                        } else {
+                            val text = typedMessage.trim()
+                            val chat = activeChat
+                            if (text.isNotBlank() && chat != null) {
+                                coroutineScope.launch {
+                                    val success = manager.sendChatMessage(chat.id, text)
+                                    if (success) {
+                                        typedMessage = ""
+                                        loadMessages(chat.id)
+                                    } else {
+                                        Toast.makeText(context, "Error al enviar mensaje", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -445,6 +476,8 @@ fun CSMSScreen(
                             placeholder = { Text("Escribe un mensaje CSMS...") },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(24.dp),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                            keyboardActions = KeyboardActions(onSend = { sendMessageAction() }),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,
@@ -454,17 +487,7 @@ fun CSMSScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         IconButton(
-                            onClick = {
-                                val text = typedMessage.trim()
-                                val chat = activeChat
-                                if (text.isNotBlank() && chat != null) {
-                                    coroutineScope.launch {
-                                        manager.sendChatMessage(chat.id, text)
-                                        typedMessage = ""
-                                        loadMessages(chat.id)
-                                    }
-                                }
-                            },
+                            onClick = { sendMessageAction() },
                             modifier = Modifier
                                 .size(46.dp)
                                 .clip(CircleShape)
