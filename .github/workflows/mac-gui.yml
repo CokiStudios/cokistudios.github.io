@@ -4,11 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       os_version:
-        description: 'Versión de macOS Runner'
+        description: 'Versión de macOS Runner (xcode-27 con macOS 27 e iOS 27 SDK)'
         required: true
-        default: 'macos-latest'
+        default: 'xcode-27'
         type: choice
         options:
+          - xcode-27
+          - xcode-27-xlarge
           - macos-latest
           - macos-15
           - macos-14
@@ -26,7 +28,7 @@ on:
 jobs:
   remote-mac:
     name: Sesion Mac GUI
-    runs-on: ${{ inputs.os_version || 'macos-latest' }}
+    runs-on: ${{ inputs.os_version || 'xcode-27' }}
     timeout-minutes: 360 # Hasta 6 horas gratis de sesión continua
     steps:
       - name: Checkout del proyecto
