@@ -801,18 +801,51 @@ class SupabaseManager private constructor(context: Context) {
         client.newCall(request).execute().use { response ->
             val body = response.body?.string() ?: ""
             if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
-            val array = JSONArray(body)
-            val list = mutableListOf<JSONObject>()
-            for (i in 0 until array.length()) {
-                list.add(array.getJSONObject(i))
+            try {
+                val array = JSONArray(body)
+                val list = mutableListOf<JSONObject>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    var roomName = obj.optString("name")
+                    val isGroup = obj.optBoolean("is_group", true)
+                    if (roomName.isBlank() || roomName == "null") {
+                        roomName = if (isGroup) "Grupo CSMS" else "Chat Directo"
+                    }
+                    obj.put("displayName", roomName)
+                    list.add(obj)
+                }
+                list
+            } catch (e: Exception) {
+                emptyList()
             }
-            list
+        }
+    }
+
+    suspend fun joinRoomAsMember(roomId: String, memberId: String? = null, memberName: String? = null): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val user = currentUser
+            val uid = memberId ?: user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
+            val name = memberName ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
+            val path = "/rest/v1/chat_room_members"
+            val bodyJson = JSONObject().apply {
+                put("room_id", roomId)
+                put("user_id", uid)
+                put("user_name", name)
+            }
+            val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
+            val request = makeRequest(path, "POST", body)
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 
     suspend fun createGroupChat(name: String): Boolean = withContext(Dispatchers.IO) {
         val user = currentUser
         val createdBy = user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
+        val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
         val path = "/rest/v1/chat_rooms"
         val bodyJson = JSONObject().apply {
             put("name", name)
@@ -821,9 +854,28 @@ class SupabaseManager private constructor(context: Context) {
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
-        client.newCall(request).execute().use { response ->
-            response.isSuccessful
+        var createdRoomId: String? = null
+        val success = client.newCall(request).execute().use { response ->
+            val resBody = response.body?.string() ?: ""
+            if (response.isSuccessful && resBody.isNotBlank()) {
+                try {
+                    val arr = JSONArray(resBody)
+                    if (arr.length() > 0) {
+                        createdRoomId = arr.getJSONObject(0).optString("id")
+                    }
+                } catch (e: Exception) {
+                    // ignore
+                }
+                true
+            } else {
+                response.isSuccessful
+            }
         }
+
+        if (success && !createdRoomId.isNullOrBlank()) {
+            joinRoomAsMember(createdRoomId!!, createdBy, authorName)
+        }
+        success
     }
 
     suspend fun fetchChatMessages(roomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
@@ -849,10 +901,13 @@ class SupabaseManager private constructor(context: Context) {
     suspend fun sendChatMessage(roomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
         val user = currentUser
         val senderId = user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
+        val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
         val path = "/rest/v1/chat_messages"
         val bodyJson = JSONObject().apply {
             put("room_id", roomId)
+            put("user_id", senderId)
             put("sender_id", senderId)
+            put("author_name", authorName)
             put("content", content)
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())

@@ -500,6 +500,16 @@ async function createCSMSGroup(name) {
         .select()
         .single();
     if (error) return { success: false, error: error.message };
+
+    // Register creator in chat_room_members so web client immediately syncs it
+    const meta = user.user_metadata || {};
+    const authorName = meta.full_name || meta.name || user.email || 'Usuario';
+    await supabase.from('chat_room_members').insert({
+        room_id: data.id,
+        user_id: user.id,
+        user_name: authorName
+    });
+
     return { success: true, room: data };
 }
 
@@ -517,9 +527,18 @@ async function sendCSMSMessage(roomId, content) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Inicia sesión para enviar mensajes' };
 
+    const meta = user.user_metadata || {};
+    const authorName = meta.full_name || meta.name || user.email || 'Usuario';
+
     const { data, error } = await supabase
         .from('chat_messages')
-        .insert({ room_id: roomId, sender_id: user.id, content })
+        .insert({
+            room_id: roomId,
+            user_id: user.id,
+            sender_id: user.id,
+            author_name: authorName,
+            content
+        })
         .select()
         .single();
     if (error) return { success: false, error: error.message };

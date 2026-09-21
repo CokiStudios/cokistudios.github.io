@@ -1050,24 +1050,22 @@
         async function loadRooms() {
             try {
                 // 1. Get room memberships of the current user
-                const { data: memberships, error: memError } = await supabase
+                const { data: memberships } = await supabase
                     .from('chat_room_members')
                     .select('room_id')
                     .eq('user_id', currentUser.id);
 
-                if (memError || !memberships || memberships.length === 0) {
-                    renderRooms([]);
-                    return;
+                const memberRoomIds = (memberships || []).map(m => m.room_id);
+
+                // 2. Fetch member rooms AND public community group rooms (is_group = true)
+                // so chats are always synchronized between Web and Android client!
+                let roomsQuery = supabase.from('chat_rooms').select('*');
+                if (memberRoomIds.length > 0) {
+                    roomsQuery = roomsQuery.or(`id.in.(${memberRoomIds.join(',')}),is_group.eq.true`);
+                } else {
+                    roomsQuery = roomsQuery.eq('is_group', true);
                 }
-
-                const roomIds = memberships.map(m => m.room_id);
-
-                // 2. Fetch the corresponding rooms
-                const { data: rooms, error: roomsError } = await supabase
-                    .from('chat_rooms')
-                    .select('*')
-                    .in('id', roomIds)
-                    .order('created_at', { ascending: false });
+                const { data: rooms, error: roomsError } = await roomsQuery.order('created_at', { ascending: false });
 
                 if (roomsError) throw roomsError;
 
@@ -1153,11 +1151,11 @@
 
             activeRoomsChannel = supabase
                 .channel('realtime_rooms_changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_room_members' }, async (payload) => {
-                    // If current user is affected, refresh rooms list
-                    if (payload.new && payload.new.user_id === currentUser.id) {
-                        await loadRooms();
-                    }
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_room_members' }, async () => {
+                    await loadRooms();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_rooms' }, async () => {
+                    await loadRooms();
                 })
                 .subscribe();
         }
@@ -1359,8 +1357,9 @@
             }
 
             container.innerHTML = messages.map(msg => {
-                const isSent = msg.user_id === currentUser.id;
-                const initials = msg.author_name.charAt(0).toUpperCase();
+                const isSent = (msg.user_id === currentUser.id) || (msg.sender_id === currentUser.id);
+                const author = msg.author_name || (isSent ? 'Tú' : 'Usuario');
+                const initials = author.charAt(0).toUpperCase();
                 const avatar = msg.author_avatar;
 
                 return `
@@ -1371,7 +1370,7 @@
                             </div>
                         ` : ''}
                         <div class="message-bubble-wrap">
-                            ${!isSent && activeRoom.is_group ? `<div class="message-author">${escHtml(msg.author_name)}</div>` : ''}
+                            ${!isSent && activeRoom?.is_group ? `<div class="message-author">${escHtml(author)}</div>` : ''}
                             <div class="message-bubble">
                                 ${msg.content ? escHtml(msg.content) : ''}
                                 ${renderAttachmentHTML(msg)}
@@ -1414,8 +1413,9 @@
                 container.innerHTML = '';
             }
 
-            const isSent = msg.user_id === currentUser.id;
-            const initials = msg.author_name.charAt(0).toUpperCase();
+            const isSent = (msg.user_id === currentUser.id) || (msg.sender_id === currentUser.id);
+            const author = msg.author_name || (isSent ? 'Tú' : 'Usuario');
+            const initials = author.charAt(0).toUpperCase();
             const avatar = msg.author_avatar;
 
             const row = document.createElement('div');
@@ -1427,7 +1427,7 @@
                     </div>
                 ` : ''}
                 <div class="message-bubble-wrap">
-                    ${!isSent && activeRoom.is_group ? `<div class="message-author">${escHtml(msg.author_name)}</div>` : ''}
+                    ${!isSent && activeRoom?.is_group ? `<div class="message-author">${escHtml(author)}</div>` : ''}
                     <div class="message-bubble">
                         ${msg.content ? escHtml(msg.content) : ''}
                         ${renderAttachmentHTML(msg)}

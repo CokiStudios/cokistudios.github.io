@@ -115,10 +115,15 @@ fun CSMSScreen(
                     )
                 } else {
                     dbRooms.forEach { obj ->
+                        val displayName = if (obj.has("displayName") && !obj.isNull("displayName") && obj.optString("displayName").isNotBlank()) {
+                            obj.optString("displayName")
+                        } else {
+                            obj.optString("name", "Chat CSMS")
+                        }
                         chatList.add(
                             CSMSChat(
                                 id = obj.optString("id"),
-                                name = obj.optString("name", "Chat de Grupo"),
+                                name = displayName,
                                 lastMessage = "Ver mensajes compartidos...",
                                 time = "Reciente",
                                 unreadCount = 0,
@@ -146,14 +151,37 @@ fun CSMSScreen(
                     )
                 } else {
                     dbMsgs.forEach { obj ->
-                        val senderId = obj.optString("sender_id")
-                        val isMine = (manager.currentUser?.id == senderId)
+                        val msgUserId = if (obj.has("user_id") && !obj.isNull("user_id") && obj.optString("user_id").isNotBlank()) {
+                            obj.optString("user_id")
+                        } else {
+                            obj.optString("sender_id")
+                        }
+                        val myId = manager.currentUser?.id
+                        val isMine = (myId != null && msgUserId.equals(myId, ignoreCase = true))
+
+                        val authorName = when {
+                            isMine -> "Tú"
+                            obj.has("author_name") && !obj.isNull("author_name") && obj.optString("author_name").isNotBlank() -> obj.optString("author_name")
+                            else -> "Usuario Web/CSMS"
+                        }
+
+                        val createdAt = obj.optString("created_at")
+                        val timeStr = if (createdAt.length >= 16) {
+                            try {
+                                createdAt.substring(11, 16)
+                            } catch (e: Exception) {
+                                "Enviado"
+                            }
+                        } else {
+                            "Enviado"
+                        }
+
                         activeMessages.add(
                             CSMSMessage(
                                 id = obj.optString("id"),
-                                senderName = if (isMine) "Tú" else "Usuario",
+                                senderName = authorName,
                                 text = obj.optString("content"),
-                                time = "Enviado",
+                                time = timeStr,
                                 isMine = isMine
                             )
                         )
@@ -167,15 +195,24 @@ fun CSMSScreen(
 
     LaunchedEffect(Unit) {
         loadRooms()
+        while (true) {
+            delay(5000)
+            if (activeChat == null) {
+                loadRooms()
+            }
+        }
     }
 
-    // Auto sync messages every 3.5s when inside chat
+    // Auto sync messages every 1.8s when inside chat + auto join room as member
     LaunchedEffect(activeChat) {
         val chat = activeChat
         if (chat != null) {
+            coroutineScope.launch {
+                manager.joinRoomAsMember(chat.id)
+            }
             loadMessages(chat.id)
             while (activeChat?.id == chat.id) {
-                delay(3500)
+                delay(1800)
                 loadMessages(chat.id)
             }
         }
