@@ -14,11 +14,6 @@ on:
           - macos-latest
           - macos-15
           - macos-14
-      ngrok_token:
-        description: 'Ngrok Authtoken (opcional si ya está en Secrets)'
-        required: false
-        default: ''
-        type: string
       session_password:
         description: 'Contraseña para la sesión VNC/Mac'
         required: false
@@ -59,59 +54,73 @@ jobs:
           sudo launchctl enable system/com.apple.screensharing 2>/dev/null || true
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
 
-      - name: Iniciar servidor noVNC (Pantalla en Navegador Web)
-        run: |
-          echo "🌐 Instalando y levantando noVNC..."
-          brew install websockify novnc 2>/dev/null || true
-          
-          if command -v novnc_proxy >/dev/null 2>&1; then
-            NOVNC_BIN="$(command -v novnc_proxy)"
-          elif [ -f /opt/homebrew/bin/novnc_proxy ]; then
-            NOVNC_BIN="/opt/homebrew/bin/novnc_proxy"
-          elif [ -f /usr/local/bin/novnc_proxy ]; then
-            NOVNC_BIN="/usr/local/bin/novnc_proxy"
-          else
-            git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/novnc
-            NOVNC_BIN="/tmp/novnc/utils/novnc_proxy"
-          fi
-          
-          echo "Ejecutando noVNC desde: ${NOVNC_BIN}"
-          nohup "${NOVNC_BIN}" --vnc localhost:5900 --listen 6080 > /tmp/novnc.log 2>&1 &
-          sleep 3
+          # Otorgar permisos TCC para captura de pantalla
+          sudo sqlite3 "/Library/Application Support/com.apple.TCC/TCC.db" \
+            "INSERT OR REPLACE INTO access VALUES('kTCCServiceScreenCapture','com.apple.RemoteDesktopAgent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,$(date +%s));" 2>/dev/null || true
+          sudo sqlite3 "/Library/Application Support/com.apple.TCC/TCC.db" \
+            "INSERT OR REPLACE INTO access VALUES('kTCCServiceScreenCapture','com.apple.screensharing.agent',0,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,$(date +%s));" 2>/dev/null || true
 
-      - name: Conectar túnel Ngrok HTTP (Sin tarjeta de crédito)
+      - name: Instalar túnel Bore (TCP puro para VNC)
+        run: |
+          echo "⚡ Descargando bore..."
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+            BORE_ARCH="aarch64-apple-darwin"
+          else
+            BORE_ARCH="x86_64-apple-darwin"
+          fi
+          curl -sL "https://github.com/ekzhang/bore/releases/download/v0.5.2/bore-v0.5.2-${BORE_ARCH}.tar.gz" | tar -xz -C /tmp
+          sudo mv /tmp/bore /usr/local/bin/bore
+          sudo chmod +x /usr/local/bin/bore
+          bore --version
+
+      - name: Conectar túnel VNC con Bore (y Pinggy de respaldo)
         env:
-          NGROK_TOKEN: ${{ inputs.ngrok_token != '' && inputs.ngrok_token || secrets.NGROK_AUTHTOKEN }}
           PASS: ${{ inputs.session_password || 'Coki12345!' }}
         run: |
-          if [ -n "${NGROK_TOKEN}" ]; then
-            echo "⚡ Configurando Ngrok HTTP..."
-            command -v ngrok >/dev/null 2>&1 || brew install ngrok/ngrok/ngrok
-            ngrok config add-authtoken "${NGROK_TOKEN}"
-            ngrok http 6080 --log=stdout > /tmp/ngrok.log 2>&1 &
-            sleep 6
-            WEB_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
-            if [ -z "${WEB_URL}" ]; then
-              sleep 5
-              WEB_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
-            fi
-            echo "================================================================"
-            echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA ESTÁ LISTA!"
-            echo "👉 Haz clic directo en este enlace para entrar sin escribir contraseña:"
-            echo "   ${WEB_URL}/vnc.html?autoconnect=true&password=${PASS}"
-            echo ""
-            echo "   Usuario: $(whoami)"
-            echo "   Sistema: $(sw_vers -productName 2>/dev/null || echo macOS) $(sw_vers -productVersion 2>/dev/null) ($(uname -m))"
-            echo "   (O manual: Usuario: $(whoami) | Contraseña: ${PASS})"
-            echo "================================================================"
-          else
-            echo "❌ Error: NGROK_TOKEN no está definido."
-            exit 1
+          echo "🚀 Conectando VNC al puerto 5900 mediante Bore..."
+          nohup bore local 5900 --to bore.pub > /tmp/bore_vnc.log 2>&1 &
+          
+          echo "📡 Levantando túnel de respaldo con Pinggy..."
+          ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -R0:localhost:5900 a.pinggy.io tcp > /tmp/pinggy.log 2>&1 &
+          
+          sleep 5
+          BORE_CONN=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_vnc.log | head -n 1)
+          if [ -z "${BORE_CONN}" ]; then
+            sleep 4
+            BORE_CONN=$(grep -oE "bore.pub:[0-9]+" /tmp/bore_vnc.log | head -n 1)
           fi
+
+          PINGGY_CONN=$(grep -oE "tcp://[^ ]+" /tmp/pinggy.log | head -n 1)
+
+          echo ""
+          echo "================================================================"
+          echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA VNC ESTÁ LISTA (CON BORE)!"
+          echo "================================================================"
+          echo ""
+          echo "👉 OPCIÓN 1 - Desde tu Mac (App Compartir Pantalla o Finder Cmd+K):"
+          echo "   vnc://${BORE_CONN}"
+          echo ""
+          echo "👉 OPCIÓN 2 - Desde RealVNC Viewer / TigerVNC:"
+          echo "   Servidor:   ${BORE_CONN}"
+          echo "   Usuario:    runner"
+          echo "   Contraseña: ${PASS}"
+          echo ""
+          if [ -n "${PINGGY_CONN}" ]; then
+            echo "👉 OPCIÓN 3 - Respaldo Pinggy:"
+            echo "   ${PINGGY_CONN}"
+            echo ""
+          fi
+          echo "ℹ️ Datos del Runner:"
+          echo "   Usuario local: $(whoami)"
+          echo "   Sistema: $(sw_vers -productName 2>/dev/null || echo macOS) $(sw_vers -productVersion 2>/dev/null) ($(uname -m))"
+          echo "================================================================"
+          echo ""
+          cat /tmp/bore_vnc.log
 
       - name: Mantener sesión viva de macOS
         run: |
-          echo "🖥️ Mac en la nube activa. Conéctate con el enlace de noVNC en tu navegador."
+          echo "🖥️ Mac en la nube activa. Conectado por Bore VNC."
           for i in {1..360}; do
             sleep 60
           done
