@@ -100,7 +100,9 @@ jobs:
             echo "👉 Haz clic directo en este enlace para entrar sin escribir contraseña:"
             echo "   ${WEB_URL}/vnc.html?autoconnect=true&password=${PASS}"
             echo ""
-            echo "   (O manual: Usuario: runner | Contraseña: ${PASS})"
+            echo "   Usuario: $(whoami)"
+            echo "   Sistema: $(sw_vers -productName 2>/dev/null || echo macOS) $(sw_vers -productVersion 2>/dev/null) ($(uname -m))"
+            echo "   (O manual: Usuario: $(whoami) | Contraseña: ${PASS})"
             echo "================================================================"
           else
             echo "❌ Error: NGROK_TOKEN no está definido."
