@@ -34,11 +34,22 @@ fun ForkarTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = Color(0xFF06090F).toArgb()
-            window.navigationBarColor = Color(0xFF06090F).toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+            var ctx = view.context
+            while (ctx is android.content.ContextWrapper) {
+                if (ctx is Activity) break
+                ctx = ctx.baseContext
+            }
+            val activity = ctx as? Activity
+            activity?.window?.let { window ->
+                try {
+                    window.statusBarColor = Color(0xFF06090F).toArgb()
+                    window.navigationBarColor = Color(0xFF06090F).toArgb()
+                    WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+                    WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+                } catch (e: Exception) {
+                    // Safe fallback
+                }
+            }
         }
     }
 
