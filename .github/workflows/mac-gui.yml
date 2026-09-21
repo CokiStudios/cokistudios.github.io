@@ -38,8 +38,8 @@ jobs:
         run: |
           PASS="${{ inputs.session_password || 'Coki12345!' }}"
           echo "Configurando contraseña en DirectoryServices..."
-          sudo dscl . -passwd /Users/runner "${PASS}" 2>/dev/null || true
-          sudo dscl . -passwd /Users/runneradmin "${PASS}" 2>/dev/null || true
+          # El usuario runner por defecto tiene clave vacía en GitHub Actions
+          sudo dscl . -passwd /Users/runner "" "${PASS}" 2>/dev/null || sudo dscl . -passwd /Users/runner "${PASS}" 2>/dev/null || true
           
           # Habilitar Screen Sharing con kickstart oficial de macOS para todos los usuarios
           echo "Activando Remote Desktop y VNC con kickstart..."
