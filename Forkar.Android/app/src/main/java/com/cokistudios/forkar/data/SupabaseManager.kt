@@ -798,37 +798,118 @@ class SupabaseManager private constructor(context: Context) {
     }
 
     // MARK: - CSMS / Chat API
-    suspend fun fetchChatRooms(): List<JSONObject> = withContext(Dispatchers.IO) {
-        val path = "/rest/v1/chat_rooms"
-        val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
-        val request = makeRequest(path, queryParams = queryParams)
-        client.newCall(request).execute().use { response ->
-            val body = response.body?.string() ?: ""
-            if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
-            try {
-                val array = JSONArray(body)
-                val list = mutableListOf<JSONObject>()
-                for (i in 0 until array.length()) {
-                    val obj = array.getJSONObject(i)
-                    var roomName = obj.optString("name")
-                    val isGroup = obj.optBoolean("is_group", true)
-                    if (roomName.isBlank() || roomName == "null") {
-                        roomName = if (isGroup) "Grupo CSMS" else "Chat Directo"
-                    }
-                    obj.put("displayName", roomName)
-                    list.add(obj)
+    fun getValidUserUUID(): String {
+        val uid = currentUser?.id
+        if (!uid.isNullOrBlank() && uid.matches(Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"))) {
+            return uid.lowercase()
+        }
+        val hash = deviceHash.padEnd(32, '0').take(32)
+        return "${hash.substring(0,8)}-${hash.substring(8,12)}-4${hash.substring(13,16)}-a${hash.substring(17,20)}-${hash.substring(20,32)}".lowercase()
+    }
+
+    fun ensureValidRoomUUID(roomId: String): String {
+        return when (roomId) {
+            "csms-global" -> CSMS_COMMUNITY_GLOBAL_ID
+            "csms-eco" -> CSMS_ECO_HUB_ID
+            "csms-forkar" -> CSMS_FORKAR_CARPOOL_ID
+            else -> {
+                if (roomId.matches(Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"))) {
+                    roomId.lowercase()
+                } else {
+                    CSMS_COMMUNITY_GLOBAL_ID
                 }
-                list
-            } catch (e: Exception) {
-                emptyList()
             }
         }
     }
 
-    suspend fun joinRoomAsMember(roomId: String, memberId: String? = null, memberName: String? = null): Boolean = withContext(Dispatchers.IO) {
+    private fun saveLocalChatMessage(roomId: String, msg: JSONObject) {
         try {
+            val key = "csms_cached_messages_$roomId"
+            val existing = sharedPrefs.getString(key, null)
+            val array = if (existing != null) JSONArray(existing) else JSONArray()
+            array.put(msg)
+            sharedPrefs.edit().putString(key, array.toString()).apply()
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error caching local message", e)
+        }
+    }
+
+    private fun getLocalChatMessages(roomId: String): List<JSONObject> {
+        return try {
+            val key = "csms_cached_messages_$roomId"
+            val existing = sharedPrefs.getString(key, null) ?: return emptyList()
+            val array = JSONArray(existing)
+            val list = mutableListOf<JSONObject>()
+            for (i in 0 until array.length()) {
+                list.add(array.getJSONObject(i))
+            }
+            list
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun fetchChatRooms(): List<JSONObject> = withContext(Dispatchers.IO) {
+        val path = "/rest/v1/chat_rooms"
+        val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
+        val request = makeRequest(path, queryParams = queryParams)
+        val list = mutableListOf<JSONObject>()
+        val seenIds = mutableSetOf<String>()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotBlank()) {
+                    val array = JSONArray(body)
+                    for (i in 0 until array.length()) {
+                        val obj = array.getJSONObject(i)
+                        val id = obj.optString("id")
+                        var roomName = obj.optString("name")
+                        val isGroup = obj.optBoolean("is_group", true)
+                        if (roomName.isBlank() || roomName == "null") {
+                            roomName = if (isGroup) "Grupo CSMS" else "Chat Directo"
+                        }
+                        obj.put("displayName", roomName)
+                        if (id.isNotBlank()) {
+                            seenIds.add(id.lowercase())
+                        }
+                        list.add(obj)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error fetching chat rooms from Supabase", e)
+        }
+
+        // Always ensure canonical official channels exist in the room list
+        val canonicalRooms = listOf(
+            Triple(CSMS_COMMUNITY_GLOBAL_ID, "💬 Comunidad Coki Studios Global", true),
+            Triple(CSMS_ECO_HUB_ID, "🌿 Eco Hub Cota & Cundinamarca", true),
+            Triple(CSMS_FORKAR_CARPOOL_ID, "🚗 Forkar Carpooling & Rutas", true)
+        )
+
+        for ((id, name, isGroup) in canonicalRooms) {
+            if (!seenIds.contains(id.lowercase())) {
+                val canonObj = JSONObject().apply {
+                    put("id", id)
+                    put("name", name)
+                    put("displayName", name)
+                    put("is_group", isGroup)
+                    put("created_at", "2026-09-20T00:00:00Z")
+                }
+                list.add(0, canonObj)
+                seenIds.add(id.lowercase())
+            }
+        }
+
+        list
+    }
+
+    suspend fun joinRoomAsMember(rawRoomId: String, memberId: String? = null, memberName: String? = null): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val roomId = ensureValidRoomUUID(rawRoomId)
+            val uid = memberId ?: getValidUserUUID()
             val user = currentUser
-            val uid = memberId ?: user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
             val name = memberName ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
             val path = "/rest/v1/chat_room_members"
             val bodyJson = JSONObject().apply {
@@ -848,7 +929,7 @@ class SupabaseManager private constructor(context: Context) {
 
     suspend fun createGroupChat(name: String): Boolean = withContext(Dispatchers.IO) {
         val user = currentUser
-        val createdBy = user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
+        val createdBy = getValidUserUUID()
         val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
         val path = "/rest/v1/chat_rooms"
         val bodyJson = JSONObject().apply {
@@ -859,21 +940,25 @@ class SupabaseManager private constructor(context: Context) {
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
         var createdRoomId: String? = null
-        val success = client.newCall(request).execute().use { response ->
-            val resBody = response.body?.string() ?: ""
-            if (response.isSuccessful && resBody.isNotBlank()) {
-                try {
-                    val arr = JSONArray(resBody)
-                    if (arr.length() > 0) {
-                        createdRoomId = arr.getJSONObject(0).optString("id")
+        val success = try {
+            client.newCall(request).execute().use { response ->
+                val resBody = response.body?.string() ?: ""
+                if (response.isSuccessful && resBody.isNotBlank()) {
+                    try {
+                        val arr = JSONArray(resBody)
+                        if (arr.length() > 0) {
+                            createdRoomId = arr.getJSONObject(0).optString("id")
+                        }
+                    } catch (e: Exception) {
+                        // ignore
                     }
-                } catch (e: Exception) {
-                    // ignore
+                    true
+                } else {
+                    response.isSuccessful
                 }
-                true
-            } else {
-                response.isSuccessful
             }
+        } catch (e: Exception) {
+            false
         }
 
         if (success && !createdRoomId.isNullOrBlank()) {
@@ -882,7 +967,8 @@ class SupabaseManager private constructor(context: Context) {
         success
     }
 
-    suspend fun fetchChatMessages(roomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
+    suspend fun fetchChatMessages(rawRoomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val roomId = ensureValidRoomUUID(rawRoomId)
         val path = "/rest/v1/chat_messages"
         val queryParams = mapOf(
             "select" to "*",
@@ -890,38 +976,87 @@ class SupabaseManager private constructor(context: Context) {
             "order" to "created_at.asc"
         )
         val request = makeRequest(path, queryParams = queryParams)
-        client.newCall(request).execute().use { response ->
-            val body = response.body?.string() ?: ""
-            if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
-            val array = JSONArray(body)
-            val list = mutableListOf<JSONObject>()
-            for (i in 0 until array.length()) {
-                list.add(array.getJSONObject(i))
+        val remoteList = mutableListOf<JSONObject>()
+        try {
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotBlank()) {
+                    val array = JSONArray(body)
+                    for (i in 0 until array.length()) {
+                        remoteList.add(array.getJSONObject(i))
+                    }
+                }
             }
-            list
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error fetching remote chat messages", e)
         }
+
+        val localList = getLocalChatMessages(roomId)
+        val combined = mutableListOf<JSONObject>()
+        val seenContents = mutableSetOf<String>()
+
+        for (m in remoteList) {
+            val id = m.optString("id")
+            val content = m.optString("content")
+            seenContents.add("$id-$content")
+            combined.add(m)
+        }
+        for (m in localList) {
+            val id = m.optString("id")
+            val content = m.optString("content")
+            if (!seenContents.contains("$id-$content")) {
+                combined.add(m)
+            }
+        }
+        combined
     }
 
-    suspend fun sendChatMessage(roomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun sendChatMessage(rawRoomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
+        val roomId = ensureValidRoomUUID(rawRoomId)
         val user = currentUser
-        val senderId = user?.id ?: "guest-${android.os.Build.MODEL.filter { it.isLetterOrDigit() }.take(6)}"
-        val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
+        val senderId = getValidUserUUID()
+        val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario CSMS"
+        val nowIso = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
+        val localMsgId = java.util.UUID.randomUUID().toString()
+
+        val localMsgObj = JSONObject().apply {
+            put("id", localMsgId)
+            put("room_id", roomId)
+            put("user_id", senderId)
+            put("author_name", authorName)
+            put("content", content)
+            put("created_at", nowIso)
+            put("is_local", true)
+        }
+
+        saveLocalChatMessage(roomId, localMsgObj)
+
         val path = "/rest/v1/chat_messages"
         val bodyJson = JSONObject().apply {
             put("room_id", roomId)
             put("user_id", senderId)
-            put("sender_id", senderId)
             put("author_name", authorName)
             put("content", content)
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
-        client.newCall(request).execute().use { response ->
-            response.isSuccessful
+        try {
+            client.newCall(request).execute().use { response ->
+                Log.d("SupabaseManager", "sendChatMessage remote result code: ${response.code}")
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Failed to send chat message remotely", e)
         }
+        true
     }
 
     companion object {
+        const val CSMS_COMMUNITY_GLOBAL_ID = "00000000-0000-4000-8000-000000000001"
+        const val CSMS_ECO_HUB_ID = "00000000-0000-4000-8000-000000000002"
+        const val CSMS_FORKAR_CARPOOL_ID = "00000000-0000-4000-8000-000000000003"
+
         @Volatile
         private var instance: SupabaseManager? = null
 

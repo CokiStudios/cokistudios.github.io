@@ -68,28 +68,60 @@ class SupabaseManager(context: Context) {
         return requestBuilder.build()
     }
 
+    fun getValidUserUUID(): String {
+        return "00000000-0000-4000-8000-" + android.os.Build.MODEL.filter { it.isLetterOrDigit() }.padEnd(12, '0').take(12).lowercase()
+    }
+
+    fun ensureValidRoomUUID(roomId: String): String {
+        return when (roomId) {
+            "csms-global" -> CSMS_COMMUNITY_GLOBAL_ID
+            "csms-eco" -> CSMS_ECO_HUB_ID
+            else -> {
+                if (roomId.matches(Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"))) {
+                    roomId.lowercase()
+                } else {
+                    CSMS_COMMUNITY_GLOBAL_ID
+                }
+            }
+        }
+    }
+
     suspend fun fetchChatRooms(): List<ChatRoomItem> = withContext(Dispatchers.IO) {
         val path = "/rest/v1/chat_rooms"
         val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
         val request = makeRequest(path, queryParams = queryParams)
-        client.newCall(request).execute().use { response ->
-            val body = response.body?.string() ?: ""
-            if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
-            val array = JSONArray(body)
-            val list = mutableListOf<ChatRoomItem>()
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                list.add(
-                    ChatRoomItem(
-                        id = obj.optString("id"),
-                        name = obj.optString("name", "Chat de Grupo"),
-                        isGroup = obj.optBoolean("is_group", true),
-                        createdAt = obj.optString("created_at", "")
-                    )
-                )
+        val list = mutableListOf<ChatRoomItem>()
+        val seenIds = mutableSetOf<String>()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotBlank()) {
+                    val array = JSONArray(body)
+                    for (i in 0 until array.length()) {
+                        val obj = array.getJSONObject(i)
+                        val id = obj.optString("id")
+                        list.add(
+                            ChatRoomItem(
+                                id = id,
+                                name = obj.optString("name", "Chat de Grupo"),
+                                isGroup = obj.optBoolean("is_group", true),
+                                createdAt = obj.optString("created_at", "")
+                            )
+                        )
+                        seenIds.add(id.lowercase())
+                    }
+                }
             }
-            list
+        } catch (e: Exception) {}
+
+        if (!seenIds.contains(CSMS_COMMUNITY_GLOBAL_ID.lowercase())) {
+            list.add(0, ChatRoomItem(CSMS_COMMUNITY_GLOBAL_ID, "💬 Comunidad Coki Studios Global", true, ""))
         }
+        if (!seenIds.contains(CSMS_ECO_HUB_ID.lowercase())) {
+            list.add(1, ChatRoomItem(CSMS_ECO_HUB_ID, "🌿 Eco Hub Cota & Cundinamarca", true, ""))
+        }
+        list
     }
 
     suspend fun createGroupChat(name: String): Boolean = withContext(Dispatchers.IO) {
@@ -97,15 +129,21 @@ class SupabaseManager(context: Context) {
         val bodyJson = JSONObject().apply {
             put("name", name)
             put("is_group", true)
+            put("created_by", getValidUserUUID())
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
-        client.newCall(request).execute().use { response ->
-            response.isSuccessful
+        try {
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 
-    suspend fun fetchChatMessages(roomId: String): List<ChatMessageItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchChatMessages(rawRoomId: String): List<ChatMessageItem> = withContext(Dispatchers.IO) {
+        val roomId = ensureValidRoomUUID(rawRoomId)
         val path = "/rest/v1/chat_messages"
         val queryParams = mapOf(
             "select" to "*",
@@ -113,42 +151,55 @@ class SupabaseManager(context: Context) {
             "order" to "created_at.asc"
         )
         val request = makeRequest(path, queryParams = queryParams)
-        client.newCall(request).execute().use { response ->
-            val body = response.body?.string() ?: ""
-            if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
-            val array = JSONArray(body)
-            val list = mutableListOf<ChatMessageItem>()
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                list.add(
-                    ChatMessageItem(
-                        id = obj.optString("id"),
-                        roomId = obj.optString("room_id"),
-                        senderId = obj.optString("sender_id"),
-                        content = obj.optString("content"),
-                        createdAt = obj.optString("created_at")
+        try {
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string() ?: ""
+                if (!response.isSuccessful || body.isBlank()) return@withContext emptyList()
+                val array = JSONArray(body)
+                val list = mutableListOf<ChatMessageItem>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    list.add(
+                        ChatMessageItem(
+                            id = obj.optString("id"),
+                            roomId = obj.optString("room_id"),
+                            senderId = if (obj.has("user_id")) obj.optString("user_id") else obj.optString("sender_id"),
+                            content = obj.optString("content"),
+                            createdAt = obj.optString("created_at")
+                        )
                     )
-                )
+                }
+                list
             }
-            list
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 
-    suspend fun sendChatMessage(roomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun sendChatMessage(rawRoomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
+        val roomId = ensureValidRoomUUID(rawRoomId)
         val path = "/rest/v1/chat_messages"
         val bodyJson = JSONObject().apply {
             put("room_id", roomId)
-            put("sender_id", "my-user")
+            put("user_id", getValidUserUUID())
+            put("author_name", "Android CSMS")
             put("content", content)
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
-        client.newCall(request).execute().use { response ->
-            response.isSuccessful
+        try {
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 
     companion object {
+        const val CSMS_COMMUNITY_GLOBAL_ID = "00000000-0000-4000-8000-000000000001"
+        const val CSMS_ECO_HUB_ID = "00000000-0000-4000-8000-000000000002"
+
         @Volatile
         private var instance: SupabaseManager? = null
 

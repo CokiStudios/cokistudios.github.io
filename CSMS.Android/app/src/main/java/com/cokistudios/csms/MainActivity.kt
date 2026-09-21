@@ -102,8 +102,8 @@ fun CSMSAppMainScreen(manager: SupabaseManager) {
                 if (dbRooms.isEmpty()) {
                     chatList.addAll(
                         listOf(
-                            ChatRoomItem("csms-global", "💬 Comunidad Coki Studios Global", true),
-                            ChatRoomItem("csms-eco", "🌿 Eco Hub Cota & Cundinamarca", true)
+                            ChatRoomItem(SupabaseManager.CSMS_COMMUNITY_GLOBAL_ID, "💬 Comunidad Coki Studios Global", true),
+                            ChatRoomItem(SupabaseManager.CSMS_ECO_HUB_ID, "🌿 Eco Hub Cota & Cundinamarca", true)
                         )
                     )
                 } else {
@@ -405,9 +405,18 @@ fun CSMSAppMainScreen(manager: SupabaseManager) {
                                 val text = typedMessage.trim()
                                 val room = activeRoom
                                 if (text.isNotBlank() && room != null) {
+                                    activeMessages.add(
+                                        ChatMessageItem(
+                                            id = java.util.UUID.randomUUID().toString(),
+                                            roomId = room.id,
+                                            senderId = manager.getValidUserUUID(),
+                                            content = text,
+                                            createdAt = "Ahora"
+                                        )
+                                    )
+                                    typedMessage = ""
                                     coroutineScope.launch {
                                         manager.sendChatMessage(room.id, text)
-                                        typedMessage = ""
                                         loadMessages(room.id)
                                     }
                                 }

@@ -108,9 +108,9 @@ fun CSMSScreen(
                 if (dbRooms.isEmpty()) {
                     chatList.addAll(
                         listOf(
-                            CSMSChat("csms-global", "💬 Comunidad Coki Studios Global", "Canal de chat sincronizado Web, iOS & Android 2.0", "Ahora", 0, true),
-                            CSMSChat("csms-eco", "🌿 Eco Hub Cota & Cundinamarca", "¿Quién se suma al reto de reciclar RAEE hoy?", "10:42 AM", 0, true),
-                            CSMSChat("csms-forkar", "🚗 Forkar Carpooling & Rutas", "Coordina viajes seguros y comparte trayectos ecológicos", "09:15 AM", 0, true)
+                            CSMSChat(SupabaseManager.CSMS_COMMUNITY_GLOBAL_ID, "💬 Comunidad Coki Studios Global", "Canal de chat sincronizado Web, iOS & Android 2.0", "Ahora", 0, true),
+                            CSMSChat(SupabaseManager.CSMS_ECO_HUB_ID, "🌿 Eco Hub Cota & Cundinamarca", "¿Quién se suma al reto de reciclar RAEE hoy?", "10:42 AM", 0, true),
+                            CSMSChat(SupabaseManager.CSMS_FORKAR_CARPOOL_ID, "🚗 Forkar Carpooling & Rutas", "Coordina viajes seguros y comparte trayectos ecológicos", "09:15 AM", 0, true)
                         )
                     )
                 } else {
@@ -120,9 +120,11 @@ fun CSMSScreen(
                         } else {
                             obj.optString("name", "Chat CSMS")
                         }
+                        val rawId = obj.optString("id")
+                        val validId = manager.ensureValidRoomUUID(rawId)
                         chatList.add(
                             CSMSChat(
-                                id = obj.optString("id"),
+                                id = validId,
                                 name = displayName,
                                 lastMessage = "Ver mensajes compartidos...",
                                 time = "Reciente",
@@ -141,7 +143,8 @@ fun CSMSScreen(
     val loadMessages = { roomId: String ->
         coroutineScope.launch {
             try {
-                val dbMsgs = manager.fetchChatMessages(roomId)
+                val validRoomId = manager.ensureValidRoomUUID(roomId)
+                val dbMsgs = manager.fetchChatMessages(validRoomId)
                 activeMessages.clear()
                 if (dbMsgs.isEmpty()) {
                     activeMessages.addAll(
@@ -150,19 +153,22 @@ fun CSMSScreen(
                         )
                     )
                 } else {
+                    val myUid = manager.getValidUserUUID()
+                    val myAuthId = manager.currentUser?.id
                     dbMsgs.forEach { obj ->
                         val msgUserId = if (obj.has("user_id") && !obj.isNull("user_id") && obj.optString("user_id").isNotBlank()) {
                             obj.optString("user_id")
                         } else {
                             obj.optString("sender_id")
                         }
-                        val myId = manager.currentUser?.id
-                        val isMine = (myId != null && msgUserId.equals(myId, ignoreCase = true))
+                        val isMine = (myAuthId != null && msgUserId.equals(myAuthId, ignoreCase = true)) ||
+                                     (msgUserId.equals(myUid, ignoreCase = true)) ||
+                                     obj.optBoolean("is_local", false)
 
                         val authorName = when {
                             isMine -> "Tú"
                             obj.has("author_name") && !obj.isNull("author_name") && obj.optString("author_name").isNotBlank() -> obj.optString("author_name")
-                            else -> "Usuario Web/CSMS"
+                            else -> "Usuario CSMS"
                         }
 
                         val createdAt = obj.optString("created_at")
@@ -178,7 +184,7 @@ fun CSMSScreen(
 
                         activeMessages.add(
                             CSMSMessage(
-                                id = obj.optString("id"),
+                                id = obj.optString("id", java.util.UUID.randomUUID().toString()),
                                 senderName = authorName,
                                 text = obj.optString("content"),
                                 time = timeStr,
@@ -414,6 +420,40 @@ fun CSMSScreen(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    if (!manager.isLoggedIn) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x228B5CF6))
+                                .border(1.dp, Color(0x558B5CF6), RoundedCornerShape(12.dp))
+                                .clickable { onLoginRequired() }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "💬 Modo Invitado • Toca aquí para iniciar sesión con CSID y verificar tu cuenta",
+                                    color = Color(0xFFC7D2FE),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "Entrar",
+                                    color = PurpleAccent,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
@@ -469,8 +509,8 @@ fun CSMSScreen(
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
                                             text = msg.time,
-                                            fontSize = 9.sp,
-                                            color = Color.White.copy(alpha = 0.6f),
+                                            fontSize = 10.sp,
+                                            color = if (isMine) Color.White.copy(alpha = 0.7f) else Color(0xFF94A3B8),
                                             modifier = Modifier.align(Alignment.End)
                                         )
                                     }
@@ -481,21 +521,24 @@ fun CSMSScreen(
 
                     // Bottom Composer Bar
                     val sendMessageAction = {
-                        if (!manager.isLoggedIn) {
-                            onLoginRequired()
-                        } else {
-                            val text = typedMessage.trim()
-                            val chat = activeChat
-                            if (text.isNotBlank() && chat != null) {
-                                coroutineScope.launch {
-                                    val success = manager.sendChatMessage(chat.id, text)
-                                    if (success) {
-                                        typedMessage = ""
-                                        loadMessages(chat.id)
-                                    } else {
-                                        Toast.makeText(context, "Error al enviar mensaje", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
+                        val text = typedMessage.trim()
+                        val chat = activeChat
+                        if (text.isNotBlank() && chat != null) {
+                            val myName = manager.currentUser?.userMetadata?.fullName ?: manager.currentUser?.email?.substringBefore("@") ?: "Tú"
+                            val nowTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+                            activeMessages.add(
+                                CSMSMessage(
+                                    id = java.util.UUID.randomUUID().toString(),
+                                    senderName = myName,
+                                    text = text,
+                                    time = nowTime,
+                                    isMine = true
+                                )
+                            )
+                            typedMessage = ""
+                            coroutineScope.launch {
+                                manager.sendChatMessage(chat.id, text)
+                                loadMessages(chat.id)
                             }
                         }
                     }
