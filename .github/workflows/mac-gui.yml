@@ -42,24 +42,32 @@ jobs:
           sudo launchctl enable system/com.apple.screensharing 2>/dev/null || true
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
 
-      - name: Conectar túnel Ngrok (si NGROK_AUTHTOKEN está configurado)
+      - name: Iniciar servidor noVNC (Pantalla en Navegador Web)
+        run: |
+          echo "🌐 Instalando y levantando noVNC..."
+          brew install websockify novnc 2>/dev/null || (git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/novnc && ln -sf /tmp/novnc/utils/novnc_proxy /usr/local/bin/novnc_proxy)
+          # Iniciar proxy de VNC a WebSockets HTTP en puerto 6080
+          nohup /usr/local/bin/novnc_proxy --vnc localhost:5900 --listen 6080 > /tmp/novnc.log 2>&1 &
+          sleep 3
+
+      - name: Conectar túnel Ngrok HTTP (Sin tarjeta de crédito)
         env:
           NGROK_TOKEN: ${{ inputs.ngrok_token != '' && inputs.ngrok_token || secrets.NGROK_AUTHTOKEN }}
         run: |
           if [ -n "${NGROK_TOKEN}" ]; then
-            echo "⚡ Configurando Ngrok..."
-            brew install ngrok/ngrok/ngrok
+            echo "⚡ Configurando Ngrok HTTP..."
+            which ngrok >/dev/null 2>&1 || brew install ngrok/ngrok/ngrok
             ngrok config add-authtoken "${NGROK_TOKEN}"
-            ngrok tcp 5900 --log=stdout &
+            # Túnel HTTP estándar (no requiere tarjeta de crédito en cuentas gratis)
+            ngrok http 6080 --log=stdout &
             sleep 6
-            TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
+            WEB_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
             echo "================================================================"
-            echo "🎉 URL DE CONEXIÓN VNC:"
-            echo "👉 ${TUNNEL_URL}"
-            echo "En tu Mac abre Finder > Cmd + K y escribe: vnc://${TUNNEL_URL#tcp://}"
+            echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA ESTÁ LISTA!"
+            echo "👉 Abre este enlace en Safari o Chrome:"
+            echo "   ${WEB_URL}/vnc.html"
+            echo "   Contraseña: ${{ inputs.session_password || 'Coki12345!' }}"
             echo "================================================================"
-          else
-            echo "ℹ️ NGROK_AUTHTOKEN no configurado en Secrets. Puedes usar tmate abajo."
           fi
 
       - name: Iniciar túnel Tmate (Respaldo directo para terminal y web)
