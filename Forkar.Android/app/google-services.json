@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "703867182522",
+    "project_id": "forkar-app",
+    "storage_bucket": "forkar-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703867182522:android:73d71157ab0d7c63f71183",
+        "android_client_info": {
+          "package_name": "com.cokistudios.forkar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_QR1NzuIx81IRyZYW5oR_aQQQp_ec1XY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
