@@ -32,16 +32,17 @@ jobs:
       - name: Configurar credenciales y Servidor de Pantalla (Apple Remote Desktop / VNC)
         run: |
           PASS="${{ inputs.session_password || 'Coki12345!' }}"
-          echo "Configurando contraseña del usuario runner..."
-          sudo sysadminctl -resetPasswordFor runner -newPassword "${PASS}" 2>/dev/null || true
-          echo -e "${PASS}\n${PASS}" | sudo passwd runner 2>/dev/null || true
+          echo "Creando usuario administrador coki con contraseña establecida..."
+          sudo sysadminctl -addUser coki -fullName "Coki Developer" -password "${PASS}" -admin 2>/dev/null || true
+          sudo dscl . -passwd /Users/coki "${PASS}" 2>/dev/null || true
+          sudo dscl . -passwd /Users/runner "${PASS}" 2>/dev/null || true
           
           echo "Configurando Apple Remote Desktop y VNC con kickstart..."
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
             -configure -allowAccessFor -allUsers -privs -all 2>/dev/null || true
             
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -configure -users runner -access -on -privs -all 2>/dev/null || true
+            -configure -users coki,runner -access -on -privs -all 2>/dev/null || true
             
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
             -configure -clientopts -setvnclegacy -vnclegacy yes -setvncpw -vncpw "${PASS}" 2>/dev/null || true
@@ -98,21 +99,21 @@ jobs:
           echo "🎉 ¡TU MAC CON INTERFAZ GRÁFICA VNC ESTÁ LISTA (CON BORE)!"
           echo "================================================================"
           echo ""
-          echo "👉 OPCIÓN 1 - Desde tu Mac (App Compartir Pantalla o Finder Cmd+K):"
-          echo "   vnc://${BORE_CONN}"
+          echo "👉 CONEXIÓN DIRECTA (App Compartir Pantalla o Finder Cmd+K):"
+          echo "   vnc://coki:${PASS}@${BORE_CONN}"
           echo ""
-          echo "👉 OPCIÓN 2 - Desde RealVNC Viewer / TigerVNC:"
-          echo "   Servidor:   ${BORE_CONN}"
-          echo "   Usuario:    runner"
-          echo "   Contraseña: ${PASS}"
+          echo "👉 O manual en la ventana de login:"
+          echo "   Servidor:           ${BORE_CONN}"
+          echo "   Nombre de usuario:  coki"
+          echo "   Contraseña:         ${PASS}"
           echo ""
           if [ -n "${PINGGY_CONN}" ]; then
-            echo "👉 OPCIÓN 3 - Respaldo Pinggy:"
+            echo "👉 Respaldo Pinggy:"
             echo "   ${PINGGY_CONN}"
             echo ""
           fi
           echo "ℹ️ Datos del Runner:"
-          echo "   Usuario local: $(whoami)"
+          echo "   Usuario principal: coki (y runner)"
           echo "   Sistema: $(sw_vers -productName 2>/dev/null || echo macOS) $(sw_vers -productVersion 2>/dev/null) ($(uname -m))"
           echo "================================================================"
           echo ""
