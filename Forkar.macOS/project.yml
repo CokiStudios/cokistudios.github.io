@@ -1,0 +1,24 @@
+name: Forkar
+options:
+  bundleIdPrefix: com.cokistudios
+  deploymentTarget:
+    macOS: "13.0"
+targets:
+  Forkar:
+    type: application
+    platform: macOS
+    sources:
+      - path: .
+        includes:
+          - "*.swift"
+          - "Forkar.entitlements"
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.cokistudios.forkar.mac
+      PRODUCT_NAME: Forkar
+      MARKETING_VERSION: "2.0.0"
+      CURRENT_PROJECT_VERSION: "1"
+      GENERATE_INFOPLIST_FILE: YES
+      INFOPLIST_KEY_CFBundleDisplayName: "Forkar for PC"
+      CODE_SIGN_ENTITLEMENTS: Forkar.entitlements
+      CODE_SIGN_STYLE: Automatic
+      SWIFT_VERSION: "5.0"

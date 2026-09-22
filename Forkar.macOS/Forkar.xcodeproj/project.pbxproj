@@ -1,0 +1,321 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9F0000012A00000100000001 /* ForkarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000022A00000100000001 /* ForkarApp.swift */; };
+		9F0000032A00000100000001 /* ForkarDesktopRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000042A00000100000001 /* ForkarDesktopRootView.swift */; };
+		9F0000052A00000100000001 /* HomeFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000062A00000100000001 /* HomeFeedView.swift */; };
+		9F0000072A00000100000001 /* PostDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000082A00000100000001 /* PostDetailSheet.swift */; };
+		9F0000092A00000100000001 /* CreatePostSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F00000A2A00000100000001 /* CreatePostSheet.swift */; };
+		9F00000B2A00000100000001 /* CSMSExtensionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F00000C2A00000100000001 /* CSMSExtensionView.swift */; };
+		9F00000D2A00000100000001 /* ForkarEcoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F00000E2A00000100000001 /* ForkarEcoView.swift */; };
+		9F00000F2A00000100000001 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000102A00000100000001 /* ProfileView.swift */; };
+		9F0000112A00000100000001 /* ForkarTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000122A00000100000001 /* ForkarTheme.swift */; };
+		9F0000132A00000100000001 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000142A00000100000001 /* Models.swift */; };
+		9F0000152A00000100000001 /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000162A00000100000001 /* SupabaseManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		9F0000022A00000100000001 /* ForkarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarApp.swift; sourceTree = "<group>"; };
+		9F0000042A00000100000001 /* ForkarDesktopRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarDesktopRootView.swift; sourceTree = "<group>"; };
+		9F0000062A00000100000001 /* HomeFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFeedView.swift; sourceTree = "<group>"; };
+		9F0000082A00000100000001 /* PostDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailSheet.swift; sourceTree = "<group>"; };
+		9F00000A2A00000100000001 /* CreatePostSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostSheet.swift; sourceTree = "<group>"; };
+		9F00000C2A00000100000001 /* CSMSExtensionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSMSExtensionView.swift; sourceTree = "<group>"; };
+		9F00000E2A00000100000001 /* ForkarEcoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarEcoView.swift; sourceTree = "<group>"; };
+		9F0000102A00000100000001 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		9F0000122A00000100000001 /* ForkarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarTheme.swift; sourceTree = "<group>"; };
+		9F0000142A00000100000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		9F0000162A00000100000001 /* SupabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseManager.swift; sourceTree = "<group>"; };
+		9F0000252A00000100000001 /* Forkar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Forkar.entitlements; sourceTree = "<group>"; };
+		9F0000172A00000100000001 /* Forkar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Forkar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9F0000182A00000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9F0000192A00000100000001 = {
+			isa = PBXGroup;
+			children = (
+				9F00001A2A00000100000001 /* Forkar */,
+				9F00001B2A00000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9F00001A2A00000100000001 /* Forkar */ = {
+			isa = PBXGroup;
+			children = (
+				9F0000022A00000100000001 /* ForkarApp.swift */,
+				9F0000042A00000100000001 /* ForkarDesktopRootView.swift */,
+				9F0000062A00000100000001 /* HomeFeedView.swift */,
+				9F0000082A00000100000001 /* PostDetailSheet.swift */,
+				9F00000A2A00000100000001 /* CreatePostSheet.swift */,
+				9F00000C2A00000100000001 /* CSMSExtensionView.swift */,
+				9F00000E2A00000100000001 /* ForkarEcoView.swift */,
+				9F0000102A00000100000001 /* ProfileView.swift */,
+				9F0000122A00000100000001 /* ForkarTheme.swift */,
+				9F0000142A00000100000001 /* Models.swift */,
+				9F0000162A00000100000001 /* SupabaseManager.swift */,
+				9F0000252A00000100000001 /* Forkar.entitlements */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		9F00001B2A00000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9F0000172A00000100000001 /* Forkar.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9F00001C2A00000100000001 /* Forkar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9F0000232A00000100000001 /* Build configuration list for PBXNativeTarget "Forkar" */;
+			buildPhases = (
+				9F00001E2A00000100000001 /* Sources */,
+				9F0000182A00000100000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Forkar;
+			productName = Forkar;
+			productReference = 9F0000172A00000100000001 /* Forkar.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9F00001D2A00000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					9F00001C2A00000100000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 9F0000242A00000100000001 /* Build configuration list for PBXProject "Forkar" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9F0000192A00000100000001;
+			productRefGroup = 9F00001B2A00000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9F00001C2A00000100000001 /* Forkar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9F00001E2A00000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F0000012A00000100000001 /* ForkarApp.swift in Sources */,
+				9F0000032A00000100000001 /* ForkarDesktopRootView.swift in Sources */,
+				9F0000052A00000100000001 /* HomeFeedView.swift in Sources */,
+				9F0000072A00000100000001 /* PostDetailSheet.swift in Sources */,
+				9F0000092A00000100000001 /* CreatePostSheet.swift in Sources */,
+				9F00000B2A00000100000001 /* CSMSExtensionView.swift in Sources */,
+				9F00000D2A00000100000001 /* ForkarEcoView.swift in Sources */,
+				9F00000F2A00000100000001 /* ProfileView.swift in Sources */,
+				9F0000112A00000100000001 /* ForkarTheme.swift in Sources */,
+				9F0000132A00000100000001 /* Models.swift in Sources */,
+				9F0000152A00000100000001 /* SupabaseManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9F00001F2A00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDEFINED_VARIABLES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9F0000202A00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDEFINED_VARIABLES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		9F0000212A00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_ENTITLEMENTS = Forkar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Forkar for PC";
+				INFOPLIST_KEY_CFBundleURLTypes = (
+					{
+						CFBundleURLName = "com.cokistudios.forkar.mac";
+						CFBundleURLSchemes = (
+							forkar,
+							csms,
+						);
+					},
+				);
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Coki Studios. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.forkar.mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9F0000222A00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_ENTITLEMENTS = Forkar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Forkar for PC";
+				INFOPLIST_KEY_CFBundleURLTypes = (
+					{
+						CFBundleURLName = "com.cokistudios.forkar.mac";
+						CFBundleURLSchemes = (
+							forkar,
+							csms,
+						);
+					},
+				);
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Coki Studios. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.forkar.mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9F0000232A00000100000001 /* Build configuration list for PBXNativeTarget "Forkar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9F0000212A00000100000001 /* Debug */,
+				9F0000222A00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9F0000242A00000100000001 /* Build configuration list for PBXProject "Forkar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9F00001F2A00000100000001 /* Debug */,
+				9F0000202A00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 9F00001D2A00000100000001 /* Project object */;
+}
