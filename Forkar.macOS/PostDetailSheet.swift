@@ -2,7 +2,7 @@ import SwiftUI
 
 // ══════════════════════════════════════════════════════════════════
 // 🔍 POST DETAIL SHEET — FORKAR FOR PC (macOS)
-// Vista detallada de publicación con comentarios y enlace rápido a CSMS
+// Detalle de publicación con comentarios reales guardados en Supabase
 // ══════════════════════════════════════════════════════════════════
 
 struct PostDetailSheet: View {
@@ -14,6 +14,8 @@ struct PostDetailSheet: View {
     @State private var comments: [PostComment] = []
     @State private var newCommentText: String = ""
     @State private var isSubmitting: Bool = false
+    @State private var isLoadingComments: Bool = true
+    @State private var errorMessage: String?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -48,16 +50,16 @@ struct PostDetailSheet: View {
                             .fill(ForkarTheme.accent.opacity(0.3))
                             .frame(width: 42, height: 42)
                             .overlay(
-                                Text(String(post.authorName?.prefix(2) ?? "U").uppercased())
+                                Text(String(post.authorName.prefix(2)).uppercased())
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(ForkarTheme.accent)
                             )
                         
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(post.authorName ?? "Usuario de Forkar")
+                            Text(post.authorName)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(ForkarTheme.text)
-                            Text(post.createdAt)
+                            Text(post.formattedDate)
                                 .font(.system(size: 11))
                                 .foregroundColor(ForkarTheme.textSub)
                         }
@@ -107,13 +109,27 @@ struct PostDetailSheet: View {
                     
                     Divider().background(ForkarTheme.border)
                     
-                    // Sección Comentarios
-                    Text("Comentarios (\(comments.count))")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(ForkarTheme.text)
+                    // Sección Comentarios Reales
+                    HStack {
+                        Text("Comentarios (\(comments.count))")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(ForkarTheme.text)
+                        Spacer()
+                        if isLoadingComments {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
+                                .scaleEffect(0.7)
+                        }
+                    }
                     
-                    if comments.isEmpty {
-                        Text("Aún no hay comentarios. ¡Sé el primero en responder!")
+                    if let err = errorMessage {
+                        Text(err)
+                            .font(.system(size: 12))
+                            .foregroundColor(.red)
+                    }
+                    
+                    if comments.isEmpty && !isLoadingComments {
+                        Text("Aún no hay comentarios en esta publicación. ¡Sé el primero en participar!")
                             .font(.system(size: 12))
                             .foregroundColor(ForkarTheme.textSub)
                             .padding(.vertical, 10)
@@ -121,11 +137,11 @@ struct PostDetailSheet: View {
                         ForEach(comments) { comment in
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Text(comment.authorName ?? "Usuario")
+                                    Text(comment.authorName)
                                         .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(ForkarTheme.accent)
                                     Spacer()
-                                    Text(comment.createdAt)
+                                    Text(comment.formattedDate)
                                         .font(.system(size: 10))
                                         .foregroundColor(ForkarTheme.textSub)
                                 }
@@ -144,7 +160,7 @@ struct PostDetailSheet: View {
             
             Divider().background(ForkarTheme.border)
             
-            // Entrada para nuevo comentario
+            // Entrada para nuevo comentario en Supabase
             HStack(spacing: 10) {
                 TextField("Escribe un comentario público...", text: $newCommentText)
                     .textFieldStyle(PlainTextFieldStyle())
@@ -155,15 +171,21 @@ struct PostDetailSheet: View {
                     .cornerRadius(8)
                 
                 Button(action: addComment) {
-                    Text("Enviar")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(ForkarTheme.accent)
-                        .cornerRadius(8)
+                    if isSubmitting {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.7)
+                    } else {
+                        Text("Enviar")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
                 .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(ForkarTheme.accent)
+                .cornerRadius(8)
                 .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty || isSubmitting)
             }
             .padding(16)
@@ -171,22 +193,35 @@ struct PostDetailSheet: View {
         }
         .frame(minWidth: 540, minHeight: 600)
         .background(ForkarTheme.bg)
+        .onAppear {
+            loadComments()
+        }
+    }
+    
+    private func loadComments() {
+        isLoadingComments = true
+        Task {
+            let fetched = await manager.fetchComments(postId: post.id)
+            self.comments = fetched
+            self.isLoadingComments = false
+        }
     }
     
     private func addComment() {
         let text = newCommentText.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
         newCommentText = ""
+        isSubmitting = true
+        errorMessage = nil
         
-        let comment = PostComment(
-            id: UUID().uuidString,
-            postId: post.id,
-            userId: manager.currentUser?.id ?? "anonymous",
-            content: text,
-            authorName: manager.currentUser?.fullName ?? "Tú",
-            authorAvatar: manager.currentUser?.avatarUrl,
-            createdAt: "Ahora"
-        )
-        comments.append(comment)
+        Task {
+            do {
+                let newComment = try await manager.addComment(postId: post.id, content: text)
+                comments.append(newComment)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isSubmitting = false
+        }
     }
 }

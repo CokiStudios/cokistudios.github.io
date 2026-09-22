@@ -31,24 +31,17 @@ struct ForkarDesktopRootView: View {
         HSplitView {
             // ─── 1. BARRA LATERAL PRINCIPAL DE FORKAR ───
             VStack(alignment: .leading, spacing: 0) {
-                // Cabecera de la Marca
-                HStack(spacing: 10) {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(ForkarTheme.brandGradient)
-                        .frame(width: 32, height: 32)
-                        .overlay(
-                            Image(systemName: "f.cursive")
-                                .font(.system(size: 18, weight: .black))
-                                .foregroundColor(.white)
-                        )
+                // Cabecera de la Marca con Logo Oficial de Forkar
+                HStack(spacing: 12) {
+                    ForkarLogoView(size: 34, showGlow: true)
                     
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Forkar")
-                            .font(.system(size: 15, weight: .black))
+                            .font(.system(size: 16, weight: .black))
                             .foregroundColor(ForkarTheme.text)
                         Text("for PC • v2.0")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(ForkarTheme.accent)
+                            .foregroundColor(Color(hex: "#F59E0B"))
                     }
                     
                     Spacer()

@@ -17,6 +17,7 @@ mkdir -p "$RESOURCES_DIR"
 SWIFT_FILES=(
     "$DIR/ForkarApp.swift"
     "$DIR/ForkarDesktopRootView.swift"
+    "$DIR/ForkarLogoView.swift"
     "$DIR/ForkarTheme.swift"
     "$DIR/Models.swift"
     "$DIR/SupabaseManager.swift"
@@ -26,7 +27,13 @@ SWIFT_FILES=(
     "$DIR/CreatePostSheet.swift"
     "$DIR/ForkarEcoView.swift"
     "$DIR/ProfileView.swift"
+    "$DIR/SecurityAndNotificationManager.swift"
 )
+
+# Copiar icono oficial a Resources
+if [ -f "$DIR/forkar-icon.png" ]; then
+    cp "$DIR/forkar-icon.png" "$RESOURCES_DIR/forkar-icon.png"
+fi
 
 # 1. Compilar para Apple Silicon (arm64: M1, M2, M3, M4, M5)
 echo "🍎 [1/4] Compilando para Apple Silicon (arm64)..."

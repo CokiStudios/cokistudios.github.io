@@ -107,13 +107,11 @@ struct ProfileView: View {
                 } else {
                     // ─── FORMULARIO DE INICIO DE SESIÓN CON OAUTH ───
                     VStack(spacing: 20) {
-                        Image(systemName: "lock.shield.fill")
-                            .font(.system(size: 40))
-                            .foregroundColor(ForkarTheme.accent)
+                        ForkarLogoView(size: 64, showGlow: true)
                         
                         VStack(spacing: 4) {
                             Text("Iniciar Sesión en Forkar")
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(ForkarTheme.text)
                             Text("Ingresa con tu cuenta de Google, GitHub o correo para interactuar en el feed y CSMS.")
                                 .font(.system(size: 12))

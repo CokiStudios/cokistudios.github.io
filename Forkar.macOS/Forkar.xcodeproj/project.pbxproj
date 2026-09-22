@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		9F0000012A00000100000001 /* ForkarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000022A00000100000001 /* ForkarApp.swift */; };
 		9F0000032A00000100000001 /* ForkarDesktopRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000042A00000100000001 /* ForkarDesktopRootView.swift */; };
+		9F0000272A00000100000001 /* ForkarLogoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000262A00000100000001 /* ForkarLogoView.swift */; };
 		9F0000052A00000100000001 /* HomeFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000062A00000100000001 /* HomeFeedView.swift */; };
 		9F0000072A00000100000001 /* PostDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000082A00000100000001 /* PostDetailSheet.swift */; };
 		9F0000092A00000100000001 /* CreatePostSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F00000A2A00000100000001 /* CreatePostSheet.swift */; };
@@ -18,11 +19,13 @@
 		9F0000112A00000100000001 /* ForkarTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000122A00000100000001 /* ForkarTheme.swift */; };
 		9F0000132A00000100000001 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000142A00000100000001 /* Models.swift */; };
 		9F0000152A00000100000001 /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000162A00000100000001 /* SupabaseManager.swift */; };
+		9F0000292A00000100000001 /* SecurityAndNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0000282A00000100000001 /* SecurityAndNotificationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		9F0000022A00000100000001 /* ForkarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarApp.swift; sourceTree = "<group>"; };
 		9F0000042A00000100000001 /* ForkarDesktopRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarDesktopRootView.swift; sourceTree = "<group>"; };
+		9F0000262A00000100000001 /* ForkarLogoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarLogoView.swift; sourceTree = "<group>"; };
 		9F0000062A00000100000001 /* HomeFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFeedView.swift; sourceTree = "<group>"; };
 		9F0000082A00000100000001 /* PostDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailSheet.swift; sourceTree = "<group>"; };
 		9F00000A2A00000100000001 /* CreatePostSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostSheet.swift; sourceTree = "<group>"; };
@@ -32,8 +35,9 @@
 		9F0000122A00000100000001 /* ForkarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkarTheme.swift; sourceTree = "<group>"; };
 		9F0000142A00000100000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		9F0000162A00000100000001 /* SupabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseManager.swift; sourceTree = "<group>"; };
-		9F0000252A00000100000001 /* Forkar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Forkar.entitlements; sourceTree = "<group>"; };
+		9F0000282A00000100000001 /* SecurityAndNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityAndNotificationManager.swift; sourceTree = "<group>"; };
 		9F0000172A00000100000001 /* Forkar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Forkar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9F0000252A00000100000001 /* Forkar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Forkar.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,16 +54,17 @@
 		9F0000192A00000100000001 = {
 			isa = PBXGroup;
 			children = (
-				9F00001A2A00000100000001 /* Forkar */,
+				9F00001A2A00000100000001 /* . */,
 				9F00001B2A00000100000001 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		9F00001A2A00000100000001 /* Forkar */ = {
+		9F00001A2A00000100000001 /* . */ = {
 			isa = PBXGroup;
 			children = (
 				9F0000022A00000100000001 /* ForkarApp.swift */,
 				9F0000042A00000100000001 /* ForkarDesktopRootView.swift */,
+				9F0000262A00000100000001 /* ForkarLogoView.swift */,
 				9F0000062A00000100000001 /* HomeFeedView.swift */,
 				9F0000082A00000100000001 /* PostDetailSheet.swift */,
 				9F00000A2A00000100000001 /* CreatePostSheet.swift */,
@@ -69,6 +74,7 @@
 				9F0000122A00000100000001 /* ForkarTheme.swift */,
 				9F0000142A00000100000001 /* Models.swift */,
 				9F0000162A00000100000001 /* SupabaseManager.swift */,
+				9F0000282A00000100000001 /* SecurityAndNotificationManager.swift */,
 				9F0000252A00000100000001 /* Forkar.entitlements */,
 			);
 			path = .;
@@ -141,6 +147,7 @@
 			files = (
 				9F0000012A00000100000001 /* ForkarApp.swift in Sources */,
 				9F0000032A00000100000001 /* ForkarDesktopRootView.swift in Sources */,
+				9F0000272A00000100000001 /* ForkarLogoView.swift in Sources */,
 				9F0000052A00000100000001 /* HomeFeedView.swift in Sources */,
 				9F0000072A00000100000001 /* PostDetailSheet.swift in Sources */,
 				9F0000092A00000100000001 /* CreatePostSheet.swift in Sources */,
@@ -150,6 +157,7 @@
 				9F0000112A00000100000001 /* ForkarTheme.swift in Sources */,
 				9F0000132A00000100000001 /* Models.swift in Sources */,
 				9F0000152A00000100000001 /* SupabaseManager.swift in Sources */,
+				9F0000292A00000100000001 /* SecurityAndNotificationManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,18 +239,21 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
+				ENABLE_RESOURCE_ACCESS_USB = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Forkar for PC";
-				INFOPLIST_KEY_CFBundleURLTypes = (
-					{
-						CFBundleURLName = "com.cokistudios.forkar.mac";
-						CFBundleURLSchemes = (
-							forkar,
-							csms,
-						);
-					},
-				);
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.cokistudios.forkar.mac\";\n    CFBundleURLSchemes =     (\n        forkar,\n        csms\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Coki Studios. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -252,7 +263,7 @@
 				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.forkar.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "macosx";
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -266,18 +277,21 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
+				ENABLE_RESOURCE_ACCESS_USB = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Forkar for PC";
-				INFOPLIST_KEY_CFBundleURLTypes = (
-					{
-						CFBundleURLName = "com.cokistudios.forkar.mac";
-						CFBundleURLSchemes = (
-							forkar,
-							csms,
-						);
-					},
-				);
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.cokistudios.forkar.mac\";\n    CFBundleURLSchemes =     (\n        forkar,\n        csms\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Coki Studios. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -287,7 +301,7 @@
 				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.forkar.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "macosx";
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -315,7 +329,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = 9F00001D2A00000100000001 /* Project object */;
 }

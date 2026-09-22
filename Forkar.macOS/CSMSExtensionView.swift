@@ -2,13 +2,15 @@ import SwiftUI
 
 // ══════════════════════════════════════════════════════════════════
 // 💬 CSMS EXTENSION FOR FORKAR PC (NATIVE MACOS CLIENT)
-// Extensión nativa de mensajería en tiempo real de Coki Studios
+// Extensión nativa de mensajería en tiempo real con Supabase chat_messages
 // ══════════════════════════════════════════════════════════════════
 
 struct CSMSExtensionView: View {
     @EnvironmentObject var manager: SupabaseManager
     @State private var messageText: String = ""
     @State private var isSending: Bool = false
+    @State private var showingNewRoomSheet: Bool = false
+    @State private var newRoomName: String = ""
     
     var body: some View {
         HSplitView {
@@ -17,14 +19,26 @@ struct CSMSExtensionView: View {
                 HStack {
                     Image(systemName: "bubble.left.and.bubble.right.fill")
                         .foregroundColor(ForkarTheme.accent)
-                    Text("CSMS Canales")
+                    Text("Salas CSMS")
                         .font(.headline)
                         .foregroundColor(ForkarTheme.text)
                     Spacer()
+                    
                     Circle()
-                        .fill(ForkarTheme.greenEco)
+                        .fill(manager.isCSMSConnected ? ForkarTheme.greenEco : Color(hex: "#F59E0B"))
                         .frame(width: 8, height: 8)
-                        .help("Conectado en tiempo real")
+                        .help(manager.isCSMSConnected ? "Conectado a Supabase en vivo" : "Reconectando...")
+                    
+                    Button(action: { showingNewRoomSheet = true }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(ForkarTheme.textSub)
+                            .frame(width: 20, height: 20)
+                            .background(ForkarTheme.card)
+                            .cornerRadius(4)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Crear nueva sala CSMS")
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -51,17 +65,14 @@ struct CSMSExtensionView: View {
                                 )
                             
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(room.name)
+                                Text(room.displayName)
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(room.id == manager.activeCSMSRoomId ? .white : ForkarTheme.text)
                                     .lineLimit(1)
                                 
-                                if let last = room.lastMessage {
-                                    Text(last)
-                                        .font(.system(size: 11))
-                                        .foregroundColor(ForkarTheme.textSub)
-                                        .lineLimit(1)
-                                }
+                                Text(room.isGroup ? "Canal público" : "Mensajes directos")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(ForkarTheme.textSub)
                             }
                             Spacer()
                         }
@@ -87,29 +98,26 @@ struct CSMSExtensionView: View {
                         Text(activeRoomTitle)
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(ForkarTheme.text)
-                        Text("Extensión oficial de mensajería para Forkar PC")
+                        Text("Sincronización en tiempo real vía Supabase REST & Polling")
                             .font(.system(size: 11))
                             .foregroundColor(ForkarTheme.textSub)
                     }
                     Spacer()
                     
                     Button(action: {
-                        if let url = URL(string: "https://cokistudios.com/messenger") {
-                            NSWorkspace.shared.open(url)
+                        Task {
+                            await manager.fetchCSMSMessages(roomId: manager.activeCSMSRoomId)
                         }
                     }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.up.right.square")
-                            Text("Pantalla completa")
-                        }
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(ForkarTheme.textSub)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(ForkarTheme.card)
-                        .cornerRadius(6)
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12))
+                            .foregroundColor(ForkarTheme.textSub)
+                            .frame(width: 28, height: 28)
+                            .background(ForkarTheme.card)
+                            .cornerRadius(6)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .help("Refrescar mensajes")
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
@@ -117,7 +125,7 @@ struct CSMSExtensionView: View {
                 
                 Divider().background(ForkarTheme.border)
                 
-                // Mensajes
+                // Mensajes Reales de Supabase
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 12) {
@@ -127,13 +135,16 @@ struct CSMSExtensionView: View {
                                     Image(systemName: "bubble.left.and.exclamationmark.bubble.right")
                                         .font(.system(size: 36))
                                         .foregroundColor(ForkarTheme.textSub.opacity(0.5))
-                                    Text("¡Sé el primero en escribir en este canal!")
-                                        .font(.system(size: 13))
+                                    Text("¡Sé el primero en escribir en esta sala de CSMS!")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(ForkarTheme.text)
+                                    Text("Escribe un mensaje abajo para iniciar la conversación.")
+                                        .font(.system(size: 11))
                                         .foregroundColor(ForkarTheme.textSub)
                                 }
                             } else {
                                 ForEach(manager.csmsMessages) { msg in
-                                    CSMSMessageBubble(message: msg, isMe: msg.senderId == manager.currentUser?.id)
+                                    CSMSMessageBubble(message: msg, isMe: msg.userId == manager.currentUser?.id)
                                         .id(msg.id)
                                 }
                             }
@@ -151,9 +162,9 @@ struct CSMSExtensionView: View {
                 
                 Divider().background(ForkarTheme.border)
                 
-                // Input de Envío
+                // Input de Envío Real
                 HStack(spacing: 10) {
-                    TextField("Escribe un mensaje en CSMS...", text: $messageText)
+                    TextField(manager.isAuthenticated ? "Escribe un mensaje en CSMS..." : "Inicia sesión para chatear...", text: $messageText)
                         .textFieldStyle(PlainTextFieldStyle())
                         .font(.system(size: 13))
                         .padding(.horizontal, 12)
@@ -164,20 +175,28 @@ struct CSMSExtensionView: View {
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(ForkarTheme.border, lineWidth: 1)
                         )
+                        .disabled(!manager.isAuthenticated)
                         .onSubmit {
                             sendMessage()
                         }
                     
                     Button(action: sendMessage) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .frame(width: 32, height: 32)
-                            .background(ForkarTheme.brandGradient)
-                            .cornerRadius(8)
+                        if isSending {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.7)
+                                .frame(width: 32, height: 32)
+                        } else {
+                            Image(systemName: "paperplane.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white)
+                                .frame(width: 32, height: 32)
+                                .background(ForkarTheme.brandGradient)
+                                .cornerRadius(8)
+                        }
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .disabled(messageText.trimmingCharacters(in: .whitespaces).isEmpty || isSending)
+                    .disabled(messageText.trimmingCharacters(in: .whitespaces).isEmpty || isSending || !manager.isAuthenticated)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -190,19 +209,58 @@ struct CSMSExtensionView: View {
                 await manager.fetchCSMSMessages(roomId: manager.activeCSMSRoomId)
             }
         }
+        .sheet(isPresented: $showingNewRoomSheet) {
+            VStack(spacing: 16) {
+                Text("Nueva Sala CSMS")
+                    .font(.headline)
+                    .foregroundColor(ForkarTheme.text)
+                
+                TextField("Nombre de la sala (Ej: Desarrolladores Coki)", text: $newRoomName)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(10)
+                    .background(ForkarTheme.bgTertiary)
+                    .cornerRadius(8)
+                
+                HStack {
+                    Button("Cancelar") { showingNewRoomSheet = false }
+                    Spacer()
+                    Button("Crear") {
+                        if !newRoomName.isEmpty {
+                            let newRoom = CSMSChatRoom(
+                                id: UUID().uuidString.lowercased(),
+                                name: newRoomName,
+                                isGroup: true,
+                                createdBy: manager.currentUser?.id,
+                                createdAt: nil
+                            )
+                            manager.csmsRooms.insert(newRoom, at: 0)
+                            manager.activeCSMSRoomId = newRoom.id
+                            newRoomName = ""
+                            showingNewRoomSheet = false
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(ForkarTheme.accent)
+                    .cornerRadius(6)
+                }
+            }
+            .padding(20)
+            .frame(width: 360)
+            .background(ForkarTheme.bgSecondary)
+        }
     }
     
     private var activeRoomTitle: String {
-        manager.csmsRooms.first(where: { $0.id == manager.activeCSMSRoomId })?.name ?? "CSMS Chat"
+        manager.csmsRooms.first(where: { $0.id == manager.activeCSMSRoomId })?.displayName ?? "CSMS Chat"
     }
     
     private func iconForRoom(_ id: String) -> String {
-        switch id {
-        case "00000000-0000-4000-8000-000000000001": return "bubble.left.fill"
-        case "00000000-0000-4000-8000-000000000003": return "car.fill"
-        case "00000000-0000-4000-8000-000000000002": return "leaf.fill"
-        default: return "person.fill"
-        }
+        if id.contains("1") { return "bubble.left.fill" }
+        if id.contains("3") { return "car.fill" }
+        if id.contains("2") { return "leaf.fill" }
+        return "person.2.fill"
     }
     
     private func sendMessage() {
@@ -243,10 +301,15 @@ struct CSMSMessageBubble: View {
             }
             
             VStack(alignment: isMe ? .trailing : .leading, spacing: 3) {
-                if !isMe, let author = message.authorName {
-                    Text(author)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(ForkarTheme.accent)
+                HStack(spacing: 6) {
+                    if !isMe {
+                        Text(message.authorName)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(ForkarTheme.accent)
+                    }
+                    Text(message.formattedTime)
+                        .font(.system(size: 9))
+                        .foregroundColor(ForkarTheme.textSub)
                 }
                 
                 Text(message.content)
@@ -267,7 +330,6 @@ struct CSMSMessageBubble: View {
     }
     
     private var initials: String {
-        let name = message.authorName ?? "U"
-        return String(name.prefix(2)).uppercased()
+        String(message.authorName.prefix(2)).uppercased()
     }
 }

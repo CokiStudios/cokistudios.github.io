@@ -2,7 +2,7 @@ import SwiftUI
 
 // ══════════════════════════════════════════════════════════════════
 // ✍️ CREATE POST SHEET — FORKAR FOR PC (macOS)
-// Modal moderno para redactar nuevas publicaciones con categorías
+// Modal con categorías reales desde Supabase social_categories
 // ══════════════════════════════════════════════════════════════════
 
 struct CreatePostSheet: View {
@@ -11,7 +11,7 @@ struct CreatePostSheet: View {
     
     @State private var title: String = ""
     @State private var content: String = ""
-    @State private var selectedCategoryId: String = "cat-general"
+    @State private var selectedCategoryId: String = ""
     @State private var imageUrl: String = ""
     @State private var isSubmitting: Bool = false
     @State private var errorMessage: String?
@@ -59,14 +59,14 @@ struct CreatePostSheet: View {
                         .cornerRadius(8)
                     }
                     
-                    // Categoría
+                    // Categoría real desde Supabase
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Categoría")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(ForkarTheme.textSub)
                         
                         Picker("Categoría", selection: $selectedCategoryId) {
-                            ForEach(manager.categories.filter { $0.id != "all" }, id: \.id) { cat in
+                            ForEach(manager.categories.filter { $0.slug != "all" }, id: \.id) { cat in
                                 Text(cat.name).tag(cat.id)
                             }
                         }
@@ -131,6 +131,11 @@ struct CreatePostSheet: View {
                 }
                 .padding(24)
             }
+            .onAppear {
+                if selectedCategoryId.isEmpty, let first = manager.categories.first(where: { $0.slug != "all" }) {
+                    selectedCategoryId = first.id
+                }
+            }
             
             Divider().background(ForkarTheme.border)
             
@@ -151,7 +156,7 @@ struct CreatePostSheet: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     } else {
-                        Text("Publicar Ahora")
+                        Text("Publicar en Supabase")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white)
                     }
@@ -175,12 +180,14 @@ struct CreatePostSheet: View {
         isSubmitting = true
         errorMessage = nil
         
+        let catId = selectedCategoryId.isEmpty ? (manager.categories.first(where: { $0.slug != "all" })?.id ?? "494f6ad4-8425-440b-a4de-103b0cdf6c41") : selectedCategoryId
+        
         Task {
             do {
                 try await manager.createPost(
                     title: title.trimmingCharacters(in: .whitespaces),
                     content: content.trimmingCharacters(in: .whitespaces),
-                    categoryId: selectedCategoryId,
+                    categoryId: catId,
                     imageUrl: imageUrl.trimmingCharacters(in: .whitespaces).isEmpty ? nil : imageUrl
                 )
                 isPresented = false

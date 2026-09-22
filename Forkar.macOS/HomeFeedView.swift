@@ -2,40 +2,37 @@ import SwiftUI
 
 // ══════════════════════════════════════════════════════════════════
 // 📱 HOME FEED VIEW — FORKAR FOR PC (macOS)
-// Muro de publicaciones con estética Liquid Glass e integración CSMS
+// Muro dinámico sincronizado en tiempo real con Supabase social_posts
 // ══════════════════════════════════════════════════════════════════
 
 struct HomeFeedView: View {
     @EnvironmentObject var manager: SupabaseManager
     @Binding var selectedTab: NavigationTab
     
-    @State private var selectedCategory: String = "all"
+    @State private var selectedCategoryId: String = "all"
     @State private var searchQuery: String = ""
     @State private var showingCreatePost: Bool = false
     @State private var selectedPostForDetail: Post?
-    
-    var filteredPosts: [Post] {
-        manager.posts.filter { post in
-            let matchesCategory = (selectedCategory == "all" || post.categoryId == selectedCategory)
-            let matchesSearch = searchQuery.isEmpty || 
-                post.title.localizedCaseInsensitiveContains(searchQuery) ||
-                post.content.localizedCaseInsensitiveContains(searchQuery) ||
-                (post.authorName?.localizedCaseInsensitiveContains(searchQuery) ?? false)
-            return matchesCategory && matchesSearch
-        }
-    }
     
     var body: some View {
         VStack(spacing: 0) {
             // ─── TOP BAR DEL FEED ───
             HStack(spacing: 16) {
-                // Buscador
+                // Buscador en tiempo real
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(ForkarTheme.textSub)
-                    TextField("Buscar publicaciones, tags o usuarios...", text: $searchQuery)
+                    TextField("Buscar en el muro (título, contenido)...", text: $searchQuery)
                         .textFieldStyle(PlainTextFieldStyle())
                         .font(.system(size: 13))
+                        .onSubmit {
+                            Task {
+                                await manager.fetchPosts(
+                                    categoryId: selectedCategoryId == "all" ? nil : selectedCategoryId,
+                                    searchQuery: searchQuery
+                                )
+                            }
+                        }
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -52,7 +49,10 @@ struct HomeFeedView: View {
                 // Botón de Refrescar
                 Button(action: {
                     Task {
-                        await manager.fetchPosts(categorySlug: selectedCategory)
+                        await manager.fetchPosts(
+                            categoryId: selectedCategoryId == "all" ? nil : selectedCategoryId,
+                            searchQuery: searchQuery.isEmpty ? nil : searchQuery
+                        )
                     }
                 }) {
                     Image(systemName: "arrow.clockwise")
@@ -89,20 +89,59 @@ struct HomeFeedView: View {
             
             Divider().background(ForkarTheme.border)
             
-            // ─── BARRA DE CATEGORÍAS (PILLS) ───
+            // ─── BARRA DE CATEGORÍAS REALES (social_categories) ───
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(manager.categories, id: \.id) { cat in
-                        CategoryPill(
-                            category: cat,
-                            isSelected: selectedCategory == cat.id || (selectedCategory == "all" && cat.id == "all"),
-                            action: {
-                                selectedCategory = cat.id
-                                Task {
-                                    await manager.fetchPosts(categorySlug: cat.id == "all" ? nil : cat.id)
-                                }
-                            }
+                    // Botón "Todos"
+                    Button(action: {
+                        selectedCategoryId = "all"
+                        Task { await manager.fetchPosts(categoryId: nil, searchQuery: searchQuery.isEmpty ? nil : searchQuery) }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "square.grid.2x2.fill")
+                                .font(.system(size: 11))
+                            Text("Todos")
+                                .font(.system(size: 12, weight: selectedCategoryId == "all" ? .bold : .medium))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(selectedCategoryId == "all" ? ForkarTheme.accent : ForkarTheme.card)
+                        .foregroundColor(selectedCategoryId == "all" ? .white : ForkarTheme.textSub)
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(selectedCategoryId == "all" ? ForkarTheme.borderHighlight : ForkarTheme.border, lineWidth: 1)
                         )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    ForEach(manager.categories, id: \.id) { cat in
+                        if cat.slug != "all" {
+                            Button(action: {
+                                selectedCategoryId = cat.id
+                                Task {
+                                    await manager.fetchPosts(categoryId: cat.id, searchQuery: searchQuery.isEmpty ? nil : searchQuery)
+                                }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Circle()
+                                        .fill(Color(hex: cat.color))
+                                        .frame(width: 8, height: 8)
+                                    Text(cat.name)
+                                        .font(.system(size: 12, weight: selectedCategoryId == cat.id ? .bold : .medium))
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 6)
+                                .background(selectedCategoryId == cat.id ? Color(hex: cat.color).opacity(0.3) : ForkarTheme.card)
+                                .foregroundColor(selectedCategoryId == cat.id ? .white : ForkarTheme.textSub)
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(selectedCategoryId == cat.id ? Color(hex: cat.color) : ForkarTheme.border, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -112,7 +151,7 @@ struct HomeFeedView: View {
             
             Divider().background(ForkarTheme.border)
             
-            // ─── LISTADO DE PUBLICACIONES ───
+            // ─── LISTADO DE PUBLICACIONES REALES ───
             ScrollView {
                 LazyVStack(spacing: 16) {
                     if manager.isLoadingPosts && manager.posts.isEmpty {
@@ -120,20 +159,20 @@ struct HomeFeedView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
                                 .scaleEffect(1.2)
-                            Text("Cargando muro de Forkar...")
+                            Text("Sincronizando muro con Supabase...")
                                 .font(.system(size: 13))
                                 .foregroundColor(ForkarTheme.textSub)
                         }
                         .frame(maxWidth: .infinity, minHeight: 300)
-                    } else if filteredPosts.isEmpty {
+                    } else if manager.posts.isEmpty {
                         VStack(spacing: 12) {
-                            Image(systemName: "tray.fill")
+                            Image(systemName: "newspaper.fill")
                                 .font(.system(size: 40))
                                 .foregroundColor(ForkarTheme.textSub.opacity(0.4))
-                            Text("No hay publicaciones en esta categoría")
+                            Text("No se encontraron publicaciones")
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundColor(ForkarTheme.text)
-                            Text("Sé el primero en publicar una historia o compartir con la comunidad.")
+                            Text("Sé el primero en compartir noticias o proyectos con la comunidad.")
                                 .font(.system(size: 12))
                                 .foregroundColor(ForkarTheme.textSub)
                             Button("Crear Publicación") {
@@ -150,11 +189,10 @@ struct HomeFeedView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 320)
                     } else {
-                        ForEach(filteredPosts) { post in
+                        ForEach(manager.posts) { post in
                             PostCardView(
                                 post: post,
                                 onOpenChat: {
-                                    // Seleccionar canal o cambiar a pestaña CSMS
                                     selectedTab = .csms
                                 },
                                 onSelect: {
@@ -170,13 +208,6 @@ struct HomeFeedView: View {
             .frame(maxWidth: .infinity)
         }
         .background(ForkarTheme.bg)
-        .onAppear {
-            Task {
-                if manager.posts.isEmpty {
-                    await manager.fetchPosts()
-                }
-            }
-        }
         .sheet(isPresented: $showingCreatePost) {
             CreatePostSheet(isPresented: $showingCreatePost)
                 .environmentObject(manager)
@@ -191,75 +222,57 @@ struct HomeFeedView: View {
     }
 }
 
-// ─── PÍLDORA DE CATEGORÍA ───
-struct CategoryPill: View {
-    let category: Category
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: category.icon)
-                    .font(.system(size: 11))
-                Text(category.name)
-                    .font(.system(size: 12, weight: isSelected ? .bold : .medium))
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? ForkarTheme.accent : ForkarTheme.card)
-            .foregroundColor(isSelected ? .white : ForkarTheme.textSub)
-            .cornerRadius(20)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(isSelected ? ForkarTheme.borderHighlight : ForkarTheme.border, lineWidth: 1)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// ─── TARJETA DE PUBLICACIÓN (GLASSMORPHIC POST CARD) ───
+// ─── TARJETA DE PUBLICACIÓN REAL ───
 struct PostCardView: View {
     let post: Post
     let onOpenChat: () -> Void
     let onSelect: () -> Void
     
-    @State private var isLiked: Bool = false
-    @State private var likesCount: Int = 0
+    @EnvironmentObject var manager: SupabaseManager
     @State private var isHovered: Bool = false
+    @State private var likesCount: Int = 0
+    @State private var isLiked: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header: Autor, fecha y categoría
+            // Header: Autor, fecha y categoría real
             HStack(spacing: 10) {
-                Circle()
-                    .fill(ForkarTheme.accent.opacity(0.3))
-                    .frame(width: 36, height: 36)
-                    .overlay(
-                        Text(authorInitials)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(ForkarTheme.accent)
-                    )
+                // Avatar con fallback
+                if let avatar = post.authorAvatar, let url = URL(string: avatar) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 36, height: 36)
+                                .clipShape(Circle())
+                        default:
+                            authorInitialsBadge
+                        }
+                    }
+                } else {
+                    authorInitialsBadge
+                }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.authorName ?? "Usuario de Forkar")
+                    Text(post.authorName)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(ForkarTheme.text)
-                    Text(formattedDate)
+                    Text(post.formattedDate)
                         .font(.system(size: 11))
                         .foregroundColor(ForkarTheme.textSub)
                 }
                 
                 Spacer()
                 
-                if let catId = post.categoryId {
-                    Text(catId.replacingOccurrences(of: "cat-", with: "").capitalized)
+                if let cat = post.category {
+                    Text(cat.name)
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(ForkarTheme.accent)
+                        .foregroundColor(Color(hex: cat.color))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(ForkarTheme.accent.opacity(0.15))
+                        .background(Color(hex: cat.color).opacity(0.15))
                         .cornerRadius(6)
                 }
             }
@@ -282,7 +295,7 @@ struct PostCardView: View {
                 onSelect()
             }
             
-            // Imagen si existe
+            // Imagen multimedia si existe
             if let img = post.imageUrl, let url = URL(string: img), !img.isEmpty {
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -301,12 +314,15 @@ struct PostCardView: View {
             
             Divider().background(ForkarTheme.border)
             
-            // ─── BARRA DE ACCIONES CON EXTENSIÓN CSMS ───
+            // ─── ACCIONES CONECTADAS A SUPABASE ───
             HStack(spacing: 16) {
-                // Like
+                // Like interactivo
                 Button(action: {
                     isLiked.toggle()
                     likesCount += isLiked ? 1 : -1
+                    Task {
+                        await manager.toggleLike(postId: post.id)
+                    }
                 }) {
                     HStack(spacing: 5) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
@@ -332,12 +348,12 @@ struct PostCardView: View {
                 
                 Spacer()
                 
-                // 🔥 BOTÓN EXTENSIÓN CSMS: Conectar directamente por chat
+                // 🔥 BOTÓN EXTENSIÓN CSMS: Conectar directamente
                 Button(action: onOpenChat) {
                     HStack(spacing: 6) {
                         Image(systemName: "bubble.left.and.bubble.right.fill")
                             .font(.system(size: 11))
-                        Text("💬 Abrir en CSMS")
+                        Text("💬 Debatir en CSMS")
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundColor(ForkarTheme.accent)
@@ -351,7 +367,7 @@ struct PostCardView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Conectar y chatear sobre este tema en CSMS")
+                .help("Abrir chat para debatir este tema")
             }
             .font(.system(size: 12))
         }
@@ -369,22 +385,18 @@ struct PostCardView: View {
         }
         .onAppear {
             likesCount = post.likesCount
+            isLiked = manager.userLikedPostIds.contains(post.id)
         }
     }
     
-    private var authorInitials: String {
-        let name = post.authorName ?? "U"
-        return String(name.prefix(2)).uppercased()
-    }
-    
-    private var formattedDate: String {
-        let df = ISO8601DateFormatter()
-        df.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = df.date(from: post.createdAt) {
-            let relative = RelativeDateTimeFormatter()
-            relative.unitsStyle = .short
-            return relative.localizedString(for: date, relativeTo: Date())
-        }
-        return "reciente"
+    private var authorInitialsBadge: some View {
+        Circle()
+            .fill(ForkarTheme.accent.opacity(0.3))
+            .frame(width: 36, height: 36)
+            .overlay(
+                Text(String(post.authorName.prefix(2)).uppercased())
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(ForkarTheme.accent)
+            )
     }
 }
