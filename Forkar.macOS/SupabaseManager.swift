@@ -448,7 +448,64 @@ final class SupabaseManager: ObservableObject {
         }
     }
     
-    func sendCSMSMessage(content: String, roomId: String) async throws {
+    // MARK: - Subida de Fotos y Videos a Supabase Storage (csms-media / forkar-media)
+    func uploadMedia(fileURL: URL) async throws -> (url: String, type: String) {
+        guard let user = currentUser, let token = accessToken else {
+            throw NSError(domain: "Auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para subir archivos"])
+        }
+        
+        let data = try Data(contentsOf: fileURL)
+        let ext = fileURL.pathExtension.lowercased()
+        let isVideo = ["mp4", "mov", "webm", "m4v"].contains(ext)
+        let mediaType = isVideo ? "video" : "image"
+        
+        let contentType: String
+        switch ext {
+        case "jpg", "jpeg": contentType = "image/jpeg"
+        case "png": contentType = "image/png"
+        case "webp": contentType = "image/webp"
+        case "gif": contentType = "image/gif"
+        case "heic": contentType = "image/heic"
+        case "mp4": contentType = "video/mp4"
+        case "mov": contentType = "video/quicktime"
+        case "webm": contentType = "video/webm"
+        case "m4v": contentType = "video/x-m4v"
+        default: contentType = isVideo ? "video/mp4" : "application/octet-stream"
+        }
+        
+        let filename = "\(user.id)/\(Int(Date().timeIntervalSince1970))_\(UUID().uuidString.prefix(6)).\(ext.isEmpty ? (isVideo ? "mp4" : "jpg") : ext)"
+        
+        // 1. Intentar subir a 'csms-media' (estándar Web & iOS)
+        // 2. Si falla o no existe, fallback a 'forkar-media'
+        let buckets = ["csms-media", "forkar-media"]
+        var lastError: Error?
+        
+        for bucket in buckets {
+            guard let uploadURL = URL(string: "\(supabaseURL)/storage/v1/object/\(bucket)/\(filename)") else { continue }
+            var request = URLRequest(url: uploadURL)
+            request.httpMethod = "POST"
+            request.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            request.setValue("3600", forHTTPHeaderField: "cache-control")
+            request.setValue("true", forHTTPHeaderField: "x-upsert")
+            request.httpBody = data
+            
+            do {
+                let (_, response) = try await URLSession.shared.data(for: request)
+                if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+                    let publicUrl = "\(supabaseURL)/storage/v1/object/public/\(bucket)/\(filename)"
+                    return (publicUrl, mediaType)
+                }
+            } catch {
+                lastError = error
+            }
+        }
+        
+        throw lastError ?? NSError(domain: "Storage", code: 400, userInfo: [NSLocalizedDescriptionKey: "No se pudo subir a Supabase Storage (csms-media ni forkar-media)"])
+    }
+
+    func sendCSMSMessage(content: String, roomId: String, mediaUrl: String? = nil, mediaType: String? = nil) async throws {
         guard let user = currentUser, let token = accessToken else {
             throw NSError(domain: "Auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para enviar mensajes en CSMS"])
         }
@@ -462,13 +519,15 @@ final class SupabaseManager: ObservableObject {
         request.setValue("return=representation", forHTTPHeaderField: "Prefer")
         
         // Mapeo canónico a la tabla real de Supabase (user_id, no sender_id)
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "room_id": roomId,
             "user_id": user.id,
             "author_name": user.fullName ?? user.email ?? "Usuario",
             "author_avatar": user.avatarUrl as Any,
             "content": content
         ]
+        if let mUrl = mediaUrl, !mUrl.isEmpty { body["media_url"] = mUrl }
+        if let mType = mediaType, !mType.isEmpty { body["media_type"] = mType }
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (_, response) = try await URLSession.shared.data(for: request)

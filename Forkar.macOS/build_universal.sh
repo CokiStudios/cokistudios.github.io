@@ -39,7 +39,7 @@ fi
 echo "🍎 [1/4] Compilando para Apple Silicon (arm64)..."
 swiftc -O -target arm64-apple-macos12.0 -parse-as-library \
     -sdk $(xcrun --show-sdk-path) \
-    -framework SwiftUI -framework AppKit -framework AuthenticationServices \
+    -framework SwiftUI -framework AppKit -framework AuthenticationServices -framework AVKit -framework AVFoundation \
     "${SWIFT_FILES[@]}" \
     -o "$BUILD_DIR/forkar-arm64"
 
@@ -47,7 +47,7 @@ swiftc -O -target arm64-apple-macos12.0 -parse-as-library \
 echo "💻 [2/4] Compilando para Intel x86_64..."
 swiftc -O -target x86_64-apple-macos12.0 -parse-as-library \
     -sdk $(xcrun --show-sdk-path) \
-    -framework SwiftUI -framework AppKit -framework AuthenticationServices \
+    -framework SwiftUI -framework AppKit -framework AuthenticationServices -framework AVKit -framework AVFoundation \
     "${SWIFT_FILES[@]}" \
     -o "$BUILD_DIR/forkar-x86_64"
 

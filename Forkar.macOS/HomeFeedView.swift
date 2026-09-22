@@ -1,4 +1,5 @@
 import SwiftUI
+import AVKit
 
 // ══════════════════════════════════════════════════════════════════
 // 📱 HOME FEED VIEW — FORKAR FOR PC (macOS)
@@ -295,19 +296,30 @@ struct PostCardView: View {
                 onSelect()
             }
             
-            // Imagen multimedia si existe
-            if let img = post.imageUrl, let url = URL(string: img), !img.isEmpty {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxHeight: 280)
-                            .clipped()
-                            .cornerRadius(10)
-                    default:
-                        EmptyView()
+            // Multimedia: Foto o Video nativo
+            if let videoStr = post.videoUrl, let vUrl = URL(string: videoStr), !videoStr.isEmpty {
+                PostVideoThumbnailView(url: vUrl)
+            } else if let img = post.imageUrl, let url = URL(string: img), !img.isEmpty {
+                let lower = img.lowercased()
+                let isVid = lower.hasSuffix(".mp4") || lower.hasSuffix(".mov") || lower.hasSuffix(".webm") || lower.hasSuffix(".m4v")
+                if isVid {
+                    PostVideoThumbnailView(url: url)
+                } else {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(maxHeight: 280)
+                                .clipped()
+                                .cornerRadius(10)
+                                .onTapGesture {
+                                    onSelect()
+                                }
+                        default:
+                            EmptyView()
+                        }
                     }
                 }
             }
@@ -400,3 +412,45 @@ struct PostCardView: View {
             )
     }
 }
+
+// ─── REPRODUCTOR DE VIDEO PARA EL MURO ───
+struct PostVideoThumbnailView: View {
+    let url: URL
+    @State private var isPlaying: Bool = false
+    @State private var player: AVPlayer?
+    
+    var body: some View {
+        ZStack {
+            if let player = player, isPlaying {
+                VideoPlayer(player: player)
+                    .frame(height: 260)
+                    .cornerRadius(10)
+            } else {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.black.opacity(0.6))
+                    .frame(height: 200)
+                    .overlay(
+                        VStack(spacing: 8) {
+                            Button(action: {
+                                let p = AVPlayer(url: url)
+                                self.player = p
+                                self.isPlaying = true
+                                p.play()
+                            }) {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 46))
+                                    .foregroundColor(ForkarTheme.accent)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text("Reproducir Video")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    )
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+

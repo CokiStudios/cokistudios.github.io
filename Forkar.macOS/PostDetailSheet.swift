@@ -1,4 +1,6 @@
 import SwiftUI
+import AVKit
+import AppKit
 
 // ══════════════════════════════════════════════════════════════════
 // 🔍 POST DETAIL SHEET — FORKAR FOR PC (macOS)
@@ -92,17 +94,45 @@ struct PostDetailSheet: View {
                         .foregroundColor(ForkarTheme.textSub)
                         .lineSpacing(5)
                     
-                    if let img = post.imageUrl, let url = URL(string: img), !img.isEmpty {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxHeight: 360)
-                                    .cornerRadius(12)
-                            default:
-                                EmptyView()
+                    // ─── MULTIMEDIA: FOTO O VIDEO ───
+                    if let vid = post.videoUrl, let vUrl = URL(string: vid), !vid.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            VideoPlayer(player: AVPlayer(url: vUrl))
+                                .frame(height: 340)
+                                .cornerRadius(12)
+                            
+                            Button(action: { NSWorkspace.shared.open(vUrl) }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.up.right.square")
+                                    Text("Abrir video en reproductor externo")
+                                }
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(ForkarTheme.accent)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    } else if let img = post.imageUrl, let url = URL(string: img), !img.isEmpty {
+                        let isVid = img.hasSuffix(".mp4") || img.hasSuffix(".mov") || img.hasSuffix(".webm") || img.hasSuffix(".m4v")
+                        if isVid {
+                            VideoPlayer(player: AVPlayer(url: url))
+                                .frame(height: 340)
+                                .cornerRadius(12)
+                        } else {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxHeight: 380)
+                                        .cornerRadius(12)
+                                        .onTapGesture {
+                                            NSWorkspace.shared.open(url)
+                                        }
+                                        .help("Click para abrir en tamaño original")
+                                default:
+                                    EmptyView()
+                                }
                             }
                         }
                     }
