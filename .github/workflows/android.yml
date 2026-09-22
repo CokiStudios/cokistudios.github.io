@@ -34,7 +34,7 @@ jobs:
       - name: Guardar APK en Artifacts de GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: Forkar-Android-3.0.1
+          name: Forkar-Android-3.0.2
           path: Forkar.Android/app/build/outputs/apk/release/*.apk
           retention-days: 14
 
@@ -51,7 +51,7 @@ jobs:
               --app "${FIREBASE_APP_ID}" \
               --token "${FIREBASE_TOKEN}" \
               --groups "testers" \
-              --release-notes "Compilación automática de Forkar Android 3.0.1 desde GitHub Actions"
+              --release-notes "Compilación automática de Forkar Android 3.0.2 desde GitHub Actions"
           else
             echo "ℹ️ El secret FIREBASE_TOKEN no está configurado aún en GitHub Secrets."
             echo "🎉 El archivo APK ya quedó guardado en los Artifacts de este workflow para descarga directa."

@@ -66,14 +66,22 @@ class SupabaseManager private constructor(context: Context) {
                 currentUser = gson.fromJson(userJson, SupabaseUser::class.java)
             } catch (e: Exception) {
                 Log.e("SupabaseManager", "Error decoding stored user", e)
+                sharedPrefs.edit().remove("supabase_current_user").apply()
             }
         }
-        if (sessionToken == null) {
-            managerScope.launch {
-                restoreSessionFromDeviceHash()
-            }
-        } else if (refreshToken != null) {
-            // Refrescar token proactivamente para evitar expiración JWT
+
+        // AUTO-HEAL: Eliminar de raíz tokens falsos ("device_hash_session_...") o no-JWT corruptos
+        // Esto elimina permanentemente el error que obligaba al usuario a "borrar datos de la app".
+        val token = sessionToken
+        if (token != null && (token.startsWith("device_hash_session_") || token.count { it == '.' } != 2)) {
+            Log.w("SupabaseManager", "Auto-heal: Limpiando token inválido o corrupto previo")
+            sessionToken = null
+            currentUser = null
+            sharedPrefs.edit().remove("supabase_session_token").remove("supabase_current_user").apply()
+        }
+
+        if (refreshToken != null) {
+            // Refrescar token proactivamente usando el refresh_token real
             managerScope.launch {
                 refreshAuthSession()
             }
@@ -130,6 +138,11 @@ class SupabaseManager private constructor(context: Context) {
                         saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
                     }
                     return@withContext true
+                } else if (response.code in 400..499) {
+                    // Si el refresh token caducó o no es válido, cerrar sesión limpiamente sin bloquear la app
+                    withContext(Dispatchers.Main) {
+                        logout()
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -179,39 +192,9 @@ class SupabaseManager private constructor(context: Context) {
     }
 
     suspend fun restoreSessionFromDeviceHash(): Unit = withContext(Dispatchers.IO) {
-        try {
-            val currentHash = deviceHash
-            val path = "/rest/v1/user_device_hashes"
-            val queryParams = mapOf(
-                "select" to "*",
-                "device_hash" to "eq.$currentHash"
-            )
-            val request = makeRequest(path, queryParams = queryParams)
-            client.newCall(request).execute().use { response ->
-                val body = response.body?.string() ?: ""
-                if (response.isSuccessful && body.isNotBlank()) {
-                    val array = JSONArray(body)
-                    if (array.length() > 0) {
-                        val obj = array.getJSONObject(0)
-                        val userId = obj.optString("user_id")
-                        val userEmail = obj.optString("user_email")
-                        if (!userId.isNullOrBlank()) {
-                            val restoredUser = SupabaseUser(
-                                id = userId,
-                                email = userEmail,
-                                userMetadata = UserMetadata(fullName = userEmail.substringBefore("@"), name = userEmail.substringBefore("@"), avatarUrl = null, picture = null, company = "Coki Studios", role = "user")
-                            )
-                            val token = "device_hash_session_${currentHash.take(16)}"
-                            withContext(Dispatchers.Main) {
-                                saveSession(token, restoredUser)
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.w("SupabaseManager", "Error restoring session from device hash", e)
-        }
+        // Desactivado: Crear tokens falsos 'device_hash_session_' provocaba que Supabase
+        // retornara 401 en todas las APIs autenticadas y obligaba al usuario a "borrar datos de la app".
+        // La sesión se mantiene de manera segura exclusivamente con JWTs reales y refresh_token.
     }
 
 
@@ -613,7 +596,7 @@ class SupabaseManager private constructor(context: Context) {
     }
 
     // MARK: - OAuth API
-    suspend fun loginWithToken(accessToken: String) = withContext(Dispatchers.IO) {
+    suspend fun loginWithToken(accessToken: String, refresh: String? = null) = withContext(Dispatchers.IO) {
         val path = "/auth/v1/user"
         val request = Request.Builder()
             .url("$baseURL$path")
@@ -629,27 +612,47 @@ class SupabaseManager private constructor(context: Context) {
             }
             val user = gson.fromJson(responseBody, SupabaseUser::class.java)
             withContext(Dispatchers.Main) {
-                saveSession(accessToken, user)
+                saveSession(accessToken, user, refresh)
             }
         }
     }
 
     suspend fun handleOAuthCallback(url: String) {
-        val fragment = url.substringAfter("#", "")
-        if (fragment.isEmpty()) {
-            throw IOException("Enlace de retorno inválido")
-        }
-
         val params = mutableMapOf<String, String>()
-        fragment.split("&").forEach { pair ->
-            val parts = pair.split("=")
-            if (parts.size == 2) {
-                params[parts[0]] = parts[1]
+
+        // 1. Fragment (#access_token=...&refresh_token=...)
+        val fragment = if (url.contains("#")) url.substringAfter("#") else ""
+        if (fragment.isNotEmpty()) {
+            fragment.split("&").forEach { pair ->
+                val parts = pair.split("=")
+                if (parts.size == 2) {
+                    try {
+                        params[parts[0]] = java.net.URLDecoder.decode(parts[1], "UTF-8")
+                    } catch (e: Exception) {
+                        params[parts[0]] = parts[1]
+                    }
+                }
             }
         }
 
-        val accessToken = params["access_token"] ?: throw IOException("Token de acceso no encontrado")
-        loginWithToken(accessToken)
+        // 2. Query (?access_token=... o ?code=...)
+        val query = if (url.contains("?")) url.substringAfter("?").substringBefore("#") else ""
+        if (query.isNotEmpty()) {
+            query.split("&").forEach { pair ->
+                val parts = pair.split("=")
+                if (parts.size == 2) {
+                    try {
+                        params[parts[0]] = java.net.URLDecoder.decode(parts[1], "UTF-8")
+                    } catch (e: Exception) {
+                        params[parts[0]] = parts[1]
+                    }
+                }
+            }
+        }
+
+        val accessToken = params["access_token"] ?: throw IOException("Token de acceso no encontrado en redirección")
+        val refreshToken = params["refresh_token"]
+        loginWithToken(accessToken, refreshToken)
     }
 
     // MARK: - Moderation API
