@@ -1,7 +1,17 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+val hasKeystore = keystorePropertiesFile.exists()
+if (hasKeystore) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -28,6 +38,30 @@ android {
             enableV3Signing = true
             enableV4Signing = false
         }
+        create("release") {
+            val ksRelPath = if (hasKeystore) keystoreProperties.getProperty("storeFile", "keystore/forkar-release.jks") else "keystore/forkar-release.jks"
+            val ksFile = rootProject.file(ksRelPath)
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = keystoreProperties.getProperty("storePassword") ?: System.getenv("KEYSTORE_PASSWORD") ?: "CokiStudiosForkar2026!"
+                keyAlias = keystoreProperties.getProperty("keyAlias") ?: System.getenv("KEY_ALIAS") ?: "forkar_release"
+                keyPassword = keystoreProperties.getProperty("keyPassword") ?: System.getenv("KEY_PASSWORD") ?: "CokiStudiosForkar2026!"
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = false
+            } else {
+                val debugConfig = getByName("debug")
+                storeFile = debugConfig.storeFile
+                storePassword = debugConfig.storePassword
+                keyAlias = debugConfig.keyAlias
+                keyPassword = debugConfig.keyPassword
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = false
+            }
+        }
     }
 
     buildTypes {
@@ -36,7 +70,7 @@ android {
             isMinifyEnabled = false
         }
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -44,6 +78,34 @@ android {
             )
         }
     }
+
+    flavorDimensions += "channel"
+    productFlavors {
+        create("production") {
+            dimension = "channel"
+            applicationId = "com.cokistudios.forkar"
+            buildConfigField("String", "CHANNEL_NAME", "\"production\"")
+            buildConfigField("Boolean", "IS_QA", "false")
+            buildConfigField("Boolean", "IS_INTERNAL_CS", "false")
+        }
+        create("qa") {
+            dimension = "channel"
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+            buildConfigField("String", "CHANNEL_NAME", "\"qa\"")
+            buildConfigField("Boolean", "IS_QA", "true")
+            buildConfigField("Boolean", "IS_INTERNAL_CS", "false")
+        }
+        create("internal") {
+            dimension = "channel"
+            applicationIdSuffix = ".internal"
+            versionNameSuffix = "-cs"
+            buildConfigField("String", "CHANNEL_NAME", "\"internal\"")
+            buildConfigField("Boolean", "IS_QA", "false")
+            buildConfigField("Boolean", "IS_INTERNAL_CS", "true")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -53,6 +115,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"

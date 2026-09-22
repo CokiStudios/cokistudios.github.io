@@ -63,10 +63,12 @@ class MainActivity : ComponentActivity() {
         try {
             val appDist = com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
             appDist.updateIfNewReleaseAvailable()
-            appDist.showFeedbackNotification(
-                R.string.additional_form_text,
-                com.google.firebase.appdistribution.InterruptionLevel.DEFAULT
-            )
+            if (BuildConfig.IS_QA) {
+                appDist.showFeedbackNotification(
+                    R.string.additional_form_text,
+                    com.google.firebase.appdistribution.InterruptionLevel.DEFAULT
+                )
+            }
         } catch (e: Exception) {
             android.util.Log.w("AppDistribution", "Feedback setup skipped: ${e.message}")
         }

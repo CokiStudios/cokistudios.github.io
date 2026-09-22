@@ -6,6 +6,9 @@ dist-dmg/
 **/.gradle/
 **/build/
 **/local.properties
+keystore.properties
+*.jks
+*.keystore
 .idea/
 
 # Node & Rust Build Outputs

@@ -32,6 +32,12 @@
                 <data
                     android:scheme="forkar"
                     android:host="oauth" />
+                <data
+                    android:scheme="forkar-qa"
+                    android:host="oauth" />
+                <data
+                    android:scheme="forkar-internal"
+                    android:host="oauth" />
             </intent-filter>
         </activity>
     </application>

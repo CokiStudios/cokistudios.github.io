@@ -23,6 +23,44 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703867182522:android:73d71157ab0d7c63f71183",
+        "android_client_info": {
+          "package_name": "com.cokistudios.forkar.qa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_QR1NzuIx81IRyZYW5oR_aQQQp_ec1XY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703867182522:android:73d71157ab0d7c63f71183",
+        "android_client_info": {
+          "package_name": "com.cokistudios.forkar.internal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_QR1NzuIx81IRyZYW5oR_aQQQp_ec1XY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

@@ -16,12 +16,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import com.cokistudios.forkar.BuildConfig
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -70,6 +75,7 @@ fun CreatePostScreen(
     var content by remember { mutableStateOf("") }
     var isLoadingCategories by remember { mutableStateOf(false) }
     var isPublishing by remember { mutableStateOf(false) }
+    var isInternalPost by remember { mutableStateOf(BuildConfig.IS_INTERNAL_CS) }
 
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -193,6 +199,48 @@ fun CreatePostScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            if (BuildConfig.IS_INTERNAL_CS) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF201938))
+                        .border(1.dp, Color(0xFF8B5CF6).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .clickable { isInternalPost = !isInternalPost }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = if (isInternalPost) Color(0xFFA78BFA) else Color.Gray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Exclusivo para el equipo de Coki Studios",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = if (isInternalPost) "Solo visible en el Muro Interno CS" else "Visible en el Feed Global de Forkar",
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.6f)
+                        )
+                    }
+                    Switch(
+                        checked = isInternalPost,
+                        onCheckedChange = { isInternalPost = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF7C3AED)
+                        )
+                    )
+                }
+            }
+
             PrimaryButton(
                 text = if (isPublishing) "Publicando..." else "Publicar",
                 onClick = {
@@ -200,7 +248,12 @@ fun CreatePostScreen(
                     coroutineScope.launch {
                         isPublishing = true
                         try {
-                            manager.createPost(title.trim(), content.trim(), catId)
+                            val finalContent = if (BuildConfig.IS_INTERNAL_CS && isInternalPost) {
+                                "[🔒 CS Internal] ${content.trim()}"
+                            } else {
+                                content.trim()
+                            }
+                            manager.createPost(title.trim(), finalContent, catId)
                             Toast.makeText(context, "Publicación creada", Toast.LENGTH_SHORT).show()
                             onBack()
                         } catch (e: Exception) {

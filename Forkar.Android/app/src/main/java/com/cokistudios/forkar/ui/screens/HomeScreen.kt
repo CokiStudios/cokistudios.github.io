@@ -29,8 +29,15 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
 import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
+import com.cokistudios.forkar.ui.components.ChannelBadge
+import com.cokistudios.forkar.ui.components.InternalCsToolsSheet
 import com.cokistudios.forkar.ui.theme.PurpleAccent
+import com.cokistudios.forkar.BuildConfig
+import com.cokistudios.forkar.R
+import com.google.firebase.appdistribution.FirebaseAppDistribution
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,6 +95,8 @@ fun HomeScreen(
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var showInternalTools by remember { mutableStateOf(false) }
+    var internalTabSelected by remember { androidx.compose.runtime.mutableIntStateOf(0) } // 0: Muro Interno CS, 1: Feed Público
 
     val coroutineScope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
@@ -131,11 +140,33 @@ fun HomeScreen(
         containerColor = Color.Transparent,
         topBar = {
             LiquidGlassTopBar(
-                title = "Forkar",
-                subtitle = "Comunidad Coki Studios",
+                title = when {
+                    BuildConfig.IS_INTERNAL_CS -> "Forkar CS"
+                    BuildConfig.IS_QA -> "Forkar QA"
+                    else -> "Forkar"
+                },
+                subtitle = when {
+                    BuildConfig.IS_INTERNAL_CS -> "Red Social Interna Coki Studios"
+                    BuildConfig.IS_QA -> "Canal de Pruebas & Feedback"
+                    else -> "Comunidad Coki Studios"
+                },
                 icon = Icons.Default.Home,
-                iconColor = IndigoPrimary,
+                iconColor = if (BuildConfig.IS_INTERNAL_CS) Color(0xFFA78BFA) else IndigoPrimary,
                 actions = {
+                    ChannelBadge(
+                        onClick = {
+                            if (BuildConfig.IS_INTERNAL_CS) {
+                                showInternalTools = true
+                            } else if (BuildConfig.IS_QA) {
+                                try {
+                                    FirebaseAppDistribution.getInstance().startFeedback(R.string.additional_form_text)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     IconButton(onClick = onNavigateToCSMS) {
                         Box(contentAlignment = Alignment.TopEnd) {
                             Icon(
@@ -179,6 +210,50 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Internal CS Social Feed Switcher
+            if (BuildConfig.IS_INTERNAL_CS) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF1E1833))
+                        .border(1.dp, Color(0xFF8B5CF6).copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                        .padding(3.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(if (internalTabSelected == 0) Color(0xFF7C3AED) else Color.Transparent)
+                            .clickable { internalTabSelected = 0 }
+                            .padding(vertical = 7.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text("Muro Interno CS", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(if (internalTabSelected == 1) Color(0xFF7C3AED) else Color.Transparent)
+                            .clickable { internalTabSelected = 1 }
+                            .padding(vertical = 7.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Share, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text("Feed Global", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
             // Search Bar
             SearchBarView(
                 query = searchQuery,
@@ -288,18 +363,48 @@ fun HomeScreen(
                     }
                 }
             } else {
+                val filteredPosts = remember(posts, internalTabSelected) {
+                    when {
+                        BuildConfig.IS_INTERNAL_CS && internalTabSelected == 0 -> {
+                            val internalList = posts.filter { post ->
+                                post.content.contains("[🔒 CS Internal]") ||
+                                post.title.contains("[CS]") ||
+                                post.content.contains("#cs-internal") ||
+                                post.content.contains("#dev-builds") ||
+                                post.content.contains("#anuncios")
+                            }
+                            if (internalList.isNotEmpty()) internalList else posts
+                        }
+                        BuildConfig.IS_INTERNAL_CS && internalTabSelected == 1 -> {
+                            posts.filter { !it.content.contains("[🔒 CS Internal]") }
+                        }
+                        !BuildConfig.IS_INTERNAL_CS -> {
+                            posts.filter { !it.content.contains("[🔒 CS Internal]") && !it.content.contains("#cs-internal") }
+                        }
+                        else -> posts
+                    }
+                }
+
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(posts) { post ->
+                    items(filteredPosts) { post ->
                         PostCardView(
                             post = post,
                             onClick = { onPostClick(post) }
                         )
                     }
                 }
+            }
+
+            if (showInternalTools) {
+                InternalCsToolsSheet(
+                    manager = manager,
+                    onDismiss = { showInternalTools = false },
+                    onNavigateToCSMS = onNavigateToCSMS
+                )
             }
         }
     }
@@ -399,6 +504,22 @@ fun PostCardView(
             }
 
             // Category tag
+            if (post.content.contains("[🔒 CS Internal]") || post.content.contains("#cs-internal")) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x338B5CF6))
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "🔒 CS Team",
+                        color = Color(0xFFC084FC),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+            }
             if (post.category != null) {
                 Box(
                     modifier = Modifier

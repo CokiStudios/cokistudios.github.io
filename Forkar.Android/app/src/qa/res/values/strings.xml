@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Forkar QA</string>
+    <string name="channel_title">Forkar QA Testing Build</string>
+    <string name="additional_form_text">Reporte de QA: Envía capturas y comentarios directamente a Firebase App Distribution.</string>
+</resources>
