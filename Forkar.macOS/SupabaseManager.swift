@@ -535,6 +535,128 @@ final class SupabaseManager: ObservableObject {
             await fetchCSMSMessages(roomId: roomId)
         }
     }
+
+    private func joinRoomAsMember(roomId: String, userId: String, userName: String) async {
+        guard let url = URL(string: "\(supabaseURL)/rest/v1/chat_room_members") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        if let token = accessToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+        let body: [String: Any] = [
+            "room_id": roomId,
+            "user_id": userId,
+            "user_name": userName
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        _ = try? await URLSession.shared.data(for: request)
+    }
+
+    func createGroupChat(name: String) async throws -> String {
+        guard let user = currentUser else {
+            throw NSError(domain: "Auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para crear grupos"])
+        }
+        guard let url = URL(string: "\(supabaseURL)/rest/v1/chat_rooms") else {
+            throw NSError(domain: "Network", code: 400, userInfo: [NSLocalizedDescriptionKey: "URL inválida"])
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        if let token = accessToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("return=representation", forHTTPHeaderField: "Prefer")
+
+        let body: [String: Any] = [
+            "name": name,
+            "is_group": true,
+            "created_by": user.id
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        var roomId = UUID().uuidString.lowercased()
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+            if let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+               let first = arr.first,
+               let id = first["id"] as? String {
+                roomId = id
+            }
+        }
+
+        await joinRoomAsMember(roomId: roomId, userId: user.id, userName: user.fullName ?? user.email ?? "Usuario")
+        await fetchCSMSRooms()
+        self.activeCSMSRoomId = roomId
+        return roomId
+    }
+
+    func startDirectMessage(targetEmail: String) async throws -> String {
+        guard let user = currentUser else {
+            throw NSError(domain: "Auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para enviar mensajes"])
+        }
+        let cleanEmail = targetEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !cleanEmail.isEmpty else {
+            throw NSError(domain: "Input", code: 400, userInfo: [NSLocalizedDescriptionKey: "Ingresa un correo electrónico válido"])
+        }
+
+        var targetUserId: String? = nil
+        var targetName: String = cleanEmail
+
+        // Buscar perfil por correo
+        if let profUrl = URL(string: "\(supabaseURL)/rest/v1/profiles?email=ilike.\(cleanEmail)&limit=1") {
+            var profReq = URLRequest(url: profUrl)
+            profReq.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+            if let token = accessToken { profReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+            if let (pData, pResp) = try? await URLSession.shared.data(for: profReq),
+               let http = pResp as? HTTPURLResponse, (200...299).contains(http.statusCode),
+               let arr = try? JSONSerialization.jsonObject(with: pData) as? [[String: Any]],
+               let first = arr.first {
+                targetUserId = first["id"] as? String
+                if let fName = first["full_name"] as? String, !fName.isEmpty {
+                    targetName = fName
+                }
+            }
+        }
+
+        guard let roomUrl = URL(string: "\(supabaseURL)/rest/v1/chat_rooms") else {
+            throw NSError(domain: "Network", code: 400, userInfo: [NSLocalizedDescriptionKey: "URL inválida"])
+        }
+        var roomReq = URLRequest(url: roomUrl)
+        roomReq.httpMethod = "POST"
+        roomReq.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        if let token = accessToken { roomReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        roomReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        roomReq.setValue("return=representation", forHTTPHeaderField: "Prefer")
+
+        let roomBody: [String: Any] = [
+            "name": targetName,
+            "is_group": false,
+            "created_by": user.id
+        ]
+        roomReq.httpBody = try JSONSerialization.data(withJSONObject: roomBody)
+
+        var roomId = UUID().uuidString.lowercased()
+        let (data, response) = try await URLSession.shared.data(for: roomReq)
+        if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+            if let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+               let first = arr.first,
+               let id = first["id"] as? String {
+                roomId = id
+            }
+        }
+
+        await joinRoomAsMember(roomId: roomId, userId: user.id, userName: user.fullName ?? user.email ?? "Usuario")
+        if let tid = targetUserId {
+            await joinRoomAsMember(roomId: roomId, userId: tid, userName: targetName)
+        }
+        await fetchCSMSRooms()
+        self.activeCSMSRoomId = roomId
+        return roomId
+    }
     
     // ─── 6. ECO HUB DINÁMICO (forkman_user_eco) ───
     func fetchUserEcoStats() async {

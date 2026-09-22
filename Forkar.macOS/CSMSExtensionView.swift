@@ -15,6 +15,10 @@ struct CSMSExtensionView: View {
     @State private var isSending: Bool = false
     @State private var showingNewRoomSheet: Bool = false
     @State private var newRoomName: String = ""
+    @State private var showingNewDMSheet: Bool = false
+    @State private var newDMEmail: String = ""
+    @State private var roomSearchQuery: String = ""
+    @State private var isCreatingRoom: Bool = false
     
     // Estado de archivos adjuntos (Fotos y Videos)
     @State private var attachedFileURL: URL? = nil
@@ -23,15 +27,26 @@ struct CSMSExtensionView: View {
     @State private var isUploadingMedia: Bool = false
     @State private var uploadErrorMessage: String? = nil
     
+    private var filteredRooms: [CSMSChatRoom] {
+        let q = roomSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        if q.isEmpty {
+            return manager.csmsRooms
+        }
+        return manager.csmsRooms.filter {
+            $0.displayName.localizedCaseInsensitiveContains(q)
+        }
+    }
+    
     var body: some View {
         HSplitView {
             // ─── 1. BARRA LATERAL DE CANALES CSMS ───
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
+                // Header
+                HStack(spacing: 8) {
                     Image(systemName: "bubble.left.and.bubble.right.fill")
                         .foregroundColor(ForkarTheme.accent)
-                    Text("Salas CSMS")
-                        .font(.headline)
+                    Text("CSMS Web & PC")
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(ForkarTheme.text)
                     Spacer()
                     
@@ -39,6 +54,18 @@ struct CSMSExtensionView: View {
                         .fill(manager.isCSMSConnected ? ForkarTheme.greenEco : Color(hex: "#F59E0B"))
                         .frame(width: 8, height: 8)
                         .help(manager.isCSMSConnected ? "Conectado a Supabase en vivo" : "Reconectando...")
+                    
+                    Button(action: { showingNewDMSheet = true }) {
+                        Text("+ DM")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(ForkarTheme.accent)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(ForkarTheme.accent.opacity(0.15))
+                            .cornerRadius(4)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Iniciar mensaje directo por correo")
                     
                     Button(action: { showingNewRoomSheet = true }) {
                         Image(systemName: "plus")
@@ -49,57 +76,82 @@ struct CSMSExtensionView: View {
                             .cornerRadius(4)
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .help("Crear nueva sala CSMS")
+                    .help("Crear nuevo grupo o sala")
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
                 .background(ForkarTheme.bgTertiary)
+                
+                // Barra de Búsqueda de Salas
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 11))
+                        .foregroundColor(ForkarTheme.textSub)
+                    TextField("Buscar salas o DMs...", text: $roomSearchQuery)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .font(.system(size: 11))
+                        .foregroundColor(ForkarTheme.text)
+                    if !roomSearchQuery.isEmpty {
+                        Button(action: { roomSearchQuery = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(ForkarTheme.textSub)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(ForkarTheme.card)
+                .cornerRadius(6)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
                 
                 Divider()
                     .background(ForkarTheme.border)
                 
-                List(manager.csmsRooms, id: \.id) { room in
+                List(filteredRooms, id: \.id) { room in
                     Button(action: {
                         manager.activeCSMSRoomId = room.id
                         Task {
                             await manager.fetchCSMSMessages(roomId: room.id)
                         }
                     }) {
-                        HStack(spacing: 12) {
+                        HStack(spacing: 10) {
                             Circle()
                                 .fill(room.id == manager.activeCSMSRoomId ? ForkarTheme.accent : ForkarTheme.cardActive)
-                                .frame(width: 36, height: 36)
+                                .frame(width: 32, height: 32)
                                 .overlay(
                                     Image(systemName: iconForRoom(room.id))
-                                        .font(.system(size: 14))
+                                        .font(.system(size: 12))
                                         .foregroundColor(room.id == manager.activeCSMSRoomId ? .white : ForkarTheme.textSub)
-                                )
+                                    )
                             
-                            VStack(alignment: .leading, spacing: 3) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text(room.displayName)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(room.id == manager.activeCSMSRoomId ? .white : ForkarTheme.text)
                                     .lineLimit(1)
                                 
-                                Text(room.isGroup ? "Canal público" : "Mensajes directos")
+                                Text(room.isGroup ? "Grupo" : "Mensaje Directo")
                                     .font(.system(size: 10))
                                     .foregroundColor(ForkarTheme.textSub)
                             }
                             Spacer()
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 3)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
                     .listRowBackground(
                         room.id == manager.activeCSMSRoomId
-                            ? RoundedRectangle(cornerRadius: 8).fill(ForkarTheme.cardActive)
-                            : RoundedRectangle(cornerRadius: 8).fill(Color.clear)
+                            ? RoundedRectangle(cornerRadius: 6).fill(ForkarTheme.cardActive)
+                            : RoundedRectangle(cornerRadius: 6).fill(Color.clear)
                     )
                 }
                 .listStyle(SidebarListStyle())
             }
-            .frame(minWidth: 220, idealWidth: 260, maxWidth: 320)
+            .frame(minWidth: 230, idealWidth: 270, maxWidth: 340)
             
             // ─── 2. ÁREA DE CHAT EN VIVO CON MULTIMEDIA ───
             VStack(spacing: 0) {
@@ -302,11 +354,11 @@ struct CSMSExtensionView: View {
         }
         .sheet(isPresented: $showingNewRoomSheet) {
             VStack(spacing: 16) {
-                Text("Nueva Sala CSMS")
+                Text("Nuevo Grupo CSMS")
                     .font(.headline)
                     .foregroundColor(ForkarTheme.text)
                 
-                TextField("Nombre de la sala (Ej: Desarrolladores Coki)", text: $newRoomName)
+                TextField("Nombre del grupo (Ej: Desarrolladores Coki)", text: $newRoomName)
                     .textFieldStyle(PlainTextFieldStyle())
                     .padding(10)
                     .background(ForkarTheme.bgTertiary)
@@ -315,18 +367,14 @@ struct CSMSExtensionView: View {
                 HStack {
                     Button("Cancelar") { showingNewRoomSheet = false }
                     Spacer()
-                    Button("Crear") {
-                        if !newRoomName.isEmpty {
-                            let newRoom = CSMSChatRoom(
-                                id: UUID().uuidString.lowercased(),
-                                name: newRoomName,
-                                isGroup: true,
-                                createdBy: manager.currentUser?.id,
-                                createdAt: nil
-                            )
-                            manager.csmsRooms.insert(newRoom, at: 0)
-                            manager.activeCSMSRoomId = newRoom.id
+                    Button("Crear Grupo") {
+                        let name = newRoomName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !name.isEmpty else { return }
+                        Task {
+                            isCreatingRoom = true
+                            _ = try? await manager.createGroupChat(name: name)
                             newRoomName = ""
+                            isCreatingRoom = false
                             showingNewRoomSheet = false
                         }
                     }
@@ -335,10 +383,53 @@ struct CSMSExtensionView: View {
                     .padding(.vertical, 6)
                     .background(ForkarTheme.accent)
                     .cornerRadius(6)
+                    .disabled(isCreatingRoom || newRoomName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
             .padding(20)
             .frame(width: 360)
+            .background(ForkarTheme.bgSecondary)
+        }
+        .sheet(isPresented: $showingNewDMSheet) {
+            VStack(spacing: 16) {
+                Text("Nuevo Mensaje Directo (DM)")
+                    .font(.headline)
+                    .foregroundColor(ForkarTheme.text)
+                
+                Text("Inicia una conversación privada ingresando el correo de la persona (arquitectura CSMS Web & iOS).")
+                    .font(.system(size: 11))
+                    .foregroundColor(ForkarTheme.textSub)
+                
+                TextField("Correo electrónico (ej: colega@cokistudios.com)", text: $newDMEmail)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(10)
+                    .background(ForkarTheme.bgTertiary)
+                    .cornerRadius(8)
+                
+                HStack {
+                    Button("Cancelar") { showingNewDMSheet = false }
+                    Spacer()
+                    Button("Iniciar DM") {
+                        let email = newDMEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !email.isEmpty else { return }
+                        Task {
+                            isCreatingRoom = true
+                            _ = try? await manager.startDirectMessage(targetEmail: email)
+                            newDMEmail = ""
+                            isCreatingRoom = false
+                            showingNewDMSheet = false
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(ForkarTheme.accent)
+                    .cornerRadius(6)
+                    .disabled(isCreatingRoom || newDMEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .padding(20)
+            .frame(width: 380)
             .background(ForkarTheme.bgSecondary)
         }
     }

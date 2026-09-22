@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>HoloApp</title>
+    <style>
+        body { margin: 0; background: #06090f; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; touch-action: none; }
+        canvas { width: 100vw; height: 100vh; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="720" height="480"></canvas>
+    <script type="module">
+        import { LoopingInterpreter } from 'https://cokistudios.com/LoopingEngine/looping_core.js?v=2.0.4';
+        const canvas = document.getElementById('gameCanvas');
+        const runtime = new LoopingInterpreter(canvas, console.log);
+        runtime.execute("");
+    </script>
+</body>
+</html>

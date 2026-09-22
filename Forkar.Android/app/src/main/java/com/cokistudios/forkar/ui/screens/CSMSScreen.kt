@@ -1,6 +1,10 @@
 package com.cokistudios.forkar.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,8 +31,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,11 +62,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.cokistudios.forkar.data.SupabaseManager
 import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
@@ -79,7 +90,9 @@ data class CSMSMessage(
     val senderName: String,
     val text: String,
     val time: String,
-    val isMine: Boolean
+    val isMine: Boolean,
+    val mediaUrl: String? = null,
+    val mediaType: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,14 +106,30 @@ fun CSMSScreen(
 
     var activeChat by remember { mutableStateOf<CSMSChat?>(null) }
     var typedMessage by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Dialogs
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     var newGroupName by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    var showCreateDmDialog by remember { mutableStateOf(false) }
+    var dmTargetEmail by remember { mutableStateOf("") }
+
+    // Media Attachments (Photos & Videos)
+    var attachedUri by remember { mutableStateOf<Uri?>(null) }
+    var isUploadingMedia by remember { mutableStateOf(false) }
+    var isSendingMessage by remember { mutableStateOf(false) }
 
     val chatList = remember { mutableStateListOf<CSMSChat>() }
     val activeMessages = remember { mutableStateListOf<CSMSMessage>() }
 
-    val loadRooms = {
+    // Media Picker Launcher for Android
+    val mediaPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        attachedUri = uri
+    }
+
+    val loadRooms: () -> Unit = {
         coroutineScope.launch {
             try {
                 val dbRooms = manager.fetchChatRooms()
@@ -108,7 +137,7 @@ fun CSMSScreen(
                 if (dbRooms.isEmpty()) {
                     chatList.addAll(
                         listOf(
-                            CSMSChat(SupabaseManager.CSMS_COMMUNITY_GLOBAL_ID, "💬 Comunidad Coki Studios Global", "Canal de chat sincronizado Web, iOS & Android 2.0", "Ahora", 0, true),
+                            CSMSChat(SupabaseManager.CSMS_COMMUNITY_GLOBAL_ID, "💬 Comunidad Coki Studios Global", "Canal de chat sincronizado Web, iOS, PC & Android", "Ahora", 0, true),
                             CSMSChat(SupabaseManager.CSMS_ECO_HUB_ID, "🌿 Eco Hub Cota & Cundinamarca", "¿Quién se suma al reto de reciclar RAEE hoy?", "10:42 AM", 0, true),
                             CSMSChat(SupabaseManager.CSMS_FORKAR_CARPOOL_ID, "🚗 Forkar Carpooling & Rutas", "Coordina viajes seguros y comparte trayectos ecológicos", "09:15 AM", 0, true)
                         )
@@ -126,7 +155,7 @@ fun CSMSScreen(
                             CSMSChat(
                                 id = validId,
                                 name = displayName,
-                                lastMessage = "Ver mensajes compartidos...",
+                                lastMessage = "Ver mensajes y multimedia...",
                                 time = "Reciente",
                                 unreadCount = 0,
                                 isGroup = obj.optBoolean("is_group", true)
@@ -140,7 +169,7 @@ fun CSMSScreen(
         }
     }
 
-    val loadMessages = { roomId: String ->
+    val loadMessages: (String) -> Unit = { roomId: String ->
         coroutineScope.launch {
             try {
                 val validRoomId = manager.ensureValidRoomUUID(roomId)
@@ -149,7 +178,13 @@ fun CSMSScreen(
                 if (dbMsgs.isEmpty()) {
                     activeMessages.addAll(
                         listOf(
-                            CSMSMessage("m-1", "Sistema CSMS", "¡Bienvenido al canal sincronizado Web, iOS y Android!", "10:00 AM", false)
+                            CSMSMessage(
+                                id = "m-1",
+                                senderName = "Sistema CSMS",
+                                text = "¡Bienvenido al canal sincronizado Web, iOS, PC y Android! Puedes compartir fotos, videos y mensajes.",
+                                time = "10:00 AM",
+                                isMine = false
+                            )
                         )
                     )
                 } else {
@@ -182,13 +217,18 @@ fun CSMSScreen(
                             "Enviado"
                         }
 
+                        val mUrl = obj.optString("media_url").takeIf { it.isNotBlank() && it != "null" }
+                        val mType = obj.optString("media_type").takeIf { it.isNotBlank() && it != "null" }
+
                         activeMessages.add(
                             CSMSMessage(
                                 id = obj.optString("id", java.util.UUID.randomUUID().toString()),
                                 senderName = authorName,
                                 text = obj.optString("content"),
                                 time = timeStr,
-                                isMine = isMine
+                                isMine = isMine,
+                                mediaUrl = mUrl,
+                                mediaType = mType
                             )
                         )
                     }
@@ -202,14 +242,14 @@ fun CSMSScreen(
     LaunchedEffect(Unit) {
         loadRooms()
         while (true) {
-            delay(5000)
+            delay(4000)
             if (activeChat == null) {
                 loadRooms()
             }
         }
     }
 
-    // Auto sync messages every 1.8s when inside chat + auto join room as member
+    // Auto sync messages every 2.0s when inside chat
     LaunchedEffect(activeChat) {
         val chat = activeChat
         if (chat != null) {
@@ -218,7 +258,7 @@ fun CSMSScreen(
             }
             loadMessages(chat.id)
             while (activeChat?.id == chat.id) {
-                delay(1800)
+                delay(2000)
                 loadMessages(chat.id)
             }
         }
@@ -230,7 +270,7 @@ fun CSMSScreen(
             if (activeChat == null) {
                 LiquidGlassTopBar(
                     title = "CSMS",
-                    subtitle = "Coki Messaging Service Sincronizado",
+                    subtitle = "Coki Messaging Service • Web, PC & Android",
                     icon = Icons.Default.Email,
                     iconColor = PurpleAccent,
                     actions = {
@@ -242,7 +282,7 @@ fun CSMSScreen(
             } else {
                 LiquidGlassTopBar(
                     title = activeChat?.name ?: "Chat CSMS",
-                    subtitle = "Sincronizado en tiempo real",
+                    subtitle = if (activeChat?.isGroup == true) "Canal grupal sincronizado" else "Mensaje directo",
                     icon = Icons.Default.ArrowBack,
                     iconColor = Color.White,
                     onIconClick = { activeChat = null },
@@ -261,14 +301,14 @@ fun CSMSScreen(
                         if (!manager.isLoggedIn) {
                             onLoginRequired()
                         } else {
-                            showCreateGroupDialog = !showCreateGroupDialog
+                            showCreateGroupDialog = true
                         }
                     },
                     containerColor = PurpleAccent,
                     contentColor = Color.White,
                     shape = CircleShape
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Crear Grupo CSMS")
+                    Icon(Icons.Default.Add, contentDescription = "Nuevo Grupo")
                 }
             }
         }
@@ -279,13 +319,150 @@ fun CSMSScreen(
                 .padding(paddingValues)
         ) {
             if (activeChat == null) {
-                // ── CHAT LIST VIEW ──
+                // ── LISTA DE CANALES Y CHATS CSMS (CLON DE WEB & PC) ──
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
                 ) {
-                    // Create Group Banner Dialog
+                    // Barra de Búsqueda de Chats
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Buscar salas o chats CSMS...", fontSize = 13.sp) },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.Gray)
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Limpiar", tint = Color.Gray)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = PurpleAccent,
+                            unfocusedBorderColor = Color(0xFF334155),
+                            focusedContainerColor = Color(0xFF1E293B).copy(alpha = 0.6f),
+                            unfocusedContainerColor = Color(0xFF1E293B).copy(alpha = 0.4f)
+                        ),
+                        singleLine = true
+                    )
+
+                    // Botones de acción rápida: + DM y + Grupo
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    if (!manager.isLoggedIn) onLoginRequired() else showCreateDmDialog = true
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.7f)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, PurpleAccent.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Person, contentDescription = null, tint = PurpleAccent, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Nuevo DM", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    if (!manager.isLoggedIn) onLoginRequired() else showCreateGroupDialog = true
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.7f)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, IndigoPrimary.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, tint = IndigoPrimary, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Nuevo Grupo", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+
+                    // Dialog Crear DM
+                    AnimatedVisibility(visible = showCreateDmDialog) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B)),
+                            border = androidx.compose.foundation.BorderStroke(1.2.dp, PurpleAccent)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("✉️ Iniciar Mensaje Directo (DM)", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
+                                Text("Ingresa el correo del usuario registrado en CSMS:", color = Color.LightGray, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                                OutlinedTextField(
+                                    value = dmTargetEmail,
+                                    onValueChange = { dmTargetEmail = it },
+                                    placeholder = { Text("ejemplo@cokistudios.com", fontSize = 12.sp) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = PurpleAccent,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
+                                    ),
+                                    singleLine = true
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                                    IconButton(onClick = { showCreateDmDialog = false }) {
+                                        Text("Cancelar", color = Color.Gray, fontSize = 12.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    IconButton(onClick = {
+                                        if (dmTargetEmail.isNotBlank()) {
+                                            coroutineScope.launch {
+                                                val roomId = manager.startDirectMessage(dmTargetEmail)
+                                                if (roomId != null) {
+                                                    Toast.makeText(context, "Conversación iniciada", Toast.LENGTH_SHORT).show()
+                                                    loadRooms()
+                                                    activeChat = CSMSChat(roomId, dmTargetEmail, "", "Ahora", 0, false)
+                                                }
+                                                dmTargetEmail = ""
+                                                showCreateDmDialog = false
+                                            }
+                                        }
+                                    }) {
+                                        Text("Chatear", color = PurpleAccent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Dialog Crear Grupo
                     AnimatedVisibility(visible = showCreateGroupDialog) {
                         Card(
                             modifier = Modifier
@@ -293,7 +470,7 @@ fun CSMSScreen(
                                 .padding(vertical = 8.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B)),
-                            border = androidx.compose.foundation.BorderStroke(1.2.dp, PurpleAccent.copy(alpha = 0.5f))
+                            border = androidx.compose.foundation.BorderStroke(1.2.dp, IndigoPrimary)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text("💬 Crear Nuevo Grupo CSMS Sincronizado", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
@@ -301,14 +478,15 @@ fun CSMSScreen(
                                 OutlinedTextField(
                                     value = newGroupName,
                                     onValueChange = { newGroupName = it },
-                                    placeholder = { Text("Nombre del grupo (ej: Hackers Cota)") },
+                                    placeholder = { Text("Nombre del grupo (ej: Hackers Cota)", fontSize = 12.sp) },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = Color.White,
                                         unfocusedTextColor = Color.White,
-                                        focusedBorderColor = PurpleAccent,
+                                        focusedBorderColor = IndigoPrimary,
                                         unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
-                                    )
+                                    ),
+                                    singleLine = true
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
@@ -319,25 +497,30 @@ fun CSMSScreen(
                                     IconButton(onClick = {
                                         if (newGroupName.isNotBlank()) {
                                             coroutineScope.launch {
-                                                val success = manager.createGroupChat(newGroupName)
-                                                if (success) {
+                                                val createdId = manager.createGroupChat(newGroupName)
+                                                if (createdId != null) {
                                                     Toast.makeText(context, "Grupo CSMS creado", Toast.LENGTH_SHORT).show()
                                                     loadRooms()
+                                                    activeChat = CSMSChat(createdId, newGroupName, "", "Ahora", 0, true)
                                                 }
                                                 newGroupName = ""
                                                 showCreateGroupDialog = false
                                             }
                                         }
                                     }) {
-                                        Text("Crear", color = PurpleAccent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        Text("Crear", color = IndigoPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                     }
                                 }
                             }
                         }
                     }
 
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        items(chatList) { chat ->
+                    val filteredList = chatList.filter {
+                        searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true)
+                    }
+
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 4.dp)) {
+                        items(filteredList) { chat ->
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -360,17 +543,19 @@ fun CSMSScreen(
                                             .clip(CircleShape)
                                             .background(
                                                 Brush.linearGradient(
-                                                    listOf(PurpleAccent.copy(alpha = 0.4f), IndigoPrimary.copy(alpha = 0.2f))
+                                                    listOf(
+                                                        if (chat.isGroup) IndigoPrimary else PurpleAccent,
+                                                        Color(0xFF3B82F6)
+                                                    )
                                                 )
-                                            )
-                                            .border(1.2.dp, PurpleAccent.copy(alpha = 0.6f), CircleShape),
+                                            ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = chat.name.take(2).uppercase(),
-                                            fontWeight = FontWeight.Black,
                                             color = Color.White,
-                                            fontSize = 16.sp
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp
                                         )
                                     }
 
@@ -378,27 +563,30 @@ fun CSMSScreen(
 
                                     Column(modifier = Modifier.weight(1f)) {
                                         Row(
+                                            modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.fillMaxWidth()
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
                                                 text = chat.name,
+                                                fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
-                                                fontSize = 15.sp
+                                                maxLines = 1
                                             )
                                             Text(
                                                 text = chat.time,
-                                                fontSize = 11.sp,
-                                                color = Color(0xFF94A3B8)
+                                                fontSize = 10.sp,
+                                                color = Color.Gray
                                             )
                                         }
-                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Spacer(modifier = Modifier.height(3.dp))
+
                                         Text(
                                             text = chat.lastMessage,
-                                            fontSize = 13.sp,
-                                            color = Color(0xFFCBD5E1),
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF94A3B8),
                                             maxLines = 1
                                         )
                                     }
@@ -408,7 +596,8 @@ fun CSMSScreen(
                     }
                 }
             } else {
-                // ── CONVERSATION CHAT VIEW ──
+                // ── CONVERSACIÓN ACTIVA CON MULTIMEDIA (FOTOS Y VIDEOS) ──
+                val currentChat = activeChat!!
                 val listState = rememberLazyListState()
 
                 LaunchedEffect(activeMessages.size) {
@@ -417,43 +606,7 @@ fun CSMSScreen(
                     }
                 }
 
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    if (!manager.isLoggedIn) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0x228B5CF6))
-                                .border(1.dp, Color(0x558B5CF6), RoundedCornerShape(12.dp))
-                                .clickable { onLoginRequired() }
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "💬 Modo Invitado • Toca aquí para iniciar sesión con CSID y verificar tu cuenta",
-                                    color = Color(0xFFC7D2FE),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = "Entrar",
-                                    color = PurpleAccent,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
-                            }
-                        }
-                    }
-
+                Column(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
@@ -490,6 +643,7 @@ fun CSMSScreen(
                                             RoundedCornerShape(16.dp)
                                         )
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
+                                        .fillMaxWidth(if (!msg.mediaUrl.isNullOrBlank()) 0.75f else 0.85f)
                                 ) {
                                     Column {
                                         if (!isMine) {
@@ -501,15 +655,76 @@ fun CSMSScreen(
                                             )
                                             Spacer(modifier = Modifier.height(2.dp))
                                         }
-                                        Text(
-                                            text = msg.text,
-                                            fontSize = 14.sp,
-                                            color = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        // Texto del mensaje
+                                        if (msg.text.isNotBlank()) {
+                                            Text(
+                                                text = msg.text,
+                                                fontSize = 14.sp,
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                        }
+
+                                        // Adjunto Multimedia: FOTO O VIDEO NATIVO
+                                        if (!msg.mediaUrl.isNullOrBlank()) {
+                                            val url = msg.mediaUrl
+                                            val isVideo = (msg.mediaType == "video") ||
+                                                          url.endsWith(".mp4", true) ||
+                                                          url.endsWith(".mov", true) ||
+                                                          url.endsWith(".webm", true)
+
+                                            if (isVideo) {
+                                                Card(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(160.dp)
+                                                        .clickable {
+                                                            try {
+                                                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                                    setDataAndType(Uri.parse(url), "video/*")
+                                                                }
+                                                                context.startActivity(intent)
+                                                            } catch (e: Exception) {
+                                                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                                            }
+                                                        },
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+                                                ) {
+                                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                            Icon(
+                                                                Icons.Default.PlayArrow,
+                                                                contentDescription = "Reproducir Video",
+                                                                tint = PurpleAccent,
+                                                                modifier = Modifier.size(48.dp)
+                                                            )
+                                                            Text("Reproducir Video CSMS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                // Foto / Imagen con Coil
+                                                AsyncImage(
+                                                    model = url,
+                                                    contentDescription = "Foto adjunta",
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .heightIn(max = 220.dp)
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                        .clickable {
+                                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                                        },
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                        }
+
                                         Text(
                                             text = msg.time,
-                                            fontSize = 10.sp,
+                                            fontSize = 9.sp,
                                             color = if (isMine) Color.White.copy(alpha = 0.7f) else Color(0xFF94A3B8),
                                             modifier = Modifier.align(Alignment.End)
                                         )
@@ -519,26 +734,64 @@ fun CSMSScreen(
                         }
                     }
 
-                    // Bottom Composer Bar
+                    // Barra de Previsualización de Archivo Adjunto (Foto o Video)
+                    if (attachedUri != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF1E1B4B))
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("📎 Archivo adjunto listo para enviar", color = PurpleAccent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            if (isUploadingMedia) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = PurpleAccent, strokeWidth = 2.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            IconButton(
+                                onClick = { attachedUri = null },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Clear, contentDescription = "Quitar", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+
+                    // Barra Inferior de Entrada (Con botón de adjuntar fotos y videos)
                     val sendMessageAction = {
                         val text = typedMessage.trim()
-                        val chat = activeChat
-                        if (text.isNotBlank() && chat != null) {
-                            val myName = manager.currentUser?.userMetadata?.fullName ?: manager.currentUser?.email?.substringBefore("@") ?: "Tú"
-                            val nowTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
-                            activeMessages.add(
-                                CSMSMessage(
-                                    id = java.util.UUID.randomUUID().toString(),
-                                    senderName = myName,
-                                    text = text,
-                                    time = nowTime,
-                                    isMine = true
-                                )
-                            )
-                            typedMessage = ""
+                        val uri = attachedUri
+                        if ((text.isNotBlank() || uri != null) && !isSendingMessage) {
+                            isSendingMessage = true
                             coroutineScope.launch {
-                                manager.sendChatMessage(chat.id, text)
-                                loadMessages(chat.id)
+                                var uploadedUrl: String? = null
+                                var uploadedType: String? = null
+
+                                if (uri != null) {
+                                    isUploadingMedia = true
+                                    val result = manager.uploadMedia(uri, context)
+                                    if (result != null) {
+                                        uploadedUrl = result.first
+                                        uploadedType = result.second
+                                    }
+                                    isUploadingMedia = false
+                                }
+
+                                val finalContent = if (text.isNotBlank()) text else {
+                                    if (uploadedType == "video") "🎥 Video adjunto" else "📷 Foto adjunta"
+                                }
+
+                                manager.sendChatMessage(
+                                    rawRoomId = currentChat.id,
+                                    content = finalContent,
+                                    mediaUrl = uploadedUrl,
+                                    mediaType = uploadedType
+                                )
+
+                                typedMessage = ""
+                                attachedUri = null
+                                isSendingMessage = false
+                                loadMessages(currentChat.id)
                             }
                         }
                     }
@@ -550,10 +803,25 @@ fun CSMSScreen(
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Botón de Adjuntar Fotos y Videos (Galería de Android)
+                        IconButton(
+                            onClick = {
+                                mediaPickerLauncher.launch("*/*")
+                            },
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1E293B))
+                        ) {
+                            Text("📎", fontSize = 18.sp)
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         OutlinedTextField(
                             value = typedMessage,
                             onValueChange = { typedMessage = it },
-                            placeholder = { Text("Escribe un mensaje CSMS...") },
+                            placeholder = { Text("Escribe un mensaje en CSMS...", fontSize = 13.sp) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(24.dp),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
@@ -562,10 +830,14 @@ fun CSMSScreen(
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,
                                 focusedBorderColor = PurpleAccent,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                                focusedContainerColor = Color(0xFF1E293B).copy(alpha = 0.5f),
+                                unfocusedContainerColor = Color(0xFF1E293B).copy(alpha = 0.3f)
                             )
                         )
+
                         Spacer(modifier = Modifier.width(8.dp))
+
                         IconButton(
                             onClick = { sendMessageAction() },
                             modifier = Modifier
@@ -573,7 +845,11 @@ fun CSMSScreen(
                                 .clip(CircleShape)
                                 .background(PurpleAccent)
                         ) {
-                            Icon(Icons.Default.Send, contentDescription = "Enviar", tint = Color.White)
+                            if (isSendingMessage || isUploadingMedia) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Send, contentDescription = "Enviar", tint = Color.White)
+                            }
                         }
                     }
                 }

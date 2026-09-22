@@ -2,6 +2,7 @@ package com.cokistudios.forkar.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -927,7 +928,121 @@ class SupabaseManager private constructor(context: Context) {
         }
     }
 
-    suspend fun createGroupChat(name: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun uploadMedia(uri: Uri, context: Context): Pair<String, String>? = withContext(Dispatchers.IO) {
+        val uid = getValidUserUUID()
+        val resolver = context.contentResolver
+        val mimeType = resolver.getType(uri) ?: "application/octet-stream"
+        val isVideo = mimeType.startsWith("video/")
+        val ext = when {
+            mimeType.contains("png") -> "png"
+            mimeType.contains("webp") -> "webp"
+            mimeType.contains("gif") -> "gif"
+            mimeType.contains("mp4") -> "mp4"
+            mimeType.contains("mov") -> "mov"
+            mimeType.contains("webm") -> "webm"
+            isVideo -> "mp4"
+            else -> "jpg"
+        }
+        val mediaType = if (isVideo) "video" else "image"
+        val filename = "$uid/${System.currentTimeMillis()}_${java.util.UUID.randomUUID().toString().take(6)}.$ext"
+
+        val bytes = try {
+            resolver.openInputStream(uri)?.use { it.readBytes() }
+        } catch (e: Exception) {
+            null
+        } ?: return@withContext null
+
+        val body = bytes.toRequestBody(mimeType.toMediaType())
+
+        // Intentar csms-media y fallback a forkar-media (igual que Web)
+        val buckets = listOf("csms-media", "forkar-media")
+        for (bucket in buckets) {
+            val path = "/storage/v1/object/$bucket/$filename"
+            val request = Request.Builder()
+                .url("$baseURL$path")
+                .header("apikey", anonKey)
+                .header("Authorization", if (sessionToken != null) "Bearer $sessionToken" else "Bearer $anonKey")
+                .header("Content-Type", mimeType)
+                .header("x-upsert", "true")
+                .header("cache-control", "3600")
+                .post(body)
+                .build()
+
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val publicUrl = "$baseURL/storage/v1/object/public/$bucket/$filename"
+                        return@withContext Pair(publicUrl, mediaType)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("SupabaseManager", "Error subiendo media a bucket $bucket", e)
+            }
+        }
+        null
+    }
+
+    suspend fun startDirectMessage(targetEmail: String): String? = withContext(Dispatchers.IO) {
+        val email = targetEmail.trim().lowercase()
+        if (email.isBlank()) return@withContext null
+        val myUid = getValidUserUUID()
+        val myName = currentUser?.userMetadata?.fullName ?: currentUser?.userMetadata?.name ?: currentUser?.email?.substringBefore("@") ?: "Usuario Android"
+
+        var targetUserId: String? = null
+        var targetUserName: String = email
+
+        try {
+            val path = "/rest/v1/profiles"
+            val req = makeRequest(path, queryParams = mapOf("select" to "*", "email" to "ilike.$email", "limit" to "1"))
+            client.newCall(req).execute().use { resp ->
+                val body = resp.body?.string() ?: ""
+                if (resp.isSuccessful && body.isNotBlank()) {
+                    val arr = JSONArray(body)
+                    if (arr.length() > 0) {
+                        val prof = arr.getJSONObject(0)
+                        targetUserId = prof.optString("id")
+                        targetUserName = prof.optString("full_name", email)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+
+        val roomPath = "/rest/v1/chat_rooms"
+        val roomJson = JSONObject().apply {
+            put("name", targetUserName)
+            put("is_group", false)
+            put("created_by", myUid)
+        }
+        val roomBody = roomJson.toString().toRequestBody("application/json".toMediaType())
+        val roomReq = makeRequest(roomPath, "POST", roomBody)
+        var newRoomId: String? = null
+        try {
+            client.newCall(roomReq).execute().use { resp ->
+                val body = resp.body?.string() ?: ""
+                if (resp.isSuccessful && body.isNotBlank()) {
+                    val arr = JSONArray(body)
+                    if (arr.length() > 0) {
+                        newRoomId = arr.getJSONObject(0).optString("id")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error creating DM room", e)
+        }
+
+        val roomId = newRoomId ?: java.util.UUID.randomUUID().toString()
+        joinRoomAsMember(roomId, myUid, myName)
+        if (targetUserId != null) {
+            joinRoomAsMember(roomId, targetUserId!!, targetUserName)
+        } else {
+            joinRoomAsMember(roomId, "00000000-0000-0000-0000-000000000000", targetUserName)
+        }
+        roomId
+    }
+
+    suspend fun createGroupChat(name: String): String? = withContext(Dispatchers.IO) {
         val user = currentUser
         val createdBy = getValidUserUUID()
         val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
@@ -940,7 +1055,7 @@ class SupabaseManager private constructor(context: Context) {
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
         var createdRoomId: String? = null
-        val success = try {
+        try {
             client.newCall(request).execute().use { response ->
                 val resBody = response.body?.string() ?: ""
                 if (response.isSuccessful && resBody.isNotBlank()) {
@@ -952,19 +1067,15 @@ class SupabaseManager private constructor(context: Context) {
                     } catch (e: Exception) {
                         // ignore
                     }
-                    true
-                } else {
-                    response.isSuccessful
                 }
             }
         } catch (e: Exception) {
-            false
+            // ignore
         }
 
-        if (success && !createdRoomId.isNullOrBlank()) {
-            joinRoomAsMember(createdRoomId!!, createdBy, authorName)
-        }
-        success
+        val roomId = createdRoomId ?: java.util.UUID.randomUUID().toString()
+        joinRoomAsMember(roomId, createdBy, authorName)
+        roomId
     }
 
     suspend fun fetchChatMessages(rawRoomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
@@ -1011,7 +1122,12 @@ class SupabaseManager private constructor(context: Context) {
         combined
     }
 
-    suspend fun sendChatMessage(rawRoomId: String, content: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun sendChatMessage(
+        rawRoomId: String,
+        content: String,
+        mediaUrl: String? = null,
+        mediaType: String? = null
+    ): Boolean = withContext(Dispatchers.IO) {
         val roomId = ensureValidRoomUUID(rawRoomId)
         val user = currentUser
         val senderId = getValidUserUUID()
@@ -1025,8 +1141,11 @@ class SupabaseManager private constructor(context: Context) {
             put("id", localMsgId)
             put("room_id", roomId)
             put("user_id", senderId)
+            put("sender_id", senderId)
             put("author_name", authorName)
             put("content", content)
+            if (!mediaUrl.isNullOrBlank()) put("media_url", mediaUrl)
+            if (!mediaType.isNullOrBlank()) put("media_type", mediaType)
             put("created_at", nowIso)
             put("is_local", true)
         }
@@ -1037,8 +1156,11 @@ class SupabaseManager private constructor(context: Context) {
         val bodyJson = JSONObject().apply {
             put("room_id", roomId)
             put("user_id", senderId)
+            put("sender_id", senderId)
             put("author_name", authorName)
             put("content", content)
+            if (!mediaUrl.isNullOrBlank()) put("media_url", mediaUrl)
+            if (!mediaType.isNullOrBlank()) put("media_type", mediaType)
         }
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
         val request = makeRequest(path, "POST", body)
