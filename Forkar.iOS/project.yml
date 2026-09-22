@@ -1,0 +1,25 @@
+name: Forkar
+options:
+  bundleIdPrefix: com.cokistudios
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  Forkar:
+    type: application
+    platform: iOS
+    sources:
+      - path: .
+        includes:
+          - "*.swift"
+          - "GoogleService-Info.plist"
+    info:
+      path: Info.plist
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.cokistudios.forkar
+      MARKETING_VERSION: "3.0.1"
+      CURRENT_PROJECT_VERSION: "4"
+      GENERATE_INFOPLIST_FILE: NO
+      INFOPLIST_FILE: Info.plist
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
