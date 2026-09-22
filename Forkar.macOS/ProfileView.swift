@@ -2,7 +2,7 @@ import SwiftUI
 
 // ══════════════════════════════════════════════════════════════════
 // 👤 PROFILE VIEW — FORKAR FOR PC (macOS)
-// Perfil de usuario, estadísticas de comunidad y gestión de sesión
+// Perfil de usuario, estadísticas de comunidad y autenticación OAuth
 // ══════════════════════════════════════════════════════════════════
 
 struct ProfileView: View {
@@ -11,6 +11,7 @@ struct ProfileView: View {
     @State private var emailInput: String = ""
     @State private var passwordInput: String = ""
     @State private var isSigningIn: Bool = false
+    @State private var oauthProviderLoading: String? = nil
     @State private var authErrorMessage: String?
     
     var body: some View {
@@ -104,7 +105,7 @@ struct ProfileView: View {
                             .stroke(ForkarTheme.border, lineWidth: 1)
                     )
                 } else {
-                    // ─── FORMULARIO DE INICIO DE SESIÓN ───
+                    // ─── FORMULARIO DE INICIO DE SESIÓN CON OAUTH ───
                     VStack(spacing: 20) {
                         Image(systemName: "lock.shield.fill")
                             .font(.system(size: 40))
@@ -114,7 +115,7 @@ struct ProfileView: View {
                             Text("Iniciar Sesión en Forkar")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(ForkarTheme.text)
-                            Text("Ingresa con tu cuenta de Coki Studios para interactuar en el feed y CSMS.")
+                            Text("Ingresa con tu cuenta de Google, GitHub o correo para interactuar en el feed y CSMS.")
                                 .font(.system(size: 12))
                                 .foregroundColor(ForkarTheme.textSub)
                                 .multilineTextAlignment(.center)
@@ -130,6 +131,77 @@ struct ProfileView: View {
                                 .cornerRadius(6)
                         }
                         
+                        // ─── BOTONES DE OAUTH (GOOGLE & GITHUB) ───
+                        VStack(spacing: 10) {
+                            // Continuar con Google
+                            Button(action: { handleOAuth(provider: "google") }) {
+                                HStack(spacing: 10) {
+                                    if oauthProviderLoading == "google" {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: "globe.americas.fill")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Color(hex: "#EA4335"))
+                                        Text("Continuar con Google")
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(ForkarTheme.bgTertiary)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(ForkarTheme.borderHighlight, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .disabled(oauthProviderLoading != nil || isSigningIn)
+                            
+                            // Continuar con GitHub
+                            Button(action: { handleOAuth(provider: "github") }) {
+                                HStack(spacing: 10) {
+                                    if oauthProviderLoading == "github" {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: "terminal.fill")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white)
+                                        Text("Continuar con GitHub")
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Color.black.opacity(0.6))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(ForkarTheme.border, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .disabled(oauthProviderLoading != nil || isSigningIn)
+                        }
+                        
+                        // Separador
+                        HStack {
+                            Rectangle().fill(ForkarTheme.border).frame(height: 1)
+                            Text("o con correo")
+                                .font(.system(size: 11))
+                                .foregroundColor(ForkarTheme.textSub)
+                                .padding(.horizontal, 8)
+                            Rectangle().fill(ForkarTheme.border).frame(height: 1)
+                        }
+                        .padding(.vertical, 4)
+                        
+                        // Formulario de correo y contraseña
                         VStack(spacing: 12) {
                             TextField("Correo electrónico", text: $emailInput)
                                 .textFieldStyle(PlainTextFieldStyle())
@@ -164,7 +236,7 @@ struct ProfileView: View {
                             .cornerRadius(8)
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .disabled(emailInput.isEmpty || passwordInput.isEmpty || isSigningIn)
+                        .disabled(emailInput.isEmpty || passwordInput.isEmpty || isSigningIn || oauthProviderLoading != nil)
                         
                         // Modo Invitado Demo
                         Button(action: {
@@ -199,6 +271,20 @@ struct ProfileView: View {
             .frame(maxWidth: .infinity)
         }
         .background(ForkarTheme.bg)
+    }
+    
+    private func handleOAuth(provider: String) {
+        oauthProviderLoading = provider
+        authErrorMessage = nil
+        
+        Task {
+            do {
+                try await manager.signInWithOAuth(provider: provider)
+            } catch {
+                authErrorMessage = error.localizedDescription
+            }
+            oauthProviderLoading = nil
+        }
     }
     
     private func handleSignIn() {

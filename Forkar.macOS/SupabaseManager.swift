@@ -1,10 +1,11 @@
 import Foundation
 import SwiftUI
+import AuthenticationServices
 internal import Combine
 
 // ══════════════════════════════════════════════════════════════════
 // ⚡ SUPABASE MANAGER — FORKAR MACOS & CSMS EXTENSION
-// Conexión REST nativa optimizada con URLSession y JSONDecoder
+// Conexión REST nativa optimizada con URLSession, OAuth & Polling
 // ══════════════════════════════════════════════════════════════════
 
 @MainActor
@@ -60,7 +61,7 @@ final class SupabaseManager: ObservableObject {
             let avatar = UserDefaults.standard.string(forKey: "forkar_user_avatar")
             
             self.accessToken = token
-            self.currentUser = UserProfile(id: uid, email: email, fullName: name, avatarUrl: avatar, bio: "Desarrollador en Coki Studios", followersCount: 12, followingCount: 8)
+            self.currentUser = UserProfile(id: uid, email: email, fullName: name, avatarUrl: avatar, bio: "Comunidad Forkar", followersCount: 12, followingCount: 8)
             self.isAuthenticated = true
         }
     }
@@ -96,6 +97,104 @@ final class SupabaseManager: ObservableObject {
             UserDefaults.standard.set(avatar, forKey: "forkar_user_avatar")
             
             self.accessToken = token
+            self.currentUser = UserProfile(id: uid, email: email, fullName: name, avatarUrl: avatar, bio: "Comunidad Forkar", followersCount: 1, followingCount: 0)
+            self.isAuthenticated = true
+        }
+    }
+    
+    // MARK: - OAuth (Google & GitHub)
+    func signInWithOAuth(provider: String) async throws {
+        let callbackScheme = "forkar"
+        guard let authURL = URL(string: "\(supabaseURL)/auth/v1/authorize?provider=\(provider)&redirect_to=forkar://oauth") else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "URL de autorización inválida"])
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            let session = ASWebAuthenticationSession(url: authURL, callbackURLScheme: callbackScheme) { [weak self] callbackURL, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                guard let callbackURL = callbackURL else {
+                    continuation.resume(throwing: NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No se recibió respuesta de autenticación"]))
+                    return
+                }
+                
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
+                    do {
+                        try await self.handleOAuthCallback(url: callbackURL)
+                        continuation.resume()
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+            
+            session.presentationContextProvider = PresentationAnchorProvider.shared
+            session.prefersEphemeralWebBrowserSession = false
+            session.start()
+        }
+    }
+    
+    func handleOAuthCallback(url: URL) async throws {
+        var token: String?
+        
+        // Revisar fragmento (#access_token=...)
+        if let fragment = url.fragment {
+            let pairs = fragment.components(separatedBy: "&")
+            for pair in pairs {
+                let parts = pair.components(separatedBy: "=")
+                if parts.count == 2 && parts[0] == "access_token" {
+                    token = parts[1].removingPercentEncoding
+                    break
+                }
+            }
+        }
+        
+        // Revisar query params (?access_token=...) si no vino en fragment
+        if token == nil, let components = URLComponents(url: url, resolvingAgainstBaseURL: false), let items = components.queryItems {
+            token = items.first(where: { $0.name == "access_token" })?.value
+        }
+        
+        guard let accessToken = token else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No se encontró el token de acceso en la respuesta"])
+        }
+        
+        try await loginWithToken(accessToken: accessToken)
+    }
+    
+    func loginWithToken(accessToken: String) async throws {
+        guard let url = URL(string: "\(supabaseURL)/auth/v1/user") else { return }
+        var request = URLRequest(url: url)
+        request.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Error al validar perfil de usuario"])
+        }
+        
+        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let uid = json["id"] as? String {
+            let email = json["email"] as? String
+            let userMeta = json["user_metadata"] as? [String: Any]
+            
+            let name = userMeta?["full_name"] as? String
+                ?? userMeta?["name"] as? String
+                ?? userMeta?["user_name"] as? String
+                ?? email?.components(separatedBy: "@").first
+                ?? "Usuario"
+            let avatar = userMeta?["avatar_url"] as? String
+            
+            UserDefaults.standard.set(accessToken, forKey: "forkar_access_token")
+            UserDefaults.standard.set(uid, forKey: "forkar_user_id")
+            if let email = email { UserDefaults.standard.set(email, forKey: "forkar_user_email") }
+            UserDefaults.standard.set(name, forKey: "forkar_user_name")
+            if let avatar = avatar { UserDefaults.standard.set(avatar, forKey: "forkar_user_avatar") }
+            
+            self.accessToken = accessToken
             self.currentUser = UserProfile(id: uid, email: email, fullName: name, avatarUrl: avatar, bio: "Comunidad Forkar", followersCount: 1, followingCount: 0)
             self.isAuthenticated = true
         }
@@ -238,5 +337,14 @@ final class SupabaseManager: ObservableObject {
         if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
             await fetchCSMSMessages(roomId: roomId)
         }
+    }
+}
+
+// ─── PROVEEDOR DE ANCLAJE PARA ASWebAuthenticationSession EN MACOS ───
+class PresentationAnchorProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    static let shared = PresentationAnchorProvider()
+    
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        return NSApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? NSApplication.shared.windows.first ?? NSWindow()
     }
 }

@@ -32,7 +32,7 @@ SWIFT_FILES=(
 echo "🍎 [1/4] Compilando para Apple Silicon (arm64)..."
 swiftc -O -target arm64-apple-macos12.0 -parse-as-library \
     -sdk $(xcrun --show-sdk-path) \
-    -framework SwiftUI -framework AppKit \
+    -framework SwiftUI -framework AppKit -framework AuthenticationServices \
     "${SWIFT_FILES[@]}" \
     -o "$BUILD_DIR/forkar-arm64"
 
@@ -40,7 +40,7 @@ swiftc -O -target arm64-apple-macos12.0 -parse-as-library \
 echo "💻 [2/4] Compilando para Intel x86_64..."
 swiftc -O -target x86_64-apple-macos12.0 -parse-as-library \
     -sdk $(xcrun --show-sdk-path) \
-    -framework SwiftUI -framework AppKit \
+    -framework SwiftUI -framework AppKit -framework AuthenticationServices \
     "${SWIFT_FILES[@]}" \
     -o "$BUILD_DIR/forkar-x86_64"
 
@@ -72,6 +72,18 @@ cat << 'EOF' > "$APP_BUNDLE/Contents/Info.plist"
     <string>12.0</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.cokistudios.forkar.mac</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>forkar</string>
+                <string>csms</string>
+            </array>
+        </dict>
+    </array>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>

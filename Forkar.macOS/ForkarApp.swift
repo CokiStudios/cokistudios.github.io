@@ -2,7 +2,7 @@ import SwiftUI
 
 // ══════════════════════════════════════════════════════════════════
 // 🚗 FORKAR FOR PC — NATIVE MACOS DESKTOP APPLICATION
-// Cliente nativo en SwiftUI con Extensión CSMS y Eco Hub
+// Cliente nativo en SwiftUI con Extensión CSMS, Eco Hub y OAuth
 // ══════════════════════════════════════════════════════════════════
 
 @main
@@ -16,6 +16,13 @@ struct ForkarApp: App {
                 .environmentObject(manager)
                 .frame(minWidth: 980, minHeight: 650)
                 .background(ForkarTheme.bg)
+                .onOpenURL { url in
+                    if url.scheme == "forkar" && url.host == "oauth" {
+                        Task {
+                            try? await manager.handleOAuthCallback(url: url)
+                        }
+                    }
+                }
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .commands {
@@ -47,5 +54,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
+    }
+    
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            if url.scheme == "forkar" {
+                Task {
+                    try? await SupabaseManager.shared.handleOAuthCallback(url: url)
+                }
+            }
+        }
     }
 }
