@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.SubcomposeAsyncImage
 import com.cokistudios.forkar.data.Post
 import com.cokistudios.forkar.data.SupabaseManager
@@ -57,6 +58,7 @@ fun ProfileScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val currentUser = manager.currentUser
+    val context = LocalContext.current
 
     var followersCount by remember { mutableStateOf(0) }
     var followingCount by remember { mutableStateOf(0) }
@@ -137,6 +139,19 @@ fun ProfileScreen(
                     PrimaryButton(
                         text = "Iniciar Sesión",
                         onClick = onLoginClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    SecondaryButton(
+                        text = "Feedback de Tester (Firebase)",
+                        onClick = {
+                            try {
+                                com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
+                                    .startFeedback(com.cokistudios.forkar.R.string.additional_form_text)
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "Error al abrir feedback: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -239,9 +254,26 @@ fun ProfileScreen(
                         }
                     }
 
+                    // Feedback for testers
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SecondaryButton(
+                            text = "Enviar Feedback a Desarrolladores (Beta)",
+                            onClick = {
+                                try {
+                                    com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
+                                        .startFeedback(com.cokistudios.forkar.R.string.additional_form_text)
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(context, "Error al abrir feedback: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     // Logout item
                     item {
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         SecondaryButton(
                             text = "Cerrar sesión",
                             onClick = { manager.logout() },

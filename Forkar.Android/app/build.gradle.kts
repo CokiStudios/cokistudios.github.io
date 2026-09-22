@@ -12,8 +12,8 @@ android {
         applicationId = "com.cokistudios.forkar"
         minSdk = 26
         targetSdk = 34
-        versionCode = 5
-        versionName = "3.0.2"
+        versionCode = 6
+        versionName = "3.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -93,6 +93,8 @@ dependencies {
     // Firebase Platform (BoM) & Analytics / App Testing
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-appdistribution-api:16.0.0-beta20")
+    implementation("com.google.firebase:firebase-appdistribution:16.0.0-beta20")
 
     // Tooling
     debugImplementation("androidx.compose.ui:ui-tooling")
