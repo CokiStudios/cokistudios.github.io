@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import com.cokistudios.forkar.BuildConfig
 import coil.compose.SubcomposeAsyncImage
 import com.cokistudios.forkar.data.Post
 import com.cokistudios.forkar.data.SupabaseManager
@@ -141,19 +142,21 @@ fun ProfileScreen(
                         onClick = onLoginClick,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    SecondaryButton(
-                        text = "Feedback de Tester (Firebase)",
-                        onClick = {
-                            try {
-                                com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
-                                    .startFeedback(com.cokistudios.forkar.R.string.additional_form_text)
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "Error al abrir feedback: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (BuildConfig.IS_QA) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        SecondaryButton(
+                            text = "Reporte de Feedback (QA)",
+                            onClick = {
+                                try {
+                                    com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
+                                        .startFeedback(com.cokistudios.forkar.R.string.additional_form_text)
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(context, "Error al abrir feedback: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             } else {
                 // Logged-in profile details
@@ -254,21 +257,23 @@ fun ProfileScreen(
                         }
                     }
 
-                    // Feedback for testers
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        SecondaryButton(
-                            text = "Enviar Feedback a Desarrolladores (Beta)",
-                            onClick = {
-                                try {
-                                    com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
-                                        .startFeedback(com.cokistudios.forkar.R.string.additional_form_text)
-                                } catch (e: Exception) {
-                                    android.widget.Toast.makeText(context, "Error al abrir feedback: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    // Feedback exclusively for QA testers
+                    if (BuildConfig.IS_QA) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            SecondaryButton(
+                                text = "Enviar Reporte de QA (Firebase)",
+                                onClick = {
+                                    try {
+                                        com.google.firebase.appdistribution.FirebaseAppDistribution.getInstance()
+                                            .startFeedback(com.cokistudios.forkar.R.string.additional_form_text)
+                                    } catch (e: Exception) {
+                                        android.widget.Toast.makeText(context, "Error al abrir feedback: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
 
                     // Logout item
