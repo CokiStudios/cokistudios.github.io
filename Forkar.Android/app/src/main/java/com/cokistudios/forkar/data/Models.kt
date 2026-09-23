@@ -32,16 +32,17 @@ data class Post(
     val category: Category?
 ) {
     val initials: String
-        get() = authorName.firstOrNull()?.uppercase() ?: "?"
+        get() = (authorName as? String)?.firstOrNull()?.uppercase() ?: "?"
 
     val formattedDate: String
         get() {
             return try {
+                val rawDate = createdAt as? String ?: return "hace poco"
                 // Parse ISO 8601 string (e.g. 2026-07-10T05:43:00.000Z or similar)
                 val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
                     timeZone = TimeZone.getTimeZone("UTC")
                 }
-                val cleanDateStr = createdAt.substringBefore(".") // Remove milliseconds for simpler parsing
+                val cleanDateStr = rawDate.substringBefore(".") // Remove milliseconds for simpler parsing
                 val date = format.parse(cleanDateStr) ?: Date()
                 val diff = Date().time - date.time
                 val seconds = diff / 1000
@@ -71,15 +72,16 @@ data class Comment(
     @SerializedName("created_at") val createdAt: String
 ) {
     val initials: String
-        get() = authorName.firstOrNull()?.uppercase() ?: "?"
+        get() = (authorName as? String)?.firstOrNull()?.uppercase() ?: "?"
 
     val formattedDate: String
         get() {
             return try {
+                val rawDate = createdAt as? String ?: return "hace poco"
                 val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
                     timeZone = TimeZone.getTimeZone("UTC")
                 }
-                val cleanDateStr = createdAt.substringBefore(".")
+                val cleanDateStr = rawDate.substringBefore(".")
                 val date = format.parse(cleanDateStr) ?: Date()
                 val diff = Date().time - date.time
                 val seconds = diff / 1000

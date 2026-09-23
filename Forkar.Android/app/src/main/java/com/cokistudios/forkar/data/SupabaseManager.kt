@@ -59,43 +59,144 @@ class SupabaseManager private constructor(context: Context) {
             return newHash
         }
 
-    init {
+    fun isJwtExpired(token: String?): Boolean {
+        if (token.isNullOrBlank()) return true
+        val parts = token.split(".")
+        if (parts.size != 3) return true
+        return try {
+            val payloadBytes = android.util.Base64.decode(
+                parts[1],
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
+            )
+            val payload = JSONObject(String(payloadBytes, Charsets.UTF_8))
+            val exp = payload.optLong("exp", 0L)
+            if (exp == 0L) false else (exp * 1000L) <= System.currentTimeMillis()
+        } catch (e: Exception) {
+            true // If corrupted, treat as expired
+        }
+    }
+
+    private fun isJwtNearExpiry(token: String?): Boolean {
+        if (token.isNullOrBlank()) return true
+        val parts = token.split(".")
+        if (parts.size != 3) return true
+        return try {
+            val payloadBytes = android.util.Base64.decode(
+                parts[1],
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
+            )
+            val payload = JSONObject(String(payloadBytes, Charsets.UTF_8))
+            val exp = payload.optLong("exp", 0L)
+            if (exp == 0L) false else (exp * 1000L) <= (System.currentTimeMillis() + 300_000L) // 5 minutes margin
+        } catch (e: Exception) {
+            true
+        }
+    }
+
+    private fun emergencyResetSession() {
+        try {
+            sessionToken = null
+            refreshToken = null
+            currentUser = null
+            sharedPrefs.edit()
+                .remove("supabase_session_token")
+                .remove("supabase_refresh_token")
+                .remove("supabase_current_user")
+                .apply()
+        } catch (e: Exception) {
+            Log.e("SupabaseManager", "Emergency reset error", e)
+        }
+    }
+
+    private fun performDataSanitization() {
+        val storedSanityVersion = sharedPrefs.getInt("data_sanity_version", 0)
+
+        // Read saved session info
         sessionToken = sharedPrefs.getString("supabase_session_token", null)
         refreshToken = sharedPrefs.getString("supabase_refresh_token", null)
         val userJson = sharedPrefs.getString("supabase_current_user", null)
+
+        // 1. Validate stored user JSON safely
         if (userJson != null) {
             try {
-                currentUser = gson.fromJson(userJson, SupabaseUser::class.java)
+                val parsed = gson.fromJson(userJson, SupabaseUser::class.java)
+                if (parsed != null && !parsed.id.isNullOrBlank()) {
+                    currentUser = parsed
+                } else {
+                    Log.w("SupabaseManager", "Auto-heal: SupabaseUser has invalid or missing id, clearing")
+                    sharedPrefs.edit().remove("supabase_current_user").apply()
+                    currentUser = null
+                }
             } catch (e: Exception) {
-                Log.e("SupabaseManager", "Error decoding stored user", e)
+                Log.e("SupabaseManager", "Auto-heal: Error decoding stored user JSON, clearing", e)
                 sharedPrefs.edit().remove("supabase_current_user").apply()
+                currentUser = null
             }
         }
 
-        // AUTO-HEAL: Eliminar de raíz tokens falsos ("device_hash_session_...") o no-JWT corruptos
-        // Esto elimina permanentemente el error que obligaba al usuario a "borrar datos de la app".
+        // 2. Validate token format and expiration
         val token = sessionToken
-        if (token != null && (token.startsWith("device_hash_session_") || token.count { it == '.' } != 2)) {
-            Log.w("SupabaseManager", "Auto-heal: Limpiando token inválido o corrupto previo")
-            sessionToken = null
-            currentUser = null
-            sharedPrefs.edit().remove("supabase_session_token").remove("supabase_current_user").apply()
-        }
+        if (token != null) {
+            val isInvalidFormat = token.startsWith("device_hash_session_") || token.count { it == '.' } != 2
+            val expired = isJwtExpired(token)
 
-        if (refreshToken != null) {
-            // Refrescar token proactivamente usando el refresh_token real
+            if (isInvalidFormat || expired) {
+                Log.w("SupabaseManager", "Auto-heal: Stored token is invalid or expired (expired=$expired). Purging from active session.")
+                sessionToken = null
+                sharedPrefs.edit().remove("supabase_session_token").apply()
+
+                if (refreshToken != null) {
+                    // Try to refresh session pro-actively in background
+                    managerScope.launch {
+                        refreshAuthSession()
+                    }
+                } else {
+                    // If no refresh token exists, fully wipe user to prevent inconsistent partial state
+                    currentUser = null
+                    sharedPrefs.edit().remove("supabase_current_user").apply()
+                }
+            } else {
+                // Token is valid and alive. If close to expiry (< 5 min), proactively refresh
+                if (refreshToken != null && isJwtNearExpiry(token)) {
+                    managerScope.launch {
+                        refreshAuthSession()
+                    }
+                }
+            }
+        } else if (refreshToken != null) {
+            // No session token but have refresh token -> attempt refresh
             managerScope.launch {
                 refreshAuthSession()
             }
         }
+
+        if (storedSanityVersion < 4) {
+            sharedPrefs.edit().putInt("data_sanity_version", 4).apply()
+        }
+    }
+
+    init {
+        try {
+            performDataSanitization()
+        } catch (t: Throwable) {
+            Log.e("SupabaseManager", "Critical failure during init data sanitization, emergency resetting session", t)
+            emergencyResetSession()
+        }
     }
 
     fun saveSession(token: String?, user: SupabaseUser?, refresh: String? = null) {
-        sessionToken = token
-        currentUser = user
-        if (refresh != null) {
-            refreshToken = refresh
+        // Ensure Compose states are updated on Main thread safely
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        mainHandler.post {
+            sessionToken = token
+            currentUser = user
+            if (refresh != null) {
+                refreshToken = refresh
+            } else if (token == null) {
+                refreshToken = null
+            }
         }
+
         sharedPrefs.edit().apply {
             if (token != null) {
                 putString("supabase_session_token", token)
@@ -114,6 +215,7 @@ class SupabaseManager private constructor(context: Context) {
             }
             apply()
         }
+
         if (user != null && user.email != null) {
             managerScope.launch {
                 bindDeviceHash(user.id, user.email)
@@ -130,21 +232,18 @@ class SupabaseManager private constructor(context: Context) {
                 put("refresh_token", currentRefresh)
             }
             val body = json.toString().toRequestBody("application/json".toMediaType())
-            val request = makeRequest(path, "POST", body, queryParams)
+            val request = makeRequest(path, "POST", body, queryParams, forceAnon = true)
 
             client.newCall(request).execute().use { response ->
                 val responseBody = response.body?.string() ?: ""
                 if (response.isSuccessful && responseBody.isNotBlank()) {
                     val authResponse = gson.fromJson(responseBody, SupabaseAuthResponse::class.java)
-                    withContext(Dispatchers.Main) {
-                        saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
-                    }
+                    saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
                     return@withContext true
                 } else if (response.code in 400..499) {
                     // Si el refresh token caducó o no es válido, cerrar sesión limpiamente sin bloquear la app
-                    withContext(Dispatchers.Main) {
-                        logout()
-                    }
+                    Log.w("SupabaseManager", "Refresh token invalid/expired (${response.code}). Logging out cleanly.")
+                    logout()
                 }
             }
         } catch (e: Exception) {
@@ -204,7 +303,8 @@ class SupabaseManager private constructor(context: Context) {
         path: String,
         method: String = "GET",
         body: RequestBody? = null,
-        queryParams: Map<String, String> = emptyMap()
+        queryParams: Map<String, String> = emptyMap(),
+        forceAnon: Boolean = false
     ): Request {
         val urlBuilder = ("$baseURL$path").toHttpUrlOrNull()!!.newBuilder()
         queryParams.forEach { (name, value) ->
@@ -216,7 +316,7 @@ class SupabaseManager private constructor(context: Context) {
             .header("apikey", anonKey)
 
         val token = sessionToken
-        if (token != null && !token.startsWith("device_hash_session_") && token.count { it == '.' } == 2) {
+        if (!forceAnon && token != null && !token.startsWith("device_hash_session_") && token.count { it == '.' } == 2 && !isJwtExpired(token)) {
             requestBuilder.header("Authorization", "Bearer $token")
         } else {
             requestBuilder.header("Authorization", "Bearer $anonKey")
@@ -247,7 +347,8 @@ class SupabaseManager private constructor(context: Context) {
             } catch (e: Exception) {
                 // Ignore parsing errors
             }
-            if (response.code == 401 || message.lowercase().contains("jwt")) {
+            if (response.code == 401 || message.lowercase().contains("jwt") || message.lowercase().contains("token")) {
+                Log.w("SupabaseManager", "verifyResponse: 401/JWT error detected, auto-healing with logout()")
                 logout()
             }
             throw IOException(message)
@@ -263,7 +364,7 @@ class SupabaseManager private constructor(context: Context) {
             put("password", password)
         }
         val body = json.toString().toRequestBody("application/json".toMediaType())
-        val request = makeRequest(path, "POST", body, queryParams)
+        val request = makeRequest(path, "POST", body, queryParams, forceAnon = true)
 
         client.newCall(request).execute().use { response ->
             val responseBody = response.body?.string() ?: ""
@@ -279,9 +380,7 @@ class SupabaseManager private constructor(context: Context) {
             }
 
             val authResponse = gson.fromJson(responseBody, SupabaseAuthResponse::class.java)
-            withContext(Dispatchers.Main) {
-                saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
-            }
+            saveSession(authResponse.accessToken, authResponse.user, authResponse.refreshToken)
         }
     }
 
@@ -305,7 +404,7 @@ class SupabaseManager private constructor(context: Context) {
         }
 
         val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
-        val request = makeRequest(path, "POST", body)
+        val request = makeRequest(path, "POST", body, forceAnon = true)
 
         client.newCall(request).execute().use { response ->
             val responseBody = response.body?.string() ?: ""
@@ -332,12 +431,20 @@ class SupabaseManager private constructor(context: Context) {
             "select" to "*",
             "order" to "name.asc"
         )
-        val request = makeRequest(path, "GET", queryParams = queryParams)
-        client.newCall(request).execute().use { response ->
-            val responseBody = response.body?.string() ?: ""
-            verifyResponse(response, responseBody)
-            val type = object : TypeToken<List<Category>>() {}.type
-            gson.fromJson(responseBody, type)
+        val request = makeRequest(path, "GET", queryParams = queryParams, forceAnon = true)
+        try {
+            client.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string() ?: ""
+                if (response.isSuccessful && responseBody.isNotBlank()) {
+                    val type = object : TypeToken<List<Category>>() {}.type
+                    gson.fromJson<List<Category>>(responseBody, type) ?: emptyList()
+                } else {
+                    emptyList()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error fetching categories: ${e.message}")
+            emptyList()
         }
     }
 
@@ -360,11 +467,29 @@ class SupabaseManager private constructor(context: Context) {
         }
 
         val request = makeRequest(path, "GET", queryParams = queryParams)
-        client.newCall(request).execute().use { response ->
-            val responseBody = response.body?.string() ?: ""
-            verifyResponse(response, responseBody)
-            val type = object : TypeToken<List<Post>>() {}.type
-            gson.fromJson(responseBody, type)
+        try {
+            client.newCall(request).execute().use { response ->
+                var responseBody = response.body?.string() ?: ""
+                if (response.code == 401) {
+                    Log.w("SupabaseManager", "401 on fetchPosts. Auto-healing: clearing session and retrying with anonKey")
+                    logout()
+                    val fallbackReq = makeRequest(path, "GET", queryParams = queryParams, forceAnon = true)
+                    client.newCall(fallbackReq).execute().use { fallbackResp ->
+                        if (fallbackResp.isSuccessful) {
+                            responseBody = fallbackResp.body?.string() ?: ""
+                        }
+                    }
+                }
+                if (responseBody.isNotBlank()) {
+                    val type = object : TypeToken<List<Post>>() {}.type
+                    gson.fromJson<List<Post>>(responseBody, type) ?: emptyList()
+                } else {
+                    emptyList()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error fetching posts: ${e.message}")
+            emptyList()
         }
     }
 

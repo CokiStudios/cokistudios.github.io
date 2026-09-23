@@ -120,10 +120,14 @@ fun EcoHubScreen(
         loadData()
         while (true) {
             kotlinx.coroutines.delay(3500)
-            val (freshCo2, freshPts) = manager.fetchUserEcoImpact()
-            if (freshCo2 > 0.0 || freshPts > 0) {
-                co2Saved = freshCo2
-                pointsEarned = freshPts
+            try {
+                val (freshCo2, freshPts) = manager.fetchUserEcoImpact()
+                if (freshCo2 > 0.0 || freshPts > 0) {
+                    co2Saved = freshCo2
+                    pointsEarned = freshPts
+                }
+            } catch (e: Exception) {
+                // Ignore transient network errors during background polling
             }
         }
     }

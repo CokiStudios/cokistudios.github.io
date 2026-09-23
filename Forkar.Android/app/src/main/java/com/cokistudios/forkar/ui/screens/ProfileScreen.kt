@@ -69,7 +69,7 @@ fun ProfileScreen(
     var showQaLabTools by remember { mutableStateOf(false) }
 
     val loadProfileData = {
-        if (currentUser != null) {
+        if (currentUser != null && !currentUser.id.isNullOrBlank()) {
             coroutineScope.launch {
                 isLoadingStats = true
                 try {

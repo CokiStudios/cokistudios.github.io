@@ -133,12 +133,16 @@ fun HomeScreen(
     }
 
     LaunchedEffect(selectedCategory, searchQuery) {
-        val postList = manager.fetchPosts(
-            categoryId = selectedCategory?.id,
-            query = searchQuery.ifBlank { null }
-        )
-        posts.clear()
-        posts.addAll(postList)
+        try {
+            val postList = manager.fetchPosts(
+                categoryId = selectedCategory?.id,
+                query = searchQuery.ifBlank { null }
+            )
+            posts.clear()
+            posts.addAll(postList)
+        } catch (e: Exception) {
+            android.util.Log.e("HomeScreen", "Error loading filtered posts", e)
+        }
     }
 
     LaunchedEffect(Unit) {

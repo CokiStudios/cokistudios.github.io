@@ -57,7 +57,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        manager = SupabaseManager.getInstance(this)
+        try {
+            manager = SupabaseManager.getInstance(this)
+        } catch (e: Throwable) {
+            android.util.Log.e("MainActivity", "Emergency fallback for SupabaseManager init error", e)
+            try {
+                getSharedPreferences("supabase_prefs", MODE_PRIVATE).edit().clear().apply()
+            } catch (ignored: Exception) {}
+            manager = SupabaseManager.getInstance(this)
+        }
 
         // Firebase App Distribution: Check updates & enable in-app tester feedback ONLY in QA
         if (BuildConfig.IS_QA) {
