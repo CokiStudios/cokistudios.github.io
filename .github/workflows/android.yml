@@ -67,11 +67,27 @@ jobs:
             echo "🚀 Subiendo Forkar QA a Firebase App Distribution..."
             npm install -g firebase-tools
             QA_APK=$(ls Forkar.Android/app/build/outputs/apk/qa/release/*.apk | head -n 1)
-            firebase appdistribution:distribute "$QA_APK" \
-              --app "${FIREBASE_APP_ID}" \
-              --token "${FIREBASE_TOKEN}" \
-              --groups "testers" \
-              --release-notes "Compilación automática de Forkar QA (Feedback y Muro de Testing)"
+
+            # Extraer emails de testers desde .testers.md si existe
+            if [ -f .testers.md ]; then
+              grep -E -o "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}" .testers.md | grep -v "tudominio.com" > /tmp/testers.txt || true
+            fi
+
+            if [ -s /tmp/testers.txt ]; then
+              echo "👥 Distribuyendo automáticamente a los testers listados en .testers.md:"
+              cat /tmp/testers.txt
+              firebase appdistribution:distribute "$QA_APK" \
+                --app "${FIREBASE_APP_ID}" \
+                --token "${FIREBASE_TOKEN}" \
+                --testers-file /tmp/testers.txt \
+                --release-notes "Compilación automática de Forkar QA (Laboratorio de Staging y Feedback)"
+            else
+              echo "ℹ️ No se especificaron testers en .testers.md. Subiendo release a la consola..."
+              firebase appdistribution:distribute "$QA_APK" \
+                --app "${FIREBASE_APP_ID}" \
+                --token "${FIREBASE_TOKEN}" \
+                --release-notes "Compilación automática de Forkar QA (Laboratorio de Staging y Feedback)"
+            fi
           else
             echo "ℹ️ El secret FIREBASE_TOKEN no está configurado aún en GitHub Secrets."
             echo "🎉 Los 3 APKs (Production, QA e Internal CS) quedaron guardados en los Artifacts del workflow."
