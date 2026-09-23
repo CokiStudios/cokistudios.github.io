@@ -27,6 +27,11 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import com.cokistudios.forkar.BuildConfig
+import com.cokistudios.forkar.data.QALabManager
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -80,6 +85,10 @@ fun CreatePostScreen(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val isDark = isSystemInDarkTheme()
+
+    val qaManager = remember { if (BuildConfig.IS_QA) QALabManager.getInstance(context) else null }
+    var isQaStagingPost by remember { mutableStateOf(qaManager?.tagQaPostsByDefault ?: true) }
+    var simulatedAudioDuration by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -241,6 +250,121 @@ fun CreatePostScreen(
                 }
             }
 
+            if (BuildConfig.IS_QA) {
+                // QA Staging Isolation Banner & Switch
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF241C10))
+                        .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .clickable { isQaStagingPost = !isQaStagingPost }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🧪", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Aislamiento de Staging QA",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color(0xFFF59E0B)
+                        )
+                        Text(
+                            text = if (isQaStagingPost) "Etiquetado como [🧪 QA Test] (Aislado de Retail)" else "Publicación sin etiqueta de prueba",
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+                    Switch(
+                        checked = isQaStagingPost,
+                        onCheckedChange = { isQaStagingPost = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFFF59E0B)
+                        )
+                    )
+                }
+
+                // Experimental Feature: Audio Notes Simulator
+                if (qaManager?.audioNotesExperimentEnabled == true) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF1E1E26))
+                            .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("🎙️", fontSize = 16.sp)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Función Experimental: Nota de Audio",
+                                        color = Color(0xFF38BDF8),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Text(
+                                    text = "QA LAB PREVIEW",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF38BDF8),
+                                    letterSpacing = 1.sp
+                                )
+                            }
+
+                            if (simulatedAudioDuration == null) {
+                                OutlinedButton(
+                                    onClick = {
+                                        simulatedAudioDuration = 18
+                                        Toast.makeText(context, "Nota de voz de 18s simulada para prueba", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFF38BDF8)
+                                    )
+                                ) {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Simular Grabación de Audio (18s)", fontSize = 12.sp)
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0x3338BDF8), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("|||ı|ı||ı|ı||||ı| 0:${simulatedAudioDuration}s", color = Color.White, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+                                    }
+                                    IconButton(
+                                        onClick = { simulatedAudioDuration = null },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Quitar audio", tint = Color.LightGray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             PrimaryButton(
                 text = if (isPublishing) "Publicando..." else "Publicar",
                 onClick = {
@@ -248,12 +372,23 @@ fun CreatePostScreen(
                     coroutineScope.launch {
                         isPublishing = true
                         try {
-                            val finalContent = if (BuildConfig.IS_INTERNAL_CS && isInternalPost) {
-                                "[🔒 CS Internal] ${content.trim()}"
-                            } else {
-                                content.trim()
+                            val prefix = when {
+                                BuildConfig.IS_INTERNAL_CS && isInternalPost -> "[🔒 CS Internal] "
+                                BuildConfig.IS_QA && isQaStagingPost -> "[🧪 QA Test] "
+                                else -> ""
                             }
-                            manager.createPost(title.trim(), finalContent, catId)
+                            val audioSuffix = if (simulatedAudioDuration != null) {
+                                "\n\n[🎙️ Audio Memo: 0:${simulatedAudioDuration}s]"
+                            } else ""
+
+                            val finalContent = "$prefix${content.trim()}$audioSuffix"
+                            val finalTitle = if (BuildConfig.IS_QA && isQaStagingPost && !title.startsWith("[🧪")) {
+                                "[🧪 QA] ${title.trim()}"
+                            } else {
+                                title.trim()
+                            }
+
+                            manager.createPost(finalTitle, finalContent, catId)
                             Toast.makeText(context, "Publicación creada", Toast.LENGTH_SHORT).show()
                             onBack()
                         } catch (e: Exception) {

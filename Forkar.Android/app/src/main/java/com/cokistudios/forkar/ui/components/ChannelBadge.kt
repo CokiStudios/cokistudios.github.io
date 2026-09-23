@@ -48,15 +48,13 @@ fun ChannelBadge(
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "QA Testing",
-                        tint = Color(0xFFF59E0B),
-                        modifier = Modifier.size(13.dp)
+                    Text(
+                        text = "🧪",
+                        fontSize = 11.sp
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "QA BUILD",
+                        text = "QA LAB",
                         color = Color(0xFFF59E0B),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold

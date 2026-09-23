@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
@@ -229,6 +230,25 @@ fun PostDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // QA Staging Indicator
+                        if (post.title.contains("[🧪") || post.content.contains("[🧪")) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0x33F59E0B))
+                                    .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "🧪 Publicación Experimental - Staging QA",
+                                    color = Color(0xFFF59E0B),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
                         // Post details
                         if (post.category != null) {
                             val catColor = try {
@@ -268,6 +288,47 @@ fun PostDetailScreen(
                             lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
+
+                        // Experimental Audio Player Bar
+                        if (post.content.contains("[🎙️ Audio Memo:")) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF1E293B))
+                                    .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF0284C7)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = "Reproducir audio", tint = Color.White, modifier = Modifier.size(20.dp))
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Nota de Audio Experimental (QA Lab)",
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "||||ı|ı||ı|ı||||ı||||ı|ı||ı|ı|| Reproducción simulada",
+                                            color = Color(0xFF38BDF8),
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         // Full Post Photo
                         if (!post.imageUrl.isNullOrBlank()) {

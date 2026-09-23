@@ -9,6 +9,7 @@ dist-dmg/
 keystore.properties
 *.jks
 *.keystore
+*.apk
 .idea/
 
 # Node & Rust Build Outputs

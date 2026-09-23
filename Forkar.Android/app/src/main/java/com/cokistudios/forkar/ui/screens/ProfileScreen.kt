@@ -47,6 +47,7 @@ import com.cokistudios.forkar.data.SupabaseManager
 import com.cokistudios.forkar.ui.components.CircleAvatarPlaceholder
 import com.cokistudios.forkar.ui.components.PrimaryButton
 import com.cokistudios.forkar.ui.components.SecondaryButton
+import com.cokistudios.forkar.ui.components.QALabSheet
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
 import kotlinx.coroutines.launch
 
@@ -65,6 +66,7 @@ fun ProfileScreen(
     var followingCount by remember { mutableStateOf(0) }
     val userPosts = remember { mutableStateListOf<Post>() }
     var isLoadingStats by remember { mutableStateOf(false) }
+    var showQaLabTools by remember { mutableStateOf(false) }
 
     val loadProfileData = {
         if (currentUser != null) {
@@ -144,6 +146,12 @@ fun ProfileScreen(
                     )
                     if (BuildConfig.IS_QA) {
                         Spacer(modifier = Modifier.height(12.dp))
+                        SecondaryButton(
+                            text = "🧪 Laboratorio Experimental QA",
+                            onClick = { showQaLabTools = true },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         SecondaryButton(
                             text = "Reporte de Feedback (QA)",
                             onClick = {
@@ -257,10 +265,16 @@ fun ProfileScreen(
                         }
                     }
 
-                    // Feedback exclusively for QA testers
+                    // Feedback and Lab exclusively for QA testers
                     if (BuildConfig.IS_QA) {
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
+                            SecondaryButton(
+                                text = "🧪 Laboratorio Experimental QA",
+                                onClick = { showQaLabTools = true },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                             SecondaryButton(
                                 text = "Enviar Reporte de QA (Firebase)",
                                 onClick = {
@@ -287,6 +301,13 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(40.dp))
                     }
                 }
+            }
+
+            if (showQaLabTools) {
+                QALabSheet(
+                    manager = manager,
+                    onDismiss = { showQaLabTools = false }
+                )
             }
         }
     }

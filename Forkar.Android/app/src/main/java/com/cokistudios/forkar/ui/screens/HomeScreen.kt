@@ -34,10 +34,15 @@ import androidx.compose.material.icons.filled.Share
 import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
 import com.cokistudios.forkar.ui.components.ChannelBadge
 import com.cokistudios.forkar.ui.components.InternalCsToolsSheet
+import com.cokistudios.forkar.ui.components.QALabSheet
+import com.cokistudios.forkar.data.QALabManager
 import com.cokistudios.forkar.ui.theme.PurpleAccent
 import com.cokistudios.forkar.BuildConfig
 import com.cokistudios.forkar.R
 import com.google.firebase.appdistribution.FirebaseAppDistribution
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import kotlinx.coroutines.delay
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -101,6 +106,10 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
 
+    val context = LocalContext.current
+    val qaManager = remember { if (BuildConfig.IS_QA) QALabManager.getInstance(context) else null }
+    var showQaLabTools by remember { mutableStateOf(false) }
+
     val loadData = {
         coroutineScope.launch {
             isLoading = true
@@ -136,6 +145,25 @@ fun HomeScreen(
         loadData()
     }
 
+    // Experimental Realtime Sync in QA
+    LaunchedEffect(qaManager?.realtimeSyncEnabled) {
+        if (BuildConfig.IS_QA && qaManager?.realtimeSyncEnabled == true) {
+            while (true) {
+                delay(12000L)
+                try {
+                    val postList = manager.fetchPosts(
+                        categoryId = selectedCategory?.id,
+                        query = searchQuery.ifBlank { null }
+                    )
+                    posts.clear()
+                    posts.addAll(postList)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -153,16 +181,30 @@ fun HomeScreen(
                 icon = Icons.Default.Home,
                 iconColor = if (BuildConfig.IS_INTERNAL_CS) Color(0xFFA78BFA) else IndigoPrimary,
                 actions = {
+                    if (BuildConfig.IS_QA && qaManager?.latencyInspectorEnabled == true) {
+                        val ping = qaManager.lastMeasuredLatencyMs
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x28F59E0B))
+                                .clickable { showQaLabTools = true }
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (ping >= 0) "⚡ ${ping}ms" else "⚡ QA Lab",
+                                color = Color(0xFFF59E0B),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
                     ChannelBadge(
                         onClick = {
                             if (BuildConfig.IS_INTERNAL_CS) {
                                 showInternalTools = true
                             } else if (BuildConfig.IS_QA) {
-                                try {
-                                    FirebaseAppDistribution.getInstance().startFeedback(R.string.additional_form_text)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
+                                showQaLabTools = true
                             }
                         }
                     )
@@ -363,7 +405,7 @@ fun HomeScreen(
                     }
                 }
             } else {
-                val filteredPosts = remember(posts, internalTabSelected) {
+                val filteredPosts = remember(posts, internalTabSelected, qaManager?.filterOnlyQaPosts) {
                     when {
                         BuildConfig.IS_INTERNAL_CS && internalTabSelected == 0 -> {
                             val internalList = posts.filter { post ->
@@ -378,23 +420,64 @@ fun HomeScreen(
                         BuildConfig.IS_INTERNAL_CS && internalTabSelected == 1 -> {
                             posts.filter { !it.content.contains("[🔒 CS Internal]") }
                         }
-                        !BuildConfig.IS_INTERNAL_CS -> {
-                            posts.filter { !it.content.contains("[🔒 CS Internal]") && !it.content.contains("#cs-internal") }
+                        BuildConfig.IS_QA && qaManager?.filterOnlyQaPosts == true -> {
+                            posts.filter { it.content.contains("[🧪") || it.title.contains("[🧪") || it.content.contains("QA") }
+                        }
+                        !BuildConfig.IS_INTERNAL_CS && !BuildConfig.IS_QA -> {
+                            // Retail production: strictly filter out QA staging posts and CS internal posts
+                            posts.filter {
+                                !it.content.contains("[🔒 CS Internal]") &&
+                                !it.content.contains("#cs-internal") &&
+                                !it.content.contains("[🧪 QA Test]") &&
+                                !it.title.contains("[🧪 QA Test]")
+                            }
                         }
                         else -> posts
                     }
                 }
 
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredPosts) { post ->
-                        PostCardView(
-                            post = post,
-                            onClick = { onPostClick(post) }
-                        )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredPosts) { post ->
+                            PostCardView(
+                                post = post,
+                                onClick = { onPostClick(post) }
+                            )
+                        }
+                    }
+
+                    // Floating Watermark for QA Staging
+                    if (BuildConfig.IS_QA && qaManager?.watermarkEnabled == true) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 12.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0xE6141419))
+                                .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                                .clickable { showQaLabTools = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "🧪 FORKAR QA STAGING",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFFF59E0B)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "v${BuildConfig.VERSION_NAME}",
+                                    fontSize = 10.sp,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -404,6 +487,13 @@ fun HomeScreen(
                     manager = manager,
                     onDismiss = { showInternalTools = false },
                     onNavigateToCSMS = onNavigateToCSMS
+                )
+            }
+
+            if (showQaLabTools) {
+                QALabSheet(
+                    manager = manager,
+                    onDismiss = { showQaLabTools = false }
                 )
             }
         }
@@ -503,7 +593,6 @@ fun PostCardView(
                 )
             }
 
-            // Category tag
             if (post.content.contains("[🔒 CS Internal]") || post.content.contains("#cs-internal")) {
                 Box(
                     modifier = Modifier
@@ -514,6 +603,21 @@ fun PostCardView(
                     Text(
                         text = "🔒 CS Team",
                         color = Color(0xFFC084FC),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+            } else if (post.content.contains("[🧪") || post.title.contains("[🧪")) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x33F59E0B))
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "🧪 QA Staging",
+                        color = Color(0xFFF59E0B),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )

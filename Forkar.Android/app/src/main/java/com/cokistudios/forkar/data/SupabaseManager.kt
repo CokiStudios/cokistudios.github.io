@@ -48,6 +48,8 @@ class SupabaseManager private constructor(context: Context) {
     val isLoggedIn: Boolean
         get() = sessionToken != null
 
+    fun getRestEndpoint(): String = "$baseURL/rest/v1/"
+
     val deviceHash: String
         get() {
             val existing = sharedPrefs.getString("forkar_device_hash", null)
