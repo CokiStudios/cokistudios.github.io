@@ -51,15 +51,37 @@ android {
                 enableV3Signing = true
                 enableV4Signing = false
             } else {
-                val debugConfig = getByName("debug")
-                storeFile = debugConfig.storeFile
-                storePassword = debugConfig.storePassword
-                keyAlias = debugConfig.keyAlias
-                keyPassword = debugConfig.keyPassword
-                enableV1Signing = true
-                enableV2Signing = true
-                enableV3Signing = true
-                enableV4Signing = false
+                val fallbackFile = rootProject.file("keystore/ci-fallback.jks")
+                if (!fallbackFile.exists()) {
+                    fallbackFile.parentFile?.mkdirs()
+                    try {
+                        val keytoolBin = org.gradle.internal.jvm.Jvm.current().javaHome.resolve("bin/keytool").absolutePath
+                        val cmd = listOf(
+                            keytoolBin, "-genkeypair",
+                            "-alias", "ci_fallback",
+                            "-keyalg", "RSA",
+                            "-keysize", "2048",
+                            "-validity", "10000",
+                            "-keystore", fallbackFile.absolutePath,
+                            "-storepass", "android",
+                            "-keypass", "android",
+                            "-dname", "CN=CI Fallback, O=Coki Studios, C=CO"
+                        )
+                        ProcessBuilder(cmd).start().waitFor()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                if (fallbackFile.exists()) {
+                    storeFile = fallbackFile
+                    storePassword = "android"
+                    keyAlias = "ci_fallback"
+                    keyPassword = "android"
+                    enableV1Signing = true
+                    enableV2Signing = true
+                    enableV3Signing = true
+                    enableV4Signing = false
+                }
             }
         }
     }

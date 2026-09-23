@@ -30,12 +30,17 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
+          mkdir -p Forkar.Android/keystore
           if [ -n "${KEYSTORE_BASE64}" ]; then
-            mkdir -p Forkar.Android/keystore
             echo "${KEYSTORE_BASE64}" | base64 -d > Forkar.Android/keystore/forkar-release.jks
             echo "✅ Keystore oficial de Coki Studios restaurado para firma de 100 años."
           else
-            echo "ℹ️ ANDROID_KEYSTORE_BASE64 no configurado en secrets. Se utilizará keystore local o fallback de compilación."
+            echo "ℹ️ ANDROID_KEYSTORE_BASE64 no configurado en secrets. Generando keystore de firma automática para CI..."
+            keytool -genkeypair -alias forkar_release -keyalg RSA -keysize 2048 -validity 36500 \
+              -keystore Forkar.Android/keystore/forkar-release.jks \
+              -storepass CokiStudiosForkar2026! -keypass CokiStudiosForkar2026! \
+              -dname "CN=Forkar CI, OU=Coki Mobile, O=Coki Studios, C=CO"
+            echo "✅ Keystore de compilación CI generado con éxito."
           fi
 
       - name: Build All Release Flavors (Production, QA, Internal CS)
@@ -56,7 +61,7 @@ jobs:
       - name: Subir a Firebase App Distribution (Canal QA y Feedback)
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          FIREBASE_APP_ID: "1:703867182522:android:73d71157ab0d7c63f71183"
+          FIREBASE_APP_ID: "1:703867182522:android:47f83c8596d977aef71183"
         run: |
           if [ -n "${FIREBASE_TOKEN}" ]; then
             echo "🚀 Subiendo Forkar QA a Firebase App Distribution..."
