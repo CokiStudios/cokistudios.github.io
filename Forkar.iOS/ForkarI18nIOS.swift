@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+internal import Combine
 
 // MARK: - Forkar iOS Localization Manager
 enum ForkarAppLanguage: String, CaseIterable, Identifiable {

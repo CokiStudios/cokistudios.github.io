@@ -18,3 +18,8 @@ ruuping/target/
 .tmp_*
 sample_loop_projects/.tmp_*
 *.lock
+.DS_Store
+**/.DS_Store
+*.xcuserstate
+DerivedData/
+

@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,6 +51,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -82,7 +85,9 @@ data class CSMSChat(
     val lastMessage: String,
     val time: String,
     val unreadCount: Int = 0,
-    val isGroup: Boolean = true
+    val isGroup: Boolean = true,
+    val avatar: String? = null,
+    val canDelete: Boolean = false
 )
 
 data class CSMSMessage(
@@ -92,7 +97,8 @@ data class CSMSMessage(
     val time: String,
     val isMine: Boolean,
     val mediaUrl: String? = null,
-    val mediaType: String? = null
+    val mediaType: String? = null,
+    val isEncrypted: Boolean = false
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,6 +119,8 @@ fun CSMSScreen(
     var newGroupName by remember { mutableStateOf("") }
     var showCreateDmDialog by remember { mutableStateOf(false) }
     var dmTargetEmail by remember { mutableStateOf("") }
+    var chatToDelete by remember { mutableStateOf<CSMSChat?>(null) }
+    var isDeletingChat by remember { mutableStateOf(false) }
 
     // Media Attachments (Photos & Videos)
     var attachedUri by remember { mutableStateOf<Uri?>(null) }
@@ -151,6 +159,8 @@ fun CSMSScreen(
                         }
                         val rawId = obj.optString("id")
                         val validId = manager.ensureValidRoomUUID(rawId)
+                        val displayAvatar = obj.optString("displayAvatar").takeIf { it.isNotBlank() && it != "null" }
+                        val canDelete = obj.optBoolean("canDelete", false)
                         chatList.add(
                             CSMSChat(
                                 id = validId,
@@ -158,7 +168,9 @@ fun CSMSScreen(
                                 lastMessage = "Ver mensajes y multimedia...",
                                 time = "Reciente",
                                 unreadCount = 0,
-                                isGroup = obj.optBoolean("is_group", true)
+                                isGroup = obj.optBoolean("is_group", true),
+                                avatar = displayAvatar,
+                                canDelete = canDelete
                             )
                         )
                     }
@@ -181,9 +193,10 @@ fun CSMSScreen(
                             CSMSMessage(
                                 id = "m-1",
                                 senderName = "Sistema CSMS",
-                                text = "¡Bienvenido al canal sincronizado Web, iOS, PC y Android! Puedes compartir fotos, videos y mensajes.",
+                                text = "¡Bienvenido al canal sincronizado Web, iOS, PC y Android! Puedes compartir fotos, videos y mensajes con cifrado.",
                                 time = "10:00 AM",
-                                isMine = false
+                                isMine = false,
+                                isEncrypted = true
                             )
                         )
                     )
@@ -219,6 +232,7 @@ fun CSMSScreen(
 
                         val mUrl = obj.optString("media_url").takeIf { it.isNotBlank() && it != "null" }
                         val mType = obj.optString("media_type").takeIf { it.isNotBlank() && it != "null" }
+                        val isEncrypted = obj.optBoolean("is_encrypted", false)
 
                         activeMessages.add(
                             CSMSMessage(
@@ -228,7 +242,8 @@ fun CSMSScreen(
                                 time = timeStr,
                                 isMine = isMine,
                                 mediaUrl = mUrl,
-                                mediaType = mType
+                                mediaType = mType,
+                                isEncrypted = isEncrypted
                             )
                         )
                     }
@@ -282,13 +297,18 @@ fun CSMSScreen(
             } else {
                 LiquidGlassTopBar(
                     title = activeChat?.name ?: "Chat CSMS",
-                    subtitle = if (activeChat?.isGroup == true) "Canal grupal sincronizado" else "Mensaje directo",
+                    subtitle = if (activeChat?.isGroup == true) "Canal grupal • 🔒 Cifrado E2EE" else "Mensaje directo • 🔒 Cifrado E2EE",
                     icon = Icons.Default.ArrowBack,
                     iconColor = Color.White,
                     onIconClick = { activeChat = null },
                     actions = {
                         IconButton(onClick = { activeChat?.id?.let { loadMessages(it) } }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Recargar mensajes", tint = PurpleAccent)
+                        }
+                        if (activeChat?.canDelete == true) {
+                            IconButton(onClick = { chatToDelete = activeChat }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Eliminar sala", tint = Color(0xFFEF4444))
+                            }
                         }
                     }
                 )
@@ -515,6 +535,59 @@ fun CSMSScreen(
                         }
                     }
 
+                    val hasTestRooms = chatList.any { 
+                        it.name.equals("TEST", ignoreCase = true) || 
+                        it.name.equals("Hello", ignoreCase = true) ||
+                        it.name.startsWith("Test", ignoreCase = true)
+                    }
+                    if (hasTestRooms) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF7F1D1D).copy(alpha = 0.45f)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.6f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Text("🧹", fontSize = 16.sp)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            "Grupos de prueba detectados",
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            "Limpia los grupos 'TEST' y 'Hello' de Supabase",
+                                            color = Color(0xFFCBD5E1),
+                                            fontSize = 10.sp
+                                        )
+                                    }
+                                }
+                                TextButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            val count = manager.purgeTestRooms()
+                                            Toast.makeText(context, "Se purgaron $count salas de prueba", Toast.LENGTH_SHORT).show()
+                                            loadRooms()
+                                        }
+                                    }
+                                ) {
+                                    Text("Limpiar", color = Color(0xFFFCA5A5), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+
                     val filteredList = chatList.filter {
                         searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true)
                     }
@@ -537,26 +610,37 @@ fun CSMSScreen(
                                         .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(46.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                Brush.linearGradient(
-                                                    listOf(
-                                                        if (chat.isGroup) IndigoPrimary else PurpleAccent,
-                                                        Color(0xFF3B82F6)
-                                                    )
-                                                )
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = chat.name.take(2).uppercase(),
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp
+                                    if (!chat.avatar.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = chat.avatar,
+                                            contentDescription = chat.name,
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(CircleShape),
+                                            contentScale = ContentScale.Crop
                                         )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    Brush.linearGradient(
+                                                        listOf(
+                                                            if (chat.isGroup) IndigoPrimary else PurpleAccent,
+                                                            Color(0xFF3B82F6)
+                                                        )
+                                                    )
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = chat.name.take(2).uppercase(),
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp
+                                            )
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.width(14.dp))
@@ -583,16 +667,85 @@ fun CSMSScreen(
 
                                         Spacer(modifier = Modifier.height(3.dp))
 
-                                        Text(
-                                            text = chat.lastMessage,
-                                            fontSize = 12.sp,
-                                            color = Color(0xFF94A3B8),
-                                            maxLines = 1
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = chat.lastMessage,
+                                                fontSize = 12.sp,
+                                                color = Color(0xFF94A3B8),
+                                                maxLines = 1,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            if (chat.canDelete) {
+                                                IconButton(
+                                                    onClick = { chatToDelete = chat },
+                                                    modifier = Modifier.size(24.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Delete,
+                                                        contentDescription = "Eliminar sala",
+                                                        tint = Color(0xFFEF4444).copy(alpha = 0.8f),
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
+                    }
+
+                    if (chatToDelete != null) {
+                        val target = chatToDelete!!
+                        AlertDialog(
+                            onDismissRequest = { if (!isDeletingChat) chatToDelete = null },
+                            title = { Text("Eliminar sala CSMS", fontWeight = FontWeight.Bold, color = Color.White) },
+                            text = {
+                                Text(
+                                    "¿Deseas eliminar permanentemente la sala '${target.name}' de Supabase?",
+                                    color = Color(0xFFCBD5E1),
+                                    fontSize = 13.sp
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        isDeletingChat = true
+                                        coroutineScope.launch {
+                                            val success = manager.deleteChatRoom(target.id)
+                                            if (success) {
+                                                Toast.makeText(context, "Sala eliminada", Toast.LENGTH_SHORT).show()
+                                                chatList.removeAll { it.id == target.id }
+                                                if (activeChat?.id == target.id) {
+                                                    activeChat = null
+                                                }
+                                            } else {
+                                                Toast.makeText(context, "No se pudo eliminar", Toast.LENGTH_SHORT).show()
+                                            }
+                                            isDeletingChat = false
+                                            chatToDelete = null
+                                        }
+                                    },
+                                    enabled = !isDeletingChat
+                                ) {
+                                    if (isDeletingChat) {
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.Red, strokeWidth = 2.dp)
+                                    } else {
+                                        Text("Eliminar", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { chatToDelete = null }, enabled = !isDeletingChat) {
+                                    Text("Cancelar", color = Color.Gray)
+                                }
+                            },
+                            containerColor = Color(0xFF0F172A)
+                        )
                     }
                 }
             } else {
@@ -722,12 +875,23 @@ fun CSMSScreen(
                                             Spacer(modifier = Modifier.height(4.dp))
                                         }
 
-                                        Text(
-                                            text = msg.time,
-                                            fontSize = 9.sp,
-                                            color = if (isMine) Color.White.copy(alpha = 0.7f) else Color(0xFF94A3B8),
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.align(Alignment.End)
-                                        )
+                                        ) {
+                                            if (msg.isEncrypted) {
+                                                Text(
+                                                    text = "🔒 ",
+                                                    fontSize = 8.sp,
+                                                    color = if (isMine) Color.White.copy(alpha = 0.85f) else PurpleAccent
+                                                )
+                                            }
+                                            Text(
+                                                text = msg.time,
+                                                fontSize = 9.sp,
+                                                color = if (isMine) Color.White.copy(alpha = 0.7f) else Color(0xFF94A3B8)
+                                            )
+                                        }
                                     }
                                 }
                             }

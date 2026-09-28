@@ -55,6 +55,26 @@ struct ChatsView: View {
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                         .padding(.horizontal)
+                                        .contextMenu {
+                                            if room.created_by == authManager.currentUser?.id && !CSMSCanonicalRooms.isProtected(roomId: room.id) {
+                                                Button(role: .destructive) {
+                                                    deleteRoom(room)
+                                                } label: {
+                                                    Label("Eliminar Conversación", systemImage: "trash")
+                                                }
+                                            }
+                                        }
+                                        #if os(iOS)
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                            if room.created_by == authManager.currentUser?.id && !CSMSCanonicalRooms.isProtected(roomId: room.id) {
+                                                Button(role: .destructive) {
+                                                    deleteRoom(room)
+                                                } label: {
+                                                    Label("Eliminar", systemImage: "trash")
+                                                }
+                                            }
+                                        }
+                                        #endif
                                     }
                                 }
                             }
@@ -226,6 +246,21 @@ struct ChatsView: View {
         }
     }
     
+    private func deleteRoom(_ room: ChatRoom) {
+        Task {
+            do {
+                try await authManager.deleteChatRoom(roomId: room.id)
+                await MainActor.run {
+                    withAnimation {
+                        self.rooms.removeAll { $0.id == room.id }
+                    }
+                }
+            } catch {
+                print("Error deleting room: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     private func createGroup() {
         let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
@@ -253,8 +288,9 @@ struct ChatsView: View {
 struct ChatRoomRowView: View {
     @EnvironmentObject var authManager: SupabaseManager
     let room: ChatRoom
-    @State private var displayName: String = "Cargando..."
+    @State private var displayName: String = ""
     @State private var initials: String = "?"
+    @State private var avatarUrl: String? = nil
     
     var body: some View {
         HStack(spacing: 12) {
@@ -275,28 +311,45 @@ struct ChatRoomRowView: View {
                         .font(.headline)
                         .foregroundColor(ForkarTheme.text)
                     
-                    Text("Grupo Privado")
+                    Text("Grupo Privado • E2EE")
                         .font(.caption)
                         .foregroundColor(ForkarTheme.textSub)
                 }
             } else {
-                // Direct Message Icon
+                // Direct Message Icon with resolved avatar
                 ZStack {
-                    Circle()
-                        .fill(ForkarTheme.primaryGradient)
+                    if let urlStr = avatarUrl ?? room.displayAvatar, let url = URL(string: urlStr) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image.resizable()
+                                    .scaledToFill()
+                                    .frame(width: 48, height: 48)
+                                    .clipShape(Circle())
+                            default:
+                                fallbackAvatarView
+                            }
+                        }
                         .frame(width: 48, height: 48)
-                    
-                    Text(initials)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                    } else {
+                        fallbackAvatarView
+                    }
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(displayName)
-                        .font(.headline)
-                        .foregroundColor(ForkarTheme.text)
+                    HStack(spacing: 6) {
+                        Text(displayName.isEmpty ? room.displayName : displayName)
+                            .font(.headline)
+                            .foregroundColor(ForkarTheme.text)
+                            .lineLimit(1)
+                        
+                        // Hardware E2EE Protected Badge
+                        Image(systemName: "lock.shield.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(ForkarTheme.green)
+                    }
                     
-                    Text("Mensaje Directo")
+                    Text("Mensaje Directo • E2EE")
                         .font(.caption)
                         .foregroundColor(ForkarTheme.textSub)
                 }
@@ -312,7 +365,10 @@ struct ChatRoomRowView: View {
         .padding(.vertical, 10)
         .liquidGlass(cornerRadius: 14, glowColor: room.is_group ? ForkarTheme.accent2 : ForkarTheme.accent)
         .onAppear {
-            if !room.is_group {
+            self.displayName = room.displayName
+            self.initials = room.initials
+            self.avatarUrl = room.displayAvatar
+            if !room.is_group && (room.directContactName == nil || room.directContactName?.isEmpty == true) {
                 Task {
                     await loadPartnerInfo()
                 }
@@ -320,18 +376,27 @@ struct ChatRoomRowView: View {
         }
     }
     
+    private var fallbackAvatarView: some View {
+        ZStack {
+            Circle()
+                .fill(ForkarTheme.primaryGradient)
+                .frame(width: 48, height: 48)
+            
+            Text(initials.isEmpty ? room.initials : initials)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+        }
+    }
+    
     private func loadPartnerInfo() async {
         do {
             let members = try await authManager.fetchRoomMembers(roomId: room.id)
-            if let partner = members.first(where: { $0.user_id != authManager.currentUser?.id }) {
+            if let partner = members.first(where: { $0.user_id != authManager.currentUser?.id }),
+               !partner.user_name.isEmpty {
                 await MainActor.run {
                     self.displayName = partner.user_name
                     self.initials = partner.initials
-                }
-            } else {
-                await MainActor.run {
-                    self.displayName = "Chat Privado"
-                    self.initials = "CP"
+                    self.avatarUrl = partner.user_avatar
                 }
             }
         } catch {

@@ -1,11 +1,37 @@
 import SwiftUI
+internal import Combine
+
 #if canImport(FirebaseCore)
 import FirebaseCore
+#endif
 
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+// MARK: - Gestor de Acciones Rápidas (Long Press en icono de App)
+class QuickActionManager: ObservableObject {
+    static let shared = QuickActionManager()
+    @Published var actionType: String? = nil
+}
+
+#if os(macOS)
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        #if canImport(FirebaseCore)
         FirebaseApp.configure()
+        #endif
+    }
+}
+#else
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        #if canImport(FirebaseCore)
+        FirebaseApp.configure()
+        #endif
+        
+        if let shortcutItem = launchOptions?[.shortcutItem] as? UIApplicationShortcutItem {
+            QuickActionManager.shared.actionType = shortcutItem.type
+        }
         return true
     }
 }
@@ -13,9 +39,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct ForkarApp: App {
-#if canImport(FirebaseCore)
+    #if os(macOS)
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    #else
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-#endif
+    #endif
 
     var body: some Scene {
         WindowGroup {
@@ -23,4 +51,3 @@ struct ForkarApp: App {
         }
     }
 }
-

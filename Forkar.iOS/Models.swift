@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+public import Combine
 
 // MARK: - Category Model
 struct Category: Identifiable, Codable, Hashable {
@@ -80,6 +81,8 @@ struct Comment: Identifiable, Codable, Hashable {
 
 // MARK: - Color Hex Extension
 extension Color {
+    static let emerald = Color(red: 16/255, green: 185/255, blue: 129/255)
+    
     init?(hex: String) {
         var cleanHex = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         cleanHex = cleanHex.replacingOccurrences(of: "#", with: "")
@@ -129,15 +132,46 @@ extension Color {
 
 // MARK: - Chat Models
 
+struct ChatRoomMemberBasic: Identifiable, Codable, Hashable {
+    var id: UUID { user_id }
+    let user_id: UUID
+    let user_name: String?
+    let user_avatar: String?
+}
+
 struct ChatRoom: Identifiable, Codable, Hashable {
     let id: UUID
     let name: String?
     let is_group: Bool
     let created_at: String
     let created_by: UUID
+    var chat_room_members: [ChatRoomMemberBasic]?
+    
+    // Resolved DM contact fields
+    var directContactName: String?
+    var directContactAvatar: String?
     
     var displayName: String {
-        name ?? "Chat Privado"
+        if !is_group {
+            if let direct = directContactName, !direct.isEmpty {
+                return direct
+            }
+            if let other = chat_room_members?.first(where: { $0.user_name != nil })?.user_name, !other.isEmpty {
+                return other
+            }
+        }
+        return name ?? (is_group ? "Grupo de Chat" : "Chat Directo")
+    }
+    
+    var displayAvatar: String? {
+        if !is_group {
+            return directContactAvatar ?? chat_room_members?.first(where: { $0.user_avatar != nil })?.user_avatar
+        }
+        return nil
+    }
+    
+    var initials: String {
+        displayName.prefix(1).uppercased()
     }
 }
 
@@ -160,10 +194,15 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     let user_id: UUID
     let author_name: String
     let author_avatar: String?
-    let content: String
+    var content: String
     let media_url: String?
     let media_type: String?
     let created_at: String
+    var isEncrypted: Bool = false
+    
+    enum CodingKeys: String, CodingKey {
+        case id, room_id, user_id, author_name, author_avatar, content, media_url, media_type, created_at
+    }
     
     var formattedTime: String {
         let formatter = ISO8601DateFormatter()
@@ -192,6 +231,28 @@ struct CommunityUser: Identifiable, Hashable {
     let id: UUID
     let name: String
     let avatar: String?
+}
+
+// MARK: - CSMS Canonical Protected Rooms
+
+enum CSMSCanonicalRooms {
+    static let communityGlobal = "00000000-0000-0000-0000-000000000001"
+    static let ecoHub = "00000000-0000-0000-0000-000000000002"
+    static let forkarCarpool = "00000000-0000-0000-0000-000000000003"
+    
+    static let protectedIds: Set<String> = [
+        communityGlobal,
+        ecoHub,
+        forkarCarpool
+    ]
+    
+    static func isProtected(roomId: String) -> Bool {
+        return protectedIds.contains(roomId.lowercased())
+    }
+    
+    static func isProtected(roomId: UUID) -> Bool {
+        return protectedIds.contains(roomId.uuidString.lowercased())
+    }
 }
 
 // MARK: - Localization Support
@@ -331,4 +392,27 @@ struct MultiplatformNavigationStack<Content: View>: View {
         #endif
     }
 }
+
+// MARK: - Forkman Eco Models
+public struct ForkmanEcoAction: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String
+    public let description: String?
+    public let eco_points: Int?
+    public let icon_name: String?
+    public let category: String?
+    public let created_at: String?
+}
+
+public struct ForkmanEcoMapPoint: Identifiable, Codable, Hashable {
+    public let id: String
+    public let name: String
+    public let address: String?
+    public let latitude: Double?
+    public let longitude: Double?
+    public let point_type: String?
+    public let is_active: Bool?
+    public let created_at: String?
+}
+
 

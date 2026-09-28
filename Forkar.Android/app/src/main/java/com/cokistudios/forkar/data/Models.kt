@@ -162,3 +162,21 @@ data class EcoMapPoint(
     val color: String = "#10b981"
 )
 
+typealias ForkmanEcoAction = EcoAction
+typealias ForkmanEcoMapPoint = EcoMapPoint
+
+data class SocialLike(
+    val id: String,
+    @SerializedName("post_id") val postId: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("created_at") val createdAt: String? = null
+)
+
+data class SocialFollow(
+    val id: String,
+    @SerializedName("follower_id") val followerId: String,
+    @SerializedName("following_id") val followingId: String,
+    @SerializedName("created_at") val createdAt: String? = null
+)
+
+

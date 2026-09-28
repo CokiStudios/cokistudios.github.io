@@ -10,6 +10,7 @@ struct ProfileView: View {
     @State private var showLogin = false
     @State private var showSetupWizard = false
     @State private var showLogoutConfirmation = false
+    @State private var showMyQRCode = false
     
     var body: some View {
         MultiplatformNavigationStack {
@@ -26,10 +27,9 @@ struct ProfileView: View {
                             // User Info Card
                             VStack(spacing: 16) {
                                 // Avatar
-                                let meta = user.user_metadata
-                                let displayName = meta?.full_name ?? meta?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
-                                let avatarURL = meta?.avatar_url ?? meta?.picture
-                                let initials = displayName.prefix(1).uppercased()
+                                let displayName = user.resolvedName
+                                let avatarURL = user.resolvedAvatarUrl
+                                let initials = user.initials
                                 
                                 if let avatar = avatarURL, let url = URL(string: avatar) {
                                     AsyncImage(url: url) { image in
@@ -65,6 +65,22 @@ struct ProfileView: View {
                                     Text(user.email ?? "")
                                         .font(.system(size: 12))
                                         .foregroundColor(ForkarTheme.textSub)
+                                    
+                                    Button(action: {
+                                        showMyQRCode = true
+                                    }) {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "qrcode")
+                                            Text("Mi Código QR")
+                                        }
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(Color.emerald)
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 14)
+                                        .background(Color.emerald.opacity(0.12))
+                                        .cornerRadius(10)
+                                    }
+                                    .padding(.top, 4)
                                 }
                                 
                                 // Stats Row
@@ -190,6 +206,13 @@ struct ProfileView: View {
                     .sheet(isPresented: $showSetupWizard) {
                         SetupWizardView()
                             .environmentObject(authManager)
+                    }
+                    .sheet(isPresented: $showMyQRCode) {
+                        MyEcoQRCodeSheet(
+                            userId: user.id.uuidString,
+                            userName: user.resolvedName,
+                            points: UserDefaults.standard.integer(forKey: "forkar_eco_points")
+                        )
                     }
                 } else {
                     // Not logged in view

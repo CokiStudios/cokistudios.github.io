@@ -1,19 +1,32 @@
 import SwiftUI
-import ActivityKit
-import WidgetKit
 internal import Combine
 
-// Attributes struct for Dynamic Island & Lock Screen Live Activity
+#if canImport(ActivityKit) && os(iOS)
+import ActivityKit
+import WidgetKit
+
+// MARK: - Attributes struct for Dynamic Island & Lock Screen Live Activity (iOS 16.1+)
+@available(iOS 16.1, *)
 public struct ForkarEcoActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         public var co2Saved: Double
         public var ecoPoints: Int
         public var statusMessage: String
+        public var dailyGoalProgress: Double
+        public var treesPreserved: Double
         
-        public init(co2Saved: Double, ecoPoints: Int, statusMessage: String) {
+        public init(
+            co2Saved: Double,
+            ecoPoints: Int,
+            statusMessage: String,
+            dailyGoalProgress: Double = 0.65,
+            treesPreserved: Double? = nil
+        ) {
             self.co2Saved = co2Saved
             self.ecoPoints = ecoPoints
             self.statusMessage = statusMessage
+            self.dailyGoalProgress = min(max(dailyGoalProgress, 0.05), 1.0)
+            self.treesPreserved = treesPreserved ?? max(0.1, co2Saved / 21.77)
         }
     }
     
@@ -24,34 +37,28 @@ public struct ForkarEcoActivityAttributes: ActivityAttributes {
     }
 }
 
+// MARK: - Dynamic Island Eco Manager (Pure Liquid Glass - iOS 16.1+)
+@available(iOS 16.1, *)
 class DynamicIslandEcoManager: ObservableObject {
     static let shared = DynamicIslandEcoManager()
     
     @Published var isLiveActivityActive: Bool = false
-    
-    #if os(iOS)
     private var currentActivity: Activity<ForkarEcoActivityAttributes>? = nil
-    #endif
     
     init() {
-        #if os(iOS)
         checkActiveActivities()
-        #endif
     }
     
     private func checkActiveActivities() {
-        #if os(iOS)
         if let existing = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active }) {
             self.currentActivity = existing
             self.isLiveActivityActive = true
         } else {
             self.isLiveActivityActive = false
         }
-        #endif
     }
     
     func startEcoLiveActivity(co2: Double, pts: Int, userName: String = "Usuario") {
-        #if os(iOS)
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         
         // Si ya existe una Live Activity activa, solo la actualizamos
@@ -66,17 +73,14 @@ class DynamicIslandEcoManager: ObservableObject {
         let state = ForkarEcoActivityAttributes.ContentState(
             co2Saved: co2,
             ecoPoints: pts,
-            statusMessage: "Monitoreo Eco en Tiempo Real"
+            statusMessage: "Monitoreo Eco en Tiempo Real",
+            dailyGoalProgress: min(1.0, max(0.15, co2 / 20.0))
         )
         
         do {
             let staleDate = Calendar.current.date(byAdding: .hour, value: 4, to: Date())
-            if #available(iOS 16.2, *) {
-                let content = ActivityContent(state: state, staleDate: staleDate)
-                currentActivity = try Activity.request(attributes: attributes, content: content, pushType: nil)
-            } else {
-                currentActivity = try Activity.request(attributes: attributes, contentState: state, pushType: nil)
-            }
+            let content = ActivityContent(state: state, staleDate: staleDate)
+            currentActivity = try Activity.request(attributes: attributes, content: content, pushType: nil)
             
             DispatchQueue.main.async {
                 self.isLiveActivityActive = true
@@ -87,11 +91,9 @@ class DynamicIslandEcoManager: ObservableObject {
                 print("Error al iniciar Live Activity / Dynamic Island: \(error)")
             }
         }
-        #endif
     }
     
     func updateEcoLiveActivity(co2: Double, pts: Int, message: String = "Impacto Eco Actualizado") {
-        #if os(iOS)
         if currentActivity == nil || currentActivity?.activityState != .active {
             currentActivity = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active })
         }
@@ -102,25 +104,20 @@ class DynamicIslandEcoManager: ObservableObject {
             let updatedState = ForkarEcoActivityAttributes.ContentState(
                 co2Saved: co2,
                 ecoPoints: pts,
-                statusMessage: message
+                statusMessage: message,
+                dailyGoalProgress: min(1.0, max(0.15, co2 / 20.0))
             )
             let staleDate = Calendar.current.date(byAdding: .hour, value: 4, to: Date())
-            if #available(iOS 16.2, *) {
-                let content = ActivityContent(state: updatedState, staleDate: staleDate)
-                await activity.update(content)
-            } else {
-                await activity.update(using: updatedState)
-            }
+            let content = ActivityContent(state: updatedState, staleDate: staleDate)
+            await activity.update(content)
             
             await MainActor.run {
                 self.isLiveActivityActive = true
             }
         }
-        #endif
     }
     
     func stopEcoLiveActivity(finalCo2: Double, finalPts: Int) {
-        #if os(iOS)
         if currentActivity == nil || currentActivity?.activityState != .active {
             currentActivity = Activity<ForkarEcoActivityAttributes>.activities.first(where: { $0.activityState == .active })
         }
@@ -134,21 +131,17 @@ class DynamicIslandEcoManager: ObservableObject {
             let finalState = ForkarEcoActivityAttributes.ContentState(
                 co2Saved: finalCo2,
                 ecoPoints: finalPts,
-                statusMessage: "Resumen Eco Guardado"
+                statusMessage: "Resumen Eco Guardado",
+                dailyGoalProgress: 1.0
             )
-            if #available(iOS 16.2, *) {
-                let content = ActivityContent(state: finalState, staleDate: nil)
-                await activity.end(content, dismissalPolicy: .immediate)
-            } else {
-                await activity.end(using: finalState, dismissalPolicy: .immediate)
-            }
+            let content = ActivityContent(state: finalState, staleDate: nil)
+            await activity.end(content, dismissalPolicy: .immediate)
             
             await MainActor.run {
                 self.currentActivity = nil
                 self.isLiveActivityActive = false
             }
         }
-        #endif
     }
     
     func toggleEcoLiveActivity(co2: Double, pts: Int, userName: String = "Usuario") {
@@ -159,3 +152,15 @@ class DynamicIslandEcoManager: ObservableObject {
         }
     }
 }
+#else
+// MARK: - macOS Fallback
+class DynamicIslandEcoManager: ObservableObject {
+    static let shared = DynamicIslandEcoManager()
+    @Published var isLiveActivityActive: Bool = false
+    
+    func startEcoLiveActivity(co2: Double, pts: Int, userName: String = "Usuario") {}
+    func updateEcoLiveActivity(co2: Double, pts: Int, message: String = "Impacto Eco Actualizado") {}
+    func stopEcoLiveActivity(finalCo2: Double, finalPts: Int) {}
+    func toggleEcoLiveActivity(co2: Double, pts: Int, userName: String = "Usuario") {}
+}
+#endif

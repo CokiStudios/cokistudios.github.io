@@ -1,5 +1,6 @@
 import SwiftUI
 import WidgetKit
+internal import Combine
 
 struct ForkarEcoView: View {
     @EnvironmentObject var authManager: SupabaseManager
@@ -115,7 +116,7 @@ struct ForkarEcoView: View {
                                     }) {
                                         HStack(spacing: 6) {
                                             Image(systemName: islandManager.isLiveActivityActive ? "stop.circle.fill" : "capsule.portrait.fill")
-                                            Text(islandManager.isLiveActivityActive ? "Detener Isla" : "Activar Dynamic Island")
+                                            Text(islandManager.isLiveActivityActive ? "Detener Isla (OS 26+)" : "Activar Dynamic Island (OS 26+)")
                                         }
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.white)
@@ -485,8 +486,8 @@ struct MyEcoQRCodeSheet: View {
                             .frame(width: 230, height: 230)
                             .shadow(color: Color.emerald.opacity(0.35), radius: 15)
                         
-                        if let qrImage = generateQRCode(from: qrPayload) {
-                            Image(uiImage: qrImage)
+                        if let qrCgImage = generateQRCode(from: qrPayload) {
+                            Image(decorative: qrCgImage, scale: 1.0)
                                 .interpolation(.none)
                                 .resizable()
                                 .scaledToFit()
@@ -556,7 +557,7 @@ struct MyEcoQRCodeSheet: View {
         }
     }
     
-    private func generateQRCode(from string: String) -> UIImage? {
+    private func generateQRCode(from string: String) -> CGImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(string.utf8)
@@ -564,11 +565,7 @@ struct MyEcoQRCodeSheet: View {
         
         guard let outputImage = filter.outputImage else { return nil }
         let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
-        
-        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
-            return UIImage(cgImage: cgImage)
-        }
-        return nil
+        return context.createCGImage(scaledImage, from: scaledImage.extent)
     }
 }
 
@@ -688,8 +685,4 @@ struct EcoStationMapRow: View {
         .background(Color.white.opacity(0.03))
         .cornerRadius(10)
     }
-}
-
-extension Color {
-    static let emerald = Color(red: 16/255, green: 185/255, blue: 129/255)
 }

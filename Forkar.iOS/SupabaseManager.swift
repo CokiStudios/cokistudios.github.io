@@ -27,6 +27,33 @@ struct SupabaseUser: Codable, Identifiable {
         let company: String?
         let role: String?
     }
+    
+    var resolvedName: String {
+        if let fullName = user_metadata?.full_name?.trimmingCharacters(in: .whitespacesAndNewlines), !fullName.isEmpty {
+            return fullName
+        }
+        if let name = user_metadata?.name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+            return name
+        }
+        if let emailName = email?.components(separatedBy: "@").first, !emailName.isEmpty {
+            return emailName.capitalized
+        }
+        return ""
+    }
+    
+    var resolvedAvatarUrl: String? {
+        user_metadata?.avatar_url ?? user_metadata?.picture
+    }
+    
+    var initials: String {
+        let name = resolvedName
+        if name.isEmpty { return "?" }
+        let parts = name.components(separatedBy: " ")
+        if parts.count >= 2, let first = parts.first?.first, let second = parts[1].first {
+            return "\(first)\(second)".uppercased()
+        }
+        return String(name.prefix(1)).uppercased()
+    }
 }
 
 // MARK: - Supabase Manager
@@ -691,18 +718,80 @@ class SupabaseManager: ObservableObject {
     func fetchChatRooms() async throws -> [ChatRoom] {
         guard let user = currentUser else { return [] }
         
-        let path = "/rest/v1/chat_room_members"
-        let queryItems = [
-            URLQueryItem(name: "user_id", value: "eq.\(user.id.uuidString.lowercased())"),
-            URLQueryItem(name: "select", value: "room_id,chat_rooms(*)")
+        // 1. Intentar consultar chat_rooms con join de chat_room_members
+        let roomsPath = "/rest/v1/chat_rooms"
+        let roomsQuery = [
+            URLQueryItem(name: "select", value: "*,chat_room_members(user_id,user_name,user_avatar)"),
+            URLQueryItem(name: "order", value: "created_at.desc")
         ]
         
-        let request = makeRequest(path: path, queryItems: queryItems)
+        var rooms: [ChatRoom] = []
+        do {
+            let request = makeRequest(path: roomsPath, queryItems: roomsQuery)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try verifyResponse(data: data, response: response)
+            rooms = try JSONDecoder().decode([ChatRoom].self, from: data)
+        } catch {
+            // Fallback a través de membresías si la consulta directa está restringida por RLS
+            let path = "/rest/v1/chat_room_members"
+            let queryItems = [
+                URLQueryItem(name: "user_id", value: "eq.\(user.id.uuidString.lowercased())"),
+                URLQueryItem(name: "select", value: "room_id,chat_rooms(*,chat_room_members(user_id,user_name,user_avatar))")
+            ]
+            let request = makeRequest(path: path, queryItems: queryItems)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try verifyResponse(data: data, response: response)
+            let memberships = try JSONDecoder().decode([ChatRoomMemberWithRoom].self, from: data)
+            rooms = memberships.compactMap { $0.chat_rooms }
+        }
+        
+        // 2. Resolver contactos reales en DMs (is_group == false)
+        var resolvedRooms: [ChatRoom] = []
+        for var room in rooms {
+            if !room.is_group {
+                if let members = room.chat_room_members,
+                   let partner = members.first(where: { $0.user_id != user.id }) {
+                    room.directContactName = partner.user_name
+                    room.directContactAvatar = partner.user_avatar
+                } else {
+                    // Si los miembros no vinieron embebidos, resolverlos individualmente
+                    if let partner = try? await fetchRoomMembers(roomId: room.id).first(where: { $0.user_id != user.id }) {
+                        room.directContactName = partner.user_name
+                        room.directContactAvatar = partner.user_avatar
+                    }
+                }
+            }
+            resolvedRooms.append(room)
+        }
+        
+        return resolvedRooms
+    }
+    
+    func deleteChatRoom(roomId: String) async throws {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para eliminar salas"])
+        }
+        
+        let cleanId = roomId.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        // Protección contra borrado de salas canónicas del sistema
+        if CSMSCanonicalRooms.isProtected(roomId: cleanId) {
+            throw NSError(domain: "SupabaseManager", code: 403, userInfo: [NSLocalizedDescriptionKey: "Esta sala oficial comunitaria de Forkar no puede ser eliminada."])
+        }
+        
+        let path = "/rest/v1/chat_rooms"
+        let queryItems = [
+            URLQueryItem(name: "id", value: "eq.\(cleanId)"),
+            URLQueryItem(name: "created_by", value: "eq.\(user.id.uuidString.lowercased())")
+        ]
+        
+        let request = makeRequest(path: path, method: "DELETE", queryItems: queryItems)
         let (data, response) = try await URLSession.shared.data(for: request)
         try verifyResponse(data: data, response: response)
-        
-        let memberships = try JSONDecoder().decode([ChatRoomMemberWithRoom].self, from: data)
-        return memberships.compactMap { $0.chat_rooms }
+    }
+    
+    func deleteChatRoom(roomId: UUID) async throws {
+        try await deleteChatRoom(roomId: roomId.uuidString.lowercased())
     }
     
     func fetchRoomMembers(roomId: UUID) async throws -> [ChatRoomMember] {
@@ -770,7 +859,14 @@ class SupabaseManager: ObservableObject {
         let (data, response) = try await URLSession.shared.data(for: request)
         try verifyResponse(data: data, response: response)
         
-        return try JSONDecoder().decode([ChatMessage].self, from: data)
+        var messages = try JSONDecoder().decode([ChatMessage].self, from: data)
+        // Descifrado E2EE en memoria con respaldo de hardware Apple
+        for i in 0..<messages.count {
+            let decrypted = CSMSEncryption.shared.decrypt(payload: messages[i].content, roomId: roomId)
+            messages[i].content = decrypted.text
+            messages[i].isEncrypted = decrypted.isEncrypted
+        }
+        return messages
     }
     
     func sendMessage(roomId: UUID, content: String) async throws -> ChatMessage {
@@ -782,11 +878,22 @@ class SupabaseManager: ObservableObject {
         let authorName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
         let authorAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
         
+        // Cifrado de Extremo a Extremo (E2EE) con respaldo de hardware (SEP / T2)
+        let encryptedPayload: String
+        var wasEncrypted = false
+        do {
+            encryptedPayload = try CSMSEncryption.shared.encrypt(plainText: content, roomId: roomId)
+            wasEncrypted = true
+        } catch {
+            print("CSMS Encryption fallback: \(error.localizedDescription)")
+            encryptedPayload = content
+        }
+        
         var bodyJson: [String: Any] = [
             "room_id": roomId.uuidString.lowercased(),
             "user_id": user.id.uuidString.lowercased(),
             "author_name": authorName,
-            "content": content
+            "content": encryptedPayload
         ]
         
         if let avatar = authorAvatar {
@@ -799,9 +906,14 @@ class SupabaseManager: ObservableObject {
         try verifyResponse(data: data, response: response)
         
         let messages = try JSONDecoder().decode([ChatMessage].self, from: data)
-        guard let newMessage = messages.first else {
+        guard var newMessage = messages.first else {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Error al enviar mensaje"])
         }
+        
+        // Descifrar en memoria para actualización inmediata en UI
+        let decrypted = CSMSEncryption.shared.decrypt(payload: newMessage.content, roomId: roomId)
+        newMessage.content = decrypted.text
+        newMessage.isEncrypted = decrypted.isEncrypted || wasEncrypted
         return newMessage
     }
     
@@ -1127,6 +1239,38 @@ class SupabaseManager: ObservableObject {
             return true
         }
         return false
+    }
+    
+    @MainActor
+    func fetchEcoActions() async throws -> [ForkmanEcoAction] {
+        let path = "/rest/v1/forkman_eco_actions"
+        let items = [
+            URLQueryItem(name: "select", value: "*"),
+            URLQueryItem(name: "order", value: "created_at.desc")
+        ]
+        let req = makeRequest(path: path, queryItems: items)
+        let (data, res) = try await URLSession.shared.data(for: req)
+        guard let httpRes = res as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
+            return []
+        }
+        let decoder = JSONDecoder()
+        return (try? decoder.decode([ForkmanEcoAction].self, from: data)) ?? []
+    }
+
+    @MainActor
+    func fetchEcoMapPoints() async throws -> [ForkmanEcoMapPoint] {
+        let path = "/rest/v1/forkman_eco_map_points"
+        let items = [
+            URLQueryItem(name: "select", value: "*"),
+            URLQueryItem(name: "order", value: "created_at.desc")
+        ]
+        let req = makeRequest(path: path, queryItems: items)
+        let (data, res) = try await URLSession.shared.data(for: req)
+        guard let httpRes = res as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
+            return []
+        }
+        let decoder = JSONDecoder()
+        return (try? decoder.decode([ForkmanEcoMapPoint].self, from: data)) ?? []
     }
     
     // MARK: - Taste Matching Algorithm (Letter & Category Affinity)

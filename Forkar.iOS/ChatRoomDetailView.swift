@@ -1,15 +1,18 @@
 import SwiftUI
-import Combine
+internal import Combine
 
 struct ChatRoomDetailView: View {
     @EnvironmentObject var authManager: SupabaseManager
+    @Environment(\.presentationMode) var presentationMode
     let room: ChatRoom
     
     @State private var messages: [ChatMessage] = []
     @State private var newMessageText = ""
     @State private var isSending = false
     @State private var isLoading = true
-    @State private var partnerName: String = "Cargando..."
+    @State private var partnerName: String = ""
+    @State private var showDeleteConfirmation = false
+    @State private var isDeletingRoom = false
     
     // Timer to pull new messages every 3 seconds
     let timer = Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()
@@ -33,13 +36,23 @@ struct ChatRoomDetailView: View {
                 // Header (if direct chat, shows partner's name)
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(room.is_group ? room.displayName : partnerName)
-                            .font(.headline)
-                            .foregroundColor(ForkarTheme.text)
+                        HStack(spacing: 6) {
+                            Text(room.is_group ? room.displayName : partnerName)
+                                .font(.headline)
+                                .foregroundColor(ForkarTheme.text)
+                            Image(systemName: "lock.shield.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        }
                         
-                        Text(room.is_group ? "Grupo de Chat" : "Mensaje Privado")
-                            .font(.caption)
-                            .foregroundColor(ForkarTheme.textSub)
+                        HStack(spacing: 4) {
+                            Text(room.is_group ? "Grupo de Chat" : "Mensaje Privado")
+                            Text("•")
+                            Text(CSMSEncryption.shared.hardwareSecurityBadge)
+                                .foregroundColor(ForkarTheme.accent)
+                        }
+                        .font(.caption2)
+                        .foregroundColor(ForkarTheme.textSub)
                     }
                     Spacer()
                 }
@@ -150,18 +163,27 @@ struct ChatRoomDetailView: View {
         #endif
         .toolbar {
             #if os(iOS)
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
                 if room.is_group {
                     Button(action: {
                         showInviteSheet = true
                     }) {
                         Image(systemName: "person.badge.plus")
                             .foregroundColor(ForkarTheme.accent)
+                    }
+                }
+                
+                if room.created_by == authManager.currentUser?.id && !CSMSCanonicalRooms.isProtected(roomId: room.id) {
+                    Button(role: .destructive, action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
                     }
                 }
             }
             #else
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
                 if room.is_group {
                     Button(action: {
                         showInviteSheet = true
@@ -170,8 +192,25 @@ struct ChatRoomDetailView: View {
                             .foregroundColor(ForkarTheme.accent)
                     }
                 }
+                
+                if room.created_by == authManager.currentUser?.id && !CSMSCanonicalRooms.isProtected(roomId: room.id) {
+                    Button(role: .destructive, action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                }
             }
             #endif
+        }
+        .alert("Eliminar Conversación", isPresented: $showDeleteConfirmation) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Eliminar", role: .destructive) {
+                deleteRoomAction()
+            }
+        } message: {
+            Text("¿Estás seguro de que deseas eliminar esta conversación? Esta acción no se puede deshacer.")
         }
         .sheet(isPresented: $showInviteSheet) {
             InviteUsersSheetView(roomId: room.id, communityUsers: $communityUsers, isLoading: $isLoadingUsers, onInvite: { user in
@@ -217,8 +256,14 @@ struct ChatRoomDetailView: View {
     }
     
     private func loadInitialData() async {
-        await loadMessages()
         if !room.is_group {
+            let initialResolved = room.displayName
+            await MainActor.run {
+                self.partnerName = initialResolved
+            }
+        }
+        await loadMessages()
+        if !room.is_group && (room.directContactName == nil || room.directContactName?.isEmpty == true) {
             await loadPartnerName()
         }
         updateKnownNames()
@@ -256,17 +301,32 @@ struct ChatRoomDetailView: View {
     private func loadPartnerName() async {
         do {
             let members = try await authManager.fetchRoomMembers(roomId: room.id)
-            if let partner = members.first(where: { $0.user_id != authManager.currentUser?.id }) {
+            if let partner = members.first(where: { $0.user_id != authManager.currentUser?.id }),
+               !partner.user_name.isEmpty {
                 await MainActor.run {
                     self.partnerName = partner.user_name
-                }
-            } else {
-                await MainActor.run {
-                    self.partnerName = "Chat Privado"
                 }
             }
         } catch {
             print("Error loading partner name: \(error.localizedDescription)")
+        }
+    }
+    
+    private func deleteRoomAction() {
+        isDeletingRoom = true
+        Task {
+            do {
+                try await authManager.deleteChatRoom(roomId: room.id)
+                await MainActor.run {
+                    self.isDeletingRoom = false
+                    self.presentationMode.wrappedValue.dismiss()
+                }
+            } catch {
+                print("Error deleting room: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.isDeletingRoom = false
+                }
+            }
         }
     }
     
@@ -569,10 +629,16 @@ struct MessageBubbleView: View {
                 .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
                 .padding(.horizontal, 4)
                 
-                Text(message.formattedTime)
-                    .font(.system(size: 9))
-                    .foregroundColor(ForkarTheme.textMuted)
-                    .padding(.horizontal, 6)
+                HStack(spacing: 4) {
+                    if message.isEncrypted {
+                        Text("🔒")
+                            .font(.system(size: 9))
+                    }
+                    Text(message.formattedTime)
+                        .font(.system(size: 9))
+                        .foregroundColor(ForkarTheme.textMuted)
+                }
+                .padding(.horizontal, 6)
             }
             
             if isCurrentUser {

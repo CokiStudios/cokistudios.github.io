@@ -1,5 +1,7 @@
 import SwiftUI
 internal import Combine
+
+#if canImport(CoreNFC) && !os(macOS)
 import CoreNFC
 
 class NFCReaderManager: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
@@ -49,7 +51,6 @@ class NFCReaderManager: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate
         for message in messages {
             for record in message.records {
                 if let payloadString = String(data: record.payload, encoding: .utf8) {
-                    // Limpiar el payload si incluye código de idioma (ej: enUS)
                     let cleanPayload = cleanNFCPayload(payloadString)
                     DispatchQueue.main.async {
                         self.lastScannedActionId = cleanPayload
@@ -71,7 +72,6 @@ class NFCReaderManager: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate
         if raw.contains("forkar://") || raw.contains("http") {
             return raw
         }
-        // Si viene con prefijo de lenguaje NDEF (en / es)
         if raw.count > 3 {
             let index = raw.index(raw.startIndex, offsetBy: 3)
             return String(raw[index...])
@@ -79,3 +79,18 @@ class NFCReaderManager: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate
         return raw
     }
 }
+#else
+// MARK: - macOS / Non-NFC Fallback
+class NFCReaderManager: NSObject, ObservableObject {
+    @Published var lastScannedActionId: String? = nil
+    @Published var statusMessage: String = "NFC no está disponible en macOS."
+    @Published var isScanning = false
+    
+    var onTagScanned: ((String) -> Void)?
+    
+    func startScan(completion: @escaping (String) -> Void) {
+        self.onTagScanned = completion
+        self.statusMessage = "La lectura física de NFC requiere un dispositivo iOS (iPhone)."
+    }
+}
+#endif

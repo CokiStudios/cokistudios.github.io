@@ -1,0 +1,102 @@
+# Project Context: Forkar iOS & macOS (Coki Studios)
+
+## 1. Overview & Mission
+Forkar is the native iOS/macOS application for Coki Studios' automotive & eco-mobility social community. It allows automotive enthusiasts and drivers to share build logs, discover automotive events, track eco-friendly commutes, communicate in real-time, and interact with vehicle tags.
+
+- Bundle Identifier: `com.cokistudios.forkar`
+- Primary Tech Stack: Swift 6, SwiftUI, Combine, URLSession (Zero external SPM/CocoaPods for core networking), Firebase Core, Supabase backend.
+- Target OS: iOS 17.0+ (optimized for iOS 18/26+ features, Dynamic Island, Live Activities, and App Intents), macOS 14.0+.
+
+## 2. Core Navigation & Tabs (ContentView.swift)
+The app uses a 4-tab native navigation layout styled with `ForkarTheme`:
+1. Tab 0 - Home (`HomeView`): Feed of community posts, horizontal category chips (Engine, Tuning, Electric, Classic, Events), live search bar, and floating action button to create posts (`CreatePostView`).
+2. Tab 1 - Eco Hub (`ForkarEcoView`): Carbon-saving trip tracker, eco validations, QR scanning, and sync with `ForkarEcoWidget` & `DynamicIslandEcoManager`.
+3. Tab 2 - Chats (`ChatsView`, `ChatRoomDetailView`): Real-time peer-to-peer and group messaging powered by the Coki Studios Messaging Service (CSMS).
+4. Tab 3 - Profile (`ProfileView`): User stats (followers, following, posts), vehicle garage, badge achievements, and settings (`SetupWizardView`).
+
+## 3. Data & Backend Layer (SupabaseManager.swift)
+- All network calls run natively over `URLSession` against Supabase REST and Realtime endpoints.
+- Authentication: Email/Password login, registration, and OAuth (Google, GitHub) via `ASWebAuthenticationSession` with callback scheme `forkar://`.
+- State Management: `SupabaseManager` is an `@ObservedObject`/`@StateObject` injected via `.environmentObject(authManager)`.
+- Core Models (`Models.swift`): `Post`, `Category`, `Comment`, `UserProfile`, `ChatMessage`, `EcoValidation`.
+
+## 4. Hardware & Special iOS Integrations
+- Dynamic Island & Live Activities (`DynamicIslandEcoManager.swift`): Manages eco-commute timers, battery/consumption states, and deep links:
+  - `forkar://ecoscan`: Directly triggers Eco QR scanner.
+  - `forkar://app`: Brings user to the home feed.
+- NFC Interaction (`NFCReaderManager.swift`): Reads NFC tags attached to vehicles or event passes (`CoreNFC`).
+- Push Notifications & Security (`SecurityAndNotificationManager.swift`): Firebase Messaging & APNs handling.
+- Internationalization (`ForkarI18nIOS.swift`): Native localization dictionary for dynamic multi-language support.
+
+## 5. Design System (ForkarTheme.swift)
+- Aesthetics: "Liquid Glass" dark mode, subtle neomorphic borders, translucent backgrounds, and vibrant brand accents.
+- Key Palette:
+  - Background: `ForkarTheme.bg` (Deep obsidian dark)
+  - Card/Surface: `ForkarTheme.cardBg` (Semi-transparent with ultra-thin material blur)
+  - Accent / Tint: `ForkarTheme.accent` (Electric Indigo / Violet)
+  - Text: `ForkarTheme.textPrimary` (Crisp white) and `ForkarTheme.textSub` (Muted gray)
+- Components should always follow SwiftUI Declarative best practices, avoid force-unwrapping, and prioritize 120Hz ProMotion animation smoothness.
+
+## 6. CSMS Hardware-Backed E2EE & Messaging Standards (Multiplataforma)
+- Hardware Security Module (HSM) Binding:
+  - **iPhone (iOS)**: Protegido por el **Secure Enclave Processor (SEP)** vía `CryptoKit.SecureEnclave` o Keychain con `kSecAttrTokenIDSecureEnclave`.
+  - **Mac (macOS)**: Protegido por el chip **Apple T2** (Intel) o el **Secure Enclave** de Apple Silicon (M1-M4) vía `CryptoKit.SecureEnclave`.
+  - **Android**: Protegido por **AndroidKeyStore** con respaldo en hardware TEE / StrongBox.
+- Algoritmo de Cifrado:
+  - AES-256-GCM (`CryptoKit.AES.GCM`).
+  - Formato del mensaje: `🔒 enc:v1:<base64-iv>:<base64-ciphertext>`.
+  - Clave simétrica de sala derivada: SHA-256 de `\(roomId):CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR`.
+- Resolución de Contactos en DMs:
+  - Consultar `chat_rooms?select=*,chat_room_members(user_id,user_name,user_avatar)&order=created_at.desc`.
+  - En chats 1-a-1 (`is_group == false`), resolver el nombre y avatar del contacto buscando el miembro donde `user_id != currentUserId`. No mostrar fallbacks genéricos.
+- Eliminación de Salas:
+  - Permitir a los creadores eliminar sus salas usando `DELETE /rest/v1/chat_rooms?id=eq.\(roomId)`.
+
+## 7. Prohibición Estricta de Datos Hardcodeados (Zero Hardcoded Data Policy)
+Xcode Intelligence DEBE cumplir las siguientes directivas de producción:
+1. **Cero Mocks o Arrays Ficticios en Vistas**:
+   - PROHIBIDO crear datos estáticos falsos como `let mockPosts = [...]`, `let dummyMessages = [...]` o listas quemadas en el código de vistas.
+   - Toda información debe provenir del modelo real y de `SupabaseManager` (`authManager`).
+   - Si la lista está vacía, mostrar siempre el estado vacío legítimo (`EmptyStateView` o placeholder con `ForkarTheme.textSub`), nunca rellenar con datos inventados.
+2. **Cero Nombres, Avatares o IDs Ficticios**:
+   - NUNCA usar `"John Doe"`, `"Usuario de Prueba"`, `"Chat Instantáneo"` o `"Admin"`.
+   - NUNCA usar UUIDs quemados (`"123e4567-..."`) ni URLs de imágenes de relleno (`"https://via.placeholder.com"`, `"https://picsum.photos"`).
+   - Siempre resolver el nombre, avatar y rol desde la base de datos (`user_name`, `avatar_url`, `user_id`). Si el usuario no tiene avatar, renderizar `CircleAvatarPlaceholder(initials: user.initials)`.
+3. **Cero Dimensiones de Pantalla Fijas (Adaptabilidad Total)**:
+   - PROHIBIDO usar `UIScreen.main.bounds` o anchos estáticos en puntos (ej. `frame(width: 375)`).
+   - Usar siempre `maxWidth: .infinity`, `@Environment(\.horizontalSizeClass)` y `GeometryReader` para garantizar compatibilidad con iPhone estándar, iPad, Mac y el nuevo iPhone Duo (pantalla externa de 5.4" y desplegada de 7.6").
+4. **Cero Claves, Tokens o URLs de Servidor en Línea**:
+   - NUNCA poner URLs o anon keys de Supabase directamente en funciones de vistas o controllers.
+   - Usar centralizadamente `SupabaseConfig` o `Info.plist`.
+5. **Cero Cadenas Mágicas Sueltas**:
+   - Usar `ForkarI18nIOS` para textos internacionalizados y `ForkarTheme` para colores, radios y fuentes.
+
+## 8. Arquitectura Universal y Multiplataforma (iOS + macOS Nativo + iPhone Duo)
+El proyecto Forkar es un único target **100% Universal** capaz de compilar de forma nativa para iPhone, iPad, macOS (Apple Silicon M1–M4) y el nuevo factor de forma iPhone Duo:
+
+1. **Target Unificado y Destinos Compatibles**:
+   - Un solo target `Forkar` compila contra el SDK de iOS (`generic/platform=iOS`) y el SDK de macOS (`platform=macOS,arch=arm64`).
+   - Está prohibido duplicar código o crear bifurcaciones de proyectos separadas (`Forkar.macOS` vs `Forkar.iOS`). Todo cambio debe vivir en el árbol unificado.
+
+2. **Ciclo de Vida de la Aplicación (`ForkarApp.swift`)**:
+   - Usar adaptadores condicionales según la plataforma:
+     - iOS: `@UIApplicationDelegateAdaptor(AppDelegate.self)` con `UIApplicationDelegate`.
+     - macOS: `@NSApplicationDelegateAdaptor(AppDelegate.self)` con `NSApplicationDelegate`.
+
+3. **Aislamiento Estricto de APIs Móviles Exclusivas**:
+   - **NFC (`NFCReaderManager.swift`)**: Proteger siempre con `#if canImport(CoreNFC) && !os(macOS)`. En macOS, proveer un fallback transparente que informe que el hardware no está disponible sin romper llamadas.
+   - **Dynamic Island & Live Activities (`DynamicIslandEcoManager.swift`)**: Proteger con `#if canImport(ActivityKit) && os(iOS)` con disponibilidad `@available(iOS 16.1, *)`. En macOS, proveer stubs no operativos.
+   - **Extensiones de Widgets (`project.pbxproj`)**: Toda extensión exclusiva de iOS (como `ForkarEcoWidgetExtension.appex`) debe contar con `platformFilter = ios;` en su fase de incrustación (`Embed Foundation Extensions`) y en su `PBXTargetDependency` para evitar errores de validación de binarios en compilaciones de macOS.
+
+4. **Componentes Visuales Agnósticos a Plataforma**:
+   - **Modales y Cubiertas**: En macOS usar `.sheet` con tamaño de marco explícito (`frame(minWidth: 700, minHeight: 600)`); en iOS usar `.fullScreenCover`.
+   - **Imágenes y Códigos QR (`ForkarEcoView.swift`)**: Prohibido usar `UIImage` o `NSImage` directamente en vistas compartidas. Usar `CGImage` (`CoreGraphics`) con `Image(decorative: cgImage, scale: 1.0)`.
+   - **Campos de Texto**: Prohibido usar el modificador legado `.autocapitalization(...)`. Usar `.textInputAutocapitalization(...)` condicionado a `#if os(iOS)` y `.autocorrectionDisabled(true)`.
+   - **Colores**: Centralizar extensiones de `Color` (como `Color.emerald`) exclusivamente en `Models.swift` para evitar colisiones de redeclaración en el compilador.
+
+5. **Adaptabilidad para iPhone Duo (iOS 27)**:
+   - Pantalla externa (5.4"): Tratar como `.compact` para uso a una sola mano.
+   - Pantalla interna desplegada (7.6"): Tratar como `.regular` con interfaces de dos columnas o split-view (ej. lista de chats a la izquierda, conversación activa a la derecha).
+   - Flex Mode (semi-plegado): Aprovechar la bisagra para dividir el contenido: mitad superior como pantalla de visualización/mapa/telemetría y mitad inferior como panel de control interactivo.
+
+

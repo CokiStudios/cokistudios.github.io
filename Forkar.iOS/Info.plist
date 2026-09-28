@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
-    <string>com.cokistudios.forkar</string>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -30,6 +30,10 @@
     <true/>
     <key>NSSupportsLiveActivitiesFrequentUpdates</key>
     <true/>
+    <key>MinimumOSVersion</key>
+    <string>17.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>17.0</string>
     <key>NSCameraUsageDescription</key>
     <string>Forkar necesita acceso a la cámara para escanear códigos QR de retos y estaciones ecológicas.</string>
     <key>CFBundleURLTypes</key>
@@ -41,6 +45,39 @@
             <array>
                 <string>forkar</string>
             </array>
+        </dict>
+    </array>
+    <key>UIApplicationShortcutItems</key>
+    <array>
+        <dict>
+            <key>UIApplicationShortcutItemType</key>
+            <string>com.cokistudios.forkar.ecoscan</string>
+            <key>UIApplicationShortcutItemTitle</key>
+            <string>Escanear QR Eco</string>
+            <key>UIApplicationShortcutItemSubtitle</key>
+            <string>Validar punto verde</string>
+            <key>UIApplicationShortcutItemIconType</key>
+            <string>UIApplicationShortcutIconTypeCapturePhoto</string>
+        </dict>
+        <dict>
+            <key>UIApplicationShortcutItemType</key>
+            <string>com.cokistudios.forkar.dynamicisland</string>
+            <key>UIApplicationShortcutItemTitle</key>
+            <string>Activar Dynamic Island</string>
+            <key>UIApplicationShortcutItemSubtitle</key>
+            <string>Monitoreo Eco en Tiempo Real</string>
+            <key>UIApplicationShortcutItemIconType</key>
+            <string>UIApplicationShortcutIconTypePlay</string>
+        </dict>
+        <dict>
+            <key>UIApplicationShortcutItemType</key>
+            <string>com.cokistudios.forkar.ecohub</string>
+            <key>UIApplicationShortcutItemTitle</key>
+            <string>Eco Hub &amp; Impacto CO₂</string>
+            <key>UIApplicationShortcutItemSubtitle</key>
+            <string>Ver balance ecológico</string>
+            <key>UIApplicationShortcutItemIconType</key>
+            <string>UIApplicationShortcutIconTypeFavorite</string>
         </dict>
     </array>
 </dict>

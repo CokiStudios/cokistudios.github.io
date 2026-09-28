@@ -2,7 +2,7 @@ name: Forkar
 options:
   bundleIdPrefix: com.cokistudios
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "17.0"
 targets:
   Forkar:
     type: application

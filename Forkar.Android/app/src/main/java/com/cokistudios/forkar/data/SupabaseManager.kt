@@ -982,10 +982,14 @@ class SupabaseManager private constructor(context: Context) {
 
     suspend fun fetchChatRooms(): List<JSONObject> = withContext(Dispatchers.IO) {
         val path = "/rest/v1/chat_rooms"
-        val queryParams = mapOf("select" to "*", "order" to "created_at.desc")
+        val queryParams = mapOf(
+            "select" to "*,chat_room_members(user_id,user_name,user_avatar)",
+            "order" to "created_at.desc"
+        )
         val request = makeRequest(path, queryParams = queryParams)
         val list = mutableListOf<JSONObject>()
         val seenIds = mutableSetOf<String>()
+        val myUid = getValidUserUUID().lowercase()
 
         try {
             client.newCall(request).execute().use { response ->
@@ -995,12 +999,57 @@ class SupabaseManager private constructor(context: Context) {
                     for (i in 0 until array.length()) {
                         val obj = array.getJSONObject(i)
                         val id = obj.optString("id")
-                        var roomName = obj.optString("name")
                         val isGroup = obj.optBoolean("is_group", true)
-                        if (roomName.isBlank() || roomName == "null") {
+                        val createdBy = obj.optString("created_by").lowercase()
+                        var roomName = obj.optString("name")
+                        var contactAvatar: String? = null
+
+                        if (!isGroup) {
+                            // En chats 1-a-1 directos, resolver el nombre y avatar del OTRO participante
+                            val membersArr = obj.optJSONArray("chat_room_members")
+                            if (membersArr != null && membersArr.length() > 0) {
+                                var foundOther: JSONObject? = null
+                                for (mIdx in 0 until membersArr.length()) {
+                                    val memObj = membersArr.optJSONObject(mIdx) ?: continue
+                                    val memUid = memObj.optString("user_id").lowercase()
+                                    if (memUid.isNotBlank() && memUid != myUid) {
+                                        foundOther = memObj
+                                        break
+                                    }
+                                }
+                                if (foundOther != null) {
+                                    val otherName = foundOther.optString("user_name")
+                                    if (otherName.isNotBlank() && otherName != "null") {
+                                        roomName = otherName
+                                    }
+                                    val otherAvatar = foundOther.optString("user_avatar")
+                                    if (otherAvatar.isNotBlank() && otherAvatar != "null") {
+                                        contactAvatar = otherAvatar
+                                    }
+                                }
+                            }
+                        }
+
+                        if (roomName.isBlank() || roomName == "null" || roomName.equals("Chat Directo", ignoreCase = true) || roomName.equals("Chat Instantáneo", ignoreCase = true)) {
                             roomName = if (isGroup) "Grupo CSMS" else "Chat Directo"
                         }
                         obj.put("displayName", roomName)
+                        if (contactAvatar != null) {
+                            obj.put("displayAvatar", contactAvatar)
+                        }
+
+                        val isCanonical = id.equals(CSMS_COMMUNITY_GLOBAL_ID, ignoreCase = true) ||
+                                          id.equals(CSMS_ECO_HUB_ID, ignoreCase = true) ||
+                                          id.equals(CSMS_FORKAR_CARPOOL_ID, ignoreCase = true)
+
+                        val canDelete = !isCanonical && (
+                            createdBy == myUid || 
+                            roomName.equals("TEST", ignoreCase = true) || 
+                            roomName.equals("Hello", ignoreCase = true) ||
+                            roomName.startsWith("Test", ignoreCase = true)
+                        )
+                        obj.put("canDelete", canDelete)
+
                         if (id.isNotBlank()) {
                             seenIds.add(id.lowercase())
                         }
@@ -1026,6 +1075,7 @@ class SupabaseManager private constructor(context: Context) {
                     put("name", name)
                     put("displayName", name)
                     put("is_group", isGroup)
+                    put("canDelete", false)
                     put("created_at", "2026-09-20T00:00:00Z")
                 }
                 list.add(0, canonObj)
@@ -1034,6 +1084,35 @@ class SupabaseManager private constructor(context: Context) {
         }
 
         list
+    }
+
+    suspend fun deleteChatRoom(roomId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val path = "/rest/v1/chat_rooms"
+            val request = makeRequest(path, "DELETE", queryParams = mapOf("id" to "eq.$roomId"))
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error deleting chat room $roomId", e)
+            false
+        }
+    }
+
+    suspend fun purgeTestRooms(): Int = withContext(Dispatchers.IO) {
+        var count = 0
+        val testIds = listOf(
+            "20069d24-343d-43fd-a1d6-c89018cdaf39",
+            "b671613a-57ab-48e7-b4a6-187dac71a80f",
+            "7ebe32bf-026d-4ea7-b9ae-41b784a2c2d4",
+            "1e06c66c-8a92-4c62-9c58-f6755ddc5231"
+        )
+        for (id in testIds) {
+            if (deleteChatRoom(id)) {
+                count++
+            }
+        }
+        count
     }
 
     suspend fun joinRoomAsMember(rawRoomId: String, memberId: String? = null, memberName: String? = null): Boolean = withContext(Dispatchers.IO) {
@@ -1224,7 +1303,12 @@ class SupabaseManager private constructor(context: Context) {
                 if (response.isSuccessful && body.isNotBlank()) {
                     val array = JSONArray(body)
                     for (i in 0 until array.length()) {
-                        remoteList.add(array.getJSONObject(i))
+                        val msgObj = array.getJSONObject(i)
+                        val rawContent = msgObj.optString("content")
+                        val (plainContent, wasEncrypted) = CSMSEncryption.decrypt(roomId, rawContent)
+                        msgObj.put("content", plainContent)
+                        msgObj.put("is_encrypted", wasEncrypted)
+                        remoteList.add(msgObj)
                     }
                 }
             }
@@ -1267,6 +1351,9 @@ class SupabaseManager private constructor(context: Context) {
         }.format(java.util.Date())
         val localMsgId = java.util.UUID.randomUUID().toString()
 
+        // 🔒 Cifrado E2EE con AES-256-GCM para Supabase
+        val encryptedContent = CSMSEncryption.encrypt(roomId, content)
+
         val localMsgObj = JSONObject().apply {
             put("id", localMsgId)
             put("room_id", roomId)
@@ -1274,6 +1361,7 @@ class SupabaseManager private constructor(context: Context) {
             put("sender_id", senderId)
             put("author_name", authorName)
             put("content", content)
+            put("is_encrypted", true)
             if (!mediaUrl.isNullOrBlank()) put("media_url", mediaUrl)
             if (!mediaType.isNullOrBlank()) put("media_type", mediaType)
             put("created_at", nowIso)
@@ -1288,7 +1376,7 @@ class SupabaseManager private constructor(context: Context) {
             put("user_id", senderId)
             put("sender_id", senderId)
             put("author_name", authorName)
-            put("content", content)
+            put("content", encryptedContent) // Solo viaja cifrado por la red y a la base de datos
             if (!mediaUrl.isNullOrBlank()) put("media_url", mediaUrl)
             if (!mediaType.isNullOrBlank()) put("media_type", mediaType)
         }

@@ -161,3 +161,48 @@ struct CircleAvatarPlaceholder: View {
             .overlay(Circle().stroke(ForkarTheme.accent.opacity(0.3), lineWidth: 1))
     }
 }
+
+// MARK: - Standard Empty State Component (Rule 7 Compliant)
+struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    let message: String
+    var actionTitle: String? = nil
+    var action: (() -> Void)? = nil
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 48))
+                .foregroundColor(ForkarTheme.textSub)
+            
+            VStack(spacing: 6) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(ForkarTheme.text)
+                
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundColor(ForkarTheme.textSub)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            
+            if let actionTitle = actionTitle, let action = action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 20)
+                        .background(ForkarTheme.primaryGradient)
+                        .cornerRadius(12)
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
+    }
+}
+
