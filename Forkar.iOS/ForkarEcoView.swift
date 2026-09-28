@@ -286,7 +286,9 @@ struct ForkarEcoView: View {
     }
     
     private func handleScannedQR(_ code: String) {
-        if code.contains("RAEE") || code.contains("raee") {
+        if let scannedUUID = UUID(uuidString: code) {
+            completeAction(co2: 1.0, pts: 25, title: "Conexión Eco con Usuario \(scannedUUID.uuidString.prefix(6))")
+        } else if code.contains("RAEE") || code.contains("raee") {
             completeAction(co2: 3.5, pts: 70, title: "Punto RAEE QR")
         } else if code.contains("bici") || code.contains("Bici") || code.contains("bike") {
             completeAction(co2: 1.5, pts: 30, title: "Estación Bici QR")
@@ -442,20 +444,17 @@ struct EcoQRScannerView: View {
 
 import CoreImage.CIFilterBuiltins
 
-// MARK: - Native Dynamic Random QR Code Generator Sheet
+// MARK: - Native Static QR Code Generator Sheet
 struct MyEcoQRCodeSheet: View {
     @Environment(\.presentationMode) var presentationMode
     let userId: String
     let userName: String
     let points: Int
+    @State private var copiedToClipboard = false
     
-    @State private var dynamicNonce = UUID().uuidString.prefix(8)
-    @State private var timeRemaining = 30
-    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+    // Payload estático permanente: UUID de Supabase
     private var qrPayload: String {
-        // Formato seguro y aleatorio: forkar_eco://claim?user=<userId>&pts=50&nonce=<random_token>&ts=<timestamp>
-        "forkar_eco://claim?user=\(userId)&name=\(userName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? userName)&pts=50&token=\(dynamicNonce)&ts=\(Int(Date().timeIntervalSince1970))"
+        userId
     }
     
     var body: some View {
@@ -465,7 +464,7 @@ struct MyEcoQRCodeSheet: View {
             
             VStack(spacing: 20) {
                 HStack {
-                    Text("Código QR Dinámico Eco")
+                    Text("Mi Código QR Eco")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(ForkarTheme.text)
                     Spacer()
@@ -478,8 +477,8 @@ struct MyEcoQRCodeSheet: View {
                 
                 Spacer()
                 
-                VStack(spacing: 16) {
-                    // Imagen generada mediante CoreImage CIFilter
+                VStack(spacing: 18) {
+                    // Imagen generada mediante CoreImage CIFilter de forma 100% estática
                     ZStack {
                         RoundedRectangle(cornerRadius: 20)
                             .fill(Color.white)
@@ -502,43 +501,56 @@ struct MyEcoQRCodeSheet: View {
                     
                     VStack(spacing: 6) {
                         Text(userName)
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ForkarTheme.text)
                         
                         Text("\(points) Puntos Eco Disponibles")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(Color.emerald)
                         
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.system(size: 11))
-                            Text("Código aleatorio seguro (Renueva en \(timeRemaining)s)")
-                                .font(.system(size: 11, weight: .medium))
+                        // User UUID badge
+                        HStack(spacing: 6) {
+                            Image(systemName: "key.fill")
+                                .font(.system(size: 10))
+                            Text(userId.prefix(18) + "...")
+                                .font(.system(size: 11, design: .monospaced))
                         }
                         .foregroundColor(ForkarTheme.textSub)
-                        .padding(.top, 2)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(ForkarTheme.card.opacity(0.6))
+                        .cornerRadius(8)
+                        .padding(.top, 4)
                     }
                 }
                 .padding(24)
                 .liquidGlass(cornerRadius: 24, glowColor: Color.emerald)
                 
+                // Botón de Copiar UUID
                 Button(action: {
-                    dynamicNonce = UUID().uuidString.prefix(8)
-                    timeRemaining = 30
+                    copyToClipboard(userId)
+                    withAnimation {
+                        copiedToClipboard = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        withAnimation {
+                            copiedToClipboard = false
+                        }
+                    }
                 }) {
                     HStack(spacing: 6) {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Regenerar Código Ahora")
+                        Image(systemName: copiedToClipboard ? "checkmark" : "doc.on.doc")
+                        Text(copiedToClipboard ? "¡ID Copiado!" : "Copiar ID de Usuario")
                     }
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Color.emerald)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(Color.emerald.opacity(0.12))
-                    .cornerRadius(10)
+                    .foregroundColor(copiedToClipboard ? .white : Color.emerald)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 18)
+                    .background(copiedToClipboard ? Color.emerald : Color.emerald.opacity(0.12))
+                    .cornerRadius(12)
                 }
                 
-                Text("Muestra este código en la app de validación de comercios o estaciones aliadas para validar tus puntos.")
+                Text("Este es tu código QR estático e intransferible. Úsalo para identificarte en estaciones de reciclaje y validar retos ecológicos.")
                     .font(.system(size: 12))
                     .foregroundColor(ForkarTheme.textSub)
                     .multilineTextAlignment(.center)
@@ -547,14 +559,16 @@ struct MyEcoQRCodeSheet: View {
                 Spacer()
             }
         }
-        .onReceive(timer) { _ in
-            if timeRemaining > 1 {
-                timeRemaining -= 1
-            } else {
-                dynamicNonce = UUID().uuidString.prefix(8)
-                timeRemaining = 30
-            }
-        }
+    }
+    
+    private func copyToClipboard(_ text: String) {
+        #if os(macOS)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+        #else
+        UIPasteboard.general.string = text
+        #endif
     }
     
     private func generateQRCode(from string: String) -> CGImage? {
