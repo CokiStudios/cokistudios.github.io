@@ -24,6 +24,8 @@ struct ChatRoomDetailView: View {
     @State private var activeChatRoom: ChatRoom? = nil
     @State private var navigateToChat = false
     @State private var knownNames: [String] = []
+    @State private var moderationErrorAlert: String? = nil
+    @State private var showModerationErrorAlert = false
     
     var body: some View {
         ZStack {
@@ -212,6 +214,11 @@ struct ChatRoomDetailView: View {
         } message: {
             Text("¿Estás seguro de que deseas eliminar esta conversación? Esta acción no se puede deshacer.")
         }
+        .alert("Moderación Apple Intelligence", isPresented: $showModerationErrorAlert) {
+            Button("Entendido", role: .cancel) { }
+        } message: {
+            Text(moderationErrorAlert ?? "")
+        }
         .sheet(isPresented: $showInviteSheet) {
             InviteUsersSheetView(roomId: room.id, communityUsers: $communityUsers, isLoading: $isLoadingUsers, onInvite: { user in
                 inviteUser(user)
@@ -338,6 +345,18 @@ struct ChatRoomDetailView: View {
         newMessageText = ""
         
         Task {
+            // On-Device Content Safety Check via Apple Foundation Models (macOS 27)
+            let verdict = await AppleContentModerator.shared.checkContent(content)
+            if !verdict.isSafe {
+                await MainActor.run {
+                    self.isSending = false
+                    self.newMessageText = content
+                    self.moderationErrorAlert = "⚠️ Mensaje no enviado: Se detectó contenido inapropiado por Apple Intelligence (\(verdict.reason))."
+                    self.showModerationErrorAlert = true
+                }
+                return
+            }
+            
             do {
                 let newMsg = try await authManager.sendMessage(roomId: room.id, content: content)
                 await MainActor.run {

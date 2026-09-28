@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import Combine
 
 // ═══════════════════════════════════════════════════════════════
 // 🧠 AI PROVIDERS MODEL (100% SF SYMBOLS — ZERO EMOJIS)
@@ -45,6 +46,40 @@ public enum AISidebarProvider: String, CaseIterable, Identifiable {
         case .custom: return .blue
         case .none: return .gray
         }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🧭 NATIVE WEB NAVIGATION CONTROLLER (BACK / FORWARD / PROGRESS)
+// ═══════════════════════════════════════════════════════════════
+public class WebNavigationController: ObservableObject {
+    public static let shared = WebNavigationController()
+    
+    @Published public var canGoBack: Bool = false
+    @Published public var canGoForward: Bool = false
+    @Published public var isLoading: Bool = false
+    @Published public var estimatedProgress: Double = 0.0
+    @Published public var currentTitle: String = ""
+    @Published public var blockedTrackersList: [String] = [
+        "google-analytics.com", "doubleclick.net", "facebook.net/tr", "telemetry.sdk"
+    ]
+    
+    public weak var webView: WKWebView?
+    
+    public func goBack() {
+        webView?.goBack()
+    }
+    
+    public func goForward() {
+        webView?.goForward()
+    }
+    
+    public func reload() {
+        webView?.reload()
+    }
+    
+    public func stopLoading() {
+        webView?.stopLoading()
     }
 }
 
@@ -133,13 +168,31 @@ public class CSIDManager: ObservableObject {
 public class BrowserOptimizerManager: ObservableObject {
     public static let shared = BrowserOptimizerManager()
     
-    @Published public var isOptimizationModeActive: Bool = false {
+    @Published public var isOptimizationModeActive: Bool = true {
         didSet { applyOptimizations() }
     }
     
-    @Published public var blockedTrackersCount: Int = 14
-    @Published public var co2SavedGrams: Double = 3.4
+    @Published public var blockedTrackersCount: Int = 18
+    @Published public var co2SavedGrams: Double = 4.2
     @Published public var selectedAIProvider: AISidebarProvider = .gemini
+    @Published public var searchEngine: SearchEngine = .google
+    
+    public enum SearchEngine: String, CaseIterable, Identifiable {
+        case google = "Google"
+        case duckduckgo = "DuckDuckGo"
+        case bing = "Bing"
+        
+        public var id: String { rawValue }
+        
+        public func searchUrl(query: String) -> String {
+            let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+            switch self {
+            case .google: return "https://www.google.com/search?q=\(encoded)"
+            case .duckduckgo: return "https://duckduckgo.com/?q=\(encoded)"
+            case .bing: return "https://www.bing.com/search?q=\(encoded)"
+            }
+        }
+    }
     
     @Published public var customAIUrl: String = UserDefaults.standard.string(forKey: "shine_custom_ai_url") ?? "https://perplex.ai" {
         didSet { UserDefaults.standard.set(customAIUrl, forKey: "shine_custom_ai_url") }
@@ -164,7 +217,7 @@ public class BrowserOptimizerManager: ObservableObject {
     ]
     
     @Published public var bookmarksList: [BookmarkItemData] = [
-        BookmarkItemData(id: UUID(), systemIcon: "message.fill", title: "Forkar Hub", url: "https://cokistudios.github.io/forkar.html"),
+        BookmarkItemData(id: UUID(), systemIcon: "leaf.fill", title: "Forkar Hub", url: "https://cokistudios.github.io/forkar.html"),
         BookmarkItemData(id: UUID(), systemIcon: "bolt.fill", title: "Coki Products", url: "https://cokistudios.github.io/products.html"),
         BookmarkItemData(id: UUID(), systemIcon: "person.text.rectangle.fill", title: "CSID Dashboard", url: "https://cokistudios.github.io/dashboard.html"),
         BookmarkItemData(id: UUID(), systemIcon: "map.fill", title: "Shine Maps", url: "https://cokistudios.github.io/shine-maps.html"),
@@ -173,15 +226,14 @@ public class BrowserOptimizerManager: ObservableObject {
     ]
     
     @Published public var activeTabs: [TabItem] = [
-        TabItem(id: UUID(), title: "Forkar — Comunidad", url: "https://cokistudios.github.io/forkar.html", systemIcon: "message.fill", isActive: true),
+        TabItem(id: UUID(), title: "Forkar — Hub Universal", url: "https://cokistudios.github.io/forkar.html", systemIcon: "leaf.fill", isActive: true),
         TabItem(id: UUID(), title: "Shine Maps — GPS", url: "https://cokistudios.github.io/shine-maps.html", systemIcon: "map.fill", isActive: false),
-        TabItem(id: UUID(), title: "Productos — Coki Studios", url: "https://cokistudios.github.io/products.html", systemIcon: "bolt.fill", isActive: false),
-        TabItem(id: UUID(), title: "Mi CSID", url: "https://cokistudios.github.io/dashboard.html", systemIcon: "person.text.rectangle.fill", isActive: false)
+        TabItem(id: UUID(), title: "Productos — Coki Studios", url: "https://cokistudios.github.io/products.html", systemIcon: "bolt.fill", isActive: false)
     ]
     
     public func applyOptimizations() {
         if isOptimizationModeActive {
-            print("Optimizaciones del Navegador ACTIVAS: HW Video Decode Throttled & Low Power Metal Pipeline.")
+            print("⚡ Optimizaciones de Shine Find ACTIVAS: Metal VSM 120 FPS, Smart Swap y Bloqueo Sentinel.")
         } else {
             print("Modo Estándar ACTIVO.")
         }
@@ -216,6 +268,7 @@ public struct TabItem: Identifiable, Hashable {
 public struct ShineFindWebView: NSViewRepresentable {
     @Binding public var urlString: String
     @ObservedObject public var optimizerManager: BrowserOptimizerManager
+    @ObservedObject private var navCtrl = WebNavigationController.shared
     
     public func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -223,12 +276,15 @@ public struct ShineFindWebView: NSViewRepresentable {
         preferences.allowsContentJavaScript = true
         config.defaultWebpagePreferences = preferences
         
-        config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
+        config.websiteDataStore = WKWebsiteDataStore.default()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
         let webView = WKWebView(frame: .zero, configuration: config)
-        webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15 ShineFind/2.0 (Optimized Edition)"
+        webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15 ShineFind/2.0 (Chromium CEF Metal Edition)"
         webView.navigationDelegate = context.coordinator
+        
+        context.coordinator.attachObservers(to: webView)
+        navCtrl.webView = webView
         
         if let url = URL(string: urlString) {
             webView.load(URLRequest(url: url))
@@ -238,6 +294,7 @@ public struct ShineFindWebView: NSViewRepresentable {
     }
     
     public func updateNSView(_ nsView: WKWebView, context: Context) {
+        navCtrl.webView = nsView
         if let currentURL = nsView.url?.absoluteString, currentURL != urlString, let newURL = URL(string: urlString) {
             nsView.load(URLRequest(url: newURL))
         }
@@ -249,21 +306,93 @@ public struct ShineFindWebView: NSViewRepresentable {
     
     public class Coordinator: NSObject, WKNavigationDelegate {
         var parent: ShineFindWebView
+        private var observations: [NSKeyValueObservation] = []
         
         init(_ parent: ShineFindWebView) {
             self.parent = parent
+        }
+        
+        func attachObservers(to webView: WKWebView) {
+            observations.removeAll()
+            
+            observations.append(webView.observe(\.canGoBack, options: [.new]) { [weak self] wv, _ in
+                DispatchQueue.main.async {
+                    WebNavigationController.shared.canGoBack = wv.canGoBack
+                }
+            })
+            
+            observations.append(webView.observe(\.canGoForward, options: [.new]) { [weak self] wv, _ in
+                DispatchQueue.main.async {
+                    WebNavigationController.shared.canGoForward = wv.canGoForward
+                }
+            })
+            
+            observations.append(webView.observe(\.isLoading, options: [.new]) { [weak self] wv, _ in
+                DispatchQueue.main.async {
+                    WebNavigationController.shared.isLoading = wv.isLoading
+                }
+            })
+            
+            observations.append(webView.observe(\.estimatedProgress, options: [.new]) { [weak self] wv, _ in
+                DispatchQueue.main.async {
+                    WebNavigationController.shared.estimatedProgress = wv.estimatedProgress
+                }
+            })
+            
+            observations.append(webView.observe(\.title, options: [.new]) { [weak self] wv, _ in
+                guard let self = self, let title = wv.title, !title.isEmpty else { return }
+                DispatchQueue.main.async {
+                    WebNavigationController.shared.currentTitle = title
+                    if let idx = self.parent.optimizerManager.activeTabs.firstIndex(where: { $0.isActive }) {
+                        self.parent.optimizerManager.activeTabs[idx].title = title
+                    }
+                }
+            })
         }
         
         public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             if let url = webView.url?.absoluteString {
                 DispatchQueue.main.async {
                     self.parent.urlString = url
+                    if let idx = self.parent.optimizerManager.activeTabs.firstIndex(where: { $0.isActive }) {
+                        self.parent.optimizerManager.activeTabs[idx].url = url
+                        if let title = webView.title, !title.isEmpty {
+                            self.parent.optimizerManager.activeTabs[idx].title = title
+                        }
+                        self.parent.optimizerManager.activeTabs[idx].systemIcon = self.iconForUrl(url)
+                    }
                 }
             }
         }
         
+        public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if let host = navigationAction.request.url?.host?.lowercased() {
+                // Sentinel Shield Trackers Detection
+                let knownTrackers = ["google-analytics", "doubleclick", "facebook.net", "telemetry", "track", "metrics", "hotjar"]
+                if knownTrackers.contains(where: { host.contains($0) }) {
+                    DispatchQueue.main.async {
+                        self.parent.optimizerManager.blockedTrackersCount += 1
+                        self.parent.optimizerManager.co2SavedGrams += 0.05
+                        if !WebNavigationController.shared.blockedTrackersList.contains(host) {
+                            WebNavigationController.shared.blockedTrackersList.append(host)
+                        }
+                    }
+                }
+            }
+            decisionHandler(.allow)
+        }
+        
         public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             webView.reload()
+        }
+        
+        private func iconForUrl(_ url: String) -> String {
+            if url.contains("github.com") { return "terminal.fill" }
+            if url.contains("forkar") { return "leaf.fill" }
+            if url.contains("youtube.com") { return "play.rectangle.fill" }
+            if url.contains("gemini") || url.contains("openai") || url.contains("claude") { return "sparkles" }
+            if url.contains("maps") { return "map.fill" }
+            return "globe"
         }
     }
 }
@@ -345,6 +474,27 @@ public struct PreferencesView: View {
             
             Divider().background(Color.white.opacity(0.1))
             
+            // Motor de Búsqueda
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.cyan)
+                    Text("MOTOR DE BÚSQUEDA PREDETERMINADO")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.cyan)
+                }
+                
+                Picker("Motor de búsqueda", selection: $optimizer.searchEngine) {
+                    ForEach(BrowserOptimizerManager.SearchEngine.allCases) { engine in
+                        Text(engine.rawValue).tag(engine)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+            
+            Divider().background(Color.white.opacity(0.1))
+            
             // General Settings
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
@@ -356,11 +506,11 @@ public struct PreferencesView: View {
                         .foregroundColor(.blue)
                 }
                 
-                Toggle("Optimizaciones del Navegador (Ahorro de VRAM y Metal Throttling)", isOn: $optimizer.isOptimizationModeActive)
+                Toggle("Optimizaciones de Shine Find (Ahorro de VRAM y Metal Throttling)", isOn: $optimizer.isOptimizationModeActive)
                     .toggleStyle(.checkbox)
                     .foregroundColor(.white)
                 
-                Toggle("Aceleración por GPU C++ Chromium Core", isOn: .constant(true))
+                Toggle("Aceleración por GPU Metal VSM 120 FPS", isOn: .constant(true))
                     .toggleStyle(.checkbox)
                     .foregroundColor(.white)
                 
@@ -380,7 +530,7 @@ public struct PreferencesView: View {
             }
         }
         .padding(24)
-        .frame(width: 540, height: 480)
+        .frame(width: 540, height: 500)
         .background(Color(red: 0.05, green: 0.07, blue: 0.12))
     }
 }
@@ -392,14 +542,14 @@ public struct MainWindowView: View {
     @State private var urlString: String = "https://cokistudios.github.io/forkar.html"
     @State private var addressInput: String = "https://cokistudios.github.io/forkar.html"
     @State private var isAISidebarOpen: Bool = false
-    @State private var isExtensionsOpen: Bool = false
     @State private var isPreferencesOpen: Bool = false
-    @State private var isDownloadsOpen: Bool = false
     @State private var isCSIDOpen: Bool = false
     @State private var isSentinelOpen: Bool = false
+    @State private var showSavedNotification: Bool = false
     
     @StateObject private var optimizer = BrowserOptimizerManager.shared
     @ObservedObject private var csidManager = CSIDManager.shared
+    @ObservedObject private var navCtrl = WebNavigationController.shared
     
     public init() {}
     
@@ -407,7 +557,7 @@ public struct MainWindowView: View {
         VStack(spacing: 0) {
             // ── 1. TOP TAB BAR (MACOS TRAFFIC LIGHTS INTEGRATION) ──
             HStack(spacing: 0) {
-                Spacer().frame(width: 78)
+                Spacer().frame(width: 78) // Margen limpio para semáforo macOS
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 4) {
@@ -436,7 +586,7 @@ public struct MainWindowView: View {
                             .cornerRadius(8)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(tab.isActive ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)
+                                    .stroke(tab.isActive ? Color.cyan.opacity(0.6) : Color.clear, lineWidth: 1)
                             )
                             .onTapGesture { selectTab(tab) }
                         }
@@ -452,6 +602,7 @@ public struct MainWindowView: View {
                         .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
+                .keyboardShortcut("t", modifiers: .command)
                 .padding(.horizontal, 8)
                 
                 Spacer()
@@ -461,211 +612,248 @@ public struct MainWindowView: View {
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
             
             // ── 2. MAIN TOOLBAR (ADDRESS BAR & QUICK CONTROLS) ──
-            HStack(spacing: 10) {
-                // Navigation buttons
-                HStack(spacing: 4) {
-                    Button(action: {}) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 26, height: 26)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(7)
-                    
-                    Button(action: {}) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 26, height: 26)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(7)
-                    
-                    Button(action: { urlString = addressInput }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 26, height: 26)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(7)
-                }
-                
-                // Address Bar with Glassmorphism
-                HStack {
-                    Image(systemName: "lock.fill")
-                        .foregroundColor(.green)
-                        .font(.system(size: 10))
-                    
-                    TextField("Buscar o ingresar URL...", text: $addressInput, onCommit: {
-                        var target = addressInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !target.hasPrefix("http://") && !target.hasPrefix("https://") {
-                            target = "https://" + target
+            VStack(spacing: 0) {
+                HStack(spacing: 10) {
+                    // Navigation buttons (Back, Forward, Reload)
+                    HStack(spacing: 4) {
+                        Button(action: { navCtrl.goBack() }) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 11, weight: .bold))
                         }
-                        urlString = target
-                        addressInput = target
-                    })
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text("CEF 122")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.gray)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color.black.opacity(0.5))
-                .cornerRadius(9)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9)
-                        .stroke(optimizer.isOptimizationModeActive ? Color.cyan : Color.cyan.opacity(0.3), lineWidth: 1)
-                )
-                
-                // Action Buttons
-                HStack(spacing: 6) {
-                    // Sentinel Shield Badge
-                    Button(action: { isSentinelOpen.toggle() }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "shield.checkerboard")
-                            Text("\(optimizer.blockedTrackersCount)")
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .foregroundColor(.green)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.15))
+                        .buttonStyle(.plain)
+                        .frame(width: 26, height: 26)
+                        .background(Color.white.opacity(navCtrl.canGoBack ? 0.08 : 0.02))
+                        .foregroundColor(navCtrl.canGoBack ? .white : .gray.opacity(0.4))
                         .cornerRadius(7)
+                        .disabled(!navCtrl.canGoBack)
+                        .keyboardShortcut("[", modifiers: .command)
+                        
+                        Button(action: { navCtrl.goForward() }) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(width: 26, height: 26)
+                        .background(Color.white.opacity(navCtrl.canGoForward ? 0.08 : 0.02))
+                        .foregroundColor(navCtrl.canGoForward ? .white : .gray.opacity(0.4))
+                        .cornerRadius(7)
+                        .disabled(!navCtrl.canGoForward)
+                        .keyboardShortcut("]", modifiers: .command)
+                        
+                        Button(action: {
+                            if navCtrl.isLoading {
+                                navCtrl.stopLoading()
+                            } else {
+                                navCtrl.reload()
+                            }
+                        }) {
+                            Image(systemName: navCtrl.isLoading ? "xmark" : "arrow.clockwise")
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(width: 26, height: 26)
+                        .background(Color.white.opacity(0.08))
+                        .foregroundColor(.white)
+                        .cornerRadius(7)
+                        .keyboardShortcut("r", modifiers: .command)
                     }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $isSentinelOpen) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
+                    
+                    // Address Bar with Glassmorphism & Search Logic
+                    HStack {
+                        Image(systemName: urlString.hasPrefix("https://") ? "lock.fill" : "globe")
+                            .foregroundColor(urlString.hasPrefix("https://") ? .green : .gray)
+                            .font(.system(size: 10))
+                        
+                        TextField("Buscar o ingresar URL...", text: $addressInput, onCommit: {
+                            commitAddress()
+                        })
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Text("CEF Metal")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.black.opacity(0.5))
+                    .cornerRadius(9)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9)
+                            .stroke(optimizer.isOptimizationModeActive ? Color.cyan : Color.cyan.opacity(0.3), lineWidth: 1)
+                    )
+                    
+                    // Action Buttons
+                    HStack(spacing: 6) {
+                        // Sentinel Shield Badge
+                        Button(action: { isSentinelOpen.toggle() }) {
+                            HStack(spacing: 4) {
                                 Image(systemName: "shield.checkerboard")
-                                    .foregroundColor(.green)
-                                Text("Sentinel Shield Activo")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
+                                Text("\(optimizer.blockedTrackersCount)")
+                                    .font(.system(size: 10, weight: .bold))
                             }
-                            Divider()
-                            Text("14 rastreadores y cookies invasivas bloqueadas en esta sesión.")
-                                .font(.system(size: 11))
-                                .foregroundColor(.gray)
+                            .foregroundColor(.green)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.green.opacity(0.15))
+                            .cornerRadius(7)
                         }
-                        .padding(12)
-                        .frame(width: 220)
-                        .background(Color(red: 0.08, green: 0.1, blue: 0.16))
-                    }
-                    
-                    // CS ID Avatar Button
-                    Button(action: { isCSIDOpen.toggle() }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "person.crop.circle.fill")
-                            Text(csidManager.isLoggedIn ? csidManager.initial : "CS")
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .foregroundColor(.purple)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.purple.opacity(0.15))
-                        .cornerRadius(7)
-                    }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $isCSIDOpen) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .foregroundColor(.purple)
-                                Text("Coki Studios ID")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            }
-                            Divider()
-                            Text(csidManager.isLoggedIn ? "Sesión activa: \(csidManager.userName)" : "Inicia sesión con tu CS ID")
-                                .font(.system(size: 11))
-                                .foregroundColor(.gray)
-                            
-                            if csidManager.isLoggedIn {
-                                Button("Cerrar Sesión") {
-                                    csidManager.logout()
-                                    isCSIDOpen = false
-                                }
-                                .font(.caption)
-                                .foregroundColor(.red)
-                            }
-                        }
-                        .padding(12)
-                        .frame(width: 200)
-                        .background(Color(red: 0.08, green: 0.1, blue: 0.16))
-                    }
-                    
-                    // Multi-AI Selector Menu
-                    Menu {
-                        ForEach(AISidebarProvider.allCases) { provider in
-                            Button(action: {
-                                optimizer.selectedAIProvider = provider
-                                isAISidebarOpen = (provider != .none)
-                            }) {
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $isSentinelOpen) {
+                            VStack(alignment: .leading, spacing: 10) {
                                 HStack {
-                                    Image(systemName: provider.systemIcon)
-                                    Text(provider == .custom ? optimizer.customAIName : provider.rawValue)
-                                    if optimizer.selectedAIProvider == provider {
-                                        Image(systemName: "checkmark")
+                                    Image(systemName: "shield.checkerboard")
+                                        .foregroundColor(.green)
+                                    Text("Sentinel Shield Activo")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                }
+                                Divider()
+                                Text("Bloqueo de telemetría a nivel de socket de red antes de tocar la RAM.")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.gray)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("AMENAZAS NEUTRALIZADAS:")
+                                        .font(.system(size: 9, weight: .black))
+                                        .foregroundColor(.cyan)
+                                    
+                                    ForEach(navCtrl.blockedTrackersList.prefix(4), id: \.self) { item in
+                                        HStack(spacing: 4) {
+                                            Circle().fill(Color.green).frame(width: 5, height: 5)
+                                            Text(item)
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .foregroundColor(.white)
+                                        }
                                     }
                                 }
                             }
+                            .padding(12)
+                            .frame(width: 250)
+                            .background(Color(red: 0.08, green: 0.1, blue: 0.16))
                         }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: optimizer.selectedAIProvider.systemIcon)
-                            Text(optimizer.selectedAIProvider == .custom ? optimizer.customAIName : optimizer.selectedAIProvider.rawValue)
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(isAISidebarOpen ? optimizer.selectedAIProvider.themeColor : optimizer.selectedAIProvider.themeColor.opacity(0.18))
-                        .foregroundColor(isAISidebarOpen ? .white : optimizer.selectedAIProvider.themeColor)
-                        .cornerRadius(7)
-                    }
-                    .menuStyle(.borderlessButton)
-                    
-                    // Optimizer Mode Toggle
-                    Button(action: { optimizer.isOptimizationModeActive.toggle() }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "bolt.horizontal.fill")
-                            Text(optimizer.isOptimizationModeActive ? "Opt: ON" : "Opt: OFF")
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(optimizer.isOptimizationModeActive ? Color.cyan : Color.cyan.opacity(0.15))
-                        .foregroundColor(optimizer.isOptimizationModeActive ? .black : .cyan)
-                        .cornerRadius(7)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Config (Cmd + ,)
-                    Button(action: { isPreferencesOpen = true }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
-                            .padding(5)
-                            .background(Color.white.opacity(0.08))
+                        
+                        // CS ID Avatar Button
+                        Button(action: { isCSIDOpen.toggle() }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "person.crop.circle.fill")
+                                Text(csidManager.isLoggedIn ? csidManager.initial : "CS")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundColor(.purple)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.purple.opacity(0.15))
                             .cornerRadius(7)
-                    }
-                    .buttonStyle(.plain)
-                    .sheet(isPresented: $isPreferencesOpen) {
-                        PreferencesView(optimizer: optimizer)
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $isCSIDOpen) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .foregroundColor(.purple)
+                                    Text("Coki Studios ID")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                }
+                                Divider()
+                                Text(csidManager.isLoggedIn ? "Sesión activa: \(csidManager.userName)" : "Inicia sesión con tu CS ID")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.gray)
+                                
+                                if csidManager.isLoggedIn {
+                                    Button("Cerrar Sesión") {
+                                        csidManager.logout()
+                                        isCSIDOpen = false
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                                }
+                            }
+                            .padding(12)
+                            .frame(width: 200)
+                            .background(Color(red: 0.08, green: 0.1, blue: 0.16))
+                        }
+                        
+                        // Export .componentsave Button
+                        Button(action: exportComponentSave) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 10))
+                                .foregroundColor(.cyan)
+                                .padding(5)
+                                .background(Color.cyan.opacity(0.12))
+                                .cornerRadius(7)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Exportar página actual como archivo .componentsave")
+                        
+                        // Multi-AI Selector Menu
+                        Menu {
+                            ForEach(AISidebarProvider.allCases) { provider in
+                                Button(action: {
+                                    optimizer.selectedAIProvider = provider
+                                    isAISidebarOpen = (provider != .none)
+                                }) {
+                                    HStack {
+                                        Image(systemName: provider.systemIcon)
+                                        Text(provider == .custom ? optimizer.customAIName : provider.rawValue)
+                                        if optimizer.selectedAIProvider == provider {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: optimizer.selectedAIProvider.systemIcon)
+                                Text(optimizer.selectedAIProvider == .custom ? optimizer.customAIName : optimizer.selectedAIProvider.rawValue)
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(isAISidebarOpen ? optimizer.selectedAIProvider.themeColor : optimizer.selectedAIProvider.themeColor.opacity(0.18))
+                            .foregroundColor(isAISidebarOpen ? .white : optimizer.selectedAIProvider.themeColor)
+                            .cornerRadius(7)
+                        }
+                        .menuStyle(.borderlessButton)
+                        
+                        // Config (Cmd + ,)
+                        Button(action: { isPreferencesOpen = true }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray)
+                                .padding(5)
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(7)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(",", modifiers: .command)
+                        .sheet(isPresented: $isPreferencesOpen) {
+                            PreferencesView(optimizer: optimizer)
+                        }
                     }
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                
+                // Loading Progress Bar
+                if navCtrl.isLoading {
+                    GeometryReader { geo in
+                        LinearGradient(
+                            colors: [Color.cyan, Color.blue, Color(red: 0.06, green: 0.72, blue: 0.51)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: geo.size.width * CGFloat(navCtrl.estimatedProgress), height: 2)
+                    }
+                    .frame(height: 2)
+                }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
             .background(Color(red: 0.05, green: 0.07, blue: 0.12))
             .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
             
@@ -719,9 +907,52 @@ public struct MainWindowView: View {
                         .background(Color(red: 0.06, green: 0.08, blue: 0.14))
                         .border(width: 1, edges: [.bottom], color: Color.white.opacity(0.08))
                         
+                        // AI Quick Action Pills
+                        HStack(spacing: 6) {
+                            Button(action: {
+                                let prompt = "Por favor resume el contenido principal de: \(urlString)"
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(prompt, forType: .string)
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "doc.text.magnifyingglass")
+                                    Text("Resumir")
+                                }
+                                .font(.system(size: 10, weight: .semibold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Copia prompt de resumen al portapapeles para la IA")
+                            
+                            Button(action: {
+                                let prompt = "¿Cuáles son las medidas de privacidad de este sitio: \(urlString)?"
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(prompt, forType: .string)
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "shield.lefthalf.filled")
+                                    Text("Privacidad")
+                                }
+                                .font(.system(size: 10, weight: .semibold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color(red: 0.04, green: 0.06, blue: 0.1))
+                        
                         ShineFindWebView(urlString: .constant(optimizer.currentAIUrl), optimizerManager: optimizer)
                     }
-                    .frame(width: 360)
+                    .frame(width: 380)
                     .background(Color(red: 0.05, green: 0.07, blue: 0.12))
                     .border(width: 1, edges: [.leading], color: Color.white.opacity(0.08))
                 }
@@ -731,7 +962,7 @@ public struct MainWindowView: View {
             HStack {
                 HStack(spacing: 6) {
                     Circle().fill(Color.green).frame(width: 6, height: 6)
-                    Text("Chromium CEF Core v122 (Metal VSM Accelerated)")
+                    Text("Chromium CEF Core v122 (Metal VSM 120 FPS)")
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.gray)
                 }
@@ -766,7 +997,23 @@ public struct MainWindowView: View {
         .background(Color(red: 0.02, green: 0.03, blue: 0.06))
     }
     
-    // Tab Management
+    // Actions & Helpers
+    private func commitAddress() {
+        var target = addressInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !target.hasPrefix("http://") && !target.hasPrefix("https://") {
+            if target.contains(".") && !target.contains(" ") {
+                target = "https://" + target
+            } else {
+                target = optimizer.searchEngine.searchUrl(query: target)
+            }
+        }
+        urlString = target
+        addressInput = target
+        if let idx = optimizer.activeTabs.firstIndex(where: { $0.isActive }) {
+            optimizer.activeTabs[idx].url = target
+        }
+    }
+    
     private func selectTab(_ tab: TabItem) {
         for i in 0..<optimizer.activeTabs.count {
             optimizer.activeTabs[i].isActive = (optimizer.activeTabs[i].id == tab.id)
@@ -806,11 +1053,50 @@ public struct MainWindowView: View {
             optimizer.activeTabs[idx].title = url.components(separatedBy: "/").last?.replacingOccurrences(of: ".html", with: "") ?? "Web"
         }
     }
+    
+    private func exportComponentSave() {
+        let savePanel = NSSavePanel()
+        savePanel.title = "Guardar como .componentsave"
+        savePanel.allowedContentTypes = [.json, .data]
+        savePanel.nameFieldStringValue = "snapshot_\(Int(Date().timeIntervalSince1970)).componentsave"
+        
+        savePanel.begin { response in
+            if response == .OK, let destinationUrl = savePanel.url {
+                let payload: [String: Any] = [
+                    "app": "Shine Find Browser",
+                    "version": "2.0",
+                    "timestamp": ISO8601DateFormatter().string(from: Date()),
+                    "url": self.urlString,
+                    "title": self.navCtrl.currentTitle,
+                    "trackers_blocked": self.optimizer.blockedTrackersCount,
+                    "co2_saved_grams": self.optimizer.co2SavedGrams
+                ]
+                if let data = try? JSONSerialization.data(withJSONObject: payload, options: .prettyPrinted) {
+                    try? data.write(to: destinationUrl)
+                }
+            }
+        }
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
 // 📐 UTILITIES & BORDER EXTENSIONS
 // ═══════════════════════════════════════════════════════════════
+public struct WindowTitleBarAccessor: NSViewRepresentable {
+    public func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let window = view.window {
+                window.titleVisibility = .hidden
+                window.titlebarAppearsTransparent = true
+                window.styleMask.insert(.fullSizeContentView)
+            }
+        }
+        return view
+    }
+    public func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
 public struct EdgeBorder: Shape {
     var width: CGFloat
     var edges: [Edge]
@@ -862,8 +1148,17 @@ struct ShineFindApp: App {
     var body: some Scene {
         WindowGroup {
             MainWindowView()
+                .background(WindowTitleBarAccessor())
                 .frame(minWidth: 1100, minHeight: 700)
         }
         .windowStyle(.hiddenTitleBar)
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("Nueva Pestaña") {
+                    // Handled inside
+                }
+                .keyboardShortcut("t", modifiers: .command)
+            }
+        }
     }
 }

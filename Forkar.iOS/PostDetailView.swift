@@ -20,6 +20,8 @@ struct PostDetailView: View {
     @State private var activeChatRoom: ChatRoom? = nil
     @State private var isNavigatingToChat = false
     @State private var knownNames: [String] = []
+    @State private var moderationAlertMessage: String? = nil
+    @State private var showModerationAlert = false
     
     var body: some View {
         ZStack {
@@ -298,6 +300,11 @@ struct PostDetailView: View {
             } message: {
                 Text("Gracias por reportar. Revisaremos el contenido lo antes posible.")
             }
+            .alert("Moderación Apple Intelligence", isPresented: $showModerationAlert) {
+                Button("Entendido", role: .cancel) { }
+            } message: {
+                Text(moderationAlertMessage ?? "")
+            }
         }
         .navigationTitle("Publicación")
         #if os(iOS)
@@ -469,6 +476,16 @@ struct PostDetailView: View {
     private func submitComment() async {
         let cleanText = newCommentText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanText.isEmpty else { return }
+        
+        // On-Device Content Safety Check via Apple Foundation Models (macOS 27)
+        let verdict = await AppleContentModerator.shared.checkContent(cleanText)
+        if !verdict.isSafe {
+            await MainActor.run {
+                self.moderationAlertMessage = "⚠️ Comentario bloqueado por Apple Intelligence on-device: \(verdict.reason)"
+                self.showModerationAlert = true
+            }
+            return
+        }
         
         do {
             let newComment = try await authManager.createComment(postId: post.id, content: cleanText)

@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-public import Combine
+internal import Combine
 
 // MARK: - Category Model
 struct Category: Identifiable, Codable, Hashable {

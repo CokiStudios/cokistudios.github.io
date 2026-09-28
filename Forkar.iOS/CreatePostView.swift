@@ -27,11 +27,31 @@ struct CreatePostView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             
+                            #if os(macOS)
+                            HStack(spacing: 8) {
+                                Image(systemName: "apple.intelligence")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(ForkarTheme.accent)
+                                Text("Apple Intelligence (macOS 27)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(ForkarTheme.text)
+                                Spacer()
+                                Text("On-Device Safety Active")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(ForkarTheme.accent)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(ForkarTheme.accent.opacity(0.1))
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ForkarTheme.accent.opacity(0.3), lineWidth: 1))
+                            #endif
+                            
                             // Category selection label
                             Text("Selecciona una Categoría")
                                 .font(.headline)
                                 .foregroundColor(ForkarTheme.text)
-                                .padding(.top)
+                                .padding(.top, 4)
                             
                             if isFetchingCategories {
                                 ProgressView()
@@ -228,6 +248,15 @@ struct CreatePostView: View {
         
         isLoading = true
         errorMessage = ""
+        
+        // On-Device Content Safety Check via Apple Foundation Models (macOS 27)
+        let fullText = "\(cleanTitle)\n\(cleanContent)"
+        let verdict = await AppleContentModerator.shared.checkContent(fullText)
+        if !verdict.isSafe {
+            isLoading = false
+            errorMessage = "⚠️ Publicación detenida por Apple Intelligence: \(verdict.reason)"
+            return
+        }
         
         let cleanImage = imageUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanVideo = videoUrl.trimmingCharacters(in: .whitespacesAndNewlines)
