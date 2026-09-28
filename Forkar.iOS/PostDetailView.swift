@@ -336,10 +336,13 @@ struct PostDetailView: View {
             #endif
         }
         .sheet(isPresented: $showLogin) {
-            NavigationView {
+            NavigationStack {
                 LoginView()
                     .environmentObject(authManager)
             }
+            #if os(macOS)
+            .frame(minWidth: 460, idealWidth: 500, maxWidth: 600, minHeight: 560, idealHeight: 640)
+            #endif
         }
         .background(
             NavigationLink(

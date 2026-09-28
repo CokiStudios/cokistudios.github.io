@@ -225,6 +225,9 @@ struct ForkarEcoView: View {
                 EcoQRScannerView { scannedCode in
                     handleScannedQR(scannedCode)
                 }
+                #if os(macOS)
+                .frame(minWidth: 460, idealWidth: 500, minHeight: 460, idealHeight: 520)
+                #endif
             }
             .sheet(isPresented: $showMyQRCode) {
                 MyEcoQRCodeSheet(
@@ -232,6 +235,9 @@ struct ForkarEcoView: View {
                     userName: authManager.currentUser?.email ?? "Usuario",
                     points: ecoPoints
                 )
+                #if os(macOS)
+                .frame(minWidth: 420, idealWidth: 480, minHeight: 480, idealHeight: 540)
+                #endif
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenEcoQRScanner"))) { _ in
                 showQRScanner = true

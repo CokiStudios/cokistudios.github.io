@@ -16,7 +16,7 @@ struct CreatePostView: View {
     @State private var isFetchingCategories = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
@@ -214,6 +214,9 @@ struct CreatePostView: View {
                 }
             }
         }
+        #if os(macOS)
+        .frame(minWidth: 560, idealWidth: 620, maxWidth: 720, minHeight: 640, idealHeight: 740)
+        #endif
     }
     
     private func loadCategories() async {

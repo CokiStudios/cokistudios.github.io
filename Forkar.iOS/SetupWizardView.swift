@@ -165,6 +165,8 @@ struct SetupWizardView: View {
         }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #else
+        .frame(minWidth: 560, idealWidth: 640, maxWidth: 720, minHeight: 640, idealHeight: 740)
         #endif
         .onAppear {
             populateExistingData()

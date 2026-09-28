@@ -206,6 +206,9 @@ struct ProfileView: View {
                     .sheet(isPresented: $showSetupWizard) {
                         SetupWizardView()
                             .environmentObject(authManager)
+                            #if os(macOS)
+                            .frame(minWidth: 560, idealWidth: 640, maxWidth: 720, minHeight: 640, idealHeight: 740)
+                            #endif
                     }
                     .sheet(isPresented: $showMyQRCode) {
                         MyEcoQRCodeSheet(
@@ -213,6 +216,9 @@ struct ProfileView: View {
                             userName: user.resolvedName,
                             points: UserDefaults.standard.integer(forKey: "forkar_eco_points")
                         )
+                        #if os(macOS)
+                        .frame(minWidth: 420, idealWidth: 480, minHeight: 480, idealHeight: 540)
+                        #endif
                     }
                 } else {
                     // Not logged in view
@@ -262,10 +268,13 @@ struct ProfileView: View {
                     }
                 }
             }) {
-                NavigationView {
+                NavigationStack {
                     LoginView()
                         .environmentObject(authManager)
                 }
+                #if os(macOS)
+                .frame(minWidth: 460, idealWidth: 500, maxWidth: 600, minHeight: 560, idealHeight: 640)
+                #endif
             }
             .onAppear {
                 if authManager.isLoggedIn, let user = authManager.currentUser {

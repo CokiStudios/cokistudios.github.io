@@ -157,10 +157,13 @@ struct ChatsView: View {
                             }
                         }
                     }) {
-                        NavigationView {
+                        NavigationStack {
                             LoginView()
                                 .environmentObject(authManager)
                         }
+                        #if os(macOS)
+                        .frame(minWidth: 460, idealWidth: 500, maxWidth: 600, minHeight: 560, idealHeight: 640)
+                        #endif
                     }
                 }
             }
@@ -412,7 +415,7 @@ struct CreateGroupSheetView: View {
     let onCreate: () -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
@@ -466,5 +469,8 @@ struct CreateGroupSheetView: View {
                 }
             }
         }
+        #if os(macOS)
+        .frame(minWidth: 460, idealWidth: 500, minHeight: 340, idealHeight: 380)
+        #endif
     }
 }

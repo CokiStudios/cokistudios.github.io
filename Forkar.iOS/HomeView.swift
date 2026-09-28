@@ -253,14 +253,20 @@ struct HomeView: View {
                     .environmentObject(authManager)
             }
             .sheet(isPresented: $showLogin) {
-                NavigationView {
+                NavigationStack {
                     LoginView()
                         .environmentObject(authManager)
                 }
+                #if os(macOS)
+                .frame(minWidth: 460, idealWidth: 500, maxWidth: 600, minHeight: 560, idealHeight: 640)
+                #endif
             }
             .sheet(isPresented: $showSetupWizard) {
                 SetupWizardView()
                     .environmentObject(authManager)
+                    #if os(macOS)
+                    .frame(minWidth: 560, idealWidth: 640, maxWidth: 720, minHeight: 640, idealHeight: 740)
+                    #endif
             }
             .onAppear {
                 Task {

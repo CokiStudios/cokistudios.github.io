@@ -459,7 +459,7 @@ struct InviteUsersSheetView: View {
     @State private var invitedUserIds: Set<UUID> = []
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 ForkarTheme.bg
                     .ignoresSafeArea()
@@ -539,6 +539,9 @@ struct InviteUsersSheetView: View {
                 #endif
             }
         }
+        #if os(macOS)
+        .frame(minWidth: 460, idealWidth: 520, minHeight: 480, idealHeight: 560)
+        #endif
     }
 }
 
