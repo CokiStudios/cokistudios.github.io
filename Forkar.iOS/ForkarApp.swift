@@ -49,5 +49,11 @@ struct ForkarApp: App {
         WindowGroup {
             ContentView()
         }
+        #if os(macOS)
+        .defaultSize(width: 1080, height: 720)
+        .commands {
+            SidebarCommands()
+        }
+        #endif
     }
 }

@@ -222,6 +222,29 @@ struct HomeView: View {
                             .foregroundColor(ForkarTheme.text)
                     }
                 }
+                #if os(macOS)
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: {
+                        if authManager.isLoggedIn {
+                            showCreatePost = true
+                        } else {
+                            showLogin = true
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("Nueva Publicación")
+                        }
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(ForkarTheme.primaryGradient)
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                #endif
             }
             .sheet(isPresented: $showCreatePost, onDismiss: {
                 Task { await loadPosts() }
