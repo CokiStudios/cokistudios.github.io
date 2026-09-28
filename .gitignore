@@ -22,4 +22,6 @@ sample_loop_projects/.tmp_*
 **/.DS_Store
 *.xcuserstate
 DerivedData/
+public/
+.wrangler/
 
