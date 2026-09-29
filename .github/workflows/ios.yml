@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages & Build iOS
+name: Build & Distribute Forkar iOS
 
 on:
   push:
@@ -7,45 +7,15 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
   actions: write
 
 concurrency:
-  group: "pages"
+  group: "ios-build"
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Preparar GitHub Pages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-  deploy:
-    name: Desplegar GitHub Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
   build-ios:
     name: Compilar y Distribuir Forkar iOS (Xcode 27)
-    needs: deploy
     runs-on: xcode-27
     steps:
       - name: Checkout repository
