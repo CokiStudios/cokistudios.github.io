@@ -300,7 +300,7 @@ struct PostDetailView: View {
             } message: {
                 Text("Gracias por reportar. Revisaremos el contenido lo antes posible.")
             }
-            .alert("Moderación Apple Intelligence", isPresented: $showModerationAlert) {
+            .alert("Moderación de Seguridad", isPresented: $showModerationAlert) {
                 Button("Entendido", role: .cancel) { }
             } message: {
                 Text(moderationAlertMessage ?? "")
@@ -484,7 +484,7 @@ struct PostDetailView: View {
         let verdict = await AppleContentModerator.shared.checkContent(cleanText, title: post.title)
         if !verdict.isSafe {
             await MainActor.run {
-                self.moderationAlertMessage = "⚠️ Comentario bloqueado por Apple Intelligence on-device: \(verdict.reason)"
+                self.moderationAlertMessage = "⚠️ Comentario bloqueado (\(verdict.engine)): \(verdict.reason)"
                 self.showModerationAlert = true
             }
             return

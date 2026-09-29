@@ -256,7 +256,7 @@ struct CreatePostView: View {
         let verdict = await AppleContentModerator.shared.checkContent(cleanContent, title: cleanTitle)
         if !verdict.isSafe {
             isLoading = false
-            errorMessage = "⚠️ Publicación detenida por Apple Intelligence: \(verdict.reason)"
+            errorMessage = "⚠️ Publicación detenida (\(verdict.engine)): \(verdict.reason)"
             return
         }
         

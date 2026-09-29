@@ -214,7 +214,7 @@ struct ChatRoomDetailView: View {
         } message: {
             Text("¿Estás seguro de que deseas eliminar esta conversación? Esta acción no se puede deshacer.")
         }
-        .alert("Moderación Apple Intelligence", isPresented: $showModerationErrorAlert) {
+        .alert("Moderación de Contenido", isPresented: $showModerationErrorAlert) {
             Button("Entendido", role: .cancel) { }
         } message: {
             Text(moderationErrorAlert ?? "")
@@ -351,7 +351,7 @@ struct ChatRoomDetailView: View {
                 await MainActor.run {
                     self.isSending = false
                     self.newMessageText = content
-                    self.moderationErrorAlert = "⚠️ Mensaje no enviado: Se detectó contenido inapropiado por Apple Intelligence (\(verdict.reason))."
+                    self.moderationErrorAlert = "⚠️ Mensaje no enviado (\(verdict.engine)): \(verdict.reason)"
                     self.showModerationErrorAlert = true
                 }
                 return

@@ -152,7 +152,13 @@ final class AppleContentModerator: ObservableObject {
         }
         #endif
         
-        // Step 3: Universal fallback for iOS or when model is warming up
+        // Step 3: Cloudflare Workers AI (Llama 3.2) on edge for iOS (iOS 26 and below / iOS 27) or pre-macOS 27
+        if let workersResult = await analyzeWithWorkersAI(content: trimmedContent, title: trimmedTitle.isEmpty ? nil : trimmedTitle) {
+            lastResult = workersResult
+            return workersResult
+        }
+        
+        // Step 4: Universal on-device fallback (NaturalLanguage + Lexicon) for offline resilience
         let combined = trimmedTitle.isEmpty ? trimmedContent : "\(trimmedTitle)\n\(trimmedContent)"
         let result = analyzeWithFallback(combined)
         lastResult = result
@@ -258,6 +264,53 @@ final class AppleContentModerator: ObservableObject {
         return str.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     #endif
+    
+    /// Real-time edge moderation via Cloudflare Workers AI (@cf/meta/llama-3.2-3b-instruct)
+    /// Powered for iOS (iOS 26 and below, iOS 27) and platforms without local Apple Foundation Models.
+    private func analyzeWithWorkersAI(content: String, title: String? = nil) async -> ModerationResult? {
+        guard let url = URL(string: "https://cokistudios.com/api/moderate") else { return nil }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 5.0
+        
+        var payload: [String: String] = ["content": content]
+        if let title = title, !title.isEmpty {
+            payload["title"] = title
+        }
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+                return nil
+            }
+            
+            struct WorkersAIResponse: Decodable {
+                let isSafe: Bool
+                let flaggedWords: [String]?
+                let reason: String?
+                let engine: String?
+            }
+            
+            let decoded = try JSONDecoder().decode(WorkersAIResponse.self, from: data)
+            let flagged = decoded.isSafe ? [] : (decoded.flaggedWords ?? [])
+            let engine = decoded.engine ?? "Cloudflare Workers AI (Llama 3.2)"
+            let reason = decoded.reason ?? (decoded.isSafe ? "Contenido verificado y respetuoso." : "Contenido inapropiado detectado.")
+            
+            return ModerationResult(
+                isSafe: decoded.isSafe,
+                flaggedWords: flagged,
+                reason: reason,
+                engine: engine
+            )
+        } catch {
+            print("Workers AI moderation network fallback: \(error.localizedDescription)")
+            return nil
+        }
+    }
     
     /// Fast on-device lexical & NaturalLanguage fallback for iOS and offline resilience
     private func analyzeWithFallback(_ text: String) -> ModerationResult {
