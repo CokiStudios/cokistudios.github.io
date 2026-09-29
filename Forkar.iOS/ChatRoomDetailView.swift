@@ -346,7 +346,7 @@ struct ChatRoomDetailView: View {
         
         Task {
             // On-Device Content Safety Check via Apple Foundation Models (macOS 27)
-            let verdict = await AppleContentModerator.shared.checkContent(content)
+            let verdict = await AppleContentModerator.shared.checkContent(content, title: room.name)
             if !verdict.isSafe {
                 await MainActor.run {
                     self.isSending = false

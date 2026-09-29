@@ -111,18 +111,26 @@ final class AppleContentModerator: ObservableObject {
     }
     
     /// Analyzes text on-device for toxic content, slurs, profanity, evasion attempts, and offensive language.
-    /// Exclusively powered by Apple Foundation Models on macOS 27 Apple Silicon with instant heuristic anti-evasion.
-    func checkContent(_ text: String) async -> ModerationResult {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+    /// Exclusively powered by Apple Foundation Models on macOS 27 Apple Silicon with structured prompt execution (title + message context).
+    func checkContent(_ content: String, title: String? = nil) async -> ModerationResult {
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        
+        guard !trimmedContent.isEmpty || !trimmedTitle.isEmpty else {
             return .safe
         }
         
         isAnalyzing = true
         defer { isAnalyzing = false }
         
-        // Step 1: Immediate local Anti-Evasion detection (catches "maricooon", "P U T A", "m!erd@", etc. in <1ms)
-        let evasionWords = detectEvasions(in: trimmed)
+        // Step 1: Immediate local Anti-Evasion detection across both title and message (<1ms)
+        var evasionWords = detectEvasions(in: trimmedContent)
+        if !trimmedTitle.isEmpty {
+            let titleEvasions = detectEvasions(in: trimmedTitle)
+            evasionWords.append(contentsOf: titleEvasions)
+            evasionWords = Array(Set(evasionWords))
+        }
+        
         if !evasionWords.isEmpty {
             let result = ModerationResult(
                 isSafe: false,
@@ -134,10 +142,10 @@ final class AppleContentModerator: ObservableObject {
             return result
         }
         
-        // Step 2: Apple Foundation Models deep contextual analysis on macOS 27 Apple Silicon
+        // Step 2: Apple Foundation Models deep contextual analysis on macOS 27 Apple Silicon with title + message prompt
         #if os(macOS)
         if #available(macOS 27.0, *) {
-            if let result = await analyzeWithAppleFoundationModel(trimmed) {
+            if let result = await analyzeWithAppleFoundationModel(content: trimmedContent, title: trimmedTitle.isEmpty ? nil : trimmedTitle) {
                 lastResult = result
                 return result
             }
@@ -145,14 +153,15 @@ final class AppleContentModerator: ObservableObject {
         #endif
         
         // Step 3: Universal fallback for iOS or when model is warming up
-        let result = analyzeWithFallback(trimmed)
+        let combined = trimmedTitle.isEmpty ? trimmedContent : "\(trimmedTitle)\n\(trimmedContent)"
+        let result = analyzeWithFallback(combined)
         lastResult = result
         return result
     }
     
     #if os(macOS)
     @available(macOS 27.0, *)
-    private func analyzeWithAppleFoundationModel(_ text: String) async -> ModerationResult? {
+    private func analyzeWithAppleFoundationModel(content: String, title: String? = nil) async -> ModerationResult? {
         guard SystemLanguageModel.default.isAvailable else {
             return nil
         }
@@ -163,21 +172,41 @@ final class AppleContentModerator: ObservableObject {
                 model: model,
                 instructions: """
                 You are the Forkar on-device safety moderator running locally on Apple Silicon (macOS 27).
-                Your job is to analyze user text (in Spanish or English) for profanity, insults, toxicity, harassment, and hate speech.
+                Your job is to analyze posts, comments, and messages in the Forkar community (Spanish and English).
+                You evaluate both the TITLE and the BODY/MESSAGE for toxicity, insults, harassment, hate speech, threats, and safety evasion attempts.
                 CRITICAL: Users may attempt to bypass moderation by:
                 - Stretching letters (e.g. 'maricooon', 'putaaa', 'estuuupido')
                 - Inserting spaces or punctuation between characters (e.g. 'P U T A', 'm.a.r.i.c.o.n', 'h-d-p')
                 - Using leetspeak or symbol substitutions (e.g. 'p*ta', 'p3nd3jo', 'm@ricon', '1diota')
+                - Masking insults by splitting context across the title and message.
                 You MUST recognize these evasion attempts and detect the underlying offensive words.
                 Respond ONLY with a JSON object in this exact format:
-                {"isSafe": false, "flaggedWords": ["word1", "word2"], "reason": "Breve explicación en español"}
+                {"isSafe": false, "flaggedWords": ["word1", "word2"], "reason": "Breve explicación en español de por qué se detuvo la publicación"}
                 or if completely safe:
                 {"isSafe": true, "flaggedWords": [], "reason": "Contenido respetuoso"}
                 Do not include markdown ticks or additional commentary.
                 """
             )
             
-            let prompt = "Analiza el siguiente texto de usuario: \"\(text)\""
+            // Build structured contextual prompt with specific post title and message
+            let prompt: String
+            if let title = title, !title.isEmpty {
+                prompt = """
+                Evalúa la siguiente publicación para la comunidad Forkar:
+                📌 TÍTULO DE LA PUBLICACIÓN: "\(title)"
+                📝 CONTENIDO DEL MENSAJE: "\(content)"
+                
+                Analiza el título y el mensaje en conjunto. ¿Cumple con las normas comunitarias o contiene ataques, toxicidad, insultos o evasión de filtros?
+                """
+            } else {
+                prompt = """
+                Evalúa el siguiente mensaje para la comunidad Forkar:
+                💬 MENSAJE: "\(content)"
+                
+                ¿Cumple con las normas comunitarias o contiene ataques, toxicidad, insultos o evasión de filtros?
+                """
+            }
+            
             let response = try await session.respond(to: prompt)
             let cleanedJSON = extractJSON(from: response.content)
             

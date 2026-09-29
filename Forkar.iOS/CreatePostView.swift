@@ -253,8 +253,7 @@ struct CreatePostView: View {
         errorMessage = ""
         
         // On-Device Content Safety Check via Apple Foundation Models (macOS 27)
-        let fullText = "\(cleanTitle)\n\(cleanContent)"
-        let verdict = await AppleContentModerator.shared.checkContent(fullText)
+        let verdict = await AppleContentModerator.shared.checkContent(cleanContent, title: cleanTitle)
         if !verdict.isSafe {
             isLoading = false
             errorMessage = "⚠️ Publicación detenida por Apple Intelligence: \(verdict.reason)"

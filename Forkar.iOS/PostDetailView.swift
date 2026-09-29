@@ -481,7 +481,7 @@ struct PostDetailView: View {
         guard !cleanText.isEmpty else { return }
         
         // On-Device Content Safety Check via Apple Foundation Models (macOS 27)
-        let verdict = await AppleContentModerator.shared.checkContent(cleanText)
+        let verdict = await AppleContentModerator.shared.checkContent(cleanText, title: post.title)
         if !verdict.isSafe {
             await MainActor.run {
                 self.moderationAlertMessage = "⚠️ Comentario bloqueado por Apple Intelligence on-device: \(verdict.reason)"
