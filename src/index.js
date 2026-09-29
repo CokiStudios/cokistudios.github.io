@@ -103,25 +103,25 @@ export default {
 Your role: detect toxic language, insults, slurs, harassment, and vulgar double entendres (chistes de doble sentido, albures, insunaciones sexuales veladas o vulgares en español/inglés).
 
 CRITERIA FOR UNSAFE (isSafe: false):
-- Insults, cursing, hate speech, vulgarity, or harassment.
-- Double entendres / albures / sexual wordplay (e.g. phrases playing on eating/sitting on foods, sexual puns, disguised sexual acts).
-- Filter evasion attempts (leetspeak, spaced letters).
+- Insults, cursing, profanities, hate speech, threats, or harassment.
+- ALL double entendres, albures, sexual puns, or disguised sexual innuendos (e.g. phrases playing on eating/sitting on foods, banana, sexual organs, or positions). Even if intended as a joke or playful banter, you MUST classify it as isSafe: false.
+- Filter evasion attempts (leetspeak, spaced letters, hidden slurs).
 
 CRITERIA FOR SAFE (isSafe: true):
-- Friendly, constructive, normal discussions, technical topics, polite banter without sexual/insult connotations.
+- Friendly, constructive, normal discussions, technical topics, polite banter without any sexual or insult connotations.
 
 Output ONLY valid raw JSON:
 {
   "isSafe": boolean,
-  "flaggedWords": ["word1", "word2"],
-  "reason": "Explicación concisa en español de por qué es seguro o por qué se marcó"
+  "flaggedWords": ["palabra1", "palabra2"],
+  "reason": "Explicación concisa en español de por qué se aprueba o por qué se marca como inseguro"
 }`;
 
           const userPrompt = title
-            ? `Analiza este post para la comunidad:\nTítulo: "${title}"\nContenido: "${content}"\n\n¿Contiene insultos, toxicidad o chistes de doble sentido / albures sexuales?`
-            : `Analiza este mensaje para la comunidad:\nContenido: "${content}"\n\n¿Contiene insultos, toxicidad o chistes de doble sentido / albures sexuales?`;
+            ? `Analiza este post para la comunidad:\nTítulo: "${title}"\nContenido: "${content}"\n\nInstrucción obligatoria: Si contiene chistes de doble sentido, albures, insinuaciones de índole sexual o insultos, DEBES responder con "isSafe": false.`
+            : `Analiza este mensaje para la comunidad:\nContenido: "${content}"\n\nInstrucción obligatoria: Si contiene chistes de doble sentido, albures, insinuaciones de índole sexual o insultos, DEBES responder con "isSafe": false.`;
 
-          const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+          const aiResponse = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
@@ -147,7 +147,7 @@ Output ONLY valid raw JSON:
               isSafe: Boolean(parsed.isSafe),
               flaggedWords: parsed.flaggedWords || [],
               reason: parsed.reason || (parsed.isSafe ? 'Contenido verificado y respetuoso.' : 'Contenido inapropiado detectado.'),
-              engine: 'Cloudflare Workers AI (Llama 3.1 8B)'
+              engine: 'Cloudflare Workers AI (Llama 3.2)'
             });
           }
 
@@ -155,7 +155,7 @@ Output ONLY valid raw JSON:
             isSafe: true,
             flaggedWords: [],
             reason: 'Contenido verificado.',
-            engine: 'Cloudflare Workers AI (Llama 3.1 8B)'
+            engine: 'Cloudflare Workers AI (Llama 3.2)'
           });
         }
 
