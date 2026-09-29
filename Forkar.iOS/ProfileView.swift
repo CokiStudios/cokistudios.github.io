@@ -144,7 +144,7 @@ struct ProfileView: View {
                                         .padding(.horizontal)
                                 } else {
                                     ForEach(userPosts) { post in
-                                        NavigationLink(destination: PostDetailView(post: post)) {
+                                        NavigationLink(destination: PostDetailView(post: post).environmentObject(authManager)) {
                                             PostCardView(post: post)
                                         }
                                         .buttonStyle(PlainButtonStyle())

@@ -69,6 +69,7 @@ struct ContentView: View {
     #if os(macOS)
     var body: some View {
         macOSSplitLayout
+            .environmentObject(authManager)
             .frame(minWidth: 920, minHeight: 620)
             .tint(ForkarTheme.accent)
             .onAppear {
@@ -99,6 +100,7 @@ struct ContentView: View {
                 iOSTabLayout
             }
         }
+        .environmentObject(authManager)
         .tint(ForkarTheme.accent)
         .onAppear {
             if !hasCompletedSetupWizard {

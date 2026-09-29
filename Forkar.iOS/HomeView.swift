@@ -146,7 +146,7 @@ struct HomeView: View {
                                 ZStack {
                                     PostCardView(post: post)
                                     
-                                    NavigationLink(destination: PostDetailView(post: post)) {
+                                    NavigationLink(destination: PostDetailView(post: post).environmentObject(authManager)) {
                                         EmptyView()
                                     }
                                     .opacity(0)

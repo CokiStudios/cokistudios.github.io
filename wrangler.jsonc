@@ -1,9 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cokistudios-github-io",
+  "main": "src/index.js",
   "compatibility_date": "2026-09-28",
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "ai": {
+    "binding": "AI"
   },
   "routes": [
     "cokistudios.com/*",

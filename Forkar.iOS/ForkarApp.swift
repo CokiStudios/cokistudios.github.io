@@ -45,9 +45,12 @@ struct ForkarApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     #endif
 
+    @StateObject private var authManager = SupabaseManager.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(authManager)
         }
         #if os(macOS)
         .defaultSize(width: 1080, height: 720)

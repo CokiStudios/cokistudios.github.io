@@ -173,13 +173,13 @@ final class AppleContentModerator: ObservableObject {
                 instructions: """
                 You are the Forkar on-device safety moderator running locally on Apple Silicon (macOS 27).
                 Your job is to analyze posts, comments, and messages in the Forkar community (Spanish and English).
-                You evaluate both the TITLE and the BODY/MESSAGE for toxicity, insults, harassment, hate speech, threats, and safety evasion attempts.
-                CRITICAL: Users may attempt to bypass moderation by:
-                - Stretching letters (e.g. 'maricooon', 'putaaa', 'estuuupido')
-                - Inserting spaces or punctuation between characters (e.g. 'P U T A', 'm.a.r.i.c.o.n', 'h-d-p')
-                - Using leetspeak or symbol substitutions (e.g. 'p*ta', 'p3nd3jo', 'm@ricon', '1diota')
-                - Masking insults by splitting context across the title and message.
-                You MUST recognize these evasion attempts and detect the underlying offensive words.
+                You evaluate both the TITLE and the BODY/MESSAGE for:
+                1. Toxicity, insults, harassment, hate speech, and threats.
+                2. Sexual innuendos, vulgar double entendres ("chistes de doble sentido", albures, juegos de palabras vulgares de connotación sexual).
+                3. Evasion attempts: letter stretching (e.g. 'maricooon'), spaced-out characters (e.g. 'P U T A'), leetspeak (e.g. 'p3nd3jo'), and split context across title and message.
+                CRITICAL:
+                - Detect double entendres ("chistes de doble sentido", albures) where words with dual meanings or sexual puns are used to make vulgar, sexually suggestive, or harassing jokes.
+                - You MUST recognize evasion attempts and detect the underlying offensive words or innuendos.
                 Respond ONLY with a JSON object in this exact format:
                 {"isSafe": false, "flaggedWords": ["word1", "word2"], "reason": "Breve explicación en español de por qué se detuvo la publicación"}
                 or if completely safe:
@@ -196,14 +196,14 @@ final class AppleContentModerator: ObservableObject {
                 📌 TÍTULO DE LA PUBLICACIÓN: "\(title)"
                 📝 CONTENIDO DEL MENSAJE: "\(content)"
                 
-                Analiza el título y el mensaje en conjunto. ¿Cumple con las normas comunitarias o contiene ataques, toxicidad, insultos o evasión de filtros?
+                Analiza el título y el mensaje en conjunto. ¿Cumple con las normas comunitarias o contiene ataques, toxicidad, insultos, evasión de filtros o chistes de doble sentido (albures / insinuaciones sexuales vulgares)?
                 """
             } else {
                 prompt = """
                 Evalúa el siguiente mensaje para la comunidad Forkar:
                 💬 MENSAJE: "\(content)"
                 
-                ¿Cumple con las normas comunitarias o contiene ataques, toxicidad, insultos o evasión de filtros?
+                ¿Cumple con las normas comunitarias o contiene ataques, toxicidad, insultos, evasión de filtros o chistes de doble sentido (albures / insinuaciones sexuales vulgares)?
                 """
             }
             

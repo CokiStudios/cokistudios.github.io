@@ -146,6 +146,9 @@
                 <span class="nav-badge">Moderación</span>
             </a>
             <div class="nav-right">
+                <button type="button" onclick="window.openChatGPTModal()" style="background:rgba(16,163,127,0.15); border:1px solid rgba(16,163,127,0.3); color:#34d399; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    ⚡ Conectar ChatGPT
+                </button>
                 <a href="forkar" class="nav-link">Comunidad</a>
                 <a href="dashboard" class="nav-link">Mi Cuenta</a>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
@@ -203,6 +206,10 @@
 
     <script type="module">
         import { supabase, getCurrentCokiUser } from './coki-auth.js';
+        import { moderateContent, setupChatGPTModalUI, openChatGPTModal } from './moderation-client.js';
+
+        window.openChatGPTModal = openChatGPTModal;
+        setupChatGPTModalUI();
 
         let userRole = 'user';
         let currentUser = null;
@@ -325,8 +332,14 @@
                             </div>
                             
                             ${r.details ? `<div style="font-size:13px; color:var(--text-sub); margin-top:8px;"> Detalles adicionales: <span style="color:var(--text); font-style:italic;">"${esc(r.details)}"</span></div>` : ''}
+
+                            <!-- Veredicto IA (Cloudflare Workers AI / ChatGPT) -->
+                            <div id="ai-verdict-${r.id}" style="display:none; margin-top:12px; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.4;"></div>
                         </div>
-                        <div class="report-actions">
+                        <div class="report-actions" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <button class="btn btn-ghost" id="btn-ai-${r.id}" onclick="analyzeReportWithAI('${r.id}', '${esc(isPost && target.title ? target.title : '').replace(/'/g, "\\'")}', '${esc(target.content || '').replace(/'/g, "\\'")}')" style="border:1px solid rgba(139,92,246,0.4); color:#a78bfa;">
+                                🤖 Analizar con IA
+                            </button>
                             <button class="btn btn-ghost" onclick="resolveReport('${r.id}', 'dismissed')">Desestimar</button>
                             <button class="btn btn-danger" onclick="resolveReport('${r.id}', 'hide', '${isPost ? 'post' : 'comment'}', '${isPost ? r.post_id : r.comment_id}')">Ocultar contenido</button>
                         </div>
@@ -334,6 +347,55 @@
                 `;
             }).join('');
         }
+
+        window.analyzeReportWithAI = async (reportId, title, content) => {
+            const btn = document.getElementById(`btn-ai-${reportId}`);
+            const verdictBox = document.getElementById(`ai-verdict-${reportId}`);
+            if (!btn || !verdictBox) return;
+
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Analizando en Edge AI...';
+
+            try {
+                const result = await moderateContent({ title, content });
+                verdictBox.style.display = 'block';
+
+                if (!result.isSafe) {
+                    verdictBox.style.background = 'rgba(239, 68, 68, 0.12)';
+                    verdictBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                    verdictBox.style.color = '#fca5a5';
+                    verdictBox.innerHTML = `
+                        <div style="font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                            <span>⚠️ Veredicto IA: Contenido Sospechoso / Inapropiado</span>
+                            <span style="font-size:10px; opacity:0.8; margin-left:auto; background:rgba(239,68,68,0.25); padding:2px 6px; border-radius:4px;">${result.engine}</span>
+                        </div>
+                        <div>${esc(result.reason)}</div>
+                        ${result.flaggedWords && result.flaggedWords.length > 0 ? `<div style="font-size:11px; margin-top:4px; opacity:0.9;"><strong>Términos detectados:</strong> ${esc(result.flaggedWords.join(', '))}</div>` : ''}
+                    `;
+                } else {
+                    verdictBox.style.background = 'rgba(16, 185, 129, 0.12)';
+                    verdictBox.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+                    verdictBox.style.color = '#6ee7b7';
+                    verdictBox.innerHTML = `
+                        <div style="font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                            <span>✅ Veredicto IA: Contenido Respetuoso</span>
+                            <span style="font-size:10px; opacity:0.8; margin-left:auto; background:rgba(16,185,129,0.25); padding:2px 6px; border-radius:4px;">${result.engine}</span>
+                        </div>
+                        <div>${esc(result.reason)}</div>
+                    `;
+                }
+            } catch (err) {
+                verdictBox.style.display = 'block';
+                verdictBox.style.background = 'rgba(245, 158, 11, 0.15)';
+                verdictBox.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+                verdictBox.style.color = '#fcd34d';
+                verdictBox.innerHTML = `⚠️ No se pudo completar el análisis: ${esc(err.message)}`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
 
         window.resolveReport = async (reportId, action, type = null, targetId = null) => {
             try {

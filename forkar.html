@@ -956,9 +956,14 @@
                 <input type="hidden" id="post-media-image">
                 <input type="hidden" id="post-media-video">
             </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-                <button class="btn-publish" id="btn-submit" onclick="submitPost()">Publicar</button>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <button type="button" id="btn-chatgpt-toggle" onclick="window.openChatGPTModal()" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); color:#34d399; font-size:12px; font-weight:700; padding:8px 14px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    ⚡ Moderación IA (Workers AI / ChatGPT)
+                </button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button class="btn-publish" id="btn-submit" onclick="submitPost()">Publicar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1075,6 +1080,10 @@
             getCurrentUser, formatDate, getUserDisplayName, getUserAvatar, getInitials,
             getEcoActions, getUserEcoImpact, logUserEcoImpact, getEcoMapPoints
         } from './forkar.js';
+        import { moderateContent, setupChatGPTModalUI, openChatGPTModal } from './moderation-client.js';
+
+        window.openChatGPTModal = openChatGPTModal;
+        setupChatGPTModalUI();
 
         //  ALGORITMO DE AFINIDAD Y RANKING INTEGRADO
         function calculateTasteMatchScore(post, userPreferences = []) {
@@ -1385,7 +1394,16 @@
 
             if (!title || !content) { alert('Por favor escribe un título y contenido'); return; }
             const btn = document.getElementById('btn-submit');
-            btn.disabled = true; btn.textContent = 'Publicando...';
+            btn.disabled = true; btn.textContent = 'Verificando con IA...';
+
+            const verdict = await moderateContent({ title, content });
+            if (!verdict.isSafe) {
+                btn.disabled = false; btn.textContent = 'Publicar';
+                alert('⚠️ Publicación no permitida por moderación (' + verdict.engine + '):\n\n' + verdict.reason);
+                return;
+            }
+
+            btn.textContent = 'Publicando...';
             const result = await createPost(title, content, categoryId, { imageUrl, videoUrl });
             btn.disabled = false; btn.textContent = 'Publicar';
             if (result.success) { closeModal(); loadPosts(); }
