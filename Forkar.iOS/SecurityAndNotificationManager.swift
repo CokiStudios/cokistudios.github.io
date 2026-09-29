@@ -13,15 +13,54 @@ class SecurityAndNotificationManager: ObservableObject {
         requestNotificationPermission()
     }
     
+    // MARK: - Biometry Properties (Adaptive for iOS & macOS)
+    var biometryType: LABiometryType {
+        let context = LAContext()
+        _ = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+        return context.biometryType
+    }
+    
+    var biometryName: String {
+        #if os(macOS)
+        return "Touch ID"
+        #else
+        switch biometryType {
+        case .faceID: return "Face ID"
+        case .touchID: return "Touch ID"
+        case .opticID: return "Optic ID"
+        default: return "Touch ID / Contraseña"
+        }
+        #endif
+    }
+    
+    var biometryIcon: String {
+        #if os(macOS)
+        return "touchid"
+        #else
+        switch biometryType {
+        case .faceID: return "faceid"
+        case .touchID: return "touchid"
+        case .opticID: return "opticid"
+        default: return "lock.open.fill"
+        }
+        #endif
+    }
+    
     // MARK: - Face ID / Touch ID Authentication
     func authenticateBiometrics(reason: String = "Autentícate para acceder a los chats privados de Forkar", completion: @escaping (Bool) -> Void) {
         let context = LAContext()
         var error: NSError?
         
-        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) ||
-           context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
-            
-            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, evaluateError in
+        #if os(macOS)
+        let policy: LAPolicy = .deviceOwnerAuthentication
+        #else
+        let policy: LAPolicy = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+            ? .deviceOwnerAuthenticationWithBiometrics
+            : .deviceOwnerAuthentication
+        #endif
+        
+        if context.canEvaluatePolicy(policy, error: &error) {
+            context.evaluatePolicy(policy, localizedReason: reason) { success, evaluateError in
                 DispatchQueue.main.async {
                     if success {
                         self.isUnlocked = true
@@ -29,13 +68,13 @@ class SecurityAndNotificationManager: ObservableObject {
                         completion(true)
                     } else {
                         self.isUnlocked = false
-                        self.authError = evaluateError?.localizedDescription ?? "Autenticación fallida"
+                        self.authError = evaluateError?.localizedDescription ?? "Autenticación cancelada o fallida"
                         completion(false)
                     }
                 }
             }
         } else {
-            // Fallback si el dispositivo no tiene Face ID/Passcode habilitado en simulador
+            // Fallback si el dispositivo no tiene Face ID/Touch ID ni Passcode
             DispatchQueue.main.async {
                 self.isUnlocked = true
                 completion(true)

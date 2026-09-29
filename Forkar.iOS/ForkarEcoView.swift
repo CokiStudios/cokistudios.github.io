@@ -92,6 +92,7 @@ struct ForkarEcoView: View {
                                     }
                                 }
                                 
+                                #if os(iOS)
                                 HStack(spacing: 12) {
                                     Button(action: { scanNFCTag() }) {
                                         HStack(spacing: 4) {
@@ -116,7 +117,7 @@ struct ForkarEcoView: View {
                                     }) {
                                         HStack(spacing: 6) {
                                             Image(systemName: islandManager.isLiveActivityActive ? "stop.circle.fill" : "capsule.portrait.fill")
-                                            Text(islandManager.isLiveActivityActive ? "Detener Isla (OS 26+)" : "Activar Dynamic Island (OS 26+)")
+                                            Text(islandManager.isLiveActivityActive ? "Detener Dynamic Island" : "Activar Dynamic Island")
                                         }
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.white)
@@ -127,6 +128,7 @@ struct ForkarEcoView: View {
                                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(islandManager.isLiveActivityActive ? Color.emerald : Color.purple.opacity(0.4), lineWidth: 1))
                                     }
                                 }
+                                #endif
                             }
                             .padding(.top, 12)
                         }

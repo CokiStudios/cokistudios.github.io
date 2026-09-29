@@ -84,9 +84,9 @@ struct ChatsView: View {
                             await loadRooms()
                         }
                     } else {
-                        // Face ID Locked State Overlay
+                        // Biometric Locked State Overlay (Adaptive Touch ID / Face ID)
                         VStack(spacing: 24) {
-                            Image(systemName: "faceid")
+                            Image(systemName: securityManager.biometryIcon)
                                 .font(.system(size: 72))
                                 .foregroundColor(ForkarTheme.accent)
                             
@@ -94,7 +94,7 @@ struct ChatsView: View {
                                 Text("Chats Privados Protegidos")
                                     .font(.title2.bold())
                                     .foregroundColor(ForkarTheme.text)
-                                Text("Se requiere Face ID / Touch ID para ver tus conversaciones privadas en Forkar.")
+                                Text("Se requiere \(securityManager.biometryName) para ver tus conversaciones privadas en Forkar.")
                                     .font(.subheadline)
                                     .foregroundColor(ForkarTheme.textSub)
                                     .multilineTextAlignment(.center)
@@ -104,7 +104,7 @@ struct ChatsView: View {
                             Button(action: unlockChats) {
                                 HStack {
                                     Image(systemName: "lock.open.fill")
-                                    Text("Desbloquear con Face ID")
+                                    Text("Desbloquear con \(securityManager.biometryName)")
                                 }
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white)
