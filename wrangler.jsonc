@@ -4,5 +4,15 @@
   "compatibility_date": "2026-09-28",
   "assets": {
     "directory": "./public"
-  }
+  },
+  "routes": [
+    {
+      "pattern": "cokistudios.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.cokistudios.com",
+      "custom_domain": true
+    }
+  ]
 }
