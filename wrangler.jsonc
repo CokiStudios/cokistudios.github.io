@@ -6,13 +6,7 @@
     "directory": "./public"
   },
   "routes": [
-    {
-      "pattern": "cokistudios.com",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.cokistudios.com",
-      "custom_domain": true
-    }
+    "cokistudios.com/*",
+    "www.cokistudios.com/*"
   ]
 }
