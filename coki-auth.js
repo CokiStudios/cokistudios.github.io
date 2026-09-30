@@ -10,7 +10,37 @@ import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON, getBr
 const SUPABASE_URL = 'https://cmkumxprmmhuinxfppxl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const authStorageAdapter = {
+    getItem: (key) => {
+        if (typeof window === 'undefined') return null;
+        let val = null;
+        try { val = window.localStorage.getItem(key); } catch (e) {}
+        if (!val) {
+            val = getCookie(key);
+        }
+        return val;
+    },
+    setItem: (key, value) => {
+        if (typeof window === 'undefined') return;
+        try { window.localStorage.setItem(key, value); } catch (e) {}
+        try { setCookie(key, value, { maxAge: 7 * 24 * 60 * 60 }); } catch (e) {}
+    },
+    removeItem: (key) => {
+        if (typeof window === 'undefined') return;
+        try { window.localStorage.removeItem(key); } catch (e) {}
+        try { deleteCookie(key); } catch (e) {}
+    }
+};
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        storage: authStorageAdapter,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+    }
+});
 
 // ─── CATEGORÍAS GLOBALES & TASTE MATCHING ───
 const DEFAULT_CATEGORIES = [
@@ -147,12 +177,21 @@ async function restoreSessionFromBrowserHash() {
 }
 
 async function loginCokiWithOAuth(provider) {
+    const options = {
+        redirectTo: window.location.origin + '/oauth-callback.html'
+    };
+
+    if (provider === 'google') {
+        options.scopes = 'profile email';
+    } else if (provider === 'azure') {
+        // Microsoft Entra ID requiere scopes explícitos openid profile email
+        options.scopes = 'openid profile email';
+        options.queryParams = { prompt: 'select_account' };
+    }
+
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
-        options: {
-            redirectTo: window.location.origin + '/oauth-callback.html',
-            scopes: provider === 'google' ? 'profile email' : undefined
-        }
+        options: options
     });
     
     if (error) {
@@ -160,35 +199,124 @@ async function loginCokiWithOAuth(provider) {
         return { success: false, error: error.message };
     }
     
-    return { success: true };
+    return { success: true, data };
 }
 
 async function handleCokiOAuthCallback() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error || !session) {
-        return { success: false, error: error?.message || 'No session' };
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(
+        window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash
+    );
+
+    // 1. Detección de errores devueltos por el proveedor (Microsoft Entra / Google / Supabase)
+    const errorParam = urlParams.get('error') || hashParams.get('error');
+    const errorDesc = urlParams.get('error_description') || hashParams.get('error_description');
+    if (errorParam || errorDesc) {
+        const fullMsg = errorDesc ? `${errorParam ? errorParam + ': ' : ''}${errorDesc}` : errorParam;
+        console.error(' OAuth Callback URL Error:', fullMsg);
+        return { success: false, error: decodeURIComponent(fullMsg.replace(/\+/g, ' ')) };
     }
-    
+
+    let session = null;
+    let lastError = null;
+
+    // 2. Flujo PKCE: intercambiar código de autorización por sesión
+    const code = urlParams.get('code');
+    if (code) {
+        console.log('🔄 [CSID Auth] Intercambiando código PKCE por sesión de Supabase...');
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error && data?.session) {
+            session = data.session;
+        } else if (error) {
+            console.warn('⚠️ [CSID Auth] Error al intercambiar código PKCE:', error.message);
+            lastError = error;
+            // Si el código ya fue canjeado por detectSessionInUrl en segundo plano, verificar getSession()
+            const { data: currentData } = await supabase.auth.getSession();
+            if (currentData?.session) {
+                session = currentData.session;
+                lastError = null;
+            }
+        }
+    }
+
+    // 3. Flujo implícito: verificar fragmento hash (#access_token=...)
+    if (!session) {
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || '';
+        if (accessToken) {
+            console.log('🔄 [CSID Auth] Estableciendo sesión desde fragmento hash...');
+            const { data, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+            });
+            if (!error && data?.session) {
+                session = data.session;
+                lastError = null;
+            } else if (error) {
+                lastError = error;
+            }
+        }
+    }
+
+    // 4. Fallback: getSession() directa
+    if (!session) {
+        const { data, error } = await supabase.auth.getSession();
+        if (data?.session) {
+            session = data.session;
+            lastError = null;
+        } else if (error) {
+            lastError = error;
+        }
+    }
+
+    // 5. Breve polling de espera (hasta ~1.2s) si la inicialización en segundo plano sigue procesándose
+    if (!session) {
+        for (let i = 0; i < 3; i++) {
+            await new Promise(r => setTimeout(r, 400));
+            const { data } = await supabase.auth.getSession();
+            if (data?.session) {
+                session = data.session;
+                lastError = null;
+                break;
+            }
+        }
+    }
+
+    if (!session) {
+        return { success: false, error: lastError?.message || 'No session' };
+    }
+
     const user = session.user;
-    
-    //  GUARDAR EN COOKIES
+    const userEmail = user.email || user.user_metadata?.email || user.user_metadata?.preferred_username || '';
+    const userName = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.user_metadata?.displayName || 
+                     (userEmail ? userEmail.split('@')[0] : 'Usuario');
+    const userPicture = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+
+    //  GUARDAR EN COOKIES (7 días)
     setCookieJSON('coki_current_user', {
         id: user.id,
-        email: user.email,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.phone || 'Usuario',
-        picture: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+        email: userEmail,
+        name: userName,
+        picture: userPicture,
         metadata: user.user_metadata
     }, { maxAge: 7 * 24 * 60 * 60 });
     
-    if (session) {
+    if (session.access_token) {
         setCookie('coki_access_token', session.access_token, { maxAge: 7 * 24 * 60 * 60 });
+    }
+    if (session.refresh_token) {
         setCookie('coki_refresh_token', session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
     }
 
-    await bindBrowserHash(user.id, user.email);
+    try {
+        await bindBrowserHash(user.id, userEmail);
+    } catch (e) {
+        console.warn('bindBrowserHash warning:', e);
+    }
     
-    return { success: true, user };
+    return { success: true, user, session };
 }
 
 async function resetCokiPassword(email) {
@@ -258,11 +386,17 @@ async function getCurrentCokiUser() {
         const { data: { user }, error } = await supabase.auth.getUser();
         
         if (user) {
+            const email = user.email || user.user_metadata?.email || user.user_metadata?.preferred_username || '';
+            const name = user.user_metadata?.full_name || 
+                         user.user_metadata?.name || 
+                         user.user_metadata?.displayName || 
+                         (email ? email.split('@')[0] : 'Usuario');
+            const picture = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
             return {
                 id: user.id,
-                email: user.email,
-                name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
-                picture: user.user_metadata?.avatar_url,
+                email: email,
+                name: name,
+                picture: picture,
                 metadata: user.user_metadata
             };
         }
@@ -292,13 +426,27 @@ supabase.auth.onAuthStateChange((event, session) => {
     
     if (event === 'SIGNED_IN' && session) {
         const user = session.user;
+        const email = user.email || user.user_metadata?.email || user.user_metadata?.preferred_username || '';
+        const name = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.user_metadata?.displayName || 
+                     (email ? email.split('@')[0] : 'Usuario');
+        const picture = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+        
         setCookieJSON('coki_current_user', {
             id: user.id,
-            email: user.email,
-            name: user.user_metadata?.full_name || user.email || user.phone || 'Usuario',
-            picture: user.user_metadata?.avatar_url,
+            email: email,
+            name: name,
+            picture: picture,
             metadata: user.user_metadata
         }, { maxAge: 7 * 24 * 60 * 60 });
+
+        if (session.access_token) {
+            setCookie('coki_access_token', session.access_token, { maxAge: 7 * 24 * 60 * 60 });
+        }
+        if (session.refresh_token) {
+            setCookie('coki_refresh_token', session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
+        }
     }
     
     if (event === 'SIGNED_OUT') {
