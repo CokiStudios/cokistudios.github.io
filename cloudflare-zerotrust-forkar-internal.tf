@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-#  CLOUDFLARE ZERO TRUST (ACCESS) CONFIGURATION FOR FORKAR INTERNAL
-#  Target: forkar-internal.cokistudios.com
-#  Rule: Only emails ending in @cokistudios.com are allowed
+#  CLOUDFLARE ZERO TRUST (ACCESS) CONFIGURATION FOR FORKAR INTERNAL & CSIMS
+#  Target: forkar-internal.cokistudios.com & csims.cokistudios.com
+#  Rule: Only authenticated Microsoft accounts ending in @cokistudios.com
 # ═══════════════════════════════════════════════════════════════════════════════
 
 terraform {
@@ -23,10 +23,16 @@ variable "cloudflare_zone_id" {
   description = "The Zone ID for cokistudios.com"
 }
 
-# 1. Reusable Access Policy for Coki Studios Team (@cokistudios.com)
+variable "azure_idp_id" {
+  type        = string
+  description = "The ID of the Azure AD / Microsoft Entra ID provider in Cloudflare Access"
+  default     = ""
+}
+
+# 1. Reusable Access Policy for Coki Studios Team (@cokistudios.com via Microsoft)
 resource "cloudflare_zero_trust_access_policy" "coki_studios_team_only" {
   account_id = var.cloudflare_account_id
-  name       = "Allow Coki Studios Team (@cokistudios.com)"
+  name       = "Allow Coki Studios Team (@cokistudios.com via Microsoft)"
   decision   = "allow"
 
   include {
@@ -43,7 +49,8 @@ resource "cloudflare_zero_trust_access_application" "forkar_internal" {
   domain                    = "forkar-internal.cokistudios.com"
   type                      = "self_hosted"
   session_duration          = "24h"
-  auto_redirect_to_identity = false
+  auto_redirect_to_identity = true
+  allowed_idps              = var.azure_idp_id != "" ? [var.azure_idp_id] : null
   app_launcher_visible      = true
   policies                  = [cloudflare_zero_trust_access_policy.coki_studios_team_only.id]
 
@@ -62,7 +69,8 @@ resource "cloudflare_zero_trust_access_application" "csims_internal" {
   domain                    = "csims.cokistudios.com"
   type                      = "self_hosted"
   session_duration          = "24h"
-  auto_redirect_to_identity = false
+  auto_redirect_to_identity = true
+  allowed_idps              = var.azure_idp_id != "" ? [var.azure_idp_id] : null
   app_launcher_visible      = true
   policies                  = [cloudflare_zero_trust_access_policy.coki_studios_team_only.id]
 }

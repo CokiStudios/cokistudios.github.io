@@ -301,7 +301,14 @@
                             return;
                         }
                         
-                        // 2. Parámetro redirect en URL
+                        // 2. Parámetro redirect en URL o sesión
+                        const storedRedirect = sessionStorage.getItem('coki_auth_redirect');
+                        if (storedRedirect) {
+                            sessionStorage.removeItem('coki_auth_redirect');
+                            window.location.href = storedRedirect;
+                            return;
+                        }
+
                         const targetRedirect = params.get('redirect') || '/dashboard.html';
                         window.location.href = targetRedirect;
                     }, 900);

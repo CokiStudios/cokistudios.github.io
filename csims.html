@@ -524,9 +524,45 @@
 
         .modal-error {
             color: var(--danger);
-            font-size: 12px;
+            font-size: 13px;
             margin-top: 10px;
             font-weight: 600;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .btn-ms-login {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-ms-login:hover {
+            background: #1e293b;
+            border-color: #6366f1;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-ms-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -611,29 +647,35 @@
         </main>
     </div>
 
-    <!-- ── MODAL AUTH ZERO TRUST ── -->
+    <!-- ── MODAL AUTH ZERO TRUST (SOLO MICROSOFT) ── -->
     <div class="modal-overlay" id="authModal">
         <div class="modal">
-            <div class="modal-icon">🛡️</div>
-            <h2 class="modal-title">Acceso Restringido CSIMS</h2>
+            <div class="modal-icon">
+                <svg width="48" height="48" viewBox="0 0 23 23" style="margin: 0 auto;">
+                    <path fill="#f35325" d="M1 1h10v10H1z" />
+                    <path fill="#81bc06" d="M12 1h10v10H12z" />
+                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                    <path fill="#ffba08" d="M12 12h10v10H12z" />
+                </svg>
+            </div>
+            <h2 class="modal-title">Acceso Exclusivo con Microsoft</h2>
             <p class="modal-desc">
-                Este servicio de mensajería interna está protegido por <strong>Cloudflare Zero Trust</strong>. 
-                Ingresa con tu correo corporativo terminado en <strong>@cokistudios.com</strong>.
+                CSIMS está protegido por <strong>Cloudflare Zero Trust</strong>.
+                El acceso a las salas de operaciones y canales cifrados está reservado estrictamente para colaboradores de Coki Studios autenticados con su cuenta corporativa Microsoft terminada en <strong>@cokistudios.com</strong>.
             </p>
-            <input 
-                type="email" 
-                class="modal-input" 
-                id="internalEmailInput" 
-                placeholder="tu.nombre@cokistudios.com"
-            />
-            <input 
-                type="password" 
-                class="modal-input" 
-                id="internalPasswordInput" 
-                placeholder="Contraseña / Token de acceso"
-            />
-            <button class="modal-btn" onclick="submitAuth()">Ingresar al Servicio Interno</button>
-            <div class="modal-error" id="authErrorMsg" style="display: none;"></div>
+            <div class="modal-error" id="authErrorMsg" style="display: none; margin-bottom: 16px;"></div>
+            <button class="btn-ms-login" id="btnMsAuth" onclick="startMicrosoftLogin()">
+                <svg width="20" height="20" viewBox="0 0 23 23">
+                    <path fill="#f35325" d="M1 1h10v10H1z" />
+                    <path fill="#81bc06" d="M12 1h10v10H12z" />
+                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                    <path fill="#ffba08" d="M12 12h10v10H12z" />
+                </svg>
+                <span>Continuar con Microsoft (@cokistudios.com)</span>
+            </button>
+            <div style="margin-top: 18px; font-size: 11px; color: var(--text-muted);">
+                🔒 Cifrado E2EE con respaldo de hardware Secure Enclave / KeyStore
+            </div>
         </div>
     </div>
 
@@ -656,7 +698,9 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { getCurrentCokiUser, loginCokiWithOAuth, logoutCoki } from './coki-auth.js';
+
         // ─────────────────────────────────────────────────────────────
         // 🔐 CSIMS CRYPTOGRAPHIC ENGINE (Web Crypto AES-256-GCM)
         // Interoperable con CSIMSEncryption.swift y CSIMSEncryption.kt
@@ -754,43 +798,50 @@
         let mockMessages = [];
 
         // ─────────────────────────────────────────────────────────────
-        // 🛡️ ZERO TRUST AUTH CHECK
+        // 🛡️ ZERO TRUST AUTH CHECK (SOLO MICROSOFT @COKISTUDIOS.COM)
         // ─────────────────────────────────────────────────────────────
-        function checkZeroTrustAccess() {
-            // Verificar si el correo es corporativo @cokistudios.com
-            if (!currentUserEmail || !currentUserEmail.toLowerCase().endsWith("@cokistudios.com")) {
-                document.getElementById("authModal").classList.add("open");
-            } else {
-                document.getElementById("authModal").classList.remove("open");
-                document.getElementById("currentEmailTag").textContent = currentUserEmail;
-                loadChannels();
-                loadMessages();
-            }
-        }
-
-        function submitAuth() {
-            const email = document.getElementById("internalEmailInput").value.trim().toLowerCase();
+        async function checkZeroTrustAccess() {
+            const user = await getCurrentCokiUser();
             const errBox = document.getElementById("authErrorMsg");
 
-            if (!email.endsWith("@cokistudios.com")) {
-                errBox.textContent = "⚠️ Acceso denegado: El correo debe terminar estrictamente en @cokistudios.com";
-                errBox.style.display = "block";
+            if (!user || !user.email) {
+                document.getElementById("authModal").classList.add("open");
+                if (errBox) errBox.style.display = "none";
                 return;
             }
 
+            const email = (user.email || '').toLowerCase().trim();
+            if (!email.endsWith("@cokistudios.com")) {
+                document.getElementById("authModal").classList.add("open");
+                if (errBox) {
+                    errBox.textContent = `⚠️ Acceso denegado: La cuenta actual (${email}) no pertenece a la organización @cokistudios.com. Debes iniciar sesión con tu cuenta corporativa Microsoft.`;
+                    errBox.style.display = "block";
+                }
+                return;
+            }
+
+            // Usuario corporativo verificado
             currentUserEmail = email;
-            localStorage.setItem("csims_user_email", email);
-            errBox.style.display = "none";
+            if (errBox) errBox.style.display = "none";
             document.getElementById("authModal").classList.remove("open");
-            document.getElementById("currentEmailTag").textContent = currentUserEmail;
+            document.getElementById("currentEmailTag").textContent = `${email} (MS Entra)`;
             loadChannels();
             loadMessages();
         }
 
-        function handleLogout() {
-            localStorage.removeItem("csims_user_email");
-            currentUserEmail = "";
-            checkZeroTrustAccess();
+        async function startMicrosoftLogin() {
+            const btn = document.getElementById("btnMsAuth");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Redirigiendo a Microsoft...</span>';
+            }
+            sessionStorage.setItem('coki_auth_redirect', '/csims.html');
+            await loginCokiWithOAuth('azure');
+        }
+
+        async function handleLogout() {
+            await logoutCoki();
+            window.location.reload();
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -935,6 +986,14 @@
             p.textContent = str;
             return p.innerHTML;
         }
+
+        // Exponer funciones globales para eventos del DOM
+        window.startMicrosoftLogin = startMicrosoftLogin;
+        window.handleLogout = handleLogout;
+        window.openNewChannelModal = openNewChannelModal;
+        window.closeNewChannelModal = closeNewChannelModal;
+        window.submitCreateChannel = submitCreateChannel;
+        window.handleSendMessage = handleSendMessage;
 
         // Inicio
         checkZeroTrustAccess();

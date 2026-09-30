@@ -291,6 +291,109 @@
             align-items: center;
             gap: 4px;
         }
+
+        /* ── ZERO TRUST AUTH MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            padding: 38px 32px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(99, 102, 241, 0.15);
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+            padding: 4px 12px;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-badge span {
+            color: var(--accent);
+        }
+
+        .modal-icon {
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .modal-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-error {
+            color: #f43f5e;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .btn-ms-login {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-ms-login:hover {
+            background: #1e293b;
+            border-color: #6366f1;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-ms-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -303,6 +406,8 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 14px;">
+            <span id="userEmailBadge" style="display:none; font-size:12px; font-weight:600; font-family:'JetBrains Mono', monospace; background:rgba(255,255,255,0.06); border:1px solid var(--border); padding:5px 12px; border-radius:8px; color:#cbd5e1;"></span>
+            <button id="btnHeaderLogout" style="display:none; background:transparent; border:1px solid var(--border); color:var(--text-sub); padding:5px 10px; border-radius:8px; font-size:11px; cursor:pointer;">Cerrar sesión</button>
             <div class="zt-tag">
                 <span class="dot"></span>
                 <span>Zero Trust: @cokistudios.com</span>
@@ -407,5 +512,104 @@
         </section>
     </main>
 
+    <!-- ── MODAL AUTH ZERO TRUST (SOLO MICROSOFT) ── -->
+    <div class="modal-overlay" id="forkarAuthModal">
+        <div class="modal-card">
+            <div class="brand-badge">
+                <span>ZERO TRUST</span> &bull; FORKAR INTERNAL
+            </div>
+            <div class="modal-icon">
+                <svg width="48" height="48" viewBox="0 0 23 23" style="margin: 0 auto;">
+                    <path fill="#f35325" d="M1 1h10v10H1z" />
+                    <path fill="#81bc06" d="M12 1h10v10H12z" />
+                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                    <path fill="#ffba08" d="M12 12h10v10H12z" />
+                </svg>
+            </div>
+            <h2 class="modal-title">Acceso Exclusivo con Microsoft</h2>
+            <p class="modal-desc">
+                Este portal interno contiene telemetría de moderación y servicios operativos de Forkar.
+                El acceso está restringido estrictamente a cuentas corporativas de Microsoft terminadas en <strong>@cokistudios.com</strong>.
+            </p>
+            <div class="modal-error" id="authErrorMsg" style="display: none; margin-bottom: 16px;"></div>
+            <button class="btn-ms-login" id="btnMsForkarLogin">
+                <svg width="20" height="20" viewBox="0 0 23 23">
+                    <path fill="#f35325" d="M1 1h10v10H1z" />
+                    <path fill="#81bc06" d="M12 1h10v10H12z" />
+                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                    <path fill="#ffba08" d="M12 12h10v10H12z" />
+                </svg>
+                <span>Iniciar sesión con Microsoft (@cokistudios.com)</span>
+            </button>
+            <div style="margin-top: 18px;">
+                <a href="forkar.html" style="font-size: 12px; color: var(--text-sub); text-decoration: none;">← Volver a Forkar Público</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getCurrentCokiUser, loginCokiWithOAuth, logoutCoki } from './coki-auth.js';
+
+        const modal = document.getElementById("forkarAuthModal");
+        const errorBox = document.getElementById("authErrorMsg");
+        const btnLogin = document.getElementById("btnMsForkarLogin");
+        const userBadge = document.getElementById("userEmailBadge");
+        const btnLogout = document.getElementById("btnHeaderLogout");
+        const mainContainer = document.querySelector(".container");
+
+        btnLogin?.addEventListener("click", async () => {
+            btnLogin.disabled = true;
+            btnLogin.innerHTML = '<span>Redirigiendo a Microsoft...</span>';
+            sessionStorage.setItem('coki_auth_redirect', '/forkar-internal.html');
+            await loginCokiWithOAuth('azure');
+        });
+
+        btnLogout?.addEventListener("click", async () => {
+            await logoutCoki();
+            window.location.reload();
+        });
+
+        async function verifyAccess() {
+            const user = await getCurrentCokiUser();
+            if (!user || !user.email) {
+                modal.style.display = "flex";
+                if (mainContainer) {
+                    mainContainer.style.filter = "blur(10px)";
+                    mainContainer.style.pointerEvents = "none";
+                }
+                return;
+            }
+
+            const email = (user.email || '').toLowerCase().trim();
+            if (!email.endsWith("@cokistudios.com")) {
+                modal.style.display = "flex";
+                if (mainContainer) {
+                    mainContainer.style.filter = "blur(10px)";
+                    mainContainer.style.pointerEvents = "none";
+                }
+                if (errorBox) {
+                    errorBox.textContent = `⚠️ Acceso denegado: Tu cuenta actual (${email}) no pertenece a @cokistudios.com. Debes ingresar con tu cuenta corporativa Microsoft.`;
+                    errorBox.style.display = "block";
+                }
+                return;
+            }
+
+            // Acceso verificado
+            modal.style.display = "none";
+            if (mainContainer) {
+                mainContainer.style.filter = "none";
+                mainContainer.style.pointerEvents = "auto";
+            }
+            if (userBadge) {
+                userBadge.textContent = `${email} (MS Entra)`;
+                userBadge.style.display = "inline-flex";
+            }
+            if (btnLogout) {
+                btnLogout.style.display = "inline-flex";
+            }
+        }
+
+        verifyAccess();
+    </script>
 </body>
 </html>

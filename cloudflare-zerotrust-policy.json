@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Cloudflare Zero Trust Access Configuration for Forkar Internal & CSIMS",
-  "description": "Restricts access to forkar-internal.cokistudios.com and csims.cokistudios.com strictly to authenticated accounts ending in @cokistudios.com",
+  "title": "Cloudflare Zero Trust Access Configuration for Forkar Internal & CSIMS (Microsoft Only)",
+  "description": "Restricts access to forkar-internal.cokistudios.com and csims.cokistudios.com strictly to authenticated accounts ending in @cokistudios.com via Microsoft Entra ID (Azure AD)",
   "policy": {
-    "name": "Allow Coki Studios Internal Team",
+    "name": "Allow Coki Studios Internal Team (Microsoft Only)",
     "decision": "allow",
     "include": [
       {
@@ -22,12 +22,14 @@
       "type": "self_hosted",
       "session_duration": "24h",
       "app_launcher_visible": true,
-      "allowed_idps": [],
-      "auto_redirect_to_identity": false,
+      "allowed_idps": [
+        "azure-ad"
+      ],
+      "auto_redirect_to_identity": true,
       "enable_binding_cookie": false,
       "http_only_cookie_attribute": true,
       "same_site_cookie_attribute": "lax",
-      "custom_deny_message": "Acceso Restringido: Esta área interna de Forkar es exclusiva para personal y desarrolladores verificados de Coki Studios (@cokistudios.com).",
+      "custom_deny_message": "Acceso Restringido: Esta área interna de Forkar es exclusiva para personal y desarrolladores verificados de Coki Studios (@cokistudios.com) autenticados exclusivamente mediante Microsoft.",
       "custom_deny_url": "https://forkar.cokistudios.com/access-denied.html"
     },
     {
@@ -36,12 +38,14 @@
       "type": "self_hosted",
       "session_duration": "24h",
       "app_launcher_visible": true,
-      "allowed_idps": [],
-      "auto_redirect_to_identity": false,
+      "allowed_idps": [
+        "azure-ad"
+      ],
+      "auto_redirect_to_identity": true,
       "enable_binding_cookie": false,
       "http_only_cookie_attribute": true,
       "same_site_cookie_attribute": "lax",
-      "custom_deny_message": "CSIMS: Servicio de mensajería interna reservado exclusivamente para correos @cokistudios.com."
+      "custom_deny_message": "CSIMS: Servicio de mensajería interna reservado exclusivamente para cuentas Microsoft corporativas @cokistudios.com."
     }
   ]
 }
