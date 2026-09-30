@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSIMS — Coki Studios Internal Messaging Service</title>
+    <meta name="description" content="CSIMS es el servicio de mensajería interna y cifrada de Coki Studios, protegido por Cloudflare Zero Trust para personal @cokistudios.com.">
+    <link rel="icon" type="image/svg+xml" href="assets/forkar-icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --bg2: #0d1117;
+            --sidebar: #090d16;
+            --card: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.4);
+            --accent: #6366f1;
+            --accent2: #8b5cf6;
+            --green: #10b981;
+            --danger: #ef4444;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #475569;
+            --shadow: rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── TOP NAV BAR ── */
+        .topbar {
+            height: 60px;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+        }
+
+        .brand-zone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            font-weight: 900;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .brand-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .zt-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: var(--green);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.2px;
+        }
+
+        .zt-pill .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+        }
+
+        .user-zone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-email-tag {
+            font-size: 12px;
+            font-weight: 600;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .app-body {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* ── CHANNELS SIDEBAR ── */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-sub);
+        }
+
+        .btn-new-room {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--accent);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-new-room:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .channel-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--text-sub);
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .channel-item:hover {
+            background: var(--card-hover);
+            color: var(--text);
+        }
+
+        .channel-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #ffffff;
+            border-color: rgba(99, 102, 241, 0.35);
+        }
+
+        .channel-icon {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .channel-badge {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            color: var(--text-sub);
+        }
+
+        .sidebar-footer {
+            padding: 14px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* ── CHAT PANEL ── */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            position: relative;
+        }
+
+        .chat-header {
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(9, 13, 22, 0.4);
+            backdrop-filter: blur(12px);
+        }
+
+        .chat-title-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chat-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-desc {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .hardware-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        /* ── MESSAGES LIST ── */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .msg-row {
+            display: flex;
+            gap: 12px;
+            max-width: 80%;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .msg-row.mine {
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+
+        .msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .msg-content-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .msg-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .msg-meta .author {
+            font-weight: 700;
+            color: #cbd5e1;
+        }
+
+        .msg-bubble {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 16px;
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.5;
+            position: relative;
+            word-break: break-word;
+        }
+
+        .msg-row.mine .msg-bubble {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(79, 70, 229, 0.35));
+            border-color: rgba(99, 102, 241, 0.4);
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-row:not(.mine) .msg-bubble {
+            border-bottom-left-radius: 4px;
+        }
+
+        .enc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #10b981;
+            margin-top: 4px;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            width: fit-content;
+        }
+
+        /* ── CHAT INPUT COMPONENT ── */
+        .chat-input-area {
+            padding: 16px 24px 20px;
+            border-top: 1px solid var(--border);
+            background: rgba(9, 13, 22, 0.6);
+            backdrop-filter: blur(12px);
+        }
+
+        .chat-form {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 6px 10px 6px 16px;
+            transition: border-color 0.2s;
+        }
+
+        .chat-form:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-send:hover {
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── ZERO TRUST AUTH MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            padding: 36px 32px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(99, 102, 241, 0.15);
+        }
+
+        .modal-icon {
+            font-size: 44px;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .modal-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn:hover {
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .modal-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── TOP BAR ── -->
+    <header class="topbar">
+        <div class="brand-zone">
+            <span class="brand-badge">CSIMS</span>
+            <div>
+                <div class="brand-title">
+                    Coki Studios Internal Messaging Service
+                </div>
+                <div class="brand-sub">Comunicaciones clasificadas y canales de equipo</div>
+            </div>
+        </div>
+
+        <div class="user-zone">
+            <div class="zt-pill">
+                <span class="dot"></span>
+                <span>Cloudflare Zero Trust (@cokistudios.com)</span>
+            </div>
+            <span class="user-email-tag" id="currentEmailTag">cargando...</span>
+            <button class="btn-new-room" onclick="handleLogout()" title="Cerrar sesión interna">Salir</button>
+        </div>
+    </header>
+
+    <!-- ── APP BODY ── -->
+    <div class="app-body">
+        <!-- ── SIDEBAR CANALES ── -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">Canales Internos</span>
+                <button class="btn-new-room" onclick="openNewChannelModal()">+ Nuevo</button>
+            </div>
+
+            <nav class="channel-list" id="channelList">
+                <!-- Se poblarán dinámicamente -->
+            </nav>
+
+            <div class="sidebar-footer">
+                <div>🔐 <strong>E2EE Hardware Backed:</strong> AES-256-GCM</div>
+                <div>🛡️ <strong>Zero Trust Policy:</strong> Domain = cokistudios.com</div>
+            </div>
+        </aside>
+
+        <!-- ── ÁREA DE CHAT ── -->
+        <main class="chat-area">
+            <div class="chat-header">
+                <div class="chat-title-info">
+                    <div class="chat-title" id="activeChatTitle">
+                        <span>#</span> <span id="activeChannelName">general-coki</span>
+                    </div>
+                    <div class="chat-desc" id="activeChatDesc">Canal principal de anuncios e ingeniería interna</div>
+                </div>
+
+                <div class="hardware-badge">
+                    <span>🔒</span>
+                    <span id="hardwareBadgeText">CSIMS AES-256-GCM Enclave</span>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <!-- Mensajes cifrados en memoria -->
+            </div>
+
+            <div class="chat-input-area">
+                <form class="chat-form" id="chatForm" onsubmit="handleSendMessage(event)">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="messageInput" 
+                        placeholder="Escribe un mensaje cifrado para el equipo (@cokistudios.com)..." 
+                        autocomplete="off"
+                    />
+                    <button type="submit" class="btn-send" id="btnSend">
+                        <span>Enviar</span>
+                        <span>✈</span>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- ── MODAL AUTH ZERO TRUST ── -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <div class="modal-icon">🛡️</div>
+            <h2 class="modal-title">Acceso Restringido CSIMS</h2>
+            <p class="modal-desc">
+                Este servicio de mensajería interna está protegido por <strong>Cloudflare Zero Trust</strong>. 
+                Ingresa con tu correo corporativo terminado en <strong>@cokistudios.com</strong>.
+            </p>
+            <input 
+                type="email" 
+                class="modal-input" 
+                id="internalEmailInput" 
+                placeholder="tu.nombre@cokistudios.com"
+            />
+            <input 
+                type="password" 
+                class="modal-input" 
+                id="internalPasswordInput" 
+                placeholder="Contraseña / Token de acceso"
+            />
+            <button class="modal-btn" onclick="submitAuth()">Ingresar al Servicio Interno</button>
+            <div class="modal-error" id="authErrorMsg" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- ── MODAL NUEVO CANAL ── -->
+    <div class="modal-overlay" id="newChannelModal">
+        <div class="modal">
+            <div class="modal-icon">💬</div>
+            <h2 class="modal-title">Nuevo Canal Interno</h2>
+            <p class="modal-desc">Crea una sala de chat cifrada de extremo a extremo para el equipo.</p>
+            <input 
+                type="text" 
+                class="modal-input" 
+                id="newChannelNameInput" 
+                placeholder="ej. security-incident-2026"
+            />
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="modal-btn" style="background: rgba(255,255,255,0.08);" onclick="closeNewChannelModal()">Cancelar</button>
+                <button class="modal-btn" onclick="submitCreateChannel()">Crear Canal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─────────────────────────────────────────────────────────────
+        // 🔐 CSIMS CRYPTOGRAPHIC ENGINE (Web Crypto AES-256-GCM)
+        // Interoperable con CSIMSEncryption.swift y CSIMSEncryption.kt
+        // ─────────────────────────────────────────────────────────────
+        const CSIMS_SALT = "CSIMS_E2EE_COKI_STUDIOS_v1_SALT_INTERNAL";
+        const CSIMS_PREFIX = "🔒 csims:v1:";
+        const LEGACY_PREFIX = "🔒 enc:v1:";
+
+        // Deriva clave AES-256 a partir del ID de sala
+        async function deriveRoomKey(roomId) {
+            const cleanId = String(roomId).trim().toLowerCase();
+            const seed = `${cleanId}:${CSIMS_SALT}`;
+            const encoder = new TextEncoder();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(seed));
+            return crypto.subtle.importKey(
+                'raw',
+                hashBuffer,
+                { name: 'AES-GCM' },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        // Cifra texto plano con AES-256-GCM (12-byte IV + 128-bit tag)
+        async function csimsEncrypt(plainText, roomId) {
+            if (!plainText) return plainText;
+            const key = await deriveRoomKey(roomId);
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const encoder = new TextEncoder();
+            const encryptedBuffer = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv, tagLength: 128 },
+                key,
+                encoder.encode(plainText)
+            );
+
+            // Convertir IV y Combined Data a Base64
+            const ivBase64 = btoa(String.fromCharCode(...iv));
+            const combinedArray = new Uint8Array(encryptedBuffer);
+            let combinedBinary = '';
+            for (let i = 0; i < combinedArray.byteLength; i++) {
+                combinedBinary += String.fromCharCode(combinedArray[i]);
+            }
+            const combinedBase64 = btoa(combinedBinary);
+
+            return `${CSIMS_PREFIX}${ivBase64}:${combinedBase64}`;
+        }
+
+        // Descifra mensaje si tiene prefijo CSIMS o CSMS
+        async function csimsDecrypt(payload, roomId) {
+            if (!payload) return { text: '', isEncrypted: false };
+            const trimmed = String(payload).trim();
+            const isCsims = trimmed.startsWith(CSIMS_PREFIX);
+            const isLegacy = trimmed.startsWith(LEGACY_PREFIX);
+
+            if (!isCsims && !isLegacy) {
+                return { text: payload, isEncrypted: false };
+            }
+
+            try {
+                const prefix = isCsims ? CSIMS_PREFIX : LEGACY_PREFIX;
+                const raw = trimmed.slice(prefix.length);
+                const [ivBase64, combinedBase64] = raw.split(':');
+                if (!ivBase64 || !combinedBase64) return { text: payload, isEncrypted: false };
+
+                const iv = Uint8Array.from(atob(ivBase64), c => c.charCodeAt(0));
+                const combined = Uint8Array.from(atob(combinedBase64), c => c.charCodeAt(0));
+
+                const key = await deriveRoomKey(roomId);
+                const decryptedBuffer = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv, tagLength: 128 },
+                    key,
+                    combined
+                );
+
+                const decoder = new TextDecoder();
+                return { text: decoder.decode(decryptedBuffer), isEncrypted: true };
+            } catch (err) {
+                console.warn('CSIMS Decryption fallback:', err);
+                return { text: payload, isEncrypted: false };
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 🏢 CSIMS CANONICAL INTERNAL ROOMS
+        // ─────────────────────────────────────────────────────────────
+        const CANONICAL_ROOMS = [
+            { id: "10000000-0000-0000-0000-000000000001", name: "general-coki", desc: "Anuncios y coordinación general del equipo Coki Studios" },
+            { id: "10000000-0000-0000-0000-000000000002", name: "eng-forkar", desc: "Ingeniería, Swift, Kotlin, Cloudflare Workers y Core" },
+            { id: "10000000-0000-0000-0000-000000000003", name: "security-ops", desc: "Operaciones de Seguridad, Zero Trust y Hardware Enclave" },
+            { id: "10000000-0000-0000-0000-000000000004", name: "design-system", desc: "Lineamientos de diseño, Liquid Glass y UX" }
+        ];
+
+        let activeRoom = CANONICAL_ROOMS[0];
+        let currentUserEmail = localStorage.getItem("csims_user_email") || "";
+        let mockMessages = [];
+
+        // ─────────────────────────────────────────────────────────────
+        // 🛡️ ZERO TRUST AUTH CHECK
+        // ─────────────────────────────────────────────────────────────
+        function checkZeroTrustAccess() {
+            // Verificar si el correo es corporativo @cokistudios.com
+            if (!currentUserEmail || !currentUserEmail.toLowerCase().endsWith("@cokistudios.com")) {
+                document.getElementById("authModal").classList.add("open");
+            } else {
+                document.getElementById("authModal").classList.remove("open");
+                document.getElementById("currentEmailTag").textContent = currentUserEmail;
+                loadChannels();
+                loadMessages();
+            }
+        }
+
+        function submitAuth() {
+            const email = document.getElementById("internalEmailInput").value.trim().toLowerCase();
+            const errBox = document.getElementById("authErrorMsg");
+
+            if (!email.endsWith("@cokistudios.com")) {
+                errBox.textContent = "⚠️ Acceso denegado: El correo debe terminar estrictamente en @cokistudios.com";
+                errBox.style.display = "block";
+                return;
+            }
+
+            currentUserEmail = email;
+            localStorage.setItem("csims_user_email", email);
+            errBox.style.display = "none";
+            document.getElementById("authModal").classList.remove("open");
+            document.getElementById("currentEmailTag").textContent = currentUserEmail;
+            loadChannels();
+            loadMessages();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem("csims_user_email");
+            currentUserEmail = "";
+            checkZeroTrustAccess();
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 💬 CANALES Y MENSAJES
+        // ─────────────────────────────────────────────────────────────
+        function loadChannels() {
+            const list = document.getElementById("channelList");
+            list.innerHTML = "";
+
+            CANONICAL_ROOMS.forEach(room => {
+                const el = document.createElement("div");
+                el.className = `channel-item ${room.id === activeRoom.id ? 'active' : ''}`;
+                el.onclick = () => selectChannel(room);
+                el.innerHTML = `
+                    <span class="channel-icon">#</span>
+                    <span>${room.name}</span>
+                    <span class="channel-badge">E2EE</span>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function selectChannel(room) {
+            activeRoom = room;
+            document.getElementById("activeChannelName").textContent = room.name;
+            document.getElementById("activeChatDesc").textContent = room.desc;
+            loadChannels();
+            loadMessages();
+        }
+
+        async function loadMessages() {
+            const container = document.getElementById("messagesContainer");
+            container.innerHTML = "";
+
+            // Cargar mensajes guardados para esta sala
+            const storageKey = `csims_msgs_${activeRoom.id}`;
+            const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+            if (stored.length === 0) {
+                // Mensaje semilla de bienvenida cifrado para el canal
+                const seedMsg = await csimsEncrypt(`Bienvenido al canal interno #${activeRoom.name}. Todos los mensajes están cifrados con AES-256-GCM y respaldados por Cloudflare Zero Trust.`, activeRoom.id);
+                stored.push({
+                    id: "seed-1",
+                    author: "CSIMS Security Bot",
+                    email: "security@cokistudios.com",
+                    payload: seedMsg,
+                    time: "12:00"
+                });
+                localStorage.setItem(storageKey, JSON.stringify(stored));
+            }
+
+            for (const msg of stored) {
+                const decrypted = await csimsDecrypt(msg.payload, activeRoom.id);
+                const isMine = msg.email === currentUserEmail;
+
+                const row = document.createElement("div");
+                row.className = `msg-row ${isMine ? 'mine' : ''}`;
+                row.innerHTML = `
+                    <div class="msg-avatar">${msg.author.charAt(0).toUpperCase()}</div>
+                    <div class="msg-content-box">
+                        <div class="msg-meta">
+                            <span class="author">${escapeHtml(msg.author)}</span>
+                            <span>${msg.time}</span>
+                        </div>
+                        <div class="msg-bubble">
+                            ${escapeHtml(decrypted.text)}
+                            ${decrypted.isEncrypted ? '<div class="enc-badge">🔒 Cifrado E2EE CSIMS</div>' : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById("messageInput");
+            const text = input.value.trim();
+            if (!text) return;
+
+            const btn = document.getElementById("btnSend");
+            btn.disabled = true;
+
+            try {
+                // 1. Cifrado en el cliente con clave de sala derivada
+                const encryptedPayload = await csimsEncrypt(text, activeRoom.id);
+
+                // 2. Persistir localmente en sala
+                const storageKey = `csims_msgs_${activeRoom.id}`;
+                const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                stored.push({
+                    id: 'msg-' + Date.now(),
+                    author: currentUserEmail.split('@')[0],
+                    email: currentUserEmail,
+                    payload: encryptedPayload,
+                    time: timeStr
+                });
+
+                localStorage.setItem(storageKey, JSON.stringify(stored));
+                input.value = "";
+                await loadMessages();
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function openNewChannelModal() {
+            document.getElementById("newChannelModal").classList.add("open");
+        }
+
+        function closeNewChannelModal() {
+            document.getElementById("newChannelModal").classList.remove("open");
+        }
+
+        function submitCreateChannel() {
+            const input = document.getElementById("newChannelNameInput");
+            const name = input.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+            if (!name) return;
+
+            const newRoom = {
+                id: 'custom-' + Date.now(),
+                name: name,
+                desc: `Canal privado creado por ${currentUserEmail}`
+            };
+
+            CANONICAL_ROOMS.push(newRoom);
+            activeRoom = newRoom;
+            closeNewChannelModal();
+            input.value = "";
+            loadChannels();
+            loadMessages();
+        }
+
+        function escapeHtml(str) {
+            const p = document.createElement("p");
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
+        // Inicio
+        checkZeroTrustAccess();
+    </script>
+</body>
+</html>

@@ -775,8 +775,8 @@ class SupabaseManager: ObservableObject {
         let cleanId = roomId.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         
         // Protección contra borrado de salas canónicas del sistema
-        if CSMSCanonicalRooms.isProtected(roomId: cleanId) {
-            throw NSError(domain: "SupabaseManager", code: 403, userInfo: [NSLocalizedDescriptionKey: "Esta sala oficial comunitaria de Forkar no puede ser eliminada."])
+        if CSMSCanonicalRooms.isProtected(roomId: cleanId) || CSIMSCanonicalRooms.isInternalRoom(roomId: cleanId) {
+            throw NSError(domain: "SupabaseManager", code: 403, userInfo: [NSLocalizedDescriptionKey: "Esta sala oficial comunitaria o interna de Forkar no puede ser eliminada."])
         }
         
         let path = "/rest/v1/chat_rooms"
@@ -860,11 +860,20 @@ class SupabaseManager: ObservableObject {
         try verifyResponse(data: data, response: response)
         
         var messages = try JSONDecoder().decode([ChatMessage].self, from: data)
-        // Descifrado E2EE en memoria con respaldo de hardware Apple
+        let isInternal = CSIMSCanonicalRooms.isInternalRoom(roomId: roomId)
+        
+        // Descifrado E2EE en memoria con respaldo de hardware Apple (CSIMS / CSMS)
         for i in 0..<messages.count {
-            let decrypted = CSMSEncryption.shared.decrypt(payload: messages[i].content, roomId: roomId)
-            messages[i].content = decrypted.text
-            messages[i].isEncrypted = decrypted.isEncrypted
+            let content = messages[i].content
+            if isInternal || content.hasPrefix(CSIMSEncryption.payloadPrefix) {
+                let decrypted = CSIMSEncryption.shared.decrypt(payload: content, roomId: roomId)
+                messages[i].content = decrypted.text
+                messages[i].isEncrypted = decrypted.isEncrypted
+            } else {
+                let decrypted = CSMSEncryption.shared.decrypt(payload: content, roomId: roomId)
+                messages[i].content = decrypted.text
+                messages[i].isEncrypted = decrypted.isEncrypted
+            }
         }
         return messages
     }
@@ -874,6 +883,17 @@ class SupabaseManager: ObservableObject {
             throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para enviar mensajes"])
         }
         
+        let isInternal = CSIMSCanonicalRooms.isInternalRoom(roomId: roomId)
+        if isInternal {
+            guard CSIMSEncryption.isAuthorizedInternalEmail(user.email) else {
+                throw NSError(
+                    domain: "CSIMSZeroTrust",
+                    code: 403,
+                    userInfo: [NSLocalizedDescriptionKey: "Acceso Denegado por Zero Trust: Solo correos @cokistudios.com pueden transmitir en canales internos CSIMS."]
+                )
+            }
+        }
+        
         let path = "/rest/v1/chat_messages"
         let authorName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
         let authorAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
@@ -881,12 +901,23 @@ class SupabaseManager: ObservableObject {
         // Cifrado de Extremo a Extremo (E2EE) con respaldo de hardware (SEP / T2)
         let encryptedPayload: String
         var wasEncrypted = false
-        do {
-            encryptedPayload = try CSMSEncryption.shared.encrypt(plainText: content, roomId: roomId)
-            wasEncrypted = true
-        } catch {
-            print("CSMS Encryption fallback: \(error.localizedDescription)")
-            encryptedPayload = content
+        
+        if isInternal {
+            do {
+                encryptedPayload = try CSIMSEncryption.shared.encrypt(plainText: content, roomId: roomId, authorEmail: user.email)
+                wasEncrypted = true
+            } catch {
+                print("CSIMS Encryption fallback: \(error.localizedDescription)")
+                encryptedPayload = content
+            }
+        } else {
+            do {
+                encryptedPayload = try CSMSEncryption.shared.encrypt(plainText: content, roomId: roomId)
+                wasEncrypted = true
+            } catch {
+                print("CSMS Encryption fallback: \(error.localizedDescription)")
+                encryptedPayload = content
+            }
         }
         
         var bodyJson: [String: Any] = [
@@ -911,7 +942,12 @@ class SupabaseManager: ObservableObject {
         }
         
         // Descifrar en memoria para actualización inmediata en UI
-        let decrypted = CSMSEncryption.shared.decrypt(payload: newMessage.content, roomId: roomId)
+        let decrypted: (text: String, isEncrypted: Bool)
+        if isInternal || newMessage.content.hasPrefix(CSIMSEncryption.payloadPrefix) {
+            decrypted = CSIMSEncryption.shared.decrypt(payload: newMessage.content, roomId: roomId)
+        } else {
+            decrypted = CSMSEncryption.shared.decrypt(payload: newMessage.content, roomId: roomId)
+        }
         newMessage.content = decrypted.text
         newMessage.isEncrypted = decrypted.isEncrypted || wasEncrypted
         return newMessage

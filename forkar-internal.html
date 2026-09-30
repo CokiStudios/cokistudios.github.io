@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forkar Internal — Coki Studios Zero Trust Portal</title>
+    <meta name="description" content="Portal interno de administración, telemetría y mensajería CSIMS de Forkar para colaboradores @cokistudios.com.">
+    <link rel="icon" type="image/svg+xml" href="assets/forkar-icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --bg2: #0d1117;
+            --card: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.4);
+            --accent: #6366f1;
+            --accent2: #8b5cf6;
+            --green: #10b981;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --text-muted: #475569;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.12), transparent 60%);
+            pointer-events: none;
+        }
+
+        /* ── NAVBAR ── */
+        .header {
+            height: 64px;
+            background: rgba(9, 13, 22, 0.8);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-badge {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            font-weight: 900;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .zt-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: var(--green);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .zt-tag .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+        }
+
+        /* ── HERO BANNER ── */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 36px 20px 60px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.04));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 24px;
+            padding: 36px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-desc {
+            font-size: 14px;
+            color: var(--text-sub);
+            max-width: 680px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(99, 102, 241, 0.45);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ── GRID DE SERVICIOS ── */
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .service-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .service-card:hover {
+            background: var(--card-hover);
+            border-color: var(--border-glow);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .service-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--accent);
+        }
+
+        .service-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .service-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .service-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── HEADER ── -->
+    <header class="header">
+        <div class="header-brand">
+            <span class="header-badge">INTERNAL</span>
+            <div class="header-title">Forkar Internal Portal</div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div class="zt-tag">
+                <span class="dot"></span>
+                <span>Zero Trust: @cokistudios.com</span>
+            </div>
+            <a href="csims.html" class="btn-primary" style="padding: 8px 14px; font-size: 12px;">
+                <span>💬 Abrir CSIMS</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- ── BODY CONTAINER ── -->
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-card">
+            <h1 class="hero-title">Centro de Operaciones Forkar Internal</h1>
+            <p class="hero-desc">
+                Acceso exclusivo para el equipo de desarrollo, moderación y operaciones de Coki Studios. 
+                Protegido perimetralmente con políticas de <strong>Cloudflare Zero Trust Access</strong> y cifrado de extremo a extremo con respaldo de hardware Apple SEP / AndroidKeyStore.
+            </p>
+            <div class="hero-actions">
+                <a href="csims.html" class="btn-primary">
+                    <span>💬 Iniciar CSIMS (Internal Messenger)</span>
+                    <span>→</span>
+                </a>
+                <a href="forkar.html" class="btn-secondary" target="_blank">
+                    <span>🌐 Ver Forkar Público</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Stats Row -->
+        <section class="stats-row">
+            <div class="stat-card">
+                <span class="stat-label">Zero Trust Policy Status</span>
+                <span class="stat-val" style="color: var(--green);">ACTIVA</span>
+                <span class="stat-badge">● Domain = cokistudios.com</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">CSIMS E2EE Protocol</span>
+                <span class="stat-val">v1-AES-256</span>
+                <span class="stat-badge">● Hardware SEP / T2 / StrongBox</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Edge Moderation AI</span>
+                <span class="stat-val">Llama 3.2</span>
+                <span class="stat-badge">● Cloudflare Workers AI + Apple</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Sesión de Acceso</span>
+                <span class="stat-val">24h TTL</span>
+                <span class="stat-badge">● Cloudflare Access Managed</span>
+            </div>
+        </section>
+
+        <!-- Internal Services -->
+        <section>
+            <h2 class="section-title">
+                <span>🛡️</span>
+                <span>Servicios y Módulos Internos</span>
+            </h2>
+
+            <div class="services-grid">
+                <!-- CSIMS -->
+                <div class="service-card">
+                    <div class="service-icon">💬</div>
+                    <div class="service-title">CSIMS (Coki Studios Internal Messaging Service)</div>
+                    <div class="service-desc">
+                        Mensajería instantánea interna para el equipo. Soporta canales clasificados, salas de ingeniería y chat directo cifrado punto a punto.
+                    </div>
+                    <div class="service-meta">
+                        <span>Estado: Online</span>
+                        <a href="csims.html" style="color: var(--accent); font-weight: 700; text-decoration: none;">Abrir CSIMS →</a>
+                    </div>
+                </div>
+
+                <!-- Moderación AI -->
+                <div class="service-card">
+                    <div class="service-icon">⚡</div>
+                    <div class="service-title">Telemetría de Moderación Workers AI</div>
+                    <div class="service-desc">
+                        Monitoreo en tiempo real de llamadas al endpoint /api/moderate y detección heurística de albures y evasión anti-filtro.
+                    </div>
+                    <div class="service-meta">
+                        <span>Latencia Edge: &lt;15ms</span>
+                        <a href="moderation.html" style="color: var(--accent); font-weight: 700; text-decoration: none;">Panel AI →</a>
+                    </div>
+                </div>
+
+                <!-- Control de Calidad -->
+                <div class="service-card">
+                    <div class="service-icon">🧪</div>
+                    <div class="service-title">Forkar QA & Multiplatform Builds</div>
+                    <div class="service-desc">
+                        Control de versiones de compilación universal para iOS (iPhone Duo, Apple Watch, macOS) y paridad nativa Android Compose.
+                    </div>
+                    <div class="service-meta">
+                        <span>Target: iOS 17-27 / Android 16</span>
+                        <span style="color: var(--green); font-weight: 600;">Sincronizado</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>

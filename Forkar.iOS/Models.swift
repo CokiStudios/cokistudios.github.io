@@ -255,6 +255,30 @@ enum CSMSCanonicalRooms {
     }
 }
 
+// MARK: - CSIMS Canonical Protected Internal Rooms (Zero Trust: @cokistudios.com only)
+
+enum CSIMSCanonicalRooms {
+    static let generalCoki = "10000000-0000-0000-0000-000000000001"
+    static let engForkar = "10000000-0000-0000-0000-000000000002"
+    static let securityOps = "10000000-0000-0000-0000-000000000003"
+    static let designSystem = "10000000-0000-0000-0000-000000000004"
+    
+    static let internalIds: Set<String> = [
+        generalCoki,
+        engForkar,
+        securityOps,
+        designSystem
+    ]
+    
+    static func isInternalRoom(roomId: String) -> Bool {
+        return internalIds.contains(roomId.lowercased())
+    }
+    
+    static func isInternalRoom(roomId: UUID) -> Bool {
+        return internalIds.contains(roomId.uuidString.lowercased())
+    }
+}
+
 // MARK: - Localization Support
 
 enum AppLanguage: String, CaseIterable, Identifiable {
