@@ -25,6 +25,7 @@ struct HomeView: View {
                     SearchBarView(text: $searchQuery)
                         .padding(.horizontal)
                         .padding(.top, 8)
+                        .frame(maxWidth: 860)
                         .onChange(of: searchQuery) {
                             Task {
                                 await loadPosts()
@@ -116,6 +117,7 @@ struct HomeView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 12)
                     }
+                    .frame(maxWidth: 860)
                     
                     // Feed
                     if isLoading && posts.isEmpty {
@@ -151,6 +153,8 @@ struct HomeView: View {
                                     }
                                     .opacity(0)
                                 }
+                                .frame(maxWidth: 860)
+                                .frame(maxWidth: .infinity, alignment: .center)
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 8, trailing: 16))
@@ -165,7 +169,8 @@ struct HomeView: View {
                     }
                 }
                 
-                // Floating Action Button (Clean Liquid Glass + Gradient)
+                #if os(iOS)
+                // Floating Action Button (Clean Liquid Glass + Gradient) - Strictly on iPhone/iPad
                 VStack {
                     Spacer()
                     HStack {
@@ -203,11 +208,15 @@ struct HomeView: View {
                         .padding()
                     }
                 }
+                #endif
             }
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #else
+            .navigationTitle("Inicio")
             #endif
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
                         Text("F")
@@ -222,7 +231,7 @@ struct HomeView: View {
                             .foregroundColor(ForkarTheme.text)
                     }
                 }
-                #if os(macOS)
+                #else
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: {
                         if authManager.isLoggedIn {
@@ -232,17 +241,14 @@ struct HomeView: View {
                         }
                     }) {
                         HStack(spacing: 6) {
-                            Image(systemName: "plus")
+                            Image(systemName: "square.and.pencil")
                             Text("Nueva Publicación")
                         }
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(ForkarTheme.primaryGradient)
-                        .cornerRadius(6)
+                        .font(.system(size: 12, weight: .semibold))
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.borderedProminent)
+                    .tint(ForkarTheme.accent)
+                    .help("Crear una nueva publicación en la comunidad")
                 }
                 #endif
             }

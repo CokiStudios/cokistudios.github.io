@@ -165,6 +165,7 @@ struct CreatePostView: View {
                     }
                     
                     // Publish Button
+                    #if os(iOS)
                     Button(action: {
                         Task {
                             await publishPost()
@@ -185,29 +186,72 @@ struct CreatePostView: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(isLoading)
                     .padding()
+                    #else
+                    // macOS Sheet Footer: Cancelar & Publicar
+                    VStack(spacing: 0) {
+                        Divider().background(ForkarTheme.border.opacity(0.5))
+                        
+                        HStack(spacing: 12) {
+                            Spacer()
+                            
+                            Button("Cancelar") {
+                                dismiss()
+                            }
+                            .keyboardShortcut(.cancelAction)
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(ForkarTheme.card)
+                            .foregroundColor(ForkarTheme.text)
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ForkarTheme.border, lineWidth: 1))
+                            
+                            Button(action: {
+                                Task {
+                                    await publishPost()
+                                }
+                            }) {
+                                HStack(spacing: 6) {
+                                    if isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: "paperplane.fill")
+                                        Text("Publicar")
+                                            .font(.system(size: 13, weight: .bold))
+                                    }
+                                }
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 8)
+                                .background(ForkarTheme.primaryGradient)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                                .shadow(color: ForkarTheme.accent.opacity(0.35), radius: 6, y: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isLoading)
+                            .keyboardShortcut(.defaultAction)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(ForkarTheme.card.opacity(0.3))
+                    }
+                    #endif
                 }
             }
             .navigationTitle("Crear Publicación")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            #endif
             .toolbar {
-                #if os(iOS)
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancelar") {
                         dismiss()
                     }
                     .foregroundColor(ForkarTheme.text)
                 }
-                #else
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") {
-                        dismiss()
-                    }
-                    .foregroundColor(ForkarTheme.text)
-                }
-                #endif
             }
+            #endif
             .onAppear {
                 Task {
                     await loadCategories()

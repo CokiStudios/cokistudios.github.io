@@ -238,6 +238,8 @@ struct PostDetailView: View {
                         }
                     }
                     .padding()
+                    .frame(maxWidth: 860)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 
                 // Bottom Write Comment Bar
@@ -275,9 +277,10 @@ struct PostDetailView: View {
                         }
                         .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
-                    .padding()
                     .padding(.horizontal)
                     .padding(.vertical, 12)
+                    .frame(maxWidth: 860)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .background(ForkarTheme.bg.opacity(0.85))
                 }
             }
