@@ -768,6 +768,13 @@ async function loginWithPasskey(providedKey = null) {
 //  VALIDACIÓN DE ACCESO PRIVADO CS MAIL (SUPABASE SERVER-SIDE)
 // ═══════════════════════════════════════════════════════════════
 
+function isCokiInternalEmail(email) {
+    if (!email) return false;
+    const clean = String(email).toLowerCase().trim();
+    const allowedWhitelisted = ['cokistudiosllc@gmail.com', 'jerixortixdev@gmail.com', 'ceosupport@cokistudios.com'];
+    return clean.endsWith('@cokistudios.com') || allowedWhitelisted.includes(clean);
+}
+
 async function hasAdminMailAccess() {
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -775,10 +782,7 @@ async function hasAdminMailAccess() {
         if (!user || !user.email) return false;
         
         const email = user.email.toLowerCase().trim();
-        const allowedEmails = ['cokistudiosllc@gmail.com', 'jerixortixdev@gmail.com', 'ceosupport@cokistudios.com'];
-        
-        // Comprobar rol de administrador o email verificado en Supabase
-        const isAuthorizedEmail = allowedEmails.includes(email);
+        const isAuthorizedEmail = isCokiInternalEmail(email);
         const isAdminRole = user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'Founder / entrepreneur';
         
         return isAuthorizedEmail || isAdminRole;
@@ -810,6 +814,7 @@ export {
     isPasskeySupported,
     registerPasskey,
     loginWithPasskey,
-    hasAdminMailAccess
+    hasAdminMailAccess,
+    isCokiInternalEmail
 };
 

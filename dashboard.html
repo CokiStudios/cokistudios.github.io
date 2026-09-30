@@ -561,6 +561,39 @@
             </div>
         </div>
 
+        <!--  PANEL EXCLUSIVO EQUIPO COKI STUDIOS (@cokistudios.com) -->
+        <div id="coki-internal-panel" class="section-box" style="display:none; border:1px solid rgba(99,102,241,0.35); background:linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.04) 100%);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="background:linear-gradient(135deg, #6366f1, #8b5cf6); color:#fff; font-size:11px; font-weight:900; padding:4px 10px; border-radius:8px; letter-spacing:0.5px;">COKI STUDIOS TEAM</span>
+                    <h2 class="section-title" style="margin-bottom:0; font-size:16px;">Herramientas Internas y Operaciones</h2>
+                </div>
+                <span style="font-size:12px; color:#10b981; font-weight:700;">● Acceso Habilitado</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+                <a href="csims.html" style="text-decoration:none; color:inherit; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.2s;">
+                    <div style="font-size:22px;">💬</div>
+                    <div style="font-weight:700; font-size:14px; color:#ffffff;">CSIMS Messenger</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Mensajería interna E2EE</div>
+                </a>
+                <a href="forkar-internal.html" style="text-decoration:none; color:inherit; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.2s;">
+                    <div style="font-size:22px;">🛡️</div>
+                    <div style="font-weight:700; font-size:14px; color:#ffffff;">Forkar Internal</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Operaciones y builds</div>
+                </a>
+                <a href="moderation.html" style="text-decoration:none; color:inherit; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.2s;">
+                    <div style="font-size:22px;">⚡</div>
+                    <div style="font-weight:700; font-size:14px; color:#ffffff;">Moderación AI</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Workers AI telemetría</div>
+                </a>
+                <a href="cs-mail.html" style="text-decoration:none; color:inherit; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.2s;">
+                    <div style="font-size:22px;">📧</div>
+                    <div style="font-weight:700; font-size:14px; color:#ffffff;">CS Mail</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Buzón administrativo</div>
+                </a>
+            </div>
+        </div>
+
         <div class="section-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2 class="section-title" style="margin-bottom:0;">Juegos y Aplicaciones vinculadas</h2>
@@ -635,7 +668,7 @@
     </div>
 
     <script type="module">
-        import { getCurrentCokiUser, logoutCoki, updateCokiProfile, registerPasskey, hasAdminMailAccess } from './coki-auth.js';
+        import { getCurrentCokiUser, logoutCoki, updateCokiProfile, registerPasskey, hasAdminMailAccess, isCokiInternalEmail } from './coki-auth.js';
         import { getUserConnectedApps, revokeConnectedApp } from './oauth-server.js';
         import { checkAndShowSetupWizard } from './coki-extensions.js';
 
@@ -740,7 +773,13 @@
             }
             renderCategoryPreferences();
 
-            //  VERIFICACIÓN DE ACCESO CS MAIL EN SUPABASE
+            //  VERIFICACIÓN DE ACCESO EQUIPO COKI STUDIOS (@cokistudios.com)
+            const isInternal = isCokiInternalEmail(user.email);
+            const internalPanel = document.getElementById('coki-internal-panel');
+            if (internalPanel) {
+                internalPanel.style.display = isInternal ? 'block' : 'none';
+            }
+
             const canAccessMail = await hasAdminMailAccess();
             const mailBtn = document.getElementById('btn-cs-mail');
             if (mailBtn) {
