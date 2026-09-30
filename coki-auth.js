@@ -184,8 +184,8 @@ async function loginCokiWithOAuth(provider) {
     if (provider === 'google') {
         options.scopes = 'profile email';
     } else if (provider === 'azure') {
-        // Microsoft Entra ID requiere scopes explícitos openid profile email
-        options.scopes = 'openid profile email';
+        // Microsoft Entra ID requiere scopes explícitos openid profile email User.Read
+        options.scopes = 'email openid profile User.Read';
         options.queryParams = { prompt: 'select_account' };
     }
 

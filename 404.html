@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coki Studios — Redirigiendo</title>
+    <script>
+        // Si la ruta es /oauth-callback sin extensión, redirigir a oauth-callback.html preservando query y hash
+        const path = window.location.pathname;
+        if (path === '/oauth-callback' || path === '/oauth-callback/') {
+            window.location.replace('/oauth-callback.html' + window.location.search + window.location.hash);
+        } else {
+            // Si falta .html en cualquier archivo principal
+            const cleanPath = path.replace(/\/$/, '');
+            const possibleHtml = cleanPath + '.html';
+            fetch(possibleHtml, { method: 'HEAD' }).then(res => {
+                if (res.ok) {
+                    window.location.replace(possibleHtml + window.location.search + window.location.hash);
+                } else {
+                    window.location.replace('/index.html');
+                }
+            }).catch(() => {
+                window.location.replace('/index.html');
+            });
+        }
+    </script>
+</head>
+<body style="background:#07090e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <p>Redirigiendo a Coki Studios...</p>
+</body>
+</html>
