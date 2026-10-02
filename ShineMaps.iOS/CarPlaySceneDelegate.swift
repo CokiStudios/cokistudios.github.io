@@ -7,6 +7,7 @@ public class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelega
     public var interfaceController: CPInterfaceController?
     public var mapTemplate: CPMapTemplate?
     private var navigationSession: CPNavigationSession?
+    private var activeTrip: CPTrip?
 
     public func templateApplicationScene(
         _ templateApplicationScene: CPTemplateApplicationScene,
@@ -18,22 +19,7 @@ public class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelega
         mapTemp.mapDelegate = self
         self.mapTemplate = mapTemp
 
-        // Leading Bar Buttons (Home & Work shortcuts)
-        let homeButton = CPBarButton(title: "Casa") { [weak self] _ in
-            self?.routeToSavedPlace(named: "Casa")
-        }
-        let workButton = CPBarButton(title: "Estudio") { [weak self] _ in
-            self?.routeToSavedPlace(named: "Estudio")
-        }
-        mapTemp.leadingNavigationBarButtons = [homeButton, workButton]
-
-        // Trailing Bar Button (HUD Mirror & CS ID state)
-        let csidTitle = CSIDManager.shared.isLoggedIn ? (CSIDManager.shared.currentUser?.initial ?? "CS") : "CS"
-        let csidButton = CPBarButton(title: csidTitle) { [weak self] _ in
-            self?.showCarPlayCSIDAlert()
-        }
-        mapTemp.trailingNavigationBarButtons = [csidButton]
-
+        setupNavigationBar(on: mapTemp)
         interfaceController.setRootTemplate(mapTemp, animated: true, completion: nil)
     }
 
@@ -44,6 +30,96 @@ public class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelega
         self.interfaceController = nil
         self.mapTemplate = nil
         self.navigationSession = nil
+        self.activeTrip = nil
+    }
+
+    // MARK: - Navigation Bar Setup
+    private func setupNavigationBar(on mapTemp: CPMapTemplate) {
+        // Recommendations via Apple Maps POI
+        let recsButton = CPBarButton(title: "Lugares") { [weak self] _ in
+            self?.presentAppleRecommendationsList()
+        }
+
+        let homeButton = CPBarButton(title: "Casa") { [weak self] _ in
+            self?.routeToSavedPlace(named: "Casa")
+        }
+
+        let workButton = CPBarButton(title: "Estudio") { [weak self] _ in
+            self?.routeToSavedPlace(named: "Estudio")
+        }
+
+        mapTemp.leadingNavigationBarButtons = [recsButton, homeButton, workButton]
+
+        // CS ID status & Voice Mute toggle
+        let csidTitle = CSIDManager.shared.isLoggedIn ? (CSIDManager.shared.currentUser?.initial ?? "CS") : "CS"
+        let csidButton = CPBarButton(title: csidTitle) { [weak self] _ in
+            self?.showCarPlayCSIDAlert()
+        }
+
+        mapTemp.trailingNavigationBarButtons = [csidButton]
+    }
+
+    // MARK: - Apple Maps Recommendations List Template on CarPlay
+    private func presentAppleRecommendationsList() {
+        let categories: [ApplePlaceCategory] = [.gasStation, .restaurant, .cafe, .parking, .pharmacy]
+
+        var sections: [CPListSection] = []
+
+        let groupItems: [CPListItem] = categories.map { cat in
+            let item = CPListItem(
+                text: cat.rawValue,
+                detailText: "Explorar \(cat.rawValue.lowercased()) cercanas con Apple Maps",
+                image: UIImage(systemName: cat.icon)
+            )
+            item.handler = { [weak self] _, completion in
+                self?.loadCategoryPlaces(category: cat)
+                completion()
+            }
+            return item
+        }
+
+        sections.append(CPListSection(items: groupItems, header: "Recomendaciones Apple Maps", sectionIndexTitle: nil))
+
+        let listTemplate = CPListTemplate(title: "Lugares Cercanos", sections: sections)
+        interfaceController?.pushTemplate(listTemplate, animated: true, completion: nil)
+    }
+
+    private func loadCategoryPlaces(category: ApplePlaceCategory) {
+        Task {
+            let places = await LocationAndMapService.shared.fetchAppleRecommendations(category: category)
+
+            await MainActor.run {
+                let items: [CPListItem] = places.prefix(8).map { place in
+                    let detail = place.formattedDistance != nil ? "\(place.formattedDistance!) • \(place.address)" : place.address
+                    let item = CPListItem(
+                        text: place.title,
+                        detailText: detail,
+                        image: UIImage(systemName: category.icon)
+                    )
+                    item.handler = { [weak self] _, completion in
+                        self?.interfaceController?.popToRootTemplate(animated: true, completion: nil)
+                        self?.startRouteTo(place: place)
+                        completion()
+                    }
+                    return item
+                }
+
+                let section = CPListSection(items: items, header: "\(category.rawValue) cercanas", sectionIndexTitle: nil)
+                let detailList = CPListTemplate(title: category.rawValue, sections: [section])
+                self.interfaceController?.pushTemplate(detailList, animated: true, completion: nil)
+            }
+        }
+    }
+
+    // MARK: - Mapbox Directions GL Navigation Session
+    private func startRouteTo(place: SearchResult) {
+        Task {
+            if let route = await LocationAndMapService.shared.calculateRoute(to: place.coordinate, profile: .drivingTraffic) {
+                await MainActor.run {
+                    self.startCarPlayNavigation(with: route, destinationName: place.title)
+                }
+            }
+        }
     }
 
     private func routeToSavedPlace(named: String) {
@@ -62,7 +138,7 @@ public class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelega
 
         let target = CLLocationCoordinate2D(latitude: lat, longitude: lng)
         Task {
-            if let route = await LocationAndMapService.shared.calculateRoute(to: target) {
+            if let route = await LocationAndMapService.shared.calculateRoute(to: target, profile: .drivingTraffic) {
                 await MainActor.run {
                     self.startCarPlayNavigation(with: route, destinationName: named)
                 }
@@ -73,30 +149,77 @@ public class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelega
     public func startCarPlayNavigation(with route: RouteInfo, destinationName: String) {
         guard let mapTemp = self.mapTemplate else { return }
 
+        let destCoord = route.coordinates.last ?? CLLocationCoordinate2D()
+        let destPlacemark = MKPlacemark(coordinate: destCoord)
+        let destinationItem = MKMapItem(placemark: destPlacemark)
+        destinationItem.name = destinationName
+
+        let originItem = MKMapItem.forCurrentLocation()
+
+        let summary = "\(route.formattedDuration) • \(route.formattedDistance) • \(route.overallCongestion.label)"
         let cpTrip = CPTrip(
-            origin: MKMapItem.forCurrentLocation(),
-            destination: MKMapItem(placemark: MKPlacemark(coordinate: route.coordinates.last ?? CLLocationCoordinate2D())),
-            routeChoices: [CPRouteChoice(summaryVariants: [route.formattedDistance, route.formattedDuration], additionalInformationVariants: [destinationName], selectionSummaryVariants: ["Ruta directa"])]
+            origin: originItem,
+            destination: destinationItem,
+            routeChoices: [
+                CPRouteChoice(
+                    summaryVariants: [summary, "\(route.formattedDuration) • \(route.formattedDistance)"],
+                    additionalInformationVariants: [route.primaryRoadName, "Mapbox Directions GL"],
+                    selectionSummaryVariants: ["Ruta Mapbox GL"]
+                )
+            ]
         )
+        self.activeTrip = cpTrip
 
         let session = mapTemp.startNavigationSession(for: cpTrip)
         self.navigationSession = session
 
-        // Display first maneuver
-        if let firstStep = route.steps.first {
+        // Upcoming Maneuvers with SF Symbols
+        var maneuvers: [CPManeuver] = []
+        for step in route.steps.prefix(5) {
             let maneuver = CPManeuver()
-            maneuver.instructionVariants = [firstStep.instruction]
-            session.upcomingManeuvers = [maneuver]
+            maneuver.instructionVariants = [step.instruction]
+            if let sec = step.secondaryInstruction {
+                maneuver.instructionVariants.append(sec)
+            }
+            maneuver.symbolImage = UIImage(systemName: step.maneuverIconName)
+            maneuvers.append(maneuver)
+        }
+        session.upcomingManeuvers = maneuvers
+
+        // Travel Estimates
+        let measurementDist = Measurement(value: route.distanceMeters, unit: UnitLength.meters)
+        let estimates = CPTravelEstimates(distanceRemaining: measurementDist, timeRemaining: route.durationSeconds)
+        mapTemp.updateEstimates(estimates, for: cpTrip)
+
+        // Navigation Bar when Active: End Navigation button
+        let endButton = CPBarButton(title: "Terminar") { [weak self] _ in
+            self?.stopCarPlayNavigation()
+        }
+        let voiceButton = CPBarButton(title: LocationAndMapService.shared.isVoiceMuted ? "Silencio" : "Voz") { _ in
+            LocationAndMapService.shared.toggleVoiceMute()
+        }
+        mapTemp.trailingNavigationBarButtons = [voiceButton, endButton]
+    }
+
+    public func stopCarPlayNavigation() {
+        navigationSession?.finishTrip()
+        navigationSession = nil
+        activeTrip = nil
+        LocationAndMapService.shared.clearRoute()
+
+        if let mapTemp = self.mapTemplate {
+            setupNavigationBar(on: mapTemp)
         }
     }
 
     private func showCarPlayCSIDAlert() {
         let isAuth = CSIDManager.shared.isLoggedIn
         let userName = CSIDManager.shared.currentUser?.name ?? "No autenticado"
-        let message = isAuth ? "Sesión activa: \(userName)" : "Inicia sesión con tu CS ID en tu iPhone"
+        let email = CSIDManager.shared.currentUser?.email ?? ""
+        let msg = isAuth ? "Sesión activa: \(userName) (\(email))" : "Inicia sesión con tu CS ID en tu iPhone para sincronizar lugares."
 
         let alert = CPAlertTemplate(
-            titleVariants: ["Shine Maps — CS ID"],
+            titleVariants: ["Shine Maps — CS ID", msg],
             actions: [
                 CPAlertAction(title: "Entendido", style: .default, handler: { [weak self] _ in
                     self?.interfaceController?.dismissTemplate(animated: true, completion: nil)
@@ -105,4 +228,8 @@ public class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelega
         )
         interfaceController?.presentTemplate(alert, animated: true, completion: nil)
     }
+
+    // MARK: - CPMapTemplateDelegate
+    public func mapTemplateDidShowPanningInterface(_ mapTemplate: CPMapTemplate) {}
+    public func mapTemplateDidDismissPanningInterface(_ mapTemplate: CPMapTemplate) {}
 }
