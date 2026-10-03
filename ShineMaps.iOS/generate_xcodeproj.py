@@ -1,0 +1,323 @@
+import os, hashlib
+
+def make_id(seed):
+    h = hashlib.md5(seed.encode('utf-8')).hexdigest().upper()
+    return 'B8' + h[:22]
+
+files = [
+    ('ShineMapsApp.swift', 'sourcecode.swift', True),
+    ('ContentView.swift', 'sourcecode.swift', True),
+    ('LocationAndMapService.swift', 'sourcecode.swift', True),
+    ('Models.swift', 'sourcecode.swift', True),
+    ('ShineMapsTheme.swift', 'sourcecode.swift', True),
+    ('CSIDManager.swift', 'sourcecode.swift', True),
+    ('CSIDAuthViews.swift', 'sourcecode.swift', True),
+    ('CarPlaySceneDelegate.swift', 'sourcecode.swift', True),
+    ('Info.plist', 'text.plist.xml', False),
+    ('README.md', 'net.daringfireball.markdown', False),
+]
+
+file_refs = {}
+build_files = {}
+
+for fname, ftype, is_src in files:
+    f_id = make_id('FILE_' + fname)
+    file_refs[fname] = (f_id, ftype)
+    if is_src:
+        b_id = make_id('BUILD_' + fname)
+        build_files[fname] = b_id
+
+proj_id = make_id('PROJECT')
+target_id = make_id('TARGET')
+app_ref_id = make_id('APP_REF')
+main_grp_id = make_id('MAIN_GRP')
+prod_grp_id = make_id('PROD_GRP')
+sources_phase_id = make_id('SOURCES_PHASE')
+frameworks_phase_id = make_id('FRAMEWORKS_PHASE')
+resources_phase_id = make_id('RESOURCES_PHASE')
+cfg_proj_debug_id = make_id('CFG_PROJ_DEBUG')
+cfg_proj_release_id = make_id('CFG_PROJ_RELEASE')
+cfg_target_debug_id = make_id('CFG_TARGET_DEBUG')
+cfg_target_release_id = make_id('CFG_TARGET_RELEASE')
+cfg_list_proj_id = make_id('CFG_LIST_PROJ')
+cfg_list_target_id = make_id('CFG_LIST_TARGET')
+
+out = []
+out.append('// !$*UTF8*$!')
+out.append('{')
+out.append('\tarchiveVersion = 1;')
+out.append('\tclasses = {')
+out.append('\t};')
+out.append('\tobjectVersion = 56;')
+out.append('\tobjects = {')
+out.append('')
+
+# PBXBuildFile
+out.append('/* Begin PBXBuildFile section */')
+for fname, b_id in build_files.items():
+    f_id, _ = file_refs[fname]
+    out.append(f'\t\t{b_id} /* {fname} in Sources */ = {{isa = PBXBuildFile; fileRef = {f_id} /* {fname} */; }};')
+out.append('/* End PBXBuildFile section */')
+out.append('')
+
+# PBXFileReference
+out.append('/* Begin PBXFileReference section */')
+out.append(f'\t\t{app_ref_id} /* ShineMaps.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShineMaps.app; sourceTree = BUILT_PRODUCTS_DIR; }};')
+for fname, (f_id, ftype) in file_refs.items():
+    out.append(f'\t\t{f_id} /* {fname} */ = {{isa = PBXFileReference; lastKnownFileType = {ftype}; path = "{fname}"; sourceTree = "<group>"; }};')
+out.append('/* End PBXFileReference section */')
+out.append('')
+
+# PBXFrameworksBuildPhase
+out.append('/* Begin PBXFrameworksBuildPhase section */')
+out.append(f'\t\t{frameworks_phase_id} /* Frameworks */ = {{')
+out.append('\t\t\tisa = PBXFrameworksBuildPhase;')
+out.append('\t\t\tbuildActionMask = 2147483647;')
+out.append('\t\t\tfiles = (')
+out.append('\t\t\t);')
+out.append('\t\t\trunOnlyForDeploymentPostprocessing = 0;')
+out.append('\t\t};')
+out.append('/* End PBXFrameworksBuildPhase section */')
+out.append('')
+
+# PBXGroup
+out.append('/* Begin PBXGroup section */')
+out.append(f'\t\t{main_grp_id} = {{')
+out.append('\t\t\tisa = PBXGroup;')
+out.append('\t\t\tchildren = (')
+for fname in file_refs:
+    f_id, _ = file_refs[fname]
+    out.append(f'\t\t\t\t{f_id} /* {fname} */,')
+out.append(f'\t\t\t\t{prod_grp_id} /* Products */,')
+out.append('\t\t\t);')
+out.append('\t\t\tsourceTree = "<group>";')
+out.append('\t\t};')
+
+out.append(f'\t\t{prod_grp_id} /* Products */ = {{')
+out.append('\t\t\tisa = PBXGroup;')
+out.append('\t\t\tchildren = (')
+out.append(f'\t\t\t\t{app_ref_id} /* ShineMaps.app */,')
+out.append('\t\t\t);')
+out.append('\t\t\tname = Products;')
+out.append('\t\t\tsourceTree = "<group>";')
+out.append('\t\t};')
+out.append('/* End PBXGroup section */')
+out.append('')
+
+# PBXNativeTarget
+out.append('/* Begin PBXNativeTarget section */')
+out.append(f'\t\t{target_id} /* ShineMaps */ = {{')
+out.append('\t\t\tisa = PBXNativeTarget;')
+out.append(f'\t\t\tbuildConfigurationList = {cfg_list_target_id} /* Build configuration list for PBXNativeTarget "ShineMaps" */;')
+out.append('\t\t\tbuildPhases = (')
+out.append(f'\t\t\t\t{sources_phase_id} /* Sources */,')
+out.append(f'\t\t\t\t{frameworks_phase_id} /* Frameworks */,')
+out.append(f'\t\t\t\t{resources_phase_id} /* Resources */,')
+out.append('\t\t\t);')
+out.append('\t\t\tbuildRules = (')
+out.append('\t\t\t);')
+out.append('\t\t\tdependencies = (')
+out.append('\t\t\t);')
+out.append('\t\t\tname = ShineMaps;')
+out.append('\t\t\tproductName = ShineMaps;')
+out.append(f'\t\t\tproductReference = {app_ref_id} /* ShineMaps.app */;')
+out.append('\t\t\tproductType = "com.apple.product-type.application";')
+out.append('\t\t};')
+out.append('/* End PBXNativeTarget section */')
+out.append('')
+
+# PBXProject
+out.append('/* Begin PBXProject section */')
+out.append(f'\t\t{proj_id} /* Project object */ = {{')
+out.append('\t\t\tisa = PBXProject;')
+out.append('\t\t\tattributes = {')
+out.append('\t\t\t\tBuildIndependentTargetsInParallel = 1;')
+out.append('\t\t\t\tLastUpgradeCheck = 1500;')
+out.append('\t\t\t\tTargetAttributes = {')
+out.append(f'\t\t\t\t\t{target_id} = {{')
+out.append('\t\t\t\t\t\tCreatedOnToolsVersion = 15.0;')
+out.append('\t\t\t\t\t};')
+out.append('\t\t\t\t};')
+out.append('\t\t\t};')
+out.append(f'\t\t\tbuildConfigurationList = {cfg_list_proj_id} /* Build configuration list for PBXProject "ShineMaps" */;')
+out.append('\t\t\tcompatibilityVersion = "Xcode 14.0";')
+out.append('\t\t\tdevelopmentRegion = es;')
+out.append('\t\t\thasScannedForEncodings = 0;')
+out.append('\t\t\tknownRegions = (')
+out.append('\t\t\t\tes,')
+out.append('\t\t\t\ten,')
+out.append('\t\t\t\tBase,')
+out.append('\t\t\t);')
+out.append(f'\t\t\tmainGroup = {main_grp_id};')
+out.append(f'\t\t\tproductRefGroup = {prod_grp_id} /* Products */;')
+out.append('\t\t\tprojectDirPath = "";')
+out.append('\t\t\tprojectRoot = "";')
+out.append('\t\t\ttargets = (')
+out.append(f'\t\t\t\t{target_id} /* ShineMaps */,')
+out.append('\t\t\t);')
+out.append('\t\t};')
+out.append('/* End PBXProject section */')
+out.append('')
+
+# PBXResourcesBuildPhase
+out.append('/* Begin PBXResourcesBuildPhase section */')
+out.append(f'\t\t{resources_phase_id} /* Resources */ = {{')
+out.append('\t\t\tisa = PBXResourcesBuildPhase;')
+out.append('\t\t\tbuildActionMask = 2147483647;')
+out.append('\t\t\tfiles = (')
+out.append('\t\t\t);')
+out.append('\t\t\trunOnlyForDeploymentPostprocessing = 0;')
+out.append('\t\t};')
+out.append('/* End PBXResourcesBuildPhase section */')
+out.append('')
+
+# PBXSourcesBuildPhase
+out.append('/* Begin PBXSourcesBuildPhase section */')
+out.append(f'\t\t{sources_phase_id} /* Sources */ = {{')
+out.append('\t\t\tisa = PBXSourcesBuildPhase;')
+out.append('\t\t\tbuildActionMask = 2147483647;')
+out.append('\t\t\tfiles = (')
+for fname, b_id in build_files.items():
+    out.append(f'\t\t\t\t{b_id} /* {fname} in Sources */,')
+out.append('\t\t\t);')
+out.append('\t\t\trunOnlyForDeploymentPostprocessing = 0;')
+out.append('\t\t};')
+out.append('/* End PBXSourcesBuildPhase section */')
+out.append('')
+
+# XCBuildConfiguration
+out.append('/* Begin XCBuildConfiguration section */')
+out.append(f'\t\t{cfg_proj_debug_id} /* Debug */ = {{')
+out.append('\t\t\tisa = XCBuildConfiguration;')
+out.append('\t\t\tbuildSettings = {')
+out.append('\t\t\t\tALWAYS_SEARCH_USER_PATHS = NO;')
+out.append('\t\t\t\tCLANG_ANALYZER_NONNULL = YES;')
+out.append('\t\t\t\tCLANG_CXX_LANGUAGE_STANDARD = "gnu++20";')
+out.append('\t\t\t\tCLANG_ENABLE_MODULES = YES;')
+out.append('\t\t\t\tCLANG_ENABLE_OBJC_ARC = YES;')
+out.append('\t\t\t\tCOPY_PHASE_STRIP = NO;')
+out.append('\t\t\t\tDEBUG_INFORMATION_FORMAT = dwarf;')
+out.append('\t\t\t\tENABLE_STRICT_OBJC_MSGSEND = YES;')
+out.append('\t\t\t\tENABLE_TESTABILITY = YES;')
+out.append('\t\t\t\tGCC_C_LANGUAGE_STANDARD = gnu17;')
+out.append('\t\t\t\tGCC_DYNAMIC_NO_PIC = NO;')
+out.append('\t\t\t\tGCC_OPTIMIZATION_LEVEL = 0;')
+out.append('\t\t\t\tGCC_PREPROCESSOR_DEFINITIONS = (')
+out.append('\t\t\t\t\t"DEBUG=1",')
+out.append('\t\t\t\t\t"$(inherited)",')
+out.append('\t\t\t\t);')
+out.append('\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;')
+out.append('\t\t\t\tMTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;')
+out.append('\t\t\t\tONLY_ACTIVE_ARCH = YES;')
+out.append('\t\t\t\tSDKROOT = iphoneos;')
+out.append('\t\t\t\tSWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";')
+out.append('\t\t\t\tSWIFT_OPTIMIZATION_LEVEL = "-Onone";')
+out.append('\t\t\t};')
+out.append('\t\t\tname = Debug;')
+out.append('\t\t};')
+
+out.append(f'\t\t{cfg_proj_release_id} /* Release */ = {{')
+out.append('\t\t\tisa = XCBuildConfiguration;')
+out.append('\t\t\tbuildSettings = {')
+out.append('\t\t\t\tALWAYS_SEARCH_USER_PATHS = NO;')
+out.append('\t\t\t\tCLANG_ANALYZER_NONNULL = YES;')
+out.append('\t\t\t\tCLANG_CXX_LANGUAGE_STANDARD = "gnu++20";')
+out.append('\t\t\t\tCLANG_ENABLE_MODULES = YES;')
+out.append('\t\t\t\tCLANG_ENABLE_OBJC_ARC = YES;')
+out.append('\t\t\t\tCOPY_PHASE_STRIP = NO;')
+out.append('\t\t\t\tDEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";')
+out.append('\t\t\t\tENABLE_NS_ASSERTIONS = NO;')
+out.append('\t\t\t\tENABLE_STRICT_OBJC_MSGSEND = YES;')
+out.append('\t\t\t\tGCC_C_LANGUAGE_STANDARD = gnu17;')
+out.append('\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;')
+out.append('\t\t\t\tMTL_ENABLE_DEBUG_INFO = NO;')
+out.append('\t\t\t\tSDKROOT = iphoneos;')
+out.append('\t\t\t\tSWIFT_COMPILATION_MODE = wholemodule;')
+out.append('\t\t\t};')
+out.append('\t\t\tname = Release;')
+out.append('\t\t};')
+
+out.append(f'\t\t{cfg_target_debug_id} /* Debug */ = {{')
+out.append('\t\t\tisa = XCBuildConfiguration;')
+out.append('\t\t\tbuildSettings = {')
+out.append('\t\t\t\tCODE_SIGN_STYLE = Automatic;')
+out.append('\t\t\t\tCURRENT_PROJECT_VERSION = 1;')
+out.append('\t\t\t\tDEVELOPMENT_TEAM = 9CBRG74884;')
+out.append('\t\t\t\tGENERATE_INFOPLIST_FILE = NO;')
+out.append('\t\t\t\tINFOPLIST_FILE = Info.plist;')
+out.append('\t\t\t\tLD_RUNPATH_SEARCH_PATHS = (')
+out.append('\t\t\t\t\t"$(inherited)",')
+out.append('\t\t\t\t\t"@executable_path/Frameworks",')
+out.append('\t\t\t\t);')
+out.append('\t\t\t\tMARKETING_VERSION = 1.0.0;')
+out.append('\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shinemaps;')
+out.append('\t\t\t\tPRODUCT_NAME = "$(TARGET_NAME)";')
+out.append('\t\t\t\tSWIFT_VERSION = 5.0;')
+out.append('\t\t\t\tTARGETED_DEVICE_FAMILY = "1,2";')
+out.append('\t\t\t};')
+out.append('\t\t\tname = Debug;')
+out.append('\t\t};')
+
+out.append(f'\t\t{cfg_target_release_id} /* Release */ = {{')
+out.append('\t\t\tisa = XCBuildConfiguration;')
+out.append('\t\t\tbuildSettings = {')
+out.append('\t\t\t\tCODE_SIGN_STYLE = Automatic;')
+out.append('\t\t\t\tCURRENT_PROJECT_VERSION = 1;')
+out.append('\t\t\t\tDEVELOPMENT_TEAM = 9CBRG74884;')
+out.append('\t\t\t\tGENERATE_INFOPLIST_FILE = NO;')
+out.append('\t\t\t\tINFOPLIST_FILE = Info.plist;')
+out.append('\t\t\t\tLD_RUNPATH_SEARCH_PATHS = (')
+out.append('\t\t\t\t\t"$(inherited)",')
+out.append('\t\t\t\t\t"@executable_path/Frameworks",')
+out.append('\t\t\t\t);')
+out.append('\t\t\t\tMARKETING_VERSION = 1.0.0;')
+out.append('\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shinemaps;')
+out.append('\t\t\t\tPRODUCT_NAME = "$(TARGET_NAME)";')
+out.append('\t\t\t\tSWIFT_VERSION = 5.0;')
+out.append('\t\t\t\tTARGETED_DEVICE_FAMILY = "1,2";')
+out.append('\t\t\t};')
+out.append('\t\t\tname = Release;')
+out.append('\t\t};')
+out.append('/* End XCBuildConfiguration section */')
+out.append('')
+
+# XCConfigurationList
+out.append('/* Begin XCConfigurationList section */')
+out.append(f'\t\t{cfg_list_proj_id} /* Build configuration list for PBXProject "ShineMaps" */ = {{')
+out.append('\t\t\tisa = XCConfigurationList;')
+out.append('\t\t\tbuildConfigurations = (')
+out.append(f'\t\t\t\t{cfg_proj_debug_id} /* Debug */,')
+out.append(f'\t\t\t\t{cfg_proj_release_id} /* Release */,')
+out.append('\t\t\t);')
+out.append('\t\t\tdefaultConfigurationIsVisible = 0;')
+out.append('\t\t\tdefaultConfigurationName = Release;')
+out.append('\t\t};')
+
+out.append(f'\t\t{cfg_list_target_id} /* Build configuration list for PBXNativeTarget "ShineMaps" */ = {{')
+out.append('\t\t\tisa = XCConfigurationList;')
+out.append('\t\t\tbuildConfigurations = (')
+out.append(f'\t\t\t\t{cfg_target_debug_id} /* Debug */,')
+out.append(f'\t\t\t\t{cfg_target_release_id} /* Release */,')
+out.append('\t\t\t);')
+out.append('\t\t\tdefaultConfigurationIsVisible = 0;')
+out.append('\t\t\tdefaultConfigurationName = Release;')
+out.append('\t\t};')
+out.append('/* End XCConfigurationList section */')
+
+out.append('\t};')
+out.append(f'\trootObject = {proj_id} /* Project object */;')
+out.append('}')
+
+content = '\n'.join(out) + '\n'
+
+dirs = [
+    '/Users/jerix/Documents/Xcode/Forkar/ShineMaps/ShineMaps.xcodeproj',
+    '/Users/jerix/Documents/Xcode/Forkar/Shine Maps/Shine Maps.xcodeproj',
+    '/Users/jerix/cokistudios.github.io/ShineMaps.iOS/ShineMaps.xcodeproj'
+]
+
+for d in dirs:
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, 'project.pbxproj'), 'w') as f:
+        f.write(content)
+    print('Generated:', d)

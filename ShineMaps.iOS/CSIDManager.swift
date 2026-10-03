@@ -1,5 +1,5 @@
 import Foundation
-internal import Combine
+public import Combine
 
 public class CSIDManager: ObservableObject {
     public static let shared = CSIDManager()

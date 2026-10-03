@@ -2,7 +2,7 @@ import Foundation
 import CoreLocation
 import MapKit
 import AVFoundation
-internal import Combine
+public import Combine
 
 public class LocationAndMapService: NSObject, ObservableObject, CLLocationManagerDelegate, MKLocalSearchCompleterDelegate {
     public static let shared = LocationAndMapService()
