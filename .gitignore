@@ -25,3 +25,8 @@ DerivedData/
 public/
 .wrangler/
 
+# C++ Build Outputs
+LoopingEngine/cpp/looping
+LoopingEngine/cpp/looping_bin
+LoopingEngine/cpp/build/
+

@@ -1,0 +1,21 @@
+# ═══════════════════════════════════════════════════════════════
+# [HELLO WORLD] Looping C++ Native Engine
+# Powered by Holo Entertainment & Coki Studios
+# ═══════════════════════════════════════════════════════════════
+
+import loop.engine as engine
+
+define app "HelloLoopingNative" version 2.2:
+    set author to "Angel Helium"
+    set year = 2026
+    
+    print "✨ Hello from Looping C++ Native Engine!"
+    print "Target Platform: Shine Loop Console (Holo Looping OoS)"
+    print "Developed by {author} ({year})"
+    
+    repeat 3 times {
+        print "  -> Looping ping cycle: {i} (Sub-millisecond latency)"
+    }
+    
+    draw card at (20, 20) with size (760, 60) and title "HELLO LOOPING C++" and text "Engine: Looping C++ v2.2.0 | Latency: <1ms"
+    print "[OK] Hello script finished successfully."
