@@ -811,7 +811,6 @@ struct NativeMapView: UIViewRepresentable {
         mapView.showsCompass = true
         mapView.showsScale = true
         mapView.mapType = mapType
-        mapView.setRegion(region, animated: false)
 
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
         mapView.addGestureRecognizer(tapGesture)
@@ -848,15 +847,17 @@ struct NativeMapView: UIViewRepresentable {
             uiView.addAnnotation(pin)
         }
 
-        // 3D Navigation Camera Tracking
-        if isNavigating, let user = userLocation {
-            let camera = MKMapCamera(
-                lookingAtCenter: user,
-                fromDistance: 450,
-                pitch: 60,
-                heading: userHeading
-            )
-            uiView.setCamera(camera, animated: true)
+        // 3D Navigation Camera Tracking - Only when view bounds are established
+        if uiView.bounds.width > 0 && uiView.bounds.height > 0 {
+            if isNavigating, let user = userLocation {
+                let camera = MKMapCamera(
+                    lookingAtCenter: user,
+                    fromDistance: 450,
+                    pitch: 60,
+                    heading: userHeading
+                )
+                uiView.setCamera(camera, animated: true)
+            }
         }
     }
 

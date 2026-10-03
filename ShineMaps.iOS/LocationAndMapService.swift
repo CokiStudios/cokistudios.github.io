@@ -21,7 +21,7 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
     }
 
     // Published State
-    @Published public var currentLocation: CLLocation? = nil
+    @Published public var currentLocation: CLLocation? = CLLocation(latitude: 4.7110, longitude: -74.0721)
     @Published public var currentSpeedKmh: Double = 0.0
     @Published public var currentHeading: Double = 0.0
     @Published public var searchResults: [SearchResult] = []
@@ -36,6 +36,7 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
 
     public override init() {
         super.init()
+        self.currentLocation = CLLocation(latitude: 4.7110, longitude: -74.0721)
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         locationManager.distanceFilter = 2 // meters
@@ -73,6 +74,16 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
         }
     }
 
+    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        // Handle transient errors gracefully (e.g. kCLErrorLocationUnknown on Simulator)
+        if let clErr = error as? CLError, clErr.code == .locationUnknown {
+            return
+        }
+        if self.currentLocation == nil {
+            self.currentLocation = CLLocation(latitude: 4.7110, longitude: -74.0721)
+        }
+    }
+
     // MARK: - MKLocalSearchCompleterDelegate (Apple Maps Live Suggestions)
     public func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         let userLoc = currentLocation
@@ -93,7 +104,7 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
     }
 
     public func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        // Fallback silently if offline
+        // Fallback silently if offline or simulator GeoServices issue
     }
 
     public func updateSearchCompleterQuery(_ query: String) {
@@ -158,8 +169,60 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
                 )
             }
 
-            let sorted = results.sorted { ($0.distanceMeters ?? .infinity) < ($1.distanceMeters ?? .infinity) }
+            if !results.isEmpty {
+                let sorted = results.sorted { ($0.distanceMeters ?? .infinity) < ($1.distanceMeters ?? .infinity) }
+                await MainActor.run {
+                    self.recommendationsByCategory[category] = sorted
+                }
+                return sorted
+            }
+        } catch {
+            // Simulator or Apple Maps GeoServices issue -> Mapbox POI Fallback
+        }
 
+        // Resilient Fallback to Mapbox POI search
+        return await fetchMapboxCategoryFallback(category: category, userCoord: userCoord)
+    }
+
+    private func fetchMapboxCategoryFallback(category: ApplePlaceCategory, userCoord: CLLocationCoordinate2D) async -> [SearchResult] {
+        guard let encoded = category.queryTerm.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "https://api.mapbox.com/geocoding/v5/mapbox.places/\(encoded).json?access_token=\(mapboxToken)&proximity=\(userCoord.longitude),\(userCoord.latitude)&types=poi&language=es,en&limit=8") else {
+            return []
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let features = json["features"] as? [[String: Any]] else {
+                return []
+            }
+
+            let userLoc = currentLocation ?? CLLocation(latitude: userCoord.latitude, longitude: userCoord.longitude)
+            var results: [SearchResult] = []
+
+            for f in features {
+                let title = (f["text"] as? String) ?? category.rawValue
+                let placeName = (f["place_name"] as? String) ?? title
+                guard let center = f["center"] as? [Double], center.count == 2 else { continue }
+                let lon = center[0]
+                let lat = center[1]
+
+                let dist = userLoc.distance(from: CLLocation(latitude: lat, longitude: lon))
+                results.append(
+                    SearchResult(
+                        title: title,
+                        address: placeName,
+                        latitude: lat,
+                        longitude: lon,
+                        distanceMeters: dist,
+                        systemIconName: category.icon,
+                        poiCategoryName: category.rawValue,
+                        source: .mapbox
+                    )
+                )
+            }
+
+            let sorted = results.sorted { ($0.distanceMeters ?? .infinity) < ($1.distanceMeters ?? .infinity) }
             await MainActor.run {
                 self.recommendationsByCategory[category] = sorted
             }
@@ -169,30 +232,53 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
         }
     }
 
-    // MARK: - Apple Maps: Reverse Geocoding Address Resolver
+    // MARK: - Apple Maps: Reverse Geocoding Address Resolver with Mapbox Fallback
     public func reverseGeocodeAddress(coordinate: CLLocationCoordinate2D) async -> (name: String, fullAddress: String)? {
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         do {
             let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            guard let p = placemarks.first else { return nil }
+            if let p = placemarks.first {
+                let primaryName = p.name ?? p.thoroughfare ?? "Ubicación fijada"
+                var parts: [String] = []
+                if let st = p.subThoroughfare { parts.append(st) }
+                if let th = p.thoroughfare { parts.append(th) }
+                if let loc = p.subLocality ?? p.locality { parts.append(loc) }
+                if let city = p.administrativeArea { parts.append(city) }
 
-            let primaryName = p.name ?? p.thoroughfare ?? "Ubicación fijada"
-            var parts: [String] = []
-            if let st = p.subThoroughfare { parts.append(st) }
-            if let th = p.thoroughfare { parts.append(th) }
-            if let loc = p.subLocality ?? p.locality { parts.append(loc) }
-            if let city = p.administrativeArea { parts.append(city) }
+                let full = parts.joined(separator: ", ")
+                let finalAddress = full.isEmpty ? primaryName : full
 
-            let full = parts.joined(separator: ", ")
-            let finalAddress = full.isEmpty ? primaryName : full
-
-            await MainActor.run {
-                self.currentResolvedAddress = finalAddress
+                await MainActor.run {
+                    self.currentResolvedAddress = finalAddress
+                }
+                return (name: primaryName, fullAddress: finalAddress)
             }
-            return (name: primaryName, fullAddress: finalAddress)
         } catch {
-            return nil
+            // Simulator default.csv GeoServices issue -> Fallback to Mapbox Reverse Geocoding
         }
+
+        // Mapbox Reverse Geocoding Fallback
+        guard let url = URL(string: "https://api.mapbox.com/geocoding/v5/mapbox.places/\(coordinate.longitude),\(coordinate.latitude).json?access_token=\(mapboxToken)&language=es&limit=1") else {
+            return ("Ubicación fijada", "Lat: \(String(format: "%.4f", coordinate.latitude)), Lng: \(String(format: "%.4f", coordinate.longitude))")
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let features = json["features"] as? [[String: Any]],
+               let first = features.first {
+                let title = (first["text"] as? String) ?? "Ubicación fijada"
+                let placeName = (first["place_name"] as? String) ?? title
+                await MainActor.run {
+                    self.currentResolvedAddress = placeName
+                }
+                return (name: title, fullAddress: placeName)
+            }
+        } catch {
+            // Ignore
+        }
+
+        return ("Ubicación fijada", "Lat: \(String(format: "%.4f", coordinate.latitude)), Lng: \(String(format: "%.4f", coordinate.longitude))")
     }
 
     // MARK: - Hybrid Search Places (Apple Maps POI & Geocoding + Mapbox GL Proximity)
@@ -247,7 +333,7 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
                 )
             }
         } catch {
-            // Proceed to Mapbox geocoding if Apple Maps had no matches
+            // Proceed to Mapbox geocoding if Apple Maps had no matches or simulator GeoServices error
         }
 
         // 2. Mapbox Places Proximity Geocoding for GL Routing Parity
@@ -265,7 +351,7 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
                         let lon = center[0]
                         let lat = center[1]
 
-                        // Avoid exact duplicates
+                        // Avoid duplicates
                         let isDup = combinedResults.contains { res in
                             abs(res.latitude - lat) < 0.0005 && abs(res.longitude - lon) < 0.0005
                         }
@@ -288,15 +374,17 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
                     }
                 }
             } catch {
-                // Keep Apple Maps results
+                // Keep existing results
             }
         }
 
         // Sort by distance
-        combinedResults.sort { ($0.distanceMeters ?? .infinity) < ($1.distanceMeters ?? .infinity) }
+        var finalResults = combinedResults
+        finalResults.sort { ($0.distanceMeters ?? .infinity) < ($1.distanceMeters ?? .infinity) }
+        let resultList = finalResults
 
         await MainActor.run {
-            self.searchResults = combinedResults
+            self.searchResults = resultList
             self.isSearching = false
         }
     }
