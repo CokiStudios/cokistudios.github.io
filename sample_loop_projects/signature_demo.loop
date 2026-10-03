@@ -1,0 +1,78 @@
+// ═══════════════════════════════════════════════════════════════
+// ♾️ [LOOPING v2.5] Signature Syntax Showcase
+// Core Programming Language for Shine Loop Console
+// Holo Entertainment (Coki Studios)
+// ═══════════════════════════════════════════════════════════════
+
+import loop.engine as engine;
+use python "math";
+
+@app("CyberShineCore", "2.5") {
+    window("CyberShine OS // Looping Native", 800, 520);
+    theme("cyber_dark");
+    profile("xui");
+
+    // ── 1. Declaraciones Modernas (let, mut, val, :=, ++) ──
+    let hero = "Angel Helium";
+    mut hp = 100;
+    val max_hp = 250;
+    mut energy = 45.5;
+    xp := 1500;
+    level := 12;
+
+    level++;
+    hp += 25;
+
+    out($"[INIT] Pilot: {hero} | Level: {level} | HP: {hp}/{max_hp}");
+
+    // ── 2. Funciones de Expresión (Arrow Functions) & Retorno ──
+    fn compute_shield(base, lvl) => base * 1.5 + (lvl * 10);
+    val shield_rating = compute_shield(40, level);
+
+    out($"[CORE] Shield capacity calculated: {shield_rating}");
+
+    // ── 3. Operador Pipeline (|>) & Matemáticas ──
+    val sqrt_val = 81 |> math.sqrt;
+    $"[PIPELINE] 81 piped into math.sqrt => {sqrt_val}" |> out;
+
+    // ── 4. Puente Python con Macro py!(...) ──
+    val py_calc = py!(round(math.pi * 10, 3));
+    out($"[PYTHON MACRO] Pi scaled: {py_calc}");
+
+    // ── 5. Control de Flujo: Arrow & Block Conditionals ──
+    if (hp >= 120) -> out("[STATUS] Armor supercharged & ready for battle.");
+
+    if (shield_rating > 100) {
+        out("[DEFENSE] Dynamic deflection field ACTIVE.");
+    } else {
+        out("[DEFENSE] Standard shield online.");
+    }
+
+    // ── 6. Bucles de Rango (for..in) & Contador (loop) ──
+    for (step in 0..3) {
+        out($"  -> [TELEMETRY] Sensor array ping #{step} OK");
+    }
+
+    loop (2) {
+        out("  -> [HEARTBEAT] Sub-millisecond tick verified");
+    }
+
+    // ── 7. Interfaz Gráfica Holográfica (Glassmorphism Directives) ──
+    ui.card(at: (20, 20), size: (760, 60), title: "CYBERSHINE CORE // LOOPING v2.5", text: "Kernel: Holo Looping OoS | Engine: C++17 Signature Native");
+    ui.card(at: (20, 95), size: (360, 220), title: "STATUS & TELEMETRY", text: "Pilot: Angel Helium\nShield: Overcharged\nPipeline: 60 FPS Sub-ms");
+    ui.input(at: (40, 200), size: (320, 40), placeholder: "Ingresa comando...", bind: "terminal_cmd");
+    ui.btn(at: (40, 255), text: "EJECUTAR HYPERDRIVE", action: "hyper_boost");
+
+    // ── 8. Spawns de Escenario & Entidades 2D ──
+    spawn.platform(at: (420, 310), size: (350, 16), color: "#38bdf8");
+    spawn.coin(at: (520, 250), points: 500);
+    spawn.sprite("AngelPilot", at: (460, 240), size: (34, 46), color: "#6366f1");
+    spawn.bubbly("System Active // Diamond", state: "music");
+
+    // ── 9. Audio & Partículas ──
+    audio.tone(587, 80);
+    audio.tone(880, 100);
+    fx.particles(at: (460, 240), color: "#38bdf8");
+
+    out("[READY] CyberShine Core compilado y ejecutado en Looping v2.5!");
+}

@@ -12,7 +12,7 @@ public:
     static void run(Interpreter& vm) {
         vm.print_banner();
         std::cout << color::BOLD << color::CYAN << "✨ Welcome to Looping Interactive C++ Shell" << color::RESET << "\n";
-        std::cout << color::DIM << "Type 'help' for instructions, 'vars' to view memory, 'clear' to reset screen, 'exit' to quit." << color::RESET << "\n\n";
+        std::cout << "Type 'help' for syntax guide, 'vars' to view memory, 'clear' to reset screen, 'exit' to quit.\n\n";
 
         std::string line;
         std::vector<std::string> multiline_buffer;
@@ -22,7 +22,7 @@ public:
             if (!in_multiline) {
                 std::cout << color::BOLD << color::CYAN << "looping> " << color::RESET;
             } else {
-                std::cout << color::DIM << "   ...> " << color::RESET;
+                std::cout << color::PURPLE << "   ...> " << color::RESET;
             }
 
             if (!std::getline(std::cin, line)) {
@@ -47,7 +47,7 @@ public:
                 std::cout << "\n" << color::BOLD << color::CYAN << "📋 Active Memory Variables (" 
                           << vm.variables.size() << "):" << color::RESET << "\n";
                 if (vm.variables.empty()) {
-                    std::cout << color::DIM << "   (No variables defined yet. Try: set score to 100)" << color::RESET << "\n\n";
+                    std::cout << "   (No variables defined yet. Try: let score = 100)\n\n";
                 } else {
                     for (const auto& [k, v] : vm.variables) {
                         std::cout << "   " << color::YELLOW << k << color::RESET << " = " 
@@ -65,9 +65,13 @@ public:
 
             // Check if entering a multi-line block
             if (!in_multiline) {
-                if (trimmed.rfind("python {", 0) == 0 || trimmed == "python:" || trimmed == "py:" || 
+                if (trimmed.rfind("python {", 0) == 0 || trimmed.rfind("py! {", 0) == 0 || 
+                    trimmed.rfind("py {", 0) == 0 || trimmed == "python:" || trimmed == "py:" || 
+                    trimmed.rfind("fn ", 0) == 0 || trimmed.rfind("fun ", 0) == 0 || 
                     trimmed.rfind("function ", 0) == 0 || trimmed.rfind("repeat ", 0) == 0 || 
-                    trimmed.rfind("while ", 0) == 0 || (trimmed.back() == '{' && trimmed.size() > 1)) {
+                    trimmed.rfind("loop ", 0) == 0 || trimmed.rfind("loop(", 0) == 0 || 
+                    trimmed.rfind("for ", 0) == 0 || trimmed.rfind("while ", 0) == 0 || 
+                    (trimmed.back() == '{' && trimmed.size() > 1)) {
                     in_multiline = true;
                     multiline_buffer.push_back(line);
                     continue;
@@ -88,10 +92,23 @@ public:
             // Single line execution
             if (trimmed.empty()) continue;
 
-            // If expression without print or set, evaluate and print return value
-            if (trimmed.rfind("print ", 0) != 0 && trimmed.rfind("set ", 0) != 0 && 
-                trimmed.find('=') == std::string::npos && trimmed.rfind("import ", 0) != 0 &&
-                trimmed.rfind("use ", 0) != 0 && trimmed.rfind("call ", 0) != 0) {
+            // If expression without statement prefix, evaluate and print return value
+            bool is_stmt = (
+                trimmed.rfind("let ", 0) == 0 || trimmed.rfind("mut ", 0) == 0 ||
+                trimmed.rfind("val ", 0) == 0 || trimmed.rfind("var ", 0) == 0 ||
+                trimmed.find(":=") != std::string::npos ||
+                trimmed.rfind("print ", 0) == 0 || trimmed.rfind("print(", 0) == 0 ||
+                trimmed.rfind("out ", 0) == 0 || trimmed.rfind("out(", 0) == 0 ||
+                trimmed.rfind("set ", 0) == 0 || trimmed.rfind("import ", 0) == 0 ||
+                trimmed.rfind("use ", 0) == 0 || trimmed.rfind("call ", 0) == 0 ||
+                trimmed.rfind("ui.", 0) == 0 || trimmed.rfind("@ui", 0) == 0 ||
+                trimmed.rfind("spawn.", 0) == 0 || trimmed.rfind("@spawn", 0) == 0 ||
+                trimmed.rfind("audio.", 0) == 0 || trimmed.rfind("@audio", 0) == 0 ||
+                trimmed.rfind("fx.", 0) == 0 || trimmed.rfind("@fx", 0) == 0 ||
+                trimmed.rfind("return", 0) == 0 || trimmed == "break"
+            );
+
+            if (!is_stmt && trimmed.find('=') == std::string::npos) {
                 Parser p(trimmed);
                 auto expr = p.parse_single_expr(trimmed);
                 Value val = vm.eval(expr);
@@ -107,19 +124,22 @@ public:
 
     static void print_help() {
         std::cout << "\n" << color::BOLD << color::PURPLE << "═══════════════════════════════════════════════════════════════" << color::RESET << "\n";
-        std::cout << color::BOLD << "📖 Looping Language Quick Syntax Reference" << color::RESET << "\n";
+        std::cout << color::BOLD << "📖 Looping Language Quick Syntax Reference (v2.5 Signature)" << color::RESET << "\n";
         std::cout << color::BOLD << color::PURPLE << "═══════════════════════════════════════════════════════════════" << color::RESET << "\n";
-        std::cout << "  " << color::CYAN << "set <var> to <val>" << color::RESET << "       Assign variable (or: set x = 10, x += 5)\n";
-        std::cout << "  " << color::CYAN << "print <expr>, ..." << color::RESET << "          Print values with string interpolation \"{var}\"\n";
-        std::cout << "  " << color::CYAN << "if <cond> do <stmt>" << color::RESET << "        One-line conditional\n";
-        std::cout << "  " << color::CYAN << "repeat <N> times { ... }" << color::RESET << "   Repeat loop with {i} index variable\n";
-        std::cout << "  " << color::CYAN << "function <name>(...) { }" << color::RESET << "   Define reusable function\n";
-        std::cout << "  " << color::CYAN << "call <name>(...)" << color::RESET << "            Invoke function\n";
-        std::cout << "  " << color::CYAN << "py: <expr>" << color::RESET << "                  Inline Python evaluation (e.g. py: math.sqrt(25))\n";
-        std::cout << "  " << color::CYAN << "python { ... }" << color::RESET << "              Multi-line Python block with looping_set()\n";
-        std::cout << "  " << color::CYAN << "spawn sprite / platform" << color::RESET << "     Create 2D Game Entity with 60FPS physics\n";
-        std::cout << "  " << color::CYAN << "draw card / button / input" << color::RESET << "  Render Frosted Glassmorphism UI\n";
-        std::cout << "  " << color::CYAN << "play tone at X Hz for Y ms" << color::RESET << "  Synthesize audio frequency\n";
+        std::cout << "  " << color::CYAN << "let x = 10 / mut hp = 100" << color::RESET << "  Declarations (also: val max = 50, count := 0)\n";
+        std::cout << "  " << color::CYAN << "hp += 15, count++" << color::RESET << "           Shorthand math & increment operators\n";
+        std::cout << "  " << color::CYAN << "out(...) / print(...)" << color::RESET << "          Output with string interpolation \"{var}\" or $\"...\"\n";
+        std::cout << "  " << color::CYAN << "fn name(a, b) => a + b" << color::RESET << "        Function definition (arrow or block with { ... })\n";
+        std::cout << "  " << color::CYAN << "loop (5) { ... }" << color::RESET << "               Count loop with {i} index variable\n";
+        std::cout << "  " << color::CYAN << "for (i in 0..10) { ... }" << color::RESET << "        Range loop\n";
+        std::cout << "  " << color::CYAN << "while (cond) { ... }" << color::RESET << "            Condition loop (with break / return)\n";
+        std::cout << "  " << color::CYAN << "if (cond) { ... } else" << color::RESET << "        Conditional branching (or: if (cond) -> stmt)\n";
+        std::cout << "  " << color::CYAN << "expr |> func" << color::RESET << "                    Pipeline operator (e.g. 16 |> math.sqrt |> out)\n";
+        std::cout << "  " << color::CYAN << "py!(expr) / py! { ... }" << color::RESET << "         Python bridge inline macro & sync blocks\n";
+        std::cout << "  " << color::CYAN << "ui.card(...) / ui.btn(...)" << color::RESET << "     Glassmorphism UI components (pos, size, title)\n";
+        std::cout << "  " << color::CYAN << "spawn.sprite / platform" << color::RESET << "        Physics 2D entities (spawn.coin, spawn.bubbly)\n";
+        std::cout << "  " << color::CYAN << "audio.tone(freq, ms)" << color::RESET << "           Synthesize audio tone frequency\n";
+        std::cout << "  " << color::CYAN << "fx.particles(at, color)" << color::RESET << "        Particle physics burst\n";
         std::cout << "\n  " << color::YELLOW << "Special REPL Commands:" << color::RESET << " vars, clear, help, exit\n";
         std::cout << color::BOLD << color::PURPLE << "═══════════════════════════════════════════════════════════════" << color::RESET << "\n\n";
     }

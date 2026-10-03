@@ -2,31 +2,32 @@
 
 #include "LoopingValue.hpp"
 #include "LoopingAST.hpp"
-#include "LoopingPythonBridge.hpp"
 #include "LoopingParser.hpp"
+#include "LoopingPythonBridge.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <chrono>
+#include <memory>
 #include <cmath>
-#include <random>
+#include <chrono>
+#include <iomanip>
+#include <cstdlib>
 
 namespace looping {
 
-// ANSI Terminal Color Codes
 namespace color {
     inline const char* RESET   = "\033[0m";
     inline const char* BOLD    = "\033[1m";
-    inline const char* DIM     = "\033[2m";
     inline const char* CYAN    = "\033[36m";
     inline const char* GREEN   = "\033[32m";
     inline const char* YELLOW  = "\033[33m";
     inline const char* PURPLE  = "\033[35m";
     inline const char* RED     = "\033[31m";
     inline const char* BLUE    = "\033[34m";
+    inline const char* WHITE   = "\033[37m";
 }
 
 class Interpreter {
@@ -36,11 +37,15 @@ public:
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
-    std::string app_version = "2.2.0";
+    std::string app_version = "2.5.0";
     std::string target_platform = "Shine Loop Console (Holo Looping OoS)";
     std::string ui_profile = "stock";
     std::string theme = "frosted_aqua_a17";
     PythonBridge python_bridge;
+
+    bool has_returned = false;
+    bool has_broken = false;
+    Value last_return_value;
 
     Interpreter() {
         init_builtins();
@@ -57,11 +62,11 @@ public:
     void print_banner() {
         std::cout << "\n" << color::BOLD << color::PURPLE << "----------------------------------------------------------------------" << color::RESET << "\n";
         std::cout << color::BOLD << color::CYAN << "[LOOPING C++ NATIVE]" << color::RESET << " " 
-                  << color::GREEN << "Core High-Performance Engine v2.2.0" << color::RESET << " " 
-                  << color::DIM << "(POSIX / Win32 Native)" << color::RESET << "\n";
-        std::cout << color::YELLOW << "Target Platform:" << color::RESET << " " << target_platform 
-                  << " | " << color::BLUE << "Kernel:" << color::RESET << " Holo Looping OoS 1.0 (C++ Subsystem)\n";
-        std::cout << color::PURPLE << "By Holo Entertainment (Coki Studios)" << color::RESET << "\n";
+                  << color::GREEN << "Core High-Performance Engine v2.5.0" << color::RESET << " " 
+                  << color::YELLOW << "(POSIX / Win32 Native)" << color::RESET << "\n";
+        std::cout << color::BOLD << "Target Platform: " << color::RESET << target_platform 
+                  << " | " << color::BOLD << "Kernel: " << color::RESET << "Holo Looping OoS 1.0 (C++ Subsystem)\n";
+        std::cout << color::CYAN << "By Holo Entertainment (Coki Studios)" << color::RESET << "\n";
         std::cout << color::BOLD << color::PURPLE << "----------------------------------------------------------------------" << color::RESET << "\n\n";
     }
 
@@ -69,28 +74,42 @@ public:
     Value eval(std::shared_ptr<Expr> expr) {
         if (!expr) return Value();
 
-        // 1. Literal
+        // 1. Literal Value
         if (auto lit = std::dynamic_pointer_cast<LiteralExpr>(expr)) {
             return lit->val;
         }
 
         // 2. Variable Lookup
         if (auto var = std::dynamic_pointer_cast<VariableExpr>(expr)) {
-            auto it = variables.find(var->name);
+            std::string n = var->name;
+            // Check builtin constants
+            if (n == "true") return Value(true);
+            if (n == "false") return Value(false);
+            if (n == "nil" || n == "null" || n == "none") return Value();
+
+            auto it = variables.find(n);
             if (it != variables.end()) {
                 return it->second;
             }
-            return Value(var->name);
+            // Check normalized namespace math::pi -> math.pi
+            auto col_pos = n.find("::");
+            if (col_pos != std::string::npos) {
+                std::string alt = n;
+                alt.replace(col_pos, 2, ".");
+                auto ait = variables.find(alt);
+                if (ait != variables.end()) return ait->second;
+            }
+            return Value(); // undefined defaults to Nil
         }
 
-        // 3. Tuple (x, y)
+        // 3. Tuple
         if (auto tup = std::dynamic_pointer_cast<TupleExpr>(expr)) {
             double x = eval(tup->x).as_number();
             double y = eval(tup->y).as_number();
             return Value(x, y);
         }
 
-        // 4. String Interpolation: "Name: {hero_name} | Level: {level}"
+        // 4. Interpolated String
         if (auto interp = std::dynamic_pointer_cast<InterpolatedStringExpr>(expr)) {
             std::string res = interp->raw_template;
             for (const auto& [k, v] : variables) {
@@ -113,6 +132,26 @@ public:
         // 6. Binary Operators
         if (auto bin = std::dynamic_pointer_cast<BinaryExpr>(expr)) {
             std::string op = bin->op;
+
+            // Pipeline operator: left |> right
+            if (op == "|>") {
+                Value l = eval(bin->left);
+                if (auto var_r = std::dynamic_pointer_cast<VariableExpr>(bin->right)) {
+                    std::string fname = var_r->name;
+                    if (fname == "print" || fname == "out" || fname == "echo") {
+                        std::cout << color::GREEN << "[OUTPUT]" << color::RESET << " " << l.as_string() << "\n";
+                        return l;
+                    }
+                    auto call_e = std::make_shared<CallExpr>(fname, std::vector<std::shared_ptr<Expr>>{std::make_shared<LiteralExpr>(l)});
+                    return eval(call_e);
+                } else if (auto call_r = std::dynamic_pointer_cast<CallExpr>(bin->right)) {
+                    std::vector<std::shared_ptr<Expr>> new_args = { std::make_shared<LiteralExpr>(l) };
+                    for (const auto& a : call_r->args) new_args.push_back(a);
+                    auto call_e = std::make_shared<CallExpr>(call_r->callee, new_args);
+                    return eval(call_e);
+                }
+                return l;
+            }
 
             // Short-circuit logical operators
             if (op == "and" || op == "&&") {
@@ -158,6 +197,10 @@ public:
         // 8. Function Calls & Builtins
         if (auto call = std::dynamic_pointer_cast<CallExpr>(expr)) {
             std::string name = call->callee;
+            // Normalize :: to .
+            auto col_p = name.find("::");
+            if (col_p != std::string::npos) name.replace(col_p, 2, ".");
+
             std::vector<Value> evaluated_args;
             for (const auto& a : call->args) {
                 evaluated_args.push_back(eval(a));
@@ -235,18 +278,38 @@ public:
                 return Value(s);
             }
 
-            // User Defined Function Call
+            // Output Builtin inside expr
+            if (name == "out" || name == "print") {
+                std::ostringstream ss;
+                for (size_t i = 0; i < evaluated_args.size(); ++i) {
+                    if (i > 0) ss << " ";
+                    ss << evaluated_args[i].as_string();
+                }
+                std::cout << color::GREEN << "[OUTPUT]" << color::RESET << " " << ss.str() << "\n";
+                return evaluated_args.empty() ? Value() : evaluated_args[0];
+            }
+
+            // User Defined Function Call with return value
             auto fn_it = functions.find(name);
             if (fn_it != functions.end()) {
                 auto fn = fn_it->second;
-                // Scope parameters
+                std::unordered_map<std::string, Value> saved_vars;
+                for (const auto& p : fn->params) {
+                    if (variables.find(p) != variables.end()) saved_vars[p] = variables[p];
+                }
                 for (size_t i = 0; i < fn->params.size() && i < evaluated_args.size(); ++i) {
                     variables[fn->params[i]] = evaluated_args[i];
                 }
+                has_returned = false;
+                last_return_value = Value();
                 for (auto& s : fn->body) {
                     execute_statement(s);
+                    if (has_returned) break;
                 }
-                return Value();
+                Value ret = last_return_value;
+                has_returned = false;
+                for (const auto& [k, v] : saved_vars) variables[k] = v;
+                return ret;
             }
 
             // Fallback: If python module function, evaluate via Python Bridge
@@ -268,9 +331,29 @@ public:
 
     // ── Statement Executor ──
     void execute_statement(std::shared_ptr<Stmt> stmt) {
-        if (!stmt) return;
+        if (!stmt || has_returned || has_broken) return;
 
-        // 1. Print / Echo
+        // 0. Break
+        if (std::dynamic_pointer_cast<BreakStmt>(stmt)) {
+            has_broken = true;
+            return;
+        }
+
+        // 1. Return
+        if (auto ret = std::dynamic_pointer_cast<ReturnStmt>(stmt)) {
+            if (ret->value_expr) last_return_value = eval(ret->value_expr);
+            else last_return_value = Value();
+            has_returned = true;
+            return;
+        }
+
+        // Expression Statement (e.g. pipelines, function invocations)
+        if (auto es = std::dynamic_pointer_cast<ExprStmt>(stmt)) {
+            eval(es->expr);
+            return;
+        }
+
+        // 2. Print / Echo / Out
         if (auto pr = std::dynamic_pointer_cast<PrintStmt>(stmt)) {
             std::ostringstream ss;
             for (size_t i = 0; i < pr->expressions.size(); ++i) {
@@ -282,7 +365,7 @@ public:
             return;
         }
 
-        // 2. Variable Assignment: set x to 10, set x = 10, x += 5
+        // 3. Variable Assignment: let x = 10, mut x = 10, x := 10, x += 5
         if (auto st = std::dynamic_pointer_cast<SetStmt>(stmt)) {
             Value val = eval(st->value_expr);
             if (st->op == "=") {
@@ -299,22 +382,55 @@ public:
             return;
         }
 
-        // 3. Conditional: if cond do stmt OR if cond { ... } else { ... }
+        // 4. Conditional: if (cond) { ... } else { ... } OR if cond -> stmt
         if (auto if_st = std::dynamic_pointer_cast<IfStmt>(stmt)) {
             Value cond_val = eval(if_st->condition);
             if (cond_val.is_truthy()) {
                 for (auto& s : if_st->then_branch) {
                     execute_statement(s);
+                    if (has_returned || has_broken) break;
                 }
             } else {
                 for (auto& s : if_st->else_branch) {
                     execute_statement(s);
+                    if (has_returned || has_broken) break;
                 }
             }
             return;
         }
 
-        // 4. Repeat Loop: repeat N times { ... }
+        // 5. For Range Loop: for (i in start..end) { ... }
+        if (auto for_r = std::dynamic_pointer_cast<ForRangeStmt>(stmt)) {
+            int64_t start_v = eval(for_r->start_expr).as_int();
+            int64_t end_v = eval(for_r->end_expr).as_int();
+            for (int64_t i = start_v; i < end_v; ++i) {
+                variables[for_r->var_name] = Value(i);
+                for (auto& s : for_r->body) {
+                    execute_statement(s);
+                    if (has_broken || has_returned) break;
+                }
+                if (has_broken) { has_broken = false; break; }
+                if (has_returned) break;
+            }
+            return;
+        }
+
+        // 6. While Loop: while (cond) { ... }
+        if (auto wh = std::dynamic_pointer_cast<WhileStmt>(stmt)) {
+            size_t max_iterations = 1000000;
+            size_t iter = 0;
+            while (eval(wh->condition).is_truthy() && iter++ < max_iterations) {
+                for (auto& s : wh->body) {
+                    execute_statement(s);
+                    if (has_broken || has_returned) break;
+                }
+                if (has_broken) { has_broken = false; break; }
+                if (has_returned) break;
+            }
+            return;
+        }
+
+        // 7. Repeat / Loop Count: loop (N) { ... } OR repeat N times { ... }
         if (auto rep = std::dynamic_pointer_cast<RepeatStmt>(stmt)) {
             int64_t count = eval(rep->count_expr).as_int();
             for (int64_t i = 0; i < count; ++i) {
@@ -322,37 +438,57 @@ public:
                 variables["loop_index"] = Value(i);
                 for (auto& s : rep->body) {
                     execute_statement(s);
+                    if (has_broken || has_returned) break;
                 }
+                if (has_broken) { has_broken = false; break; }
+                if (has_returned) break;
             }
             return;
         }
 
-        // 5. Function Definition
+        // 8. Function Definition
         if (auto fn = std::dynamic_pointer_cast<FunctionDefStmt>(stmt)) {
             functions[fn->name] = fn;
-            std::cout << color::BLUE << "[FUNCTION]" << color::RESET << " Registered function \"" << fn->name 
+            std::cout << color::BLUE << "[FUNCTION]" << color::RESET << " Registered fn \"" << fn->name 
                       << "\" (" << fn->params.size() << " args)\n";
             return;
         }
 
-        // 6. Function Call: call name(...)
+        // 9. Function Call Statement: name(...) OR call name(...)
         if (auto call = std::dynamic_pointer_cast<CallStmt>(stmt)) {
             auto it = functions.find(call->name);
             if (it != functions.end()) {
                 auto fn = it->second;
+                std::unordered_map<std::string, Value> saved_vars;
+                for (const auto& p : fn->params) {
+                    if (variables.find(p) != variables.end()) saved_vars[p] = variables[p];
+                }
                 for (size_t i = 0; i < fn->params.size() && i < call->args.size(); ++i) {
                     variables[fn->params[i]] = eval(call->args[i]);
                 }
+                has_returned = false;
                 for (auto& s : fn->body) {
                     execute_statement(s);
+                    if (has_returned) break;
                 }
+                has_returned = false;
+                for (const auto& [k, v] : saved_vars) variables[k] = v;
             } else {
-                std::cout << color::YELLOW << "[FUNCTION CALL]" << color::RESET << " Invoked \"" << call->name << "\"\n";
+                if (call->name == "out" || call->name == "print" || call->name == "echo") {
+                    std::ostringstream ss;
+                    for (size_t i = 0; i < call->args.size(); ++i) {
+                        if (i > 0) ss << " ";
+                        ss << eval(call->args[i]).as_string();
+                    }
+                    std::cout << color::GREEN << "[OUTPUT]" << color::RESET << " " << ss.str() << "\n";
+                } else {
+                    std::cout << color::YELLOW << "[FUNCTION CALL]" << color::RESET << " Invoked \"" << call->name << "\"\n";
+                }
             }
             return;
         }
 
-        // 7. Python Multiline Block
+        // 10. Python Multiline Block
         if (auto py_b = std::dynamic_pointer_cast<PythonBlockStmt>(stmt)) {
             std::cout << color::PURPLE << "[PYTHON EXEC]" << color::RESET << " Running Python block...\n";
             std::string out = python_bridge.execute_block(py_b->py_code, variables);
@@ -362,7 +498,7 @@ public:
             return;
         }
 
-        // 8. Import
+        // 11. Import
         if (auto imp = std::dynamic_pointer_cast<ImportStmt>(stmt)) {
             if (imp->is_python) {
                 imported_python_modules.insert(imp->module_name);
@@ -375,23 +511,23 @@ public:
             return;
         }
 
-        // 9. App Definition
+        // 12. App Definition
         if (auto app = std::dynamic_pointer_cast<AppDefineStmt>(stmt)) {
             app_name = app->app_name;
             app_version = app->version;
-            std::cout << color::PURPLE << "[APP]" << color::RESET << " Registered \"" << app_name 
+            std::cout << color::GREEN << "[APP]" << color::RESET << " Registered \"" << app_name 
                       << "\" v" << app_version << " on " << target_platform << "\n";
             return;
         }
 
-        // 10. Window Definition
+        // 13. Window Canvas
         if (auto win = std::dynamic_pointer_cast<WindowStmt>(stmt)) {
-            std::cout << color::CYAN << "[DISPLAY]" << color::RESET << " \"" << win->title << "\" (" 
-                      << static_cast<int>(win->width) << "x" << static_cast<int>(win->height) << ")\n";
+            std::cout << color::PURPLE << "[DISPLAY]" << color::RESET << " \"" << win->title 
+                      << "\" (" << static_cast<int>(win->width) << "x" << static_cast<int>(win->height) << ")\n";
             return;
         }
 
-        // 11. Config: Theme / UI Profile
+        // 14. Theme & Config
         if (auto cfg = std::dynamic_pointer_cast<ConfigStmt>(stmt)) {
             if (cfg->key == "theme") {
                 theme = cfg->value;
@@ -403,7 +539,7 @@ public:
             return;
         }
 
-        // 12. Draw UI: Card / Button / Input
+        // 15. Draw UI: Card / Button / Input
         if (auto draw = std::dynamic_pointer_cast<DrawUIStmt>(stmt)) {
             std::string label = draw->ui_type;
             label[0] = std::toupper(label[0]);
@@ -414,7 +550,7 @@ public:
             return;
         }
 
-        // 13. Spawn Entity: Sprite / Platform / Coin / Bubbly Dot
+        // 16. Spawn Entity: Sprite / Platform / Coin / Bubbly Dot
         if (auto sp = std::dynamic_pointer_cast<SpawnEntityStmt>(stmt)) {
             if (sp->entity_type == "bubbly_dot") {
                 std::cout << color::GREEN << "[BUBBLY DOT]" << color::RESET << " Active Notch [" 
@@ -430,14 +566,14 @@ public:
             return;
         }
 
-        // 14. Emit Particles
+        // 17. Emit Particles
         if (auto em = std::dynamic_pointer_cast<EmitParticlesStmt>(stmt)) {
             std::cout << color::CYAN << "[PARTICLES]" << color::RESET << " Emitted FX burst at (" 
                       << em->x << ", " << em->y << ") [" << em->color << "]\n";
             return;
         }
 
-        // 15. Audio Tone
+        // 18. Audio Tone
         if (auto tone = std::dynamic_pointer_cast<PlayToneStmt>(stmt)) {
             std::cout << color::GREEN << "[AUDIO SYNTH]" << color::RESET << " Tone " 
                       << static_cast<int>(tone->freq_hz) << " Hz for " 
@@ -445,25 +581,25 @@ public:
             return;
         }
 
-        // 16. Syscall
+        // 19. Syscall
         if (auto sc = std::dynamic_pointer_cast<SyscallStmt>(stmt)) {
             std::cout << color::CYAN << "[KERNEL SYSCALL]" << color::RESET << " 0x" 
-                      << std::hex << (rand() % 0xFFFFFF) << std::dec << " :: " 
-                      << sc->call_name << "(" << sc->args << ") -> OK\n";
+                      << sc->call_name << " (" << sc->args << ")\n";
             return;
         }
 
-        // 17. Process
+        // 20. Process
         if (auto proc = std::dynamic_pointer_cast<SpawnProcessStmt>(stmt)) {
-            int pid = 1000 + (rand() % 9000);
-            std::cout << color::PURPLE << "[PROCESS]" << color::RESET << " PID " << pid 
-                      << " [" << proc->process_name << "] Started (Priority: " << proc->priority << ")\n";
+            std::cout << color::PURPLE << "[PROCESS]" << color::RESET << " Spawned daemon process: " 
+                      << proc->process_name << " (priority: " << proc->priority << ")\n";
             return;
         }
     }
 
-    // ── Execute Code String ──
+    // ── Execute Multiple Statements ──
     void execute_code(const std::string& code) {
+        has_returned = false;
+        has_broken = false;
         Parser parser(code);
         auto statements = parser.parse_script();
         for (auto& s : statements) {
@@ -485,7 +621,7 @@ public:
 
         if (python_bridge.is_available) {
             std::cout << color::GREEN << "[PYTHON INTEROP]" << color::RESET << " Attached Python runtime: " 
-                      << color::CYAN << python_bridge.get_command_str() << color::RESET << "\n";
+                  << color::CYAN << python_bridge.get_command_str() << color::RESET << "\n";
         } else {
             std::cout << color::YELLOW << "[PYTHON INTEROP]" << color::RESET << " Standalone Mode (Python not detected in PATH)\n";
         }

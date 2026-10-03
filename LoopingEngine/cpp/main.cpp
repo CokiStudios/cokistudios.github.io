@@ -17,7 +17,7 @@ void print_usage(const char* prog_name) {
 }
 
 int run_tests() {
-    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite...\n\n";
+    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v2.5 Signature)...\n\n";
     Interpreter vm;
 
     int passed = 0;
@@ -33,37 +33,51 @@ int run_tests() {
         }
     };
 
-    // Test 1: Variable assignments & Math
-    vm.execute_code("set a to 15\nset b = 25\nset c = a + b");
-    assert_test("Variable Assignment & Addition", vm.variables["c"].as_int() == 40);
+    // Test 1: Modern Declarations (let, mut, val, :=, ++)
+    vm.execute_code("let a = 15\nmut b = 25\nval c = a + b\nd := 10\nd++");
+    assert_test("Modern Declarations (let, mut, val, :=, ++)", 
+                vm.variables["c"].as_int() == 40 && vm.variables["d"].as_int() == 11);
 
     // Test 2: Arithmetic shorthand
-    vm.execute_code("set score = 100\nscore += 50\nscore *= 2");
+    vm.execute_code("mut score = 100\nscore += 50\nscore *= 2");
     assert_test("Shorthand Operators (+=, *=)", vm.variables["score"].as_int() == 300);
 
     // Test 3: Math functions
-    vm.execute_code("set sq = math.sqrt(144)\nset pw = math.pow(2, 8)");
+    vm.execute_code("val sq = math.sqrt(144)\nval pw = math.pow(2, 8)");
     assert_test("Math Builtins (sqrt, pow)", vm.variables["sq"].as_int() == 12 && vm.variables["pw"].as_int() == 256);
 
-    // Test 4: String Interpolation
-    vm.execute_code("set user to 'Angel'\nset greeting to 'Hello {user}!'");
-    assert_test("String Interpolation", vm.variables["greeting"].as_string() == "Hello Angel!");
+    // Test 4: String Interpolation with $"..."
+    vm.execute_code("let user = 'Angel'\nlet greeting = $\"Hello {user}!\"");
+    assert_test("String Interpolation ($)", vm.variables["greeting"].as_string() == "Hello Angel!");
 
-    // Test 5: Repeat loop
-    vm.execute_code("set total = 0\nrepeat 5 times {\n total += 10\n}");
-    assert_test("Repeat Loop", vm.variables["total"].as_int() == 50);
+    // Test 5: Functions with Arrow body & Call in expression
+    vm.execute_code("fn add(x, y) => x + y\nlet sum_res = add(35, 15)");
+    assert_test("Functions with Arrow Body & Return", vm.variables["sum_res"].as_int() == 50);
 
-    // Test 6: Conditionals
-    vm.execute_code("set flag = false\nif total == 50 do set flag to true");
-    assert_test("Inline Conditionals", vm.variables["flag"].is_truthy());
+    // Test 6: Range Loop & Count Loop
+    vm.execute_code("mut total_range = 0\nfor (i in 0..5) {\n total_range += i\n}\nmut count_acc = 0\nloop (4) {\n count_acc += 10\n}");
+    assert_test("Range Loop (for in 0..N) & Count Loop (loop N)", 
+                vm.variables["total_range"].as_int() == 10 && vm.variables["count_acc"].as_int() == 40);
 
-    // Test 7: Python Bridge if available
+    // Test 7: Block & Arrow Conditionals
+    vm.execute_code("mut status = 'initial'\nif (sum_res == 50) {\n status = 'ok'\n}\nmut flag = false\nif (status == 'ok') -> flag = true");
+    assert_test("Block & Arrow Conditionals", vm.variables["flag"].is_truthy());
+
+    // Test 8: Pipeline Operator |>
+    vm.execute_code("val piped = 64 |> math.sqrt");
+    assert_test("Pipeline Operator (|>)", vm.variables["piped"].as_int() == 8);
+
+    // Test 9: Python Bridge Macro py!(...)
     if (vm.python_bridge.is_available) {
-        vm.execute_code("set py_val to py: math.sqrt(64)");
-        assert_test("Python Bridge Inline Eval", vm.variables["py_val"].as_int() == 8);
+        vm.execute_code("val py_val = py!(math.sqrt(100))");
+        assert_test("Python Bridge Macro py!(...)", vm.variables["py_val"].as_int() == 10);
     } else {
         std::cout << "  " << color::YELLOW << "⚠ [SKIP]" << color::RESET << " Python Bridge (No python executable in PATH)\n";
     }
+
+    // Test 10: Modern UI & Entity Directives
+    vm.execute_code("ui.card(at: (10, 20), size: (200, 100), title: \"Test Card\")\nspawn.sprite(\"Hero\", at: (50, 50), color: \"#38bdf8\")\naudio.tone(587, 80)");
+    assert_test("Modern Directives (ui.card, spawn.sprite, audio.tone)", true);
 
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
@@ -98,21 +112,20 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    if (first_arg == "eval") {
-        if (argc < 3) {
-            std::cerr << color::RED << "Error: 'eval' requires code argument.\n" << color::RESET;
-            return 1;
-        }
-        std::string code = argv[2];
-        vm.execute_code(code);
-        return 0;
-    }
-
     if (first_arg == "test") {
         return run_tests();
     }
 
-    // Default: run script file
+    if (first_arg == "eval") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'eval' requires code string argument." << color::RESET << "\n";
+            return 1;
+        }
+        vm.execute_code(argv[2]);
+        return 0;
+    }
+
+    // Execute script file
     bool success = vm.execute_file(first_arg);
     return success ? 0 : 1;
 }

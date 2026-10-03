@@ -127,6 +127,37 @@ public:
         : condition(cond), body(b) {}
 };
 
+// For Range Loop: for i in start..end { ... }
+class ForRangeStmt : public Stmt {
+public:
+    std::string var_name;
+    std::shared_ptr<Expr> start_expr;
+    std::shared_ptr<Expr> end_expr;
+    std::vector<std::shared_ptr<Stmt>> body;
+    ForRangeStmt(const std::string& var, std::shared_ptr<Expr> s, std::shared_ptr<Expr> e, const std::vector<std::shared_ptr<Stmt>>& b)
+        : var_name(var), start_expr(s), end_expr(e), body(b) {}
+};
+
+// Return Statement: return <expr>
+class ReturnStmt : public Stmt {
+public:
+    std::shared_ptr<Expr> value_expr;
+    ReturnStmt(std::shared_ptr<Expr> val = nullptr) : value_expr(val) {}
+};
+
+// Break Statement: break
+class BreakStmt : public Stmt {
+public:
+    BreakStmt() = default;
+};
+
+// Expression Statement: expr (e.g. pipelines, function calls)
+class ExprStmt : public Stmt {
+public:
+    std::shared_ptr<Expr> expr;
+    ExprStmt(std::shared_ptr<Expr> e) : expr(e) {}
+};
+
 // Function Definition: function name(p1, p2) { ... }
 class FunctionDefStmt : public Stmt {
 public:
