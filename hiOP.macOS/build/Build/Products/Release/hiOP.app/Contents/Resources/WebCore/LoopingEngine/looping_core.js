@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// ♾️ LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
+//  LOOPING COMPILE — CORE RUNTIME & GRAPHIC ENGINE v2.0
 // Next-Gen Game Programming Language for "Shine Loop" & "Holo Looping OoS"
 // Developed by Holo Entertainment (Sub-division of Coki Studios)
 // ═══════════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ export class LoopingInterpreter {
     // ── AST & Lexer Compiler ──
     execute(code) {
         this.reset();
-        this.log("⚡ Compiling Looping (.loop) Source Code...", "system");
+        this.log(" Compiling Looping (.loop) Source Code...", "system");
         
         const lines = code.split('\n');
         
@@ -137,12 +137,12 @@ export class LoopingInterpreter {
             try {
                 this.parseLine(line);
             } catch (err) {
-                this.log(`❌ [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
+                this.log(` [Syntax Error at line ${i + 1}]: ${err.message}`, "error");
                 return false;
             }
         }
 
-        this.log("✨ Compilation Complete! Starting Shine Loop graphics pipeline @ 60FPS...", "success");
+        this.log(" Compilation Complete! Starting Shine Loop graphics pipeline @ 60FPS...", "success");
         this.startLoop();
         return true;
     }
@@ -150,37 +150,69 @@ export class LoopingInterpreter {
     parseLine(line) {
         // 1. Module Imports
         if (line.startsWith('import ')) {
-            this.log(`📦 Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
+            this.log(` Loaded Holo Engine Library: ${line.replace('import ', '')}`, 'system');
             return;
         }
 
-        // 2. App & Console Meta Definition
+        // 2. App & Console Meta Definition (Supports: define app "Name" or define app as Name)
         if (line.startsWith('define app')) {
-            const match = line.match(/define app ["'](.*?)["']/);
-            if (match) this.log(`🚀 Registered Game Title: "${match[1]}" for Shine Loop Console`, 'info');
+            let appName = 'HoloApp';
+            const quoteMatch = line.match(/define app\s*(?:as)?\s*["'](.*?)["']/);
+            const asMatch = line.match(/define app\s+as\s+([A-Za-z0-9_]+)/);
+            if (quoteMatch) appName = quoteMatch[1];
+            else if (asMatch) appName = asMatch[1];
+            
+            this.log(`[APP] Registered Game Title: "${appName}" for Shine Loop Console`, 'info');
             return;
         }
 
-        // 3. Theme configuration
-        if (line.startsWith('set theme to')) {
-            const match = line.match(/set theme to ["'](.*?)["']/);
+        // 3. UI System Profile & Target Device Configuration (CS Design Guide p.5, 10, 14)
+        // Profiles: hi!UI (Gama A), stock (Nomad), XUI (Gama X), FlUI (i / Fold)
+        if (line.startsWith('set ui_profile to') || line.startsWith('set ui_profile as') || line.startsWith('set ui to')) {
+            const match = line.match(/set (?:ui_profile|ui) (?:to|as) ["'](.*?)["']/);
+            if (match) {
+                this.uiProfile = match[1].toLowerCase();
+                this.log(`[CS DESIGN UI] UI Profile Set: "${this.uiProfile.toUpperCase()}" (Theme Specs Loaded)`, 'info');
+            }
+            return;
+        }
+
+        // 4. Theme configuration & Frosted Glass Acrílico Aqua A17 (CS Design Guide p.4)
+        if (line.startsWith('set theme to') || line.startsWith('set theme as')) {
+            const match = line.match(/set theme (?:to|as) ["'](.*?)["']/);
             if (match) this.theme = match[1];
             return;
         }
 
-        // 4. Variables: set <var> to <value>
-        if (line.startsWith('set ') && line.includes(' to ')) {
-            const parts = line.replace('set ', '').split(' to ');
+        // 5. Bubbly Dot Component (CS Own Dynamic Island - Design Guide p.17)
+        // Syntax: spawn bubbly_dot with text "..." and state "music|call|record|connect"
+        if (line.startsWith('spawn bubbly_dot') || line.startsWith('draw bubbly_dot')) {
+            const textMatch = line.match(/text ["'](.*?)["']/);
+            const stateMatch = line.match(/state ["'](.*?)["']/);
+            this.bubblyDot = {
+                active: true,
+                text: textMatch ? textMatch[1] : 'Shine Audio Active',
+                state: stateMatch ? stateMatch[1] : 'music',
+                pulse: 0
+            };
+            this.log(`[BUBBLY DOT] Active on Top Notch: [${this.bubblyDot.state.toUpperCase()}] "${this.bubblyDot.text}"`, 'info');
+            return;
+        }
+
+        // 6. Variables: set <var> to <value> OR set <var> as <value>
+        if (line.startsWith('set ') && (line.includes(' to ') || line.includes(' as '))) {
+            const delimiter = line.includes(' to ') ? ' to ' : ' as ';
+            const parts = line.replace('set ', '').split(delimiter);
             const varName = parts[0].trim();
-            const valExpr = parts[1].trim();
+            const valExpr = parts.slice(1).join(delimiter).trim();
             this.variables[varName] = this.evaluateExpression(valExpr);
             return;
         }
 
-        // 5. Print output: print "..."
+        // 5. Print output: print "...", var1, var2
         if (line.startsWith('print ')) {
             const expr = line.replace('print ', '').trim();
-            const val = this.evaluateExpression(expr);
+            const val = this.parsePrint(expr);
             this.log(val, 'output');
             return;
         }
@@ -194,12 +226,59 @@ export class LoopingInterpreter {
                 this.canvas.height = parseInt(sizeMatch[2]);
             }
             if (titleMatch) {
-                this.log(`🖥️ Shine Loop Display Mode: "${titleMatch[1]}" (${this.canvas.width}x${this.canvas.height})`, 'info');
+                this.log(` Shine Loop Display Mode: "${titleMatch[1]}" (${this.canvas.width}x${this.canvas.height})`, 'info');
             }
             return;
         }
 
-        // 7. Draw Card UI: draw card at (x, y) with size (w, h) and title "..." and text "..."
+        // 7. System Calls & Kernel Control: syscall <name> with args "..."
+        if (line.startsWith('syscall')) {
+            const match = line.match(/syscall\s+([A-Za-z0-9_]+)(?:\s+with\s+args\s+["'](.*?)["'])?/);
+            if (match) {
+                const callName = match[1];
+                const args = match[2] || '';
+                this.log(`[KERNEL SYSCALL] 0x${Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase()} :: ${callName}(${args}) -> OK`, 'system');
+            }
+            return;
+        }
+
+        // 8. Process Spawner / Multitasking: spawn process "name" with priority <int>
+        if (line.startsWith('spawn process')) {
+            const nameMatch = line.match(/spawn process ["'](.*?)["']/);
+            const prioMatch = line.match(/priority\s+(\d+)/);
+            const procName = nameMatch ? nameMatch[1] : 'task_daemon';
+            const pid = Math.floor(1000 + Math.random() * 9000);
+            this.log(`[PROCESS SCHEDULER] PID ${pid} [${procName}] Started (Priority: ${prioMatch ? prioMatch[1] : 10})`, 'info');
+            return;
+        }
+
+        // 9. Hardware Sound Generator: play tone at <freq> Hz for <duration> ms
+        if (line.startsWith('play tone')) {
+            const freqMatch = line.match(/play tone at\s+(\d+)\s*Hz/i);
+            const durMatch = line.match(/for\s+(\d+)\s*ms/i);
+            const freq = freqMatch ? parseInt(freqMatch[1]) : 440;
+            const dur = durMatch ? parseInt(durMatch[1]) : 100;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (dur / 1000));
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + (dur / 1000));
+                }
+            } catch (e) {}
+            this.log(`[AUDIO HARDWARE] Sound Synthesizer: ${freq}Hz (${dur}ms)`, 'system');
+            return;
+        }
+
+        // 10. Draw Card UI: draw card at (x, y) with size (w, h) and title "..." and text "..."
         if (line.startsWith('draw card at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
@@ -218,7 +297,7 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 8. Draw Button UI: draw button at (x, y) with text "..." and action "..."
+        // 11. Draw Button UI: draw button at (x, y) with text "..." and action "..."
         if (line.startsWith('draw button at')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const textMatch = line.match(/text ["'](.*?)["']/);
@@ -244,9 +323,10 @@ export class LoopingInterpreter {
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
             
             const name = nameMatch ? nameMatch[1] : 'Entity';
-            const isPlayer = name.toLowerCase().includes('angel') || name.toLowerCase().includes('player');
+            const isPlayer = name.toLowerCase().includes('angel') || name.toLowerCase().includes('player') || name.toLowerCase().includes('forky');
 
             const sprite = {
+                type: 'sprite',
                 name: name,
                 isPlayer: isPlayer,
                 x: posMatch ? parseFloat(posMatch[1]) : 100,
@@ -254,18 +334,56 @@ export class LoopingInterpreter {
                 vx: 0,
                 vy: 0,
                 speed: 260,
-                w: sizeMatch ? parseFloat(sizeMatch[1]) : 32,
-                h: sizeMatch ? parseFloat(sizeMatch[2]) : 44,
+                w: sizeMatch ? parseFloat(sizeMatch[1]) : 34,
+                h: sizeMatch ? parseFloat(sizeMatch[2]) : 46,
                 color: colorMatch ? colorMatch[1] : (isPlayer ? '#38bdf8' : '#ef4444'),
                 isJumping: false,
                 glowPulse: 0
             };
             this.gameEntities.push(sprite);
-            this.log(`👾 Entity Spawned on Shine Loop Stage: "${sprite.name}"`, 'info');
+            this.log(` Entity Spawned on Shine Loop Stage: "${sprite.name}"`, 'info');
             return;
         }
 
-        // 10. Particle System / Spark emitter: emit particles at (x, y) with color "..."
+        // 10. Spawn Static Platform: spawn platform at (x, y) with size (w, h) and color "..."
+        if (line.startsWith('spawn platform')) {
+            const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
+            const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
+            const colorMatch = line.match(/color ["'](.*?)["']/);
+
+            const platform = {
+                type: 'platform',
+                x: posMatch ? parseFloat(posMatch[1]) : 200,
+                y: posMatch ? parseFloat(posMatch[2]) : 300,
+                w: sizeMatch ? parseFloat(sizeMatch[1]) : 160,
+                h: sizeMatch ? parseFloat(sizeMatch[2]) : 18,
+                color: colorMatch ? colorMatch[1] : '#6366f1'
+            };
+            this.gameEntities.push(platform);
+            this.log(` Platform Placed at (${platform.x}, ${platform.y})`, 'info');
+            return;
+        }
+
+        // 11. Spawn Collectible Star/Coin: spawn coin at (x, y) with points <val>
+        if (line.startsWith('spawn coin') || line.startsWith('spawn star')) {
+            const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
+            const pointsMatch = line.match(/points\s+(\d+)/);
+
+            const coin = {
+                type: 'coin',
+                x: posMatch ? parseFloat(posMatch[1]) : 300,
+                y: posMatch ? parseFloat(posMatch[2]) : 250,
+                r: 10,
+                points: pointsMatch ? parseInt(pointsMatch[1]) : 100,
+                collected: false,
+                floatOffset: Math.random() * 10
+            };
+            this.gameEntities.push(coin);
+            this.log(` Collectible Placed at (${coin.x}, ${coin.y}) [${coin.points} pts]`, 'info');
+            return;
+        }
+
+        // 12. Particle System / Spark emitter: emit particles at (x, y) with color "..."
         if (line.startsWith('emit particles')) {
             const posMatch = line.match(/at \((\d+),\s*(\d+)\)/);
             const colorMatch = line.match(/color ["'](.*?)["']/);
@@ -296,13 +414,69 @@ export class LoopingInterpreter {
     }
 
     evaluateExpression(expr) {
+        if (expr === undefined || expr === null) return '';
+        expr = String(expr).trim();
         if (!expr) return '';
-        if ((expr.startsWith('"') && expr.endsWith('"')) || (expr.startsWith("'") && expr.endsWith("'"))) {
+        
+        // Literal String in double quotes
+        if (expr.startsWith('"') && expr.endsWith('"')) {
             return expr.slice(1, -1);
         }
-        if (!isNaN(expr)) return Number(expr);
-        if (this.variables.hasOwnProperty(expr)) return this.variables[expr];
+        // Literal String in single quotes
+        if (expr.startsWith("'") && expr.endsWith("'")) {
+            return expr.slice(1, -1);
+        }
+        // Numbers
+        if (!isNaN(expr) && expr !== '') {
+            return Number(expr);
+        }
+        // Boolean
+        if (expr === 'true') return true;
+        if (expr === 'false') return false;
+
+        // Variable lookup (with recursive resolution if needed)
+        if (this.variables.hasOwnProperty(expr)) {
+            let val = this.variables[expr];
+            if (typeof val === 'string' && this.variables.hasOwnProperty(val)) {
+                return this.variables[val];
+            }
+            return val;
+        }
+
         return expr;
+    }
+
+    parsePrint(rawExpr) {
+        // Split comma-separated arguments while respecting quoted strings
+        const args = [];
+        let current = '';
+        let inQuotes = false;
+        let quoteChar = '';
+
+        for (let i = 0; i < rawExpr.length; i++) {
+            const char = rawExpr[i];
+            if ((char === '"' || char === "'") && (i === 0 || rawExpr[i - 1] !== '\\')) {
+                if (!inQuotes) {
+                    inQuotes = true;
+                    quoteChar = char;
+                } else if (quoteChar === char) {
+                    inQuotes = false;
+                }
+            }
+
+            if (char === ',' && !inQuotes) {
+                args.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        if (current.trim()) {
+            args.push(current.trim());
+        }
+
+        const evaluated = args.map(arg => this.evaluateExpression(arg));
+        return evaluated.join(' ');
     }
 
     triggerEvent(event, data) {
@@ -311,7 +485,7 @@ export class LoopingInterpreter {
                 if (item.type === 'button') {
                     if (data.x >= item.x && data.x <= item.x + item.w &&
                         data.y >= item.y && data.y <= item.y + item.h) {
-                        this.log(`🎮 Gamepad Trigger: [${item.text}] Activated!`, 'success');
+                        this.log(` Gamepad Trigger: [${item.text}] Activated!`, 'success');
                         this.spawnParticleBurst(data.x, data.y, '#38bdf8', 25);
                     }
                 }
@@ -372,10 +546,35 @@ export class LoopingInterpreter {
                     entity.isJumping = false;
                 }
 
+                // Platform collisions
+                for (let other of this.gameEntities) {
+                    if (other.type === 'platform') {
+                        // Check if landing on top of platform
+                        if (entity.x + entity.w > other.x && entity.x < other.x + other.w) {
+                            if (entity.y + entity.h >= other.y && entity.y + entity.h <= other.y + other.h + 12 && entity.vy >= 0) {
+                                entity.y = other.y - entity.h;
+                                entity.vy = 0;
+                                entity.isJumping = false;
+                            }
+                        }
+                    } else if (other.type === 'coin' && !other.collected) {
+                        // Collect coin on overlap
+                        const cx = other.x;
+                        const cy = other.y;
+                        if (entity.x + entity.w >= cx - other.r && entity.x <= cx + other.r &&
+                            entity.y + entity.h >= cy - other.r && entity.y <= cy + other.r) {
+                            other.collected = true;
+                            this.score += other.points;
+                            this.spawnParticleBurst(cx, cy, '#fbbf24', 20);
+                            this.log(` Coin Collected! Score: +${other.points} (Total: ${this.score})`, 'success');
+                        }
+                    }
+                }
+
                 // Screen edge clamp
                 if (entity.x < 0) entity.x = 0;
                 if (this.canvas && entity.x + entity.w > this.canvas.width) entity.x = this.canvas.width - entity.w;
-            } else {
+            } else if (entity.type === 'sprite') {
                 // Autonomous AI Patrol for Enemy NPCs
                 if (!entity.patrolDir) entity.patrolDir = 1;
                 entity.x += entity.patrolDir * 60 * dt;
@@ -441,13 +640,66 @@ export class LoopingInterpreter {
         ctx.beginPath(); ctx.moveTo(0, h - 44); ctx.lineTo(w, h - 44); ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // 5. Render UI HUD Cards & Buttons
+        // 5. Render Bubbly Dot (CS Own Dynamic Island - Design Guide p.17)
+        if (this.bubblyDot && this.bubblyDot.active) {
+            this.bubblyDot.pulse += 0.05;
+            const dotW = 210;
+            const dotH = 34;
+            const dotX = (w - dotW) / 2;
+            const dotY = 12;
+
+            // Pill Notch Container (Pure Black with Neon Border)
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+            ctx.lineWidth = 1.5;
+            this.roundRect(ctx, dotX, dotY, dotW, dotH, 17, true, true);
+
+            // Dynamic Equalizer Icon / Indicator
+            if (this.bubblyDot.state === 'music') {
+                ctx.fillStyle = '#38bdf8';
+                for (let b = 0; b < 3; b++) {
+                    const barH = 8 + Math.sin(this.bubblyDot.pulse + b * 1.5) * 6;
+                    ctx.fillRect(dotX + 16 + (b * 6), dotY + (dotH - barH) / 2, 3, barH);
+                }
+            } else {
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(dotX + 22, dotY + dotH / 2, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Notification text
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 11px Outfit, sans-serif';
+            ctx.fillText(this.bubblyDot.text, dotX + 42, dotY + 21);
+        }
+
+        // 6. Render UI HUD Cards & Buttons (Frosted Glass / Acrílico Aqua A17 - Design Guide p.4)
         for (let elem of this.renderQueue) {
             if (elem.type === 'card') {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
-                ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
-                ctx.lineWidth = 1.5;
-                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 14, true, true);
+                // Frosted Glass Acrílico Aqua Gradient
+                const cardGrad = ctx.createLinearGradient(elem.x, elem.y, elem.x + elem.w, elem.y + elem.h);
+                if (this.uiProfile === 'flui') {
+                    // FlUI (Fold / Flex) Ultra Violet Theme
+                    cardGrad.addColorStop(0, 'rgba(30, 27, 75, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(15, 23, 42, 0.88)');
+                } else if (this.uiProfile === 'xui') {
+                    // XUI (Gama X) Cyber Neon Cyan Theme
+                    cardGrad.addColorStop(0, 'rgba(8, 47, 73, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(15, 23, 42, 0.88)');
+                } else {
+                    // Default / hi!UI Acrílico Aqua Glass
+                    cardGrad.addColorStop(0, 'rgba(15, 23, 42, 0.78)');
+                    cardGrad.addColorStop(1, 'rgba(30, 41, 59, 0.85)');
+                }
+
+                ctx.fillStyle = cardGrad;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+                ctx.lineWidth = 1.2;
+                ctx.shadowColor = 'rgba(56, 189, 248, 0.12)';
+                ctx.shadowBlur = 16;
+                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 16, true, true);
+                ctx.shadowBlur = 0;
 
                 ctx.fillStyle = '#38bdf8';
                 ctx.font = 'bold 15px Outfit, sans-serif';
@@ -476,20 +728,59 @@ export class LoopingInterpreter {
             }
         }
 
-        // 6. Render Game Sprites
-        for (let sprite of this.gameEntities) {
-            ctx.fillStyle = sprite.color;
-            ctx.shadowColor = sprite.color;
-            ctx.shadowBlur = 14 + Math.sin(sprite.glowPulse) * 4;
-            this.roundRect(ctx, sprite.x, sprite.y, sprite.w, sprite.h, 8, true, false);
-            
-            // Name tag above sprite
-            ctx.fillStyle = '#f1f5f9';
-            ctx.font = 'bold 11px Outfit, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(sprite.name, sprite.x + sprite.w / 2, sprite.y - 8);
-            ctx.textAlign = 'left';
-            ctx.shadowBlur = 0;
+        // 6. Render Game Entities (Platforms, Coins & Sprites)
+        for (let entity of this.gameEntities) {
+            if (entity.type === 'platform') {
+                // Neon Platform
+                const pGrad = ctx.createLinearGradient(entity.x, entity.y, entity.x, entity.y + entity.h);
+                pGrad.addColorStop(0, entity.color);
+                pGrad.addColorStop(1, 'rgba(15, 23, 42, 0.9)');
+                ctx.fillStyle = pGrad;
+                ctx.strokeStyle = '#818cf8';
+                ctx.lineWidth = 1.5;
+                this.roundRect(ctx, entity.x, entity.y, entity.w, entity.h, 6, true, true);
+            } else if (entity.type === 'coin' && !entity.collected) {
+                // Spinning Neon Star/Coin
+                const floatY = entity.y + Math.sin(this.lastTime * 0.005 + entity.floatOffset) * 4;
+                ctx.fillStyle = '#fbbf24';
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(entity.x, floatY, entity.r, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText("*", entity.x, floatY + 3.5);
+                ctx.textAlign = 'left';
+                ctx.shadowBlur = 0;
+            } else if (entity.type === 'sprite') {
+                ctx.fillStyle = entity.color;
+                ctx.shadowColor = entity.color;
+                ctx.shadowBlur = 14 + Math.sin(entity.glowPulse) * 4;
+                this.roundRect(ctx, entity.x, entity.y, entity.w, entity.h, 8, true, false);
+                
+                // Name tag above sprite
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = 'bold 11px Outfit, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(entity.name, entity.x + entity.w / 2, entity.y - 8);
+                ctx.textAlign = 'left';
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // 7. Render Score Counter (if score > 0)
+        if (this.score > 0) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1.5;
+            this.roundRect(ctx, w - 160, 24, 135, 40, 10, true, true);
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px Outfit, sans-serif';
+            ctx.fillText(`* SCORE: ${this.score}`, w - 145, 49);
         }
 
         // 7. Render Particle Bursts

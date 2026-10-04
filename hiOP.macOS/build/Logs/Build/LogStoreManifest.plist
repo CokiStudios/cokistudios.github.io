@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>logFormatVersion</key>
-	<integer>12</integer>
+	<integer>13</integer>
 	<key>logs</key>
 	<dict>
-		<key>0286BD13-7FC6-4A5C-8D49-28013FAA3760</key>
+		<key>517FFD41-7B97-413B-A588-69755BA388F2</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>0286BD13-7FC6-4A5C-8D49-28013FAA3760.xcactivitylog</string>
+			<string>517FFD41-7B97-413B-A588-69755BA388F2.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,15 +40,15 @@
 			<key>signature</key>
 			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
 			<key>timeStartedRecording</key>
-			<real>809809220.29732203</real>
+			<real>812765262.76393998</real>
 			<key>timeStoppedRecording</key>
-			<real>809809220.83473802</real>
+			<real>812765262.93502295</real>
 			<key>title</key>
 			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
 			<key>uniqueIdentifier</key>
-			<string>0286BD13-7FC6-4A5C-8D49-28013FAA3760</string>
+			<string>517FFD41-7B97-413B-A588-69755BA388F2</string>
 		</dict>
-		<key>996A0BFC-D283-4C9A-9ADE-5A788047C645</key>
+		<key>5F860C6C-08F6-41DE-BEEF-6256AB40A9B3</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>996A0BFC-D283-4C9A-9ADE-5A788047C645.xcactivitylog</string>
+			<string>5F860C6C-08F6-41DE-BEEF-6256AB40A9B3.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -80,15 +80,15 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<string>Building project hiOP with scheme hiOP and configuration Release</string>
 			<key>timeStartedRecording</key>
-			<real>809808727.74868703</real>
+			<real>812765262.93814397</real>
 			<key>timeStoppedRecording</key>
-			<real>809808728.56648397</real>
+			<real>812765267.99583805</real>
 			<key>title</key>
-			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<string>Building project hiOP with scheme hiOP and configuration Release</string>
 			<key>uniqueIdentifier</key>
-			<string>996A0BFC-D283-4C9A-9ADE-5A788047C645</string>
+			<string>5F860C6C-08F6-41DE-BEEF-6256AB40A9B3</string>
 		</dict>
 	</dict>
 </dict>
