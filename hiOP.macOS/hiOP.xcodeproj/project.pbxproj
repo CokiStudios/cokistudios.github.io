@@ -8,12 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		9D0000012A00000100000001 /* hiOPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D0000022A00000100000001 /* hiOPApp.swift */; };
-		9D0000032A00000100000001 /* WebCore in Resources */ = {isa = PBXBuildFile; fileRef = 9D0000042A00000100000001 /* WebCore */; };
+		9D0000052A00000100000001 /* IDEModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D0000062A00000100000001 /* IDEModels.swift */; };
+		9D0000072A00000100000001 /* IDEViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D0000082A00000100000001 /* IDEViewModel.swift */; };
+		9D0000092A00000100000001 /* NativeCodeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D00000A2A00000100000001 /* NativeCodeEditorView.swift */; };
+		9D00000B2A00000100000001 /* NativeFileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D00000C2A00000100000001 /* NativeFileTreeView.swift */; };
+		9D00001D2A00000100000001 /* NativeTerminalPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D00001E2A00000100000001 /* NativeTerminalPanelView.swift */; };
+		9D00001F2A00000100000001 /* hiOPWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D00002F2A00000100000001 /* hiOPWorkspaceView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		9D0000022A00000100000001 /* hiOPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hiOPApp.swift; sourceTree = "<group>"; };
-		9D0000042A00000100000001 /* WebCore */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WebCore; sourceTree = "<group>"; };
+		9D0000062A00000100000001 /* IDEModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDEModels.swift; sourceTree = "<group>"; };
+		9D0000082A00000100000001 /* IDEViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDEViewModel.swift; sourceTree = "<group>"; };
+		9D00000A2A00000100000001 /* NativeCodeEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCodeEditorView.swift; sourceTree = "<group>"; };
+		9D00000C2A00000100000001 /* NativeFileTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeFileTreeView.swift; sourceTree = "<group>"; };
+		9D00001E2A00000100000001 /* NativeTerminalPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeTerminalPanelView.swift; sourceTree = "<group>"; };
+		9D00002F2A00000100000001 /* hiOPWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hiOPWorkspaceView.swift; sourceTree = "<group>"; };
 		9D00000D2A00000100000001 /* hiOP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hiOP.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D00000E2A00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9D00000F2A00000100000001 /* hiOP.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = hiOP.entitlements; sourceTree = "<group>"; };
@@ -42,11 +52,40 @@
 			isa = PBXGroup;
 			children = (
 				9D0000022A00000100000001 /* hiOPApp.swift */,
-				9D0000042A00000100000001 /* WebCore */,
+				9D0000212A00000100000001 /* Models */,
+				9D0000222A00000100000001 /* ViewModels */,
+				9D0000232A00000100000001 /* Views */,
 				9D00000E2A00000100000001 /* Info.plist */,
 				9D00000F2A00000100000001 /* hiOP.entitlements */,
 			);
 			path = .;
+			sourceTree = "<group>";
+		};
+		9D0000212A00000100000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				9D0000062A00000100000001 /* IDEModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		9D0000222A00000100000001 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				9D0000082A00000100000001 /* IDEViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		9D0000232A00000100000001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				9D00000A2A00000100000001 /* NativeCodeEditorView.swift */,
+				9D00000C2A00000100000001 /* NativeFileTreeView.swift */,
+				9D00001E2A00000100000001 /* NativeTerminalPanelView.swift */,
+				9D00002F2A00000100000001 /* hiOPWorkspaceView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		9D0000132A00000100000001 /* Products */ = {
@@ -66,7 +105,6 @@
 			buildPhases = (
 				9D0000162A00000100000001 /* Sources */,
 				9D0000102A00000100000001 /* Frameworks */,
-				9D0000202A00000100000001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -110,23 +148,18 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		9D0000202A00000100000001 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				9D0000032A00000100000001 /* WebCore in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		9D0000162A00000100000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				9D0000012A00000100000001 /* hiOPApp.swift in Sources */,
+				9D0000052A00000100000001 /* IDEModels.swift in Sources */,
+				9D0000072A00000100000001 /* IDEViewModel.swift in Sources */,
+				9D0000092A00000100000001 /* NativeCodeEditorView.swift in Sources */,
+				9D00000B2A00000100000001 /* NativeFileTreeView.swift in Sources */,
+				9D00001D2A00000100000001 /* NativeTerminalPanelView.swift in Sources */,
+				9D00001F2A00000100000001 /* hiOPWorkspaceView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -158,7 +191,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDEFINED_VARIABLES = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -187,7 +220,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDEFINED_VARIABLES = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -214,7 +247,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.hiop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -239,7 +272,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.hiop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

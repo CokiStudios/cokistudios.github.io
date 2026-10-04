@@ -115,6 +115,25 @@ public struct TopTelemetryBar: View {
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 
+                // 100% .loop Code Inspector Button
+                Button {
+                    vm.isSourceEditorOpen.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "infinity")
+                            .font(.system(size: 10, weight: .black))
+                        Text("100% .LOOP")
+                            .font(.system(size: 9, weight: .black, design: .monospaced))
+                    }
+                    .foregroundColor(Color(hex: "00f5d4"))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(Color(hex: "00f5d4").opacity(0.15))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .help("Inspeccionar y editar código .loop del launcher (⌘L)")
+
                 // Settings Trigger Button
                 Button {
                     vm.toggleSettings()

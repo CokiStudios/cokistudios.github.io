@@ -7,9 +7,14 @@ public enum ViewMode: String, CaseIterable {
     case grid = "Cuadrícula"
 }
 
-// MARK: - Main Launcher State ViewModel
+// MARK: - Main Launcher State ViewModel (100% .loop Driven)
 public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
-    // Apps Catalog
+    // Looping Language Parser & Runtime
+    @Published public var loopEngine = LoopingScriptEngine()
+    @Published public var activeScriptFile: String = "sample_loop_projects/shine_launcher.loop"
+    @Published public var isSourceEditorOpen: Bool = false
+
+    // Apps Catalog (Generated 100% dynamically from .loop script)
     @Published public var allApps: [AppItem] = []
     @Published public var selectedCategory: AppCategory = .all
     @Published public var selectedIndex: Int = 0
@@ -73,7 +78,7 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
     }
 
     public init() {
-        loadCatalog()
+        loadCatalogFromLoopScript()
         setupControllerListener()
         startTelemetryLoop()
         updateTimeString()
@@ -84,170 +89,91 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
         }
     }
 
-    // MARK: - System Apps Catalog Definition
-    private func loadCatalog() {
-        self.allApps = [
-            AppItem(
-                id: "holo_arcade_2d",
-                title: "Holo Arcade 2D",
-                subtitle: "Cyberpunk 2D Retro Platformer",
-                category: "Juegos",
-                iconSymbol: "gamecontroller.fill",
-                primaryColorHex: "00f5d4",
-                secondaryColorHex: "0284c7",
-                badgeText: "60 FPS NATIVE",
-                summary: "Plataformero 2D retro optimizado con física cuántica a 60Hz. Corre y esquiva obstáculos mientras recolectas estrellas cuánticas y destruyes a los Corrupted Forkbots.",
-                releaseDate: "2026.1",
-                techSpecs: [
-                    ("Motor", "Looping 2D Sprite Core"),
-                    ("Física", "Sub-ms 60Hz Collider"),
-                    ("Resolución", "1280x800 @ 60 FPS"),
-                    ("Audio", "Hardware Square Tone DSP")
-                ],
-                target: .loopScript(relativeOrAbsolutePath: "sample_loop_projects/arcade.loop"),
-                sizeMb: 14.8
-            ),
-            AppItem(
-                id: "forkar_racing_3d",
-                title: "Forkar Racing 3D",
-                subtitle: "Cyberpunk High-Speed Karting",
-                category: "Juegos",
-                iconSymbol: "car.side.fill",
-                primaryColorHex: "f43f5e",
-                secondaryColorHex: "ea580c",
-                badgeText: "HOLO 3D MESH",
-                summary: "Carreras futuristas de karts en autopistas de Neo-Coki. Física aerodinámica 3D, pistas de gravedad cero, multijugador local por red y efectos de partículas de plasma.",
-                releaseDate: "2026.2",
-                techSpecs: [
-                    ("Física", "Holo 3D Aerodynamics"),
-                    ("Pistas", "Neo-Coki Skyline Zero-G"),
-                    ("Multijugador", "P2P Local Mesh 4P"),
-                    ("Hápticos", "Direct Gamepad Rumble")
-                ],
-                target: .webCore(localPathOrUrl: "forkar.html"),
-                sizeMb: 86.4
-            ),
-            AppItem(
-                id: "hiop_studio_ide",
-                title: "hiOP Studio IDE",
-                subtitle: "Entorno de Desarrollo Looping",
-                category: "Desarrollo",
-                iconSymbol: "chevron.left.forwardslash.chevron.right",
-                primaryColorHex: "6366f1",
-                secondaryColorHex: "8b5cf6",
-                badgeText: "MONACO CORE",
-                summary: "El entorno de desarrollo oficial para crear aplicaciones y videojuegos en Looping v2.5. Incluye resaltado de sintaxis, autocompletado y compilador instantáneo C++.",
-                releaseDate: "2026.3",
-                techSpecs: [
-                    ("Editor", "Embedded Monaco Engine"),
-                    ("Compilador", "Looping C++ Native v2.5"),
-                    ("Targets", "Shine Loop / macOS / APK"),
-                    ("Preview", "Live 60Hz Interactive HUD")
-                ],
-                target: .nativeApp(appBundleOrPath: "hiOP.macOS/build/Build/Products/Release/hiOP.app", fallbackUrl: "hiop-ide.html"),
-                sizeMb: 42.1
-            ),
-            AppItem(
-                id: "cybershine_core_v25",
-                title: "CyberShine Core v2.5",
-                subtitle: "Demostración de Sintaxis Looping 2.5",
-                category: "Desarrollo",
-                iconSymbol: "infinity",
-                primaryColorHex: "14b8a6",
-                secondaryColorHex: "10b981",
-                badgeText: "SUB-MS C++",
-                summary: "Demostración integral de la nueva sintaxis: pipelines `|>`, arrow functions `->`, bucles `loop (N)`, tipado `val/mut`, macro `py!` y directivas de hardware en tiempo real.",
-                releaseDate: "2026.4",
-                techSpecs: [
-                    ("Compilador", "C++17 Standalone Engine"),
-                    ("Latencia", "< 0.45 ms por ciclo"),
-                    ("Pipelines", "math.sqrt |> scale"),
-                    ("Notch", "Bubbly Dot Dynamic Island")
-                ],
-                target: .loopScript(relativeOrAbsolutePath: "sample_loop_projects/signature_demo.loop"),
-                sizeMb: 5.2
-            ),
-            AppItem(
-                id: "python_interop_bridge",
-                title: "Python Interop Bridge",
-                subtitle: "PySync 3.12+ Zero-Copy Shared Memory",
-                category: "Desarrollo",
-                iconSymbol: "cube.transparent.fill",
-                primaryColorHex: "f59e0b",
-                secondaryColorHex: "eab308",
-                badgeText: "PYTORCH SYNC",
-                summary: "Puente bidireccional entre Looping y Python. Ejecuta librerías como NumPy, SciPy y modelos de Machine Learning compartiendo buffers de memoria sin serialización lenta.",
-                releaseDate: "2026.1",
-                techSpecs: [
-                    ("Puente", "PySync C-API 3.12+"),
-                    ("Memoria", "Zero-Copy Direct IPC"),
-                    ("Librerías", "NumPy, SciPy, Torch"),
-                    ("Hilos", "Multi-Core Asíncrono")
-                ],
-                target: .loopScript(relativeOrAbsolutePath: "sample_loop_projects/python_interop_demo.loop"),
-                sizeMb: 8.9
-            ),
-            AppItem(
-                id: "ruuping_rust_core",
-                title: "Ruuping Rust Core",
-                subtitle: "Motor Nativo Ultra-Rápido 100% Rust",
-                category: "Sistema",
-                iconSymbol: "bolt.badge.automatic.fill",
-                primaryColorHex: "ff6b6b",
-                secondaryColorHex: "ee5253",
-                badgeText: "1.4M OPS/S",
-                summary: "Núcleo de sistema en Rust diseñado para tareas críticas de renderizado y audio. Alcanza más de 1.4 millones de instrucciones por segundo con seguridad de memoria garantizada.",
-                releaseDate: "2026.2",
-                techSpecs: [
-                    ("Lenguaje", "Rust 2024 Edition"),
-                    ("Throughput", "1,420,000 Ops/sec"),
-                    ("Latencia", "0.12 ms"),
-                    ("Seguridad", "100% Safe Memory / Zero GC")
-                ],
-                target: .loopScript(relativeOrAbsolutePath: "sample_loop_projects/ruuping_demo.ruup"),
-                sizeMb: 18.3
-            ),
-            AppItem(
-                id: "csms_encrypted_chat",
-                title: "CSMS Encrypted Chat",
-                subtitle: "Hardware-Backed Party Voice & Chat",
-                category: "Comunidad",
-                iconSymbol: "bubble.left.and.bubble.right.fill",
-                primaryColorHex: "06b6d4",
-                secondaryColorHex: "0ea5e9",
-                badgeText: "E2EE SECURE",
-                summary: "Servicio de mensajería y chat de voz cifrado para partidas multijugador. Protegido por el Secure Enclave del hardware con claves AES-256-GCM derivadas de sala.",
-                releaseDate: "2026.3",
-                techSpecs: [
-                    ("Cifrado", "AES-256-GCM Hardware-Backed"),
-                    ("Enclave", "Apple T2 / Secure Enclave"),
-                    ("Formato", "🔒 enc:v1:<iv>:<ciphertext>"),
-                    ("Voz", "Opus Low-Latency Spatial")
-                ],
-                target: .webCore(localPathOrUrl: "messenger.html"),
-                sizeMb: 24.5
-            ),
-            AppItem(
-                id: "system_hardware_settings",
-                title: "Ajustes y Hardware",
-                subtitle: "Panel de Configuración de la Consola",
-                category: "Sistema",
-                iconSymbol: "slider.horizontal.3",
-                primaryColorHex: "64748b",
-                secondaryColorHex: "475569",
-                badgeText: "120HZ DISPLAY",
-                summary: "Gestiona los perfiles de energía (Eco, Normal, Turbo Overclock), resolución de pantalla, calibración de sticks del mando, audio DSP y almacenamiento NVMe LoopFS.",
-                releaseDate: "2026.1",
-                techSpecs: [
-                    ("Pantalla", "1280x800 OLED HDR 120Hz"),
-                    ("APU", "Quad-Core Zen Low-Latency"),
-                    ("NVMe", "512GB Fast LoopFS v2.0"),
-                    ("Audio", "DSP 48kHz Stereo Surround")
-                ],
-                target: .systemSettings,
-                sizeMb: 4.1
+    // MARK: - 100% .loop Driven UI Loader
+    public func loadCatalogFromLoopScript() {
+        loopEngine.loadScript(from: activeScriptFile)
+
+        // Read variables declared in .loop code
+        self.batteryLevel = loopEngine.batteryLevel
+        self.bubblyDotTitle = "\(loopEngine.appName) // \(loopEngine.systemName)"
+        self.bubblyDotSubtext = "Kernel: \(loopEngine.kernelVersion) • \(loopEngine.runtimeEngine)"
+
+        // Map parsed cards from .loop into interactive app items
+        var apps: [AppItem] = []
+        for card in loopEngine.cards {
+            let target = resolveActionTarget(action: card.action)
+
+            // Extract specs from text
+            var specs: [(key: String, value: String)] = []
+            let lines = card.text.components(separatedBy: "\n")
+            for line in lines {
+                if line.contains(":") {
+                    let parts = line.components(separatedBy: ":")
+                    if parts.count >= 2 {
+                        let k = parts[0].trimmingCharacters(in: .whitespaces)
+                        let v = parts.dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces)
+                        specs.append((key: k, value: v))
+                    }
+                }
+            }
+
+            if specs.isEmpty {
+                specs = [
+                    ("Motor", "Looping C++ Native"),
+                    ("Lenguaje", "100% .loop Script"),
+                    ("Consola", "Shine Loop Handheld")
+                ]
+            }
+
+            let subtitle = lines.first ?? "Aplicación Holo Loop OS"
+
+            apps.append(
+                AppItem(
+                    id: card.id,
+                    title: card.title,
+                    subtitle: subtitle,
+                    category: card.category,
+                    iconSymbol: card.iconSymbol,
+                    primaryColorHex: card.primaryColorHex,
+                    secondaryColorHex: card.secondaryColorHex,
+                    badgeText: card.badgeText,
+                    summary: card.text,
+                    releaseDate: "2026",
+                    techSpecs: specs,
+                    target: target,
+                    sizeMb: Double(card.width) / 10.0
+                )
             )
-        ]
+        }
+
+        self.allApps = apps
+    }
+
+    private func resolveActionTarget(action: String?) -> LaunchTarget {
+        guard let action = action else { return .systemSettings }
+        switch action {
+        case "launch_arcade":
+            return .loopScript(relativeOrAbsolutePath: "sample_loop_projects/arcade.loop")
+        case "launch_hiop":
+            return .nativeApp(appBundleOrPath: "hiOP.macOS/build/Build/Products/Release/hiOP.app", fallbackUrl: nil)
+        case "launch_python":
+            return .loopScript(relativeOrAbsolutePath: "sample_loop_projects/python_interop_demo.loop")
+        case "launch_forkar":
+            return .loopScript(relativeOrAbsolutePath: "sample_loop_projects/signature_demo.loop")
+        case "launch_ruuping":
+            return .loopScript(relativeOrAbsolutePath: "sample_loop_projects/ruuping_demo.ruup")
+        case "launch_settings":
+            return .systemSettings
+        default:
+            return .loopScript(relativeOrAbsolutePath: "sample_loop_projects/\(action).loop")
+        }
+    }
+
+    public func saveAndReloadScript(editedCode: String) {
+        let resolved = LoopingProcessRunner.resolveScriptPath(activeScriptFile)
+        try? editedCode.write(toFile: resolved, atomically: true, encoding: .utf8)
+        loadCatalogFromLoopScript()
+        SoundSynthesizer.shared.playActionBlip()
     }
 
     // MARK: - Controller Integration
@@ -256,48 +182,37 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
             guard let self = self else { return }
 
             if self.isRunningSheetPresented {
-                // If game execution sheet is active, button B closes it
-                if action == .buttonB {
-                    self.closeRunningApp()
-                }
+                if action == .buttonB { self.closeRunningApp() }
                 return
             }
 
             if self.isSettingsDrawerOpen {
-                if action == .buttonB || action == .menuButton {
-                    self.toggleSettings()
-                }
+                if action == .buttonB || action == .menuButton { self.toggleSettings() }
+                return
+            }
+
+            if self.isSourceEditorOpen {
+                if action == .buttonB { self.isSourceEditorOpen = false }
                 return
             }
 
             switch action {
-            case .dpadLeft:
-                self.selectPrevious()
-            case .dpadRight:
-                self.selectNext()
-            case .dpadUp:
-                self.selectUp()
-            case .dpadDown:
-                self.selectDown()
+            case .dpadLeft: self.selectPrevious()
+            case .dpadRight: self.selectNext()
+            case .dpadUp: self.selectUp()
+            case .dpadDown: self.selectDown()
             case .buttonA:
                 if let selected = self.selectedApp {
                     self.launchApp(selected)
                 }
             case .buttonB:
                 SoundSynthesizer.shared.playBackTick()
-                if self.isBubblyDotExpanded {
-                    self.isBubblyDotExpanded = false
-                }
-            case .buttonX:
-                self.toggleViewMode()
-            case .buttonY:
-                self.toggleBubblyDot()
-            case .shoulderLeft:
-                self.previousCategory()
-            case .shoulderRight:
-                self.nextCategory()
-            case .menuButton:
-                self.toggleSettings()
+                if self.isBubblyDotExpanded { self.isBubblyDotExpanded = false }
+            case .buttonX: self.toggleViewMode()
+            case .buttonY: self.toggleBubblyDot()
+            case .shoulderLeft: self.previousCategory()
+            case .shoulderRight: self.nextCategory()
+            case .menuButton: self.toggleSettings()
             }
         }
     }
@@ -308,11 +223,8 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
             guard let self = self else { return }
             self.updateTimeString()
 
-            // Simulate slight APU load fluctuations
             let variation = Int.random(in: -4...5)
             self.cpuLoadPercent = min(max(self.cpuLoadPercent + variation, 14), 68)
-
-            // Random ping jitter (6ms - 12ms)
             self.wifiPingMs = Int.random(in: 6...12)
         }
     }
@@ -428,35 +340,26 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
         case .systemSettings:
             self.isSettingsDrawerOpen = true
 
-        case .nativeApp(let appPath, let fallbackUrl):
+        case .nativeApp(let appPath, _):
             let fileManager = FileManager.default
             let resolved = LoopingProcessRunner.resolveScriptPath(appPath)
             if fileManager.fileExists(atPath: resolved) {
                 NSWorkspace.shared.open(URL(fileURLWithPath: resolved))
-            } else if let fallback = fallbackUrl {
-                openFallbackWebPage(fallback)
             } else {
                 self.activeLaunchedApp = item
                 self.isRunningSheetPresented = true
                 self.processRunner.outputLines = [
-                    "⚡ [LAUNCHING NATIVE TARGET] '\(item.title)'",
+                    "⚡ [LAUNCHING NATIVE APP] '\(item.title)'",
                     "Target path: \(resolved)",
-                    "⚠️ Native app bundle not found. Building with Xcode or run_hiop.sh recommended."
+                    "⚠️ Native app bundle not found at path."
                 ]
             }
 
         case .webCore(let webPath):
-            openFallbackWebPage(webPath)
-        }
-    }
-
-    private func openFallbackWebPage(_ path: String) {
-        let fileManager = FileManager.default
-        let resolved = LoopingProcessRunner.resolveScriptPath(path)
-        if fileManager.fileExists(atPath: resolved) {
-            NSWorkspace.shared.open(URL(fileURLWithPath: resolved))
-        } else if let remote = URL(string: "https://cokistudios.com/" + path) {
-            NSWorkspace.shared.open(remote)
+            let resolved = LoopingProcessRunner.resolveScriptPath(webPath)
+            if FileManager.default.fileExists(atPath: resolved) {
+                NSWorkspace.shared.open(URL(fileURLWithPath: resolved))
+            }
         }
     }
 

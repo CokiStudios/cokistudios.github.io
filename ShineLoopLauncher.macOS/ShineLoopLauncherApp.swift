@@ -17,6 +17,11 @@ struct ShineLoopLauncherApp: App {
                 }
                 .keyboardShortcut("r", modifiers: .command)
 
+                Button("Inspeccionar Código Fuente .loop") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ToggleLoopSource"), object: nil)
+                }
+                .keyboardShortcut("l", modifiers: .command)
+
                 Divider()
 
                 Button("Silenciar / Reactivar Audio") {

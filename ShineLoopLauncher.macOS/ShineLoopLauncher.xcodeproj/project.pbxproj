@@ -23,6 +23,8 @@
 		8A00001B2A00000100000001 /* SettingsDrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00001C2A00000100000001 /* SettingsDrawerView.swift */; };
 		8A00001D2A00000100000001 /* HandheldBezelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00001E2A00000100000001 /* HandheldBezelView.swift */; };
 		8A00001F2A00000100000001 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000202A00000100000001 /* LauncherView.swift */; };
+		8A0000412A00000100000001 /* LoopingScriptEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000422A00000100000001 /* LoopingScriptEngine.swift */; };
+		8A0000432A00000100000001 /* LoopSourceInspectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000442A00000100000001 /* LoopSourceInspectorSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		8A00001C2A00000100000001 /* SettingsDrawerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsDrawerView.swift; sourceTree = "<group>"; };
 		8A00001E2A00000100000001 /* HandheldBezelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandheldBezelView.swift; sourceTree = "<group>"; };
 		8A0000202A00000100000001 /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
+		8A0000422A00000100000001 /* LoopingScriptEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopingScriptEngine.swift; sourceTree = "<group>"; };
+		8A0000442A00000100000001 /* LoopSourceInspectorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopSourceInspectorSheet.swift; sourceTree = "<group>"; };
 		8A0000212A00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8A0000222A00000100000001 /* ShineLoopLauncher.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShineLoopLauncher.entitlements; sourceTree = "<group>"; };
 		8A0000232A00000100000001 /* ShineLoopLauncher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShineLoopLauncher.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -94,6 +98,7 @@
 				8A0000062A00000100000001 /* SoundSynthesizer.swift */,
 				8A0000082A00000100000001 /* LoopingProcessRunner.swift */,
 				8A00000A2A00000100000001 /* GameControllerManager.swift */,
+				8A0000422A00000100000001 /* LoopingScriptEngine.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -119,6 +124,7 @@
 				8A00001C2A00000100000001 /* SettingsDrawerView.swift */,
 				8A00001E2A00000100000001 /* HandheldBezelView.swift */,
 				8A0000202A00000100000001 /* LauncherView.swift */,
+				8A0000442A00000100000001 /* LoopSourceInspectorSheet.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -204,6 +210,8 @@
 				8A00001B2A00000100000001 /* SettingsDrawerView.swift in Sources */,
 				8A00001D2A00000100000001 /* HandheldBezelView.swift in Sources */,
 				8A00001F2A00000100000001 /* LauncherView.swift in Sources */,
+				8A0000412A00000100000001 /* LoopingScriptEngine.swift in Sources */,
+				8A0000432A00000100000001 /* LoopSourceInspectorSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,6 +222,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
@@ -248,6 +257,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;

@@ -6,7 +6,7 @@
 	<integer>13</integer>
 	<key>logs</key>
 	<dict>
-		<key>517FFD41-7B97-413B-A588-69755BA388F2</key>
+		<key>4842132B-DC90-4DDD-AA79-72BA85A35285</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,13 +15,13 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>517FFD41-7B97-413B-A588-69755BA388F2.xcactivitylog</string>
+			<string>4842132B-DC90-4DDD-AA79-72BA85A35285.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>S</string>
+				<string>W</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
@@ -29,7 +29,7 @@
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
+				<integer>1</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>hiOP project</string>
@@ -38,17 +38,17 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<string>Building project hiOP with scheme hiOP and configuration Release</string>
 			<key>timeStartedRecording</key>
-			<real>812765262.76393998</real>
+			<real>812766074.70033801</real>
 			<key>timeStoppedRecording</key>
-			<real>812765262.93502295</real>
+			<real>812766075.16974103</real>
 			<key>title</key>
-			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<string>Building project hiOP with scheme hiOP and configuration Release</string>
 			<key>uniqueIdentifier</key>
-			<string>517FFD41-7B97-413B-A588-69755BA388F2</string>
+			<string>4842132B-DC90-4DDD-AA79-72BA85A35285</string>
 		</dict>
-		<key>5F860C6C-08F6-41DE-BEEF-6256AB40A9B3</key>
+		<key>4CF8AE49-9D6D-4B5E-ADA2-C962F1586B31</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>5F860C6C-08F6-41DE-BEEF-6256AB40A9B3.xcactivitylog</string>
+			<string>4CF8AE49-9D6D-4B5E-ADA2-C962F1586B31.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,13 +82,97 @@
 			<key>signature</key>
 			<string>Building project hiOP with scheme hiOP and configuration Release</string>
 			<key>timeStartedRecording</key>
-			<real>812765262.93814397</real>
+			<real>812766087.88843405</real>
 			<key>timeStoppedRecording</key>
-			<real>812765267.99583805</real>
+			<real>812766088.195099</real>
 			<key>title</key>
 			<string>Building project hiOP with scheme hiOP and configuration Release</string>
 			<key>uniqueIdentifier</key>
-			<string>5F860C6C-08F6-41DE-BEEF-6256AB40A9B3</string>
+			<string>4CF8AE49-9D6D-4B5E-ADA2-C962F1586B31</string>
+		</dict>
+		<key>A85E55D9-97E6-42CD-8243-59FC4C51EA10</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>A85E55D9-97E6-42CD-8243-59FC4C51EA10.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>hiOP project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>hiOP</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>812765888.56408</real>
+			<key>timeStoppedRecording</key>
+			<real>812765888.77315998</real>
+			<key>title</key>
+			<string>Cleaning project hiOP with scheme hiOP and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>A85E55D9-97E6-42CD-8243-59FC4C51EA10</string>
+		</dict>
+		<key>ECED8C2F-DE7B-4CF4-8E86-61D627A2D89F</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>ECED8C2F-DE7B-4CF4-8E86-61D627A2D89F.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>1</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>hiOP project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>hiOP</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project hiOP with scheme hiOP and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>812765888.77616203</real>
+			<key>timeStoppedRecording</key>
+			<real>812765891.33990502</real>
+			<key>title</key>
+			<string>Building project hiOP with scheme hiOP and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>ECED8C2F-DE7B-4CF4-8E86-61D627A2D89F</string>
 		</dict>
 	</dict>
 </dict>

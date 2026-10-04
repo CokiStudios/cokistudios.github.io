@@ -64,6 +64,12 @@ public struct LauncherView: View {
                     LoopingRunnerSheet(vm: vm)
                         .transition(.opacity.combined(with: .scale(scale: 0.98)))
                 }
+
+                // 7. Looping Source Code Inspector (100% .loop Script)
+                if vm.isSourceEditorOpen {
+                    LoopSourceInspectorSheet(vm: vm)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                }
             }
         }
         .preferredColorScheme(.dark)
@@ -72,6 +78,9 @@ public struct LauncherView: View {
         }
         .onDisappear {
             removeKeyboardMonitor()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleLoopSource"))) { _ in
+            vm.isSourceEditorOpen.toggle()
         }
     }
 
@@ -132,6 +141,15 @@ public struct LauncherView: View {
                 return event
             }
 
+            // When source inspector is up
+            if self.vm.isSourceEditorOpen {
+                if event.keyCode == 53 { // ESC
+                    self.vm.isSourceEditorOpen = false
+                    return nil
+                }
+                return event
+            }
+
             // When settings drawer is up
             if self.vm.isSettingsDrawerOpen {
                 if event.keyCode == 53 || event.keyCode == 48 { // ESC or TAB
@@ -177,6 +195,9 @@ public struct LauncherView: View {
             case 17: // 'T' key (Turbo Overclock toggle)
                 self.vm.performanceProfile = (self.vm.performanceProfile == .turbo) ? .balanced : .turbo
                 SoundSynthesizer.shared.playActionBlip()
+                return nil
+            case 37: // 'L' key (.loop code inspector)
+                self.vm.isSourceEditorOpen.toggle()
                 return nil
             default:
                 return event
