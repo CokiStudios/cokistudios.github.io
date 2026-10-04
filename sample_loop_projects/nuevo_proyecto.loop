@@ -1,0 +1,19 @@
+# ═══════════════════════════════════════════════════════════════
+# ♾️ NUEVO PROGRAMA LOOPING v2.5 — SHINE LOOP CONSOLE
+# Coki Studios & Holo Entertainment
+# ═══════════════════════════════════════════════════════════════
+
+import loop.engine as game
+import loop.ui as ui
+
+define app "nuevo_proyecto" version 1.0:
+    create window with title "nuevo_proyecto.loop" and size (800, 520)
+    set theme to "frosted_aqua_a17"
+    
+    print "🌟 Ejecutando nuevo_proyecto.loop en Looping C++ Native!"
+    
+    # Tono de inicio oficial de la Shine Loop
+    play tone at 587 Hz for 80 ms
+    play tone at 880 Hz for 100 ms
+    let hi = “Hola”
+    print(hi)

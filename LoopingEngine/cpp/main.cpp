@@ -9,6 +9,9 @@ using namespace looping;
 void print_usage(const char* prog_name) {
     std::cout << color::BOLD << "Usage:" << color::RESET << "\n";
     std::cout << "  " << prog_name << " <script.loop>            Execute Looping script\n";
+    std::cout << "  " << prog_name << " run <script.loop>        Execute Looping script\n";
+    std::cout << "  " << prog_name << " create <name> [--type]   Create and synthesize new dynamic program\n";
+    std::cout << "  " << prog_name << " compile <file.loop>      Compile script for target UI profile\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
     std::cout << "  " << prog_name << " test                     Run built-in engine test suite\n";
@@ -94,6 +97,28 @@ int run_tests() {
     vm.execute_code("compile target \"xui\"\ncompile target \"shine_ui\"\ncompile target \"flui\"");
     assert_test("Target UI Profiles (Shine UI, XUI, flUI)", vm.ui_profile == "flui" && vm.active_ui_specs.name == "flUI");
 
+    // Test 13: Dynamic Program Creation & Compilation via Builtins
+    vm.execute_code(
+        "let prog = compiler.create_program(\"TestDynamicApp\", \"flui\", \"1.0\")\n"
+        "val dyn_code = \"mut dyn_x = 42\\nprint 'Dynamic app runs!'\"\n"
+        "val out_art = compiler.compile(dyn_code, \"flui\", \"build/test_dynamic_flui\")"
+    );
+    assert_test("Dynamic Program Compilation Subsystem", 
+                vm.dynamic_programs.find("TestDynamicApp") != vm.dynamic_programs.end() && 
+                vm.variables["LAST_COMPILED_APP"].as_string() == "build/test_dynamic_flui");
+
+    // Test 14: Dynamic In-Language Program Block (compile program)
+    vm.execute_code(
+        "compile program \"DynamicBlockApp\" target \"shine_ui\" to \"build/dynamic_block_shine\":\n"
+        "    title \"Dynamic Window\"\n"
+        "    card \"STATUS\" at (10, 10) size (200, 50) text \"OK\"\n"
+        "    code:\n"
+        "        val block_val = 999\n"
+    );
+    assert_test("Dynamic In-Language Program Block (compile program)",
+                vm.dynamic_programs.find("DynamicBlockApp") != vm.dynamic_programs.end() &&
+                vm.variables["DynamicBlockApp"].as_string() == "build/dynamic_block_shine");
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 
@@ -140,6 +165,36 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // Dynamic Program Creator: looping create <name> [--type <arcade|dashboard|tool>] [--target <shine_ui|xui|flui>] [--output <out>]
+    if (first_arg == "create" || first_arg == "new") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'create' requires an application name." << color::RESET << "\n";
+            std::cerr << "Usage: " << argv[0] << " create <name> [--type <game|dashboard|tool>] [--target <shine_ui|xui|flui>] [--output <out>]\n";
+            return 1;
+        }
+
+        std::string app_name = argv[2];
+        std::string type = "dashboard";
+        std::string target_ui = "shine_ui";
+        std::string out_path = "";
+
+        for (int i = 3; i < argc; ++i) {
+            std::string arg = argv[i];
+            if ((arg == "--type" || arg == "-k") && i + 1 < argc) {
+                type = argv[++i];
+            } else if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
+                target_ui = argv[++i];
+            } else if ((arg == "--output" || arg == "-o") && i + 1 < argc) {
+                out_path = argv[++i];
+            }
+        }
+
+        DynamicProgram prog = Compiler::create_template(type, app_name, target_ui);
+        std::string created_path;
+        bool ok = Compiler::compile_dynamic_program(prog, out_path, &created_path);
+        return ok ? 0 : 1;
+    }
+
     // Compile command: looping compile <script.loop> [--target <shine_ui|xui|flui>] [--output <out>]
     if (first_arg == "compile" || first_arg == "build") {
         if (argc < 3) {
@@ -165,9 +220,15 @@ int main(int argc, char* argv[]) {
         return success ? 0 : 1;
     }
 
-    // Execute script file with optional --target flag
+    // Run command: looping run <script.loop> [flags] OR looping <script.loop> [flags]
     std::string script_path = first_arg;
-    for (int i = 2; i < argc; ++i) {
+    int arg_start = 2;
+    if (first_arg == "run" && argc >= 3) {
+        script_path = argv[2];
+        arg_start = 3;
+    }
+
+    for (int i = arg_start; i < argc; ++i) {
         std::string arg = argv[i];
         if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
             vm.set_target_ui(argv[++i]);
@@ -177,3 +238,4 @@ int main(int argc, char* argv[]) {
     bool success = vm.execute_file(script_path);
     return success ? 0 : 1;
 }
+

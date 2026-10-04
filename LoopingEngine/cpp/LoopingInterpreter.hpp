@@ -4,6 +4,7 @@
 #include "LoopingAST.hpp"
 #include "LoopingParser.hpp"
 #include "LoopingPythonBridge.hpp"
+#include "LoopingCompiler.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -15,6 +16,7 @@
 #include <chrono>
 #include <iomanip>
 #include <cstdlib>
+#include <thread>
 
 namespace looping {
 
@@ -30,69 +32,12 @@ namespace color {
     inline const char* WHITE   = "\033[37m";
 }
 
-struct UIProfileSpecs {
-    std::string name;          // "Shine UI", "XUI", "flUI"
-    std::string code;          // "shine_ui", "xui", "flui"
-    std::string theme;         // "frosted_aqua_a17", "cyber_neon_xui", "aurora_indigo_fold"
-    std::string primary_color; // "#00f5d4", "#38bdf8", "#c084fc"
-    std::string accent_color;  // "#0284c7", "#082f49", "#ec4899"
-    int target_fps;            // 60, 240, 120
-    std::string pipeline;      // "Hardware APU Direct 60Hz", "Vulkan Ultra-Low Latency 240Hz", "Adaptive Dual-Screen 120Hz"
-    std::string layout_mode;   // "Console Grid & Carousel", "Pro Gamer Esports HUD", "Foldable Multi-Deck Floating"
-};
-
-inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
-    std::string s = raw;
-    for (char& c : s) c = std::tolower(c);
-    while (!s.empty() && (s.front() == ' ' || s.front() == '-' || s.front() == '_')) s.erase(0, 1);
-    while (!s.empty() && (s.back() == ' ' || s.back() == '-' || s.back() == '_')) s.pop_back();
-
-    // 1. XUI (Gama X / 240Hz Gaming)
-    if (s == "xui" || s == "x_ui" || s == "x-ui" || s == "gama_x" || s == "gama-x" || s == "gamax") {
-        return {
-            "XUI",
-            "xui",
-            "cyber_neon_xui",
-            "#38bdf8",
-            "#082f49",
-            240,
-            "Direct-to-Vulkan Ultra-Low Latency 240Hz (<0.2ms)",
-            "Pro Gamer Esports HUD (High-Refresh APU)"
-        };
-    }
-
-    // 2. flUI (Foldable / Dual-Screen / Floating Multi-Window)
-    if (s == "flui" || s == "fl_ui" || s == "fl-ui" || s == "fl ui" || s == "fold" || s == "foldable" || s == "floating" || s == "duo") {
-        return {
-            "flUI",
-            "flui",
-            "aurora_indigo_fold",
-            "#c084fc",
-            "#ec4899",
-            120,
-            "Fold-Aware Dynamic Multi-Window 120Hz",
-            "Dual-Screen Deck / Floating Cards Responsive"
-        };
-    }
-
-    // 3. Shine UI (Flagship Handheld Console) default
-    return {
-        "Shine UI",
-        "shine_ui",
-        "frosted_aqua_a17",
-        "#00f5d4",
-        "#0284c7",
-        60,
-        "Shine APU Direct V-Sync 60Hz",
-        "Handheld Console Grid & 3D Carousel"
-    };
-}
-
 class Interpreter {
 public:
     std::unordered_map<std::string, Value> variables;
     std::unordered_map<std::string, std::shared_ptr<FunctionDefStmt>> functions;
     std::unordered_map<std::string, std::string> python_snippets;
+    std::unordered_map<std::string, DynamicProgram> dynamic_programs;
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
@@ -409,6 +354,144 @@ public:
                 }
                 std::cout << color::GREEN << "[OUTPUT]" << color::RESET << " " << ss.str() << "\n";
                 return evaluated_args.empty() ? Value() : evaluated_args[0];
+            }
+
+            // Dynamic Compiler Builtins in Looping expressions
+            if (name == "compiler.compile" || name == "compile") {
+                std::string source = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                std::string target = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "shine_ui";
+                std::string out_p  = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : "";
+                std::string created_path;
+                bool ok = Compiler::compile_source(source, target, out_p, &created_path);
+                if (ok) {
+                    variables["LAST_COMPILED_APP"] = Value(created_path);
+                    return Value(created_path);
+                }
+                return Value(false);
+            }
+
+            if (name == "compiler.create_program" || name == "create_program") {
+                std::string p_name   = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "DynamicApp";
+                std::string p_target = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "shine_ui";
+                std::string p_ver    = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : "1.0";
+                dynamic_programs[p_name] = Compiler::create_program(p_name, p_target, p_ver);
+                std::cout << color::CYAN << "[DYNAMIC COMPILER]" << color::RESET << " Initialized program builder: \"" 
+                          << p_name << "\" [Target: " << p_target << "]\n";
+                return Value(p_name);
+            }
+
+            if (name == "compiler.add_card") {
+                if (evaluated_args.size() >= 7) {
+                    std::string p_name = evaluated_args[0].as_string();
+                    double x = evaluated_args[1].as_number();
+                    double y = evaluated_args[2].as_number();
+                    double w = evaluated_args[3].as_number();
+                    double h = evaluated_args[4].as_number();
+                    std::string title = evaluated_args[5].as_string();
+                    std::string text  = evaluated_args[6].as_string();
+                    if (dynamic_programs.find(p_name) != dynamic_programs.end()) {
+                        dynamic_programs[p_name].add_card(x, y, w, h, title, text);
+                        return Value(true);
+                    }
+                }
+                return Value(false);
+            }
+
+            if (name == "compiler.add_button") {
+                if (evaluated_args.size() >= 5) {
+                    std::string p_name = evaluated_args[0].as_string();
+                    double x = evaluated_args[1].as_number();
+                    double y = evaluated_args[2].as_number();
+                    std::string text   = evaluated_args[3].as_string();
+                    std::string action = evaluated_args[4].as_string();
+                    if (dynamic_programs.find(p_name) != dynamic_programs.end()) {
+                        dynamic_programs[p_name].add_button(x, y, text, action);
+                        return Value(true);
+                    }
+                }
+                return Value(false);
+            }
+
+            if (name == "compiler.add_code") {
+                if (evaluated_args.size() >= 2) {
+                    std::string p_name = evaluated_args[0].as_string();
+                    std::string code   = evaluated_args[1].as_string();
+                    if (dynamic_programs.find(p_name) != dynamic_programs.end()) {
+                        dynamic_programs[p_name].add_code(code);
+                        return Value(true);
+                    }
+                }
+                return Value(false);
+            }
+
+            if (name == "compiler.build" || name == "compiler.compile_program") {
+                if (evaluated_args.size() >= 1) {
+                    std::string p_name = evaluated_args[0].as_string();
+                    std::string out_p  = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "";
+                    if (dynamic_programs.find(p_name) != dynamic_programs.end()) {
+                        std::string created_path;
+                        bool ok = Compiler::compile_dynamic_program(dynamic_programs[p_name], out_p, &created_path);
+                        if (ok) {
+                            variables["LAST_COMPILED_APP"] = Value(created_path);
+                            return Value(created_path);
+                        }
+                    }
+                }
+                return Value(false);
+            }
+
+            if (name == "compiler.eval" || name == "eval") {
+                if (!evaluated_args.empty()) {
+                    std::string code = evaluated_args[0].as_string();
+                    execute_code(code);
+                    return last_return_value;
+                }
+                return Value();
+            }
+
+            if (name == "compiler.run" || name == "sys.launch" || name == "sys.run" || name == "run") {
+                if (!evaluated_args.empty()) {
+                    std::string path = evaluated_args[0].as_string();
+                    bool ok = Compiler::run_artifact(path);
+                    return Value(ok);
+                }
+                return Value(false);
+            }
+
+            if (name == "compiler.targets") {
+                return Value("shine_ui, xui, flui");
+            }
+
+            // Interactive Console Input
+            if (name == "input" || name == "read_line" || name == "prompt") {
+                if (!evaluated_args.empty()) {
+                    std::cout << evaluated_args[0].as_string();
+                    std::cout.flush();
+                }
+                std::string user_line;
+                if (std::getline(std::cin, user_line)) {
+                    if (!user_line.empty() && user_line.back() == '\r') user_line.pop_back();
+                    return Value(user_line);
+                }
+                return Value("");
+            }
+
+            if (name == "sys.clear" || name == "clear") {
+                std::cout << "\033[2J\033[1;1H";
+                std::cout.flush();
+                return Value(true);
+            }
+
+            if (name == "sys.sleep" || name == "sleep") {
+                double ms = evaluated_args.empty() ? 100.0 : evaluated_args[0].as_number();
+                std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(ms)));
+                return Value(true);
+            }
+
+            if (name == "time.now" || name == "timestamp") {
+                auto now = std::chrono::system_clock::now();
+                auto sec = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+                return Value(static_cast<int64_t>(sec));
             }
 
             // User Defined Function Call with return value
@@ -754,6 +837,97 @@ public:
                       << proc->process_name << " (priority: " << proc->priority << ")\n";
             return;
         }
+
+        // 21. Dynamic Program Compilation Block: compile program "..." target "..." to "...":
+        if (auto dyn = std::dynamic_pointer_cast<DynamicProgramCompileStmt>(stmt)) {
+            std::cout << color::CYAN << "[DYNAMIC COMPILER]" << color::RESET << " Synthesizing dynamic program: \"" 
+                      << color::BOLD << dyn->program_name << color::RESET << "\" (Target: " << dyn->target_ui << ")\n";
+
+            DynamicProgram prog(dyn->program_name, dyn->target_ui, dyn->version);
+
+            // Parse inner directives and statements
+            bool in_code_section = false;
+            for (const auto& raw_line : dyn->raw_lines) {
+                std::string trimmed = raw_line;
+                while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) trimmed.erase(0, 1);
+                if (trimmed.empty() || trimmed.front() == '#') continue;
+
+                if (trimmed == "code:" || trimmed == "code {") {
+                    in_code_section = true;
+                    continue;
+                }
+
+                if (in_code_section) {
+                    if (trimmed == "}" || trimmed == "end") {
+                        in_code_section = false;
+                    } else {
+                        prog.add_code(raw_line);
+                    }
+                    continue;
+                }
+
+                if (trimmed.rfind("title ", 0) == 0) {
+                    std::regex tr(R"(title\s+["'](.*?)["'])");
+                    std::smatch m;
+                    if (std::regex_search(trimmed, m, tr)) {
+                        prog.window_title = m[1];
+                    }
+                } else if (trimmed.rfind("size ", 0) == 0) {
+                    std::regex sr(R"(size\s*\((\d+),\s*(\d+)\))");
+                    std::smatch m;
+                    if (std::regex_search(trimmed, m, sr)) {
+                        prog.window_width = std::stod(m[1]);
+                        prog.window_height = std::stod(m[2]);
+                    }
+                } else if (trimmed.rfind("theme ", 0) == 0) {
+                    std::regex thr(R"(theme\s+["'](.*?)["'])");
+                    std::smatch m;
+                    if (std::regex_search(trimmed, m, thr)) {
+                        prog.set_theme(m[1]);
+                    }
+                } else if (trimmed.rfind("draw card", 0) == 0 || trimmed.rfind("card ", 0) == 0) {
+                    double cx = 20, cy = 20, cw = 760, ch = 100;
+                    std::string c_title = "Card", c_text = "";
+                    std::regex ar(R"(at\s*\((\d+),\s*(\d+)\))");
+                    std::regex sr(R"(size\s*\((\d+),\s*(\d+)\))");
+                    std::regex tr(R"(title\s*["'](.*?)["'])");
+                    std::regex txtr(R"(text\s*["'](.*?)["'])");
+                    std::smatch m;
+                    if (std::regex_search(trimmed, m, ar)) { cx = std::stod(m[1]); cy = std::stod(m[2]); }
+                    if (std::regex_search(trimmed, m, sr)) { cw = std::stod(m[1]); ch = std::stod(m[2]); }
+                    if (std::regex_search(trimmed, m, tr)) { c_title = m[1]; }
+                    if (std::regex_search(trimmed, m, txtr)) { c_text = m[1]; }
+                    prog.add_card(cx, cy, cw, ch, c_title, c_text);
+                } else if (trimmed.rfind("draw button", 0) == 0 || trimmed.rfind("button ", 0) == 0) {
+                    double bx = 20, by = 20;
+                    std::string b_text = "Button", b_act = "";
+                    std::regex ar(R"(at\s*\((\d+),\s*(\d+)\))");
+                    std::regex tr(R"(text\s*["'](.*?)["'])");
+                    std::regex actr(R"(action\s*["'](.*?)["'])");
+                    std::smatch m;
+                    if (std::regex_search(trimmed, m, ar)) { bx = std::stod(m[1]); by = std::stod(m[2]); }
+                    if (std::regex_search(trimmed, m, tr)) { b_text = m[1]; }
+                    if (std::regex_search(trimmed, m, actr)) { b_act = m[1]; }
+                    prog.add_button(bx, by, b_text, b_act);
+                } else {
+                    prog.add_code(raw_line);
+                }
+            }
+
+            dynamic_programs[dyn->program_name] = prog;
+
+            std::string created_path;
+            bool ok = Compiler::compile_dynamic_program(prog, dyn->output_path, &created_path);
+            if (ok) {
+                variables["LAST_COMPILED_APP"] = Value(created_path);
+                variables[dyn->program_name] = Value(created_path);
+                if (dyn->and_run) {
+                    std::cout << color::CYAN << "[DYNAMIC RUN]" << color::RESET << " Launching dynamic program artifact...\n";
+                    Compiler::run_artifact(created_path);
+                }
+            }
+            return;
+        }
     }
 
     // ── Execute Multiple Statements ──
@@ -804,96 +978,7 @@ public:
 
     // ── Compile Script for Target UI (Shine UI / XUI / flUI) ──
     bool compile_script_to_target(const std::string& input_path, const std::string& target_name, const std::string& output_path) {
-        std::ifstream file(input_path);
-        if (!file.is_open()) {
-            std::cerr << color::RED << "❌ Error: Cannot open input file: " << input_path << color::RESET << "\n";
-            return false;
-        }
-
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string source_code = buffer.str();
-
-        UIProfileSpecs specs = resolve_ui_profile(target_name);
-
-        std::cout << "\n" << color::BOLD << color::PURPLE << "══════════════════════════════════════════════════════════════════════" << color::RESET << "\n";
-        std::cout << color::BOLD << color::CYAN << "[LOOPING COMPILER]" << color::RESET << " Compiling for Target UI: " 
-                  << color::BOLD << color::GREEN << specs.name << color::RESET << " (" << specs.code << ")\n";
-        std::cout << color::BOLD << "Hardware Target:   " << color::RESET << target_platform << "\n";
-        std::cout << color::BOLD << "Refresh Pipeline:  " << color::RESET << specs.pipeline << " (" << specs.target_fps << " FPS)\n";
-        std::cout << color::BOLD << "UI Architecture:   " << color::RESET << specs.layout_mode << "\n";
-        std::cout << color::BOLD << "Glassmorphism FX:  " << color::RESET << specs.theme << " (" << specs.primary_color << " / " << specs.accent_color << ")\n";
-        std::cout << color::PURPLE << "══════════════════════════════════════════════════════════════════════" << color::RESET << "\n\n";
-
-        // Parse and verify AST
-        Parser parser(source_code);
-        auto statements = parser.parse_script();
-        std::cout << color::BLUE << "[AST VERIFIER]" << color::RESET << " Analyzed " 
-                  << statements.size() << " syntax nodes successfully.\n";
-
-        // Determine output path
-        std::string out_file = output_path;
-        if (out_file.empty()) {
-            std::string base_name = input_path;
-            size_t slash = base_name.find_last_of("/\\");
-            if (slash != std::string::npos) base_name = base_name.substr(slash + 1);
-            size_t dot = base_name.find_last_of('.');
-            if (dot != std::string::npos) base_name = base_name.substr(0, dot);
-            out_file = "build/" + base_name + "_" + specs.code;
-        }
-
-        // Ensure parent directory exists
-        size_t slash = out_file.find_last_of("/\\");
-        if (slash != std::string::npos) {
-            std::string dir = out_file.substr(0, slash);
-            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
-            system(mkdir_cmd.c_str());
-        }
-
-        std::ofstream out(out_file);
-        if (!out.is_open()) {
-            std::cerr << color::RED << "❌ Error: Cannot write compiled target to: " << out_file << color::RESET << "\n";
-            return false;
-        }
-
-        out << "#!/usr/bin/env looping\n";
-        out << "# ═══════════════════════════════════════════════════════════════\n";
-        out << "# 🚀 COMPILED LOOPING TARGET ARTIFACT — " << specs.name << "\n";
-        out << "# System UI: " << specs.name << " [" << specs.code << "]\n";
-        out << "# Hardware Refresh: " << specs.pipeline << " (" << specs.target_fps << " FPS)\n";
-        out << "# Layout Mode: " << specs.layout_mode << "\n";
-        out << "# Shader Palette: " << specs.theme << " (" << specs.primary_color << ")\n";
-        out << "# Compiled by Looping Engine v" << app_version << " (Holo Entertainment / Coki Studios)\n";
-        out << "# ═══════════════════════════════════════════════════════════════\n\n";
-        out << "compile target \"" << specs.code << "\"\n";
-        out << "set ui_profile to \"" << specs.code << "\"\n";
-        out << "set theme to \"" << specs.theme << "\"\n\n";
-
-        // Filter source code to comment out conflicting target/profile definitions
-        std::stringstream in_stream(source_code);
-        std::string cur_line;
-        while (std::getline(in_stream, cur_line)) {
-            std::string trimmed = cur_line;
-            while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) trimmed.erase(0, 1);
-            if (trimmed.rfind("compile target ", 0) == 0 || trimmed.rfind("compile for ", 0) == 0 ||
-                trimmed.rfind("target(", 0) == 0 || trimmed.rfind("@target(", 0) == 0 ||
-                trimmed.rfind("profile(", 0) == 0 || trimmed.rfind("@profile(", 0) == 0 ||
-                trimmed.rfind("set ui_profile to", 0) == 0 || trimmed.rfind("set ui to", 0) == 0 ||
-                trimmed.rfind("set theme to", 0) == 0) {
-                out << "    # [Compiled Target Override]: " << trimmed << "\n";
-            } else {
-                out << cur_line << "\n";
-            }
-        }
-        out.close();
-
-        std::string chmod_cmd = "chmod +x \"" + out_file + "\"";
-        system(chmod_cmd.c_str());
-
-        std::cout << color::GREEN << "✔ [SUCCESS]" << color::RESET << " Compiled target binary artifact written to: " 
-                  << color::BOLD << out_file << color::RESET << "\n\n";
-
-        return true;
+        return Compiler::compile_file(input_path, target_name, output_path);
     }
 };
 

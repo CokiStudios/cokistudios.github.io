@@ -292,4 +292,24 @@ public:
     SpawnProcessStmt(const std::string& n, int p = 10) : process_name(n), priority(p) {}
 };
 
+// Dynamic Program Compilation: compile program "Name" [target "flui"] [to "path"] [and run]: ...
+class DynamicProgramCompileStmt : public Stmt {
+public:
+    std::string program_name;
+    std::string target_ui = "shine_ui";
+    std::string output_path = "";
+    std::string version = "1.0";
+    std::string title = "";
+    double width = 800;
+    double height = 520;
+    std::string theme = "";
+    bool and_run = false;
+    std::vector<std::string> raw_lines;
+    std::vector<std::shared_ptr<Stmt>> inner_statements;
+
+    DynamicProgramCompileStmt(const std::string& name, const std::string& target = "shine_ui", const std::string& out = "", const std::string& ver = "1.0")
+        : program_name(name), target_ui(target), output_path(out), version(ver) {}
+};
+
 } // namespace looping
+

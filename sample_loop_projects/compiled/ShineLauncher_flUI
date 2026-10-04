@@ -1,81 +1,217 @@
 #!/usr/bin/env looping
 # ═══════════════════════════════════════════════════════════════
-# 🚀 COMPILED LOOPING TARGET ARTIFACT — flUI
+# 🚀 COMPILED DYNAMIC LOOPING ARTIFACT — flUI
 # System UI: flUI [flui]
 # Hardware Refresh: Fold-Aware Dynamic Multi-Window 120Hz (120 FPS)
 # Layout Mode: Dual-Screen Deck / Floating Cards Responsive
 # Shader Palette: aurora_indigo_fold (#c084fc)
-# Compiled by Looping Engine v2.5.0 (Holo Entertainment / Coki Studios)
+# Dynamic Looping Engine v2.5.0 (Coki Studios / Holo Entertainment)
 # ═══════════════════════════════════════════════════════════════
 
 compile target "flui"
 set ui_profile to "flui"
 set theme to "aurora_indigo_fold"
 
-# ═══════════════════════════════════════════════════════════════
-# 🌟 SHINE LAUNCHER — OFFICIAL SYSTEM DASHBOARD (.loop / .ruup)
-# Shine Loop Console & Holo Looping OoS 1.0 (Linux Gaming Core)
+# ═══════════════════════════════════════════════════════════════════════════════════
+# 🌟 SHINE LAUNCHER — OFFICIAL SYSTEM LAUNCHER & DASHBOARD (100% LOOPING)
+# Shine Loop Handheld Console & Holo Looping OoS 1.0 (Linux Gaming Core)
 # Developed by Holo Entertainment & Coki Studios
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════════
 
 import loop.ui as ui
 import loop.engine as game
 import loop.system as sys
 
-# ── Interoperabilidad con librerías del Sistema ──
+# ── Interoperabilidad con librerías nativas ──
 use python "math"
 use python "time"
 
-define app "ShineLauncher" version 2.1:
-    create window with title "Shine Loop OS: System Launcher & Dashboard" and size (800, 520)
-    # [Compiled Target Override]: set theme to "frosted_aqua_a17"
-    # [Compiled Target Override]: target("shine_ui")
-    
-    set system_name to "Shine Loop Handheld Console"
-    set kernel_ver to "Holo Looping OoS 1.0 (Linux Gaming Edition)"
-    set runtime_engine to "Ruuping & Looping Dual Hybrid Engine v2.1.0"
-    set battery_level to 98
-    
-    print "=========================================================="
-    print "🌟 Booting Shine Launcher v2.1.0 (Frosted Aqua A17 Shell)"
-    print "Target Platform:", system_name
-    print "Kernel Subsystem:", kernel_ver
-    print "Active Runtime:", runtime_engine
-    print "=========================================================="
+# ── Funciones de Control del Launcher 100% Looping ──
 
-    # ── Header de Barra de Estado del Sistema ──
-    draw card at (20, 18) with size (760, 54) and title "SHINE LOOP CONSOLE // SYSTEM DASHBOARD" and text "Kernel: Holo Looping OoS 1.0 • Battery: 98% ⚡ • V-Sync: 60 FPS Low-Latency • Wi-Fi: Coki-Fiber-5G"
+fn play_startup_chime() {
+    print "[AUDIO DSP] Reproduciendo arpegio de arranque Shine Aqua..."
+    play tone at 587 Hz for 70 ms
+    play tone at 740 Hz for 80 ms
+    play tone at 880 Hz for 90 ms
+    play tone at 1174 Hz for 120 ms
+}
+
+fn print_ascii_header() {
+    print "╔══════════════════════════════════════════════════════════════════════════════╗"
+    print "║  ✦ SHINE LOOP OS ✦  —  OFFICIAL SYSTEM LAUNCHER & DASHBOARD v2.5.0           ║"
+    print "║  Hardware: Shine Loop APU Direct • Kernel: Holo Looping OoS 1.0 (Linux Gaming)║"
+    print "║  Dual Hybrid Engine: Looping & Ruuping v2.5.0 • Low-Latency V-Sync 60Hz      ║"
+    print "╚══════════════════════════════════════════════════════════════════════════════╝"
+}
+
+fn print_telemetry(battery, profile, wifi, fps, ram_used) {
+    print ""
+    print "┌─── TELEMETRÍA DEL SISTEMA EN TIEMPO REAL ────────────────────────────────────┐"
+    print $"│  ⚡ Batería: {battery}% (Carga Rápida)   │  🎮 Perfil UI: {profile} ({fps} FPS)"
+    print $"│  📶 Wi-Fi: {wifi} (1.2 Gbps)  │  🧠 RAM: {ram_used} MB / 16384 MB (LPDDR5X)"
+    print "│  🔊 DSP Audio: 48kHz Estéreo Activo    │  🛡️ Cripto E2EE: Hardware Enclave OK"
+    print "└──────────────────────────────────────────────────────────────────────────────┘"
+    print ""
+}
+
+fn print_app_grid() {
+    print "┌─── APLICACIONES INSTALADAS [GAMEPAD / TECLADO] ──────────────────────────────┐"
+    print "│  [1] 🎮 Holo Arcade 2D           — Motor de plataformas 2D retro nativo      │"
+    print "│  [2] ⚡ hiOP IDE Studio          — Estudio de código y compilador en vivo     │"
+    print "│  [3] 🐍 Python Interop Bridge    — PySync Zero-Copy NumPy / PyTorch          │"
+    print "│  [4] 🏎️ Forkar Racing 3D         — Cyberpunk Kart Racer con físicas 3D       │"
+    print "│  [5] 🦀 Ruuping Rust Core        — Benchmark ultra-rápido (1.4M Ops/seg)     │"
+    print "│  [6] 🚀 Creador Dinámico Looping — Compila y crea programas dinámicamente     │"
+    print "│  [7] 🎨 Perfiles de UI (Target)  — Cambiar entre Shine UI, XUI y flUI        │"
+    print "│  [8] 🔔 Probar Chimes de Audio   — Sintetizador DSP de frecuencias           │"
+    print "│  [9] ℹ️ Specs del Kernel & OS    — Información técnica del hardware          │"
+    print "│  [0] 🚪 Modo Reposo / Salir      — Suspender consola                         │"
+    print "└──────────────────────────────────────────────────────────────────────────────┘"
+}
+
+fn test_dynamic_compiler_creation() {
+    print ""
+    print "======================================================================"
+    print "🚀 [DYNAMIC COMPILER] CREANDO Y COMPILANDO PROGRAMA DINÁMICAMENTE..."
+    print "======================================================================"
     
-    # ── Mosaico de Aplicaciones / Juegos (Launcher Grid) ──
-    # 1. Holo Arcade 2D
+    # Sintetizamos un programa dinámicamente usando el nuevo bloque del compilador Looping
+    compile program "ShineDynamicWidget" target "flui" to "sample_loop_projects/compiled/ShineDynamicWidget":
+        title "Shine Dynamic Companion Widget"
+        size (640, 420)
+        theme "aurora_indigo_fold"
+        
+        draw card at (20, 20) with size (600, 90) and title "DYNAMIC COMPANION WIDGET" and text "Generado dinámicamente en tiempo de ejecución por Shine Launcher."
+        draw button at (35, 130) with text "PING APU" and action "ping_apu"
+        
+        code:
+            mut ticks = 100
+            fn ping_apu() {
+                ticks += 50
+                print "APU Ping respondido! Ticks:", ticks
+            }
+            play tone at 740 Hz for 80 ms
+            print "[WIDGET] Widget dinámico ejecutándose a 120Hz flUI!"
+            print "[WIDGET] Estado: Totalmente compilado en memoria y disco."
+
+    print "✔ Programa dinámico 'ShineDynamicWidget' compilado exitosamente."
+    print "✔ Artefacto ejecutable listo en: sample_loop_projects/compiled/ShineDynamicWidget"
+    
+    # También demostramos la API de funciones dinámicas del compilador: compiler.compile()
+    val inline_prog = "print '[EVAL COMPILER] Hola desde código compilado al vuelo!'; audio.tone(880, 100)"
+    val compiled_path = compiler.compile(inline_prog, "shine_ui", "sample_loop_projects/compiled/InlineCompiledDemo")
+    print $"✔ Compilador dinámico inline compiló: {compiled_path}"
+    
+    # Ejecutamos el artefacto generado
+    sys.launch(compiled_path)
+}
+
+fn launch_app(choice) {
+    if (choice == "1") {
+        print ""
+        print "🚀 Iniciando Holo Arcade 2D..."
+        play tone at 440 Hz for 60 ms
+        play tone at 880 Hz for 80 ms
+        sys.launch("sample_loop_projects/arcade.loop")
+    }
+    if (choice == "2") {
+        print ""
+        print "⚡ Abriendo hiOP IDE Studio..."
+        play tone at 523 Hz for 80 ms
+        sys.launch("sample_loop_projects/hiop_ide.loop")
+    }
+    if (choice == "3") {
+        print ""
+        print "🐍 Ejecutando Python Interop Bridge..."
+        play tone at 659 Hz for 80 ms
+        sys.launch("sample_loop_projects/python_interop_demo.loop")
+    }
+    if (choice == "4") {
+        print ""
+        print "🏎️ Cargando Forkar Racing 3D Mesh Engine..."
+        play tone at 330 Hz for 100 ms
+        play tone at 660 Hz for 120 ms
+        print "[FORKAR] Físicas de chasis cargadas. Renderizador Vulkan listo."
+    }
+    if (choice == "5") {
+        print ""
+        print "🦀 Ejecutando Ruuping Native Rust Core Benchmark..."
+        play tone at 784 Hz for 90 ms
+        sys.launch("sample_loop_projects/ruuping_demo.ruup")
+    }
+    if (choice == "6") {
+        test_dynamic_compiler_creation()
+    }
+    if (choice == "7") {
+        print ""
+        print "🎨 Perfiles de UI disponibles en el compilador Looping:"
+        print "   • shine_ui : Handheld Console Grid & Carousel (60 FPS V-Sync)"
+        print "   • xui      : Pro Gamer Esports HUD (Direct-to-Vulkan 240 FPS)"
+        print "   • flui     : Dual-Screen Deck / Floating Cards (120 FPS)"
+    }
+    if (choice == "8") {
+        print ""
+        play_startup_chime()
+    }
+    if (choice == "9") {
+        print ""
+        print "📋 ESPECIFICACIONES TÉCNICAS DEL SISTEMA:"
+        print "   • Sistema: Shine Loop Handheld Console (Holo Looping OoS)"
+        print "   • Kernel: Holo Looping OoS 1.0 (Linux Gaming Edition)"
+        print "   • Dual Engine: Looping C++ v2.5.0 & Ruuping Rust v2.5.0"
+        print "   • Compilador: Dynamic On-the-Fly Looping Compiler Subsystem"
+        print "   • Seguridad: Secure Enclave SEP / T2 Hardware Encryption"
+    }
+}
+
+# ── Declaración de la Aplicación en Looping ──
+
+define app "ShineLauncher" version 2.5:
+    create window with title "Shine Loop OS: System Launcher & Dashboard" and size (800, 520)
+    # [Compiled Target Override]: target("shine_ui")
+    # [Compiled Target Override]: set theme to "frosted_aqua_a17"
+    
+    mut battery_pct = 98
+    mut current_profile = "Shine UI"
+    mut wifi_ssid = "Coki-Fiber-5G"
+    mut display_fps = 60
+    mut mem_usage = 3280
+    
+    # ── Sonido de arranque de la consola ──
+    play_startup_chime()
+    
+    # ── Renderizado del Dashboard y Telemetría ──
+    print_ascii_header()
+    print_telemetry(battery_pct, current_profile, wifi_ssid, display_fps, mem_usage)
+    
+    # ── Mosaico de Cards en Pantalla (Shine UI / Frosted Aqua) ──
+    draw card at (20, 18) with size (760, 54) and title "SHINE LOOP CONSOLE // SYSTEM DASHBOARD" and text "Kernel: Holo Looping OoS 1.0 • Battery: 98% ⚡ • V-Sync: 60 FPS Low-Latency • Wi-Fi: Coki-Fiber-5G"
     draw card at (20, 85) with size (240, 155) and title "🎮 HOLO ARCADE 2D" and text "Genre: Retro Platformer\nEngine: Looping 2D Sprite Core\nResolution: 60 FPS Native\nStatus: Ready to Play"
     draw button at (35, 195) with text "INICIAR JUEGO" and action "launch_arcade"
-
-    # 2. hiOP IDE Code Studio
-    draw card at (280, 85) with size (240, 155) and title "⚡ hiOP IDE STUDIO" and text "Type: Native IDE & Compiler\nFeatures: Syntax & Live Preview\nTargets: Shine Loop / Win32 / APK\nStatus: Standby"
+    draw card at (280, 85) with size (240, 155) and title "⚡ hiOP IDE STUDIO" and text "Type: Native IDE & Compiler\nFeatures: Dynamic Program Creator\nTargets: Shine Loop / XUI / flUI\nStatus: Standby"
     draw button at (295, 195) with text "ABRIR IDE" and action "launch_hiop"
-
-    # 3. Python Interop Bridge
     draw card at (540, 85) with size (240, 155) and title "🐍 PYTHON INTEROP" and text "Bridge: PySync 3.12+\nLibs: NumPy, SciPy, PyTorch\nSync: Zero-Copy Shared Memory\nStatus: Connected"
     draw button at (555, 195) with text "PROBAR BRIDGE" and action "launch_python"
-
-    # 4. Forkar 3D Racing
     draw card at (20, 255) with size (240, 155) and title "🏎️ FORKAR RACING 3D" and text "Genre: Cyberpunk Kart Racer\nPhysics: Holo 3D Physics Mesh\nMultiplayer: Local & P2P\nStatus: Installed"
     draw button at (35, 365) with text "CORRER PISTA" and action "launch_forkar"
-
-    # 5. Ruuping Native Rust Benchmark
     draw card at (280, 255) with size (240, 155) and title "🦀 RUUPING RUST CORE" and text "Engine: 100% Native Rust v2.1\nThroughput: 1.4M Ops/sec\nLatency: 0.12ms\nStatus: Ultra-Fast"
     draw button at (295, 365) with text "TEST RENDIMIENTO" and action "launch_ruuping"
+    draw card at (540, 255) with size (240, 155) and title "🚀 COMPILADOR DINÁMICO" and text "Feature: Dynamic Program Engine\nCapability: On-the-fly code gen\nCompilation: Native shebang/ELF\nStatus: Active"
+    draw button at (555, 365) with text "CREAR PROGRAMA" and action "dynamic_compile"
+    draw card at (20, 425) with size (760, 75) and title "NAVEGACIÓN RÁPIDA [GAMEPAD / TECLADO]" and text "🎮 [D-Pad] Seleccionar App • [A / Espacio] Abrir • [B / Esc] Atrás • [X] Compilar Dinámico • [Y] Bubbly Dot AI"
 
-    # 6. Ajustes de la Consola
-    draw card at (540, 255) with size (240, 155) and title "⚙️ SISTEMA & AJUSTES" and text "Display: Frosted Aqua A17\nAudio: DSP 48kHz Stereo\nStorage: 512GB NVMe LoopFS\nProfile: Performance Mode"
-    draw button at (555, 365) with text "CONFIGURAR" and action "launch_settings"
+    print_app_grid()
 
-    # ── Quick Launch Dock / Barra Inferior ──
-    draw card at (20, 425) with size (760, 75) and title "NAVEGACIÓN RÁPIDA [GAMEPAD / TECLADO]" and text "🎮 [D-Pad] Seleccionar App • [A / Espacio] Abrir • [B / Esc] Atrás • [X] Holo Store • [Y] Bubbly Dot AI"
+    # ── Interacción o Ejecución de Demostración ──
+    val user_input = input("\n🎮 [SHINE LAUNCHER] Seleccione opción (1-9, o Enter para demo): ")
 
-    # ── Chime de Inicio de Shine Launcher (Arpegio Aqua) ──
-    play tone at 587 Hz for 70 ms
-    play tone at 880 Hz for 90 ms
-    
-    print "[LAUNCHER] Shine Launcher cargado exitosamente en pantalla."
+    if (user_input == "" or user_input == "6") {
+        print ""
+        print "[DEMO AUTOMÁTICA] Ejecutando demostración del Compilador Dinámico Looping..."
+        test_dynamic_compiler_creation()
+    } else {
+        launch_app(user_input)
+    }
+
+    print ""
+    print "🌟 [SHINE LAUNCHER] Dashboard y Lanzador 100% Looping listo y en funcionamiento."

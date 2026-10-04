@@ -53,8 +53,21 @@ class Parser {
 public:
     std::string source;
     size_t pos = 0;
+    static void replace_all(std::string& str, const std::string& from, const std::string& to) {
+        if (from.empty()) return;
+        size_t start_pos = 0;
+        while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+            str.replace(start_pos, from.length(), to);
+            start_pos += to.length();
+        }
+    }
 
-    Parser(const std::string& src) : source(src), pos(0) {}
+    Parser(const std::string& src) : source(src), pos(0) {
+        replace_all(source, "“", "\"");
+        replace_all(source, "”", "\"");
+        replace_all(source, "‘", "'");
+        replace_all(source, "’", "'");
+    }
 
     // Parse entire script into statements
     std::vector<std::shared_ptr<Stmt>> parse_script() {
@@ -64,6 +77,10 @@ public:
 
         while (line_idx < lines.size()) {
             std::string raw_line = lines[line_idx];
+            replace_all(raw_line, "“", "\"");
+            replace_all(raw_line, "”", "\"");
+            replace_all(raw_line, "‘", "'");
+            replace_all(raw_line, "’", "'");
             std::string line = trim(raw_line);
             line_idx++;
 
@@ -197,6 +214,100 @@ public:
                 continue;
             }
 
+            // 1c. Dynamic Program Compilation: compile program "Name" [target "flui"] [to "path"] [version "1.0"] [and run]:
+            if (line.rfind("compile program ", 0) == 0 || line.rfind("dynamic program ", 0) == 0 ||
+                line.rfind("create program ", 0) == 0) {
+                std::string header_line = line;
+                std::regex name_r(R"(program\s+["']([^"']+)["'])");
+                std::smatch nm;
+                std::string prog_name = "DynamicApp";
+                if (std::regex_search(header_line, nm, name_r)) {
+                    prog_name = nm[1];
+                }
+
+                std::string target_ui = "shine_ui";
+                std::regex target_r(R"(target\s+["']?([A-Za-z0-9_]+)["']?)");
+                std::smatch tm;
+                if (std::regex_search(header_line, tm, target_r)) {
+                    target_ui = tm[1];
+                }
+
+                std::string out_path = "";
+                std::regex out_r(R"(to\s+["']([^"']+)["'])");
+                std::smatch om;
+                if (std::regex_search(header_line, om, out_r)) {
+                    out_path = om[1];
+                }
+
+                std::string version = "1.0";
+                std::regex ver_r(R"(version\s+["']?([0-9.]+)["']?)");
+                std::smatch vm;
+                if (std::regex_search(header_line, vm, ver_r)) {
+                    version = vm[1];
+                }
+
+                bool and_run = (header_line.find("and run") != std::string::npos || 
+                                header_line.find("and execute") != std::string::npos);
+
+                auto stmt = std::make_shared<DynamicProgramCompileStmt>(prog_name, target_ui, out_path, version);
+                stmt->and_run = and_run;
+
+                // Collect block lines (supports both { } and indented / end blocks)
+                std::vector<std::string> block_lines;
+                size_t base_indent = raw_line.find_first_not_of(" \t");
+                if (base_indent == std::string::npos) base_indent = 0;
+
+                bool brace_style = (line.find('{') != std::string::npos);
+
+                while (line_idx < lines.size()) {
+                    std::string next_raw = lines[line_idx];
+                    std::string next_t = trim(next_raw);
+
+                    if (brace_style) {
+                        line_idx++;
+                        if (next_t == "}" || next_t == "end") break;
+                        block_lines.push_back(next_raw);
+                    } else {
+                        if (next_t.empty()) {
+                            bool has_more = false;
+                            for (size_t p = line_idx + 1; p < lines.size(); ++p) {
+                                std::string pt = trim(lines[p]);
+                                if (pt.empty()) continue;
+                                size_t p_indent = lines[p].find_first_not_of(" \t");
+                                if (p_indent > base_indent && pt != "end" && pt != "}") {
+                                    has_more = true;
+                                }
+                                break;
+                            }
+                            if (has_more) {
+                                block_lines.push_back("");
+                                line_idx++;
+                                continue;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (next_t == "end" || next_t == "}") {
+                            line_idx++;
+                            break;
+                        }
+
+                        size_t next_indent = next_raw.find_first_not_of(" \t");
+                        if (next_indent > base_indent) {
+                            block_lines.push_back(next_raw);
+                            line_idx++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                stmt->raw_lines = dedent(block_lines);
+                statements.push_back(stmt);
+                continue;
+            }
+
             // 2. Function definition: fn <name>(<args>) { ... } OR fn <name>(<args>) => <expr>
             if (line.rfind("fn ", 0) == 0 || line.rfind("fun ", 0) == 0 || 
                 line.rfind("function ", 0) == 0 || line.rfind("def ", 0) == 0) {
@@ -224,10 +335,22 @@ public:
                     std::string fn_name = m[1];
                     std::vector<std::string> params = split_params(m[2]);
                     std::vector<std::string> body_lines;
-
+                    int brace_depth = (line.find('{') != std::string::npos) ? 1 : 0;
                     while (line_idx < lines.size()) {
                         std::string next = lines[line_idx++];
-                        if (trim(next) == "}" || trim(next) == "end") break;
+                        std::string t = trim(next);
+                        if (brace_depth > 0) {
+                            for (char ch : t) {
+                                if (ch == '{') brace_depth++;
+                                else if (ch == '}') {
+                                    brace_depth--;
+                                    if (brace_depth == 0) break;
+                                }
+                            }
+                            if (brace_depth == 0) break;
+                        } else {
+                            if (t == "}" || t == "end") break;
+                        }
                         body_lines.push_back(next);
                     }
 

@@ -2,7 +2,7 @@ CXX ?= clang++
 CXXFLAGS ?= -std=c++17 -O3 -Wall -Wextra -pthread
 
 SRC = main.cpp
-HEADERS = LoopingValue.hpp LoopingAST.hpp LoopingPythonBridge.hpp LoopingParser.hpp LoopingInterpreter.hpp LoopingREPL.hpp
+HEADERS = LoopingValue.hpp LoopingAST.hpp LoopingCompiler.hpp LoopingPythonBridge.hpp LoopingParser.hpp LoopingInterpreter.hpp LoopingREPL.hpp
 
 TARGET = ../../bin/looping
 LOCAL_TARGET = looping
