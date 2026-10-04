@@ -1,20 +1,18 @@
 class Looping < Formula
-  desc "Official runtime, compiler & module ecosystem for Shine Loop & Holo Looping OoS"
-  homepage "https://cokistudios.com"
-  url "https://github.com/CokiStudios/cokistudios.github.io/archive/refs/heads/main.tar.gz"
-  version "2.1.0"
-  license "Proprietary"
+  desc "Dual hybrid high-performance engine and programming language for Loop OS"
+  homepage "https://cokistudios.github.io"
+  version "2.5.0"
+  license "MIT"
 
-  depends_on "node"
-  depends_on "python@3.11"
+  url "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v2.5.0/looping-v2.5.0-darwin-universal.tar.gz"
+  sha256 "db86f633e561800ae9c4de373018593fc9bcbd91e37aa4501fdcdbecb7ef3b60"
 
   def install
-    bin.install "bin/looping"
-    prefix.install "LoopingEngine"
-    prefix.install "holo-looping-oos"
+    bin.install "looping"
+    bin.install_symlink "looping" => "ruuping"
   end
 
   test do
-    system "#{bin}/looping", "--version"
+    system "#{bin}/looping", "test"
   end
 end
