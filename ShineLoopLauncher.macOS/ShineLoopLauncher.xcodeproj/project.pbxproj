@@ -1,0 +1,348 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8A0000012A00000100000001 /* ShineLoopLauncherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000022A00000100000001 /* ShineLoopLauncherApp.swift */; };
+		8A0000032A00000100000001 /* AppItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000042A00000100000001 /* AppItem.swift */; };
+		8A0000052A00000100000001 /* SoundSynthesizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000062A00000100000001 /* SoundSynthesizer.swift */; };
+		8A0000072A00000100000001 /* LoopingProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000082A00000100000001 /* LoopingProcessRunner.swift */; };
+		8A0000092A00000100000001 /* GameControllerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000A2A00000100000001 /* GameControllerManager.swift */; };
+		8A00000B2A00000100000001 /* LauncherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000C2A00000100000001 /* LauncherViewModel.swift */; };
+		8A00000D2A00000100000001 /* TopTelemetryBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000E2A00000100000001 /* TopTelemetryBar.swift */; };
+		8A00000F2A00000100000001 /* BubblyDotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000102A00000100000001 /* BubblyDotView.swift */; };
+		8A0000112A00000100000001 /* GameCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000122A00000100000001 /* GameCardView.swift */; };
+		8A0000132A00000100000001 /* AppCarouselView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000142A00000100000001 /* AppCarouselView.swift */; };
+		8A0000152A00000100000001 /* AppGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000162A00000100000001 /* AppGridView.swift */; };
+		8A0000172A00000100000001 /* BottomDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000182A00000100000001 /* BottomDockView.swift */; };
+		8A0000192A00000100000001 /* LoopingRunnerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00001A2A00000100000001 /* LoopingRunnerSheet.swift */; };
+		8A00001B2A00000100000001 /* SettingsDrawerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00001C2A00000100000001 /* SettingsDrawerView.swift */; };
+		8A00001D2A00000100000001 /* HandheldBezelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00001E2A00000100000001 /* HandheldBezelView.swift */; };
+		8A00001F2A00000100000001 /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000202A00000100000001 /* LauncherView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		8A0000022A00000100000001 /* ShineLoopLauncherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShineLoopLauncherApp.swift; sourceTree = "<group>"; };
+		8A0000042A00000100000001 /* AppItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppItem.swift; sourceTree = "<group>"; };
+		8A0000062A00000100000001 /* SoundSynthesizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundSynthesizer.swift; sourceTree = "<group>"; };
+		8A0000082A00000100000001 /* LoopingProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopingProcessRunner.swift; sourceTree = "<group>"; };
+		8A00000A2A00000100000001 /* GameControllerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerManager.swift; sourceTree = "<group>"; };
+		8A00000C2A00000100000001 /* LauncherViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherViewModel.swift; sourceTree = "<group>"; };
+		8A00000E2A00000100000001 /* TopTelemetryBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopTelemetryBar.swift; sourceTree = "<group>"; };
+		8A0000102A00000100000001 /* BubblyDotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BubblyDotView.swift; sourceTree = "<group>"; };
+		8A0000122A00000100000001 /* GameCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCardView.swift; sourceTree = "<group>"; };
+		8A0000142A00000100000001 /* AppCarouselView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCarouselView.swift; sourceTree = "<group>"; };
+		8A0000162A00000100000001 /* AppGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGridView.swift; sourceTree = "<group>"; };
+		8A0000182A00000100000001 /* BottomDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomDockView.swift; sourceTree = "<group>"; };
+		8A00001A2A00000100000001 /* LoopingRunnerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopingRunnerSheet.swift; sourceTree = "<group>"; };
+		8A00001C2A00000100000001 /* SettingsDrawerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsDrawerView.swift; sourceTree = "<group>"; };
+		8A00001E2A00000100000001 /* HandheldBezelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandheldBezelView.swift; sourceTree = "<group>"; };
+		8A0000202A00000100000001 /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
+		8A0000212A00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8A0000222A00000100000001 /* ShineLoopLauncher.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShineLoopLauncher.entitlements; sourceTree = "<group>"; };
+		8A0000232A00000100000001 /* ShineLoopLauncher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShineLoopLauncher.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8A0000242A00000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8A0000252A00000100000001 = {
+			isa = PBXGroup;
+			children = (
+				8A0000262A00000100000001 /* ShineLoopLauncher */,
+				8A0000272A00000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8A0000262A00000100000001 /* ShineLoopLauncher */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000022A00000100000001 /* ShineLoopLauncherApp.swift */,
+				8A0000282A00000100000001 /* Models */,
+				8A0000292A00000100000001 /* Services */,
+				8A00002A2A00000100000001 /* ViewModels */,
+				8A00002B2A00000100000001 /* Views */,
+				8A0000212A00000100000001 /* Info.plist */,
+				8A0000222A00000100000001 /* ShineLoopLauncher.entitlements */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		8A0000282A00000100000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000042A00000100000001 /* AppItem.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		8A0000292A00000100000001 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000062A00000100000001 /* SoundSynthesizer.swift */,
+				8A0000082A00000100000001 /* LoopingProcessRunner.swift */,
+				8A00000A2A00000100000001 /* GameControllerManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		8A00002A2A00000100000001 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				8A00000C2A00000100000001 /* LauncherViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		8A00002B2A00000100000001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				8A00000E2A00000100000001 /* TopTelemetryBar.swift */,
+				8A0000102A00000100000001 /* BubblyDotView.swift */,
+				8A0000122A00000100000001 /* GameCardView.swift */,
+				8A0000142A00000100000001 /* AppCarouselView.swift */,
+				8A0000162A00000100000001 /* AppGridView.swift */,
+				8A0000182A00000100000001 /* BottomDockView.swift */,
+				8A00001A2A00000100000001 /* LoopingRunnerSheet.swift */,
+				8A00001C2A00000100000001 /* SettingsDrawerView.swift */,
+				8A00001E2A00000100000001 /* HandheldBezelView.swift */,
+				8A0000202A00000100000001 /* LauncherView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		8A0000272A00000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000232A00000100000001 /* ShineLoopLauncher.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8A00002C2A00000100000001 /* ShineLoopLauncher */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A00002D2A00000100000001 /* Build configuration list for PBXNativeTarget "ShineLoopLauncher" */;
+			buildPhases = (
+				8A00002E2A00000100000001 /* Sources */,
+				8A0000242A00000100000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShineLoopLauncher;
+			productName = ShineLoopLauncher;
+			productReference = 8A0000232A00000100000001 /* ShineLoopLauncher.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8A00002F2A00000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					8A00002C2A00000100000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 8A0000302A00000100000001 /* Build configuration list for PBXProject "ShineLoopLauncher" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = es;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				es,
+				Base,
+			);
+			mainGroup = 8A0000252A00000100000001;
+			productRefGroup = 8A0000272A00000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8A00002C2A00000100000001 /* ShineLoopLauncher */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8A00002E2A00000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A0000012A00000100000001 /* ShineLoopLauncherApp.swift in Sources */,
+				8A0000032A00000100000001 /* AppItem.swift in Sources */,
+				8A0000052A00000100000001 /* SoundSynthesizer.swift in Sources */,
+				8A0000072A00000100000001 /* LoopingProcessRunner.swift in Sources */,
+				8A0000092A00000100000001 /* GameControllerManager.swift in Sources */,
+				8A00000B2A00000100000001 /* LauncherViewModel.swift in Sources */,
+				8A00000D2A00000100000001 /* TopTelemetryBar.swift in Sources */,
+				8A00000F2A00000100000001 /* BubblyDotView.swift in Sources */,
+				8A0000112A00000100000001 /* GameCardView.swift in Sources */,
+				8A0000132A00000100000001 /* AppCarouselView.swift in Sources */,
+				8A0000152A00000100000001 /* AppGridView.swift in Sources */,
+				8A0000172A00000100000001 /* BottomDockView.swift in Sources */,
+				8A0000192A00000100000001 /* LoopingRunnerSheet.swift in Sources */,
+				8A00001B2A00000100000001 /* SettingsDrawerView.swift in Sources */,
+				8A00001D2A00000100000001 /* HandheldBezelView.swift in Sources */,
+				8A00001F2A00000100000001 /* LauncherView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		8A0000312A00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDEFINED_VARIABLES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8A0000322A00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDEFINED_VARIABLES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		8A0000332A00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShineLoopLauncher.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Holo Loop OS Launcher";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shineloop.launcher;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		8A0000342A00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShineLoopLauncher.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Holo Loop OS Launcher";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shineloop.launcher;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8A0000302A00000100000001 /* Build configuration list for PBXProject "ShineLoopLauncher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A0000312A00000100000001 /* Debug */,
+				8A0000322A00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A00002D2A00000100000001 /* Build configuration list for PBXNativeTarget "ShineLoopLauncher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A0000332A00000100000001 /* Debug */,
+				8A0000342A00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 8A00002F2A00000100000001 /* Project object */;
+}
