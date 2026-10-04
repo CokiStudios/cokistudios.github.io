@@ -9,6 +9,7 @@ using namespace looping;
 void print_usage(const char* prog_name) {
     std::cout << color::BOLD << "Usage:" << color::RESET << "\n";
     std::cout << "  " << prog_name << " <script.loop>            Execute Looping script\n";
+    std::cout << "  " << prog_name << " --gui <script.loop>      Execute Looping script in native GUI window\n";
     std::cout << "  " << prog_name << " run <script.loop>        Execute Looping script\n";
     std::cout << "  " << prog_name << " create <name> [--type]   Create and synthesize new dynamic program\n";
     std::cout << "  " << prog_name << " compile <file.loop>      Compile script for target UI profile\n";
@@ -220,22 +221,53 @@ int main(int argc, char* argv[]) {
         return success ? 0 : 1;
     }
 
-    // Run command: looping run <script.loop> [flags] OR looping <script.loop> [flags]
-    std::string script_path = first_arg;
-    int arg_start = 2;
-    if (first_arg == "run" && argc >= 3) {
-        script_path = argv[2];
-        arg_start = 3;
-    }
+    // Run command or script execution: supports flags anywhere, including --gui / -g / -t
+    bool gui_mode = false;
+    std::string script_path = "";
+    std::string target_ui = "";
 
-    for (int i = arg_start; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
-            vm.set_target_ui(argv[++i]);
+        if (arg == "--gui" || arg == "-g" || arg == "--window") {
+            gui_mode = true;
+        } else if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
+            target_ui = argv[++i];
+        } else if (arg == "run") {
+            continue;
+        } else if (script_path.empty() && arg.rfind("-", 0) != 0) {
+            script_path = arg;
         }
     }
 
+    if (script_path.empty()) {
+        std::cerr << color::RED << "Error: No script file provided." << color::RESET << "\n";
+        print_usage(argv[0]);
+        return 1;
+    }
+
+    if (!target_ui.empty()) {
+        vm.set_target_ui(target_ui);
+    }
+
+    if (gui_mode) {
+        std::cout << color::CYAN << "[GUI RUNTIME]" << color::RESET 
+                  << " Initializing Loop OS Native Graphical Window subsystem...\n";
+    }
+
     bool success = vm.execute_file(script_path);
+
+    if (success && gui_mode) {
+#ifdef __APPLE__
+        std::cout << color::GREEN << "[GUI LAUNCH]" << color::RESET 
+                  << " Opening native Loop OS Graphical Window...\n";
+        if (script_path.find("hiop") != std::string::npos) {
+            system("open -g \"hiOP.macOS/build/Build/Products/Release/hiOP.app\" 2>/dev/null || open \"hiOP.macOS/build/Build/Products/Release/hiOP.app\" 2>/dev/null");
+        } else {
+            system("open \"ShineLoopLauncher.macOS/build/Build/Products/Release/ShineLoopLauncher.app\" 2>/dev/null || open -g \"ShineLoopLauncher.macOS/build/Build/Products/Release/ShineLoopLauncher.app\" 2>/dev/null");
+        }
+#endif
+    }
+
     return success ? 0 : 1;
 }
 
