@@ -37,13 +37,6 @@
         }
       }
     ],
-    "iconThemes": [
-      {
-        "id": "looping-file-icons",
-        "label": "L∞ping File Icons",
-        "path": "./icons/icon-theme.json"
-      }
-    ],
     "grammars": [
       {
         "language": "looping",
