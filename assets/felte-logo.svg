@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient for Logo Card -->
+    <linearGradient id="logoBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f1d"/>
+      <stop offset="100%" stop-color="#050811"/>
+    </linearGradient>
+
+    <linearGradient id="logoBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5d4" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.8"/>
+    </linearGradient>
+
+    <linearGradient id="logoHandle" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="45%" stop-color="#38bdf8"/>
+      <stop offset="85%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+
+    <linearGradient id="logoArch" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <linearGradient id="logoCircle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+
+    <linearGradient id="logoSquare" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Ambient Obsidian Backdrop Card -->
+  <rect x="8" y="8" width="664" height="164" rx="36" fill="url(#logoBgGrad)"/>
+  <rect x="8" y="8" width="664" height="164" rx="36" fill="none" stroke="url(#logoBorder)" stroke-width="2" opacity="0.6"/>
+
+  <g transform="translate(18, 5)">
+    <!-- ── SYMBOL ── -->
+    <g transform="translate(15, 0) scale(0.85)">
+      <!-- Handle / Awning -->
+      <path d="M 68 96 
+               C 62 48, 108 14, 202 24 
+               C 216 26, 222 32, 218 38 
+               C 208 50, 140 58, 104 74 
+               C 90 82, 82 90, 78 96 Z" 
+            fill="url(#logoHandle)" 
+            filter="url(#softGlow)"/>
+
+      <!-- Bag Box -->
+      <rect x="60" y="90" width="134" height="102" rx="18" 
+            fill="#111827" 
+            fill-opacity="0.9" 
+            stroke="url(#logoBorder)" 
+            stroke-width="7" 
+            stroke-linejoin="round"
+            filter="url(#softGlow)"/>
+
+      <!-- Inner geometric shapes -->
+      <path d="M 80 134 C 80 118, 91 110, 104 110 C 117 110, 128 118, 128 134 Z" fill="url(#logoArch)"/>
+      <circle cx="162" cy="125" r="14" fill="url(#logoCircle)"/>
+      <rect x="106" y="150" width="28" height="28" rx="8" fill="url(#logoSquare)"/>
+    </g>
+
+    <!-- ── TYPOGRAPHY ── -->
+    <text x="235" y="98" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Outfit', 'Inter', sans-serif" 
+          font-size="62" 
+          font-weight="800" 
+          letter-spacing="-1" 
+          fill="#f8fafc">felte</text>
+
+    <!-- Badge pill -->
+    <rect x="385" y="60" width="96" height="26" rx="13" 
+          fill="rgba(0, 245, 212, 0.14)" 
+          stroke="rgba(0, 245, 212, 0.5)" 
+          stroke-width="1.5"/>
+    <text x="433" y="77" 
+          text-anchor="middle" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Outfit', 'Inter', sans-serif" 
+          font-size="11" 
+          font-weight="700" 
+          letter-spacing="2" 
+          fill="#00f5d4">STORE</text>
+
+    <!-- Subtitle -->
+    <text x="238" y="132" 
+          font-family="-apple-system, BlinkMacSystemFont, 'Outfit', 'Inter', sans-serif" 
+          font-size="13" 
+          font-weight="600" 
+          letter-spacing="3" 
+          fill="#94a3b8">TIENDA OFICIAL DE COKI STUDIOS</text>
+  </g>
+</svg>

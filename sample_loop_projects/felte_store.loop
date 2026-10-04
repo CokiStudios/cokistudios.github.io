@@ -1,0 +1,218 @@
+# ═══════════════════════════════════════════════════════════════════════════════════
+# 🛍️ FELTE APP STORE — OFFICIAL LOOP OS APPLICATION MARKETPLACE (100% LOOPING)
+# Shine Loop Handheld Console & Holo Looping OoS 1.0 (Linux Gaming Core)
+# Developed by Coki Studios & Holo Entertainment
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.engine as game
+import loop.system as sys
+
+# ── Interoperabilidad nativa y DSP ──
+use python "math"
+use python "time"
+
+# ── Efectos de Sonido Felte (DSP Audio Frequencies) ──
+
+fn play_welcome_chime() {
+    print "[DSP AUDIO] Reproduciendo acorde armónico Felte Store..."
+    play tone at 523 Hz for 70 ms
+    play tone at 659 Hz for 80 ms
+    play tone at 784 Hz for 90 ms
+    play tone at 1046 Hz for 130 ms
+}
+
+fn play_install_chime() {
+    print "[DSP AUDIO] Paquete compilado e instalado con éxito!"
+    play tone at 440 Hz for 50 ms
+    play tone at 554 Hz for 60 ms
+    play tone at 659 Hz for 70 ms
+    play tone at 880 Hz for 120 ms
+}
+
+# ── Identidad Visual ASCII (Felte Sketch Original) ──
+
+fn print_felte_ascii() {
+    print "                 .───────────────────────╮"
+    print "                /                       /"
+    print "               /                       /"
+    print "              /                       /"
+    print "         ┌───┴───────────────────────┴───┐"
+    print "         │                               │"
+    print "         │      ▲                 ●      │"
+    print "         │                               │"
+    print "         │               ■               │"
+    print "         │                               │"
+    print "         └───────────────────────────────┘"
+    print "            ✦  F  E  L  T  E    S  T  O  R  E  ✦"
+    print "               TIENDA OFICIAL DE COKI STUDIOS"
+}
+
+fn print_store_telemetry(repo_count, updates_pending, storage_avail, target_profile) {
+    print ""
+    print "┌─── FELTE STORE RUNTIME // LOOP OS STATUS ────────────────────────────────────┐"
+    print $"│  📦 Apps Disponibles: {repo_count} paquetes    │  🎮 Perfil UI Target: {target_profile}"
+    print $"│  🔄 Actualizaciones: {updates_pending} pendientes │  💾 Almacenamiento: {storage_avail} GB libres"
+    print "│  🛡️ Firma Criptográfica: Ed25519 OK   │  ⚡ Compilación: C++17 JIT / AOT Activa"
+    print "└──────────────────────────────────────────────────────────────────────────────┘"
+    print ""
+}
+
+fn print_package_catalog() {
+    print "┌─── CATÁLOGO DE APLICACIONES DISPONIBLES [LOOP OS & SHINE CONSOLE] ───────────┐"
+    print "│  [1] 🎮 Holo Arcade 2D           v2.1  • Juegos      • 100% Looping Nativo   │"
+    print "│  [2] ⚡ hiOP IDE Studio          v3.0  • Herramienta • Compilador en Vivo    │"
+    print "│  [3] 🏎️ Forkar Racing 3D         v1.8  • Juegos      • Vulkan Mesh 3D        │"
+    print "│  [4] 💬 CSMS E2EE Messenger      v2.0  • Social      • Cifrado Cuántico SEP  │"
+    print "│  [5] 🦀 Ruuping Rust Engine      v2.5  • Sistema     • Microkernel 1.4M Ops  │"
+    print "│  [6] 🗺️ Shine Maps HUD Mode      v2.4  • Navegación  • GPS y Rutas Offline   │"
+    print "│  [7] 🧩 Sintetizar Nueva App     v1.0  • Dinámico    • Compila App al Vuelo  │"
+    print "│  [8] 🔄 Actualizar Repositorios  --    • Sistema     • Sincronizar Catálogo  │"
+    print "│  [0] 🚪 Salir al Launcher        --    • Sistema     • Volver al Dashboard   │"
+    print "└──────────────────────────────────────────────────────────────────────────────┘"
+}
+
+# ── Instalador y Compilador Dinámico de Paquetes en Felte ──
+
+fn install_and_compile_package(pkg_id) {
+    if (pkg_id == "1") {
+        print ""
+        print "📦 [FELTE] Descargando manifiesto de 'Holo Arcade 2D'..."
+        play tone at 659 Hz for 80 ms
+        print "⚡ [LOOP COMPILER] Verificando dependencias de sprites y audio..."
+        compile program "HoloArcadeStandalone" target "shine_ui" to "sample_loop_projects/compiled/HoloArcadeStandalone":
+            title "Holo Arcade 2D - Shine Loop"
+            size (800, 480)
+            theme "aurora_indigo_fold"
+            draw card at (20, 20) with size (760, 80) and title "HOLO ARCADE 2D" and text "Instalado desde Felte Store. Plataformas 2D a 60 FPS nativos."
+            code:
+                print "[ARCADE] Iniciando bucle de juego retro..."
+                play tone at 880 Hz for 100 ms
+        play_install_chime()
+        print "✔ 'Holo Arcade 2D' compilado e instalado en: sample_loop_projects/compiled/HoloArcadeStandalone"
+    }
+    if (pkg_id == "2") {
+        print ""
+        print "📦 [FELTE] Instalando hiOP IDE Studio v3.0..."
+        play tone at 587 Hz for 80 ms
+        val ide_src = "print '[hiOP IDE] Entorno de desarrollo Shine Loop iniciado.'; audio.tone(523, 90)"
+        val path = compiler.compile(ide_src, "xui", "sample_loop_projects/compiled/hiOP_IDE_App")
+        play_install_chime()
+        print $"✔ 'hiOP IDE Studio' instalado exitosamente en: {path}"
+    }
+    if (pkg_id == "3") {
+        print ""
+        print "📦 [FELTE] Compilando Forkar Racing 3D con shaders Vulkan..."
+        play tone at 440 Hz for 80 ms
+        compile program "ForkarRacing3D" target "xui" to "sample_loop_projects/compiled/ForkarRacing3D":
+            title "Forkar Racing 3D"
+            size (800, 520)
+            theme "frosted_aqua_a17"
+            draw card at (20, 20) with size (760, 80) and title "FORKAR RACING 3D" and text "Motor de físicas de kart 3D instalado desde Felte Store."
+            code:
+                print "[FORKAR] Grid de salida listo. Motor 3D rugiendo."
+                play tone at 220 Hz for 150 ms
+        play_install_chime()
+        print "✔ 'Forkar Racing 3D' instalado en: sample_loop_projects/compiled/ForkarRacing3D"
+    }
+    if (pkg_id == "4") {
+        print ""
+        print "📦 [FELTE] Instalando CSMS E2EE Messenger..."
+        val csms_src = "print '[CSMS] Secure Enclave SEP vinculado. Canal E2EE listo.'; audio.tone(784, 100)"
+        val path = compiler.compile(csms_src, "shine_ui", "sample_loop_projects/compiled/CSMS_Messenger")
+        play_install_chime()
+        print $"✔ 'CSMS Messenger' instalado en: {path}"
+    }
+    if (pkg_id == "5") {
+        print ""
+        print "📦 [FELTE] Compilando Ruuping Rust Engine Core..."
+        compile program "RuupingCorePkg" target "flui" to "sample_loop_projects/compiled/RuupingCorePkg":
+            title "Ruuping Rust Core"
+            size (640, 400)
+            theme "aurora_indigo_fold"
+            draw card at (20, 20) with size (600, 70) and title "RUUPING CORE" and text "Kernel híbrido Rust + Looping."
+            code:
+                print "[RUUPING] Throughput: 1.4M Ops/sec listo."
+        play_install_chime()
+        print "✔ 'Ruuping Core' instalado en: sample_loop_projects/compiled/RuupingCorePkg"
+    }
+    if (pkg_id == "6") {
+        print ""
+        print "📦 [FELTE] Instalando Shine Maps HUD Edition..."
+        val maps_src = "print '[SHINE MAPS] GPS Vectorial y HUD activo.'; audio.tone(659, 100)"
+        val path = compiler.compile(maps_src, "shine_ui", "sample_loop_projects/compiled/ShineMapsHUD")
+        play_install_chime()
+        print $"✔ 'Shine Maps HUD' instalado en: {path}"
+    }
+    if (pkg_id == "7") {
+        print ""
+        print "🚀 [FELTE DYNAMIC PACKAGER] Sintetizando aplicación personalizada..."
+        compile program "CustomUserWidget" target "shine_ui" to "sample_loop_projects/compiled/CustomUserWidget":
+            title "Mi App Personalizada Felte"
+            size (600, 360)
+            theme "frosted_aqua_a17"
+            draw card at (15, 15) with size (570, 70) and title "MI APP FELTE" and text "Creada y compilada dinámicamente desde Felte Store en Loop OS."
+            draw button at (25, 100) with text "ACCIONAR" and action "custom_action"
+            code:
+                print "[CUSTOM] App personalizada sintetizada en ejecución!"
+        play_install_chime()
+        print "✔ Aplicación personalizada sintetizada en: sample_loop_projects/compiled/CustomUserWidget"
+    }
+    if (pkg_id == "8") {
+        print ""
+        print "🔄 [FELTE] Conectando a repositorio en la nube de Coki Studios..."
+        play tone at 740 Hz for 80 ms
+        play tone at 880 Hz for 100 ms
+        print "✔ Catálogo de Felte sincronizado: 8 paquetes verificados con firma Ed25519."
+    }
+}
+
+# ── Definición de la Aplicación en Loop OS ──
+
+define app "FelteStore" version 1.0:
+    create window with title "Felte App Store — Loop OS" and size (800, 540)
+    target("shine_ui")
+    set theme to "frosted_aqua_a17"
+    
+    mut total_packages = 8
+    mut pending_updates = 0
+    mut free_disk_space = 142
+    mut active_ui_target = "Shine UI"
+    
+    # Sonido de bienvenida
+    play_welcome_chime()
+    
+    # Arte y telemetría de la tienda
+    print_felte_ascii()
+    print_store_telemetry(total_packages, pending_updates, free_disk_space, active_ui_target)
+    
+    # Declaración de la UI en pantalla (Shine UI / Handheld Console)
+    draw card at (20, 15) with size (760, 60) and title "🛍️ FELTE APP STORE // LOOP OS REPOSITORY" and text "Tienda oficial de aplicaciones de Coki Studios. Descarga, compila y gestiona paquetes nativos .loop."
+    draw card at (20, 90) with size (240, 160) and title "🎮 HOLO ARCADE 2D" and text "Categoría: Juegos Retro\nEngine: Looping 2D Sprite Core\nLicencia: Libre\nTarget: Shine UI / XUI"
+    draw button at (35, 205) with text "INSTALAR .LOOP" and action "install_arcade"
+    draw card at (280, 90) with size (240, 160) and title "⚡ hiOP IDE STUDIO" and text "Categoría: Desarrollo\nEditor + Compilador en Vivo\nFeatures: Dynamic JIT\nTarget: Universal"
+    draw button at (295, 205) with text "INSTALAR .LOOP" and action "install_hiop"
+    draw card at (540, 90) with size (240, 160) and title "🏎️ FORKAR RACING 3D" and text "Categoría: Juegos 3D\nRender: Vulkan Direct Core\nLicencia: Coki Studios\nTarget: XUI Esports"
+    draw button at (555, 205) with text "INSTALAR .LOOP" and action "install_forkar"
+    draw card at (20, 265) with size (240, 160) and title "💬 CSMS MESSENGER" and text "Categoría: Comunicación\nSeguridad: Hardware SEP E2EE\nSincronización: Cloud Sync\nTarget: Shine UI"
+    draw button at (35, 380) with text "INSTALAR .LOOP" and action "install_csms"
+    draw card at (280, 265) with size (240, 160) and title "🦀 RUUPING RUST CORE" and text "Categoría: Sistema & Kernel\nMicrokernel de alto rendimiento\nThroughput: 1.4M Ops/sec\nTarget: flUI Dual"
+    draw button at (295, 380) with text "INSTALAR .LOOP" and action "install_ruuping"
+    draw card at (540, 265) with size (240, 160) and title "🗺️ SHINE MAPS HUD" and text "Categoría: Navegación GPS\nModo Parabrisas HUD\nRutas offline integradas\nTarget: Shine UI"
+    draw button at (555, 380) with text "INSTALAR .LOOP" and action "install_maps"
+    draw card at (20, 440) with size (760, 75) and title "BARRA DE NAVEGACIÓN FELTE STORE" and text "🛍️ [1-6] Instalar Paquete • [7] Sintetizar App • [8] Actualizar Repositorio • [Enter] Demo de Instalación"
+
+    print_package_catalog()
+    
+    val store_cmd = input("\n🛍️ [FELTE STORE] Ingrese opción (1-8, o Enter para demo): ")
+    
+    if (store_cmd == "" or store_cmd == "1") {
+        print ""
+        print "[DEMO DE INSTALACIÓN] Compilando Holo Arcade 2D e integrándolo a la consola..."
+        install_and_compile_package("1")
+    } else {
+        install_and_compile_package(store_cmd)
+    }
+    
+    print ""
+    print "✦ [FELTE STORE] Sesión de tienda finalizada. ¡Disfruta tus apps en Loop OS! ✦"

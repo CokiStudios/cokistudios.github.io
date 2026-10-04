@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Felte — Tienda Oficial de Apps de Coki Studios (Nube, Móvil y Loop OS)</title>
+    <meta name="description" content="Felte es la tienda de aplicaciones oficial de Coki Studios. Descubre, instala y compila apps nativas para la nube, dispositivos móviles y consolas Shine Loop OS.">
+    <link rel="icon" type="image/svg+xml" href="assets/felte-icon.svg">
+    <link rel="apple-touch-icon" href="assets/felte-icon.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-base: #060911;
+            --bg-surface: #0b0f19;
+            --bg-card: rgba(15, 23, 42, 0.65);
+            --bg-card-hover: rgba(30, 41, 59, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(0, 245, 212, 0.35);
+            --border-purple: rgba(139, 92, 246, 0.35);
+            --aqua: #00f5d4;
+            --cyan: #38bdf8;
+            --purple: #8b5cf6;
+            --violet: #c084fc;
+            --pink: #ec4899;
+            --emerald: #10b981;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 22px;
+            --radius-pill: 9999px;
+            --shadow-neon: 0 8px 32px -4px rgba(0, 245, 212, 0.25);
+            --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
+            --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 245, 212, 0.07) 0%, transparent 40%),
+                radial-gradient(circle at 85% 25%, rgba(139, 92, 246, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.06) 0%, transparent 50%);
+        }
+
+        /* Ambient Glow Grid */
+        .ambient-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── NAVBAR ── */
+        .felte-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(6, 9, 17, 0.82);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-logo-img {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 245, 212, 0.3);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nav-brand:hover .nav-logo-img {
+            transform: scale(1.08) rotate(-4deg);
+        }
+
+        .nav-brand-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 40%, var(--aqua) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-tag {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--aqua);
+            background: rgba(0, 245, 212, 0.12);
+            border: 1px solid rgba(0, 245, 212, 0.3);
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            text-transform: uppercase;
+        }
+
+        /* Search Bar */
+        .search-container {
+            flex: 1;
+            max-width: 480px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            padding: 10px 18px 10px 42px;
+            border-radius: var(--radius-pill);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--aqua);
+            box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Nav Action Buttons */
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-nav-ghost {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--text-sub);
+            padding: 8px 16px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-nav-ghost:hover {
+            color: var(--text-main);
+            border-color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-nav-primary {
+            background: linear-gradient(135deg, var(--aqua), var(--cyan));
+            border: none;
+            color: #041019;
+            padding: 8px 18px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 14px rgba(0, 245, 212, 0.3);
+        }
+
+        .btn-nav-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 245, 212, 0.45);
+        }
+
+        /* ── HERO BANNER ── */
+        .hero-banner {
+            position: relative;
+            z-index: 1;
+            padding: 50px 24px 30px;
+            max-width: 1240px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(11, 15, 25, 0.95) 100%);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            align-items: center;
+            gap: 40px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: -100px;
+            width: 340px; height: 340px;
+            background: radial-gradient(circle, rgba(0, 245, 212, 0.15) 0%, rgba(139, 92, 246, 0.15) 50%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 245, 212, 0.08);
+            border: 1px solid rgba(0, 245, 212, 0.25);
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            margin-bottom: 20px;
+        }
+
+        .hero-badge-dot {
+            width: 8px; height: 8px;
+            background: var(--aqua);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--aqua);
+            animation: pulse 2s infinite;
+        }
+
+        .hero-badge-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--aqua);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .hero-title span.grad {
+            background: linear-gradient(135deg, var(--aqua) 0%, var(--cyan) 50%, var(--violet) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 28px;
+            max-width: 540px;
+        }
+
+        .hero-stats-row {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-stat-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .hero-stat-lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-preview-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-logo-display {
+            width: 100%;
+            max-width: 320px;
+            filter: drop-shadow(0 15px 35px rgba(0, 245, 212, 0.25));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* ── PLATFORM SELECTOR TABS ── */
+        .section-wrap {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .platform-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0 20px;
+            scrollbar-width: none;
+        }
+        .platform-bar::-webkit-scrollbar { display: none; }
+
+        .platform-pill {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            color: var(--text-sub);
+            padding: 8px 18px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .platform-pill:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .platform-pill.active {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.15), rgba(56, 189, 248, 0.15));
+            border-color: var(--aqua);
+            color: #fff;
+            box-shadow: 0 0 16px rgba(0, 245, 212, 0.2);
+        }
+
+        /* ── CATEGORY PILLS ── */
+        .category-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .section-heading {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .cat-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-sub);
+            padding: 6px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cat-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .cat-btn.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--aqua);
+            border-color: rgba(0, 245, 212, 0.3);
+        }
+
+        /* ── APP GRID ── */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
+
+        .app-card:hover {
+            transform: translateY(-4px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+            box-shadow: 0 12px 30px -4px rgba(0, 245, 212, 0.15);
+        }
+
+        .app-card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .app-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            object-fit: cover;
+            background: #1e293b;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .app-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .app-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .app-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .app-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-verified {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-native {
+            background: rgba(0, 245, 212, 0.15);
+            color: var(--aqua);
+            border: 1px solid rgba(0, 245, 212, 0.3);
+        }
+
+        .badge-pro {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--violet);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .app-dev {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .app-rating-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .app-stars {
+            color: #fbbf24;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .app-desc {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        /* Targets supported tags */
+        .app-platforms-tag {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .target-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            color: var(--text-sub);
+        }
+
+        .app-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .btn-install {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.2), rgba(56, 189, 248, 0.2));
+            border: 1px solid rgba(0, 245, 212, 0.4);
+            color: var(--aqua);
+            padding: 10px 16px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-install:hover {
+            background: linear-gradient(135deg, var(--aqua), var(--cyan));
+            color: #041019;
+            box-shadow: 0 4px 16px rgba(0, 245, 212, 0.35);
+        }
+
+        .btn-details {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            color: var(--text-sub);
+            padding: 10px 14px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-details:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* ── DYNAMIC COMPILER EMBED BANNER (LOOP OS INTEGRATION) ── */
+        .loop-os-banner {
+            background: linear-gradient(135deg, rgba(11, 15, 25, 0.95), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(0, 245, 212, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: center;
+            box-shadow: 0 10px 35px rgba(0, 245, 212, 0.1);
+        }
+
+        .code-box {
+            background: #040711;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            font-family: var(--font-code);
+            font-size: 12px;
+            color: #e2e8f0;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .code-kw { color: var(--pink); font-weight: 600; }
+        .code-fn { color: var(--aqua); }
+        .code-str { color: #fde047; }
+        .code-num { color: #38bdf8; }
+
+        /* ── MOBILE BOTTOM NAVIGATION (Shown on Mobile) ── */
+        .mobile-bottom-bar {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 64px;
+            background: rgba(6, 9, 17, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-glass);
+            z-index: 200;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 12px;
+        }
+
+        .mobile-nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            transition: color 0.2s;
+        }
+
+        .mobile-nav-btn.active {
+            color: var(--aqua);
+        }
+
+        .mobile-nav-btn svg {
+            width: 22px; height: 22px;
+        }
+
+        /* ── MODAL DIALOG ── */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #0f172a;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 580px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            position: relative;
+            animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.94) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: var(--text-sub);
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .hero-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding: 30px 24px;
+            }
+            .hero-subtitle { margin-left: auto; margin-right: auto; }
+            .hero-stats-row { justify-content: center; }
+            .hero-preview-box { display: none; }
+            .loop-os-banner { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .felte-nav { padding: 10px 16px; }
+            .search-container { display: none; } /* Use mobile search button if needed */
+            .app-grid { grid-template-columns: 1fr; }
+            .mobile-bottom-bar { display: flex; }
+            body { padding-bottom: 74px; }
+            .hero-title { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-grid"></div>
+
+    <!-- ── TOP NAVBAR ── -->
+    <header class="felte-nav">
+        <a href="felte.html" class="nav-brand">
+            <img src="assets/felte-icon.svg" alt="Felte Logo" class="nav-logo-img">
+            <span class="nav-brand-title">felte <span class="nav-tag">Store</span></span>
+        </a>
+
+        <!-- Live Search Bar -->
+        <div class="search-container">
+            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="storeSearch" class="search-input" placeholder="Buscar apps, juegos, librerías o paquetes .loop...">
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="nav-actions">
+            <a href="index.html" class="btn-nav-ghost">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Portal CS
+            </a>
+            <button class="btn-nav-primary" id="btnPublishApp">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Publicar App
+            </button>
+        </div>
+    </header>
+
+    <!-- ── HERO BANNER ── -->
+    <section class="hero-banner">
+        <div class="hero-card">
+            <div>
+                <div class="hero-badge-wrap">
+                    <span class="hero-badge-dot"></span>
+                    <span class="hero-badge-text">Felte App Store v1.0 • Ecosistema Multiplataforma</span>
+                </div>
+                <h1 class="hero-title">
+                    Tu tienda de apps para <br>
+                    <span class="grad">la Nube, Móvil y Loop OS</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Descubre el catálogo completo de Coki Studios. Videojuegos nativos a 240Hz, suites de desarrollo hiOP, mensajería encriptada por hardware E2EE y compilador dinámico Looping.
+                </p>
+                <div class="hero-stats-row">
+                    <div class="hero-stat">
+                        <span class="hero-stat-val">100%</span>
+                        <span class="hero-stat-lbl">Nativo & Seguro</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-val">240 FPS</span>
+                        <span class="hero-stat-lbl">Ultra Low Latency</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-val">Universal</span>
+                        <span class="hero-stat-lbl">Nube · Móvil · Consola</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-preview-box">
+                <img src="assets/felte-icon.svg" alt="Felte Hero Graphic" class="hero-logo-display">
+            </div>
+        </div>
+    </section>
+
+    <!-- ── MAIN STORE CATALOG ── -->
+    <main class="section-wrap">
+        <!-- Platform Target Selector -->
+        <div class="platform-bar" id="platformSelector">
+            <button class="platform-pill active" data-platform="all">
+                <span>🌐</span> Todos los Targets
+            </button>
+            <button class="platform-pill" data-platform="loop_os">
+                <span>♾️</span> Shine Loop OS (.loop / .ruup)
+            </button>
+            <button class="platform-pill" data-platform="mobile">
+                <span>📱</span> Móvil (Android APK / iOS)
+            </button>
+            <button class="platform-pill" data-platform="web">
+                <span>☁️</span> Nube & Web Apps
+            </button>
+            <button class="platform-pill" data-platform="desktop">
+                <span>💻</span> macOS (.pkg / .dmg)
+            </button>
+        </div>
+
+        <!-- Category Filter & Heading -->
+        <div class="category-row">
+            <h2 class="section-heading">
+                <span id="catalogCategoryTitle">Catálogo de Aplicaciones</span>
+                <span id="appCounter" style="font-size: 14px; font-weight: 600; color: var(--text-muted);">(8 apps)</span>
+            </h2>
+
+            <div class="category-tabs" id="categoryTabs">
+                <button class="cat-btn active" data-cat="all">Todas</button>
+                <button class="cat-btn" data-cat="juegos">🎮 Juegos</button>
+                <button class="cat-btn" data-cat="dev">⚡ Dev & Compiladores</button>
+                <button class="cat-btn" data-cat="redes">🌐 Mensajería & Nube</button>
+                <button class="cat-btn" data-cat="sistema">🧭 Sistema & Utilidades</button>
+            </div>
+        </div>
+
+        <!-- Apps Grid -->
+        <div class="app-grid" id="appsGrid">
+            <!-- Dynamically populated by JavaScript -->
+        </div>
+
+        <!-- ── LOOP OS & DYNAMIC COMPILER INTEGRATION ── -->
+        <div class="loop-os-banner">
+            <div>
+                <div class="hero-badge-wrap" style="background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3);">
+                    <span class="hero-badge-dot" style="background: var(--purple); box-shadow: 0 0 10px var(--purple);"></span>
+                    <span class="hero-badge-text" style="color: var(--violet);">Looping Dynamic Compiler</span>
+                </div>
+                <h3 style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">Instala y compila en tu Consola Loop OS</h3>
+                <p style="color: var(--text-sub); line-height: 1.6; font-size: 14px; margin-bottom: 20px;">
+                    Cualquier aplicación de Felte puede ser compilada directamente en tu dispositivo usando el motor nativo Looping C++ v2.5.0 para <strong>Shine UI</strong>, <strong>XUI (240Hz)</strong> o <strong>flUI (120Hz)</strong>.
+                </p>
+                <a href="sample_loop_projects/shine_launcher.loop" class="btn-install" style="max-width: 220px;" download>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Descargar Shine Launcher
+                </a>
+            </div>
+
+            <div class="code-box">
+                <span class="code-kw">compile program</span> <span class="code-str">"FelteClient"</span> <span class="code-kw">target</span> <span class="code-str">"flui"</span>:<br>
+                &nbsp;&nbsp;<span class="code-kw">title</span> <span class="code-str">"Felte App Store Loop OS"</span><br>
+                &nbsp;&nbsp;<span class="code-kw">draw card</span> <span class="code-kw">at</span> (<span class="code-num">20</span>, <span class="code-num">20</span>) <span class="code-kw">title</span> <span class="code-str">"FELTE STORE"</span><br>
+                &nbsp;&nbsp;<span class="code-kw">code</span>:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-fn">play tone</span> <span class="code-kw">at</span> <span class="code-num">587</span> Hz <span class="code-kw">for</span> <span class="code-num">80</span> ms<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-fn">print</span> <span class="code-str">"Felte Store corriendo nativamente en Loop OS!"</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── MOBILE BOTTOM BAR ── -->
+    <nav class="mobile-bottom-bar">
+        <button class="mobile-nav-btn active" onclick="filterPlatform('all')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Explorar
+        </button>
+        <button class="mobile-nav-btn" onclick="filterPlatform('juegos')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Juegos
+        </button>
+        <button class="mobile-nav-btn" onclick="filterPlatform('loop_os')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+            Loop OS
+        </button>
+        <button class="mobile-nav-btn" onclick="openPublishModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Subir
+        </button>
+    </nav>
+
+    <!-- ── APP DETAIL MODAL ── -->
+    <div class="modal-overlay" id="appModalOverlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modalContent">
+                <!-- Injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DEVELOPER PUBLISH MODAL ── -->
+    <div class="modal-overlay" id="publishModalOverlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closePublishModal()">&times;</button>
+            <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Publicar App en Felte</h3>
+            <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 20px;">
+                Distribuye tu aplicación en la nube, móvil y en consolas Shine Loop OS.
+            </p>
+            <form id="publishForm" onsubmit="handlePublish(event)" style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Nombre de la App</label>
+                    <input type="text" id="pubName" required placeholder="Ej: Mi Super Juego 2D" class="search-input" style="padding: 10px 14px;">
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Categoría</label>
+                    <select id="pubCategory" class="search-input" style="padding: 10px 14px; cursor: pointer;">
+                        <option value="juegos">🎮 Videojuego</option>
+                        <option value="dev">⚡ Desarrollo & Herramientas</option>
+                        <option value="redes">🌐 Nube & Mensajería</option>
+                        <option value="sistema">🧭 Sistema & Utilidades</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Targets Soportados</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px;">
+                        <label><input type="checkbox" checked value="loop_os"> Loop OS</label>
+                        <label><input type="checkbox" checked value="mobile"> Android APK / iOS</label>
+                        <label><input type="checkbox" checked value="web"> Web / Nube</label>
+                        <label><input type="checkbox" checked value="desktop"> macOS</label>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Código Looping (.loop) o URL</label>
+                    <textarea id="pubCode" rows="4" placeholder="define app 'MiApp':&#10;    target('shine_ui')&#10;    print 'Hola Felte!'" class="search-input" style="border-radius: 12px; font-family: var(--font-code); font-size: 12px;"></textarea>
+                </div>
+                <button type="submit" class="btn-nav-primary" style="justify-content: center; padding: 12px; margin-top: 10px;">
+                    🚀 Enviar a Verificación Felte
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── APPLICATION DATA & LOGIC ── -->
+    <script>
+        const FELTE_APPS = [
+            {
+                id: 'shine_launcher',
+                name: 'Shine Loop Launcher',
+                developer: 'Holo Entertainment & Coki Studios',
+                category: 'sistema',
+                badge: 'Loop OS Native',
+                badgeClass: 'badge-native',
+                rating: 4.9,
+                reviews: '1.2k',
+                icon: 'assets/felte-icon.svg',
+                desc: 'Dashboard oficial del sistema operativo Holo Looping OoS 1.0. Telemetría de hardware, conmutación APU V-Sync y ejecución de apps.',
+                platforms: ['Loop OS', 'macOS .PKG', 'Web'],
+                downloadLoop: 'sample_loop_projects/shine_launcher.loop',
+                downloadDmg: 'dist-dmg/Looping-Engine-v2.5.0-macOS.dmg',
+                webLink: 'index.html',
+                details: 'Shine Launcher es el núcleo del ecosistema de consolas portátiles Shine Loop. Escrito 100% en lenguaje Looping (.loop), optimizado para baja latencia a 60Hz y 240Hz.'
+            },
+            {
+                id: 'holo_arcade',
+                name: 'Holo Arcade 2D',
+                developer: 'Holo Entertainment',
+                category: 'juegos',
+                badge: '60 FPS Native',
+                badgeClass: 'badge-verified',
+                rating: 4.8,
+                reviews: '850',
+                icon: '🎮',
+                desc: 'Juego de plataformas retro espacial con motor 2D Sprite Core de Looping. Físicas de salto, plataformas flotantes y estrellas coleccionables.',
+                platforms: ['Loop OS', 'Nube / Web', 'macOS'],
+                downloadLoop: 'sample_loop_projects/arcade.loop',
+                webLink: 'products.html',
+                details: 'Holo Arcade 2D demuestra las capacidades gráficas y de sintetizador de frecuencias DSP del motor Looping C++ en tiempo real.'
+            },
+            {
+                id: 'hiop_ide',
+                name: 'hiOP IDE Code Studio',
+                developer: 'Coki Studios',
+                category: 'dev',
+                badge: 'Pro Suite',
+                badgeClass: 'badge-pro',
+                rating: 5.0,
+                reviews: '3.4k',
+                icon: '⚡',
+                desc: 'Entorno de desarrollo nativo para programar en Looping y Python. Editor de código con resaltado de sintaxis, compilador y empaquetador APK.',
+                platforms: ['Nube', 'Loop OS', 'macOS', 'VSCode'],
+                downloadLoop: 'sample_loop_projects/hiop_ide.loop',
+                webLink: 'hiop-ide.html',
+                details: 'hiOP IDE es la suite de desarrollo oficial de Coki Studios. Permite compilar al vuelo para arquitecturas arm64, x86_64 y AOSP Shine OS.'
+            },
+            {
+                id: 'forkar_racing',
+                name: 'Forkar 3D Cyberpunk Racing',
+                developer: 'Coki Studios',
+                category: 'juegos',
+                badge: 'Universal',
+                badgeClass: 'badge-verified',
+                rating: 4.9,
+                reviews: '4.1k',
+                icon: '🏎️',
+                desc: 'Juego de carreras cyberpunk 3D. Físicas de chasis de alta precisión, multijugador P2P y telemetría de ecovalidación.',
+                platforms: ['Android APK', 'iOS Universal', 'macOS', 'Loop OS'],
+                downloadApk: 'Forkar.apk',
+                webLink: 'forkar.html',
+                details: 'Forkar Racing une el mundo del gaming de alta velocidad con la tecnología de validación ecológica y sincronización P2P segura.'
+            },
+            {
+                id: 'csms_messenger',
+                name: 'CSMS E2EE Messaging',
+                developer: 'Coki Studios Security Lab',
+                category: 'redes',
+                badge: 'Secure Enclave',
+                badgeClass: 'badge-native',
+                rating: 5.0,
+                reviews: '9.8k',
+                icon: '🔒',
+                desc: 'Servicio de mensajería con cifrado de extremo a extremo respaldado por hardware (Apple Secure Enclave, T2 y Android StrongBox TEE).',
+                platforms: ['Nube / Web', 'Android APK', 'iOS', 'macOS'],
+                webLink: 'messenger.html',
+                details: 'CSMS utiliza el protocolo de cifrado AES-256-GCM y derivación de sala criptográfica sin datos hardcodeados.'
+            },
+            {
+                id: 'ruuping_core',
+                name: 'Ruuping Native Rust Core',
+                developer: 'Coki Studios Systems',
+                category: 'dev',
+                badge: '1.4M Ops/s',
+                badgeClass: 'badge-pro',
+                rating: 4.9,
+                reviews: '620',
+                icon: '🦀',
+                desc: 'Runtime dual ultra-rápido en Rust compilado a binario nativo. Latencia de 0.12ms para cómputo intensivo y pipelines de videojuegos.',
+                platforms: ['Loop OS', 'macOS', 'Linux'],
+                downloadLoop: 'sample_loop_projects/ruuping_demo.ruup',
+                webLink: 'developer.html',
+                details: 'Ruuping complementa a Looping C++ para tareas de procesamiento multihilo, simulaciones físicas y pipelines masivos de datos.'
+            },
+            {
+                id: 'shine_maps',
+                name: 'Shine Maps & Transit',
+                developer: 'Coki Studios Navigation',
+                category: 'sistema',
+                badge: 'GPS Offline',
+                badgeClass: 'badge-verified',
+                rating: 4.7,
+                reviews: '2.1k',
+                icon: '🧭',
+                desc: 'Navegación inteligente con mapas sin conexión, detección de rutas eco-amigables y posicionamiento satelital de baja energía.',
+                platforms: ['Android APK', 'iOS', 'Web'],
+                downloadApk: 'ShineMaps.apk',
+                webLink: 'shine-maps.html',
+                details: 'Shine Maps ofrece navegación en tiempo real con privacidad garantizada y cero rastreo de perfiles comerciales.'
+            },
+            {
+                id: 'looping_compiler_sdk',
+                name: 'Looping C++ Dynamic Compiler',
+                developer: 'Holo Entertainment Core',
+                category: 'dev',
+                badge: 'v2.5.0 Signature',
+                badgeClass: 'badge-native',
+                rating: 5.0,
+                reviews: '1.5k',
+                icon: '♾️',
+                desc: 'Compilador dinámico de programas Looping. Permite sintetizar código sobre la marcha, ejecutar shebangs y desplegar para Shine UI, XUI y flUI.',
+                platforms: ['Loop OS', 'macOS Universal', 'Linux'],
+                downloadDmg: 'dist-dmg/Instalar Looping.pkg',
+                webLink: 'LOOPING_USE.md',
+                details: 'El compilador Looping C++ soporta el bloque "compile program", APIs de evaluación al vuelo e interoperabilidad zero-copy con librerías nativas.'
+            }
+        ];
+
+        let currentCategory = 'all';
+        let currentPlatform = 'all';
+        let searchQuery = '';
+
+        function renderApps() {
+            const grid = document.getElementById('appsGrid');
+            const counter = document.getElementById('appCounter');
+            
+            const filtered = FELTE_APPS.filter(app => {
+                const matchCat = (currentCategory === 'all' || app.category === currentCategory);
+                let matchPlat = true;
+                if (currentPlatform === 'loop_os') {
+                    matchPlat = app.platforms.some(p => p.includes('Loop OS'));
+                } else if (currentPlatform === 'mobile') {
+                    matchPlat = app.platforms.some(p => p.includes('Android') || p.includes('iOS'));
+                } else if (currentPlatform === 'web') {
+                    matchPlat = app.platforms.some(p => p.includes('Nube') || p.includes('Web'));
+                } else if (currentPlatform === 'desktop') {
+                    matchPlat = app.platforms.some(p => p.includes('macOS'));
+                }
+                const matchSearch = (!searchQuery || 
+                    app.name.toLowerCase().includes(searchQuery) ||
+                    app.desc.toLowerCase().includes(searchQuery) ||
+                    app.developer.toLowerCase().includes(searchQuery));
+
+                return matchCat && matchPlat && matchSearch;
+            });
+
+            counter.textContent = `(${filtered.length} ${filtered.length === 1 ? 'app' : 'apps'})`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-bottom: 12px; opacity: 0.5;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h3 style="color: #fff; font-size: 18px; margin-bottom: 6px;">No se encontraron aplicaciones</h3>
+                        <p style="font-size: 14px;">Prueba ajustando los filtros de categoría o buscando otro término.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(app => `
+                <div class="app-card" id="card-${app.id}">
+                    <div class="app-card-top">
+                        ${app.icon.startsWith('assets/') 
+                            ? `<img src="${app.icon}" class="app-icon" alt="${app.name}">` 
+                            : `<div class="app-icon">${app.icon}</div>`
+                        }
+                        <div class="app-info">
+                            <div class="app-title-row">
+                                <h3 class="app-name" title="${app.name}">${app.name}</h3>
+                                <span class="app-badge ${app.badgeClass}">${app.badge}</span>
+                            </div>
+                            <div class="app-dev">${app.developer}</div>
+                            <div class="app-rating-row">
+                                <span class="app-stars">★ ${app.rating}</span>
+                                <span>•</span>
+                                <span>${app.reviews} valoraciones</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="app-desc">${app.desc}</p>
+
+                    <div class="app-platforms-tag">
+                        ${app.platforms.map(p => `<span class="target-tag">${p}</span>`).join('')}
+                    </div>
+
+                    <div class="app-actions-row">
+                        <button class="btn-install" onclick="openAppAction('${app.id}')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Obtener
+                        </button>
+                        <button class="btn-details" onclick="openAppDetails('${app.id}')">Detalles</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search Input Listener
+        document.getElementById('storeSearch').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            renderApps();
+        });
+
+        // Category Tabs
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentCategory = btn.getAttribute('data-cat');
+                renderApps();
+            });
+        });
+
+        // Platform Pills
+        document.querySelectorAll('.platform-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                document.querySelectorAll('.platform-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                currentPlatform = pill.getAttribute('data-platform');
+                renderApps();
+            });
+        });
+
+        function filterPlatform(plat) {
+            currentPlatform = plat;
+            document.querySelectorAll('.platform-pill').forEach(p => {
+                if (p.getAttribute('data-platform') === plat) p.classList.add('active');
+                else p.classList.remove('active');
+            });
+            renderApps();
+        }
+
+        // Details Modal
+        function openAppDetails(id) {
+            const app = FELTE_APPS.find(a => a.id === id);
+            if (!app) return;
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div style="display: flex; gap: 18px; align-items: center; margin-bottom: 20px;">
+                    ${app.icon.startsWith('assets/') 
+                        ? `<img src="${app.icon}" style="width:72px; height:72px; border-radius:18px; object-fit:cover;" alt="${app.name}">` 
+                        : `<div style="width:72px; height:72px; border-radius:18px; background:#1e293b; display:flex; align-items:center; justify-content:center; font-size:36px;">${app.icon}</div>`
+                    }
+                    <div>
+                        <h2 style="font-size:22px; font-weight:800; color:#fff;">${app.name}</h2>
+                        <p style="color:var(--aqua); font-size:13px; font-weight:600;">${app.developer}</p>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:2px;">★ ${app.rating} (${app.reviews} valoraciones de usuarios)</p>
+                    </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
+                    <h4 style="font-size:13px; font-weight:700; color:#fff; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Descripción</h4>
+                    <p style="color:var(--text-sub); font-size:14px; line-height:1.6;">${app.details}</p>
+                </div>
+
+                <div style="margin-bottom:24px;">
+                    <h4 style="font-size:13px; font-weight:700; color:#fff; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">Plataformas Compatibles</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        ${app.platforms.map(p => `<span class="target-tag" style="background:rgba(0,245,212,0.1); border-color:rgba(0,245,212,0.3); color:var(--aqua); font-weight:700; padding:6px 12px;">${p}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button class="btn-install" onclick="openAppAction('${app.id}')" style="padding:12px 24px; font-size:14px;">
+                        Obtener e Instalar
+                    </button>
+                    ${app.webLink ? `<a href="${app.webLink}" class="btn-details" style="display:inline-flex; align-items:center; text-decoration:none;">Abrir en Nube</a>` : ''}
+                </div>
+            `;
+            document.getElementById('appModalOverlay').style.display = 'flex';
+        }
+
+        // Install / Action Modal
+        function openAppAction(id) {
+            const app = FELTE_APPS.find(a => a.id === id);
+            if (!app) return;
+
+            let downloadButtons = '';
+            if (app.downloadLoop) {
+                downloadButtons += `<a href="${app.downloadLoop}" download class="btn-install" style="margin-bottom:8px; text-decoration:none;"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Descargar paquete Looping (.loop)</a>`;
+            }
+            if (app.downloadApk) {
+                downloadButtons += `<a href="${app.downloadApk}" download class="btn-install" style="background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(56,189,248,0.2)); border-color:rgba(16,185,129,0.4); color:var(--emerald); margin-bottom:8px; text-decoration:none;"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg> Descargar APK para Android</a>`;
+            }
+            if (app.downloadDmg) {
+                downloadButtons += `<a href="${app.downloadDmg}" download class="btn-install" style="background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(192,132,252,0.2)); border-color:rgba(139,92,246,0.4); color:var(--violet); margin-bottom:8px; text-decoration:none;"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Descargar Instalador Apple (.DMG / .PKG)</a>`;
+            }
+            if (app.webLink) {
+                downloadButtons += `<a href="${app.webLink}" class="btn-details" style="display:flex; justify-content:center; text-decoration:none; margin-bottom:8px;">🚀 Lanzar Versión Web en la Nube</a>`;
+            }
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <h3 style="font-size: 20px; font-weight:800; color:#fff; margin-bottom: 8px;">Instalar ${app.name}</h3>
+                <p style="color:var(--text-sub); font-size:14px; margin-bottom:20px;">
+                    Elige la plataforma o método de instalación compatible con tu dispositivo:
+                </p>
+                <div style="display: flex; flex-direction: column;">
+                    ${downloadButtons}
+                </div>
+                <div style="margin-top: 14px; padding: 12px; background: rgba(0,245,212,0.06); border: 1px dashed rgba(0,245,212,0.25); border-radius: 12px; font-size: 12px; color: var(--text-sub); text-align: center;">
+                    💡 En Shine Loop OS puedes ejecutar directamente: <code>looping run ${app.downloadLoop || 'script.loop'}</code>
+                </div>
+            `;
+            document.getElementById('appModalOverlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('appModalOverlay').style.display = 'none';
+        }
+
+        // Publish Modal
+        document.getElementById('btnPublishApp').addEventListener('click', openPublishModal);
+        function openPublishModal() {
+            document.getElementById('publishModalOverlay').style.display = 'flex';
+        }
+        function closePublishModal() {
+            document.getElementById('publishModalOverlay').style.display = 'none';
+        }
+
+        function handlePublish(e) {
+            e.preventDefault();
+            const name = document.getElementById('pubName').value;
+            const cat = document.getElementById('pubCategory').value;
+            
+            // Add dynamically to local catalog
+            FELTE_APPS.unshift({
+                id: 'custom_' + Date.now(),
+                name: name,
+                developer: 'Comunidad Coki Studios',
+                category: cat,
+                badge: 'Nuevo',
+                badgeClass: 'badge-native',
+                rating: 5.0,
+                reviews: '1',
+                icon: '🚀',
+                desc: 'Aplicación publicada por la comunidad en Felte Store Cloud.',
+                platforms: ['Loop OS', 'Nube'],
+                details: 'Aplicación creada y subida a Felte Store. Lista para compilar y ejecutar.'
+            });
+
+            closePublishModal();
+            renderApps();
+            alert(`🎉 ¡"${name}" se ha registrado exitosamente en Felte Store!`);
+        }
+
+        // Close on background click
+        window.onclick = function(event) {
+            const m1 = document.getElementById('appModalOverlay');
+            const m2 = document.getElementById('publishModalOverlay');
+            if (event.target === m1) m1.style.display = 'none';
+            if (event.target === m2) m2.style.display = 'none';
+        };
+
+        // Initial Render
+        renderApps();
+    </script>
+</body>
+</html>

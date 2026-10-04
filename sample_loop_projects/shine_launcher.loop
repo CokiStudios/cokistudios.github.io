@@ -42,6 +42,7 @@ fn print_telemetry(battery, profile, wifi, fps, ram_used) {
 
 fn print_app_grid() {
     print "┌─── APLICACIONES INSTALADAS [GAMEPAD / TECLADO] ──────────────────────────────┐"
+    print "│  [F] 🛍️ Felte App Store         — Tienda oficial de apps Coki en Loop OS    │"
     print "│  [1] 🎮 Holo Arcade 2D           — Motor de plataformas 2D retro nativo      │"
     print "│  [2] ⚡ hiOP IDE Studio          — Estudio de código y compilador en vivo     │"
     print "│  [3] 🐍 Python Interop Bridge    — PySync Zero-Copy NumPy / PyTorch          │"
@@ -93,6 +94,14 @@ fn test_dynamic_compiler_creation() {
 }
 
 fn launch_app(choice) {
+    if (choice == "F" or choice == "f" or choice == "felte") {
+        print ""
+        print "🛍️ Abriendo Felte App Store en Loop OS..."
+        play tone at 523 Hz for 70 ms
+        play tone at 659 Hz for 80 ms
+        play tone at 784 Hz for 90 ms
+        sys.launch("sample_loop_projects/felte_store.loop")
+    }
     if (choice == "1") {
         print ""
         print "🚀 Iniciando Holo Arcade 2D..."
@@ -184,12 +193,12 @@ define app "ShineLauncher" version 2.5:
     draw button at (295, 365) with text "TEST RENDIMIENTO" and action "launch_ruuping"
     draw card at (540, 255) with size (240, 155) and title "🚀 COMPILADOR DINÁMICO" and text "Feature: Dynamic Program Engine\nCapability: On-the-fly code gen\nCompilation: Native shebang/ELF\nStatus: Active"
     draw button at (555, 365) with text "CREAR PROGRAMA" and action "dynamic_compile"
-    draw card at (20, 425) with size (760, 75) and title "NAVEGACIÓN RÁPIDA [GAMEPAD / TECLADO]" and text "🎮 [D-Pad] Seleccionar App • [A / Espacio] Abrir • [B / Esc] Atrás • [X] Compilar Dinámico • [Y] Bubbly Dot AI"
+    draw card at (20, 425) with size (760, 75) and title "NAVEGACIÓN RÁPIDA [GAMEPAD / TECLADO]" and text "🎮 [D-Pad] Seleccionar App • [F] Felte App Store • [A / Espacio] Abrir • [B / Esc] Atrás • [X] Compilar Dinámico • [Y] Bubbly Dot AI"
 
     print_app_grid()
 
     # ── Interacción o Ejecución de Demostración ──
-    val user_input = input("\n🎮 [SHINE LAUNCHER] Seleccione opción (1-9, o Enter para demo): ")
+    val user_input = input("\n🎮 [SHINE LAUNCHER] Seleccione opción (F, 1-9, o Enter para demo): ")
 
     if (user_input == "" or user_input == "6") {
         print ""
