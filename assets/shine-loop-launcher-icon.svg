@@ -1,53 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Radial Obsidian Glow -->
-    <radialGradient id="launcherBgGlow" cx="50%" cy="48%" r="68%">
-      <stop offset="0%" stop-color="#0f1b33" />
-      <stop offset="55%" stop-color="#070c18" />
-      <stop offset="100%" stop-color="#020307" />
+    <!-- Background Gradient (Dark Obsidian matching Coki Studios brand identity) -->
+    <radialGradient id="bgLauncher" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#0e172a" />
+      <stop offset="60%" stop-color="#060913" />
+      <stop offset="100%" stop-color="#020306" />
     </radialGradient>
 
-    <!-- Vibrant Infinity Gradient (Left Loop: Cyan to Neon Azure) -->
-    <linearGradient id="loopLeftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Shine Loop Signature Gradient (Electric Cyan to Neon Purple) -->
+    <linearGradient id="neonLoop" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#00f2fe" />
       <stop offset="45%" stop-color="#38bdf8" />
-      <stop offset="100%" stop-color="#6366f1" />
+      <stop offset="80%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
     </linearGradient>
 
-    <!-- Vibrant Infinity Gradient (Right Loop: Indigo to Fuchsia Purple) -->
-    <linearGradient id="loopRightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1" />
-      <stop offset="50%" stop-color="#a855f7" />
-      <stop offset="100%" stop-color="#ec4899" />
-    </linearGradient>
-
-    <!-- Core Plasma Overlay -->
-    <linearGradient id="coreLaserGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
-      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#f472b6" stop-opacity="0.9" />
-    </linearGradient>
-
-    <!-- Holographic Disc Ring Gradient -->
-    <linearGradient id="orbitRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35" />
-      <stop offset="50%" stop-color="#818cf8" stop-opacity="0.1" />
-      <stop offset="100%" stop-color="#c084fc" stop-opacity="0.4" />
-    </linearGradient>
-
-    <!-- Glow Filters -->
-    <filter id="ultraGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="16" result="blur1" />
-      <feGaussianBlur stdDeviation="30" result="blur2" />
-      <feMerge>
-        <feMergeNode in="blur2" />
-        <feMergeNode in="blur1" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+    <!-- Glow Filter matching Coki Studios Icon family -->
+    <filter id="glowLauncher" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
         <feMergeNode in="SourceGraphic" />
@@ -55,93 +25,32 @@
     </filter>
   </defs>
 
-  <!-- 1. Squircle Canvas Base (Apple macOS Style Icon Shape) -->
-  <rect x="24" y="24" width="464" height="464" rx="108" fill="url(#launcherBgGlow)" stroke="#1e2d4a" stroke-width="3.5" />
+  <!-- Dark Obsidian Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgLauncher)" stroke="#1e293b" stroke-width="4" />
 
-  <!-- 2. Ambient Console Halo -->
-  <circle cx="256" cy="256" r="170" fill="none" stroke="url(#orbitRingGrad)" stroke-width="2" stroke-dasharray="6 8" />
-  <circle cx="256" cy="256" r="195" fill="none" stroke="#38bdf8" stroke-opacity="0.08" stroke-width="1.5" />
+  <!-- Subtle Horizon Grid Ring -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#38bdf8" stroke-opacity="0.06" stroke-width="2" stroke-dasharray="8 8" />
 
-  <!-- Console Reticle Ticks -->
-  <line x1="256" y1="52" x2="256" y2="68" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="2.5" stroke-linecap="round" />
-  <line x1="256" y1="444" x2="256" y2="460" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="2.5" stroke-linecap="round" />
-  <line x1="52" y1="256" x2="68" y2="256" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="2.5" stroke-linecap="round" />
-  <line x1="444" y1="256" x2="460" y2="256" stroke="#c084fc" stroke-opacity="0.4" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Shine Loop Minimalist Emblem -->
+  <g filter="url(#glowLauncher)">
+    <!-- Top Beacon Dot (Coki Studios signature) -->
+    <circle cx="256" cy="115" r="13" fill="#38bdf8" />
 
-  <!-- 3. Primary Holographic Infinity Möbius Ribbon (Looping Engine & Shine Console Core) -->
-  <!-- Back Shadow / Glow -->
-  <g filter="url(#ultraGlow)" opacity="0.85">
-    <path d="M 256 256 
-             C 210 200, 135 170, 92 215 
-             C 45 262, 50 335, 110 368 
-             C 165 395, 225 330, 256 256 
-             C 287 182, 347 117, 402 144 
-             C 462 177, 467 250, 420 297 
-             C 377 342, 302 312, 256 256 Z"
+    <!-- Pure Infinity Loop (Smooth single continuous stroke) -->
+    <path d="M 256 256
+             C 215 195, 140 185, 108 217
+             C 70 255, 70 305, 108 343
+             C 145 380, 215 315, 256 256
+             C 297 197, 367 132, 404 169
+             C 442 207, 442 257, 404 295
+             C 372 327, 297 317, 256 256 Z"
           fill="none"
-          stroke="url(#loopLeftGrad)"
-          stroke-width="38"
-          stroke-linecap="round"
-          stroke-linejoin="round" />
-  </g>
-
-  <!-- Front Crisp Infinity Ribbon -->
-  <g filter="url(#softGlow)">
-    <!-- Continuous Möbius Path -->
-    <path d="M 256 256 
-             C 210 200, 135 170, 92 215 
-             C 45 262, 50 335, 110 368 
-             C 165 395, 225 330, 256 256 
-             C 287 182, 347 117, 402 144 
-             C 462 177, 467 250, 420 297 
-             C 377 342, 302 312, 256 256 Z"
-          fill="none"
-          stroke="url(#loopRightGrad)"
-          stroke-width="32"
+          stroke="url(#neonLoop)"
+          stroke-width="24"
           stroke-linecap="round"
           stroke-linejoin="round" />
 
-    <!-- Overlapping Ribbon Bridge (Adds 3D Depth) -->
-    <path d="M 220 295
-             C 235 275, 246 264, 256 256
-             C 268 246, 282 232, 300 215"
-          fill="none"
-          stroke="url(#loopLeftGrad)"
-          stroke-width="32"
-          stroke-linecap="round" />
-
-    <!-- Core Luminescent Laser Filament -->
-    <path d="M 256 256 
-             C 210 200, 135 170, 92 215 
-             C 45 262, 50 335, 110 368 
-             C 165 395, 225 330, 256 256 
-             C 287 182, 347 117, 402 144 
-             C 462 177, 467 250, 420 297 
-             C 377 342, 302 312, 256 256 Z"
-          fill="none"
-          stroke="url(#coreLaserGrad)"
-          stroke-width="6"
-          stroke-linecap="round"
-          stroke-linejoin="round" />
-  </g>
-
-  <!-- 4. Central Shine Star (Console Spark) -->
-  <g transform="translate(256, 256) scale(0.9)">
-    <circle cx="0" cy="0" r="14" fill="#ffffff" filter="url(#softGlow)" />
-    <!-- Star Rays -->
-    <path d="M 0 -36 Q 0 0 -36 0 Q 0 0 0 36 Q 0 0 36 0 Q 0 0 0 -36 Z" fill="#38bdf8" opacity="0.9" />
-    <circle cx="0" cy="0" r="5" fill="#ffffff" />
-  </g>
-
-  <!-- 5. Dynamic Holo Loop Orbital Bubbly Dots -->
-  <circle cx="112" cy="180" r="9" fill="#00f2fe" filter="url(#softGlow)" />
-  <circle cx="400" cy="332" r="8" fill="#ec4899" filter="url(#softGlow)" />
-  <circle cx="340" cy="120" r="6" fill="#a855f7" filter="url(#softGlow)" />
-  <circle cx="172" cy="385" r="5.5" fill="#38bdf8" filter="url(#softGlow)" />
-
-  <!-- 6. Stylized Launcher Badge Tag -->
-  <g transform="translate(256, 420)">
-    <rect x="-82" y="-14" width="164" height="28" rx="14" fill="#0b1324" fill-opacity="0.85" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1.2" />
-    <text x="0" y="4" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="11" font-weight="700" fill="#38bdf8" letter-spacing="2.5" text-anchor="middle">SHINE LOOP</text>
+    <!-- Core Center Spark Dot -->
+    <circle cx="256" cy="256" r="10" fill="#ffffff" />
   </g>
 </svg>
