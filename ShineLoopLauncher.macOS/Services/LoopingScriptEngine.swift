@@ -179,6 +179,24 @@ public final class LoopingScriptEngine: ObservableObject, @unchecked Sendable {
                 continue
             }
 
+            // 2b. Target UI & Profile: compile target "shine_ui" / target("xui") / profile("flui")
+            if line.hasPrefix("compile target ") || line.hasPrefix("compile for ") ||
+               line.hasPrefix("target(") || line.hasPrefix("@target(") ||
+               line.hasPrefix("profile(") || line.hasPrefix("@profile(") {
+                if let qRange = line.range(of: "\"([^\"]+)\"", options: .regularExpression) {
+                    let prof = String(line[qRange]).replacingOccurrences(of: "\"", with: "").lowercased()
+                    self.uiProfile = prof
+                    if prof.contains("shine") {
+                        self.theme = "frosted_aqua_a17"
+                    } else if prof.contains("xui") {
+                        self.theme = "cyber_neon_xui"
+                    } else if prof.contains("flui") {
+                        self.theme = "aurora_indigo_fold"
+                    }
+                }
+                continue
+            }
+
             // 3. set <variable> to <val>
             if line.hasPrefix("set ") {
                 let stripped = line.replacingOccurrences(of: "set ", with: "")

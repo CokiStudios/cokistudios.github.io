@@ -47,6 +47,63 @@ public struct SettingsDrawerView: View {
 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
+                        // 0. Target UI Profile
+                        sectionTitle("ARQUITECTURA DE INTERFAZ (SHINE UI / XUI / flUI)")
+                        VStack(spacing: 8) {
+                            ForEach(TargetUIProfile.allCases) { prof in
+                                let isSelected = (vm.targetUIProfile == prof)
+                                Button {
+                                    vm.setTargetUIProfile(prof)
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: prof.iconSymbol)
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(prof.primaryColor)
+                                            .frame(width: 28, height: 28)
+                                            .background(prof.primaryColor.opacity(0.12))
+                                            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            HStack(spacing: 6) {
+                                                Text(prof.displayName)
+                                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                                    .foregroundColor(isSelected ? .white : .white.opacity(0.8))
+
+                                                Text("\(prof.targetFps) Hz")
+                                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                                    .foregroundColor(prof.primaryColor)
+                                                    .padding(.horizontal, 4)
+                                                    .padding(.vertical, 1)
+                                                    .background(prof.primaryColor.opacity(0.15))
+                                                    .clipShape(Capsule())
+                                            }
+
+                                            Text(prof.subtitle)
+                                                .font(.system(size: 10, weight: .medium))
+                                                .foregroundColor(.white.opacity(0.45))
+                                                .lineLimit(1)
+                                        }
+
+                                        Spacer()
+
+                                        if isSelected {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: 15))
+                                                .foregroundColor(prof.primaryColor)
+                                        }
+                                    }
+                                    .padding(12)
+                                    .background(isSelected ? prof.primaryColor.opacity(0.12) : Color.white.opacity(0.04))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(isSelected ? prof.primaryColor : Color.white.opacity(0.06), lineWidth: 1)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+
                         // 1. Performance Profile
                         sectionTitle("PERFIL DE RENDIMIENTO (APU / FPS)")
                         VStack(spacing: 8) {

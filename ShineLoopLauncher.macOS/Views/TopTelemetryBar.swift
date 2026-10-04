@@ -38,6 +38,24 @@ public struct TopTelemetryBar: View {
                         .padding(.vertical, 2)
                         .background(Color(hex: "00f5d4").opacity(0.15))
                         .clipShape(Capsule())
+
+                    // Target UI Architecture Badge (Shine UI / XUI / flUI)
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(vm.targetUIProfile.primaryColor)
+                            .frame(width: 5, height: 5)
+
+                        Text(vm.targetUIProfile.displayName)
+                            .font(.system(size: 9, weight: .black, design: .monospaced))
+                            .foregroundColor(vm.targetUIProfile.primaryColor)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(vm.targetUIProfile.primaryColor.opacity(0.15))
+                    .overlay(
+                        Capsule().stroke(vm.targetUIProfile.primaryColor.opacity(0.3), lineWidth: 1)
+                    )
+                    .clipShape(Capsule())
                 }
 
                 Divider()

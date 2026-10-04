@@ -24,9 +24,11 @@ El ejecutable nativo compilado reside directamente en el repositorio:
 | Comando | Descripción |
 | :--- | :--- |
 | `looping <archivo.loop>` | Ejecuta un archivo de código `.loop` o `.ruup` |
+| `looping compile <archivo.loop> --target <shine_ui\|xui\|flui> [-o out]` | Compila el script para una arquitectura de interfaz nativa |
+| `looping build <archivo.loop> -t <target>` | Alias de compilación de interfaz para scripts de sistema |
 | `looping repl` | Inicia la consola interactiva (REPL) con memoria de variables en vivo |
 | `looping eval "<code>"` | Evalúa una instrucción o bloque de código en línea |
-| `looping test` | Ejecuta la suite de verificación unitaria (10/10 pruebas) |
+| `looping test` | Ejecuta la suite de verificación unitaria (12/12 pruebas) |
 | `looping --version` | Muestra la versión del motor nativo |
 | `looping --help` | Despliega el menú de ayuda |
 
@@ -320,9 +322,73 @@ use python "math";
 }
 ```
 
+
 ---
 
-## 14. Comparativa de Sintaxis (Antes vs. Ahora)
+## 14. Compilación de Interfaces Nativas: Shine UI, XUI y flUI
+
+Looping v2.5 incluye un compilador de perfiles de interfaz de usuario de hardware diseñado específicamente para el ecosistema **Shine Loop Console**, permitiendo adaptar el pipeline gráfico, la tasa de refresco (FPS) y los shaders de visualización a diferentes factores de forma y propósitos de uso:
+
+### 🌟 Los 3 Perfiles de Interfaz de Usuario
+
+| Perfil UI | Alias | Tasa de Refresco | Pipeline Gráfico | Shader Palette & Theme | Propósito / Dispositivo |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Shine UI** | `shine_ui`, `shine` | **60 FPS** | Shine APU Direct V-Sync | `frosted_aqua_a17` (`#00f5d4` / `#0284c7`) | Consola portátil insignia, carrusel 3D y cuadrícula de juegos |
+| **XUI** | `xui`, `gama_x` | **240 FPS** | Direct-to-Vulkan (<0.2ms) | `cyber_neon_xui` (`#38bdf8` / `#082f49`) | HUD competitivo para esports, alta tasa de refresco ultra-rápida |
+| **flUI** | `flui`, `foldable` | **120 FPS** | Fold-Aware Dynamic Engine | `aurora_indigo_fold` (`#c084fc` / `#ec4899`) | Dispositivos plegables, doble pantalla y tarjetas flotantes |
+
+---
+
+### Compilación desde la CLI de Looping
+
+Puedes compilar cualquier script `.loop` especificando el flag `--target` o `-t`:
+
+```bash
+# Compilar el launcher del sistema para Shine UI (Handheld 60Hz)
+./bin/looping compile sample_loop_projects/shine_launcher.loop --target shine_ui --output build/ShineLauncher_ShineUI
+
+# Compilar para XUI (Esports 240Hz Direct-to-Vulkan)
+./bin/looping compile sample_loop_projects/shine_launcher.loop --target xui --output build/ShineLauncher_XUI
+
+# Compilar para flUI (Plegable / Dual-Screen 120Hz)
+./bin/looping compile sample_loop_projects/shine_launcher.loop --target flui --output build/ShineLauncher_flUI
+```
+
+El compilador genera un binario ejecutable (`chmod +x`) con shebang `#!/usr/bin/env looping` y metadatos de arquitectura embebidos que puede ejecutarse directamente:
+
+```bash
+./build/ShineLauncher_ShineUI
+# o mediante:
+./bin/looping build/ShineLauncher_ShineUI
+```
+
+---
+
+### Sintaxis en Código Fuente (.loop)
+
+Dentro del código de Looping, puedes declarar o bloquear el target de UI con cualquiera de las siguientes formas declarativas:
+
+```loop
+// Directiva de compilación explícita
+compile target "shine_ui"
+
+// Forma de función funcional
+target("xui")
+
+// Macro decorador de arquitectura
+@target("flui")
+profile("shine_ui")
+```
+
+Al ejecutarse, el motor exporta automáticamente las variables de entorno de sistema correspondientes:
+- `UI_PROFILE`: Código del perfil (`"shine_ui"`, `"xui"`, `"flui"`)
+- `UI_NAME`: Nombre oficial de la arquitectura (`"Shine UI"`, `"XUI"`, `"flUI"`)
+- `UI_THEME`: Tema de sombreador de cristal activo
+- `UI_FPS`: Tasa de refresco objetivo (`60`, `240`, `120`)
+
+---
+
+## 15. Comparativa de Sintaxis (Antes vs. Ahora)
 
 | Característica | Prosa en Inglés (Legacy v2.0) | Sintaxis de Firma Looping (v2.5) |
 | :--- | :--- | :--- |

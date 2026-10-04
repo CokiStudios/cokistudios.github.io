@@ -74,6 +74,71 @@ public enum AppCategory: String, CaseIterable {
     case community = "Comunidad"
 }
 
+// MARK: - Target UI Architecture Profiles (Shine UI / XUI / flUI)
+public enum TargetUIProfile: String, CaseIterable, Identifiable {
+    case shineUI = "shine_ui"
+    case xui = "xui"
+    case flUI = "flui"
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .shineUI: return "Shine UI"
+        case .xui: return "XUI"
+        case .flUI: return "flUI"
+        }
+    }
+
+    public var subtitle: String {
+        switch self {
+        case .shineUI: return "Handheld Console Grid & Carousel (60Hz APU V-Sync)"
+        case .xui: return "Pro Gamer Esports HUD (240Hz Vulkan Ultra-Low Latency)"
+        case .flUI: return "Foldable Dual-Screen & Floating Cards (120Hz)"
+        }
+    }
+
+    public var themeName: String {
+        switch self {
+        case .shineUI: return "frosted_aqua_a17"
+        case .xui: return "cyber_neon_xui"
+        case .flUI: return "aurora_indigo_fold"
+        }
+    }
+
+    public var primaryColor: Color {
+        switch self {
+        case .shineUI: return Color(hex: "00f5d4")
+        case .xui: return Color(hex: "38bdf8")
+        case .flUI: return Color(hex: "c084fc")
+        }
+    }
+
+    public var accentColor: Color {
+        switch self {
+        case .shineUI: return Color(hex: "0284c7")
+        case .xui: return Color(hex: "082f49")
+        case .flUI: return Color(hex: "ec4899")
+        }
+    }
+
+    public var targetFps: Int {
+        switch self {
+        case .shineUI: return 60
+        case .xui: return 240
+        case .flUI: return 120
+        }
+    }
+
+    public var iconSymbol: String {
+        switch self {
+        case .shineUI: return "gamecontroller.fill"
+        case .xui: return "bolt.shield.fill"
+        case .flUI: return "macbook.and.iphone"
+        }
+    }
+}
+
 // MARK: - Performance Profiles
 public enum PerformanceProfile: String, CaseIterable {
     case eco = "Eco Saver (30 FPS)"

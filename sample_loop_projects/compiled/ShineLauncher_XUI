@@ -1,3 +1,17 @@
+#!/usr/bin/env looping
+# ═══════════════════════════════════════════════════════════════
+# 🚀 COMPILED LOOPING TARGET ARTIFACT — XUI
+# System UI: XUI [xui]
+# Hardware Refresh: Direct-to-Vulkan Ultra-Low Latency 240Hz (<0.2ms) (240 FPS)
+# Layout Mode: Pro Gamer Esports HUD (High-Refresh APU)
+# Shader Palette: cyber_neon_xui (#38bdf8)
+# Compiled by Looping Engine v2.5.0 (Holo Entertainment / Coki Studios)
+# ═══════════════════════════════════════════════════════════════
+
+compile target "xui"
+set ui_profile to "xui"
+set theme to "cyber_neon_xui"
+
 # ═══════════════════════════════════════════════════════════════
 # 🌟 SHINE LAUNCHER — OFFICIAL SYSTEM DASHBOARD (.loop / .ruup)
 # Shine Loop Console & Holo Looping OoS 1.0 (Linux Gaming Core)
@@ -14,8 +28,8 @@ use python "time"
 
 define app "ShineLauncher" version 2.1:
     create window with title "Shine Loop OS: System Launcher & Dashboard" and size (800, 520)
-    set theme to "frosted_aqua_a17"
-    target("shine_ui")
+    # [Compiled Target Override]: set theme to "frosted_aqua_a17"
+    # [Compiled Target Override]: target("shine_ui")
     
     set system_name to "Shine Loop Handheld Console"
     set kernel_ver to "Holo Looping OoS 1.0 (Linux Gaming Edition)"

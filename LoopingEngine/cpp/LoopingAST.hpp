@@ -229,6 +229,13 @@ public:
     ConfigStmt(const std::string& k, const std::string& v) : key(k), value(v) {}
 };
 
+// Target UI Compilation: compile target "shine_ui" / target("xui") / @target("flui")
+class TargetCompileStmt : public Stmt {
+public:
+    std::string target_ui; // "shine_ui", "xui", "flui"
+    TargetCompileStmt(const std::string& t) : target_ui(t) {}
+};
+
 // Draw UI: draw card / button / input
 class DrawUIStmt : public Stmt {
 public:

@@ -467,16 +467,24 @@ public:
             return std::make_shared<AppDefineStmt>("HoloApp", "1.0");
         }
 
-        // 6. UI Profile & Theme: profile("xui") / @profile("xui") / theme("dark_neon") / @theme(...)
-        if (s.rfind("profile(", 0) == 0 || s.rfind("@profile(", 0) == 0 || s.rfind("set ui_profile to", 0) == 0 || s.rfind("set ui to", 0) == 0) {
+        // 6. Target UI Compilation & Profile: target("shine_ui") / compile target "xui" / profile("flui")
+        if (s.rfind("compile target ", 0) == 0 || s.rfind("compile for ", 0) == 0 ||
+            s.rfind("target(", 0) == 0 || s.rfind("@target(", 0) == 0 ||
+            s.rfind("profile(", 0) == 0 || s.rfind("@profile(", 0) == 0 || 
+            s.rfind("set ui_profile to", 0) == 0 || s.rfind("set ui to", 0) == 0 ||
+            s.rfind("set target to", 0) == 0) {
             std::string prof = "xui";
             if (s.find('(') != std::string::npos) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
                 if (!args.positional.empty()) prof = args.positional[0];
+            } else if (s.rfind("compile target ", 0) == 0) {
+                prof = trim_quotes(trim(s.substr(15)));
+            } else if (s.rfind("compile for ", 0) == 0) {
+                prof = trim_quotes(trim(s.substr(12)));
             } else {
                 prof = trim_quotes(extract_after(s, "to"));
             }
-            return std::make_shared<ConfigStmt>("ui_profile", prof);
+            return std::make_shared<TargetCompileStmt>(prof);
         }
         if (s.rfind("theme(", 0) == 0 || s.rfind("@theme(", 0) == 0 || s.rfind("set theme to", 0) == 0 || s.rfind("set theme as", 0) == 0) {
             std::string th = "dark_neon";

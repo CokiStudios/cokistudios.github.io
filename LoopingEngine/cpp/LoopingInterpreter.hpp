@@ -30,6 +30,64 @@ namespace color {
     inline const char* WHITE   = "\033[37m";
 }
 
+struct UIProfileSpecs {
+    std::string name;          // "Shine UI", "XUI", "flUI"
+    std::string code;          // "shine_ui", "xui", "flui"
+    std::string theme;         // "frosted_aqua_a17", "cyber_neon_xui", "aurora_indigo_fold"
+    std::string primary_color; // "#00f5d4", "#38bdf8", "#c084fc"
+    std::string accent_color;  // "#0284c7", "#082f49", "#ec4899"
+    int target_fps;            // 60, 240, 120
+    std::string pipeline;      // "Hardware APU Direct 60Hz", "Vulkan Ultra-Low Latency 240Hz", "Adaptive Dual-Screen 120Hz"
+    std::string layout_mode;   // "Console Grid & Carousel", "Pro Gamer Esports HUD", "Foldable Multi-Deck Floating"
+};
+
+inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
+    std::string s = raw;
+    for (char& c : s) c = std::tolower(c);
+    while (!s.empty() && (s.front() == ' ' || s.front() == '-' || s.front() == '_')) s.erase(0, 1);
+    while (!s.empty() && (s.back() == ' ' || s.back() == '-' || s.back() == '_')) s.pop_back();
+
+    // 1. XUI (Gama X / 240Hz Gaming)
+    if (s == "xui" || s == "x_ui" || s == "x-ui" || s == "gama_x" || s == "gama-x" || s == "gamax") {
+        return {
+            "XUI",
+            "xui",
+            "cyber_neon_xui",
+            "#38bdf8",
+            "#082f49",
+            240,
+            "Direct-to-Vulkan Ultra-Low Latency 240Hz (<0.2ms)",
+            "Pro Gamer Esports HUD (High-Refresh APU)"
+        };
+    }
+
+    // 2. flUI (Foldable / Dual-Screen / Floating Multi-Window)
+    if (s == "flui" || s == "fl_ui" || s == "fl-ui" || s == "fl ui" || s == "fold" || s == "foldable" || s == "floating" || s == "duo") {
+        return {
+            "flUI",
+            "flui",
+            "aurora_indigo_fold",
+            "#c084fc",
+            "#ec4899",
+            120,
+            "Fold-Aware Dynamic Multi-Window 120Hz",
+            "Dual-Screen Deck / Floating Cards Responsive"
+        };
+    }
+
+    // 3. Shine UI (Flagship Handheld Console) default
+    return {
+        "Shine UI",
+        "shine_ui",
+        "frosted_aqua_a17",
+        "#00f5d4",
+        "#0284c7",
+        60,
+        "Shine APU Direct V-Sync 60Hz",
+        "Handheld Console Grid & 3D Carousel"
+    };
+}
+
 class Interpreter {
 public:
     std::unordered_map<std::string, Value> variables;
@@ -40,13 +98,24 @@ public:
     std::string app_name = "HoloApp";
     std::string app_version = "2.5.0";
     std::string target_platform = "Shine Loop Console (Holo Looping OoS)";
-    std::string ui_profile = "stock";
+    std::string ui_profile = "xui";
     std::string theme = "frosted_aqua_a17";
+    UIProfileSpecs active_ui_specs = resolve_ui_profile("xui");
     PythonBridge python_bridge;
 
     bool has_returned = false;
     bool has_broken = false;
     Value last_return_value;
+
+    void set_target_ui(const std::string& target_name) {
+        active_ui_specs = resolve_ui_profile(target_name);
+        ui_profile = active_ui_specs.code;
+        theme = active_ui_specs.theme;
+        variables["UI_PROFILE"] = Value(active_ui_specs.code);
+        variables["UI_NAME"] = Value(active_ui_specs.name);
+        variables["UI_THEME"] = Value(active_ui_specs.theme);
+        variables["UI_FPS"] = Value(static_cast<int64_t>(active_ui_specs.target_fps));
+    }
 
     Value execute_runpy(const std::vector<std::shared_ptr<Expr>>& args) {
         if (args.empty()) {
@@ -597,14 +666,26 @@ public:
             return;
         }
 
-        // 14. Theme & Config
+        // 14. Target UI Compilation: compile target "shine_ui" / target("xui") / profile("flui")
+        if (auto tgt = std::dynamic_pointer_cast<TargetCompileStmt>(stmt)) {
+            set_target_ui(tgt->target_ui);
+            std::cout << color::CYAN << "[UI COMPILER]" << color::RESET << " Target UI Profile: "
+                      << color::BOLD << color::GREEN << active_ui_specs.name << color::RESET
+                      << " [" << active_ui_specs.pipeline << "]\n";
+            std::cout << color::BLUE << "[UI SHADER]" << color::RESET << " Theme: "
+                      << active_ui_specs.theme << " | Primary: " << active_ui_specs.primary_color
+                      << " | Layout: " << active_ui_specs.layout_mode << "\n";
+            return;
+        }
+
+        // 14b. Theme & Config
         if (auto cfg = std::dynamic_pointer_cast<ConfigStmt>(stmt)) {
             if (cfg->key == "theme") {
                 theme = cfg->value;
-            } else if (cfg->key == "ui_profile") {
-                ui_profile = cfg->value;
+            } else if (cfg->key == "ui_profile" || cfg->key == "target") {
+                set_target_ui(cfg->value);
                 std::cout << color::CYAN << "[CS DESIGN UI]" << color::RESET << " UI Profile Active: " 
-                          << color::BOLD << ui_profile << color::RESET << " (Hardware Spec Loaded)\n";
+                          << color::BOLD << active_ui_specs.name << color::RESET << " (" << active_ui_specs.pipeline << ")\n";
             }
             return;
         }
@@ -717,6 +798,100 @@ public:
         double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
         std::cout << "\n" << color::GREEN << "[OK] Execution completed in " 
                   << std::fixed << std::setprecision(2) << elapsed << "ms!" << color::RESET << "\n";
+
+        return true;
+    }
+
+    // ── Compile Script for Target UI (Shine UI / XUI / flUI) ──
+    bool compile_script_to_target(const std::string& input_path, const std::string& target_name, const std::string& output_path) {
+        std::ifstream file(input_path);
+        if (!file.is_open()) {
+            std::cerr << color::RED << "❌ Error: Cannot open input file: " << input_path << color::RESET << "\n";
+            return false;
+        }
+
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        std::string source_code = buffer.str();
+
+        UIProfileSpecs specs = resolve_ui_profile(target_name);
+
+        std::cout << "\n" << color::BOLD << color::PURPLE << "══════════════════════════════════════════════════════════════════════" << color::RESET << "\n";
+        std::cout << color::BOLD << color::CYAN << "[LOOPING COMPILER]" << color::RESET << " Compiling for Target UI: " 
+                  << color::BOLD << color::GREEN << specs.name << color::RESET << " (" << specs.code << ")\n";
+        std::cout << color::BOLD << "Hardware Target:   " << color::RESET << target_platform << "\n";
+        std::cout << color::BOLD << "Refresh Pipeline:  " << color::RESET << specs.pipeline << " (" << specs.target_fps << " FPS)\n";
+        std::cout << color::BOLD << "UI Architecture:   " << color::RESET << specs.layout_mode << "\n";
+        std::cout << color::BOLD << "Glassmorphism FX:  " << color::RESET << specs.theme << " (" << specs.primary_color << " / " << specs.accent_color << ")\n";
+        std::cout << color::PURPLE << "══════════════════════════════════════════════════════════════════════" << color::RESET << "\n\n";
+
+        // Parse and verify AST
+        Parser parser(source_code);
+        auto statements = parser.parse_script();
+        std::cout << color::BLUE << "[AST VERIFIER]" << color::RESET << " Analyzed " 
+                  << statements.size() << " syntax nodes successfully.\n";
+
+        // Determine output path
+        std::string out_file = output_path;
+        if (out_file.empty()) {
+            std::string base_name = input_path;
+            size_t slash = base_name.find_last_of("/\\");
+            if (slash != std::string::npos) base_name = base_name.substr(slash + 1);
+            size_t dot = base_name.find_last_of('.');
+            if (dot != std::string::npos) base_name = base_name.substr(0, dot);
+            out_file = "build/" + base_name + "_" + specs.code;
+        }
+
+        // Ensure parent directory exists
+        size_t slash = out_file.find_last_of("/\\");
+        if (slash != std::string::npos) {
+            std::string dir = out_file.substr(0, slash);
+            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
+            system(mkdir_cmd.c_str());
+        }
+
+        std::ofstream out(out_file);
+        if (!out.is_open()) {
+            std::cerr << color::RED << "❌ Error: Cannot write compiled target to: " << out_file << color::RESET << "\n";
+            return false;
+        }
+
+        out << "#!/usr/bin/env looping\n";
+        out << "# ═══════════════════════════════════════════════════════════════\n";
+        out << "# 🚀 COMPILED LOOPING TARGET ARTIFACT — " << specs.name << "\n";
+        out << "# System UI: " << specs.name << " [" << specs.code << "]\n";
+        out << "# Hardware Refresh: " << specs.pipeline << " (" << specs.target_fps << " FPS)\n";
+        out << "# Layout Mode: " << specs.layout_mode << "\n";
+        out << "# Shader Palette: " << specs.theme << " (" << specs.primary_color << ")\n";
+        out << "# Compiled by Looping Engine v" << app_version << " (Holo Entertainment / Coki Studios)\n";
+        out << "# ═══════════════════════════════════════════════════════════════\n\n";
+        out << "compile target \"" << specs.code << "\"\n";
+        out << "set ui_profile to \"" << specs.code << "\"\n";
+        out << "set theme to \"" << specs.theme << "\"\n\n";
+
+        // Filter source code to comment out conflicting target/profile definitions
+        std::stringstream in_stream(source_code);
+        std::string cur_line;
+        while (std::getline(in_stream, cur_line)) {
+            std::string trimmed = cur_line;
+            while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) trimmed.erase(0, 1);
+            if (trimmed.rfind("compile target ", 0) == 0 || trimmed.rfind("compile for ", 0) == 0 ||
+                trimmed.rfind("target(", 0) == 0 || trimmed.rfind("@target(", 0) == 0 ||
+                trimmed.rfind("profile(", 0) == 0 || trimmed.rfind("@profile(", 0) == 0 ||
+                trimmed.rfind("set ui_profile to", 0) == 0 || trimmed.rfind("set ui to", 0) == 0 ||
+                trimmed.rfind("set theme to", 0) == 0) {
+                out << "    # [Compiled Target Override]: " << trimmed << "\n";
+            } else {
+                out << cur_line << "\n";
+            }
+        }
+        out.close();
+
+        std::string chmod_cmd = "chmod +x \"" + out_file + "\"";
+        system(chmod_cmd.c_str());
+
+        std::cout << color::GREEN << "✔ [SUCCESS]" << color::RESET << " Compiled target binary artifact written to: " 
+                  << color::BOLD << out_file << color::RESET << "\n\n";
 
         return true;
     }

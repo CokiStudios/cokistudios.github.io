@@ -15,7 +15,7 @@ use python "time"
 define app "ShineLauncherRuup" version 2.1:
     create window with title "Shine Loop OS: System Launcher (Ruuping Native)" and size (800, 520)
     set theme to "frosted_aqua_a17"
-    set ui_profile to "xui"
+    target("shine_ui")
     
     set system_name to "Shine Loop Handheld Console"
     set kernel_ver to "Holo Looping OoS 1.0 (Rust Core Edition)"

@@ -90,6 +90,10 @@ int run_tests() {
         assert_test("PyLoop Snippets (insert pysnippet & runpy)", vm.variables["py_out_val"].as_int() == 777);
     }
 
+    // Test 12: Target UI Compilation (Shine UI / XUI / flUI)
+    vm.execute_code("compile target \"xui\"\ncompile target \"shine_ui\"\ncompile target \"flui\"");
+    assert_test("Target UI Profiles (Shine UI, XUI, flUI)", vm.ui_profile == "flui" && vm.active_ui_specs.name == "flUI");
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 
@@ -136,7 +140,40 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // Execute script file
-    bool success = vm.execute_file(first_arg);
+    // Compile command: looping compile <script.loop> [--target <shine_ui|xui|flui>] [--output <out>]
+    if (first_arg == "compile" || first_arg == "build") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'compile' requires a source script file." << color::RESET << "\n";
+            std::cerr << "Usage: " << argv[0] << " compile <file.loop> [--target <shine_ui|xui|flui>] [--output <out>]\n";
+            return 1;
+        }
+
+        std::string script_path = argv[2];
+        std::string target_ui = "shine_ui";
+        std::string out_path = "";
+
+        for (int i = 3; i < argc; ++i) {
+            std::string arg = argv[i];
+            if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
+                target_ui = argv[++i];
+            } else if ((arg == "--output" || arg == "-o") && i + 1 < argc) {
+                out_path = argv[++i];
+            }
+        }
+
+        bool success = vm.compile_script_to_target(script_path, target_ui, out_path);
+        return success ? 0 : 1;
+    }
+
+    // Execute script file with optional --target flag
+    std::string script_path = first_arg;
+    for (int i = 2; i < argc; ++i) {
+        std::string arg = argv[i];
+        if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
+            vm.set_target_ui(argv[++i]);
+        }
+    }
+
+    bool success = vm.execute_file(script_path);
     return success ? 0 : 1;
 }

@@ -44,6 +44,7 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
     @Published public var totalStorageGb: Double = 512.0
     @Published public var currentTimeString: String = "18:55"
     @Published public var performanceProfile: PerformanceProfile = .turbo
+    @Published public var targetUIProfile: TargetUIProfile = .shineUI
 
     // Settings Drawer & Customization
     @Published public var isSettingsDrawerOpen: Bool = false
@@ -97,6 +98,15 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
         self.batteryLevel = loopEngine.batteryLevel
         self.bubblyDotTitle = "\(loopEngine.appName) // \(loopEngine.systemName)"
         self.bubblyDotSubtext = "Kernel: \(loopEngine.kernelVersion) • \(loopEngine.runtimeEngine)"
+
+        let p = loopEngine.uiProfile.lowercased()
+        if p.contains("xui") {
+            self.targetUIProfile = .xui
+        } else if p.contains("flui") {
+            self.targetUIProfile = .flUI
+        } else {
+            self.targetUIProfile = .shineUI
+        }
 
         // Map parsed cards from .loop into interactive app items
         var apps: [AppItem] = []
@@ -325,6 +335,14 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
         bubblyDotTitle = app.title
         bubblyDotSubtext = "\(app.badgeText) • \(app.subtitle)"
         bubblyDotIcon = app.iconSymbol
+    }
+
+    // MARK: - Target UI Profile Selection
+    public func setTargetUIProfile(_ profile: TargetUIProfile) {
+        self.targetUIProfile = profile
+        self.loopEngine.uiProfile = profile.rawValue
+        self.loopEngine.theme = profile.themeName
+        SoundSynthesizer.shared.playActionBlip()
     }
 
     // MARK: - Launching Apps & Execution
