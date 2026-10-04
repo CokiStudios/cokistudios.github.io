@@ -1,0 +1,5 @@
+from pyloop import snippets runpy
+define app "Test" version 1.0
+      insert pysnippet as sn1:
+         print("Hello World!")
+      runpy(sn1)

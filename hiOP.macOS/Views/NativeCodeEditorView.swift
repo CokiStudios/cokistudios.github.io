@@ -141,7 +141,7 @@ struct CodeTextViewRepresentable: NSViewRepresentable {
             highlightPattern(in: storage, text: code, pattern: "\\b\\d+(\\.\\d+)?(ms|Hz|fps)?\\b", color: NSColor(red: 0.75, green: 0.52, blue: 1.0, alpha: 1.0))
 
             // 3. Looping Keywords
-            let keywords = "\\b(define app|create window|set|let|mut|val|fn|import|use python|draw card|draw button|spawn sprite|spawn platform|spawn coin|play tone|syscall|repeat|loop|if|then|print|echo|as|at|size|with|title|text|action|version)\\b"
+            let keywords = "\\b(define app|create window|set|let|mut|val|fn|import|from|pyloop|snippets|insert|pysnippet|runpy|use python|draw card|draw button|spawn sprite|spawn platform|spawn coin|play tone|syscall|repeat|loop|if|then|print|echo|as|at|size|with|title|text|action|version)\\b"
             highlightPattern(in: storage, text: code, pattern: keywords, color: NSColor(red: 0.22, green: 0.74, blue: 0.97, alpha: 1.0), bold: true)
 
             // 4. Operators and Pipelines (->, |>, :=, ++)

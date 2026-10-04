@@ -63,10 +63,11 @@ public:
         size_t line_idx = 0;
 
         while (line_idx < lines.size()) {
-            std::string line = trim(lines[line_idx]);
+            std::string raw_line = lines[line_idx];
+            std::string line = trim(raw_line);
             line_idx++;
 
-            if (line.empty() || line.rfind("#", 0) == 0 || line.rfind("//", 0) == 0) {
+            if (line.empty() || line.rfind("#", 0) == 0 || line.rfind("//", 0) == 0 || line == "}" || line == "end") {
                 continue;
             }
 
@@ -88,6 +89,111 @@ public:
                     }
                 }
                 statements.push_back(std::make_shared<PythonBlockStmt>(join_lines(dedent(py_lines))));
+                continue;
+            }
+
+            // 1b. Python snippet definition: insert pysnippet as <name>: ... OR insert snippet as <name>: ...
+            std::regex snip_inline_r(R"(^(?:insert\s+)?(?:py(?:thon)?snippet|snippet|python)\s+(?:as\s+)?([A-Za-z0-9_]+)\s*:\s*(.+)$)");
+            std::smatch snip_in_m;
+            if (std::regex_search(line, snip_in_m, snip_inline_r)) {
+                std::string snip_name = snip_in_m[1];
+                std::string snip_code = snip_in_m[2];
+                statements.push_back(std::make_shared<PySnippetDefStmt>(snip_name, snip_code));
+                continue;
+            }
+
+            std::regex snip_r(R"(^(?:insert\s+)?(?:py(?:thon)?snippet|snippet)\s+(?:as\s+)?([A-Za-z0-9_]+)\s*(?:\{|:)?$)");
+            std::smatch snip_m;
+            if (std::regex_search(line, snip_m, snip_r)) {
+                std::string snip_name = snip_m[1];
+
+                // Single-line brace: insert pysnippet as sn1 { print("hi") }
+                if (line.find('{') != std::string::npos && line.back() == '}' && line.find('{') < line.rfind('}')) {
+                    size_t b_start = line.find('{');
+                    size_t b_end = line.rfind('}');
+                    std::string inner = line.substr(b_start + 1, b_end - b_start - 1);
+                    statements.push_back(std::make_shared<PySnippetDefStmt>(snip_name, inner));
+                    continue;
+                }
+
+                // Multi-line brace: insert pysnippet as sn1 { ... }
+                if (line.find('{') != std::string::npos) {
+                    std::vector<std::string> py_lines;
+                    while (line_idx < lines.size()) {
+                        std::string next_raw = lines[line_idx++];
+                        std::string next_t = trim(next_raw);
+                        if (next_t == "}" || next_t == "end") break;
+                        py_lines.push_back(next_raw);
+                    }
+                    statements.push_back(std::make_shared<PySnippetDefStmt>(snip_name, join_lines(dedent(py_lines))));
+                    continue;
+                }
+
+                // Indented or colon block (e.g. insert pysnippet as sn1:)
+                size_t base_indent = raw_line.find_first_not_of(" \t");
+                if (base_indent == std::string::npos) base_indent = 0;
+
+                std::vector<std::string> py_lines;
+                while (line_idx < lines.size()) {
+                    std::string next_raw = lines[line_idx];
+                    std::string next_t = trim(next_raw);
+
+                    if (next_t.empty()) {
+                        bool has_more = false;
+                        for (size_t p = line_idx + 1; p < lines.size(); ++p) {
+                            std::string pt = trim(lines[p]);
+                            if (pt.empty()) continue;
+                            size_t p_indent = lines[p].find_first_not_of(" \t");
+                            if (p_indent > base_indent && pt != "end" && pt != "}") {
+                                has_more = true;
+                            }
+                            break;
+                        }
+                        if (has_more) {
+                            py_lines.push_back("");
+                            line_idx++;
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if (next_t == "end" || next_t == "}") {
+                        line_idx++;
+                        break;
+                    }
+
+                    size_t next_indent = next_raw.find_first_not_of(" \t");
+                    if (next_indent > base_indent) {
+                        py_lines.push_back(next_raw);
+                        line_idx++;
+                    } else {
+                        if (py_lines.empty()) {
+                            bool has_end = false;
+                            for (size_t p = line_idx; p < lines.size(); ++p) {
+                                if (trim(lines[p]) == "end" || trim(lines[p]) == "}") {
+                                    has_end = true;
+                                    break;
+                                }
+                            }
+                            if (has_end) {
+                                while (line_idx < lines.size()) {
+                                    std::string nr = lines[line_idx++];
+                                    if (trim(nr) == "end" || trim(nr) == "}") break;
+                                    py_lines.push_back(nr);
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                while (!py_lines.empty() && trim(py_lines.back()).empty()) {
+                    py_lines.pop_back();
+                }
+
+                statements.push_back(std::make_shared<PySnippetDefStmt>(snip_name, join_lines(dedent(py_lines))));
                 continue;
             }
 
@@ -295,7 +401,33 @@ public:
             return std::make_shared<ReturnStmt>(parse_single_expr(trim(s.substr(3))));
         }
 
-        // 3. Python module import: use python "math" OR import python "math"
+        // 3. From-import: from <mod> import <symbols...>
+        // e.g. from pyloop import snippets runpy OR from pyloop import snippets, runpy
+        if (s.rfind("from ", 0) == 0) {
+            auto imp_pos = s.find(" import ");
+            if (imp_pos != std::string::npos) {
+                std::string mod = trim(s.substr(5, imp_pos - 5));
+                std::string items_str = trim(s.substr(imp_pos + 8));
+                std::vector<std::string> symbols;
+                std::string curr = "";
+                for (char c : items_str) {
+                    if (c == ',' || std::isspace(static_cast<unsigned char>(c))) {
+                        if (!curr.empty()) {
+                            symbols.push_back(curr);
+                            curr = "";
+                        }
+                    } else {
+                        curr += c;
+                    }
+                }
+                if (!curr.empty()) symbols.push_back(curr);
+
+                bool is_py = (mod == "pyloop" || mod.rfind("py.", 0) == 0 || mod.rfind("python.", 0) == 0);
+                return std::make_shared<ImportStmt>(mod, "", is_py, symbols);
+            }
+        }
+
+        // 3b. Python module import: use python "math" OR import python "math"
         if (s.rfind("use python ", 0) == 0 || s.rfind("import python ", 0) == 0) {
             std::string mod = s.substr(s.rfind("python ", 0) == 0 ? 7 : (s.find("python ") + 7));
             mod = trim_quotes(trim(mod));
@@ -640,7 +772,75 @@ public:
             return sp;
         }
 
-        // 20. Spawn Bubbly Dot: spawn.bubbly(...) / @spawn::bubbly(...) / spawn bubbly_dot ...
+        // 20. Spawn Spike / Hazard Directives: spawn.spike(...) / spawn spike ... / spawn hazard ...
+        if (s.rfind("spawn.spike(", 0) == 0 || s.rfind("@spawn::spike(", 0) == 0 || 
+            s.rfind("spawn spike", 0) == 0 || s.rfind("spawn hazard", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "spike";
+            if (s.find('(') != std::string::npos && s.rfind("spawn spike", 0) != 0 && s.rfind("spawn hazard", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at");
+                auto sz = args.get_pair("size", {32, 32});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->color = args.get("color", "#ef4444");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 32; sp->h = 32; }
+                if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#ef4444";
+            }
+            return sp;
+        }
+
+        // 21. Spawn Jump Pad / Boost: spawn.pad(...) / spawn jump_pad ... / spawn pad ...
+        if (s.rfind("spawn.pad(", 0) == 0 || s.rfind("spawn jump_pad", 0) == 0 || s.rfind("spawn pad", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "jump_pad";
+            if (s.find('(') != std::string::npos && s.rfind("spawn jump_pad", 0) != 0 && s.rfind("spawn pad", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at");
+                auto sz = args.get_pair("size", {40, 12});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->color = args.get("color", "#fbbf24");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 40; sp->h = 12; }
+                if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#fbbf24";
+            }
+            return sp;
+        }
+
+        // 22. Spawn Jump Ring / Orb: spawn.orb(...) / spawn orb ...
+        if (s.rfind("spawn.orb(", 0) == 0 || s.rfind("spawn orb", 0) == 0 || s.rfind("spawn jump_ring", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "orb";
+            if (s.find('(') != std::string::npos && s.rfind("spawn orb", 0) != 0 && s.rfind("spawn jump_ring", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at");
+                sp->x = at.first; sp->y = at.second;
+                sp->w = 28; sp->h = 28;
+                sp->color = args.get("color", "#f59e0b");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                sp->w = 28; sp->h = 28;
+                if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#f59e0b";
+            }
+            return sp;
+        }
+
+        // 23. Spawn Bubbly Dot: spawn.bubbly(...) / @spawn::bubbly(...) / spawn bubbly_dot ...
         if (s.rfind("spawn.bubbly(", 0) == 0 || s.rfind("@spawn::bubbly(", 0) == 0 || s.rfind("spawn bubbly_dot", 0) == 0) {
             auto sp = std::make_shared<SpawnEntityStmt>();
             sp->entity_type = "bubbly_dot";
@@ -736,6 +936,12 @@ public:
                 }
             }
             return std::make_shared<CallStmt>(fn_name, args);
+        }
+
+        // 24b. runpy shorthand statement: runpy sn1 OR runpy "sn1"
+        if (s.rfind("runpy ", 0) == 0) {
+            std::string arg = trim(s.substr(6));
+            return std::make_shared<CallStmt>("runpy", std::vector<std::shared_ptr<Expr>>{parse_single_expr(arg)});
         }
 
         // 25. Syscall & Process

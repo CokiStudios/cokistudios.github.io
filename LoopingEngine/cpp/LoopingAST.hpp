@@ -184,14 +184,24 @@ public:
     PythonBlockStmt(const std::string& code) : py_code(code) {}
 };
 
-// Import: import loop.ui as ui / use python "math"
+// Python Snippet Definition: insert pysnippet as <name>: ...
+class PySnippetDefStmt : public Stmt {
+public:
+    std::string snippet_name;
+    std::string py_code;
+    PySnippetDefStmt(const std::string& name, const std::string& code)
+        : snippet_name(name), py_code(code) {}
+};
+
+// Import: import loop.ui as ui / use python "math" / from pyloop import snippets runpy
 class ImportStmt : public Stmt {
 public:
     std::string module_name;
     std::string alias;
     bool is_python;
-    ImportStmt(const std::string& mod, const std::string& al = "", bool py = false)
-        : module_name(mod), alias(al), is_python(py) {}
+    std::vector<std::string> symbols;
+    ImportStmt(const std::string& mod, const std::string& al = "", bool py = false, const std::vector<std::string>& syms = {})
+        : module_name(mod), alias(al), is_python(py), symbols(syms) {}
 };
 
 // App Definition: define app "Name" version 1.0

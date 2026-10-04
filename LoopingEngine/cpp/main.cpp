@@ -79,6 +79,17 @@ int run_tests() {
     vm.execute_code("ui.card(at: (10, 20), size: (200, 100), title: \"Test Card\")\nspawn.sprite(\"Hero\", at: (50, 50), color: \"#38bdf8\")\naudio.tone(587, 80)");
     assert_test("Modern Directives (ui.card, spawn.sprite, audio.tone)", true);
 
+    // Test 11: PyLoop Snippets & runpy
+    if (vm.python_bridge.is_available) {
+        vm.execute_code(
+            "from pyloop import snippets runpy\n"
+            "insert pysnippet as t_sn1:\n"
+            "    looping_set('py_out_val', 777)\n"
+            "runpy(t_sn1)\n"
+        );
+        assert_test("PyLoop Snippets (insert pysnippet & runpy)", vm.variables["py_out_val"].as_int() == 777);
+    }
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 

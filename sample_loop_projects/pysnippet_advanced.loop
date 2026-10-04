@@ -1,0 +1,22 @@
+from pyloop import snippets, runpy
+define app "PyLoopAdvanced" version 2.5:
+
+    # 1. Snippet con variables de Looping y cálculo multilínea
+    set factor = 12
+    set name = "Angel"
+
+    insert pysnippet as calc_xp:
+        base = looping_vars.get("factor", 1)
+        player = looping_vars.get("name", "Unknown")
+        total = base * 150 + 50
+        print(f"  [Python Kernel] Player {player} -> Computed Total: {total} XP")
+        looping_set("calculated_xp", total)
+
+    runpy(calc_xp)
+    print "XP recibido en Looping:", calculated_xp
+
+    # 2. Snippet sin paréntesis (shorthand)
+    insert pysnippet as greet:
+        print("Hola desde snippet con sintaxis shorthand!")
+
+    runpy greet

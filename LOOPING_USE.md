@@ -145,7 +145,38 @@ $"[PIPELINE] Raíz calculada: {sqrt_val}" |> out;
 
 ---
 
-## 8. Puente con Python (`py!(...)` y `py! { ... }`)
+## 8. Puente con Python (`pyloop`, `pysnippet`, `runpy`, `py!`)
+
+### PyLoop Snippets & Ejecución (`from pyloop import snippets runpy`)
+Permite importar el subsistema `pyloop` y capturar fragmentos de código Python puros como snippets nombrados para ejecutarlos dinámicamente con `runpy`:
+
+```loop
+from pyloop import snippets runpy
+define app "Test" version 1.0
+      insert pysnippet as sn1:
+         print("Hello World!")
+      runpy(sn1)
+```
+
+**Salida en consola:**
+```text
+[FUNC RUNPY] Executing sn1...
+Hello World!
+```
+
+Los snippets pueden contener múltiples líneas, funciones, bibliotecas de Python, y acceden bidireccionalmente a las variables de Looping mediante `looping_vars` y `looping_set(clave, valor)`:
+```loop
+from pyloop import snippets, runpy
+
+set factor = 10
+insert pysnippet as calc_score:
+    base = looping_vars.get("factor", 1)
+    result = base * 25 + 100
+    looping_set("calculated_score", result)
+
+runpy(calc_score)
+print "Score recibido:", calculated_score
+```
 
 ### Macro en línea (`py!`)
 ```loop

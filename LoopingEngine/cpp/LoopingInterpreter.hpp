@@ -34,6 +34,7 @@ class Interpreter {
 public:
     std::unordered_map<std::string, Value> variables;
     std::unordered_map<std::string, std::shared_ptr<FunctionDefStmt>> functions;
+    std::unordered_map<std::string, std::string> python_snippets;
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
@@ -46,6 +47,53 @@ public:
     bool has_returned = false;
     bool has_broken = false;
     Value last_return_value;
+
+    Value execute_runpy(const std::vector<std::shared_ptr<Expr>>& args) {
+        if (args.empty()) {
+            std::cerr << color::RED << "[ERROR]" << color::RESET << " runpy expects a snippet name or expression\n";
+            return Value();
+        }
+
+        std::string snippet_name = "snippet";
+        std::string py_code = "";
+
+        if (auto var = std::dynamic_pointer_cast<VariableExpr>(args[0])) {
+            snippet_name = var->name;
+            auto it = python_snippets.find(var->name);
+            if (it != python_snippets.end()) {
+                py_code = it->second;
+            } else {
+                Value v = eval(args[0]);
+                if (v.type != ValueType::Nil) {
+                    py_code = v.as_string();
+                }
+            }
+        } else {
+            Value v = eval(args[0]);
+            std::string s = v.as_string();
+            auto it = python_snippets.find(s);
+            if (it != python_snippets.end()) {
+                snippet_name = s;
+                py_code = it->second;
+            } else {
+                py_code = s;
+            }
+        }
+
+        std::cout << color::CYAN << "[FUNC RUNPY]" << color::RESET << " Executing " << snippet_name << "...\n";
+
+        if (py_code.empty()) {
+            std::cerr << color::YELLOW << "[WARNING]" << color::RESET << " Snippet \"" << snippet_name << "\" is empty or undefined.\n";
+            return Value();
+        }
+
+        std::string out = python_bridge.execute_block(py_code, variables);
+        if (!out.empty()) {
+            std::cout << out << "\n";
+        }
+
+        return Value(out);
+    }
 
     Interpreter() {
         init_builtins();
@@ -204,6 +252,11 @@ public:
             std::vector<Value> evaluated_args;
             for (const auto& a : call->args) {
                 evaluated_args.push_back(eval(a));
+            }
+
+            // pyloop runpy
+            if (name == "runpy") {
+                return execute_runpy(call->args);
             }
 
             // Builtin Math Functions
@@ -456,6 +509,11 @@ public:
 
         // 9. Function Call Statement: name(...) OR call name(...)
         if (auto call = std::dynamic_pointer_cast<CallStmt>(stmt)) {
+            if (call->name == "runpy") {
+                execute_runpy(call->args);
+                return;
+            }
+
             auto it = functions.find(call->name);
             if (it != functions.end()) {
                 auto fn = it->second;
@@ -498,8 +556,20 @@ public:
             return;
         }
 
+        // 10b. Python Snippet Definition: insert pysnippet as <name>: ...
+        if (auto sn = std::dynamic_pointer_cast<PySnippetDefStmt>(stmt)) {
+            python_snippets[sn->snippet_name] = sn->py_code;
+            variables[sn->snippet_name] = Value(sn->py_code);
+            return;
+        }
+
         // 11. Import
         if (auto imp = std::dynamic_pointer_cast<ImportStmt>(stmt)) {
+            if (imp->module_name == "pyloop") {
+                imported_modules.insert("pyloop");
+                imported_python_modules.insert("pyloop");
+                return;
+            }
             if (imp->is_python) {
                 imported_python_modules.insert(imp->module_name);
                 std::cout << color::GREEN << "[PYTHON BRIDGE]" << color::RESET << " Linked Python Module: " 
@@ -559,6 +629,15 @@ public:
             } else if (sp->entity_type == "sprite") {
                 std::cout << color::PURPLE << "[ENTITY]" << color::RESET << " Spawned \"" << sp->name 
                           << "\" (Physics 60Hz Low-Latency)\n";
+            } else if (sp->entity_type == "spike" || sp->entity_type == "hazard") {
+                std::cout << color::RED << "[HAZARD]" << color::RESET << " Armed Spike at (" 
+                          << sp->x << ", " << sp->y << ")\n";
+            } else if (sp->entity_type == "jump_pad" || sp->entity_type == "pad") {
+                std::cout << color::YELLOW << "[BOOST]" << color::RESET << " Placed Jump Pad at (" 
+                          << sp->x << ", " << sp->y << ")\n";
+            } else if (sp->entity_type == "orb") {
+                std::cout << color::PURPLE << "[ORB]" << color::RESET << " Placed Jump Ring at (" 
+                          << sp->x << ", " << sp->y << ")\n";
             } else {
                 std::cout << color::CYAN << "[WORLD]" << color::RESET << " Placed " << sp->entity_type 
                           << " Stage Component\n";
