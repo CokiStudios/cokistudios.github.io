@@ -10,22 +10,22 @@
       "iconPath": "./ruup-file-icon.svg"
     }
   },
-  "file": "_loop_file",
   "fileExtensions": {
     "loop": "_loop_file",
     "ruup": "_ruup_file"
   },
   "languageIds": {
-    "looping": "_loop_file"
+    "looping": "_loop_file",
+    "ruuping": "_ruup_file"
   },
   "light": {
-    "file": "_loop_file_light",
     "fileExtensions": {
       "loop": "_loop_file_light",
       "ruup": "_ruup_file"
     },
     "languageIds": {
-      "looping": "_loop_file_light"
+      "looping": "_loop_file_light",
+      "ruuping": "_ruup_file"
     }
   }
 }
