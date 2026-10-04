@@ -1,0 +1,31 @@
+{
+  "iconDefinitions": {
+    "_loop_file": {
+      "iconPath": "./loop-file-icon.svg"
+    },
+    "_loop_file_light": {
+      "iconPath": "./loop-file-icon-light.svg"
+    },
+    "_ruup_file": {
+      "iconPath": "./ruup-file-icon.svg"
+    }
+  },
+  "file": "_loop_file",
+  "fileExtensions": {
+    "loop": "_loop_file",
+    "ruup": "_ruup_file"
+  },
+  "languageIds": {
+    "looping": "_loop_file"
+  },
+  "light": {
+    "file": "_loop_file_light",
+    "fileExtensions": {
+      "loop": "_loop_file_light",
+      "ruup": "_ruup_file"
+    },
+    "languageIds": {
+      "looping": "_loop_file_light"
+    }
+  }
+}

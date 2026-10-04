@@ -2,7 +2,7 @@
   "name": "looping-cs-core",
   "displayName": "L∞ping Compile — CS Proprietary Core",
   "description": "Official runtime, language server, live previewer, and compiler for Looping Compile (.loop) by Coki Studios",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "publisher": "cokistudios",
   "icon": "icon.png",
   "engines": {
@@ -18,9 +18,20 @@
     "languages": [
       {
         "id": "looping",
-        "aliases": ["Looping Compile", "looping", "loop"],
-        "extensions": [".loop"],
-        "configuration": "./language-configuration.json"
+        "aliases": ["Looping Compile", "looping", "loop", "ruuping", "ruup"],
+        "extensions": [".loop", ".ruup"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/loop-file-icon-light.svg",
+          "dark": "./icons/loop-file-icon.svg"
+        }
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "looping-file-icons",
+        "label": "L∞ping File Icons",
+        "path": "./icons/icon-theme.json"
       }
     ],
     "grammars": [

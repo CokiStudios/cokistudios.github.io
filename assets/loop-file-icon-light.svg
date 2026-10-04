@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Looping High-Contrast Gradient for Light Themes -->
+    <linearGradient id="loopLightGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="35%" stop-color="#2563eb" />
+      <stop offset="70%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+  </defs>
+
+  <!-- Top Beacon Dot (High-Contrast) -->
+  <circle cx="256" cy="95" r="28" fill="#0284c7" />
+
+  <!-- Pure Symmetric Infinity Lemniscate -->
+  <path d="M 256 275
+           C 310 205, 388 195, 428 235
+           C 470 275, 470 325, 428 365
+           C 388 405, 310 345, 256 275
+           C 202 205, 124 195, 84 235
+           C 42 275, 42 325, 84 365
+           C 124 405, 202 345, 256 275 Z"
+        fill="none"
+        stroke="url(#loopLightGrad)"
+        stroke-width="46"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
+
+  <!-- Core Center Spark Dot with crisp outline -->
+  <circle cx="256" cy="275" r="16" fill="#1e1b4b" />
+  <circle cx="256" cy="275" r="8" fill="#ffffff" />
+</svg>

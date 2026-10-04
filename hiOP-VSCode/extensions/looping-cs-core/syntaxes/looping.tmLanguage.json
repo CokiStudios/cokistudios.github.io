@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Looping Compile",
+  "fileTypes": ["loop", "ruup"],
   "patterns": [
     { "include": "#comments" },
     { "include": "#strings" },
