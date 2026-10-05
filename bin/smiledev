@@ -13,8 +13,8 @@ GLOBAL_MODULES_DIR="$CONFIG_DIR/modules"
 LOCAL_MODULES_DIR="$(pwd)/modules"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
-SUPABASE_URL="https://cmkumxprmmhuinxfppxl.supabase.co"
-SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
+SUPABASE_URL="https://ayxklxciqgqeyuzkziov.supabase.co"
+SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGtseGNpcWdxZXl1emt6aW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTY4MzIsImV4cCI6MjEwNjc5MjgzMn0.03wUc8blB-cNq9F8Nz5o88GShtMIXeHsNYqmeK_N-hI"
 
 # Colores y Estilos ANSI
 C_RESET="\033[0m"
