@@ -91,16 +91,28 @@ struct ContentView: View {
     }
     #else
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ObservedObject private var duoManager = ForkarDuoManager.shared
     
     var body: some View {
-        Group {
-            if horizontalSizeClass == .regular {
-                macOSSplitLayout
-            } else {
-                iOSTabLayout
+        GeometryReader { windowProxy in
+            Group {
+                if duoManager.currentPosture == .partiallyFolded {
+                    duoFoldedArrangementLayout
+                } else if horizontalSizeClass == .regular || duoManager.displayMode == .innerFoldingCanvas {
+                    macOSSplitLayout
+                } else {
+                    iOSTabLayout
+                }
+            }
+            .onAppear {
+                duoManager.updateMetrics(size: windowProxy.size, safeAreaInsets: windowProxy.safeAreaInsets)
+            }
+            .onChange(of: windowProxy.size) { newSize in
+                duoManager.updateMetrics(size: newSize, safeAreaInsets: windowProxy.safeAreaInsets)
             }
         }
         .environmentObject(authManager)
+        .environmentObject(duoManager)
         .tint(ForkarTheme.accent)
         .onAppear {
             if !hasCompletedSetupWizard {
@@ -116,6 +128,36 @@ struct ContentView: View {
         }
         .onReceive(QuickActionManager.shared.$actionType) { action in
             handleQuickAction(action)
+        }
+    }
+    
+    // MARK: - iPhone Duo Folded / Laptop Posture Layout (Apple developer.apple.com/iphone-duo)
+    private var duoFoldedArrangementLayout: some View {
+        ForkarDuoArrangementView(style: .split) {
+            ZStack {
+                ForkarTheme.bg.ignoresSafeArea()
+                
+                switch selectedItem ?? .home {
+                case .home:
+                    HomeView()
+                        .environmentObject(authManager)
+                case .eco:
+                    ForkarEcoView()
+                        .environmentObject(authManager)
+                case .chats:
+                    ChatsView()
+                        .environmentObject(authManager)
+                case .profile:
+                    ProfileView()
+                        .environmentObject(authManager)
+                }
+            }
+        } secondary: {
+            DuoControlDeckView(
+                selectedItem: $selectedItem,
+                selectedTab: $selectedTab,
+                authManager: authManager
+            )
         }
     }
     #endif

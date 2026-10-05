@@ -231,6 +231,20 @@ struct HomeView: View {
                             .foregroundColor(ForkarTheme.text)
                     }
                 }
+                
+                // Conforming to Apple developer.apple.com/iphone-duo: icon + title for vertical presentation
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        if authManager.isLoggedIn {
+                            showCreatePost = true
+                        } else {
+                            showLogin = true
+                        }
+                    }) {
+                        Label("Nuevo Post", systemImage: "square.and.pencil")
+                    }
+                    .foregroundColor(ForkarTheme.accent)
+                }
                 #else
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: {
@@ -240,11 +254,7 @@ struct HomeView: View {
                             showLogin = true
                         }
                     }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "square.and.pencil")
-                            Text("Nueva Publicación")
-                        }
-                        .font(.system(size: 12, weight: .semibold))
+                        Label("Nueva Publicación", systemImage: "square.and.pencil")
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(ForkarTheme.accent)

@@ -171,30 +171,22 @@ struct ChatsView: View {
             .toolbar {
                 if authManager.isLoggedIn && isFaceIDUnlocked {
                     #if os(iOS)
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(action: {
                             showCreateGroup = true
                         }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "plus")
-                                Text("Crear Grupo")
-                            }
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(ForkarTheme.accent)
+                            Label("Crear Grupo", systemImage: "plus.circle.fill")
                         }
+                        .foregroundColor(ForkarTheme.accent)
                     }
                     #else
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: {
                             showCreateGroup = true
                         }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "plus")
-                                Text("Crear Grupo")
-                            }
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(ForkarTheme.accent)
+                            Label("Crear Grupo", systemImage: "plus.circle.fill")
                         }
+                        .foregroundColor(ForkarTheme.accent)
                     }
                     #endif
                 }

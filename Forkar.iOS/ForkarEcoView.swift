@@ -223,6 +223,24 @@ struct ForkarEcoView: View {
                     .padding(.vertical)
                 }
             }
+            .navigationTitle("Eco Hub")
+            .toolbar {
+                #if os(iOS)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showQRScanner = true }) {
+                        Label("Escanear Eco QR", systemImage: "qrcode.viewfinder")
+                    }
+                    .foregroundColor(Color.emerald)
+                }
+                #else
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showQRScanner = true }) {
+                        Label("Escanear QR", systemImage: "qrcode.viewfinder")
+                    }
+                    .foregroundColor(Color.emerald)
+                }
+                #endif
+            }
             .sheet(isPresented: $showQRScanner) {
                 EcoQRScannerView { scannedCode in
                     handleScannedQR(scannedCode)
