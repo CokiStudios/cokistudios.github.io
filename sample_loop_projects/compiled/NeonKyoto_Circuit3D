@@ -1,0 +1,36 @@
+#!/usr/bin/env looping
+# ═══════════════════════════════════════════════════════════════
+# 🚀 COMPILED DYNAMIC LOOPING ARTIFACT — XUI
+# System UI: XUI [xui]
+# Hardware Refresh: Direct-to-Vulkan Ultra-Low Latency 240Hz (<0.2ms) (240 FPS)
+# Layout Mode: Pro Gamer Esports HUD (High-Refresh APU)
+# Shader Palette: cyber_neon_xui (#38bdf8)
+# Dynamic Looping Engine v2.5.0 (Coki Studios / Holo Entertainment)
+# ═══════════════════════════════════════════════════════════════
+
+compile target "xui"
+set ui_profile to "xui"
+set theme to "cyber_neon_xui"
+
+# ═══════════════════════════════════════════════════════════════
+# ⚡ DYNAMICALLY GENERATED LOOPING PROGRAM: NeonKyoto_Circuit3D
+# Target UI: xui | Version: 1.0
+# Created via Looping Dynamic Compiler Subsystem
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.system as sys
+import loop.engine as game
+
+define app "NeonKyoto_Circuit3D" version 1.0:
+    create window with title "Forkar Racing 3D -- Circuito Neon Kyoto" and size (800, 520)
+    # [Compiled Target Override]: target("xui")
+    # [Compiled Target Override]: set theme to "cyber_neon_xui"
+
+    draw card at (20, 20) with size (760, 75) and title "CIRCUITO NEON KYOTO // XUI 240HZ" and text "Pista urbana nocturna de alta velocidad con 14 curvas 3D y trazado de asfalto mojado reflexivo."
+    draw card at (20, 105) with size (370, 160) and title "🏎️ TELEMETRÍA DEL KART" and text "Velocidad: 323.5 km/h\nPiloto CSID: JeriX Ortiz\nChasis: Forkar Carbon-Fiber GT\nMotor: Dual-Electric 450 kW"
+    draw card at (410, 105) with size (370, 160) and title "⚡ REGENERACIÓN KERS" and text "Eco-Score: 985 Puntos\nFrenado Regenerativo: +92.4 Wh\nEficiencia Térmica: 99.2%\nEmisiones CO2: 0.0 g/km"
+    draw button at (35, 280) with text "INICIAR CARRERA 3D" and action "start_race"
+
+        val track_id = "kyoto_xui"
+        val target_hz = 240

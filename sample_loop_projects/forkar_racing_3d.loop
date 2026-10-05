@@ -1,0 +1,216 @@
+# ═══════════════════════════════════════════════════════════════
+# 🏎️ FORKAR RACING 3D — OFFICIAL CSID & LOOPING DEMO (.loop)
+# Holo Looping OoS 1.0 & Coki Studios Real-Time 3D Physics Core
+# Dynamic Program Compilation & Python PyLoop Bridge v2.5.0
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.engine as game
+import loop.system as sys
+from pyloop import snippets, runpy
+
+define app "ForkarRacing3D" version 2.5:
+    create window with title "Forkar Racing 3D -- CSID & Looping Dynamic Engine" and size (800, 520)
+    set theme to "cyber_neon_xui"
+    set ui_profile to "xui"
+    
+    set system_name to "Shine Loop Console / macOS Universal"
+    set kernel_ver to "Holo Looping OoS 1.0 (Direct-to-Vulkan 3D Core)"
+    set runtime_engine to "Looping C++ Native Engine v2.5.0 + Python 3.9 Bridge"
+    set battery_level to 100
+    
+    print "=========================================================="
+    print "🏎️  BOOTING FORKAR RACING 3D ENGINE v2.5.0"
+    print "    Architecture: 100% Looping with PyLoop Dynamic Bridge"
+    print "    Identity Subsystem: Coki Studios ID (CSID) Real-Time"
+    print "    Target Display: Direct-to-Vulkan 240Hz Ultra-Low Latency"
+    print "=========================================================="
+
+    # ── 1. CSID (Coki Studios ID) Autenticación y Telemetría del Piloto ──
+    set csid_player to "JeriX Ortiz Android"
+    set csid_email to "jerixortixdev@gmail.com"
+    set csid_tier to "Founder VIP • Eco-Master Driver"
+    set csid_vehicle to "Forkar CyberKart GT-3D (Dual-Motor E2EE)"
+    set csid_eco_score to 985
+    set csid_kers_wh to 240
+
+    insert pysnippet as csid_auth_bridge:
+        import json, os, hashlib, time
+        player = looping_vars.get("csid_player", "Piloto CS")
+        email = looping_vars.get("csid_email", "usuario@cokistudios.com")
+        tier = looping_vars.get("csid_tier", "Standard")
+        vehicle = looping_vars.get("csid_vehicle", "CyberKart GT")
+        
+        # Generar Token Criptográfico de Sesión CSID vinculado a Secure Enclave
+        token_seed = f"{email}:{player}:CSID_FORKAR_RACING_2026_TOKEN".encode()
+        csid_token = "CSID-" + hashlib.sha256(token_seed).hexdigest()[:16].upper()
+        
+        print(f"  [CSID AUTH] Sesión iniciada con éxito.")
+        print(f"  [CSID AUTH] Piloto: {player} <{email}>")
+        print(f"  [CSID AUTH] Rango: {tier} | Token de Carrera: {csid_token}")
+        print(f"  [CSID AUTH] Vehículo Registrado: {vehicle}")
+        
+        looping_set("csid_session_token", csid_token)
+        looping_set("auth_status", "CSID Verificado (Hardware-Backed E2EE)")
+
+    runpy(csid_auth_bridge)
+    print "✔ Autenticación completada:", auth_status
+    print "✔ Token de carrera asignado:", csid_session_token
+
+    # ── 2. Sonido de Arranque y Encendido del Motor ──
+    print "\n🔊 [AUDIO SYNTH] Inicializando síntesis de audio del motor..."
+    play tone at 220 Hz for 80 ms
+    play tone at 330 Hz for 90 ms
+    play tone at 440 Hz for 110 ms
+    play tone at 659 Hz for 140 ms
+
+    # ── 3. Motor de Físicas 3D y Generación de Pista en Python ──
+    insert pysnippet as physics_engine_3d:
+        import math, time
+        
+        # Parámetros del circuito
+        track_name = "Circuito Neón Kyoto 3D (Nocturno Cyberpunk)"
+        track_length_m = 4850
+        num_curves = 14
+        elevation_change_m = 42.5
+        
+        # Simulación de telemetría dinámica en carrera
+        base_speed_kmh = 248.5
+        nitro_boost_kmh = 75.0
+        total_speed_kmh = round(base_speed_kmh + nitro_boost_kmh, 1)
+        rpm = 14200
+        gear = 6
+        lateral_g = 2.85
+        drift_angle_deg = 24.2
+        kers_energy_regen_wh = round(15.4 * 6, 1)
+        
+        # Cálculo de tiempo de vuelta estimado con trazado 3D
+        lap_time_sec = round(track_length_m / (total_speed_kmh * 1000 / 3600), 2)
+        lap_min = int(lap_time_sec // 60)
+        lap_rem_sec = round(lap_time_sec % 60, 2)
+        formatted_lap = f"{lap_min}:{lap_rem_sec:05.2f}"
+        
+        print("\n" + "="*58)
+        print(f"🏎️  SIMULACIÓN DE TELEMETRÍA 3D // {track_name}")
+        print("="*58)
+        print(f"  • Velocidad Máxima Alcanzada: {total_speed_kmh} km/h (Nitro KERS Activo)")
+        print(f"  • Revoluciones Motor:        {rpm} RPM [Marcha: {gear}ª]")
+        print(f"  • Fuerzas G Laterales:       {lateral_g}G (Chasis Fibra de Carbono)")
+        print(f"  • Ángulo de Derrape:         {drift_angle_deg}° (Estabilidad Activa)")
+        print(f"  • Regeneración KERS:         +{kers_energy_regen_wh} Wh recuperados")
+        print(f"  • Récord de Vuelta 3D:       {formatted_lap}")
+        print("="*58)
+        
+        looping_set("track_name", track_name)
+        looping_set("max_speed", total_speed_kmh)
+        looping_set("current_rpm", rpm)
+        looping_set("current_gear", gear)
+        looping_set("best_lap", formatted_lap)
+        looping_set("telemetry_ready", True)
+
+    runpy(physics_engine_3d)
+
+    # ── 4. Renderizado en Tiempo Real de la Pista 3D (Pseudo-Raycasting ANSI) ──
+    insert pysnippet as render_3d_road_mesh:
+        import math
+        
+        # Renderizado de la perspectiva 3D del asfalto y horizonte cyberpunk
+        horizon = [
+            "  ☁️                       🌟  COKI STUDIOS RACING  🌟                     ☁️  ",
+            "    ░░▒▒▓▓██████████████████████████████████████████████████████████▓▓▒▒░░     ",
+            "   ▲▲▲  [NEON SKYLINE]   |  TELEMETRÍA CSID: ACTIVA  |   ▲▲▲▲ [CYBER TOWER]    ",
+            "  ───────────────────────────────────────────────────────────────────────────── "
+        ]
+        
+        road_lines = []
+        width_top = 8
+        width_bottom = 54
+        steps = 14
+        
+        for i in range(steps):
+            t = i / float(steps - 1)
+            cur_w = int(width_top + (width_bottom - width_top) * (t ** 1.8))
+            curve_offset = int(math.sin(t * math.pi) * 12)  # Curva parabólica a la derecha
+            margin_left = max(0, 36 - (cur_w // 2) + curve_offset)
+            
+            # Textura de bordillo (kerb) alternada
+            kerb_char = "▓" if (i % 2 == 0) else "░"
+            stripe = " " * cur_w
+            
+            # Línea central punteada con perspectiva
+            if cur_w > 12:
+                mid = cur_w // 2
+                dash = "║" if (i % 2 == 0) else " "
+                stripe = stripe[:mid] + dash + stripe[mid+1:]
+                
+            road_line = (" " * margin_left) + f"[{kerb_char}]" + stripe + f"[{kerb_char}]"
+            road_lines.append(road_line)
+            
+        car_ascii = [
+            "                                     ╭───[ 🏎️ ]───╮                                    ",
+            "                                   ╭─┴────────────┴─╮                                  ",
+            "                                  │ ⚡ FORKAR GT-3D │                                  ",
+            "                                  [🛞]───(💥NITRO)───[🛞]                                 "
+        ]
+        
+        hud = [
+            "┌─────────────────────────────────────────────────────────────────────────────┐",
+            f"│  PILOTO: JeriX Ortiz Android  │  VEL: 323.5 km/h  │  GEAR: 6  │  RPM: 14200 │",
+            f"│  CSID ECO: 985 Pts (Ahorro)  │  KERS: 100% ⚡     │  LAP: 1:10.15           │",
+            "└─────────────────────────────────────────────────────────────────────────────┘"
+        ]
+        
+        full_render = "\n".join(horizon + road_lines + car_ascii + hud)
+        print(full_render)
+        looping_set("render_completed", True)
+
+    runpy(render_3d_road_mesh)
+
+    # ── 5. Compilación Dinámica de Subprogramas / Circuitos en Tiempo Real ──
+    print "\n📦 [COMPILADOR DINÁMICO] Compilando circuitos autónomos de Forkar Racing..."
+
+    # Circuito 1: Neón Kyoto 3D (XUI Esports 240Hz)
+    compile program "NeonKyoto_Circuit3D" target "xui" to "sample_loop_projects/compiled/NeonKyoto_Circuit3D":
+        title "Forkar Racing 3D -- Circuito Neon Kyoto"
+        draw card at (20, 20) with size (760, 75) and title "CIRCUITO NEON KYOTO // XUI 240HZ" and text "Pista urbana nocturna de alta velocidad con 14 curvas 3D y trazado de asfalto mojado reflexivo."
+        draw card at (20, 105) with size (370, 160) and title "🏎️ TELEMETRÍA DEL KART" and text "Velocidad: 323.5 km/h\nPiloto CSID: JeriX Ortiz\nChasis: Forkar Carbon-Fiber GT\nMotor: Dual-Electric 450 kW"
+        draw card at (410, 105) with size (370, 160) and title "⚡ REGENERACIÓN KERS" and text "Eco-Score: 985 Puntos\nFrenado Regenerativo: +92.4 Wh\nEficiencia Térmica: 99.2%\nEmisiones CO2: 0.0 g/km"
+        draw button at (35, 280) with text "INICIAR CARRERA 3D" and action "start_race"
+        code:
+            val track_id = "kyoto_xui"
+            val target_hz = 240
+
+    print "✔ Circuito 1 compilado: sample_loop_projects/compiled/NeonKyoto_Circuit3D"
+
+    # Circuito 2: Eco Sprint Grand Prix (flUI Dynamic Multi-Window 120Hz)
+    compile program "EcoSprint_GrandPrix" target "flui" to "sample_loop_projects/compiled/EcoSprint_GrandPrix":
+        title "Forkar Racing 3D -- Eco Sprint Grand Prix"
+        draw card at (20, 20) with size (760, 75) and title "ECO SPRINT GRAND PRIX // flUI FOLD-AWARE" and text "Campeonato internacional de vehículos ecológicos con validación criptográfica en tiempo real."
+        draw card at (20, 105) with size (760, 170) and title "🏆 CLASIFICACIÓN CSID" and text "1. JeriX Ortiz Android (Forkar CyberKart GT) — 1:10.15 [RÉCORD]\n2. Coki Studios AI Bot #1 (Apex Predator)   — 1:11.42\n3. Holo Helium Pilot (Shine Speeder 3D)     — 1:12.80"
+        draw button at (35, 290) with text "CORRER GRAN PREMIO" and action "start_grand_prix"
+        code:
+            val track_id = "eco_sprint_flui"
+            val target_hz = 120
+
+    print "✔ Circuito 2 compilado: sample_loop_projects/compiled/EcoSprint_GrandPrix"
+
+    # ── 6. Interfaz GUI Oficial (Tarjetas de Control y Acciones) ──
+    draw card at (20, 18) with size (760, 60) and title "FORKAR RACING 3D // CSID & LOOPING GAMING CORE" and text "Piloto: JeriX Ortiz Android • Vehículo: CyberKart GT-3D • Token CSID: Activo • Físicas 3D: Vulkan 60 FPS"
+    
+    draw card at (20, 90) with size (240, 160) and title "🏎️ TELEMETRÍA 3D" and text "Velocidad: 323.5 km/h\nMarcha: 6ª [14,200 RPM]\nFuerza Lateral: 2.85 G\nDerrape: 24.2° Activo"
+    draw button at (35, 205) with text "ACTIVAR NITRO" and action "boost_nitro"
+
+    draw card at (280, 90) with size (240, 160) and title "⚡ ECO & KERS CSID" and text "Eco-Score: 985 Puntos\nKERS Batería: 100%\nEnergía Regen: +92.4 Wh\nEmisiones: Cero Netas"
+    draw button at (295, 205) with text "RECARGAR KERS" and action "regen_kers"
+
+    draw card at (540, 90) with size (240, 160) and title "📦 CIRCUITOS COMPILADOS" and text "1. Neon Kyoto 3D (XUI)\n2. Eco Sprint GP (flUI)\nCompilador: Dinámico C++\nEstado: Listos para Correr"
+    draw button at (555, 205) with text "CORRER KYOTO" and action "launch_circuit"
+
+    draw card at (20, 265) with size (760, 80) and title "PAD DE CONTROL DE CARRERA [TECLADO / GAMEPAD]" and text "🎮 [Acelerar: W / Flecha Arriba] • [Frenar/KERS: S / Flecha Abajo] • [Girar: A/D] • [Nitro Turbo: Espacio] • [Pausa: ESC]"
+
+    # ── 7. Chime Final de Carga Exitosa (Fanfarria Cyberpunk) ──
+    print "\n🎉 [SISTEMA] Forkar Racing 3D inicializado y listo para correr."
+    play tone at 523 Hz for 70 ms
+    play tone at 659 Hz for 80 ms
+    play tone at 784 Hz for 90 ms
+    play tone at 1046 Hz for 150 ms

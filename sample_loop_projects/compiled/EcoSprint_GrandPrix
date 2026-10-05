@@ -1,0 +1,35 @@
+#!/usr/bin/env looping
+# ═══════════════════════════════════════════════════════════════
+# 🚀 COMPILED DYNAMIC LOOPING ARTIFACT — flUI
+# System UI: flUI [flui]
+# Hardware Refresh: Fold-Aware Dynamic Multi-Window 120Hz (120 FPS)
+# Layout Mode: Dual-Screen Deck / Floating Cards Responsive
+# Shader Palette: aurora_indigo_fold (#c084fc)
+# Dynamic Looping Engine v2.5.0 (Coki Studios / Holo Entertainment)
+# ═══════════════════════════════════════════════════════════════
+
+compile target "flui"
+set ui_profile to "flui"
+set theme to "aurora_indigo_fold"
+
+# ═══════════════════════════════════════════════════════════════
+# ⚡ DYNAMICALLY GENERATED LOOPING PROGRAM: EcoSprint_GrandPrix
+# Target UI: flui | Version: 1.0
+# Created via Looping Dynamic Compiler Subsystem
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.system as sys
+import loop.engine as game
+
+define app "EcoSprint_GrandPrix" version 1.0:
+    create window with title "Forkar Racing 3D -- Eco Sprint Grand Prix" and size (800, 520)
+    # [Compiled Target Override]: target("flui")
+    # [Compiled Target Override]: set theme to "aurora_indigo_fold"
+
+    draw card at (20, 20) with size (760, 75) and title "ECO SPRINT GRAND PRIX // flUI FOLD-AWARE" and text "Campeonato internacional de vehículos ecológicos con validación criptográfica en tiempo real."
+    draw card at (20, 105) with size (760, 170) and title "🏆 CLASIFICACIÓN CSID" and text "1. JeriX Ortiz Android (Forkar CyberKart GT) — 1:10.15 [RÉCORD]\n2. Coki Studios AI Bot #1 (Apex Predator)   — 1:11.42\n3. Holo Helium Pilot (Shine Speeder 3D)     — 1:12.80"
+    draw button at (35, 290) with text "CORRER GRAN PREMIO" and action "start_grand_prix"
+
+        val track_id = "eco_sprint_flui"
+        val target_hz = 120
