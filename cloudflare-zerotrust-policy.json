@@ -21,11 +21,11 @@
       "domain": "forkar-internal.cokistudios.com",
       "type": "self_hosted",
       "session_duration": "24h",
-      "app_launcher_visible": true,
+      "app_launcher_visible": false,
       "allowed_idps": [
         "azure-ad"
       ],
-      "auto_redirect_to_identity": true,
+      "auto_redirect_to_identity": false,
       "enable_binding_cookie": false,
       "http_only_cookie_attribute": true,
       "same_site_cookie_attribute": "lax",
@@ -37,11 +37,11 @@
       "domain": "csims.cokistudios.com",
       "type": "self_hosted",
       "session_duration": "24h",
-      "app_launcher_visible": true,
+      "app_launcher_visible": false,
       "allowed_idps": [
         "azure-ad"
       ],
-      "auto_redirect_to_identity": true,
+      "auto_redirect_to_identity": false,
       "enable_binding_cookie": false,
       "http_only_cookie_attribute": true,
       "same_site_cookie_attribute": "lax",

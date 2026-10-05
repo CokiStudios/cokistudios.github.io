@@ -16,11 +16,13 @@ terraform {
 variable "cloudflare_account_id" {
   type        = string
   description = "The Cloudflare Account ID for Coki Studios"
+  default     = "9aafac53b395bd5f599241de8dcc4899"
 }
 
 variable "cloudflare_zone_id" {
   type        = string
   description = "The Zone ID for cokistudios.com"
+  default     = "40a8387036afe164d415f59dc8b87b6c"
 }
 
 variable "azure_idp_id" {
@@ -32,13 +34,17 @@ variable "azure_idp_id" {
 # 1. Reusable Access Policy for Coki Studios Team (@cokistudios.com via Microsoft)
 resource "cloudflare_zero_trust_access_policy" "coki_studios_team_only" {
   account_id = var.cloudflare_account_id
-  name       = "Allow Coki Studios Team (@cokistudios.com via Microsoft)"
+  name       = "Allow Coki Studios Team & Authorized Admins"
   decision   = "allow"
 
   include {
     email_domain {
       domain = "cokistudios.com"
     }
+  }
+
+  include {
+    email = ["jerixortixdev@gmail.com", "cokistudiosllc@gmail.com"]
   }
 }
 
@@ -49,9 +55,9 @@ resource "cloudflare_zero_trust_access_application" "forkar_internal" {
   domain                    = "forkar-internal.cokistudios.com"
   type                      = "self_hosted"
   session_duration          = "24h"
-  auto_redirect_to_identity = true
+  auto_redirect_to_identity = false
   allowed_idps              = var.azure_idp_id != "" ? [var.azure_idp_id] : null
-  app_launcher_visible      = true
+  app_launcher_visible      = false
   policies                  = [cloudflare_zero_trust_access_policy.coki_studios_team_only.id]
 
   cors_headers {
@@ -69,8 +75,8 @@ resource "cloudflare_zero_trust_access_application" "csims_internal" {
   domain                    = "csims.cokistudios.com"
   type                      = "self_hosted"
   session_duration          = "24h"
-  auto_redirect_to_identity = true
+  auto_redirect_to_identity = false
   allowed_idps              = var.azure_idp_id != "" ? [var.azure_idp_id] : null
-  app_launcher_visible      = true
+  app_launcher_visible      = false
   policies                  = [cloudflare_zero_trust_access_policy.coki_studios_team_only.id]
 }
