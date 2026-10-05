@@ -369,8 +369,8 @@ if not data:
 else:
     print('')
     for m in data:
-        lang = m.get('language', 'loop').upper()
-        print(f\"  • ${C_BOLD}${C_CYAN}{m['name']}${C_RESET} v{m['version']} [${lang}] por {m.get('author_name')}\")
+        lang = (m.get('language') or 'loop').upper()
+        print(f\"  • ${C_BOLD}${C_CYAN}{m['name']}${C_RESET} v{m['version']} [{lang}] por {m.get('author_name')}\")
         print(f\"    ${C_DIM}{m.get('description', '')}${C_RESET}\")
         print('')
 "

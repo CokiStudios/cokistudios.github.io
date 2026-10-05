@@ -1,5 +1,5 @@
-class Looping < Formula
-  desc "Dual hybrid high-performance engine and programming language for Loop OS"
+class Smiledev < Formula
+  desc "Official package manager for Looping and Loop OS ecosystem"
   homepage "https://cokistudios.github.io"
   version "2.5.0"
   license "MIT"
@@ -8,13 +8,10 @@ class Looping < Formula
   sha256 "1ff3d001be3b39081153d8e95c27ecedd2bcf6244189b32f2ee398c4bb5a7dee"
 
   def install
-    bin.install "looping"
-    bin.install_symlink "looping" => "ruuping"
     bin.install "smiledev"
   end
 
   test do
-    system "#{bin}/looping", "test"
     system "#{bin}/smiledev", "version"
   end
 end

@@ -40,6 +40,10 @@ chmod 755 "$BUILD_TEMP/root/usr/local/bin/looping"
 # Symlink ruuping -> looping
 ln -sf "looping" "$BUILD_TEMP/root/usr/local/bin/ruuping"
 
+# Package Manager: smiledev
+cp "$ROOT_DIR/bin/smiledev" "$BUILD_TEMP/root/usr/local/bin/smiledev"
+chmod 755 "$BUILD_TEMP/root/usr/local/bin/smiledev"
+
 # Ensure /usr/local/bin is permanently in macOS PATH via /etc/paths.d
 echo "/usr/local/bin" > "$BUILD_TEMP/root/etc/paths.d/looping"
 chmod 644 "$BUILD_TEMP/root/etc/paths.d/looping"
@@ -47,10 +51,11 @@ chmod 644 "$BUILD_TEMP/root/etc/paths.d/looping"
 # 3. Create postinstall script
 cat << 'EOF' > "$BUILD_TEMP/scripts/postinstall"
 #!/bin/sh
-# Looping Engine Post-Install Script
+# Looping Engine & smiledev Post-Install Script
 chmod 755 /usr/local/bin/looping 2>/dev/null || true
 ln -sf /usr/local/bin/looping /usr/local/bin/ruuping 2>/dev/null || true
 chmod 755 /usr/local/bin/ruuping 2>/dev/null || true
+chmod 755 /usr/local/bin/smiledev 2>/dev/null || true
 chmod 644 /etc/paths.d/looping 2>/dev/null || true
 exit 0
 EOF
@@ -82,18 +87,20 @@ cat << 'EOF' > "$STAGING_DIR/Instalar_por_Terminal.command"
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "=========================================================="
-echo "🌟 Instalador de Looping Engine v2.5.0 (Coki Studios)"
+echo "🌟 Instalador de Looping Engine & smiledev v2.5.0 (Coki Studios)"
 echo "=========================================================="
-echo "Instalando en /usr/local/bin/looping..."
+echo "Instalando en /usr/local/bin/looping y /usr/local/bin/smiledev..."
 sudo installer -pkg "$DIR/Instalar Looping.pkg" -target /
 echo ""
-echo "✅ ¡Looping se ha instalado exitosamente en el PATH del sistema!"
-echo "   Ubicación: /usr/local/bin/looping"
-echo "   Versión:   $(/usr/local/bin/looping --version 2>/dev/null || echo '2.5.0')"
+echo "✅ ¡Looping y smiledev se han instalado exitosamente en el PATH del sistema!"
+echo "   Looping:  /usr/local/bin/looping"
+echo "   smiledev: /usr/local/bin/smiledev"
+echo "   Versión:  $(/usr/local/bin/looping --version 2>/dev/null || echo '2.5.0')"
 echo ""
-echo "Ya puedes ejecutar directamente scripts con shebang como:"
-echo "   ./ShineLauncher_flUI"
+echo "Comandos disponibles:"
 echo "   looping tu_archivo.loop"
+echo "   smiledev install <modulo>"
+echo "   smiledev list"
 echo ""
 read -p "Presiona ENTER para cerrar..."
 EOF
