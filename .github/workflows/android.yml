@@ -4,6 +4,12 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+    inputs:
+      build_internal:
+        description: 'Compilar y distribuir flavor Internal para Coki Studios'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -43,19 +49,18 @@ jobs:
             echo "✅ Keystore de compilación CI generado con éxito."
           fi
 
-      - name: Build All Release Flavors (Production, QA, Internal CS)
+      - name: Build Public Release Flavors (Production & QA)
         run: |
           cd Forkar.Android
-          ./gradlew assembleProductionRelease assembleQaRelease assembleInternalRelease --no-daemon --stacktrace
+          ./gradlew assembleProductionRelease assembleQaRelease --no-daemon --stacktrace
 
-      - name: Guardar APKs en Artifacts de GitHub
+      - name: Guardar APKs Públicos en Artifacts de GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: Forkar-Suites-APKs
+          name: Forkar-Public-APKs
           path: |
             Forkar.Android/app/build/outputs/apk/production/release/*.apk
             Forkar.Android/app/build/outputs/apk/qa/release/*.apk
-            Forkar.Android/app/build/outputs/apk/internal/release/*.apk
           retention-days: 14
 
       - name: Subir a Firebase App Distribution (Canal QA y Feedback)
@@ -90,5 +95,24 @@ jobs:
             fi
           else
             echo "ℹ️ El secret FIREBASE_TOKEN no está configurado aún en GitHub Secrets."
-            echo "🎉 Los 3 APKs (Production, QA e Internal CS) quedaron guardados en los Artifacts del workflow."
+            echo "🎉 Los APKs públicos (Production y QA) quedaron guardados en los Artifacts del workflow."
+          fi
+
+      - name: Build & Distribute Internal CS (Privado / Exclusivo Equipo)
+        if: ${{ inputs.build_internal == true }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_APP_ID: "1:703867182522:android:47f83c8596d977aef71183"
+        run: |
+          echo "🔒 Compilando flavor interno confidencial..."
+          cd Forkar.Android
+          ./gradlew assembleInternalRelease --no-daemon --stacktrace
+          INTERNAL_APK=$(ls app/build/outputs/apk/internal/release/*.apk 2>/dev/null | head -n 1 || true)
+          if [ -n "${FIREBASE_TOKEN}" ] && [ -n "${INTERNAL_APK}" ]; then
+            echo "Distribuyendo a grupo privado coki-team..."
+            firebase appdistribution:distribute "${INTERNAL_APK}" \
+              --app "${FIREBASE_APP_ID}" \
+              --token "${FIREBASE_TOKEN}" \
+              --groups "coki-team" \
+              --release-notes "Build interna confidencial para equipo Coki Studios" || true
           fi
