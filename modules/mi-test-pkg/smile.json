@@ -1,0 +1,9 @@
+{
+  "name": "mi-test-pkg",
+  "version": "1.0.0",
+  "language": "loop",
+  "entry_point": "main.loop",
+  "author_name": "Desarrollador Coki",
+  "description": "Módulo mi-test-pkg creado con smiledev.",
+  "license": "MIT"
+}

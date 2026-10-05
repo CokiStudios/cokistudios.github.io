@@ -1,0 +1,8 @@
+{
+  "name": "loop-gui-tk",
+  "version": "1.0.0",
+  "language": "python",
+  "entry_point": "loop_gui_tk.py",
+  "author": "Coki Studios Core Team",
+  "description": "Interoperabilidad nativa con Tkinter para Looping (.loop). Soporta ventanas, canvas 3D, botones TTK, di\u00e1logos y eventos."
+}

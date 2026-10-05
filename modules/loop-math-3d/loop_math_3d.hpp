@@ -1,0 +1,1 @@
+#pragma once\n#include <cmath>\n\nnamespace loop_math {\n    struct Vec3 { float x, y, z; };\n    struct Mat4 { float m[16]; };\n    inline float dot(const Vec3& a, const Vec3& b) { return a.x*b.x + a.y*b.y + a.z*b.z; }\n}\n

@@ -1,0 +1,8 @@
+{
+  "name": "loop-gui-qt",
+  "version": "1.0.0",
+  "language": "python",
+  "entry_point": "loop_gui_qt.py",
+  "author": "Coki Studios Core Team",
+  "description": "Interoperabilidad nativa con PyQt6 / PySide6 para Looping (.loop). Ventanas QMainWindow modernas, botones con estilos QSS y layout manager."
+}

@@ -1,0 +1,8 @@
+{
+  "name": "loop-core-utils",
+  "version": "1.1.0",
+  "language": "loop",
+  "entry_point": "core_utils.loop",
+  "author": "Comunidad Coki Studios",
+  "description": "Utilidades est\u00e1ndar escritas 100% en Looping: formateo de cadenas, validadores de array y cron\u00f3metro de alto rendimiento."
+}

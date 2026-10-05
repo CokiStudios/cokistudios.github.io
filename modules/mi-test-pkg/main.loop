@@ -1,0 +1,2 @@
+define module "mi-test-pkg" version 1.0:
+    fn hello() => "Hola desde módulo Looping mi-test-pkg"

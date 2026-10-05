@@ -1,0 +1,482 @@
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════
+# 🌟 SMILEDEV — EL GESTOR DE PAQUETES OFICIAL DE LOOPING
+# Gestor de Módulos (C++, Python & Loop) con Backend PostgreSQL
+# Coki Studios & Holo Entertainment © 2026
+# ═══════════════════════════════════════════════════════════════
+
+set -e
+
+SMILE_VERSION="2.5.0"
+CONFIG_DIR="$HOME/.smiledev"
+GLOBAL_MODULES_DIR="$CONFIG_DIR/modules"
+LOCAL_MODULES_DIR="$(pwd)/modules"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+SUPABASE_URL="https://cmkumxprmmhuinxfppxl.supabase.co"
+SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNta3VteHBybW1odWlueGZwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTkxNzEsImV4cCI6MjA5MzA3NTE3MX0.BNbSSxoObXMGpyin4-3udSM6ricoTO57Zaade5dTfxQ"
+
+# Colores y Estilos ANSI
+C_RESET="\033[0m"
+C_BOLD="\033[1m"
+C_DIM="\033[2m"
+C_CYAN="\033[38;5;51m"
+C_AQUA="\033[38;5;49m"
+C_PURPLE="\033[38;5;141m"
+C_PINK="\033[38;5;205m"
+C_GREEN="\033[38;5;48m"
+C_YELLOW="\033[38;5;220m"
+C_RED="\033[38;5;196m"
+C_BLUE="\033[38;5;39m"
+
+mkdir -p "$CONFIG_DIR" "$GLOBAL_MODULES_DIR"
+
+# Inicializar configuración por defecto si no existe
+if [ ! -f "$CONFIG_FILE" ]; then
+    cat <<EOF > "$CONFIG_FILE"
+{
+  "version": "$SMILE_VERSION",
+  "default_repo": "$SUPABASE_URL/rest/v1/loop_modules",
+  "repos": [
+    "https://cmkumxprmmhuinxfppxl.supabase.co/rest/v1/loop_modules"
+  ],
+  "author": "Desarrollador Coki Studios"
+}
+EOF
+fi
+
+print_banner() {
+    echo -e "${C_CYAN}  _____           _ _      ${C_PURPLE}____${C_RESET}"
+    echo -e "${C_CYAN} / ____|         (_) |    ${C_PURPLE}|  _ \   ${C_BOLD}smiledev ${C_AQUA}v$SMILE_VERSION${C_RESET}"
+    echo -e "${C_CYAN}| (___  _ __ ___  _| | ___${C_PURPLE}| | | | _____   __${C_RESET}"
+    echo -e "${C_CYAN} \___ \| '_ \` _ \| | |/ _ \ ${C_PURPLE}| | |/ _ \ \ / /${C_RESET}"
+    echo -e "${C_CYAN} ____) | | | | | | | |  __/${C_PURPLE} |_| |  __/\ V / ${C_RESET}"
+    echo -e "${C_CYAN}|_____/|_| |_| |_|_|_|\___${C_PURPLE}|____/ \___| \_/  ${C_DIM}(Looping Package Manager)${C_RESET}"
+    echo ""
+}
+
+cmd_help() {
+    print_banner
+    echo -e "${C_BOLD}USO:${C_RESET} smiledev <comando> [argumentos]"
+    echo ""
+    echo -e "${C_BOLD}COMANDOS PRINCIPALES:${C_RESET}"
+    echo -e "  ${C_GREEN}install${C_RESET} <módulo>       Descarga e instala un módulo comunitario (C++, Py, Loop)"
+    echo -e "  ${C_BLUE}ver${C_RESET} <módulo>           Muestra detalles, versión y autor del módulo"
+    echo -e "  ${C_PINK}upload-module${C_RESET} <dir>    Publica un módulo en el repositorio PostgreSQL LoopModules"
+    echo -e "  ${C_PURPLE}add-repo${C_RESET} <url>         Añade un repositorio de módulos comunitario"
+    echo -e "  ${C_YELLOW}list${C_RESET}                   Lista los módulos instalados local y globalmente"
+    echo -e "  ${C_AQUA}search${C_RESET} <término>       Busca módulos en la nube de LoopModules"
+    echo -e "  ${C_CYAN}init${C_RESET} <nombre> [--lang] Inicializa un nuevo módulo (cpp, python, loop)"
+    echo ""
+    echo -e "${C_BOLD}EJEMPLOS:${C_RESET}"
+    echo -e "  smiledev install loop-gui-tk"
+    echo -e "  smiledev install loop-gui-qt"
+    echo -e "  smiledev ver loop-gui-tk"
+    echo -e "  smiledev upload-module ./mi_modulo"
+    echo -e "  smiledev add-repo https://repo.cokistudios.com/modules"
+    echo ""
+}
+
+# ── 1. COMANDO: VER (Ver información de un módulo) ──
+cmd_ver() {
+    local mod_name="$1"
+    if [ -z "$mod_name" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Debes especificar el nombre del módulo. Ejemplo: ${C_CYAN}smiledev ver loop-gui-tk${C_RESET}"
+        exit 1
+    fi
+
+    echo -e "${C_DIM}Consultando PostgreSQL LoopModules...${C_RESET}"
+    local res
+    res=$(curl -s -H "apikey: $SUPABASE_KEY" \
+                 -H "Authorization: Bearer $SUPABASE_KEY" \
+                 "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name&select=*")
+
+    echo "$res" | python3 -c "
+import sys, json
+
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = []
+
+if not data:
+    print('${C_RED}✘ Módulo no encontrado en LoopModules:${C_RESET} $mod_name')
+    sys.exit(1)
+
+m = data[0]
+lang_badge = {
+    'cpp': '${C_BLUE}[C++ NATIVO]${C_RESET}',
+    'python': '${C_YELLOW}[PYTHON PYLOOP]${C_RESET}',
+    'loop': '${C_GREEN}[LOOP PURO]${C_RESET}'
+}.get(m.get('language'), '[DESCONOCIDO]')
+
+verified = '${C_AQUA}✔ Verificado Oficial${C_RESET}' if m.get('is_verified') else '${C_DIM}Comunitario${C_RESET}'
+
+print('')
+print('${C_BOLD}${C_CYAN}' + '='*56 + '${C_RESET}')
+print(f'📦 ${C_BOLD}{m.get(\"name\")}${C_RESET}  v{m.get(\"version\")}  {lang_badge}  {verified}')
+print('${C_BOLD}${C_CYAN}' + '='*56 + '${C_RESET}')
+print(f'• ${C_BOLD}Autor:${C_RESET}        {m.get(\"author_name\", \"Desconocido\")}')
+print(f'• ${C_BOLD}Lenguaje:${C_RESET}     {m.get(\"language\").upper()}')
+print(f'• ${C_BOLD}Licencia:${C_RESET}     {m.get(\"license\", \"MIT\")}')
+print(f'• ${C_BOLD}Punto Entrada:${C_RESET}{m.get(\"entry_point\", \"N/A\")}')
+print(f'• ${C_BOLD}Descargas:${C_RESET}    {m.get(\"downloads_count\", 0)}')
+print(f'• ${C_BOLD}Descripción:${C_RESET}  {m.get(\"description\", \"Sin descripción\")}')
+print('${C_BOLD}${C_CYAN}' + '='*56 + '${C_RESET}')
+print('')
+"
+}
+
+# ── 2. COMANDO: INSTALL (Instalar módulo) ──
+cmd_install() {
+    local mod_name="$1"
+    if [ -z "$mod_name" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Debes indicar el módulo a instalar. Ejemplo: ${C_CYAN}smiledev install loop-gui-tk${C_RESET}"
+        exit 1
+    fi
+
+    echo -e "${C_CYAN}⚡ smiledev install:${C_RESET} Buscando ${C_BOLD}$mod_name${C_RESET} en LoopModules..."
+    local res
+    res=$(curl -s -H "apikey: $SUPABASE_KEY" \
+                 -H "Authorization: Bearer $SUPABASE_KEY" \
+                 "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name&select=*")
+
+    local is_found
+    is_found=$(echo "$res" | python3 -c "import sys, json; data=json.load(sys.stdin); print('1' if data else '0')")
+
+    if [ "$is_found" != "1" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Módulo '$mod_name' no existe en el catálogo de LoopModules."
+        exit 1
+    fi
+
+    # Extraer detalles y payload
+    echo "$res" | python3 -c '
+import sys, json, os
+
+data = json.load(sys.stdin)[0]
+name = data["name"]
+lang = data.get("language", "loop")
+ver = data.get("version", "1.0.0")
+entry = data.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else f"{name}.loop"))
+payload = data.get("code_payload", "")
+if "\\n" in payload and "\n" not in payload:
+    payload = payload.replace("\\n", "\n").replace("\\t", "    ")
+
+manifest = {
+    "name": name,
+    "version": ver,
+    "language": lang,
+    "entry_point": entry,
+    "author": data.get("author_name", "Comunidad"),
+    "description": data.get("description", "")
+}
+
+target_dir = os.path.abspath(f"modules/{name}")
+global_dir = os.path.expanduser(f"~/.smiledev/modules/{name}")
+
+for base_dir in [target_dir, global_dir]:
+    os.makedirs(base_dir, exist_ok=True)
+    with open(os.path.join(base_dir, "smile.json"), "w") as mf:
+        json.dump(manifest, mf, indent=2)
+    if payload:
+        with open(os.path.join(base_dir, entry), "w") as ef:
+            ef.write(payload)
+
+print(f"  ✔ Manifiesto guardado en: {target_dir}/smile.json")
+print(f"  ✔ Entrada de código:      {target_dir}/{entry}")
+'
+
+    # Incrementar contador de descargas en Supabase
+    curl -s -X PATCH -H "apikey: $SUPABASE_KEY" \
+         -H "Authorization: Bearer $SUPABASE_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{"updated_at": "'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'"}' \
+         "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name" > /dev/null || true
+
+    echo -e "${C_GREEN}✔ [ÉXITO]${C_RESET} Módulo ${C_BOLD}$mod_name${C_RESET} instalado en:"
+    echo -e "   • Local:  ${C_AQUA}$target_dir${C_RESET}"
+    echo -e "   • Global: ${C_AQUA}$GLOBAL_MODULES_DIR/$mod_name${C_RESET}"
+    echo -e "   • Listo para importar en Looping con: ${C_YELLOW}use module \"$mod_name\"${C_RESET}"
+}
+
+# ── 3. COMANDO: UPLOAD-MODULE (Subir módulo a LoopModules) ──
+cmd_upload() {
+    local target_path="$1"
+    if [ -z "$target_path" ]; then
+        target_path="."
+    fi
+
+    if [ ! -d "$target_path" ] && [ ! -f "$target_path" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Ruta no encontrada: $target_path"
+        exit 1
+    fi
+
+    local manifest_file=""
+    if [ -d "$target_path" ]; then
+        manifest_file="$target_path/smile.json"
+    fi
+
+    if [ ! -f "$manifest_file" ]; then
+        echo -e "${C_YELLOW}⚠ No se encontró smile.json en $target_path. Creando plantilla de subida...${C_RESET}"
+        cat <<EOF > "$manifest_file"
+{
+  "name": "mi-modulo-custom",
+  "version": "1.0.0",
+  "language": "python",
+  "author_name": "Desarrollador Coki",
+  "description": "Módulo interactivo para Looping creado con smiledev.",
+  "license": "MIT",
+  "entry_point": "main.py"
+}
+EOF
+        echo -e "${C_GREEN}✔ Generado:${C_RESET} $manifest_file. Revisa los datos y ejecuta upload-module de nuevo."
+        exit 0
+    fi
+
+    echo -e "${C_PINK}🚀 smiledev upload-module:${C_RESET} Leyendo $manifest_file..."
+    
+    # Preparar payload JSON via Python
+    local json_payload
+    json_payload=$(python3 -c "
+import json, os, sys
+
+with open('$manifest_file', 'r') as f:
+    mf = json.load(f)
+
+name = mf.get('name')
+lang = mf.get('language', 'loop').lower()
+if lang not in ['cpp', 'python', 'loop']:
+    print(f'Error: Lenguaje inválido {lang}. Debe ser cpp, python o loop.', file=sys.stderr)
+    sys.exit(1)
+
+entry = mf.get('entry_point', '')
+code = ''
+if entry:
+    entry_path = os.path.join('$target_path', entry)
+    if os.path.exists(entry_path):
+        with open(entry_path, 'r', errors='ignore') as ef:
+            code = ef.read()
+
+payload = {
+    'name': name,
+    'version': mf.get('version', '1.0.0'),
+    'language': lang,
+    'author_name': mf.get('author_name', 'Comunidad Coki'),
+    'description': mf.get('description', ''),
+    'license': mf.get('license', 'MIT'),
+    'entry_point': entry,
+    'code_payload': code,
+    'is_verified': False
+}
+print(json.dumps(payload))
+")
+
+    echo -e "${C_DIM}Enviando módulo a Supabase PostgreSQL LoopModules...${C_RESET}"
+    local response
+    response=$(curl -s -X POST \
+         -H "apikey: $SUPABASE_KEY" \
+         -H "Authorization: Bearer $SUPABASE_KEY" \
+         -H "Content-Type: application/json" \
+         -H "Prefer: resolution=merge-duplicates" \
+         -d "$json_payload" \
+         "$SUPABASE_URL/rest/v1/loop_modules")
+
+    local uploaded_name=$(python3 -c "import json; print(json.load(open('$manifest_file')).get('name'))" 2>/dev/null || echo "modulo")
+    echo -e "${C_GREEN}✔ [PUBLICADO]${C_RESET} Módulo ${C_BOLD}$uploaded_name${C_RESET} subido con éxito al repositorio comunitario LoopModules."
+    echo -e "   Ahora cualquier usuario puede instalarlo con: ${C_CYAN}smiledev install $uploaded_name${C_RESET}"
+}
+
+# ── 4. COMANDO: ADD-REPO (Añadir repositorio) ──
+cmd_add_repo() {
+    local repo_url="$1"
+    if [ -z "$repo_url" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Debes indicar la URL del repositorio. Ejemplo: ${C_CYAN}smiledev add-repo https://repo.cokistudios.com/modules${C_RESET}"
+        exit 1
+    fi
+
+    python3 -c "
+import json
+with open('$CONFIG_FILE', 'r') as f:
+    cfg = json.load(f)
+repos = cfg.get('repos', [])
+if '$repo_url' not in repos:
+    repos.append('$repo_url')
+    cfg['repos'] = repos
+    with open('$CONFIG_FILE', 'w') as f:
+        json.dump(cfg, f, indent=2)
+    print('${C_GREEN}✔ [ÉXITO]${C_RESET} Repositorio añadido: $repo_url')
+else:
+    print('${C_YELLOW}ℹ El repositorio ya estaba registrado:${C_RESET} $repo_url')
+"
+}
+
+# ── 5. COMANDO: LIST (Listar módulos instalados) ──
+cmd_list() {
+    print_banner
+    echo -e "${C_BOLD}MÓDULOS INSTALADOS LOCALMENTE (./modules):${C_RESET}"
+    if [ -d "$LOCAL_MODULES_DIR" ] && [ "$(ls -A "$LOCAL_MODULES_DIR" 2>/dev/null)" ]; then
+        for d in "$LOCAL_MODULES_DIR"/*; do
+            if [ -d "$d" ]; then
+                local bname=$(basename "$d")
+                local ver="1.0.0"
+                if [ -f "$d/smile.json" ]; then
+                    ver=$(python3 -c "import json; print(json.load(open('$d/smile.json')).get('version','1.0.0'))" 2>/dev/null || echo "1.0.0")
+                    lang=$(python3 -c "import json; print(json.load(open('$d/smile.json')).get('language','loop'))" 2>/dev/null || echo "loop")
+                fi
+                local lang_upper=$(echo "$lang" | tr '[:lower:]' '[:upper:]')
+                echo -e "  • ${C_CYAN}$bname${C_RESET} (v$ver) [${lang_upper}]"
+            fi
+        done
+    else
+        echo -e "  ${C_DIM}(Sin módulos locales aún. Usa smiledev install <nombre>)${C_RESET}"
+    fi
+
+    echo ""
+    echo -e "${C_BOLD}MÓDULOS GLOBALES ENTORNO (~/.smiledev/modules):${C_RESET}"
+    if [ -d "$GLOBAL_MODULES_DIR" ] && [ "$(ls -A "$GLOBAL_MODULES_DIR" 2>/dev/null)" ]; then
+        for d in "$GLOBAL_MODULES_DIR"/*; do
+            if [ -d "$d" ]; then
+                local bname=$(basename "$d")
+                echo -e "  • ${C_PURPLE}$bname${C_RESET}"
+            fi
+        done
+    else
+        echo -e "  ${C_DIM}(Sin módulos globales)${C_RESET}"
+    fi
+    echo ""
+}
+
+# ── 6. COMANDO: SEARCH (Buscar en LoopModules) ──
+cmd_search() {
+    local term="$1"
+    echo -e "${C_AQUA}🔎 Buscando en PostgreSQL LoopModules:${C_RESET} '$term'..."
+    local res
+    if [ -z "$term" ]; then
+        res=$(curl -s -H "apikey: $SUPABASE_KEY" \
+                     -H "Authorization: Bearer $SUPABASE_KEY" \
+                     "$SUPABASE_URL/rest/v1/loop_modules?select=name,version,language,author_name,description&limit=20")
+    else
+        res=$(curl -s -H "apikey: $SUPABASE_KEY" \
+                     -H "Authorization: Bearer $SUPABASE_KEY" \
+                     "$SUPABASE_URL/rest/v1/loop_modules?or=(name.ilike.*$term*,description.ilike.*$term*)&select=name,version,language,author_name,description")
+    fi
+
+    python3 -c "
+import json
+data = json.loads('''$res''')
+if not data:
+    print('  ${C_YELLOW}No se encontraron módulos coincidentes.${C_RESET}')
+else:
+    print('')
+    for m in data:
+        lang = m.get('language', 'loop').upper()
+        print(f\"  • ${C_BOLD}${C_CYAN}{m['name']}${C_RESET} v{m['version']} [${lang}] por {m.get('author_name')}\")
+        print(f\"    ${C_DIM}{m.get('description', '')}${C_RESET}\")
+        print('')
+"
+}
+
+# ── 7. COMANDO: INIT (Crear nuevo paquete) ──
+cmd_init() {
+    local name="$1"
+    local lang="python"
+    shift || true
+
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            --lang|-l) lang="$2"; shift ;;
+        esac
+        shift || true
+    done
+
+    if [ -z "$name" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Indica el nombre del módulo. Ejemplo: ${C_CYAN}smiledev init mi-gui --lang python${C_RESET}"
+        exit 1
+    fi
+
+    local target_dir="./modules/$name"
+    mkdir -p "$target_dir"
+
+    local entry=""
+    if [ "$lang" == "cpp" ]; then entry="main.hpp"; fi
+    if [ "$lang" == "python" ]; then entry="main.py"; fi
+    if [ "$lang" == "loop" ]; then entry="main.loop"; fi
+
+    cat <<EOF > "$target_dir/smile.json"
+{
+  "name": "$name",
+  "version": "1.0.0",
+  "language": "$lang",
+  "entry_point": "$entry",
+  "author_name": "Desarrollador Coki",
+  "description": "Módulo $name creado con smiledev.",
+  "license": "MIT"
+}
+EOF
+
+    # Plantilla de código según lenguaje
+    if [ "$lang" == "cpp" ]; then
+        cat <<EOF > "$target_dir/$entry"
+#pragma once
+#include <iostream>
+
+namespace $name {
+    inline void hello() {
+        std::cout << "Hola desde módulo C++: $name" << std::endl;
+    }
+}
+EOF
+    elif [ "$lang" == "python" ]; then
+        cat <<EOF > "$target_dir/$entry"
+# $name: Módulo Python interoperable con Looping
+def init_module(vars_dict=None):
+    print("Módulo $name inicializado con éxito en PyLoop.")
+    return True
+EOF
+    else
+        cat <<EOF > "$target_dir/$entry"
+define module "$name" version 1.0:
+    fn hello() => "Hola desde módulo Looping $name"
+EOF
+    fi
+
+    echo -e "${C_GREEN}✔ [CREADO]${C_RESET} Módulo ${C_BOLD}$name${C_RESET} [$lang] inicializado en: ${C_AQUA}$target_dir${C_RESET}"
+    echo -e "   Para publicarlo en la nube: ${C_CYAN}smiledev upload-module $target_dir${C_RESET}"
+}
+
+# ── ENRUTADOR DE COMANDOS ──
+case "$1" in
+    install|add|i)
+        cmd_install "$2"
+        ;;
+    ver|info|view)
+        cmd_ver "$2"
+        ;;
+    upload-module|upload|publish)
+        cmd_upload "$2"
+        ;;
+    add-repo)
+        cmd_add_repo "$2"
+        ;;
+    list|ls)
+        cmd_list
+        ;;
+    search|find)
+        cmd_search "$2"
+        ;;
+    init|new)
+        shift
+        cmd_init "$@"
+        ;;
+    version|-v|--version)
+        echo "smiledev v$SMILE_VERSION (Looping Package Manager)"
+        ;;
+    help|-h|--help|"")
+        cmd_help
+        ;;
+    *)
+        echo -e "${C_RED}Comando desconocido:${C_RESET} $1"
+        cmd_help
+        exit 1
+        ;;
+esac

@@ -1,0 +1,1 @@
+define module "LoopCoreUtils" version 1.1:\n    fn format_currency(amount) => "$" + str(amount)\n    fn clamp(val, min_v, max_v) => val < min_v ? min_v : (val > max_v ? max_v : val)\n

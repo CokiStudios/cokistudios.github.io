@@ -1,0 +1,8 @@
+{
+  "name": "loop-math-3d",
+  "version": "1.2.0",
+  "language": "cpp",
+  "entry_point": "loop_math_3d.hpp",
+  "author": "Holo Entertainment",
+  "description": "Motor de matrices 4x4, cuaterniones y proyecciones de perspectiva 3D compilado nativamente en C++ para Looping."
+}

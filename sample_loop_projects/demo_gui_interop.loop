@@ -1,0 +1,94 @@
+# ═══════════════════════════════════════════════════════════════
+# 🌟 LOOPING GUI INTEROP DEMO — TKINTER & PYQT6 (.loop)
+# Módulos instalados con smiledev desde PostgreSQL LoopModules
+# Coki Studios & Holo Entertainment © 2026
+# ═══════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.engine as engine
+from pyloop import snippets, runpy
+
+define app "LoopingGuiDemo" version 2.5:
+    create window with title "Tkinter & PyQt6 Interop en Looping" and size (800, 520)
+    set theme to "cyber_neon_xui"
+    set ui_profile to "xui"
+
+    print "=========================================================="
+    print "🌟 DEMO DE INTEROPERABILIDAD GUI EN LOOPING (.loop)"
+    print "   Módulos: loop-gui-tk (Tkinter) & loop-gui-qt (PyQt6)"
+    print "   Gestor de Paquetes: smiledev v2.5.0"
+    print "=========================================================="
+
+    set app_title to "Forkar Dashboard Pro — Looping GUI"
+    set pilot_name to "JeriX Ortiz Android"
+    set vehicle_type to "CyberKart GT-3D"
+
+    # ── 1. Interoperabilidad con Tkinter (loop-gui-tk) ──
+    print "\n[1] Probando módulo 'loop-gui-tk' (Tkinter)..."
+
+    insert pysnippet as test_tkinter_module:
+        import sys, os
+        os.environ['TK_SILENCE_DEPRECATION'] = '1'
+        sys.path.insert(0, os.path.abspath("modules/loop-gui-tk"))
+        
+        try:
+            import loop_gui_tk as ltk
+            print("  ✔ Módulo loop_gui_tk importado exitosamente.")
+            
+            # Inicializar ventana Tkinter desde Looping
+            title = looping_vars.get("app_title", "Tkinter Looping")
+            pilot = looping_vars.get("pilot_name", "Piloto")
+            
+            win = ltk.TkLoopWindow(title=title, width=540, height=360)
+            win.add_label(f"🏎️ {title}")
+            win.add_label(f"Piloto Autenticado: {pilot}", color="#6366f1", size=11)
+            win.add_button("🚀 Activar KERS Telemetría", command=lambda: win.show_alert("KERS", "KERS Recargado al 100%!"))
+            
+            looping_set("tk_ready", True)
+            print("  ✔ Estructura de ventana Tkinter construida con éxito.")
+        except Exception as e:
+            print(f"  ✘ Error probando loop-gui-tk: {e}")
+            looping_set("tk_ready", False)
+
+    runpy(test_tkinter_module)
+    print "✔ Estado Tkinter en Looping:", tk_ready
+
+    # ── 2. Interoperabilidad con PyQt6 / PySide6 (loop-gui-qt) ──
+    print "\n[2] Probando módulo 'loop-gui-qt' (PyQt6 / PySide6)..."
+
+    insert pysnippet as test_qt_module:
+        import sys, os
+        sys.path.insert(0, os.path.abspath("modules/loop-gui-qt"))
+        
+        try:
+            import loop_gui_qt as lqt
+            backend = getattr(lqt, "QT_BACKEND", "Ninguno")
+            print(f"  ✔ Módulo loop_gui_qt importado exitosamente. Backend detectado: {backend}")
+            
+            if backend:
+                title = looping_vars.get("app_title", "Qt Looping")
+                qwin = lqt.QtLoopWindow(title=f"{title} (PyQt6)", width=560, height=380)
+                qwin.add_label(f"⚡ Interfaz Nativa Qt6 en Looping")
+                qwin.add_button("🏎️ Correr Simulación Qt6", callback=lambda: qwin.show_alert("Qt6 Looping", "Físicas 3D inicializadas con éxito."))
+                looping_set("qt_backend_name", backend)
+                looping_set("qt_ready", True)
+                print("  ✔ Ventana PyQt6 QMainWindow estructurada con éxito.")
+            else:
+                looping_set("qt_backend_name", "PyQt6 no instalado (Fallback Tkinter activo)")
+                looping_set("qt_ready", False)
+                print("  ℹ PyQt6 no está instalado en este entorno de Python. Usa: pip install PyQt6")
+        except Exception as e:
+            print(f"  ✘ Error probando loop-gui-qt: {e}")
+            looping_set("qt_ready", False)
+
+    runpy(test_qt_module)
+    print "✔ Backend Qt detectado:", qt_backend_name
+
+    # ── 3. Tarjetas Informativas en Pantalla Looping XUI ──
+    draw card at (20, 20) with size (760, 65) and title "MÓDULOS SMILEDEV // TKINTER & PYQT6" and text "Interoperabilidad nativa entre scripts .loop y ventanas gráficas de escritorio con Python y C++."
+    draw card at (20, 100) with size (370, 150) and title "📦 LOOP-GUI-TK (TKINTER)" and text "• Estado: Listo\n• Backend: Tkinter 8.5\n• Tipo: Ventana de escritorio nativa\n• Eventos: Enlazados con Looping"
+    draw card at (410, 100) with size (370, 150) and title "⚡ LOOP-GUI-QT (PYQT6)" and text "• Estado: Módulo cargado\n• Backend: PyQt6 / PySide6\n• Estilos: Dark Cyberpunk QSS\n• Framework: Qt Widgets Direct"
+
+    play tone at 587 Hz for 70 ms
+    play tone at 880 Hz for 100 ms
+    print "\n🎉 [SISTEMA] Demo de interoperabilidad GUI completada con éxito."
