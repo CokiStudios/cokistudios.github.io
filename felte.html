@@ -864,19 +864,19 @@
         <!-- Platform Target Selector -->
         <div class="platform-bar" id="platformSelector">
             <button class="platform-pill active" data-platform="all">
-                <span>🌐</span> Todos los Targets
+                Todos los Targets
             </button>
             <button class="platform-pill" data-platform="loop_os">
-                <span>♾️</span> Shine Loop OS (.loop / .ruup)
+                Shine Loop OS (.loop / .ruup)
             </button>
             <button class="platform-pill" data-platform="mobile">
-                <span>📱</span> Móvil (Android APK / iOS)
+                Móvil (Android APK / iOS)
             </button>
             <button class="platform-pill" data-platform="web">
-                <span>☁️</span> Nube & Web Apps
+                Nube & Web Apps
             </button>
             <button class="platform-pill" data-platform="desktop">
-                <span>💻</span> macOS (.pkg / .dmg)
+                macOS (.pkg / .dmg)
             </button>
         </div>
 
@@ -889,10 +889,10 @@
 
             <div class="category-tabs" id="categoryTabs">
                 <button class="cat-btn active" data-cat="all">Todas</button>
-                <button class="cat-btn" data-cat="juegos">🎮 Juegos</button>
-                <button class="cat-btn" data-cat="dev">⚡ Dev & Compiladores</button>
-                <button class="cat-btn" data-cat="redes">🌐 Mensajería & Nube</button>
-                <button class="cat-btn" data-cat="sistema">🧭 Sistema & Utilidades</button>
+                <button class="cat-btn" data-cat="juegos">Juegos</button>
+                <button class="cat-btn" data-cat="dev">Dev & Compiladores</button>
+                <button class="cat-btn" data-cat="redes">Mensajería & Nube</button>
+                <button class="cat-btn" data-cat="sistema">Sistema & Utilidades</button>
             </div>
         </div>
 
@@ -964,38 +964,63 @@
         <div class="modal-card">
             <button class="modal-close" onclick="closePublishModal()">&times;</button>
             <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Publicar App en Felte</h3>
-            <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 20px;">
+            <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 14px;">
                 Distribuye tu aplicación en la nube, móvil y en consolas Shine Loop OS.
             </p>
+
+            <!-- Estado de sesión CSID -->
+            <div id="pubAuthBox" style="display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; border:1px solid var(--border-glass); background:rgba(255,255,255,0.03); color:var(--text-sub);"></div>
+
             <form id="publishForm" onsubmit="handlePublish(event)" style="display: flex; flex-direction: column; gap: 14px;">
                 <div>
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Nombre de la App</label>
-                    <input type="text" id="pubName" required placeholder="Ej: Mi Super Juego 2D" class="search-input" style="padding: 10px 14px;">
+                    <label for="pubName" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Nombre de la App</label>
+                    <input type="text" id="pubName" required minlength="2" maxlength="60" placeholder="Nombre de tu aplicación" class="search-input" style="padding: 10px 14px;">
                 </div>
-                <div>
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Categoría</label>
-                    <select id="pubCategory" class="search-input" style="padding: 10px 14px; cursor: pointer;">
-                        <option value="juegos">🎮 Videojuego</option>
-                        <option value="dev">⚡ Desarrollo & Herramientas</option>
-                        <option value="redes">🌐 Nube & Mensajería</option>
-                        <option value="sistema">🧭 Sistema & Utilidades</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Targets Soportados</label>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px;">
-                        <label><input type="checkbox" checked value="loop_os"> Loop OS</label>
-                        <label><input type="checkbox" checked value="mobile"> Android APK / iOS</label>
-                        <label><input type="checkbox" checked value="web"> Web / Nube</label>
-                        <label><input type="checkbox" checked value="desktop"> macOS</label>
+                <div style="display:grid; grid-template-columns: 1fr 120px; gap:12px;">
+                    <div>
+                        <label for="pubCategory" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Categoría</label>
+                        <select id="pubCategory" class="search-input" style="padding: 10px 14px; cursor: pointer;">
+                            <option value="juegos">Videojuego</option>
+                            <option value="dev">Desarrollo y Herramientas</option>
+                            <option value="redes">Nube y Mensajería</option>
+                            <option value="sistema">Sistema y Utilidades</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="pubVersion" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Versión</label>
+                        <input type="text" id="pubVersion" value="1.0.0" maxlength="20" class="search-input" style="padding: 10px 14px;">
                     </div>
                 </div>
                 <div>
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Código Looping (.loop) o URL</label>
-                    <textarea id="pubCode" rows="4" placeholder="define app 'MiApp':&#10;    target('shine_ui')&#10;    print 'Hola Felte!'" class="search-input" style="border-radius: 12px; font-family: var(--font-code); font-size: 12px;"></textarea>
+                    <label for="pubDesc" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Descripción</label>
+                    <textarea id="pubDesc" rows="3" maxlength="600" placeholder="¿Qué hace tu app?" class="search-input" style="border-radius: 12px; font-size: 13px;"></textarea>
                 </div>
-                <button type="submit" class="btn-nav-primary" style="justify-content: center; padding: 12px; margin-top: 10px;">
-                    🚀 Enviar a Verificación Felte
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Targets Soportados</label>
+                    <div id="pubTargets" style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px;">
+                        <label><input type="checkbox" checked value="loop_os"> Loop OS</label>
+                        <label><input type="checkbox" value="mobile"> Android / iOS</label>
+                        <label><input type="checkbox" value="web"> Web / Nube</label>
+                        <label><input type="checkbox" value="desktop"> macOS</label>
+                    </div>
+                </div>
+                <div>
+                    <label for="pubCode" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">Código Looping (.loop)</label>
+                    <textarea id="pubCode" rows="5" maxlength="100000" placeholder="define app 'MiApp':&#10;    target('shine_ui')&#10;    print 'Hola Felte!'" class="search-input" style="border-radius: 12px; font-family: var(--font-code); font-size: 12px;"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <label for="pubDownload" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">URL de descarga (https)</label>
+                        <input type="url" id="pubDownload" placeholder="https://..." class="search-input" style="padding: 10px 14px;">
+                    </div>
+                    <div>
+                        <label for="pubWeb" style="font-size: 12px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px;">URL web (https)</label>
+                        <input type="url" id="pubWeb" placeholder="https://..." class="search-input" style="padding: 10px 14px;">
+                    </div>
+                </div>
+                <div id="pubError" role="alert" style="display:none; font-size:12px; color:#fca5a5; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); padding:10px 12px; border-radius:10px;"></div>
+                <button type="submit" id="pubSubmit" class="btn-nav-primary" style="justify-content: center; padding: 12px; margin-top: 6px;">
+                    Publicar en Felte
                 </button>
             </form>
         </div>
@@ -1003,6 +1028,8 @@
 
     <!-- ── APPLICATION DATA & LOGIC ── -->
     <script>
+        const glyph = (app) => app.community ? app.icon : app.name.trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+
         const FELTE_APPS = [
             {
                 id: 'shine_launcher',
@@ -1182,7 +1209,7 @@
                     <div class="app-card-top">
                         ${app.icon.startsWith('assets/') 
                             ? `<img src="${app.icon}" class="app-icon" alt="${app.name}">` 
-                            : `<div class="app-icon">${app.icon}</div>`
+                            : `<div class="app-icon">${glyph(app)}</div>`
                         }
                         <div class="app-info">
                             <div class="app-title-row">
@@ -1190,11 +1217,6 @@
                                 <span class="app-badge ${app.badgeClass}">${app.badge}</span>
                             </div>
                             <div class="app-dev">${app.developer}</div>
-                            <div class="app-rating-row">
-                                <span class="app-stars">★ ${app.rating}</span>
-                                <span>•</span>
-                                <span>${app.reviews} valoraciones</span>
-                            </div>
                         </div>
                     </div>
 
@@ -1260,12 +1282,11 @@
                 <div style="display: flex; gap: 18px; align-items: center; margin-bottom: 20px;">
                     ${app.icon.startsWith('assets/') 
                         ? `<img src="${app.icon}" style="width:72px; height:72px; border-radius:18px; object-fit:cover;" alt="${app.name}">` 
-                        : `<div style="width:72px; height:72px; border-radius:18px; background:#1e293b; display:flex; align-items:center; justify-content:center; font-size:36px;">${app.icon}</div>`
+                        : `<div style="width:72px; height:72px; border-radius:18px; background:#1e293b; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:var(--aqua);">${glyph(app)}</div>`
                     }
                     <div>
                         <h2 style="font-size:22px; font-weight:800; color:#fff;">${app.name}</h2>
                         <p style="color:var(--aqua); font-size:13px; font-weight:600;">${app.developer}</p>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top:2px;">★ ${app.rating} (${app.reviews} valoraciones de usuarios)</p>
                     </div>
                 </div>
 
@@ -1307,7 +1328,7 @@
                 downloadButtons += `<a href="${app.downloadDmg}" download class="btn-install" style="background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(192,132,252,0.2)); border-color:rgba(139,92,246,0.4); color:var(--violet); margin-bottom:8px; text-decoration:none;"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Descargar Instalador Apple (.DMG / .PKG)</a>`;
             }
             if (app.webLink) {
-                downloadButtons += `<a href="${app.webLink}" class="btn-details" style="display:flex; justify-content:center; text-decoration:none; margin-bottom:8px;">🚀 Lanzar Versión Web en la Nube</a>`;
+                downloadButtons += `<a href="${app.webLink}" class="btn-details" style="display:flex; justify-content:center; text-decoration:none; margin-bottom:8px;">Lanzar Versión Web en la Nube</a>`;
             }
 
             const modalContent = document.getElementById('modalContent');
@@ -1320,7 +1341,7 @@
                     ${downloadButtons}
                 </div>
                 <div style="margin-top: 14px; padding: 12px; background: rgba(0,245,212,0.06); border: 1px dashed rgba(0,245,212,0.25); border-radius: 12px; font-size: 12px; color: var(--text-sub); text-align: center;">
-                    💡 En Shine Loop OS puedes ejecutar directamente: <code>looping run ${app.downloadLoop || 'script.loop'}</code>
+                    En Shine Loop OS puedes ejecutar directamente: <code>looping run ${app.community ? app.name.replace(/[^\w.-]+/g, "_") + ".loop" : (app.downloadLoop || "script.loop")}</code>
                 </div>
             `;
             document.getElementById('appModalOverlay').style.display = 'flex';
@@ -1334,35 +1355,10 @@
         document.getElementById('btnPublishApp').addEventListener('click', openPublishModal);
         function openPublishModal() {
             document.getElementById('publishModalOverlay').style.display = 'flex';
+            if (window.onPublishOpen) window.onPublishOpen();
         }
         function closePublishModal() {
             document.getElementById('publishModalOverlay').style.display = 'none';
-        }
-
-        function handlePublish(e) {
-            e.preventDefault();
-            const name = document.getElementById('pubName').value;
-            const cat = document.getElementById('pubCategory').value;
-            
-            // Add dynamically to local catalog
-            FELTE_APPS.unshift({
-                id: 'custom_' + Date.now(),
-                name: name,
-                developer: 'Comunidad Coki Studios',
-                category: cat,
-                badge: 'Nuevo',
-                badgeClass: 'badge-native',
-                rating: 5.0,
-                reviews: '1',
-                icon: '🚀',
-                desc: 'Aplicación publicada por la comunidad en Felte Store Cloud.',
-                platforms: ['Loop OS', 'Nube'],
-                details: 'Aplicación creada y subida a Felte Store. Lista para compilar y ejecutar.'
-            });
-
-            closePublishModal();
-            renderApps();
-            alert(`🎉 ¡"${name}" se ha registrado exitosamente en Felte Store!`);
         }
 
         // Close on background click
@@ -1375,6 +1371,142 @@
 
         // Initial Render
         renderApps();
+    </script>
+
+    <!-- ── COMMUNITY CATALOG & PUBLISHING (Supabase) ── -->
+    <script type="module">
+        import { supabase, getCurrentCokiUser } from './coki-auth.js';
+
+        const TARGET_LABELS = { loop_os: 'Loop OS', mobile: 'Móvil', web: 'Nube / Web', desktop: 'macOS' };
+        const MISSING_TABLE_HINT = 'La tabla felte_apps aún no existe en Supabase. Ejecuta supabase-felte-schema.sql en el SQL Editor.';
+
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const isHttps = (u) => { try { return new URL(u).protocol === 'https:'; } catch { return false; } };
+        const initials = (name) => name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('') || 'A';
+
+        // Todo el contenido proveniente de la comunidad se escapa antes de llegar a innerHTML en renderApps().
+        function rowToApp(row) {
+            const app = {
+                id: 'db_' + row.id,
+                dbId: row.id,
+                name: esc(row.name),
+                developer: esc(row.developer_name),
+                category: row.category,
+                badge: 'Comunidad',
+                badgeClass: 'badge-verified',
+                rating: '—',
+                reviews: 'Sin',
+                icon: esc(initials(row.name)),
+                desc: esc(row.description || 'Sin descripción.'),
+                platforms: (row.targets || []).map(t => TARGET_LABELS[t]).filter(Boolean),
+                details: esc(row.description || 'Sin descripción.') + ' — Versión ' + esc(row.version),
+                community: true
+            };
+            if (row.source_code) {
+                const blob = new Blob([row.source_code], { type: 'text/plain;charset=utf-8' });
+                app.downloadLoop = URL.createObjectURL(blob);
+            }
+            if (row.download_url && isHttps(row.download_url)) app.downloadApk = row.download_url;
+            if (row.web_url && isHttps(row.web_url)) app.webLink = row.web_url;
+            return app;
+        }
+
+        function mergeCommunityApps(rows) {
+            for (let i = FELTE_APPS.length - 1; i >= 0; i--) {
+                if (FELTE_APPS[i].community) FELTE_APPS.splice(i, 1);
+            }
+            FELTE_APPS.unshift(...rows.map(rowToApp));
+            renderApps();
+        }
+
+        async function loadCommunityApps() {
+            const { data, error } = await supabase
+                .from('felte_apps')
+                .select('*')
+                .eq('status', 'published')
+                .order('created_at', { ascending: false });
+            if (error) { console.warn('Felte: no se pudo cargar el catálogo comunitario:', error.message); return; }
+            mergeCommunityApps(data || []);
+        }
+
+        function showPubError(msg) {
+            const box = document.getElementById('pubError');
+            box.textContent = msg;
+            box.style.display = msg ? 'block' : 'none';
+        }
+
+        window.onPublishOpen = async () => {
+            showPubError('');
+            const box = document.getElementById('pubAuthBox');
+            const submit = document.getElementById('pubSubmit');
+            let user = null;
+            try { user = await getCurrentCokiUser(); } catch { /* sin sesión */ }
+            box.style.display = 'block';
+            if (user) {
+                const label = user.name || user.email;
+                box.innerHTML = 'Publicando como <strong style="color:#fff;">' + esc(label) + '</strong>';
+                submit.disabled = false;
+            } else {
+                box.innerHTML = 'Necesitas una cuenta CSID para publicar. <a href="register.html" style="color:var(--aqua); font-weight:700;">Iniciar sesión</a>';
+                submit.disabled = true;
+            }
+        };
+
+        window.handlePublish = async (e) => {
+            e.preventDefault();
+            showPubError('');
+            const submit = document.getElementById('pubSubmit');
+
+            const name = document.getElementById('pubName').value.trim();
+            const description = document.getElementById('pubDesc').value.trim();
+            const code = document.getElementById('pubCode').value.trim();
+            const downloadUrl = document.getElementById('pubDownload').value.trim();
+            const webUrl = document.getElementById('pubWeb').value.trim();
+            const targets = [...document.querySelectorAll('#pubTargets input:checked')].map(i => i.value);
+
+            if (name.length < 2) return showPubError('El nombre debe tener al menos 2 caracteres.');
+            if (!targets.length) return showPubError('Selecciona al menos un target.');
+            if (!code && !downloadUrl && !webUrl) return showPubError('Añade código Looping, una URL de descarga o una URL web.');
+            if (downloadUrl && !isHttps(downloadUrl)) return showPubError('La URL de descarga debe usar https.');
+            if (webUrl && !isHttps(webUrl)) return showPubError('La URL web debe usar https.');
+
+            submit.disabled = true;
+            const originalLabel = submit.textContent;
+            submit.textContent = 'Publicando...';
+
+            try {
+                const user = await getCurrentCokiUser();
+                if (!user) throw new Error('Tu sesión expiró. Inicia sesión de nuevo.');
+
+                const { error } = await supabase.from('felte_apps').insert({
+                    developer_id: user.id,
+                    developer_name: user.name || user.email.split("@")[0],
+                    name,
+                    category: document.getElementById('pubCategory').value,
+                    description,
+                    version: document.getElementById('pubVersion').value.trim() || '1.0.0',
+                    targets,
+                    source_code: code || null,
+                    download_url: downloadUrl || null,
+                    web_url: webUrl || null
+                });
+                if (error) {
+                    if (error.code === 'PGRST205' || /felte_apps/.test(error.message)) throw new Error(MISSING_TABLE_HINT);
+                    throw error;
+                }
+
+                document.getElementById('publishForm').reset();
+                closePublishModal();
+                await loadCommunityApps();
+            } catch (err) {
+                showPubError(err.message || 'No se pudo publicar la app.');
+            } finally {
+                submit.disabled = false;
+                submit.textContent = originalLabel;
+            }
+        };
+
+        loadCommunityApps();
     </script>
 </body>
 </html>
