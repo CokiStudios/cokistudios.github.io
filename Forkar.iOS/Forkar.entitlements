@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Official Apple CarPlay Entitlements (developer.apple.com/documentation/carplay/requesting-carplay-entitlements) -->
+    <!-- Navigation / Maps Entitlement for Eco Hub & Shine Maps -->
+    <key>com.apple.developer.carplay-maps</key>
+    <true/>
+    
+    <!-- Communication Entitlement for CSMS E2EE messaging & VoIP calls in CarPlay -->
+    <key>com.apple.developer.carplay-communication</key>
+    <true/>
+</dict>
+</plist>
