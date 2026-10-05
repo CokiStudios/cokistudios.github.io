@@ -16,8 +16,9 @@ echo "   Target UI: XUI Direct-to-Vulkan 240Hz / Shine APU"
 echo "=========================================================="
 
 if [ "$1" == "--gui" ] || [ "$1" == "-g" ]; then
-    echo "🖥️  Opening Forkar Racing 3D in Loop OS GUI mode..."
-    looping --gui "$SCRIPT_PATH"
+    echo "🖥️  Opening Forkar Racing 3D in Desktop GUI mode..."
+    export FORKAR_GUI=1
+    looping "$SCRIPT_PATH"
 else
     looping "$SCRIPT_PATH"
 fi

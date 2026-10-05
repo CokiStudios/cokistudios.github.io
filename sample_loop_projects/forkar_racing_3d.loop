@@ -214,3 +214,26 @@ define app "ForkarRacing3D" version 2.5:
     play tone at 659 Hz for 80 ms
     play tone at 784 Hz for 90 ms
     play tone at 1046 Hz for 150 ms
+
+    # ── 8. Lanzador Interactivo de Ventana Gráfica Tkinter Desktop ──
+    insert pysnippet as launch_desktop_gui:
+        import sys, os
+        os.environ['TK_SILENCE_DEPRECATION'] = '1'
+        gui_requested = os.environ.get("FORKAR_GUI", "0") == "1" or os.environ.get("LOOP_GUI", "0") == "1"
+        
+        if gui_requested:
+            print("\n🖥️  [TKINTER DESKTOP] Abriendo ventana gráfica interactiva de Forkar Racing 3D...")
+            try:
+                import sample_loop_projects.forkar_racing_gui as gui
+                player = looping_vars.get("csid_player", "JeriX Ortiz Android")
+                email = looping_vars.get("csid_email", "jerixortixdev@gmail.com")
+                token = looping_vars.get("csid_session_token", "CSID-750D7EBDBA73CD76")
+                gui.launch_racing_gui(player=player, email=email, csid_token=token)
+            except Exception as e:
+                print(f"  [TKINTER NOTICE] {e}")
+        else:
+            print("\n💡 [TIP] Para abrir la ventana gráfica interactiva Tkinter:")
+            print("   ./run_forkar_racing.sh --gui  (o  python3 sample_loop_projects/forkar_racing_gui.py)")
+
+    runpy(launch_desktop_gui)
+
