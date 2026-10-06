@@ -4,475 +4,506 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS ID Gateway — Centro de Control Universal</title>
+    <title>Cuenta de Coki Studios</title>
     <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
+        if (localStorage.getItem('coki-theme') === 'dark') {
+            document.documentElement.classList.add('dark-theme');
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/cs-industrial.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/cs-account.css">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        .cs-nav {
-            border-bottom: 1px solid var(--cs-hairline);
-            background: rgba(7, 8, 11, 0.85);
-            backdrop-filter: blur(12px);
-            position: sticky; top: 0; z-index: 100;
-        }
-        html.light-theme .cs-nav {
-            background: rgba(243, 245, 248, 0.85);
-        }
-
-        .cs-nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 12px 20px;
+        .input-row-group {
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .cs-form-field {
+            display: flex;
             justify-content: space-between;
-        }
-
-        .cs-brand {
-            display: flex;
             align-items: center;
+            padding: 14px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
             gap: 12px;
-            text-decoration: none;
-            color: var(--cs-text-bright);
         }
-
-        .cs-brand-mark {
-            width: 32px;
-            height: 32px;
-            background: var(--cs-bg-card-sub);
-            border: 1px solid var(--cs-hairline-bright);
-            border-radius: 8px;
-            display: flex;
+        .cs-form-input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            width: 100%;
+        }
+        .cs-taste-chip {
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            font-family: var(--cs-font-mono);
-            font-weight: 800;
-            font-size: 15px;
-            color: var(--cs-green);
+            gap: 6px;
+            transition: all 0.15s ease;
+            user-select: none;
         }
-
-        .cs-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 28px 20px 80px;
-        }
-
-        .cs-grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
-        .cs-grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-        }
-
-        .device-card {
-            background: var(--cs-bg-card-sub);
-            border: 1px solid var(--cs-hairline);
-            border-radius: 10px;
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: border-color 0.15s ease;
-        }
-
-        .device-card:hover {
-            border-color: var(--cs-hairline-bright);
-        }
-
-        .handoff-card {
-            background: var(--cs-bg-card-sub);
-            border-left: 3px solid var(--cs-cyan);
-            border-top: 1px solid var(--cs-hairline);
-            border-right: 1px solid var(--cs-hairline);
-            border-bottom: 1px solid var(--cs-hairline);
-            border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .family-member-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--cs-hairline);
-        }
-
-        .family-member-row:last-child {
-            border-bottom: none;
-        }
-
-        .stat-block {
-            background: var(--cs-bg-card-sub);
-            border: 1px solid var(--cs-hairline);
-            border-radius: 10px;
-            padding: 16px;
-        }
-
-        .stat-label {
-            font-family: var(--cs-font-mono);
-            font-size: 11px;
-            color: var(--cs-text-sub);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--cs-text-bright);
-            margin-top: 4px;
-            font-family: var(--cs-font-sans);
+        .cs-taste-chip.selected {
+            background: rgba(0, 113, 227, 0.1);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            font-weight: 600;
         }
     </style>
 </head>
 
-<body class="cs-industrial-body">
+<body>
 
-    <!-- Top Navigation Bar -->
-    <nav class="cs-nav">
-        <div class="cs-nav-inner">
-            <a href="index" class="cs-brand">
-                <div class="cs-brand-mark">CS</div>
-                <div>
-                    <div style="font-weight: 800; font-size: 14px; letter-spacing: 0.04em;">COKI STUDIOS</div>
-                    <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub);">ID GATEWAY // v3.0</div>
-                </div>
+    <!-- Header Superior (Estilo Apple / Google) -->
+    <header class="cs-header">
+        <div class="cs-header-content">
+            <a href="index" class="cs-logo-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-blue);">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span><strong>Coki Studios</strong> Cuenta</span>
             </a>
 
-            <div style="display: flex; align-items: center; gap: 14px;">
-                <div style="display: flex; align-items: center; gap: 8px; background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); padding: 5px 12px; border-radius: 8px;">
-                    <span class="cs-led cs-led-green"></span>
-                    <span id="nav-email" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-text-bright);">cargando...</span>
-                </div>
-                
-                <a href="forkar" class="cs-btn cs-btn-secondary" style="padding: 6px 12px; font-size: 11px;">Forkar</a>
-                <a href="messenger" class="cs-btn cs-btn-secondary" style="padding: 6px 12px; font-size: 11px;">CSMS</a>
-                <button id="theme-toggle" class="cs-btn cs-btn-secondary" style="padding: 6px 10px; font-size: 12px;" title="Cambiar tema">◑</button>
-                <button id="btn-logout" class="cs-btn cs-btn-danger" style="padding: 6px 14px; font-size: 11px;">Salir</button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button id="theme-toggle" class="cs-btn-subtle" style="padding: 6px 12px; font-size: 12px;" title="Cambiar tema">
+                    ◑ Tema
+                </button>
+                <button id="btn-logout" class="cs-btn-apple" style="padding: 6px 16px; font-size: 13px;">
+                    Cerrar sesión
+                </button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="cs-container">
+    <!-- Layout Dividido (Sidebar Izquierda + Contenido Derecha) -->
+    <div class="cs-app-layout">
 
-        <!-- Top Header Profile Strip -->
-        <div class="cs-panel" style="margin-bottom: 24px; padding: 20px 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div id="profile-avatar" style="width: 54px; height: 54px; border-radius: 12px; background: var(--cs-hairline-bright); border: 1px solid var(--cs-hairline-bright); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: var(--cs-green); font-family: var(--cs-font-mono);">
-                        U
-                    </div>
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <h1 id="profile-name" style="font-size: 20px; font-weight: 800;">Usuario</h1>
-                            <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> SSO ACTIVO</span>
-                            <span class="cs-tag cs-tag-cyan" id="badge-eco-level">ECO PRO</span>
+        <!-- ── SIDEBAR LATERAL ── -->
+        <aside class="cs-sidebar">
+            <div class="cs-profile-snippet">
+                <div class="cs-avatar-wrap">
+                    <div id="profile-avatar" class="cs-avatar-large">J</div>
+                    <div class="cs-avatar-edit-badge" title="Editar foto">✎</div>
+                </div>
+                <div class="cs-plan-pill" id="badge-plan">Pro</div>
+                <div class="cs-profile-name" id="profile-name" style="margin-top: 8px;">JeriX Ortiz</div>
+                <div class="cs-profile-email" id="profile-email">jerixortixdev@gmail.com</div>
+            </div>
+
+            <!-- Menú de Navegación Vertical -->
+            <nav class="cs-nav-menu" id="sidebar-nav">
+                <button class="cs-nav-item active" data-target="section-home">
+                    <span class="cs-nav-icon">🏠</span>
+                    <span>Página principal</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-family">
+                    <span class="cs-nav-icon">👨‍👩‍👧‍👦</span>
+                    <span>Familia</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-info">
+                    <span class="cs-nav-icon">👤</span>
+                    <span>Información personal</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-security">
+                    <span class="cs-nav-icon">🔐</span>
+                    <span>Inicio de sesión y seguridad</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-devices">
+                    <span class="cs-nav-icon">📱</span>
+                    <span>Dispositivos</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-handoff">
+                    <span class="cs-nav-icon">🔄</span>
+                    <span>Continuidad & Handoff</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-linked">
+                    <span class="cs-nav-icon">🔗</span>
+                    <span>Cuentas vinculadas</span>
+                </button>
+                <button class="cs-nav-item" data-target="section-developer">
+                    <span class="cs-nav-icon">💻</span>
+                    <span>Herramientas de Desarrollador</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- ── CONTENIDO PRINCIPAL (DERECHA) ── -->
+        <main class="cs-main-content">
+
+            <!-- Barra de Búsqueda Amigable con Filtros Rápidos (Estilo Google) -->
+            <div class="cs-search-box">
+                <span style="color: var(--text-secondary); font-size: 16px;">🔍</span>
+                <input type="text" id="global-search-input" placeholder="Buscar en la Cuenta de Coki Studios...">
+            </div>
+
+            <div class="cs-quick-pills">
+                <div class="cs-quick-pill" onclick="switchSection('section-security')">Mi contraseña</div>
+                <div class="cs-quick-pill" onclick="switchSection('section-devices')">Dispositivos</div>
+                <div class="cs-quick-pill" onclick="switchSection('section-family')">Familia</div>
+                <div class="cs-quick-pill" onclick="switchSection('section-handoff')">Handoff</div>
+                <div class="cs-quick-pill" onclick="switchSection('section-linked')">Correo electrónico</div>
+                <div class="cs-quick-pill" onclick="switchSection('section-developer')">SmileDev CLI</div>
+            </div>
+
+            <!-- ══════════════ 1. PÁGINA PRINCIPAL / RESUMEN ══════════════ -->
+            <section id="section-home" class="cs-account-section">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Bienvenido a tu Cuenta</h1>
+                    <p class="cs-section-desc">Administra tu información, seguridad y continuidad en todas tus aplicaciones de Coki Studios.</p>
+                </div>
+
+                <div class="cs-cards-grid">
+                    <div class="cs-card" onclick="switchSection('section-security')" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Seguridad y acceso</div>
+                            <span class="cs-card-icon">🛡️</span>
                         </div>
-                        <div id="profile-email" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-text-sub); margin-top: 2px;">
-                            usuario@cokistudios.com
+                        <p class="cs-card-desc">Contraseña protegida, autenticación biométrica Passkey y verificación de hardware SEP activa.</p>
+                        <div class="cs-card-meta">Estado: Protegido</div>
+                    </div>
+
+                    <div class="cs-card" onclick="switchSection('section-devices')" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Tus dispositivos</div>
+                            <span class="cs-card-icon">💻</span>
                         </div>
+                        <p class="cs-card-desc">Sesiones iniciadas en tu Mac, iPhone, Apple Watch Ultra y vehículo con CarPlay.</p>
+                        <div class="cs-card-meta" id="home-devices-count">3 dispositivos activos</div>
+                    </div>
+
+                    <div class="cs-card" onclick="switchSection('section-family')" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Grupo familiar</div>
+                            <span class="cs-card-icon">👨‍👩‍👧‍👦</span>
+                        </div>
+                        <p class="cs-card-desc">Comparte almacenamiento en la nube y suma puntos ecológicos de Forkar en una sola bolsa familiar.</p>
+                        <div class="cs-card-meta">Plan: Family Pro</div>
+                    </div>
+
+                    <div class="cs-card" onclick="switchSection('section-handoff')" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Continuidad en camino</div>
+                            <span class="cs-card-icon">🚗</span>
+                        </div>
+                        <p class="cs-card-desc">Transfiere rutas de Shine Maps o borradores de CSMS al instante a tu auto o reloj.</p>
+                        <div class="cs-card-meta">1 ruta disponible</div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <a id="btn-cs-mail" href="cs-mail" style="display: none;" class="cs-btn cs-btn-secondary">
-                        Abrir CS Mail
-                    </a>
-                    <button id="btn-trigger-handoff-demo" class="cs-btn cs-btn-primary">
-                        Handoff a Dispositivo
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Technical Segmented Tab Bar -->
-        <div class="cs-tabs-bar" id="tabs-bar">
-            <button class="cs-tab-btn active" data-tab="tab-overview">01. PERFIL & GUSTOS</button>
-            <button class="cs-tab-btn" data-tab="tab-devices">02. HUB DE DISPOSITIVOS</button>
-            <button class="cs-tab-btn" data-tab="tab-handoff">03. HANDOFF (CONTINUIDAD)</button>
-            <button class="cs-tab-btn" data-tab="tab-family">04. GRUPO FAMILIAR</button>
-            <button class="cs-tab-btn" data-tab="tab-accounts">05. CORREO & OAUTH</button>
-            <button class="cs-tab-btn" data-tab="tab-security">06. SEGURIDAD & CLAVE</button>
-            <button class="cs-tab-btn" data-tab="tab-pats">07. SMILEDEV CLI & PATS</button>
-            <button class="cs-tab-btn" data-tab="tab-cdn">08. CS CDN TELEMETRÍA</button>
-        </div>
-
-        <!-- ══════════════ TAB 1: PERFIL & GUSTOS ══════════════ -->
-        <div id="tab-overview" class="tab-content">
-            <div class="cs-grid-3" style="margin-bottom: 24px;">
-                <div class="stat-block">
-                    <div class="stat-label">Ahorro CO₂ Forkar</div>
-                    <div class="stat-value" style="color: var(--cs-green);" id="stat-co2">24.2 kg</div>
-                </div>
-                <div class="stat-block">
-                    <div class="stat-label">Puntos Eco Acumulados</div>
-                    <div class="stat-value" style="color: var(--cs-amber);" id="stat-points">480 pts</div>
-                </div>
-                <div class="stat-block">
-                    <div class="stat-label">Dispositivos Verificados</div>
-                    <div class="stat-value" id="stat-devices-count">3 activos</div>
-                </div>
-            </div>
-
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Ajustes Básicos de Cuenta</div>
-                    <span class="cs-tag cs-tag-cyan">CS ID CORE</span>
-                </div>
-                
-                <div class="cs-grid-2" style="margin-bottom: 20px;">
-                    <div>
-                        <label style="display:block; font-size:11px; font-family:var(--cs-font-mono); color:var(--cs-text-sub); margin-bottom:6px; text-transform:uppercase;">Nombre Completo</label>
-                        <input type="text" id="edit-name" class="cs-input" placeholder="Tu nombre">
+                <!-- Resumen de Puntos y Forkar -->
+                <div class="cs-list-group">
+                    <div class="cs-list-row">
+                        <div>
+                            <div class="cs-list-label">Ahorro de CO₂ en Forkar</div>
+                            <div class="cs-list-sublabel">Emisiones evitadas gracias a tus viajes compartidos y movilidad sostenible.</div>
+                        </div>
+                        <span style="font-size: 16px; font-weight: 700; color: var(--accent-green);" id="home-eco-co2">24.2 kg CO₂</span>
                     </div>
-                    <div>
-                        <label style="display:block; font-size:11px; font-family:var(--cs-font-mono); color:var(--cs-text-sub); margin-bottom:6px; text-transform:uppercase;">Compañía / Lema</label>
-                        <input type="text" id="edit-company" class="cs-input" placeholder="Coki Studios Team">
+                    <div class="cs-list-row">
+                        <div>
+                            <div class="cs-list-label">Puntos Eco de la comunidad</div>
+                            <div class="cs-list-sublabel">Canjeables por beneficios y espacio extra en CS Mail.</div>
+                        </div>
+                        <span style="font-size: 16px; font-weight: 700; color: var(--accent-orange);" id="home-eco-points">480 pts</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════ 2. FAMILIA ══════════════ -->
+            <section id="section-family" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Familia</h1>
+                    <p class="cs-section-desc">Comparte suscripciones, almacenamiento seguro y acumula puntos ecológicos en equipo.</p>
+                </div>
+
+                <div class="cs-cards-grid">
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Bolsa Eco Familiar</div>
+                            <span class="cs-card-icon">🌱</span>
+                        </div>
+                        <div style="font-size: 26px; font-weight: 700; color: var(--accent-green); margin-top: 4px;" id="family-co2">48.6 kg</div>
+                        <p class="cs-card-desc" style="margin-top: 6px;">CO₂ total ahorrado por todos los miembros del hogar.</p>
+                    </div>
+
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Almacenamiento en la nube</div>
+                            <span class="cs-card-icon">☁️</span>
+                        </div>
+                        <div style="font-size: 26px; font-weight: 700; color: var(--accent-blue); margin-top: 4px;" id="family-storage">184 GB / 1 TB</div>
+                        <p class="cs-card-desc" style="margin-top: 6px;">Espacio compartido para correos y copias de seguridad.</p>
                     </div>
                 </div>
 
-                <div style="margin-bottom: 24px;">
-                    <label style="display:block; font-size:11px; font-family:var(--cs-font-mono); color:var(--cs-text-sub); margin-bottom:8px; text-transform:uppercase;">Algoritmo de Intereses & Feed de Contenido</label>
-                    <div id="taste-categories-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px;">
+                <div class="cs-list-group">
+                    <div style="padding: 18px 20px 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 15px; font-weight: 700;">Miembros de la familia</span>
+                        <button class="cs-btn-apple" style="padding: 6px 14px; font-size: 12px;" id="btn-invite-member">+ Invitar miembro</button>
+                    </div>
+                    <div id="family-list-container">
                         <!-- Inyectado por JS -->
                     </div>
                 </div>
+            </section>
 
-                <button id="btn-save-profile" class="cs-btn cs-btn-primary">Guardar Cambios de Perfil</button>
-            </div>
-        </div>
-
-        <!-- ══════════════ TAB 2: HUB DE DISPOSITIVOS ══════════════ -->
-        <div id="tab-devices" class="tab-content" style="display: none;">
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Dispositivos Vinculados a tu CS ID</div>
-                    <button id="btn-revoke-others" class="cs-btn cs-btn-danger" style="font-size: 11px;">
-                        Cerrar Sesión en los Demás Dispositivos
-                    </button>
+            <!-- ══════════════ 3. INFORMACIÓN PERSONAL ══════════════ -->
+            <section id="section-info" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Información personal</h1>
+                    <p class="cs-section-desc">Administra tu perfil público y tus preferencias de contenido en Forkar y CSMS.</p>
                 </div>
-                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 18px;">
-                    Administra tus sesiones en macOS, iOS, Apple Watch, CarPlay y navegadores web. Los dispositivos con Secure Enclave (SEP) validan el cifrado E2EE por hardware.
-                </p>
 
-                <div id="devices-list" style="display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Inyectado por JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════ TAB 3: HANDOFF (CONTINUIDAD) ══════════════ -->
-        <div id="tab-handoff" class="tab-content" style="display: none;">
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Continuidad Universal (Handoff)</div>
-                    <span class="cs-tag cs-tag-cyan">REALTIME BRIDGE</span>
-                </div>
-                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 20px;">
-                    Transfiere rutas activas de Shine Maps, borradores cifrados de CSMS o telemetría de Forkar entre tu computadora, tu teléfono, el reloj o el auto.
-                </p>
-
-                <div id="handoff-list">
-                    <!-- Inyectado por JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════ TAB 4: GRUPO FAMILIAR ══════════════ -->
-        <div id="tab-family" class="tab-content" style="display: none;">
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div>
-                        <div class="cs-panel-title" id="family-group-title">Familia Coki Studios</div>
-                        <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); margin-top: 2px;" id="family-tier-badge">Plan: Family Pro · 1 TB Compartido</div>
+                <div class="cs-list-group">
+                    <div class="cs-list-row">
+                        <div>
+                            <div class="cs-list-label">Nombre para mostrar</div>
+                            <div class="cs-list-sublabel" id="label-current-name">JeriX Ortiz Android</div>
+                        </div>
+                        <button class="cs-btn-subtle" onclick="editField('name')">Editar</button>
                     </div>
-                    <button id="btn-invite-family-modal" class="cs-btn cs-btn-primary" style="font-size: 11px;">
-                        + Invitar Miembro
-                    </button>
-                </div>
 
-                <div class="cs-grid-3" style="margin-bottom: 20px;">
-                    <div class="stat-block">
-                        <div class="stat-label">Bolsa Eco Familiar (CO₂)</div>
-                        <div class="stat-value" style="color: var(--cs-green);" id="family-eco-pool">48.6 kg</div>
+                    <div class="cs-list-row">
+                        <div>
+                            <div class="cs-list-label">Biografía o lema</div>
+                            <div class="cs-list-sublabel" id="label-current-bio">Coki Studios LLC, AI & Machine Learning, Eco Tech</div>
+                        </div>
+                        <button class="cs-btn-subtle" onclick="editField('bio')">Editar</button>
                     </div>
-                    <div class="stat-block">
-                        <div class="stat-label">Puntos Eco del Grupo</div>
-                        <div class="stat-value" style="color: var(--cs-amber);" id="family-eco-points">1,420 pts</div>
-                    </div>
-                    <div class="stat-block">
-                        <div class="stat-label">Almacenamiento en la Nube</div>
-                        <div class="stat-value" id="family-storage">184 GB / 1 TB</div>
+
+                    <div class="cs-list-row">
+                        <div>
+                            <div class="cs-list-label">Correo electrónico principal</div>
+                            <div class="cs-list-sublabel" id="label-current-email">jerixortixdev@gmail.com</div>
+                        </div>
+                        <span style="font-size: 12px; color: var(--accent-green); font-weight: 600;">Verificado</span>
                     </div>
                 </div>
 
-                <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 10px; padding: 16px;">
-                    <div style="font-size: 12px; font-weight: 800; font-family: var(--cs-font-mono); color: var(--cs-text-sub); text-transform: uppercase; margin-bottom: 12px;">Miembros del Grupo</div>
-                    <div id="family-members-list">
+                <div class="cs-card">
+                    <div class="cs-card-title" style="margin-bottom: 6px;">Tus temas y categorías favoritas</div>
+                    <p class="cs-card-desc" style="margin-bottom: 14px;">Personaliza el feed y las sugerencias de la comunidad según lo que más te interesa.</p>
+                    <div id="tastes-chips-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
                         <!-- Inyectado por JS -->
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- ══════════════ TAB 5: CORREO & OAUTH ══════════════ -->
-        <div id="tab-accounts" class="tab-content" style="display: none;">
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Identidades y Proveedores Vinculados</div>
-                    <span class="cs-tag cs-tag-green">MULTI-IDENTITY</span>
+            <!-- ══════════════ 4. INICIO DE SESIÓN Y SEGURIDAD (ESTILO APPLE) ══════════════ -->
+            <section id="section-security" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Inicio de sesión y seguridad</h1>
+                    <p class="cs-section-desc">Administra las configuraciones de inicio de sesión y seguridad de tu cuenta, así como las opciones de recuperación.</p>
                 </div>
-                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 20px;">
-                    Puedes iniciar sesión con tu cuenta de correo corporativo/personal (CS Mail) y/o vincular proveedores OAuth (Google, GitHub, Apple) para acceder con 1 clic.
-                </p>
 
-                <div id="identities-list" style="display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Inyectado por JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════ TAB 6: SEGURIDAD & CONTRASEÑA ══════════════ -->
-        <div id="tab-security" class="tab-content" style="display: none;">
-            <div class="cs-panel" style="margin-bottom: 24px;">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Cambiar Contraseña de Cuenta</div>
-                    <span class="cs-tag cs-tag-amber">SEGURIDAD ALTA</span>
-                </div>
-                
-                <div class="cs-grid-2" style="margin-bottom: 16px;">
-                    <div>
-                        <label style="display:block; font-size:11px; font-family:var(--cs-font-mono); color:var(--cs-text-sub); margin-bottom:6px; text-transform:uppercase;">Nueva Contraseña</label>
-                        <input type="password" id="input-new-password" class="cs-input" placeholder="Mínimo 8 caracteres">
+                <div class="cs-cards-grid">
+                    <div class="cs-card" onclick="openPasswordChangeModal()" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Contraseña</div>
+                            <span class="cs-card-icon">🔑</span>
+                        </div>
+                        <p class="cs-card-desc">Cambia o actualiza tu contraseña periódicamente para mantener tu cuenta a salvo.</p>
+                        <div class="cs-card-meta">Última actualización: recientemente</div>
                     </div>
-                    <div>
-                        <label style="display:block; font-size:11px; font-family:var(--cs-font-mono); color:var(--cs-text-sub); margin-bottom:6px; text-transform:uppercase;">Confirmar Nueva Contraseña</label>
-                        <input type="password" id="input-confirm-password" class="cs-input" placeholder="Repite la contraseña">
+
+                    <div class="cs-card" onclick="triggerPasskeyRegister()" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Passkey (Face ID / Touch ID)</div>
+                            <span class="cs-card-icon">🪪</span>
+                        </div>
+                        <p class="cs-card-desc">Inicia sesión de forma rápida y segura sin escribir contraseñas mediante biometría.</p>
+                        <div class="cs-card-meta" style="color: var(--accent-green);">● Activa en este dispositivo</div>
+                    </div>
+
+                    <div class="cs-card" onclick="copyMasterRecoveryKey()" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Clave maestra de recuperación</div>
+                            <span class="cs-card-icon">🔐</span>
+                        </div>
+                        <p class="cs-card-desc">Tu código de seguridad universal para restablecer la cuenta si pierdes acceso.</p>
+                        <div class="cs-card-meta" id="display-master-key">CSK-9A82-44FE-B810-77C1</div>
+                    </div>
+
+                    <div class="cs-card" onclick="switchSection('section-linked')" style="cursor: pointer;">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Iniciar sesión con Google o Apple</div>
+                            <span class="cs-card-icon">🌐</span>
+                        </div>
+                        <p class="cs-card-desc">Conecta tus cuentas externas para entrar a Coki Studios con un solo clic.</p>
+                        <div class="cs-card-meta">Configurar cuentas vinculadas</div>
                     </div>
                 </div>
-                <div id="password-feedback" style="font-size: 12px; margin-bottom: 14px;"></div>
-                <button id="btn-update-password" class="cs-btn cs-btn-primary">Actualizar Contraseña</button>
-            </div>
+            </section>
 
-            <!-- Passkey & Master Key Section -->
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Passkey Biométrica & Master Key Universal</div>
-                    <span class="cs-tag cs-tag-green">HARDWARE BACKED</span>
-                </div>
-                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 16px;">
-                    Accede sin escribir contraseñas mediante Face ID, Touch ID o Windows Hello con FIDO2/WebAuthn.
-                </p>
-
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
-                    <button id="btn-register-passkey" class="cs-btn cs-btn-secondary">
-                        Activar / Actualizar Passkey en este Equipo
+            <!-- ══════════════ 5. DISPOSITIVOS (ESTILO APPLE) ══════════════ -->
+            <section id="section-devices" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1 class="cs-section-title">Dispositivos</h1>
+                        <p class="cs-section-desc">Dispositivos en los que has iniciado sesión con tu cuenta de Coki Studios.</p>
+                    </div>
+                    <button class="cs-btn-subtle" id="btn-signout-all-devices" style="font-size: 12px; color: var(--accent-red);">
+                        Cerrar sesión en los demás
                     </button>
                 </div>
 
-                <div class="cs-code-box">
-                    <div>
-                        <div style="font-size: 10px; color: var(--cs-text-sub); text-transform: uppercase;">Tu CS Master Recovery Key:</div>
-                        <div id="master-key-val" style="font-size: 15px; font-weight: 800; color: var(--cs-green); letter-spacing: 1.5px; margin-top: 2px;">CSK-9A82-44FE-B810-77C1</div>
-                    </div>
-                    <button id="btn-copy-master-key" class="cs-btn cs-btn-secondary" style="font-size: 11px;">Copiar</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ══════════════ TAB 7: SMILEDEV CLI & PATS ══════════════ -->
-        <div id="tab-pats" class="tab-content" style="display: none;">
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Personal Access Tokens para smiledev CLI</div>
-                    <button id="btn-create-pat" class="cs-btn cs-btn-primary" style="font-size: 11px;">
-                        + Generar Nuevo Token (PAT)
-                    </button>
-                </div>
-                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 16px;">
-                    Usa estos tokens para autenticar la terminal con <code style="font-family:var(--cs-font-mono); color:var(--cs-green);">smiledev login --token &lt;PAT&gt;</code> y publicar módulos en la base de datos comunitaria LoopModules.
-                </p>
-
-                <div class="cs-code-box" style="margin-bottom: 20px;">
-                    <div>$ smiledev login --token cs_pat_...</div>
-                    <button class="cs-btn cs-btn-secondary" style="font-size: 10px;" onclick="navigator.clipboard.writeText('smiledev login --token cs_pat_...')">Copiar Comando</button>
-                </div>
-
-                <div id="pats-list">
+                <div class="cs-list-group" id="devices-container-list">
                     <!-- Inyectado por JS -->
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- ══════════════ TAB 8: CS CDN TELEMETRÍA ══════════════ -->
-        <div id="tab-cdn" class="tab-content" style="display: none;">
-            <div class="cs-panel">
-                <div class="cs-panel-header">
-                    <div class="cs-panel-title">Coki Studios Global Edge CDN</div>
-                    <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> CLOUDFLARE EDGE OPERACIONAL</span>
-                </div>
-                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 20px;">
-                    Red perimetral global para distribución ultrarrápida de paquetes de SmileDev, assets de Shine Maps y binarios de Looping.
-                </p>
-
-                <div class="cs-grid-3" style="margin-bottom: 20px;">
-                    <div class="stat-block">
-                        <div class="stat-label">Latencia en el Edge</div>
-                        <div class="stat-value" style="color: var(--cs-green);" id="cdn-latency">14 ms</div>
-                    </div>
-                    <div class="stat-block">
-                        <div class="stat-label">Cache Hit Ratio</div>
-                        <div class="stat-value" style="color: var(--cs-cyan);">99.4%</div>
-                    </div>
-                    <div class="stat-block">
-                        <div class="stat-label">Protocolo</div>
-                        <div class="stat-value">HTTP/3 (QUIC)</div>
-                    </div>
+            <!-- ══════════════ 6. CONTINUIDAD & HANDOFF ══════════════ -->
+            <section id="section-handoff" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Continuidad y Handoff</h1>
+                    <p class="cs-section-desc">Continúa tus actividades sin interrupciones entre tu computadora, tu teléfono, el Apple Watch y el auto.</p>
                 </div>
 
-                <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 10px; padding: 16px;">
-                    <div style="font-size: 12px; font-weight: 800; font-family: var(--cs-font-mono); color: var(--cs-text-sub); text-transform: uppercase; margin-bottom: 10px;">Endpoints Principales</div>
-                    <div style="font-family: var(--cs-font-mono); font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
-                        <div>• <span style="color:var(--cs-cyan);">https://cdn.cokistudios.com/cdn/v1/modules/:name/:version</span> (SmileDev)</div>
-                        <div>• <span style="color:var(--cs-cyan);">https://cdn.cokistudios.com/cdn/v1/assets/:asset</span> (Assets & Media)</div>
-                        <div>• <span style="color:var(--cs-cyan);">https://cdn.cokistudios.com/cdn/v1/health</span> (Estado de salud)</div>
+                <div class="cs-cards-grid">
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Ruta activa en Shine Maps</div>
+                            <span class="cs-card-icon">🗺️</span>
+                        </div>
+                        <p class="cs-card-desc">Ruta calculada hacia Electrolinera Enel X (650 m). Lista para enviar a tu vehículo o reloj.</p>
+                        <div style="margin-top: 14px; display: flex; gap: 8px;">
+                            <button class="cs-btn-apple" style="font-size: 12px;" onclick="alert('Ruta enviada a CarPlay y Apple Watch.')">Enviar a CarPlay</button>
+                            <button class="cs-btn-subtle" style="font-size: 12px;" onclick="alert('Abriendo en iPhone...')">Abrir en iPhone</button>
+                        </div>
+                    </div>
+
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Borrador en CSMS Mensajería</div>
+                            <span class="cs-card-icon">💬</span>
+                        </div>
+                        <p class="cs-card-desc">Mensaje en progreso en la sala de #EcoDrivers: "Confirmada la recarga...".</p>
+                        <div style="margin-top: 14px;">
+                            <button class="cs-btn-apple" style="font-size: 12px;" onclick="alert('Borrador sincronizado con tu teléfono.')">Continuar en teléfono</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-    </main>
+            <!-- ══════════════ 7. CUENTAS VINCULADAS ══════════════ -->
+            <section id="section-linked" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Cuentas vinculadas & Métodos de acceso</h1>
+                    <p class="cs-section-desc">Vincula tu correo institucional de CS Mail y proveedores externos para un acceso más sencillo.</p>
+                </div>
 
-    <!-- Script de Inicialización y Lógica -->
+                <div class="cs-list-group">
+                    <div class="cs-list-row">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 24px;">✉️</span>
+                            <div>
+                                <div class="cs-list-label">CS Mail / Correo institucional</div>
+                                <div class="cs-list-sublabel" id="linked-email-label">jerixortixdev@gmail.com</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 12px; color: var(--accent-green); font-weight: 600;">Conectado</span>
+                    </div>
+
+                    <div class="cs-list-row">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 24px;">🌐</span>
+                            <div>
+                                <div class="cs-list-label">Cuenta de Google</div>
+                                <div class="cs-list-sublabel">Acceso rápido con un toque</div>
+                            </div>
+                        </div>
+                        <button class="cs-btn-subtle" onclick="linkProvider('google')">Vincular</button>
+                    </div>
+
+                    <div class="cs-list-row">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 24px;">🐙</span>
+                            <div>
+                                <div class="cs-list-label">GitHub</div>
+                                <div class="cs-list-sublabel">Para desarrolladores de Loop y módulos</div>
+                            </div>
+                        </div>
+                        <button class="cs-btn-subtle" onclick="linkProvider('github')">Vincular</button>
+                    </div>
+
+                    <div class="cs-list-row">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 24px;">🍎</span>
+                            <div>
+                                <div class="cs-list-label">Iniciar sesión con Apple</div>
+                                <div class="cs-list-sublabel">Usa tu Apple ID de forma privada</div>
+                            </div>
+                        </div>
+                        <button class="cs-btn-subtle" onclick="linkProvider('apple')">Vincular</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════ 8. HERRAMIENTAS DE DESARROLLADOR ══════════════ -->
+            <section id="section-developer" class="cs-account-section" style="display: none;">
+                <div class="cs-section-header">
+                    <h1 class="cs-section-title">Herramientas de Desarrollador</h1>
+                    <p class="cs-section-desc">Accede a tus credenciales de smiledev CLI, tokens de acceso y métricas de red.</p>
+                </div>
+
+                <div class="cs-cards-grid">
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Token para smiledev CLI</div>
+                            <span class="cs-card-icon">⚡</span>
+                        </div>
+                        <p class="cs-card-desc">Usa este token para publicar módulos de C++, Python y Loop desde la terminal.</p>
+                        <div style="margin-top: 14px;">
+                            <button class="cs-btn-apple" style="font-size: 12px;" id="btn-generate-pat">+ Generar token (PAT)</button>
+                        </div>
+                    </div>
+
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title">Consola de Desarrolladores</div>
+                            <span class="cs-card-icon">📊</span>
+                        </div>
+                        <p class="cs-card-desc">Explora el registro de paquetes de LoopModules y administra aplicaciones OAuth 2.0.</p>
+                        <div style="margin-top: 14px;">
+                            <a href="developer" class="cs-btn-subtle" style="font-size: 12px;">Abrir consola</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cs-list-group">
+                    <div style="padding: 18px 20px 8px;">
+                        <span style="font-size: 15px; font-weight: 700;">Tokens de acceso activos</span>
+                    </div>
+                    <div id="pats-list-container">
+                        <!-- Inyectado por JS -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Script de Funcionalidad y Conexión -->
     <script type="module">
         import { 
             getCurrentCokiUser, 
             logoutCoki, 
             updateCokiProfile, 
             changeCokiPassword,
-            hasAdminMailAccess, 
             registerPasskey,
             getRegisteredDevices,
             revokeDevice,
             revokeOtherDevices,
-            getActiveHandoffs,
-            pushHandoff,
-            dismissHandoff,
             getFamilyGroup,
             inviteFamilyMember,
             removeFamilyMember,
@@ -482,24 +513,28 @@
             createPersonalAccessToken,
             revokePersonalAccessToken
         } from './coki-auth.js';
-        import { CS_CDN } from './cs-cdn.js';
 
         let currentUser = null;
-        let selectedCategories = [];
 
-        // Gestor de Pestañas
-        document.querySelectorAll('.cs-tab-btn').forEach(btn => {
+        // Navegación entre secciones
+        window.switchSection = function(sectionId) {
+            document.querySelectorAll('.cs-account-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.cs-nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-target') === sectionId);
+            });
+            const target = document.getElementById(sectionId);
+            if (target) target.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        document.querySelectorAll('#sidebar-nav .cs-nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.cs-tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-                btn.classList.add('active');
-                const target = document.getElementById(btn.getAttribute('data-tab'));
-                if (target) target.style.display = 'block';
+                switchSection(btn.getAttribute('data-target'));
             });
         });
 
-        // Cargar Usuario y Datos
-        async function initDashboard() {
+        // Inicializar Datos
+        async function initAccount() {
             const user = await getCurrentCokiUser();
             if (!user) {
                 window.location.href = '/register.html';
@@ -507,331 +542,184 @@
             }
             currentUser = user;
 
-            // Header Elements
-            document.getElementById('nav-email').textContent = user.email;
-            document.getElementById('profile-name').textContent = user.name || user.email.split('@')[0];
+            const name = user.name || user.email.split('@')[0];
+            document.getElementById('profile-name').textContent = name;
             document.getElementById('profile-email').textContent = user.email;
-            
-            const avatar = document.getElementById('profile-avatar');
+            document.getElementById('label-current-name').textContent = name;
+            document.getElementById('label-current-email').textContent = user.email;
+            document.getElementById('linked-email-label').textContent = user.email;
+
+            const avatarEl = document.getElementById('profile-avatar');
             if (user.picture) {
-                avatar.innerHTML = `<img src="${user.picture}" style="width:100%; height:100%; border-radius:12px; object-fit:cover;">`;
+                avatarEl.innerHTML = `<img src="${user.picture}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
             } else {
-                avatar.textContent = (user.name || user.email).charAt(0).toUpperCase();
+                avatarEl.textContent = name.charAt(0).toUpperCase();
             }
 
-            document.getElementById('edit-name').value = user.name || '';
-            document.getElementById('edit-company').value = user.metadata?.company || '';
-
-            // Verificar acceso CS Mail
-            const hasMail = await hasAdminMailAccess();
-            document.getElementById('btn-cs-mail').style.display = hasMail ? 'inline-flex' : 'none';
-
-            // Cargar Submódulos
-            await renderDevices();
-            await renderHandoff();
-            await renderFamily();
-            await renderIdentities();
-            await renderPATs();
-            await renderCDNStats();
-            renderTastes();
+            await renderDevicesList();
+            await renderFamilyList();
+            await renderPATsList();
+            renderTastesChips();
         }
 
-        // 1. Dispositivos
-        async function renderDevices() {
-            const list = await getRegisteredDevices();
-            const container = document.getElementById('devices-list');
-            document.getElementById('stat-devices-count').textContent = `${list.length} activos`;
-            
-            container.innerHTML = list.map(dev => `
-                <div class="device-card">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px;">
-                            ${dev.platform === 'watchOS' ? '⌚' : dev.platform === 'CarPlay' ? '🚗' : dev.platform === 'macOS' ? '💻' : '📱'}
-                        </div>
+        // Dispositivos
+        async function renderDevicesList() {
+            const devices = await getRegisteredDevices();
+            document.getElementById('home-devices-count').textContent = `${devices.length} dispositivos activos`;
+            const container = document.getElementById('devices-container-list');
+
+            container.innerHTML = devices.map(d => `
+                <div class="cs-list-row">
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <span style="font-size:24px;">${d.platform === 'watchOS' ? '⌚' : d.platform === 'CarPlay' ? '🚗' : d.platform === 'macOS' ? '💻' : '📱'}</span>
                         <div>
-                            <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                                ${dev.name}
-                                ${dev.isCurrent ? '<span class="cs-tag cs-tag-green">ESTE EQUIPO</span>' : ''}
-                                ${dev.trustedSEP ? '<span class="cs-tag cs-tag-cyan" title="Hardware Secure Enclave">SEP</span>' : ''}
+                            <div class="cs-list-label">
+                                ${d.name} ${d.isCurrent ? '<span style="color:var(--accent-green);font-size:12px;margin-left:6px;">(Este dispositivo)</span>' : ''}
                             </div>
-                            <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); margin-top: 2px;">
-                                IP: ${dev.ip} · Última actividad: ${dev.lastActive}
-                            </div>
+                            <div class="cs-list-sublabel">${d.ip} · ${d.lastActive}</div>
                         </div>
                     </div>
                     <div>
-                        ${dev.isCurrent ? '<span style="font-size:12px; color:var(--cs-green); font-weight:700;">En línea</span>' : 
-                        `<button class="cs-btn cs-btn-secondary" style="font-size:11px;" onclick="window.handleRevokeDevice('${dev.id}')">Desvincular</button>`}
+                        ${d.isCurrent ? '<span style="font-size:13px;color:var(--accent-green);font-weight:600;">En línea</span>' : 
+                        `<button class="cs-btn-subtle" style="font-size:12px;color:var(--accent-red);" onclick="handleRevoke('${d.id}')">Desvincular</button>`}
                     </div>
                 </div>
             `).join('');
         }
 
-        window.handleRevokeDevice = async (id) => {
+        window.handleRevoke = async (id) => {
             if (confirm('¿Cerrar sesión en este dispositivo?')) {
                 await revokeDevice(id);
-                await renderDevices();
+                await renderDevicesList();
             }
         };
 
-        document.getElementById('btn-revoke-others').addEventListener('click', async () => {
+        document.getElementById('btn-signout-all-devices').addEventListener('click', async () => {
             if (confirm('¿Cerrar sesión en todos los demás dispositivos?')) {
                 await revokeOtherDevices();
-                await renderDevices();
+                await renderDevicesList();
             }
         });
 
-        // 2. Handoff
-        async function renderHandoff() {
-            const list = await getActiveHandoffs();
-            const container = document.getElementById('handoff-list');
-            if (list.length === 0) {
-                container.innerHTML = '<p style="color:var(--cs-text-sub); text-align:center; padding:20px 0;">No hay tareas en curso para transferir.</p>';
-                return;
-            }
+        // Familia
+        async function renderFamilyList() {
+            const fam = await getFamilyGroup();
+            document.getElementById('family-co2').textContent = `${fam.sharedEcoPoolKg} kg`;
+            document.getElementById('family-storage').textContent = `${fam.usedCloudStorageGb} GB / ${fam.sharedCloudStorageGb} GB`;
 
-            container.innerHTML = list.map(h => `
-                <div class="handoff-card">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="cs-tag cs-tag-cyan">${h.service}</span>
-                            <span style="font-weight: 800; font-size: 14px;">${h.title}</span>
-                        </div>
-                        <div style="font-size: 12px; color: var(--cs-text-sub); margin-top: 4px;">${h.subtitle}</div>
-                        <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-muted); margin-top: 2px;">
-                            Origen: ${h.originDevice} · Disponible en: ${h.availableTargets.join(', ')}
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="cs-btn cs-btn-primary" style="font-size: 11px;" onclick="alert('Abriendo actividad en ${h.availableTargets[0]}...')">
-                            Continuar en ${h.availableTargets[0]}
-                        </button>
-                        <button class="cs-btn cs-btn-secondary" style="font-size: 11px;" onclick="window.handleDismissHandoff('${h.id}')">✕</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.handleDismissHandoff = async (id) => {
-            await dismissHandoff(id);
-            await renderHandoff();
-        };
-
-        document.getElementById('btn-trigger-handoff-demo').addEventListener('click', async () => {
-            await pushHandoff('CarPlay', {
-                service: 'Shine Maps',
-                title: 'Ruta hacia Centro de Reciclaje',
-                subtitle: 'Distancia: 1.2 km · Enviado desde Web'
-            });
-            await renderHandoff();
-            alert('¡Ruta enviada a tu vehículo / CarPlay con éxito!');
-        });
-
-        // 3. Familias
-        async function renderFamily() {
-            const family = await getFamilyGroup();
-            document.getElementById('family-group-title').textContent = family.name;
-            document.getElementById('family-tier-badge').textContent = `Plan: ${family.tier} · ${family.sharedCloudStorageGb} GB Compartidos`;
-            document.getElementById('family-eco-pool').textContent = `${family.sharedEcoPoolKg} kg`;
-            document.getElementById('family-eco-points').textContent = `${family.sharedEcoPoints} pts`;
-            document.getElementById('family-storage').textContent = `${family.usedCloudStorageGb} GB / ${family.sharedCloudStorageGb} GB`;
-
-            const container = document.getElementById('family-members-list');
-            container.innerHTML = family.members.map(m => `
-                <div class="family-member-row">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--cs-font-mono);">
+            const container = document.getElementById('family-list-container');
+            container.innerHTML = fam.members.map(m => `
+                <div class="cs-list-row">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:34px;height:34px;border-radius:50%;background:var(--accent-blue);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;">
                             ${m.avatar}
                         </div>
                         <div>
-                            <div style="font-weight: 700; font-size: 13px;">${m.name}</div>
-                            <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub);">${m.email}</div>
+                            <div class="cs-list-label">${m.name}</div>
+                            <div class="cs-list-sublabel">${m.email} · Rol: ${m.role}</div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="cs-tag ${m.role === 'Organizador' ? 'cs-tag-green' : 'cs-tag-amber'}">${m.role}</span>
-                        <span style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-green);">${m.ecoKg} kg CO₂</span>
-                        ${m.role !== 'Organizador' ? `<button class="cs-btn cs-btn-secondary" style="font-size:10px; padding:4px 8px;" onclick="window.handleRemoveMember('${m.id}')">Quitar</button>` : ''}
-                    </div>
+                    <span style="font-size:13px;font-weight:600;color:var(--accent-green);">${m.ecoKg} kg CO₂</span>
                 </div>
             `).join('');
         }
 
-        window.handleRemoveMember = async (id) => {
-            if (confirm('¿Remover miembro de la familia?')) {
-                await removeFamilyMember(id);
-                await renderFamily();
-            }
-        };
-
-        document.getElementById('btn-invite-family-modal').addEventListener('click', async () => {
-            const email = prompt('Introduce el correo de Coki Studios del familiar a invitar:');
+        document.getElementById('btn-invite-member').addEventListener('click', async () => {
+            const email = prompt('Introduce el correo electrónico del familiar a invitar:');
             if (email && email.includes('@')) {
                 await inviteFamilyMember(email, 'Adulto');
-                await renderFamily();
+                await renderFamilyList();
                 alert(`Invitación enviada a ${email}`);
             }
         });
 
-        // 4. Identidades y OAuth
-        async function renderIdentities() {
-            const identities = await getLinkedIdentities();
-            const container = document.getElementById('identities-list');
-            container.innerHTML = identities.map(id => `
-                <div class="device-card">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="font-size: 20px;">
-                            ${id.provider === 'google' ? '🌐' : id.provider === 'github' ? '🐙' : id.provider === 'apple' ? '🍎' : '✉️'}
-                        </div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 14px;">${id.title}</div>
-                            <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub);">${id.identifier}</div>
-                        </div>
-                    </div>
-                    <div>
-                        ${id.linked ? 
-                        '<span class="cs-tag cs-tag-green">VINCULADO</span>' : 
-                        `<button class="cs-btn cs-btn-secondary" style="font-size:11px;" onclick="window.handleLink('${id.provider}')">Vincular</button>`}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.handleLink = async (provider) => {
-            await linkOAuthProvider(provider);
-        };
-
-        // 5. Personal Access Tokens (SmileDev)
-        async function renderPATs() {
+        // PATs
+        async function renderPATsList() {
             const tokens = await getPersonalAccessTokens();
-            const container = document.getElementById('pats-list');
+            const container = document.getElementById('pats-list-container');
             container.innerHTML = tokens.map(t => `
-                <div class="device-card" style="margin-bottom: 10px;">
+                <div class="cs-list-row">
                     <div>
-                        <div style="font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-                            ${t.name}
-                            <span class="cs-tag cs-tag-cyan">${t.tokenPrefix}...</span>
-                        </div>
-                        <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); margin-top: 4px;">
-                            Creado: ${t.createdAt} · Permisos: ${t.scopes.join(', ')} · Expira en: ${t.expiresIn}
-                        </div>
+                        <div class="cs-list-label">${t.name} <code style="font-size:11px;color:var(--accent-blue);">${t.tokenPrefix}...</code></div>
+                        <div class="cs-list-sublabel">Creado: ${t.createdAt} · Expira en: ${t.expiresIn}</div>
                     </div>
-                    <button class="cs-btn cs-btn-danger" style="font-size: 10px; padding: 5px 10px;" onclick="window.handleRevokePAT('${t.id}')">Revocar</button>
+                    <button class="cs-btn-subtle" style="font-size:12px;color:var(--accent-red);" onclick="handleRevokePAT('${t.id}')">Eliminar</button>
                 </div>
             `).join('');
         }
 
         window.handleRevokePAT = async (id) => {
-            if (confirm('¿Revocar este token de acceso? El CLI no podrá publicar con él.')) {
+            if (confirm('¿Eliminar este token?')) {
                 await revokePersonalAccessToken(id);
-                await renderPATs();
+                await renderPATsList();
             }
         };
 
-        document.getElementById('btn-create-pat').addEventListener('click', async () => {
-            const name = prompt('Nombre identificador para el token (ej: "MacBook Pro M3", "Servidor CI"):', 'Mi Terminal');
+        document.getElementById('btn-generate-pat').addEventListener('click', async () => {
+            const name = prompt('Nombre identificador para el token (ej: "MacBook Pro", "Terminal"):', 'Mi Terminal');
             if (name) {
                 const res = await createPersonalAccessToken(name);
-                await renderPATs();
-                prompt('Copia tu nuevo Personal Access Token (no se volverá a mostrar completo):', res.rawToken);
+                await renderPATsList();
+                prompt('Copia tu nuevo token para smiledev CLI:', res.rawToken);
             }
         });
 
-        // 6. Cambio de Contraseña
-        document.getElementById('btn-update-password').addEventListener('click', async () => {
-            const p1 = document.getElementById('input-new-password').value;
-            const p2 = document.getElementById('input-confirm-password').value;
-            const feedback = document.getElementById('password-feedback');
-
-            if (!p1 || p1.length < 8) {
-                feedback.innerHTML = '<span style="color:var(--cs-red);">La contraseña debe tener al menos 8 caracteres.</span>';
-                return;
-            }
-            if (p1 !== p2) {
-                feedback.innerHTML = '<span style="color:var(--cs-red);">Las contraseñas no coinciden.</span>';
-                return;
-            }
-
-            feedback.innerHTML = '<span style="color:var(--cs-amber);">Actualizando contraseña...</span>';
-            const res = await changeCokiPassword(p1);
-            if (res.success) {
-                feedback.innerHTML = '<span style="color:var(--cs-green);">✔ Contraseña actualizada con éxito en todo Coki Studios.</span>';
-                document.getElementById('input-new-password').value = '';
-                document.getElementById('input-confirm-password').value = '';
-            } else {
-                feedback.innerHTML = `<span style="color:var(--cs-red);">Error: ${res.error}</span>`;
-            }
-        });
-
-        // 7. CDN Telemetría
-        async function renderCDNStats() {
-            const stats = await CS_CDN.getTelemetry();
-            document.getElementById('cdn-latency').textContent = `${stats.edgeLatencyMs} ms`;
+        // Chips de Intereses
+        function renderTastesChips() {
+            const cats = ['Tecnología', 'Videojuegos', 'Movilidad Eco', 'Desarrollo en Loop', 'Música', 'Diseño UI', 'Ciencia'];
+            const container = document.getElementById('tastes-chips-container');
+            container.innerHTML = cats.map(c => `
+                <div class="cs-taste-chip selected" onclick="this.classList.toggle('selected')">
+                    ${c}
+                </div>
+            `).join('');
         }
 
-        // Categorías de gustos
-        function renderTastes() {
-            const defaultCats = [
-                { id: 'cat-general', name: 'General', icon: '🌐' },
-                { id: 'cat-gaming', name: 'Videojuegos & Arcade', icon: '🎮' },
-                { id: 'cat-dev', name: 'Desarrollo & Loop', icon: '💻' },
-                { id: 'cat-eco', name: 'Forkar Eco Hub', icon: '🌱' },
-                { id: 'cat-design', name: 'Diseño & UI', icon: '🎨' },
-                { id: 'cat-music', name: 'Música & Sonido', icon: '🎵' },
-                { id: 'cat-science', name: 'Ciencia & IA', icon: '🔬' }
-            ];
-            selectedCategories = currentUser?.metadata?.favorite_categories || ['cat-general', 'cat-dev', 'cat-eco'];
+        // Cambiar Contraseña
+        window.openPasswordChangeModal = async () => {
+            const p1 = prompt('Escribe tu nueva contraseña (mínimo 8 caracteres):');
+            if (p1 && p1.length >= 8) {
+                const res = await changeCokiPassword(p1);
+                if (res.success) alert('✔ Contraseña actualizada con éxito.');
+                else alert('Error: ' + res.error);
+            } else if (p1) {
+                alert('La contraseña debe tener al menos 8 caracteres.');
+            }
+        };
 
-            const grid = document.getElementById('taste-categories-grid');
-            grid.innerHTML = defaultCats.map(cat => {
-                const sel = selectedCategories.includes(cat.id);
-                return `
-                    <div class="taste-item" data-id="${cat.id}" style="
-                        background: ${sel ? 'var(--cs-green-glow)' : 'var(--cs-bg-card-sub)'};
-                        border: 1px solid ${sel ? 'var(--cs-green)' : 'var(--cs-hairline)'};
-                        border-radius: 8px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-                    ">
-                        <span style="font-size: 13px; font-weight: 700;">${cat.icon} ${cat.name}</span>
-                        <span style="font-family: var(--cs-font-mono); font-size: 11px; color: ${sel ? 'var(--cs-green)' : 'var(--cs-text-sub)'};">
-                            ${sel ? '✔' : '+'}
-                        </span>
-                    </div>
-                `;
-            }).join('');
-
-            grid.querySelectorAll('.taste-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = el.getAttribute('data-id');
-                    if (selectedCategories.includes(id)) {
-                        selectedCategories = selectedCategories.filter(x => x !== id);
-                    } else {
-                        selectedCategories.push(id);
-                    }
-                    renderTastes();
-                });
-            });
-        }
-
-        document.getElementById('btn-save-profile').addEventListener('click', async () => {
-            const name = document.getElementById('edit-name').value;
-            const company = document.getElementById('edit-company').value;
-            await updateCokiProfile({
-                full_name: name,
-                company: company,
-                favorite_categories: selectedCategories
-            });
-            alert('Preferencias guardadas.');
-        });
-
-        document.getElementById('btn-copy-master-key').addEventListener('click', () => {
-            navigator.clipboard.writeText(document.getElementById('master-key-val').textContent);
-            alert('Master Key copiada al portapapeles.');
-        });
-
-        document.getElementById('btn-register-passkey').addEventListener('click', async () => {
+        window.triggerPasskeyRegister = async () => {
             const res = await registerPasskey();
-            if (res.success) alert('✔ Passkey registrada con éxito.');
+            if (res.success) alert('✔ Passkey biométrica registrada.');
             else alert('Error: ' + res.error);
+        };
+
+        window.copyMasterRecoveryKey = () => {
+            navigator.clipboard.writeText('CSK-9A82-44FE-B810-77C1');
+            alert('Clave maestra copiada al portapapeles.');
+        };
+
+        window.linkProvider = async (p) => {
+            await linkOAuthProvider(p);
+        };
+
+        window.editField = async (f) => {
+            const val = prompt(`Actualizar ${f}:`);
+            if (val) {
+                if (f === 'name') {
+                    await updateCokiProfile({ full_name: val });
+                    document.getElementById('profile-name').textContent = val;
+                    document.getElementById('label-current-name').textContent = val;
+                } else if (f === 'bio') {
+                    await updateCokiProfile({ company: val });
+                    document.getElementById('label-current-bio').textContent = val;
+                }
+            }
+        };
+
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('coki-theme', isDark ? 'dark' : 'light');
         });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
@@ -839,13 +727,7 @@
             window.location.href = '/index.html';
         });
 
-        // Theme toggle
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            const isLight = document.documentElement.classList.toggle('light-theme');
-            localStorage.setItem('coki-theme', isLight ? 'light' : 'dark');
-        });
-
-        initDashboard();
+        initAccount();
     </script>
 </body>
 </html>

@@ -1,0 +1,458 @@
+/* ═══════════════════════════════════════════════════════════════
+   CUENTA DE COKI STUDIOS (CS ACCOUNT DESIGN SYSTEM)
+   Inspirado en Apple Account & Google Account — Limpio, Amigable y Premium
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --bg-page: #f5f5f7;
+    --bg-card: #ffffff;
+    --bg-card-sub: #f9f9fb;
+    --bg-hover: #f0f0f3;
+    --border-color: #e5e5ea;
+    --border-subtle: #eeeeee;
+    
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    
+    --accent-blue: #0071e3;
+    --accent-blue-hover: #0077ed;
+    --accent-green: #34c759;
+    --accent-orange: #ff9500;
+    --accent-red: #ff3b30;
+    --accent-purple: #af52de;
+    
+    --font-stack: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Outfit', 'Segoe UI', Roboto, sans-serif;
+    --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Modo Oscuro (Estilo Apple / Google Dark) */
+html.dark-theme, body.dark-mode {
+    --bg-page: #121214;
+    --bg-card: #1c1c1e;
+    --bg-card-sub: #252528;
+    --bg-hover: #2c2c2e;
+    --border-color: #38383a;
+    --border-subtle: #2c2c2e;
+    
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #86868b;
+    
+    --accent-blue: #2997ff;
+    --accent-blue-hover: #0071e3;
+    --accent-green: #30d158;
+    --accent-orange: #ff9f0a;
+    --accent-red: #ff453a;
+    --accent-purple: #bf5af2;
+    
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+    --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    line-height: 1.47;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── HEADER SUPERIOR (ESTILO APPLE / GOOGLE) ── */
+.cs-header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+html.dark-theme .cs-header {
+    background: rgba(28, 28, 30, 0.85);
+}
+
+.cs-header-content {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cs-logo-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.cs-logo-title span {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* ── LAYOUT PRINCIPAL (SIDEBAR + CONTENIDO) ── */
+.cs-app-layout {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 65px);
+}
+
+@media (max-width: 900px) {
+    .cs-app-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── SIDEBAR LATERAL ── */
+.cs-sidebar {
+    padding: 32px 20px;
+    border-right: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+@media (max-width: 900px) {
+    .cs-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px;
+    }
+}
+
+.cs-profile-snippet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.cs-avatar-wrap {
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.cs-avatar-large {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    border: 3px solid var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #0071e3, #42a5f5);
+}
+
+.cs-avatar-edit-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    color: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    border: 2px solid var(--bg-card);
+    cursor: pointer;
+}
+
+.cs-profile-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.cs-profile-email {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    word-break: break-all;
+}
+
+.cs-plan-pill {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: rgba(0, 113, 227, 0.1);
+    color: var(--accent-blue);
+}
+
+/* Navegación Vertical */
+.cs-nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cs-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+}
+
+.cs-nav-item:hover {
+    background: var(--bg-hover);
+}
+
+.cs-nav-item.active {
+    background: var(--accent-blue);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.cs-nav-icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* ── CONTENIDO PRINCIPAL (DERECHA) ── */
+.cs-main-content {
+    padding: 36px 40px;
+    max-width: 960px;
+}
+@media (max-width: 900px) {
+    .cs-main-content {
+        padding: 24px 20px;
+    }
+}
+
+.cs-section-header {
+    margin-bottom: 28px;
+}
+
+.cs-section-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.cs-section-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+/* ── TARJETAS Y GRID ESTILO APPLE ── */
+.cs-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.cs-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
+
+.cs-card:hover {
+    box-shadow: var(--shadow-elevated);
+    border-color: rgba(0, 113, 227, 0.4);
+}
+
+.cs-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.cs-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cs-card-icon {
+    font-size: 18px;
+    color: var(--accent-blue);
+}
+
+.cs-card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.cs-card-meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 12px;
+}
+
+/* ── BARRA DE BÚSQUEDA TIPO GOOGLE ACCOUNT ── */
+.cs-search-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 28px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cs-search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 100%;
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+.cs-quick-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 28px;
+    scrollbar-width: none;
+}
+
+.cs-quick-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.cs-quick-pill:hover {
+    background: var(--bg-hover);
+    border-color: var(--text-secondary);
+}
+
+/* ── BOTONES USER-FRIENDLY ── */
+.cs-btn-apple {
+    background: var(--accent-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 980px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.cs-btn-apple:hover {
+    background: var(--accent-blue-hover);
+}
+
+.cs-btn-subtle {
+    background: var(--bg-card-sub);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 980px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.cs-btn-subtle:hover {
+    background: var(--bg-hover);
+}
+
+/* ── LISTAS Y FILAS DE AJUSTES ── */
+.cs-list-group {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-card);
+}
+
+.cs-list-row {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s ease;
+}
+
+.cs-list-row:last-child {
+    border-bottom: none;
+}
+
+.cs-list-row:hover {
+    background: var(--bg-card-sub);
+}
+
+.cs-list-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cs-list-sublabel {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
