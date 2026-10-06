@@ -52,27 +52,8 @@
         body::before {
             content: '';
             position: fixed; inset: 0; z-index: -1;
-            background-image: linear-gradient(rgba(99,102,241,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.025) 1px, transparent 1px);
+            background-image: linear-gradient(rgba(99,102,241,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.02) 1px, transparent 1px);
             background-size: 60px 60px; pointer-events: none;
-        }
-
-        body::after {
-            content: '';
-            position: fixed; inset: 0; z-index: -1;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%236366f1' stroke-width='1.8' opacity='0.22'/%3E%3C/svg%3E");
-            background-repeat: repeat-y;
-            background-size: 100% 600px;
-            background-position: center top;
-            pointer-events: none;
-            animation: moveBackground 25s linear infinite;
-        }
-        html.light-theme body::after {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' fill='none'%3E%3Cpath d='M0,48 C150,48 300,105 450,174 C580,228 700,234 820,186 C900,150 960,84 1000,39' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3Cpath d='M0,129 C150,111 350,96 550,96 C720,96 830,126 880,102 C930,66 970,24 1000,0' stroke='%234f46e5' stroke-width='1.8' opacity='0.12'/%3E%3C/svg%3E");
-        }
-
-        @keyframes moveBackground {
-            from { background-position: center 0px; }
-            to { background-position: center 600px; }
         }
 
         /* ── NAV ── */
@@ -803,7 +784,7 @@
                 <!-- Welcome Splash -->
                 <div class="welcome-splash" id="welcome-splash">
                     <div class="splash-logo">
-                        <img src="assets/csms-icon.svg" alt="CSMS Messenger" style="width:84px; height:84px; border-radius:20px; box-shadow:0 0 35px rgba(139,92,246,0.45);">
+                        <img src="assets/csms-icon.svg" alt="CSMS Messenger" style="width:72px; height:72px; border-radius:18px; box-shadow:0 10px 25px rgba(79,70,229,0.22);">
                     </div>
                     <h3 data-i18n="csms_title">Bienvenido a CSMS</h3>
                     <p data-i18n="csms_no_chat_selected">Selecciona una conversación, busca a un amigo por su correo electrónico o crea un nuevo grupo para chatear en tiempo real.</p>
@@ -1096,34 +1077,50 @@
             }
         }
 
+        function cleanRoomName(name) {
+            if (!name) return "Chat";
+            return name.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F2FF}\u{1F900}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim() || "Chat";
+        }
+
+        function getGroupAvatar(name) {
+            const lower = (name || '').toLowerCase();
+            if (lower.includes('eco') || lower.includes('cota') || lower.includes('verde')) {
+                return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`;
+            }
+            if (lower.includes('forkar') || lower.includes('carpool') || lower.includes('ruta') || lower.includes('viaje')) {
+                return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 3c-.1.2-.1.4-.1.6v4.5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>`;
+            }
+            return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+        }
+
         function renderRooms(rooms) {
             const list = document.getElementById('rooms-list');
             if (rooms.length === 0) {
                 list.innerHTML = `
                     <div style="padding: 30px 20px; text-align: center; color: var(--text-sub); font-size: 13px;">
-                        No tienes salas de chat. ¡Comienza un chat directo haciendo clic en el icono  superior!
+                        No tienes salas de chat. ¡Comienza un chat directo haciendo clic en el icono superior!
                     </div>
                 `;
                 return;
             }
 
             list.innerHTML = rooms.map(room => {
-                let displayName = room.name || "Chat Privado";
+                let displayName = cleanRoomName(room.name || "Chat Privado");
                 let displayAvatar = "?";
 
                 if (!room.is_group) {
                     // Direct DM: show other person's name and avatar initials
                     const otherMember = room.members.find(m => m.user_id !== currentUser.id);
                     if (otherMember) {
-                        displayName = otherMember.user_name;
+                        displayName = cleanRoomName(otherMember.user_name);
                         displayAvatar = otherMember.user_avatar ? 
                             `<img src="${otherMember.user_avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : 
                             otherMember.user_name.charAt(0).toUpperCase();
                     }
                 } else {
-                    // Group: show group name and group icon
-                    displayName = room.name;
-                    displayAvatar = "";
+                    // Group: show clean group name and group icon
+                    displayName = cleanRoomName(room.name);
+                    displayAvatar = getGroupAvatar(room.name);
                 }
 
                 const isActive = activeRoom && activeRoom.id === room.id;
@@ -1178,13 +1175,13 @@
             document.getElementById('messenger-container').classList.add('show-chat');
 
             // Setup Header Info
-            let displayName = room.name || "Chat Privado";
+            let displayName = cleanRoomName(room.name || "Chat Privado");
             let displayAvatar = "?";
 
             if (!room.is_group) {
                 const otherMember = room.members.find(m => m.user_id !== currentUser.id);
                 if (otherMember) {
-                    displayName = otherMember.user_name;
+                    displayName = cleanRoomName(otherMember.user_name);
                     displayAvatar = otherMember.user_avatar ? 
                         `<img src="${otherMember.user_avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : 
                         otherMember.user_name.charAt(0).toUpperCase();
@@ -1192,8 +1189,8 @@
                 document.getElementById('chat-header-status').textContent = "Conversación Directa";
                 document.getElementById('btn-invite-members').style.display = 'none';
             } else {
-                displayName = room.name;
-                displayAvatar = "";
+                displayName = cleanRoomName(room.name);
+                displayAvatar = getGroupAvatar(room.name);
                 document.getElementById('chat-header-status').textContent = `${room.members.length} miembros`;
                 document.getElementById('btn-invite-members').style.display = 'block';
             }

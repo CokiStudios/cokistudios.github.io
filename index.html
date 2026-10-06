@@ -300,9 +300,43 @@
             animation: fadeInDown 0.7s ease 0.2s both;
         }
 
+        .btn-shine-demo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+            padding: 8px 20px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            background: var(--card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-shine-demo:hover {
+            background: var(--card-hover);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        html.light-theme .btn-shine-demo {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            color: #1e293b;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        html.light-theme .btn-shine-demo:hover {
+            background: #f8fafc;
+            border-color: var(--accent);
+        }
+
         .hero-actions {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             flex-wrap: wrap;
             justify-content: center;
             animation: fadeInDown 0.7s ease 0.3s both;
@@ -313,41 +347,53 @@
             align-items: center;
             gap: 8px;
             background: var(--accent);
-            color: white;
+            color: #ffffff;
             font-size: 15px;
-            font-weight: 700;
-            padding: 14px 28px;
-            border-radius: 12px;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 999px;
             text-decoration: none;
-            transition: all 0.25s;
-            box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.28);
         }
 
         .btn-hero-primary:hover {
             background: #4f46e5;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 40px rgba(99, 102, 241, 0.45);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.38);
         }
 
         .btn-hero-secondary {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--card);
             color: var(--text);
             font-size: 15px;
             font-weight: 600;
-            padding: 14px 28px;
-            border-radius: 12px;
+            padding: 12px 28px;
+            border-radius: 999px;
             text-decoration: none;
             border: 1px solid var(--border);
-            transition: all 0.25s;
+            transition: all 0.2s ease;
         }
 
         .btn-hero-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
+            background: var(--card-hover);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        html.light-theme .btn-hero-secondary {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #0f172a;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        html.light-theme .btn-hero-secondary:hover {
+            background: #f8fafc;
+            border-color: rgba(0, 0, 0, 0.25);
         }
 
         .hero-scroll {
@@ -743,7 +789,6 @@
     <!-- ── XTRAPS BACKGROUND ── -->
     <div class="xtraps-bg rainbow">
         <div class="xtraps-wave"></div>
-        <canvas id="xtrapsCanvas" class="xtraps-canvas"></canvas>
     </div>
 
     <!-- ── NAVBAR ── -->
@@ -792,9 +837,10 @@
         <p class="hero-desc">
             <span data-i18n="home_hero_sub">Ecosistema conectado e identidad digital inteligente para todos tus juegos y
                 comunidades.</span><br>
-            <button onclick="document.getElementById('shineDemo').classList.add('active')"
-                style="margin-top: 15px; background: transparent; border: 2px solid white; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;"
-                data-i18n="btn_shine_demo">Probar Shine UI Menu</button>
+            <button class="btn-shine-demo" onclick="document.getElementById('shineDemo').classList.add('active')" data-i18n="btn_shine_demo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Probar Shine UI Menu
+            </button>
         </p>
         <div class="hero-actions">
             <a href="forkar" class="btn-hero-primary" data-i18n="btn_join_community">
@@ -1099,70 +1145,6 @@
             });
         }
 
-        // Xtraps Interactive Canvas Animation
-        const canvas = document.getElementById('xtrapsCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
-
-        let phase = 0;
-        let mouse = { x: null, y: null };
-
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-        });
-
-        window.addEventListener('mouseleave', () => {
-            mouse.x = null;
-            mouse.y = null;
-        });
-
-        function drawWave(amplitude, frequency, phaseShift, color, lineWidth, offsetMultiplier) {
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = lineWidth;
-
-            for (let x = 0; x <= canvas.width; x += 2) {
-                let baseSvg = Math.sin(x * frequency + phase + phaseShift);
-                let y = canvas.height / 2 + baseSvg * amplitude;
-
-                if (mouse.x !== null) {
-                    let dist = Math.abs(x - mouse.x);
-                    if (dist < 200) {
-                        let force = (200 - dist) / 200;
-                        y += (mouse.y - y) * force * offsetMultiplier;
-                    }
-                }
-
-                if (x === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.stroke();
-        }
-
-        function animateXtraps() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const isLight = document.documentElement.classList.contains('light-theme');
-            const color1 = isLight ? 'rgba(79, 70, 229, 0.4)' : 'rgba(99, 102, 241, 0.3)';
-            const color2 = isLight ? 'rgba(139, 92, 246, 0.3)' : 'rgba(168, 85, 247, 0.25)';
-
-            drawWave(70, 0.003, 0, color1, 2.5, 0.4);
-            drawWave(90, 0.004, Math.PI, color2, 2, -0.3);
-
-            phase += 0.015;
-            requestAnimationFrame(animateXtraps);
-        }
-        animateXtraps();
     </script>
     <script type="module" src="i18n.js"></script>
 </body>

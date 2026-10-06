@@ -227,78 +227,86 @@
         .product-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 22px;
+            border-radius: 20px;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
-            overflow: hidden;
+            transition: all 0.25s ease;
             position: relative;
+            padding: 26px;
         }
 
         .product-card:hover {
-            border-color: var(--border-glow);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            border-color: rgba(99, 102, 241, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.2);
         }
 
-        .product-preview {
-            height: 160px;
-            overflow: hidden;
-            position: relative;
-            background: var(--bg2);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        html.light-theme .product-card {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
         }
 
-        .preview-gradient {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 40%;
-            background: linear-gradient(to top, var(--bg2), transparent);
+        html.light-theme .product-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.07);
         }
 
-        .product-body {
-            padding: 24px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .product-card.featured {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(56, 189, 248, 0.04));
+            border-color: rgba(99, 102, 241, 0.25);
+        }
+
+        html.light-theme .product-card.featured {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), #ffffff);
+            border-color: rgba(99, 102, 241, 0.2);
         }
 
         .product-icon-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
+            gap: 16px;
+            margin-bottom: 16px;
         }
 
-        .product-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+        .product-icon-img {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
             flex-shrink: 0;
+            display: block;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .product-category {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent);
         }
 
         .product-name {
-            font-size: 20px;
-            font-weight: 800;
+            font-size: 21px;
+            font-weight: 700;
             color: var(--text);
+            line-height: 1.2;
         }
 
         .product-desc {
             font-size: 14px;
             color: var(--text-sub);
-            line-height: 1.7;
-            margin-bottom: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
             flex: 1;
         }
 
@@ -306,76 +314,101 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .product-tag {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 999px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            color: var(--text-muted);
+            color: var(--text-sub);
+        }
+
+        html.light-theme .product-tag {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.07);
+            color: #475569;
         }
 
         .product-actions {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
 
         .btn-visit {
             flex: 1;
             text-align: center;
-            padding: 10px 16px;
+            padding: 11px 20px;
             background: var(--accent);
-            color: white;
+            color: #ffffff;
             font-size: 14px;
-            font-weight: 700;
-            border-radius: 10px;
+            font-weight: 600;
+            border-radius: 999px;
             text-decoration: none;
-            transition: all 0.2s;
-            display: flex;
+            transition: all 0.2s ease;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
         }
 
         .btn-visit:hover {
             background: #4f46e5;
             transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-visit-secondary {
+            padding: 11px 18px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 999px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-visit-secondary:hover {
+            background: var(--card-hover);
+            transform: translateY(-1px);
+        }
+
+        html.light-theme .btn-visit-secondary {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #0f172a;
         }
 
         .btn-github {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            background: var(--card);
             border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--text-sub);
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             flex-shrink: 0;
         }
 
         .btn-github:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--card-hover);
             color: var(--text);
-            border-color: rgba(255, 255, 255, 0.15);
         }
 
-        /* ── FEATURED CARD ── */
-        .product-card.featured {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-        }
-
-        .product-card.featured .product-preview {
-            height: 100%;
-            min-height: 220px;
+        html.light-theme .btn-github {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #475569;
         }
 
         /* ── FOOTER ── */
@@ -476,183 +509,157 @@
         <div class="products-grid">
 
             <!-- 0. Felte App Store (Featured) -->
-            <div class="product-card featured" style="border-color: rgba(99, 102, 241, 0.45); background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(6, 9, 15, 0.6));">
-                <div class="product-preview" style="background: url('assets/felte-logo.png') center/contain no-repeat, radial-gradient(circle at center, rgba(99,102,241,0.25) 0%, rgba(6,9,15,0.9) 70%); background-color: #06090f;">
-                    <div class="preview-gradient"></div>
+            <div class="product-card featured">
+                <div class="product-icon-row">
+                    <img src="assets/felte-icon.svg" alt="Felte App Store" class="product-icon-img" style="width:64px; height:64px; border-radius:16px;">
+                    <div class="product-meta">
+                        <span class="product-category">Tienda Oficial · Coki Studios</span>
+                        <div class="product-name" style="font-size:24px;">Felte App Store</div>
+                    </div>
                 </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:transparent; padding:0;">
-                            <img src="assets/felte-icon.svg" alt="Felte App Store" style="width:44px; height:44px; border-radius:12px; box-shadow:0 0 20px rgba(99,102,241,0.5);">
-                        </div>
-                        <div>
-                            <div class="product-name" style="font-size:22px; font-weight:800;">Felte App Store</div>
-                            <span style="font-size:12px; color:#38bdf8; font-weight:600;">Tienda Oficial de Coki Studios</span>
-                        </div>
-                    </div>
-                    <div class="product-desc">
-                        El ecosistema unificado de aplicaciones de Coki Studios. Descubre, instala y compila paquetes de software para la Nube, Móvil (Android/iOS) y de manera 100% nativa en Loop OS (Shine UI, XUI y flUI).
-                    </div>
-                    <div class="product-tags">
-                        <span class="product-tag" style="border-color:rgba(56,189,248,0.3); color:#38bdf8;">App Store</span>
-                        <span class="product-tag">Nube & PWA</span>
-                        <span class="product-tag">Móvil</span>
-                        <span class="product-tag">Loop OS Nativo</span>
-                        <span class="product-tag">Zero Hardcoding</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="felte" class="btn-visit" style="background:#38bdf8; color:#06090f; font-weight:700;">Abrir Felte Store →</a>
-                        <a href="felte#loopos" class="btn-visit" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);">Loop OS (.loop)</a>
-                    </div>
+                <div class="product-desc">
+                    El ecosistema unificado de aplicaciones de Coki Studios. Descubre, instala y compila paquetes de software para la Nube, Móvil (Android/iOS) y de manera 100% nativa en Loop OS (Shine UI, XUI y flUI).
+                </div>
+                <div class="product-tags">
+                    <span class="product-tag">App Store</span>
+                    <span class="product-tag">Nube & PWA</span>
+                    <span class="product-tag">Móvil Nativo</span>
+                    <span class="product-tag">Loop OS (.loop)</span>
+                    <span class="product-tag">Zero Hardcoding</span>
+                </div>
+                <div class="product-actions">
+                    <a href="felte" class="btn-visit">Abrir Felte Store →</a>
+                    <a href="felte#loopos" class="btn-visit-secondary">Loop OS (.loop)</a>
                 </div>
             </div>
 
             <!-- 1. Shine Maps -->
             <div class="product-card">
-                <div class="product-preview" style="background: url('assets/shine-maps-icon.jpg') center/cover no-repeat;">
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:transparent; padding:0;">
-                            <img src="assets/shine-maps-icon.svg" alt="Shine Maps" style="width:40px; height:40px; border-radius:10px; box-shadow:0 0 15px rgba(56,189,248,0.3);">
-                        </div>
+                <div class="product-icon-row">
+                    <img src="assets/shine-maps-icon.svg" alt="Shine Maps" class="product-icon-img">
+                    <div class="product-meta">
+                        <span class="product-category">Navegación GPS</span>
                         <div class="product-name" data-i18n="card_maps_title">Shine Maps</div>
                     </div>
-                    <div class="product-desc" data-i18n="card_maps_desc">Navegación GPS inteligente con integración nativa CS ID, modo HUD para parabrisas, rutas en tiempo real y compatibilidad Android Auto / A17.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Maps</span>
-                        <span class="product-tag">CS ID</span>
-                        <span class="product-tag">HUD Mode</span>
-                        <span class="product-tag" data-i18n="card_maps_tag">Geolocalización</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="shine-maps" class="btn-visit" style="background:rgba(56,189,248,0.85); color:#06090f; font-weight:700;" data-i18n="btn_visit_site">Abrir Shine Maps →</a>
-                    </div>
+                </div>
+                <div class="product-desc" data-i18n="card_maps_desc">Navegación GPS inteligente con integración nativa CSID, modo HUD para parabrisas, rutas en tiempo real y compatibilidad Android Auto / A17.</div>
+                <div class="product-tags">
+                    <span class="product-tag">Maps GPS</span>
+                    <span class="product-tag">CSID Sync</span>
+                    <span class="product-tag">HUD Mode</span>
+                    <span class="product-tag" data-i18n="card_maps_tag">Geolocalización</span>
+                </div>
+                <div class="product-actions">
+                    <a href="shine-maps" class="btn-visit" data-i18n="btn_visit_site">Abrir Shine Maps →</a>
                 </div>
             </div>
 
             <!-- 2. Forkar -->
             <div class="product-card">
-                <div class="product-preview" style="background: url('assets/forkar-icon.jpg') center/cover no-repeat;">
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:transparent; padding:0;">
-                            <img src="assets/forkar-icon.svg" alt="Forkar" style="width:40px; height:40px; border-radius:10px; box-shadow:0 0 15px rgba(245,158,11,0.3);">
-                        </div>
+                <div class="product-icon-row">
+                    <img src="assets/forkar-icon.svg" alt="Forkar" class="product-icon-img">
+                    <div class="product-meta">
+                        <span class="product-category">Comunidad & Red Social</span>
                         <div class="product-name" data-i18n="card_forkar_title">Forkar</div>
                     </div>
-                    <div class="product-desc" data-i18n="card_forkar_desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas, resuelven dudas, superan retos con Forkman y se conectan.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Comunidad</span>
-                        <span class="product-tag">Foro</span>
-                        <span class="product-tag" data-i18n="card_forkar_tag"> Comunidad & Eco</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="forkar" class="btn-visit" style="background:rgba(245,158,11,0.85); color:#06090f; font-weight:700;" data-i18n="btn_enter_forkar">Entrar a Forkar →</a>
-                    </div>
+                </div>
+                <div class="product-desc" data-i18n="card_forkar_desc">La comunidad de Coki Studios. Un foro donde jugadores y creadores comparten ideas, resuelven dudas, superan retos con Forkman y se conectan.</div>
+                <div class="product-tags">
+                    <span class="product-tag">Comunidad</span>
+                    <span class="product-tag">Foro & Hilos</span>
+                    <span class="product-tag" data-i18n="card_forkar_tag">Retos Eco</span>
+                </div>
+                <div class="product-actions">
+                    <a href="forkar" class="btn-visit" data-i18n="btn_enter_forkar">Entrar a Forkar →</a>
                 </div>
             </div>
 
             <!-- 3. CSMS Messenger -->
             <div class="product-card">
-                <div class="product-preview" style="background: url('assets/csms-icon.jpg') center/cover no-repeat;">
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:transparent; padding:0;">
-                            <img src="assets/csms-icon.svg" alt="CSMS Messenger" style="width:40px; height:40px; border-radius:10px; box-shadow:0 0 15px rgba(139,92,246,0.3);">
-                        </div>
+                <div class="product-icon-row">
+                    <img src="assets/csms-icon.svg" alt="CSMS Messenger" class="product-icon-img">
+                    <div class="product-meta">
+                        <span class="product-category">Mensajería Instantánea</span>
                         <div class="product-name" data-i18n="card_csms_title">CSMS Messenger</div>
                     </div>
-                    <div class="product-desc" data-i18n="card_csms_desc">Mensajería privada ultrarrápida y sincronizada en tiempo real entre iOS, Apple Watch, Mac y Web.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">iOS / WatchOS</span>
-                        <span class="product-tag">Cloud Sync</span>
-                        <span class="product-tag" data-i18n="card_csms_tag"> Mensajería Privada</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="messenger" class="btn-visit" style="background:rgba(99,102,241,0.85)">Abrir CSMS →</a>
-                    </div>
+                </div>
+                <div class="product-desc" data-i18n="card_csms_desc">Mensajería privada ultrarrápida y sincronizada en tiempo real entre iOS, Apple Watch, Mac y Web con cifrado punto a punto.</div>
+                <div class="product-tags">
+                    <span class="product-tag">iOS / Mac / Web</span>
+                    <span class="product-tag">Cloud Sync</span>
+                    <span class="product-tag" data-i18n="card_csms_tag">Cifrado E2EE</span>
+                </div>
+                <div class="product-actions">
+                    <a href="messenger" class="btn-visit">Abrir CSMS →</a>
                 </div>
             </div>
 
-            <!-- 4. Shine Find Browser (CEF) - Destacado Limpio -->
-            <div class="product-card featured" style="border-color:rgba(56,189,248,0.4);">
-                <div class="product-preview" style="background: url('assets/shine-find-icon.jpg') center/cover no-repeat;">
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:transparent; padding:0;">
-                            <img src="assets/shine-find-icon.svg" alt="Shine Find" style="width:40px; height:40px; border-radius:10px; box-shadow:0 0 15px rgba(56,189,248,0.3);">
-                        </div>
+            <!-- 4. Shine Find Browser (CEF) -->
+            <div class="product-card">
+                <div class="product-icon-row">
+                    <img src="assets/shine-find-icon.svg" alt="Shine Find" class="product-icon-img">
+                    <div class="product-meta">
+                        <span class="product-category">Navegador Web Nativo</span>
                         <div class="product-name">Shine Find Browser</div>
                     </div>
-                    <div class="product-desc" data-i18n="shine_browser_desc">
-                        El navegador web nativo de Coki Studios impulsado por Chromium Embedded Framework (CEF C++). Integra el escudo Sentinel Anti-Rastreadores, aceleración GPU y autenticación passkey con CSID.
-                    </div>
-                    <div class="product-tags">
-                        <span class="product-tag">CEF / Chromium</span>
-                        <span class="product-tag">macOS Liquid Glass</span>
-                        <span class="product-tag">Sentinel Shield</span>
-                        <span class="product-tag">CSID Autologin</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="shine-find" class="btn-visit" style="background:linear-gradient(135deg,#38bdf8,#8b5cf6);" data-i18n="btn_explore_demo">Explorar Demo →</a>
-                        <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-github" title="GitHub">
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        </a>
-                    </div>
+                </div>
+                <div class="product-desc" data-i18n="shine_browser_desc">
+                    El navegador web de Coki Studios impulsado por Chromium Embedded Framework (CEF C++). Integra el escudo Sentinel Anti-Rastreadores, aceleración GPU y passkeys.
+                </div>
+                <div class="product-tags">
+                    <span class="product-tag">Chromium CEF</span>
+                    <span class="product-tag">Liquid Glass</span>
+                    <span class="product-tag">Sentinel Shield</span>
+                </div>
+                <div class="product-actions">
+                    <a href="shine-find" class="btn-visit" data-i18n="btn_explore_demo">Explorar Demo →</a>
+                    <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-github" title="GitHub">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>
                 </div>
             </div>
 
             <!-- 5. CSID -->
             <div class="product-card">
-                <div class="product-preview" style="background:linear-gradient(135deg,rgba(0,113,227,0.12),rgba(6,9,15,0.8)); display:flex; align-items:center; justify-content:center;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue, #0071e3)" stroke-width="1.5" opacity="0.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="3"/><path d="M8 17a4 4 0 0 1 8 0"/></svg>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(0,113,227,0.12); color:#0071e3;"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <div class="product-icon-row">
+                    <div class="product-icon-img" style="background:linear-gradient(135deg, #0284c7, #2563eb); display:flex; align-items:center; justify-content:center;">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="3"/><path d="M8 17a4 4 0 0 1 8 0"/></svg>
+                    </div>
+                    <div class="product-meta">
+                        <span class="product-category">Identidad & Seguridad</span>
                         <div class="product-name">CSID</div>
                     </div>
-                    <div class="product-desc" data-i18n="csid_prod_desc">Tu cuenta única para acceder de forma rápida y segura a todos los juegos y aplicaciones de Coki Studios.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Perfil Único</span>
-                        <span class="product-tag">Master Key</span>
-                        <span class="product-tag">Passkey</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="dashboard" class="btn-visit" data-i18n="btn_my_csid">Mi CSID →</a>
-                    </div>
+                </div>
+                <div class="product-desc" data-i18n="csid_prod_desc">Tu cuenta única para acceder de forma rápida y segura a todos los juegos y aplicaciones de Coki Studios con SSO y Passkeys.</div>
+                <div class="product-tags">
+                    <span class="product-tag">Perfil Único</span>
+                    <span class="product-tag">Master Key</span>
+                    <span class="product-tag">Passkey & SSO</span>
+                </div>
+                <div class="product-actions">
+                    <a href="dashboard" class="btn-visit" data-i18n="btn_my_csid">Mi CSID →</a>
                 </div>
             </div>
 
-            <!-- 6. Forkar Eco Hub Program -->
+            <!-- 6. Forkar Eco Hub -->
             <div class="product-card">
-                <div class="product-preview" style="background:linear-gradient(135deg,rgba(52,199,89,0.12),rgba(6,9,15,0.8)); display:flex; align-items:center; justify-content:center;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green, #34c759)" stroke-width="1.5" opacity="0.6"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                    <div class="preview-gradient"></div>
-                </div>
-                <div class="product-body">
-                    <div class="product-icon-row">
-                        <div class="product-icon" style="background:rgba(52,199,89,0.12); color:#34c759;"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></div>
+                <div class="product-icon-row">
+                    <div class="product-icon-img" style="background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center;">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    </div>
+                    <div class="product-meta">
+                        <span class="product-category">Sostenibilidad & Eco</span>
                         <div class="product-name">Forkar Eco Hub</div>
                     </div>
-                    <div class="product-desc" data-i18n="eco_hero_sub">Ahorra CO₂, acumula Puntos Eco, canjea recompensas sustentables y valida estaciones con QR o NFC.</div>
-                    <div class="product-tags">
-                        <span class="product-tag">Sostenibilidad</span>
-                        <span class="product-tag">Cota • Chía • Bogotá</span>
-                        <span class="product-tag">QR & NFC</span>
-                    </div>
-                    <div class="product-actions">
-                        <a href="eco-hub" class="btn-visit" style="background:#34c759;">Abrir Eco Hub →</a>
-                    </div>
+                </div>
+                <div class="product-desc" data-i18n="eco_hero_sub">Ahorra CO₂, acumula Puntos Eco, canjea recompensas sustentables y valida estaciones con códigos QR o credenciales NFC.</div>
+                <div class="product-tags">
+                    <span class="product-tag">Sostenibilidad</span>
+                    <span class="product-tag">Cota • Chía • Bogotá</span>
+                    <span class="product-tag">QR & NFC</span>
+                </div>
+                <div class="product-actions">
+                    <a href="eco-hub" class="btn-visit">Abrir Eco Hub →</a>
                 </div>
             </div>
 
