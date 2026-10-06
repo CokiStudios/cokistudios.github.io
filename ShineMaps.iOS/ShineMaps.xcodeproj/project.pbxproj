@@ -7,18 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B840ADAD83B908CD64B2A462 /* ShineMapsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8FD969CE4E6DA50024AFE5C /* ShineMapsApp.swift */; };
-		B8A68F05BC90A940C4D543BB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8690D250E81574CFAF1AB66 /* ContentView.swift */; };
-		B809FF34CD7D737613CC0573 /* LocationAndMapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8493A35C2351792F5592779 /* LocationAndMapService.swift */; };
-		B859C920217186339A5FCB55 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85A8FAA153CE450624D4F20 /* Models.swift */; };
-		B888AFB3BEF6BC8F08EB2C4B /* ShineMapsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8689B9680AB7C7DABCCC6D3 /* ShineMapsTheme.swift */; };
-		B8653C9E662664D788443793 /* CSIDManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8D1F64A387676D50B69318F /* CSIDManager.swift */; };
-		B8C2EC3A8E71EDDCBED81F6F /* CSIDAuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87A84116EB15B019840AC31 /* CSIDAuthViews.swift */; };
-		B850D44F790C8C94847FF883 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81BC1D40360EA19F31F5B9B /* CarPlaySceneDelegate.swift */; };
+		B84C6AC80A15F0A199C55AB6 /* ShineMapsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8FD969CE4E6DA50024AFE5C /* ShineMapsApp.swift */; };
+		B80A171D4C690BDEE8C5B51A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8690D250E81574CFAF1AB66 /* ContentView.swift */; };
+		B8EAA710C55AD76662544C64 /* LocationAndMapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8493A35C2351792F5592779 /* LocationAndMapService.swift */; };
+		B83418174D7D01AE54941897 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85A8FAA153CE450624D4F20 /* Models.swift */; };
+		B875D2FF49DFE2A4DFBEB520 /* ShineMapsTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8689B9680AB7C7DABCCC6D3 /* ShineMapsTheme.swift */; };
+		B8F731D8C3CE5F53775CF5BF /* CSIDManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8D1F64A387676D50B69318F /* CSIDManager.swift */; };
+		B8BB12142934B210846A4203 /* CSIDAuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87A84116EB15B019840AC31 /* CSIDAuthViews.swift */; };
+		B89B34F85275A5BE6072F898 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81BC1D40360EA19F31F5B9B /* CarPlaySceneDelegate.swift */; };
+		B8065A0566481BF3B9F41451 /* Watch/ShineMapsWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF71AEDDD42FF2D70735C1 /* Watch/ShineMapsWatchApp.swift */; };
+		B8BDFDEAB79AED661BEA5C4B /* Watch/ShineMapsWatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8E3EE5E48B1C852C61009B1 /* Watch/ShineMapsWatchContentView.swift */; };
+		B8122C2C464D6D3DCF5673DC /* Watch/ShineMapsWatchConnectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85805A9941404925C3632E3 /* Watch/ShineMapsWatchConnectivity.swift */; };
+		B81A7661C8D8AD4151506ACC /* Watch/ShineMapsWatchComplications.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8635EB736D0EDD2DE98ABAD /* Watch/ShineMapsWatchComplications.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		B8BD54D6553C728CF0A931ED /* ShineMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShineMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B866A21599468A6116A89C91 /* ShineMaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShineMaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B87E68257629DC29B5B972FB /* ShineMapsWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShineMapsWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8FD969CE4E6DA50024AFE5C /* ShineMapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShineMapsApp.swift"; sourceTree = "<group>"; };
 		B8690D250E81574CFAF1AB66 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
 		B8493A35C2351792F5592779 /* LocationAndMapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LocationAndMapService.swift"; sourceTree = "<group>"; };
@@ -29,14 +34,24 @@
 		B81BC1D40360EA19F31F5B9B /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CarPlaySceneDelegate.swift"; sourceTree = "<group>"; };
 		B8B0F2065157817A83F04B57 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
 		B8A6FB19948678B6C97AA5FF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "README.md"; sourceTree = "<group>"; };
+		B8CF71AEDDD42FF2D70735C1 /* ShineMapsWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShineMapsWatchApp.swift"; sourceTree = "<group>"; };
+		B8E3EE5E48B1C852C61009B1 /* ShineMapsWatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShineMapsWatchContentView.swift"; sourceTree = "<group>"; };
+		B85805A9941404925C3632E3 /* ShineMapsWatchConnectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShineMapsWatchConnectivity.swift"; sourceTree = "<group>"; };
+		B8635EB736D0EDD2DE98ABAD /* ShineMapsWatchComplications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShineMapsWatchComplications.swift"; sourceTree = "<group>"; };
+		B8E005B8C763710DDC240298 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		B8A9E872B0C4F3AB11D258C3 /* Frameworks */ = {
+		B8626DB085335FEFF043C241 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
-			files = (
-			);
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8177E62DA82E01CF54B3C06 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -55,14 +70,28 @@
 				B81BC1D40360EA19F31F5B9B /* CarPlaySceneDelegate.swift */,
 				B8B0F2065157817A83F04B57 /* Info.plist */,
 				B8A6FB19948678B6C97AA5FF /* README.md */,
+				B835AE1D9CE4A6980794EF26 /* Watch */,
 				B80B8536557FEB21A0EFA66E /* Products */,
 			);
+		sourceTree = "<group>";
+		};
+		B835AE1D9CE4A6980794EF26 /* Watch */ = {
+			isa = PBXGroup;
+			children = (
+				B8CF71AEDDD42FF2D70735C1 /* ShineMapsWatchApp.swift */,
+				B8E3EE5E48B1C852C61009B1 /* ShineMapsWatchContentView.swift */,
+				B85805A9941404925C3632E3 /* ShineMapsWatchConnectivity.swift */,
+				B8635EB736D0EDD2DE98ABAD /* ShineMapsWatchComplications.swift */,
+				B8E005B8C763710DDC240298 /* Info.plist */,
+			);
+			path = Watch;
 			sourceTree = "<group>";
 		};
 		B80B8536557FEB21A0EFA66E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B8BD54D6553C728CF0A931ED /* ShineMaps.app */,
+				B866A21599468A6116A89C91 /* ShineMaps.app */,
+				B87E68257629DC29B5B972FB /* ShineMapsWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,22 +99,35 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B8730950AD798A77AD508AA9 /* ShineMaps */ = {
+		B8711B5CFAB360ECEC8DB489 /* ShineMaps */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B81BD8AF6241EA4D2BCB89A8 /* Build configuration list for PBXNativeTarget "ShineMaps" */;
+			buildConfigurationList = B87255C41549DC091C5117B1 /* Build configuration list for PBXNativeTarget "ShineMaps" */;
 			buildPhases = (
-				B87EE609159AC086BAB15FF9 /* Sources */,
-				B8A9E872B0C4F3AB11D258C3 /* Frameworks */,
-				B8A2892AFC2D88060C0AA913 /* Resources */,
+				B82BF424338670AE8DD35C87 /* Sources */,
+				B8626DB085335FEFF043C241 /* Frameworks */,
+				B8509CA5FF180B34C9B56B21 /* Resources */,
 			);
-			buildRules = (
-			);
-			dependencies = (
-			);
+			buildRules = ();
+			dependencies = ();
 			name = ShineMaps;
 			productName = ShineMaps;
-			productReference = B8BD54D6553C728CF0A931ED /* ShineMaps.app */;
+			productReference = B866A21599468A6116A89C91 /* ShineMaps.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B88D50F0BE258C02669549AA /* ShineMapsWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B8271063514A8B2EDC8BBAB9 /* Build configuration list for PBXNativeTarget "ShineMapsWatch" */;
+			buildPhases = (
+				B8D806B6803F418F11BB6015 /* Sources */,
+				B8177E62DA82E01CF54B3C06 /* Frameworks */,
+				B8395718A331BD5A29778D7F /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = ShineMapsWatch;
+			productName = ShineMapsWatch;
+			productReference = B87E68257629DC29B5B972FB /* ShineMapsWatch.app */;
+			productType = "com.apple.product-type.application.watchapp";
 		};
 /* End PBXNativeTarget section */
 
@@ -96,7 +138,10 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					B8730950AD798A77AD508AA9 = {
+					B8711B5CFAB360ECEC8DB489 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					B88D50F0BE258C02669549AA = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
@@ -105,44 +150,57 @@
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = es;
 			hasScannedForEncodings = 0;
-			knownRegions = (
-				es,
-				en,
-				Base,
-			);
+			knownRegions = (es, en, Base);
 			mainGroup = B8E9342699A65D8011A1CBCA;
 			productRefGroup = B80B8536557FEB21A0EFA66E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B8730950AD798A77AD508AA9 /* ShineMaps */,
+				B8711B5CFAB360ECEC8DB489 /* ShineMaps */,
+				B88D50F0BE258C02669549AA /* ShineMapsWatch */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		B8A2892AFC2D88060C0AA913 /* Resources */ = {
+		B8509CA5FF180B34C9B56B21 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (
-			);
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8395718A331BD5A29778D7F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		B87EE609159AC086BAB15FF9 /* Sources */ = {
+		B82BF424338670AE8DD35C87 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B840ADAD83B908CD64B2A462 /* ShineMapsApp.swift in Sources */,
-				B8A68F05BC90A940C4D543BB /* ContentView.swift in Sources */,
-				B809FF34CD7D737613CC0573 /* LocationAndMapService.swift in Sources */,
-				B859C920217186339A5FCB55 /* Models.swift in Sources */,
-				B888AFB3BEF6BC8F08EB2C4B /* ShineMapsTheme.swift in Sources */,
-				B8653C9E662664D788443793 /* CSIDManager.swift in Sources */,
-				B8C2EC3A8E71EDDCBED81F6F /* CSIDAuthViews.swift in Sources */,
-				B850D44F790C8C94847FF883 /* CarPlaySceneDelegate.swift in Sources */,
+				B84C6AC80A15F0A199C55AB6 /* ShineMapsApp.swift in Sources */,
+				B80A171D4C690BDEE8C5B51A /* ContentView.swift in Sources */,
+				B8EAA710C55AD76662544C64 /* LocationAndMapService.swift in Sources */,
+				B83418174D7D01AE54941897 /* Models.swift in Sources */,
+				B875D2FF49DFE2A4DFBEB520 /* ShineMapsTheme.swift in Sources */,
+				B8F731D8C3CE5F53775CF5BF /* CSIDManager.swift in Sources */,
+				B8BB12142934B210846A4203 /* CSIDAuthViews.swift in Sources */,
+				B89B34F85275A5BE6072F898 /* CarPlaySceneDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8D806B6803F418F11BB6015 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B8065A0566481BF3B9F41451 /* ShineMapsWatchApp.swift in Sources */,
+				B8BDFDEAB79AED661BEA5C4B /* ShineMapsWatchContentView.swift in Sources */,
+				B8122C2C464D6D3DCF5673DC /* ShineMapsWatchConnectivity.swift in Sources */,
+				B81A7661C8D8AD4151506ACC /* ShineMapsWatchComplications.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -164,10 +222,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)");
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
@@ -197,7 +252,7 @@
 			};
 			name = Release;
 		};
-		B8BF4B2DC1233899DE8D2EC6 /* Debug */ = {
+		B8AE2EEF6C688090D679F077 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -205,11 +260,8 @@
 				DEVELOPMENT_TEAM = 9CBRG74884;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 2.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shinemaps;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -217,7 +269,7 @@
 			};
 			name = Debug;
 		};
-		B89CE39D1FA58E3422FA9594 /* Release */ = {
+		B8CF8B47D6D7CA93B1E092AA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -225,15 +277,50 @@
 				DEVELOPMENT_TEAM = 9CBRG74884;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 2.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shinemaps;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B8AF12A99C485516E11FF384 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9CBRG74884;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Watch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 2.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shinemaps.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "4";
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		B89B4F18C86A3CB5812ED945 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9CBRG74884;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Watch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 2.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.shinemaps.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "4";
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -249,11 +336,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B81BD8AF6241EA4D2BCB89A8 /* Build configuration list for PBXNativeTarget "ShineMaps" */ = {
+		B87255C41549DC091C5117B1 /* Build configuration list for PBXNativeTarget "ShineMaps" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B8BF4B2DC1233899DE8D2EC6 /* Debug */,
-				B89CE39D1FA58E3422FA9594 /* Release */,
+				B8AE2EEF6C688090D679F077 /* Debug */,
+				B8CF8B47D6D7CA93B1E092AA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B8271063514A8B2EDC8BBAB9 /* Build configuration list for PBXNativeTarget "ShineMapsWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8AF12A99C485516E11FF384 /* Debug */,
+				B89B4F18C86A3CB5812ED945 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
