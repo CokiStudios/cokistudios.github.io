@@ -87,14 +87,14 @@
         <aside class="cs-sidebar">
             <div class="cs-profile-snippet">
                 <div class="cs-avatar-wrap">
-                    <div id="profile-avatar" class="cs-avatar-large">J</div>
-                    <div class="cs-avatar-edit-badge" title="Editar foto">
+                    <div id="profile-avatar" class="cs-avatar-large">...</div>
+                    <div class="cs-avatar-edit-badge" title="Editar foto" id="btn-edit-avatar" style="cursor: pointer;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                     </div>
                 </div>
-                <div class="cs-plan-pill" id="badge-plan">Pro</div>
-                <div class="cs-profile-name" id="profile-name" style="margin-top: 8px;">JeriX Ortiz</div>
-                <div class="cs-profile-email" id="profile-email">jerixortixdev@gmail.com</div>
+                <div class="cs-plan-pill" id="badge-plan">...</div>
+                <div class="cs-profile-name" id="profile-name" style="margin-top: 8px;">Cargando...</div>
+                <div class="cs-profile-email" id="profile-email">...</div>
             </div>
 
             <!-- Menú de Navegación Vertical -->
@@ -196,8 +196,8 @@
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
                             </span>
                         </div>
-                        <p class="cs-card-desc">Sesiones iniciadas en tu Mac, iPhone, Apple Watch Ultra y vehículo con CarPlay.</p>
-                        <div class="cs-card-meta" id="home-devices-count">3 dispositivos activos</div>
+                        <p class="cs-card-desc">Sesiones iniciadas y dispositivos vinculados a tu cuenta de Coki Studios.</p>
+                        <div class="cs-card-meta" id="home-devices-count">Cargando dispositivos...</div>
                     </div>
 
                     <div class="cs-card" onclick="switchSection('section-family')" style="cursor: pointer;">
@@ -208,7 +208,7 @@
                             </span>
                         </div>
                         <p class="cs-card-desc">Comparte almacenamiento en la nube y suma puntos ecológicos de Forkar en una sola bolsa familiar.</p>
-                        <div class="cs-card-meta">Plan: Family Pro</div>
+                        <div class="cs-card-meta" id="home-family-plan">Cargando plan...</div>
                     </div>
 
                     <div class="cs-card" onclick="switchSection('section-handoff')" style="cursor: pointer;">
@@ -219,7 +219,7 @@
                             </span>
                         </div>
                         <p class="cs-card-desc">Transfiere rutas de Shine Maps o borradores de CSMS al instante a tu auto o reloj.</p>
-                        <div class="cs-card-meta">1 ruta disponible</div>
+                        <div class="cs-card-meta" id="home-handoff-count">0 actividades activas</div>
                     </div>
                 </div>
 
@@ -228,16 +228,16 @@
                     <div class="cs-list-row">
                         <div>
                             <div class="cs-list-label">Ahorro de CO₂ en Forkar</div>
-                            <div class="cs-list-sublabel">Emisiones evitadas gracias a tus viajes compartidos y movilidad sostenible.</div>
+                            <div class="cs-list-sublabel">Emisiones evitadas registradas en tu historial de movilidad sostenible.</div>
                         </div>
-                        <span style="font-size: 16px; font-weight: 700; color: var(--accent-green);" id="home-eco-co2">24.2 kg CO₂</span>
+                        <span style="font-size: 16px; font-weight: 700; color: var(--accent-green);" id="home-eco-co2">0.0 kg CO₂</span>
                     </div>
                     <div class="cs-list-row">
                         <div>
                             <div class="cs-list-label">Puntos Eco de la comunidad</div>
-                            <div class="cs-list-sublabel">Canjeables por beneficios y espacio extra en CS Mail.</div>
+                            <div class="cs-list-sublabel">Puntos acumulados en retos ecológicos y estaciones validadas.</div>
                         </div>
-                        <span style="font-size: 16px; font-weight: 700; color: var(--accent-orange);" id="home-eco-points">480 pts</span>
+                        <span style="font-size: 16px; font-weight: 700; color: var(--accent-orange);" id="home-eco-points">0 pts</span>
                     </div>
                 </div>
             </section>
@@ -295,7 +295,7 @@
                     <div class="cs-list-row">
                         <div>
                             <div class="cs-list-label">Nombre para mostrar</div>
-                            <div class="cs-list-sublabel" id="label-current-name">JeriX Ortiz Android</div>
+                            <div class="cs-list-sublabel" id="label-current-name">...</div>
                         </div>
                         <button class="cs-btn-subtle" onclick="editField('name')">Editar</button>
                     </div>
@@ -303,7 +303,7 @@
                     <div class="cs-list-row">
                         <div>
                             <div class="cs-list-label">Biografía o lema</div>
-                            <div class="cs-list-sublabel" id="label-current-bio">Coki Studios LLC, AI & Machine Learning, Eco Tech</div>
+                            <div class="cs-list-sublabel" id="label-current-bio">...</div>
                         </div>
                         <button class="cs-btn-subtle" onclick="editField('bio')">Editar</button>
                     </div>
@@ -311,7 +311,7 @@
                     <div class="cs-list-row">
                         <div>
                             <div class="cs-list-label">Correo electrónico principal</div>
-                            <div class="cs-list-sublabel" id="label-current-email">jerixortixdev@gmail.com</div>
+                            <div class="cs-list-sublabel" id="label-current-email">...</div>
                         </div>
                         <span style="font-size: 12px; color: var(--accent-green); font-weight: 600;">Verificado</span>
                     </div>
@@ -321,7 +321,7 @@
                     <div class="cs-card-title" style="margin-bottom: 6px;">Tus temas y categorías favoritas</div>
                     <p class="cs-card-desc" style="margin-bottom: 14px;">Personaliza el feed y las sugerencias de la comunidad según lo que más te interesa.</p>
                     <div id="tastes-chips-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <!-- Inyectado por JS -->
+                        <!-- Inyectado por JS desde Supabase -->
                     </div>
                 </div>
             </section>
@@ -342,7 +342,7 @@
                             </span>
                         </div>
                         <p class="cs-card-desc">Cambia o actualiza tu contraseña periódicamente para mantener tu cuenta a salvo.</p>
-                        <div class="cs-card-meta">Última actualización: recientemente</div>
+                        <div class="cs-card-meta">Actualizar contraseña</div>
                     </div>
 
                     <div class="cs-card" onclick="triggerPasskeyRegister()" style="cursor: pointer;">
@@ -353,7 +353,7 @@
                             </span>
                         </div>
                         <p class="cs-card-desc">Inicia sesión de forma rápida y segura sin escribir contraseñas mediante biometría.</p>
-                        <div class="cs-card-meta" style="color: var(--accent-green);">● Activa en este dispositivo</div>
+                        <div class="cs-card-meta" style="color: var(--accent-green);">● Autenticación por Hardware</div>
                     </div>
 
                     <div class="cs-card" onclick="copyMasterRecoveryKey()" style="cursor: pointer;">
@@ -364,7 +364,7 @@
                             </span>
                         </div>
                         <p class="cs-card-desc">Tu código de seguridad universal para restablecer la cuenta si pierdes acceso.</p>
-                        <div class="cs-card-meta" id="display-master-key">CSK-9A82-44FE-B810-77C1</div>
+                        <div class="cs-card-meta" id="display-master-key">Cargando clave...</div>
                     </div>
 
                     <div class="cs-card" onclick="switchSection('section-linked')" style="cursor: pointer;">
@@ -404,33 +404,8 @@
                     <p class="cs-section-desc">Continúa tus actividades sin interrupciones entre tu computadora, tu teléfono, el Apple Watch y el auto.</p>
                 </div>
 
-                <div class="cs-cards-grid">
-                    <div class="cs-card">
-                        <div class="cs-card-header">
-                            <div class="cs-card-title">Ruta activa en Shine Maps</div>
-                            <span class="cs-card-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
-                            </span>
-                        </div>
-                        <p class="cs-card-desc">Ruta calculada hacia Electrolinera Enel X (650 m). Lista para enviar a tu vehículo o reloj.</p>
-                        <div style="margin-top: 14px; display: flex; gap: 8px;">
-                            <button class="cs-btn-apple" style="font-size: 12px;" onclick="alert('Ruta enviada a CarPlay y Apple Watch.')">Enviar a CarPlay</button>
-                            <button class="cs-btn-subtle" style="font-size: 12px;" onclick="alert('Abriendo en iPhone...')">Abrir en iPhone</button>
-                        </div>
-                    </div>
-
-                    <div class="cs-card">
-                        <div class="cs-card-header">
-                            <div class="cs-card-title">Borrador en CSMS Mensajería</div>
-                            <span class="cs-card-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            </span>
-                        </div>
-                        <p class="cs-card-desc">Mensaje en progreso en la sala de #EcoDrivers: "Confirmada la recarga...".</p>
-                        <div style="margin-top: 14px;">
-                            <button class="cs-btn-apple" style="font-size: 12px;" onclick="alert('Borrador sincronizado con tu teléfono.')">Continuar en teléfono</button>
-                        </div>
-                    </div>
+                <div class="cs-cards-grid" id="handoff-cards-container">
+                    <!-- Inyectado por JS desde user_handoffs de Supabase -->
                 </div>
             </section>
 
@@ -441,57 +416,16 @@
                     <p class="cs-section-desc">Vincula tu correo institucional de CS Mail y proveedores externos para un acceso más sencillo.</p>
                 </div>
 
-                <div class="cs-list-group">
-                    <div class="cs-list-row">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="display: flex; align-items: center; color: var(--accent-blue);">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                            </span>
-                            <div>
-                                <div class="cs-list-label">CS Mail / Correo institucional</div>
-                                <div class="cs-list-sublabel" id="linked-email-label">jerixortixdev@gmail.com</div>
-                            </div>
-                        </div>
-                        <span style="font-size: 12px; color: var(--accent-green); font-weight: 600;">Conectado</span>
-                    </div>
+                <div class="cs-list-group" id="linked-identities-container">
+                    <!-- Inyectado por JS -->
+                </div>
 
-                    <div class="cs-list-row">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="display: flex; align-items: center;">
-                                <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
-                            </span>
-                            <div>
-                                <div class="cs-list-label">Cuenta de Google</div>
-                                <div class="cs-list-sublabel">Acceso rápido con un toque</div>
-                            </div>
-                        </div>
-                        <button class="cs-btn-subtle" onclick="linkProvider('google')">Vincular</button>
+                <div class="cs-list-group" style="margin-top: 24px;">
+                    <div style="padding: 18px 20px 8px;">
+                        <span style="font-size: 15px; font-weight: 700;">Aplicaciones con acceso autorizado (OAuth 2.0)</span>
                     </div>
-
-                    <div class="cs-list-row">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="display: flex; align-items: center;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                            </span>
-                            <div>
-                                <div class="cs-list-label">GitHub</div>
-                                <div class="cs-list-sublabel">Para desarrolladores de Loop y módulos</div>
-                            </div>
-                        </div>
-                        <button class="cs-btn-subtle" onclick="linkProvider('github')">Vincular</button>
-                    </div>
-
-                    <div class="cs-list-row">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="display: flex; align-items: center;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.43c.64-.81 1.08-1.94.96-3.08-1 .04-2.16.68-2.84 1.49-.59.69-1.12 1.83-.98 2.94 1.12.09 2.22-.54 2.86-1.35z"/></svg>
-                            </span>
-                            <div>
-                                <div class="cs-list-label">Iniciar sesión con Apple</div>
-                                <div class="cs-list-sublabel">Usa tu Apple ID de forma privada</div>
-                            </div>
-                        </div>
-                        <button class="cs-btn-subtle" onclick="linkProvider('apple')">Vincular</button>
+                    <div id="authorized-apps-container">
+                        <!-- Inyectado por JS desde Supabase -->
                     </div>
                 </div>
             </section>
@@ -555,14 +489,21 @@
             getRegisteredDevices,
             revokeDevice,
             revokeOtherDevices,
+            getActiveHandoffs,
+            dismissHandoff,
             getFamilyGroup,
             inviteFamilyMember,
             removeFamilyMember,
             getLinkedIdentities,
             linkOAuthProvider,
+            getUserAuthorizedApps,
+            revokeUserApp,
             getPersonalAccessTokens,
             createPersonalAccessToken,
-            revokePersonalAccessToken
+            revokePersonalAccessToken,
+            getUserEcoStats,
+            getUserRole,
+            getSocialCategories
         } from './coki-auth.js';
 
         let currentUser = null;
@@ -584,7 +525,7 @@
             });
         });
 
-        // Inicializar Datos
+        // ── INICIALIZAR CUENTA CON DATOS REALES DE SUPABASE ──
         async function initAccount() {
             const user = await getCurrentCokiUser();
             if (!user) {
@@ -593,12 +534,19 @@
             }
             currentUser = user;
 
+            // 1. Perfil y Roles Reales
             const name = user.name || user.email.split('@')[0];
+            const role = await getUserRole(user.id);
+            const badgePlan = role === 'admin' ? 'Admin' : (user.metadata?.tier || 'CS ID Pro');
+            
+            document.getElementById('badge-plan').textContent = badgePlan;
             document.getElementById('profile-name').textContent = name;
             document.getElementById('profile-email').textContent = user.email;
             document.getElementById('label-current-name').textContent = name;
             document.getElementById('label-current-email').textContent = user.email;
-            document.getElementById('linked-email-label').textContent = user.email;
+
+            const bio = user.metadata?.bio || user.metadata?.company || 'Miembro de Coki Studios';
+            document.getElementById('label-current-bio').textContent = bio;
 
             const avatarEl = document.getElementById('profile-avatar');
             if (user.picture) {
@@ -607,10 +555,29 @@
                 avatarEl.textContent = name.charAt(0).toUpperCase();
             }
 
+            // 2. Clave Maestra de Recuperación
+            let masterKey = user.metadata?.coki_master_key;
+            if (!masterKey) {
+                const entropy = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+                    .map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('');
+                masterKey = 'CSK-' + entropy.match(/.{1,4}/g).join('-');
+                await updateCokiProfile({ coki_master_key: masterKey });
+            }
+            document.getElementById('display-master-key').textContent = masterKey;
+
+            // 3. Métricas Ecológicas Reales de Supabase (forkman_user_eco)
+            const eco = await getUserEcoStats(user.id);
+            document.getElementById('home-eco-co2').textContent = `${eco.co2} kg CO₂`;
+            document.getElementById('home-eco-points').textContent = `${eco.points} pts`;
+
+            // 4. Renderizar listas con datos de Supabase
             await renderDevicesList();
             await renderFamilyList();
+            await renderHandoffList();
+            await renderLinkedIdentities();
+            await renderAuthorizedApps();
             await renderPATsList();
-            renderTastesChips();
+            await renderTastesChips();
         }
 
         function getDeviceIconSvg(platform) {
@@ -625,11 +592,17 @@
             }
         }
 
-        // Dispositivos
+        // ── DISPOSITIVOS REALES (user_device_hashes en Supabase) ──
         async function renderDevicesList() {
             const devices = await getRegisteredDevices();
-            document.getElementById('home-devices-count').textContent = `${devices.length} dispositivos activos`;
+            const countLabel = `${devices.length} dispositivo${devices.length === 1 ? '' : 's'} activo${devices.length === 1 ? '' : 's'}`;
+            document.getElementById('home-devices-count').textContent = countLabel;
             const container = document.getElementById('devices-container-list');
+
+            if (devices.length === 0) {
+                container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-secondary);">No hay dispositivos registrados.</div>`;
+                return;
+            }
 
             container.innerHTML = devices.map(d => `
                 <div class="cs-list-row">
@@ -637,7 +610,7 @@
                         <span style="display:flex; align-items:center; color:var(--text-secondary);">${getDeviceIconSvg(d.platform)}</span>
                         <div>
                             <div class="cs-list-label">
-                                ${d.name} ${d.isCurrent ? '<span style="color:var(--accent-green);font-size:12px;margin-left:6px;">(Este dispositivo)</span>' : ''}
+                                ${d.name} ${d.isCurrent ? '<span style="color:var(--accent-green);font-size:12px;margin-left:6px;font-weight:600;">(Este dispositivo)</span>' : ''}
                             </div>
                             <div class="cs-list-sublabel">${d.ip} · ${d.lastActive}</div>
                         </div>
@@ -651,26 +624,34 @@
         }
 
         window.handleRevoke = async (id) => {
-            if (confirm('¿Cerrar sesión en este dispositivo?')) {
+            if (confirm('¿Cerrar sesión y desvincular este dispositivo en Supabase?')) {
                 await revokeDevice(id);
                 await renderDevicesList();
             }
         };
 
         document.getElementById('btn-signout-all-devices').addEventListener('click', async () => {
-            if (confirm('¿Cerrar sesión en todos los demás dispositivos?')) {
+            if (confirm('¿Cerrar sesión en todos los demás dispositivos vinculados?')) {
                 await revokeOtherDevices();
                 await renderDevicesList();
             }
         });
 
-        // Familia
+        // ── FAMILIA REAL (family_groups & family_members en Supabase) ──
         async function renderFamilyList() {
             const fam = await getFamilyGroup();
+            if (!fam) return;
+
+            document.getElementById('home-family-plan').textContent = `Plan: ${fam.tier}`;
             document.getElementById('family-co2').textContent = `${fam.sharedEcoPoolKg} kg`;
-            document.getElementById('family-storage').textContent = `${fam.usedCloudStorageGb} GB / ${fam.sharedCloudStorageGb} GB`;
+            document.getElementById('family-storage').textContent = `${fam.usedCloudStorageGb} GB / 1 TB`;
 
             const container = document.getElementById('family-list-container');
+            if (fam.members.length === 0) {
+                container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-secondary);">No hay miembros en el grupo familiar. Invita a uno arriba.</div>`;
+                return;
+            }
+
             container.innerHTML = fam.members.map(m => `
                 <div class="cs-list-row">
                     <div style="display:flex; align-items:center; gap:12px;">
@@ -682,24 +663,143 @@
                             <div class="cs-list-sublabel">${m.email} · Rol: ${m.role}</div>
                         </div>
                     </div>
-                    <span style="font-size:13px;font-weight:600;color:var(--accent-green);">${m.ecoKg} kg CO₂</span>
+                    <div>
+                        ${m.role !== 'Organizador' ? `<button class="cs-btn-subtle" style="font-size:12px;color:var(--accent-red);" onclick="handleRemoveFamilyMember('${m.id}')">Eliminar</button>` : '<span style="font-size:12px;color:var(--text-secondary);font-weight:600;">Organizador</span>'}
+                    </div>
                 </div>
             `).join('');
         }
 
+        window.handleRemoveFamilyMember = async (id) => {
+            if (confirm('¿Eliminar a este miembro del grupo familiar en Supabase?')) {
+                await removeFamilyMember(id);
+                await renderFamilyList();
+            }
+        };
+
         document.getElementById('btn-invite-member').addEventListener('click', async () => {
             const email = prompt('Introduce el correo electrónico del familiar a invitar:');
             if (email && email.includes('@')) {
-                await inviteFamilyMember(email, 'Adulto');
-                await renderFamilyList();
-                alert(`Invitación enviada a ${email}`);
+                const res = await inviteFamilyMember(email.trim(), 'Adulto');
+                if (res.success) {
+                    await renderFamilyList();
+                    alert(`Invitación guardada para ${email}`);
+                } else {
+                    alert('Error: ' + res.error);
+                }
             }
         });
 
-        // PATs
+        // ── CONTINUIDAD & HANDOFF REAL (user_handoffs en Supabase) ──
+        async function renderHandoffList() {
+            const handoffs = await getActiveHandoffs();
+            const container = document.getElementById('handoff-cards-container');
+            document.getElementById('home-handoff-count').textContent = `${handoffs.length} actividad${handoffs.length === 1 ? '' : 'es'} activa${handoffs.length === 1 ? '' : 's'}`;
+
+            if (handoffs.length === 0) {
+                container.innerHTML = `
+                    <div class="cs-card" style="grid-column: 1 / -1; text-align: center; padding: 36px 20px;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">✨</div>
+                        <div class="cs-card-title">Sin actividades pendientes</div>
+                        <p class="cs-card-desc" style="max-width: 440px; margin: 8px auto 0;">
+                            Cuando inicies una ruta en Shine Maps o redactes mensajes en CSMS, podrás continuar tu actividad en tiempo real entre tu Mac, iPhone, CarPlay o Apple Watch.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = handoffs.map(h => `
+                <div class="cs-card">
+                    <div class="cs-card-header">
+                        <div class="cs-card-title">${h.title}</div>
+                        <span class="cs-card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        </span>
+                    </div>
+                    <p class="cs-card-desc">${h.subtitle || ''}</p>
+                    <div style="margin-top: 14px; display: flex; gap: 8px;">
+                        <button class="cs-btn-apple" style="font-size: 12px;" onclick="handleHandoffAction('${h.id}')">Continuar en dispositivo</button>
+                        <button class="cs-btn-subtle" style="font-size: 12px; color: var(--accent-red);" onclick="handleDismissHandoff('${h.id}')">Descartar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.handleDismissHandoff = async (id) => {
+            await dismissHandoff(id);
+            await renderHandoffList();
+        };
+
+        window.handleHandoffAction = (id) => {
+            alert('Actividad sincronizada con éxito en el dispositivo.');
+        };
+
+        // ── IDENTIDADES VINCULADAS (Google, GitHub, Apple) ──
+        async function renderLinkedIdentities() {
+            const identities = await getLinkedIdentities();
+            const container = document.getElementById('linked-identities-container');
+
+            container.innerHTML = identities.map(item => `
+                <div class="cs-list-row">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span style="display: flex; align-items: center; color: var(--accent-blue);">
+                            ${item.provider === 'google' ? `<svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>` :
+                            item.provider === 'github' ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>` :
+                            item.provider === 'apple' ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.43c.64-.81 1.08-1.94.96-3.08-1 .04-2.16.68-2.84 1.49-.59.69-1.12 1.83-.98 2.94 1.12.09 2.22-.54 2.86-1.35z"/></svg>` :
+                            `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`}
+                        </span>
+                        <div>
+                            <div class="cs-list-label">${item.title}</div>
+                            <div class="cs-list-sublabel">${item.identifier}</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${item.linked ? `<span style="font-size: 12px; color: var(--accent-green); font-weight: 600;">Conectado</span>` :
+                        `<button class="cs-btn-subtle" onclick="linkProvider('${item.provider}')">Vincular</button>`}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ── APLICACIONES AUTORIZADAS REALES (user_apps en Supabase) ──
+        async function renderAuthorizedApps() {
+            const apps = await getUserAuthorizedApps();
+            const container = document.getElementById('authorized-apps-container');
+
+            if (apps.length === 0) {
+                container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-secondary);">No tienes aplicaciones de terceros con acceso a tu cuenta.</div>`;
+                return;
+            }
+
+            container.innerHTML = apps.map(app => `
+                <div class="cs-list-row">
+                    <div>
+                        <div class="cs-list-label">${app.appName} <code style="font-size: 11px; color: var(--text-secondary);">(${app.clientId})</code></div>
+                        <div class="cs-list-sublabel">Permisos: ${app.scopes.join(', ')} · Autorizado: ${app.grantedAt}</div>
+                    </div>
+                    <button class="cs-btn-subtle" style="font-size: 12px; color: var(--accent-red);" onclick="handleRevokeApp('${app.id}')">Revocar acceso</button>
+                </div>
+            `).join('');
+        }
+
+        window.handleRevokeApp = async (appId) => {
+            if (confirm('¿Revocar el acceso a esta aplicación autorizada?')) {
+                await revokeUserApp(appId);
+                await renderAuthorizedApps();
+            }
+        };
+
+        // ── TOKENS DE DESARROLLADOR REALES (developer_pats en Supabase) ──
         async function renderPATsList() {
             const tokens = await getPersonalAccessTokens();
             const container = document.getElementById('pats-list-container');
+
+            if (tokens.length === 0) {
+                container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-secondary);">No hay tokens PAT activos para smiledev CLI. Genera uno arriba.</div>`;
+                return;
+            }
+
             container.innerHTML = tokens.map(t => `
                 <div class="cs-list-row">
                     <div>
@@ -712,38 +812,42 @@
         }
 
         window.handleRevokePAT = async (id) => {
-            if (confirm('¿Eliminar este token?')) {
+            if (confirm('¿Eliminar este token en Supabase? Ya no podrá usarse en smiledev CLI.')) {
                 await revokePersonalAccessToken(id);
                 await renderPATsList();
             }
         };
 
         document.getElementById('btn-generate-pat').addEventListener('click', async () => {
-            const name = prompt('Nombre identificador para el token (ej: "MacBook Pro", "Terminal"):', 'Mi Terminal');
+            const name = prompt('Nombre identificador para el token (ej: "MacBook Pro CLI", "Terminal CI"):', 'Mi Terminal');
             if (name) {
-                const res = await createPersonalAccessToken(name);
-                await renderPATsList();
-                prompt('Copia tu nuevo token para smiledev CLI:', res.rawToken);
+                const res = await createPersonalAccessToken(name.trim());
+                if (res.success) {
+                    await renderPATsList();
+                    prompt('Token guardado en Supabase. Copia tu nuevo token para smiledev CLI (no volverá a mostrarse):', res.rawToken);
+                } else {
+                    alert('Error: ' + res.error);
+                }
             }
         });
 
-        // Chips de Intereses
-        function renderTastesChips() {
-            const cats = ['Tecnología', 'Videojuegos', 'Movilidad Eco', 'Desarrollo en Loop', 'Música', 'Diseño UI', 'Ciencia'];
+        // ── CATEGORÍAS REALES (social_categories en Supabase) ──
+        async function renderTastesChips() {
+            const categories = await getSocialCategories();
             const container = document.getElementById('tastes-chips-container');
-            container.innerHTML = cats.map(c => `
-                <div class="cs-taste-chip selected" onclick="this.classList.toggle('selected')">
-                    ${c}
+            container.innerHTML = categories.map(c => `
+                <div class="cs-taste-chip ${c.slug === 'general' || c.slug === 'dev' ? 'selected' : ''}" onclick="this.classList.toggle('selected')">
+                    ${c.name}
                 </div>
             `).join('');
         }
 
-        // Cambiar Contraseña
+        // ── ACCIONES DE USUARIO & SEGURIDAD ──
         window.openPasswordChangeModal = async () => {
             const p1 = prompt('Escribe tu nueva contraseña (mínimo 8 caracteres):');
             if (p1 && p1.length >= 8) {
                 const res = await changeCokiPassword(p1);
-                if (res.success) alert('Contraseña actualizada con éxito.');
+                if (res.success) alert('Contraseña actualizada con éxito en Supabase.');
                 else alert('Error: ' + res.error);
             } else if (p1) {
                 alert('La contraseña debe tener al menos 8 caracteres.');
@@ -752,13 +856,14 @@
 
         window.triggerPasskeyRegister = async () => {
             const res = await registerPasskey();
-            if (res.success) alert('Passkey biométrica registrada.');
+            if (res.success) alert('Passkey biométrica vinculada a tu cuenta con hardware SEP.');
             else alert('Error: ' + res.error);
         };
 
         window.copyMasterRecoveryKey = () => {
-            navigator.clipboard.writeText('CSK-9A82-44FE-B810-77C1');
-            alert('Clave maestra copiada al portapapeles.');
+            const key = document.getElementById('display-master-key').textContent;
+            navigator.clipboard.writeText(key);
+            alert('Clave maestra de recuperación copiada al portapapeles.');
         };
 
         window.linkProvider = async (p) => {
@@ -766,19 +871,28 @@
         };
 
         window.editField = async (f) => {
-            const val = prompt(`Actualizar ${f}:`);
-            if (val) {
+            const currentVal = f === 'name' ? document.getElementById('label-current-name').textContent : document.getElementById('label-current-bio').textContent;
+            const val = prompt(`Actualizar ${f === 'name' ? 'nombre' : 'biografía'}:`, currentVal);
+            if (val && val.trim() !== '') {
                 if (f === 'name') {
-                    await updateCokiProfile({ full_name: val });
-                    document.getElementById('profile-name').textContent = val;
-                    document.getElementById('label-current-name').textContent = val;
+                    await updateCokiProfile({ full_name: val.trim(), name: val.trim() });
+                    document.getElementById('profile-name').textContent = val.trim();
+                    document.getElementById('label-current-name').textContent = val.trim();
                 } else if (f === 'bio') {
-                    await updateCokiProfile({ company: val });
-                    document.getElementById('label-current-bio').textContent = val;
+                    await updateCokiProfile({ bio: val.trim(), company: val.trim() });
+                    document.getElementById('label-current-bio').textContent = val.trim();
                 }
             }
         };
 
+        document.getElementById('btn-edit-avatar')?.addEventListener('click', async () => {
+            const currentImg = currentUser?.picture || '';
+            const val = prompt('Introduce la URL directa de tu imagen de avatar (HTTPS):', currentImg);
+            if (val && (val.startsWith('https://') || val.startsWith('http://'))) {
+                await updateCokiProfile({ avatar_url: val.trim(), picture: val.trim() });
+                document.getElementById('profile-avatar').innerHTML = `<img src="${val.trim()}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            }
+        });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
             await logoutCoki();

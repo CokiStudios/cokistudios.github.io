@@ -340,7 +340,27 @@ async function updateCokiProfile(updates) {
         return { success: false, error: error.message };
     }
     
-    //  ACTUALIZAR COOKIE
+    // Sincronizar en tabla 'profiles' de Supabase
+    if (data?.user) {
+        try {
+            const profileUpdates = {
+                id: data.user.id,
+                email: data.user.email,
+                updated_at: new Date().toISOString()
+            };
+            if (updates.full_name) profileUpdates.full_name = updates.full_name;
+            if (updates.name) profileUpdates.full_name = updates.name;
+            if (updates.avatar_url) profileUpdates.avatar_url = updates.avatar_url;
+            if (updates.picture) profileUpdates.avatar_url = updates.picture;
+            if (updates.preferred_language) profileUpdates.preferred_language = updates.preferred_language;
+
+            await supabase.from('profiles').upsert(profileUpdates, { onConflict: 'id' });
+        } catch (e) {
+            console.warn('Error syncing to profiles table:', e);
+        }
+    }
+    
+    // ACTUALIZAR COOKIE
     const current = getCookieJSON('coki_current_user') || {};
     setCookieJSON('coki_current_user', {
         ...current,
@@ -872,182 +892,293 @@ function detectCurrentDeviceInfo() {
 }
 
 async function getRegisteredDevices() {
-    const current = detectCurrentDeviceInfo();
-    const stored = JSON.parse(localStorage.getItem('cs_registered_devices') || '[]');
+    const user = await getCurrentCokiUser();
+    const currentHash = getBrowserHash();
+    const currentInfo = detectCurrentDeviceInfo();
     
-    const defaultDevices = [
-        current,
-        {
-            id: 'dev_apple_watch_ultra',
-            name: 'Apple Watch Ultra 2 (Forkar Watch)',
-            platform: 'watchOS',
-            icon: 'applewatch',
-            ip: '181.61.x.x (Celular)',
-            lastActive: 'Hace 4 minutos',
-            isCurrent: false,
-            trustedSEP: true
-        },
-        {
-            id: 'dev_carplay_unit',
-            name: 'CarPlay Vehicle Cockpit',
-            platform: 'CarPlay',
-            icon: 'car.fill',
-            ip: '190.25.x.x (Bogotá, CO)',
-            lastActive: 'Hace 2 horas',
-            isCurrent: false,
-            trustedSEP: true
-        }
-    ];
-
-    if (!stored || stored.length === 0) {
-        localStorage.setItem('cs_registered_devices', JSON.stringify(defaultDevices));
-        return defaultDevices;
+    if (!user) return [currentInfo];
+    
+    // Sincronizar dispositivo actual en Supabase user_device_hashes
+    try {
+        await supabase.from('user_device_hashes').upsert({
+            device_hash: currentHash,
+            user_id: user.id,
+            user_email: user.email,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'device_hash' });
+    } catch (e) {
+        console.warn('Error upserting current device hash:', e);
     }
+    
+    // Obtener todos los dispositivos registrados en Supabase para este usuario
+    const { data: dbDevices, error } = await supabase
+        .from('user_device_hashes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+        
+    if (error || !dbDevices || dbDevices.length === 0) {
+        return [currentInfo];
+    }
+    
+    return dbDevices.map(d => {
+        const isCurrent = d.device_hash === currentHash;
+        const devName = isCurrent ? currentInfo.name : 'Navegador vinculado';
+        const platform = isCurrent ? currentInfo.platform : 'Web';
+        
+        const timeDiff = Date.now() - new Date(d.updated_at || d.created_at).getTime();
+        let lastActive = 'Ahora mismo';
+        if (!isCurrent) {
+            if (timeDiff > 24 * 3600 * 1000) {
+                const days = Math.floor(timeDiff / (24 * 3600 * 1000));
+                lastActive = `Hace ${days} día${days > 1 ? 's' : ''}`;
+            } else if (timeDiff > 3600 * 1000) {
+                const hours = Math.floor(timeDiff / (3600 * 1000));
+                lastActive = `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+            } else if (timeDiff > 60 * 1000) {
+                const mins = Math.floor(timeDiff / (60 * 1000));
+                lastActive = `Hace ${mins} min`;
+            } else {
+                lastActive = 'Hace un momento';
+            }
+        }
 
-    const merged = [current, ...stored.filter(d => d.id !== current.id)];
-    return merged;
+        return {
+            id: d.id,
+            device_hash: d.device_hash,
+            name: devName,
+            platform: platform,
+            ip: 'Dispositivo verificado',
+            lastActive: lastActive,
+            isCurrent: isCurrent,
+            trustedSEP: isCurrent ? currentInfo.trustedSEP : false
+        };
+    });
 }
 
 async function revokeDevice(deviceId) {
-    let list = await getRegisteredDevices();
-    list = list.filter(d => d.id !== deviceId);
-    localStorage.setItem('cs_registered_devices', JSON.stringify(list));
-    broadcastSSO('DEVICE_REVOKED', { deviceId });
-    return { success: true };
+    const { error } = await supabase.from('user_device_hashes').delete().eq('id', deviceId);
+    if (!error) {
+        broadcastSSO('DEVICE_REVOKED', { deviceId });
+        return { success: true };
+    }
+    return { success: false, error: error?.message };
 }
 
 async function revokeOtherDevices() {
-    const current = detectCurrentDeviceInfo();
-    localStorage.setItem('cs_registered_devices', JSON.stringify([current]));
-    broadcastSSO('SSO_LOGOUT', { except: current.id });
-    return { success: true };
+    const user = await getCurrentCokiUser();
+    const currentHash = getBrowserHash();
+    if (!user) return { success: false };
+    
+    const { error } = await supabase.from('user_device_hashes')
+        .delete()
+        .eq('user_id', user.id)
+        .neq('device_hash', currentHash);
+        
+    broadcastSSO('SSO_LOGOUT', { except: currentHash });
+    return { success: !error };
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HANDOFF CROSS-DEVICE (Continuidad Universal CS)
+//  HANDOFF CROSS-DEVICE (Continuidad Universal CS) — SUPABASE REAL
 // ═══════════════════════════════════════════════════════════════
 
 async function getActiveHandoffs() {
-    const defaultHandoffs = [
-        {
-            id: 'ho_route_shine',
-            service: 'Shine Maps',
-            title: 'Ruta hacia Electrolinera Enel X',
-            subtitle: 'Distancia: 650 m · ETA: 12:45 PM',
-            icon: 'map.fill',
-            originDevice: 'MacBook Pro',
-            availableTargets: ['CarPlay', 'Apple Watch', 'iPhone'],
-            timestamp: Date.now() - 60000,
-            payload: { destination: 'Electrolinera Enel X', lat: 4.6533, lon: -74.0836 }
-        },
-        {
-            id: 'ho_csms_draft',
-            service: 'CSMS E2EE',
-            title: 'Borrador en Sala #EcoDrivers',
-            subtitle: '🔒 "Confirmada la recarga en el punto sur..."',
-            icon: 'bubble.left.and.bubble.right.fill',
-            originDevice: 'iPhone',
-            availableTargets: ['MacBook Pro', 'Apple Watch'],
-            timestamp: Date.now() - 180000,
-            payload: { room: 'EcoDrivers', draft: 'Confirmada la recarga en el punto sur...' }
-        }
-    ];
-
-    const stored = JSON.parse(localStorage.getItem('cs_active_handoffs') || '[]');
-    if (!stored || stored.length === 0) {
-        localStorage.setItem('cs_active_handoffs', JSON.stringify(defaultHandoffs));
-        return defaultHandoffs;
-    }
-    return stored;
+    const user = await getCurrentCokiUser();
+    if (!user) return [];
+    
+    const { data, error } = await supabase
+        .from('user_handoffs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+    if (error || !data) return [];
+    return data;
 }
 
 async function pushHandoff(targetDevice, payload) {
-    const handoff = {
-        id: 'ho_' + Date.now(),
-        service: payload.service || 'Shine Maps',
-        title: payload.title || 'Continuar actividad',
-        subtitle: payload.subtitle || 'Enviado desde este navegador',
-        icon: payload.icon || 'arrow.triangle.2.circlepath',
-        originDevice: detectCurrentDeviceInfo().name,
-        targetDevice: targetDevice,
-        timestamp: Date.now(),
-        payload: payload
-    };
-
-    const current = await getActiveHandoffs();
-    current.unshift(handoff);
-    localStorage.setItem('cs_active_handoffs', JSON.stringify(current));
-    broadcastSSO('HANDOFF_PUSH', handoff);
-    return { success: true, handoff };
+    const user = await getCurrentCokiUser();
+    if (!user) return { success: false, error: 'No autenticado' };
+    
+    const { data, error } = await supabase
+        .from('user_handoffs')
+        .insert({
+            user_id: user.id,
+            service: payload.service || 'Shine Maps',
+            title: payload.title || 'Continuar actividad',
+            subtitle: payload.subtitle || 'Enviado desde este navegador',
+            icon: payload.icon || 'arrow.triangle.2.circlepath',
+            origin_device: detectCurrentDeviceInfo().name,
+            target_device: targetDevice,
+            payload: payload
+        })
+        .select()
+        .single();
+        
+    if (error) return { success: false, error: error.message };
+    broadcastSSO('HANDOFF_PUSH', data);
+    return { success: true, handoff: data };
 }
 
 async function dismissHandoff(handoffId) {
-    let current = await getActiveHandoffs();
-    current = current.filter(h => h.id !== handoffId);
-    localStorage.setItem('cs_active_handoffs', JSON.stringify(current));
-    return { success: true };
+    const { error } = await supabase
+        .from('user_handoffs')
+        .delete()
+        .eq('id', handoffId);
+    return { success: !error };
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CS FAMILY SHARING (FAMILIAS COKI STUDIOS)
+//  CS FAMILY SHARING — SUPABASE REAL
 // ═══════════════════════════════════════════════════════════════
 
 async function getFamilyGroup() {
-    const defaultFamily = {
-        id: 'fam_coki_prime',
-        name: 'Familia Coki Studios',
-        tier: 'Family Pro',
-        sharedEcoPoolKg: 48.6,
-        sharedEcoPoints: 1420,
-        sharedCloudStorageGb: 1024,
-        usedCloudStorageGb: 184,
-        members: [
-            { id: 'mem_1', name: 'Tú (Organizador)', email: 'tucorreo@coki.com', role: 'Organizador', avatar: 'T', ecoKg: 24.2 },
-            { id: 'mem_2', name: 'Laura Ortiz', email: 'laura@coki.com', role: 'Adulto', avatar: 'L', ecoKg: 14.8 },
-            { id: 'mem_3', name: 'Mateo Ortiz', email: 'mateo@coki.com', role: 'Menor', avatar: 'M', ecoKg: 9.6 }
-        ]
-    };
-
-    const stored = JSON.parse(localStorage.getItem('cs_family_group') || 'null');
-    if (!stored) {
-        localStorage.setItem('cs_family_group', JSON.stringify(defaultFamily));
-        return defaultFamily;
+    const user = await getCurrentCokiUser();
+    if (!user) return null;
+    
+    let { data: group } = await supabase
+        .from('family_groups')
+        .select('*')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+        
+    if (!group) {
+        const { data: memberRecord } = await supabase
+            .from('family_members')
+            .select('family_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+        if (memberRecord) {
+            const { data: foundGroup } = await supabase
+                .from('family_groups')
+                .select('*')
+                .eq('id', memberRecord.family_id)
+                .maybeSingle();
+            group = foundGroup;
+        }
     }
-    return stored;
+    
+    if (!group) {
+        const { data: newGroup, error: groupErr } = await supabase
+            .from('family_groups')
+            .insert({
+                owner_id: user.id,
+                name: `Familia de ${user.name || user.email.split('@')[0]}`,
+                tier: 'Family Pro'
+            })
+            .select()
+            .single();
+            
+        if (!groupErr && newGroup) {
+            group = newGroup;
+            await supabase.from('family_members').insert({
+                family_id: newGroup.id,
+                user_id: user.id,
+                name: user.name || user.email.split('@')[0],
+                email: user.email,
+                role: 'Organizador'
+            });
+        }
+    }
+    
+    if (!group) return null;
+    
+    const { data: members } = await supabase
+        .from('family_members')
+        .select('*')
+        .eq('family_id', group.id)
+        .order('created_at', { ascending: true });
+        
+    const memberUserIds = (members || []).map(m => m.user_id).filter(Boolean);
+    let totalEcoKg = 0;
+    let totalPoints = 0;
+    
+    if (memberUserIds.length > 0) {
+        const { data: ecoData } = await supabase
+            .from('forkman_user_eco')
+            .select('co2_saved, points_earned')
+            .in('user_id', memberUserIds);
+            
+        if (ecoData) {
+            ecoData.forEach(r => {
+                totalEcoKg += parseFloat(r.co2_saved || 0);
+                totalPoints += parseInt(r.points_earned || 0);
+            });
+        }
+    }
+    
+    return {
+        id: group.id,
+        name: group.name,
+        tier: group.tier,
+        sharedEcoPoolKg: totalEcoKg.toFixed(1),
+        sharedEcoPoints: totalPoints,
+        sharedCloudStorageGb: 1024,
+        usedCloudStorageGb: 12,
+        members: (members || []).map(m => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            role: m.role,
+            avatar: (m.name || m.email).charAt(0).toUpperCase(),
+            ecoKg: 0.0
+        }))
+    };
 }
 
 async function inviteFamilyMember(email, role = 'Adulto') {
-    const family = await getFamilyGroup();
-    const newMember = {
-        id: 'mem_' + Date.now(),
-        name: email.split('@')[0],
-        email: email,
-        role: role,
-        avatar: email.charAt(0).toUpperCase(),
-        ecoKg: 0.0
-    };
-    family.members.push(newMember);
-    localStorage.setItem('cs_family_group', JSON.stringify(family));
-    return { success: true, member: newMember };
+    const user = await getCurrentCokiUser();
+    if (!user) return { success: false, error: 'No autenticado' };
+    
+    let fam = await getFamilyGroup();
+    if (!fam) return { success: false, error: 'No se pudo cargar el grupo familiar' };
+    
+    const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('email', email)
+        .maybeSingle();
+        
+    const memberName = existingProfile?.full_name || email.split('@')[0];
+    
+    const { data, error } = await supabase
+        .from('family_members')
+        .insert({
+            family_id: fam.id,
+            user_id: existingProfile?.id || null,
+            name: memberName,
+            email: email,
+            role: role
+        })
+        .select()
+        .single();
+        
+    if (error) return { success: false, error: error.message };
+    return { success: true, member: data };
 }
 
 async function removeFamilyMember(memberId) {
-    const family = await getFamilyGroup();
-    family.members = family.members.filter(m => m.id !== memberId);
-    localStorage.setItem('cs_family_group', JSON.stringify(family));
-    return { success: true };
+    const { error } = await supabase
+        .from('family_members')
+        .delete()
+        .eq('id', memberId);
+    return { success: !error };
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  IDENTIDADES DUALES (CORREO CS MAIL + OAUTH EXTERNO)
+//  IDENTIDADES VINCULADAS & APPS OAUTH — SUPABASE REAL
 // ═══════════════════════════════════════════════════════════════
 
 async function getLinkedIdentities() {
     const user = await getCurrentCokiUser();
+    const providers = user?.metadata?.providers || user?.app_metadata?.providers || ['email'];
+    
     const identities = [
         {
             provider: 'email',
-            identifier: user?.email || 'email@cokistudios.com',
+            identifier: user?.email || '',
             title: 'Correo Institucional / CS Mail',
             icon: 'envelope.fill',
             linked: true,
@@ -1055,26 +1186,26 @@ async function getLinkedIdentities() {
         },
         {
             provider: 'google',
-            identifier: user?.user_metadata?.google_email || 'No vinculado',
+            identifier: providers.includes('google') ? user?.email : 'No vinculado',
             title: 'Google Account',
             icon: 'globe',
-            linked: !!(user?.app_metadata?.providers?.includes('google') || user?.user_metadata?.google_email),
+            linked: providers.includes('google'),
             canUnlink: true
         },
         {
             provider: 'github',
-            identifier: user?.user_metadata?.github_username || 'No vinculado',
+            identifier: providers.includes('github') ? 'Vinculado' : 'No vinculado',
             title: 'GitHub Developer Account',
             icon: 'chevron.left.forwardslash.chevron.right',
-            linked: !!(user?.app_metadata?.providers?.includes('github') || user?.user_metadata?.github_username),
+            linked: providers.includes('github'),
             canUnlink: true
         },
         {
             provider: 'apple',
-            identifier: user?.user_metadata?.apple_id || 'No vinculado',
+            identifier: providers.includes('apple') ? 'Vinculado' : 'No vinculado',
             title: 'Apple ID (Sign in with Apple)',
             icon: 'apple.logo',
-            linked: !!(user?.app_metadata?.providers?.includes('apple')),
+            linked: providers.includes('apple'),
             canUnlink: true
         }
     ];
@@ -1085,58 +1216,152 @@ async function linkOAuthProvider(provider) {
     return await loginCokiWithOAuth(provider);
 }
 
+async function getUserAuthorizedApps() {
+    const user = await getCurrentCokiUser();
+    if (!user) return [];
+    
+    const { data, error } = await supabase
+        .from('user_apps')
+        .select('id, client_id, scopes, is_active, granted_at, last_used_at')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+        
+    if (error || !data) return [];
+    
+    // Obtener nombres de aplicaciones
+    const clientIds = data.map(a => a.client_id);
+    let clientsMap = {};
+    if (clientIds.length > 0) {
+        const { data: clients } = await supabase
+            .from('oauth_clients')
+            .select('client_id, client_name, logo_url')
+            .in('client_id', clientIds);
+        if (clients) {
+            clients.forEach(c => { clientsMap[c.client_id] = c; });
+        }
+    }
+    
+    return data.map(a => ({
+        id: a.id,
+        clientId: a.client_id,
+        appName: clientsMap[a.client_id]?.client_name || a.client_id,
+        scopes: a.scopes || [],
+        grantedAt: new Date(a.granted_at).toLocaleDateString(),
+        lastUsedAt: a.last_used_at ? new Date(a.last_used_at).toLocaleDateString() : 'Recientemente'
+    }));
+}
+
+async function revokeUserApp(appId) {
+    const { error } = await supabase
+        .from('user_apps')
+        .update({ is_active: false })
+        .eq('id', appId);
+    return { success: !error };
+}
+
 // ═══════════════════════════════════════════════════════════════
-//  PERSONAL ACCESS TOKENS (SMILEDEV CLI & API)
+//  PERSONAL ACCESS TOKENS (SMILEDEV CLI) — SUPABASE REAL
 // ═══════════════════════════════════════════════════════════════
 
 async function getPersonalAccessTokens() {
-    const defaultTokens = [
-        {
-            id: 'pat_1',
-            name: 'MacBook Pro CLI',
-            tokenPrefix: 'cs_pat_9a4f2b',
-            scopes: ['read:modules', 'publish:modules'],
-            createdAt: '2026-10-01',
-            lastUsed: 'Hoy a las 11:42 AM',
-            expiresIn: '85 días'
-        }
-    ];
-
-    const stored = JSON.parse(localStorage.getItem('cs_developer_pats') || 'null');
-    if (!stored) {
-        localStorage.setItem('cs_developer_pats', JSON.stringify(defaultTokens));
-        return defaultTokens;
-    }
-    return stored;
+    const user = await getCurrentCokiUser();
+    if (!user) return [];
+    
+    const { data, error } = await supabase
+        .from('developer_pats')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+    if (error || !data) return [];
+    
+    return data.map(t => {
+        const expiresDate = new Date(t.expires_at);
+        const daysLeft = Math.max(0, Math.ceil((expiresDate.getTime() - Date.now()) / (24 * 3600 * 1000)));
+        return {
+            id: t.id,
+            name: t.name,
+            tokenPrefix: t.token_prefix,
+            scopes: t.scopes,
+            createdAt: new Date(t.created_at).toLocaleDateString(),
+            lastUsed: t.last_used_at ? new Date(t.last_used_at).toLocaleDateString() : 'Nunca',
+            expiresIn: `${daysLeft} días`
+        };
+    });
 }
 
 async function createPersonalAccessToken(name, scopes = ['read:modules', 'publish:modules']) {
+    const user = await getCurrentCokiUser();
+    if (!user) return { success: false, error: 'No autenticado' };
+    
     const randPart = Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
     const fullToken = `cs_pat_${randPart}`;
+    const tokenPrefix = fullToken.substring(0, 14);
     
-    const newToken = {
-        id: 'pat_' + Date.now(),
-        name: name,
-        tokenPrefix: fullToken.substring(0, 14),
-        scopes: scopes,
-        createdAt: new Date().toISOString().split('T')[0],
-        lastUsed: 'Nunca',
-        expiresIn: '90 días'
-    };
-
-    const current = await getPersonalAccessTokens();
-    current.unshift(newToken);
-    localStorage.setItem('cs_developer_pats', JSON.stringify(current));
-
-    return { success: true, tokenObj: newToken, rawToken: fullToken };
+    const { data, error } = await supabase
+        .from('developer_pats')
+        .insert({
+            user_id: user.id,
+            name: name,
+            token_prefix: tokenPrefix,
+            token_hash: randPart,
+            scopes: scopes
+        })
+        .select()
+        .single();
+        
+    if (error) return { success: false, error: error.message };
+    
+    return { success: true, tokenObj: data, rawToken: fullToken };
 }
 
 async function revokePersonalAccessToken(tokenId) {
-    let current = await getPersonalAccessTokens();
-    current = current.filter(t => t.id !== tokenId);
-    localStorage.setItem('cs_developer_pats', JSON.stringify(current));
-    return { success: true };
+    const { error } = await supabase
+        .from('developer_pats')
+        .delete()
+        .eq('id', tokenId);
+    return { success: !error };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MÉTRICAS ECOLÓGICAS, ROLES Y CATEGORÍAS REALES DE SUPABASE
+// ═══════════════════════════════════════════════════════════════
+
+async function getUserEcoStats(userId) {
+    const { data, error } = await supabase
+        .from('forkman_user_eco')
+        .select('co2_saved, points_earned')
+        .eq('user_id', userId);
+        
+    let co2 = 0;
+    let points = 0;
+    if (data && data.length > 0) {
+        data.forEach(row => {
+            co2 += parseFloat(row.co2_saved || 0);
+            points += parseInt(row.points_earned || 0);
+        });
+    }
+    return { co2: co2.toFixed(1), points: points };
+}
+
+async function getUserRole(userId) {
+    const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+    return data?.role || 'user';
+}
+
+async function getSocialCategories() {
+    const { data, error } = await supabase
+        .from('social_categories')
+        .select('*')
+        .order('name');
+        
+    return data || DEFAULT_CATEGORIES;
 }
 
 export {
@@ -1176,9 +1401,14 @@ export {
     removeFamilyMember,
     getLinkedIdentities,
     linkOAuthProvider,
+    getUserAuthorizedApps,
+    revokeUserApp,
     getPersonalAccessTokens,
     createPersonalAccessToken,
-    revokePersonalAccessToken
+    revokePersonalAccessToken,
+    getUserEcoStats,
+    getUserRole,
+    getSocialCategories
 };
 
 
