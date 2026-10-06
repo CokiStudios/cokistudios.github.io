@@ -604,8 +604,14 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div>🔐 <strong>E2EE Hardware Backed:</strong> AES-256-GCM</div>
-                <div>🛡️ <strong>Zero Trust Policy:</strong> Domain = cokistudios.com</div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span><strong>E2EE Hardware Backed:</strong> AES-256-GCM</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span><strong>Zero Trust Policy:</strong> Domain = cokistudios.com</span>
+                </div>
             </div>
         </aside>
 
@@ -620,7 +626,7 @@
                 </div>
 
                 <div class="hardware-badge">
-                    <span>🔒</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     <span id="hardwareBadgeText">CSIMS AES-256-GCM Enclave</span>
                 </div>
             </div>
@@ -640,7 +646,7 @@
                     />
                     <button type="submit" class="btn-send" id="btnSend">
                         <span>Enviar</span>
-                        <span>✈</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     </button>
                 </form>
             </div>
@@ -673,8 +679,9 @@
                 </svg>
                 <span>Continuar con Microsoft (@cokistudios.com)</span>
             </button>
-            <div style="margin-top: 18px; font-size: 11px; color: var(--text-muted);">
-                🔒 Cifrado E2EE con respaldo de hardware Secure Enclave / KeyStore
+            <div style="margin-top: 18px; font-size: 11px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; gap:6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Cifrado E2EE con respaldo de hardware Secure Enclave / KeyStore</span>
             </div>
         </div>
     </div>
@@ -682,7 +689,9 @@
     <!-- ── MODAL NUEVO CANAL ── -->
     <div class="modal-overlay" id="newChannelModal">
         <div class="modal">
-            <div class="modal-icon">💬</div>
+            <div class="modal-icon" style="display:flex; align-items:center; justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
             <h2 class="modal-title">Nuevo Canal Interno</h2>
             <p class="modal-desc">Crea una sala de chat cifrada de extremo a extremo para el equipo.</p>
             <input 
@@ -814,7 +823,7 @@
             if (!email.endsWith("@cokistudios.com")) {
                 document.getElementById("authModal").classList.add("open");
                 if (errBox) {
-                    errBox.textContent = `⚠️ Acceso denegado: La cuenta actual (${email}) no pertenece a la organización @cokistudios.com. Debes iniciar sesión con tu cuenta corporativa Microsoft.`;
+                    errBox.textContent = `Acceso denegado: La cuenta actual (${email}) no pertenece a la organización @cokistudios.com. Debes iniciar sesión con tu cuenta corporativa Microsoft.`;
                     errBox.style.display = "block";
                 }
                 return;
@@ -908,7 +917,7 @@
                         </div>
                         <div class="msg-bubble">
                             ${escapeHtml(decrypted.text)}
-                            ${decrypted.isEncrypted ? '<div class="enc-badge">🔒 Cifrado E2EE CSIMS</div>' : ''}
+                            ${decrypted.isEncrypted ? '<div class="enc-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px; vertical-align:-1px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Cifrado E2EE CSIMS</div>' : ''}
                         </div>
                     </div>
                 `;

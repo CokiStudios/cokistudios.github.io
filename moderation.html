@@ -147,7 +147,8 @@
             </a>
             <div class="nav-right">
                 <button type="button" onclick="window.openChatGPTModal()" style="background:rgba(16,163,127,0.15); border:1px solid rgba(16,163,127,0.3); color:#34d399; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-                    ⚡ Conectar ChatGPT
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    <span>Conectar ChatGPT</span>
                 </button>
                 <a href="forkar" class="nav-link">Comunidad</a>
                 <a href="dashboard" class="nav-link">Mi Cuenta</a>
@@ -337,8 +338,9 @@
                             <div id="ai-verdict-${r.id}" style="display:none; margin-top:12px; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.4;"></div>
                         </div>
                         <div class="report-actions" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-                            <button class="btn btn-ghost" id="btn-ai-${r.id}" onclick="analyzeReportWithAI('${r.id}', '${esc(isPost && target.title ? target.title : '').replace(/'/g, "\\'")}', '${esc(target.content || '').replace(/'/g, "\\'")}')" style="border:1px solid rgba(139,92,246,0.4); color:#a78bfa;">
-                                🤖 Analizar con IA
+                            <button class="btn btn-ghost" id="btn-ai-${r.id}" onclick="analyzeReportWithAI('${r.id}', '${esc(isPost && target.title ? target.title : '').replace(/'/g, "\\'")}', '${esc(target.content || '').replace(/'/g, "\\'")}')" style="border:1px solid rgba(139,92,246,0.4); color:#a78bfa; display:inline-flex; align-items:center; gap:6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <span>Analizar con IA</span>
                             </button>
                             <button class="btn btn-ghost" onclick="resolveReport('${r.id}', 'dismissed')">Desestimar</button>
                             <button class="btn btn-danger" onclick="resolveReport('${r.id}', 'hide', '${isPost ? 'post' : 'comment'}', '${isPost ? r.post_id : r.comment_id}')">Ocultar contenido</button>
@@ -367,7 +369,8 @@
                     verdictBox.style.color = '#fca5a5';
                     verdictBox.innerHTML = `
                         <div style="font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                            <span>⚠️ Veredicto IA: Contenido Sospechoso / Inapropiado</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span>Veredicto IA: Contenido Sospechoso / Inapropiado</span>
                             <span style="font-size:10px; opacity:0.8; margin-left:auto; background:rgba(239,68,68,0.25); padding:2px 6px; border-radius:4px;">${result.engine}</span>
                         </div>
                         <div>${esc(result.reason)}</div>
@@ -379,7 +382,8 @@
                     verdictBox.style.color = '#6ee7b7';
                     verdictBox.innerHTML = `
                         <div style="font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                            <span>✅ Veredicto IA: Contenido Respetuoso</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <span>Veredicto IA: Contenido Respetuoso</span>
                             <span style="font-size:10px; opacity:0.8; margin-left:auto; background:rgba(16,185,129,0.25); padding:2px 6px; border-radius:4px;">${result.engine}</span>
                         </div>
                         <div>${esc(result.reason)}</div>
@@ -390,7 +394,12 @@
                 verdictBox.style.background = 'rgba(245, 158, 11, 0.15)';
                 verdictBox.style.border = '1px solid rgba(245, 158, 11, 0.3)';
                 verdictBox.style.color = '#fcd34d';
-                verdictBox.innerHTML = `⚠️ No se pudo completar el análisis: ${esc(err.message)}`;
+                verdictBox.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span>No se pudo completar el análisis: ${esc(err.message)}</span>
+                    </div>
+                `;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;

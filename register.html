@@ -13,122 +13,16 @@
     <meta name="description"
         content="Inicia sesión o crea tu cuenta CSID para acceder a todas nuestras aplicaciones de forma segura.">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/cs-account.css">
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --bg: #06090f;
-            --bg2: #0d1117;
-            --card: #0d121f;
-            --border: rgba(255, 255, 255, 0.1);
-            --border-glow: rgba(99, 102, 241, 0.4);
-            --accent: #6366f1;
-            --text: #f1f5f9;
-            --text-sub: #94a3b8;
-            --text-muted: #64748b;
-            --input-bg: #141b2d;
-            --input-border: #26324e;
-            --btn-social-bg: #161e31;
-            --btn-social-border: #2a3756;
-            --tab-bar-bg: #090d16;
-        }
-
-        html.light-theme {
-            --bg: #f8fafc;
-            --bg2: #f1f5f9;
-            --card: #ffffff;
-            --border: #e2e8f0;
-            --border-glow: rgba(99, 102, 241, 0.3);
-            --accent: #4f46e5;
-            --text: #0f172a;
-            --text-sub: #475569;
-            --text-muted: #64748b;
-            --input-bg: #f8fafc;
-            --input-border: #cbd5e1;
-            --btn-social-bg: #f1f5f9;
-            --btn-social-border: #e2e8f0;
-            --tab-bar-bg: #f8fafc;
-        }
-
-        .theme-toggle-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-sub);
-            transition: all 0.2s;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-toggle-btn:hover {
-            color: var(--text);
-            background: rgba(99, 102, 241, 0.1);
-            border-color: var(--accent);
-        }
-
         body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background-color: var(--bg-page);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
-            position: relative;
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background-image: linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%236366f1' stroke-width='1.5' opacity='0.15'/%3E%3C/svg%3E");
-            background-repeat: repeat-y;
-            background-size: 100% 600px;
-            background-position: center top;
-            pointer-events: none;
-            animation: moveBackground 25s linear infinite;
-        }
-
-        html.light-theme body::after {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' fill='none'%3E%3Cpath d='M0,50 C200,50 400,210 700,210 C900,210 1100,180 1440,180' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3Cpath d='M0,150 C150,120 200,80 300,80 C500,80 750,200 900,200 C1100,200 1250,20 1440,20' stroke='%234f46e5' stroke-width='1.5' opacity='0.08'/%3E%3C/svg%3E");
-        }
-
-        @keyframes moveBackground {
-            from {
-                background-position: center 0px;
-            }
-
-            to {
-                background-position: center 600px;
-            }
         }
 
         .auth-container {
@@ -144,82 +38,75 @@
         }
 
         .auth-logo {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 16px;
+            width: 52px;
+            height: 52px;
+            background: var(--text-primary);
+            color: var(--bg-card);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
+            font-weight: 800;
             font-size: 24px;
-            color: white;
             margin: 0 auto 16px;
-            box-shadow: 0 0 35px rgba(99, 102, 241, 0.4);
+            box-shadow: var(--shadow-card);
         }
 
         .auth-header h1 {
-            font-size: 32px;
-            font-weight: 900;
-            margin-bottom: 4px;
-            letter-spacing: -0.5px;
-            color: var(--text);
-        }
-
-        .auth-header h1 span {
-            background: linear-gradient(135deg, #6366f1, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            margin-bottom: 6px;
         }
 
         .auth-header p {
-            color: var(--text-sub);
-            font-size: 14.5px;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
         .auth-card {
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border);
-            transition: background 0.3s ease, border-color 0.3s ease;
+            box-shadow: var(--shadow-elevated);
+            transition: all 0.2s ease;
         }
 
         .tabs {
             display: flex;
-            border-bottom: 1.5px solid var(--border);
-            background: var(--tab-bar-bg);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-card-sub);
         }
 
         .tab-btn {
             flex: 1;
-            padding: 18px;
+            padding: 16px;
             text-align: center;
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 14.5px;
+            font-weight: 600;
             background: transparent;
             border: none;
             cursor: pointer;
-            color: var(--text-muted);
-            border-bottom: 3px solid transparent;
-            transition: all 0.25s;
-            font-family: 'Outfit', sans-serif;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            font-family: inherit;
         }
 
         .tab-btn:hover {
-            color: var(--text-sub);
+            color: var(--text-primary);
         }
 
         .tab-btn.active {
-            color: var(--text);
-            border-bottom-color: var(--accent);
-            background: rgba(99, 102, 241, 0.08);
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+            background: var(--bg-card);
         }
 
         .panel {
-            padding: 32px;
+            padding: 30px;
             display: none;
         }
 
@@ -230,8 +117,8 @@
         .social-btns {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 10px;
+            margin-bottom: 22px;
         }
 
         .btn-social {
@@ -240,35 +127,33 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 12px;
+            padding: 11px 16px;
             border-radius: 12px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--btn-social-border);
-            font-family: 'Outfit', sans-serif;
-            background: var(--btn-social-bg);
-            color: var(--text);
+            transition: all 0.15s ease;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
         }
 
         .btn-social:hover {
-            transform: translateY(-1px);
-            border-color: var(--accent);
+            background: var(--bg-hover);
+            border-color: var(--text-tertiary);
         }
 
         .btn-passkey {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15)) !important;
-            border-color: var(--border-glow) !important;
-            color: var(--text) !important;
-            font-weight: 700 !important;
+            background: var(--bg-card-sub);
+            font-weight: 600;
         }
 
         .divider {
             display: flex;
             align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 14px;
+            margin-bottom: 22px;
         }
 
         .divider::before,
@@ -276,59 +161,53 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: var(--border);
+            background: var(--border-color);
         }
 
         .divider span {
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 700;
+            color: var(--text-tertiary);
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .form-label {
             display: block;
-            font-size: 12.5px;
-            font-weight: 700;
-            color: var(--text-sub);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
         }
 
         .form-input {
             width: 100%;
-            background: var(--input-bg);
-            border: 1.5px solid var(--input-border);
-            border-radius: 12px;
-            padding: 13px 16px;
-            color: var(--text);
-            font-family: 'Outfit', sans-serif;
-            font-size: 14.5px;
-            transition: all 0.2s;
+            background: var(--bg-card-sub);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.15s ease;
             outline: none;
         }
 
         .form-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-
-        .form-input::placeholder {
-            color: var(--text-muted);
-            opacity: 0.7;
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
         }
 
         .form-options {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 16px 0 24px;
+            margin: 14px 0 22px;
         }
 
         .checkbox-label {
@@ -336,57 +215,52 @@
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            color: var(--text-sub);
+            color: var(--text-secondary);
             cursor: pointer;
         }
 
         .checkbox-label input {
-            accent-color: var(--accent);
+            accent-color: var(--accent-blue);
             width: 16px;
             height: 16px;
         }
 
         .link {
             font-size: 13px;
-            font-weight: 600;
-            color: var(--accent);
+            font-weight: 500;
+            color: var(--accent-blue);
             text-decoration: none;
-            transition: color 0.2s;
             cursor: pointer;
             background: none;
             border: none;
-            font-family: 'Outfit', sans-serif;
+            font-family: inherit;
         }
 
         .link:hover {
-            color: #818cf8;
             text-decoration: underline;
         }
 
         .btn-primary {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            padding: 12px 18px;
+            background: var(--accent-blue);
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 15px;
-            font-weight: 800;
+            font-size: 14.5px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.25s;
-            font-family: 'Outfit', sans-serif;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.15s ease;
+            font-family: inherit;
         }
 
         .btn-primary:hover {
-            background: #4f46e5;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            background: var(--accent-blue-hover);
         }
 
         .back-link {
             text-align: center;
-            margin-top: 24px;
+            margin-top: 22px;
         }
 
         .hidden {
@@ -395,9 +269,19 @@
 
         .floating-toggle {
             position: fixed;
-            top: 24px;
-            right: 24px;
+            top: 20px;
+            right: 20px;
             z-index: 100;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -409,7 +293,7 @@
         <div class="auth-header">
             <div class="auth-logo">C</div>
             <h1 data-i18n="logon_title">Bienvenido a tu CSID</h1>
-            <p data-i18n="logon_subtitle">Tu llave maestra para todo el ecosistema Coki Studios</p>
+            <p data-i18n="logon_subtitle">Tu cuenta unificada para todo el ecosistema Coki Studios</p>
         </div>
 
         <div class="auth-card" id="main-card">
@@ -418,43 +302,35 @@
                 <button id="tab-register" class="tab-btn" data-i18n="logon_tab_signup">Crear cuenta</button>
             </div>
 
-            <!--  LOGIN -->
+            <!-- LOGIN -->
             <div id="panel-login" class="panel active">
                 <div class="social-btns">
-                    <button id="btn-coki-passkey" type="button" class="btn-social btn-passkey"
-                        style="grid-column: span 2;">
-                        <span style="font-size: 18px;"></span>
-                        <span data-i18n="auth_passkey">Iniciar sesión con Passkey / Master Key</span>
+                    <button id="btn-coki-passkey" type="button" class="btn-social btn-passkey">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+                        <span data-i18n="auth_passkey">Iniciar sesión con Passkey / Llave biométrica</span>
                     </button>
                     <button id="btn-coki-google" class="btn-social btn-google">
-                        <svg width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="#4285F4"
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                            <path fill="#34A853"
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="#FBBC05"
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                            <path fill="#EA4335"
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                        </svg>
-                        <span data-i18n="auth_google">Google</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                        <span data-i18n="auth_google">Continuar con Google</span>
                     </button>
-                    <button id="btn-coki-azure" class="btn-social btn-azure"
-                        style="background:#0f172a; border-color:#334155;">
-                        <svg width="20" height="20" viewBox="0 0 23 23">
+                    <button id="btn-coki-apple" class="btn-social btn-apple">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.43c.64-.81 1.08-1.94.96-3.08-1 .04-2.16.68-2.84 1.49-.59.69-1.12 1.83-.98 2.94 1.12.09 2.22-.54 2.86-1.35z"/></svg>
+                        <span>Continuar con Apple</span>
+                    </button>
+                    <button id="btn-coki-github" class="btn-social btn-github">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                        </svg>
+                        <span data-i18n="auth_github">Continuar con GitHub</span>
+                    </button>
+                    <button id="btn-coki-azure" class="btn-social btn-azure">
+                        <svg width="18" height="18" viewBox="0 0 23 23">
                             <path fill="#f35325" d="M1 1h10v10H1z" />
                             <path fill="#81bc06" d="M12 1h10v10H12z" />
                             <path fill="#05a6f0" d="M1 12h10v10H1z" />
                             <path fill="#ffba08" d="M12 12h10v10H12z" />
                         </svg>
                         <span>Microsoft</span>
-                    </button>
-                    <button id="btn-coki-github" class="btn-social btn-github" style="grid-column: span 2;">
-                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                        </svg>
-                        <span data-i18n="auth_github">Continuar con GitHub</span>
                     </button>
                 </div>
 
@@ -613,7 +489,7 @@
             } else {
                 alert(' ' + (res.error || 'No se pudo verificar la Passkey de cuenta.'));
                 btn.disabled = false;
-                btn.innerHTML = '<span style="font-size: 18px;"></span> Iniciar sesión con Passkey / Master Key';
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg> Iniciar sesión con Passkey / Llave biométrica';
             }
         });
 
@@ -650,6 +526,7 @@
         });
 
         document.getElementById('btn-coki-google').addEventListener('click', () => loginCokiWithOAuth('google'));
+        document.getElementById('btn-coki-apple')?.addEventListener('click', () => loginCokiWithOAuth('apple'));
         document.getElementById('btn-coki-azure')?.addEventListener('click', () => loginCokiWithOAuth('azure'));
         document.getElementById('btn-coki-github').addEventListener('click', () => loginCokiWithOAuth('github'));
 

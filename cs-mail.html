@@ -333,7 +333,9 @@
     <!-- ── SIDEBAR ── -->
     <aside class="mail-sidebar">
         <div class="brand-header">
-            <div class="brand-logo"></div>
+            <div class="brand-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
             <div>
                 <div class="brand-title">CS MAIL WEB</div>
                 <div class="brand-sub">Zoho Workspace</div>
@@ -341,24 +343,25 @@
         </div>
 
         <a href="https://mail.zoho.com/zm/#mail/compose" target="_blank" class="btn-compose">
-            <span></span> Redactar Correo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Redactar Correo
         </a>
 
         <nav class="folder-list">
             <a href="https://mail.zoho.com/zm/#mail/folder/inbox" target="_blank" class="folder-item active">
-                <span class="folder-icon"></span> Bandeja de Entrada
+                <span class="folder-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span> Bandeja de Entrada
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/starred" target="_blank" class="folder-item">
-                <span class="folder-icon"></span> Destacados
+                <span class="folder-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Destacados
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/sent" target="_blank" class="folder-item">
-                <span class="folder-icon"></span> Enviados
+                <span class="folder-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span> Enviados
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/drafts" target="_blank" class="folder-item">
-                <span class="folder-icon"></span> Borradores
+                <span class="folder-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Borradores
             </a>
             <a href="https://mail.zoho.com/zm/#mail/folder/trash" target="_blank" class="folder-item">
-                <span class="folder-icon"></span> Papelera
+                <span class="folder-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span> Papelera
             </a>
         </nav>
 
@@ -370,7 +373,7 @@
             <div class="account-email">ceosupport@cokistudios.com</div>
             <div class="footer-actions">
                 <a href="dashboard" class="footer-link">← Dashboard</a>
-                <a href="https://accounts.zoho.com" target="_blank" class="footer-link">Zoho Account </a>
+                <a href="https://accounts.zoho.com" target="_blank" class="footer-link">Zoho Account</a>
             </div>
         </div>
     </aside>
@@ -379,19 +382,23 @@
     <main class="mail-content">
         <header class="mail-header-bar">
             <div style="font-size:13px; font-weight:700; color:var(--text-sub); display:flex; align-items:center; gap:8px;">
-                <span> Sesión Corporativa Encriptada</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Sesión Corporativa Encriptada</span>
                 <span id="session-badge" style="font-size:11px; padding:2px 8px; border-radius:6px; background:rgba(16,185,129,0.15); color:#10b981;">Verificando...</span>
             </div>
 
             <div style="display:flex; gap:10px; align-items:center;">
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es"> ES</option>
-                    <option value="en"> EN</option>
-                    <option value="fr"> FR</option>
-                    <option value="pt"> PT</option>
+                    <option value="es">ES</option>
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                    <option value="pt">PT</option>
                 </select>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
-                <a href="https://mail.zoho.com/zm/" target="_blank" style="font-size:12px; font-weight:700; color:var(--accent); text-decoration:none; padding:5px 12px; border-radius:6px; background:rgba(99,102,241,0.1); border:1px solid var(--border);">Abrir en pestaña nueva </a>
+                <a href="https://mail.zoho.com/zm/" target="_blank" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--accent); text-decoration:none; padding:5px 12px; border-radius:6px; background:rgba(99,102,241,0.1); border:1px solid var(--border);">
+                    <span>Abrir en pestaña nueva</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
             </div>
         </header>
 
@@ -399,7 +406,9 @@
             <!-- Portal Card Directo Seguro -->
             <div class="fallback-overlay" id="access-container">
                 <div class="portal-card" id="authorized-card" style="display:none;">
-                    <div class="portal-icon"></div>
+                    <div class="portal-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
                     <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 8px;">Acceso a Zoho Mail CS</h1>
                     <p style="font-size: 13.5px; color: var(--text-sub); line-height: 1.6;">
                         Tu buzón corporativo de <strong>Coki Studios LLC</strong> está configurado y activo en la nube de Zoho Mail.
@@ -411,7 +420,8 @@
                     </div>
 
                     <a href="https://mail.zoho.com/zm/" target="_blank" class="btn-launch">
-                        <span>[APP]</span> Abrir Zoho Mail Corporativo
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Abrir Zoho Mail Corporativo
                     </a>
 
                     <div style="margin-top:16px; font-size:12px; color:var(--text-muted);">
@@ -420,7 +430,9 @@
                 </div>
 
                 <div class="portal-card" id="unauthorized-card" style="display:none; border-color:rgba(239, 68, 68, 0.4);">
-                    <div class="portal-icon" style="background:linear-gradient(135deg, #ef4444, #b91c1c);"></div>
+                    <div class="portal-icon" style="background:linear-gradient(135deg, #ef4444, #b91c1c);">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
                     <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 8px;">Acceso Restringido</h1>
                     <p style="font-size: 13.5px; color: var(--text-sub); line-height: 1.6; margin-bottom: 20px;">
                         El correo corporativo de Zoho Mail solo está disponible para cuentas administrativas autorizadas de <strong>Coki Studios LLC</strong> (<span style="color:#818cf8;">cokistudiosllc@gmail.com</span> / <span style="color:#818cf8;">jerixortixdev@gmail.com</span>).

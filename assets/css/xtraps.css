@@ -1,12 +1,14 @@
-/* XTRAPS Rainbow Background CSS */
-@keyframes xtrapsRainbowRotate {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
+/* XTRAPS Refined Ambient Mesh CSS (Apple / Google Clean Tone) */
+:root {
+    --xtraps-bg-base: #f5f5f7;
+    --xtraps-glow-1: rgba(0, 113, 227, 0.05);
+    --xtraps-glow-2: rgba(52, 199, 89, 0.04);
 }
 
-@keyframes xtrapsPulse {
-    0%, 100% { transform: scale(1) translateY(0); opacity: 0.25; }
-    50% { transform: scale(1.08) translateY(-15px); opacity: 0.45; }
+html.dark-theme, body.dark-mode {
+    --xtraps-bg-base: #121214;
+    --xtraps-glow-1: rgba(41, 151, 255, 0.07);
+    --xtraps-glow-2: rgba(48, 209, 88, 0.05);
 }
 
 .xtraps-bg {
@@ -15,25 +17,29 @@
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
-    background: radial-gradient(circle at 50% 50%, #0d1117 0%, #06090f 100%);
+    background: var(--xtraps-bg-base);
+    transition: background 0.3s ease;
 }
 
 .xtraps-bg.rainbow::before {
     content: '';
     position: absolute;
-    inset: -50%;
-    background: conic-gradient(
-        from 0deg at 50% 50%,
-        #ff0055, #7928ca, #0070f3, #00dfd8, #7928ca, #ff0055
-    );
-    opacity: 0.2;
-    filter: blur(60px);
-    animation: xtrapsRainbowRotate 12s linear infinite;
+    top: -20%;
+    left: 20%;
+    width: 60vw;
+    height: 60vh;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--xtraps-glow-1) 0%, transparent 70%);
+    filter: blur(80px);
 }
 
 .xtraps-bg .xtraps-wave {
     position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
-    animation: xtrapsPulse 8s ease-in-out infinite alternate;
+    bottom: -10%;
+    right: 15%;
+    width: 50vw;
+    height: 50vh;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--xtraps-glow-2) 0%, transparent 70%);
+    filter: blur(80px);
 }

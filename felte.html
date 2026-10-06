@@ -1057,7 +1057,7 @@
                 badgeClass: 'badge-verified',
                 rating: 4.8,
                 reviews: '850',
-                icon: '🎮',
+                icon: '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m10-2h.01m-3-2h.01"></path></svg>',
                 desc: 'Juego de plataformas retro espacial con motor 2D Sprite Core de Looping. Físicas de salto, plataformas flotantes y estrellas coleccionables.',
                 platforms: ['Loop OS', 'Nube / Web', 'macOS'],
                 downloadLoop: 'sample_loop_projects/arcade.loop',
@@ -1073,7 +1073,7 @@
                 badgeClass: 'badge-pro',
                 rating: 5.0,
                 reviews: '3.4k',
-                icon: '⚡',
+                icon: '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
                 desc: 'Entorno de desarrollo nativo para programar en Looping y Python. Editor de código con resaltado de sintaxis, compilador y empaquetador APK.',
                 platforms: ['Nube', 'Loop OS', 'macOS', 'VSCode'],
                 downloadLoop: 'sample_loop_projects/hiop_ide.loop',
@@ -1089,7 +1089,7 @@
                 badgeClass: 'badge-verified',
                 rating: 4.9,
                 reviews: '4.1k',
-                icon: '🏎️',
+                icon: 'assets/forkar-icon.svg',
                 desc: 'Juego de carreras cyberpunk 3D. Físicas de chasis de alta precisión, multijugador P2P y telemetría de ecovalidación.',
                 platforms: ['Android APK', 'iOS Universal', 'macOS', 'Loop OS'],
                 downloadApk: 'Forkar.apk',
@@ -1105,7 +1105,7 @@
                 badgeClass: 'badge-native',
                 rating: 5.0,
                 reviews: '9.8k',
-                icon: '🔒',
+                icon: 'assets/csms-icon.svg',
                 desc: 'Servicio de mensajería con cifrado de extremo a extremo respaldado por hardware (Apple Secure Enclave, T2 y Android StrongBox TEE).',
                 platforms: ['Nube / Web', 'Android APK', 'iOS', 'macOS'],
                 webLink: 'messenger.html',
@@ -1120,7 +1120,7 @@
                 badgeClass: 'badge-pro',
                 rating: 4.9,
                 reviews: '620',
-                icon: '🦀',
+                icon: '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="15" x2="23" y2="15"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="15" x2="4" y2="15"></line></svg>',
                 desc: 'Runtime dual ultra-rápido en Rust compilado a binario nativo. Latencia de 0.12ms para cómputo intensivo y pipelines de videojuegos.',
                 platforms: ['Loop OS', 'macOS', 'Linux'],
                 downloadLoop: 'sample_loop_projects/ruuping_demo.ruup',
@@ -1136,7 +1136,7 @@
                 badgeClass: 'badge-verified',
                 rating: 4.7,
                 reviews: '2.1k',
-                icon: '🧭',
+                icon: 'assets/shine-maps-icon.svg',
                 desc: 'Navegación inteligente con mapas sin conexión, detección de rutas eco-amigables y posicionamiento satelital de baja energía.',
                 platforms: ['Android APK', 'iOS', 'Web'],
                 downloadApk: 'ShineMaps.apk',
@@ -1152,7 +1152,7 @@
                 badgeClass: 'badge-native',
                 rating: 5.0,
                 reviews: '1.5k',
-                icon: '♾️',
+                icon: '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>',
                 desc: 'Compilador dinámico de programas Looping. Permite sintetizar código sobre la marcha, ejecutar shebangs y desplegar para Shine UI, XUI y flUI.',
                 platforms: ['Loop OS', 'macOS Universal', 'Linux'],
                 downloadDmg: 'dist-dmg/Instalar Looping.pkg',
@@ -1209,7 +1209,9 @@
                     <div class="app-card-top">
                         ${app.icon.startsWith('assets/') 
                             ? `<img src="${app.icon}" class="app-icon" alt="${app.name}">` 
-                            : `<div class="app-icon">${glyph(app)}</div>`
+                            : (app.icon.startsWith('<svg') 
+                                ? `<div class="app-icon" style="display:flex;align-items:center;justify-content:center;color:var(--accent);">${app.icon}</div>` 
+                                : `<div class="app-icon">${glyph(app)}</div>`)
                         }
                         <div class="app-info">
                             <div class="app-title-row">

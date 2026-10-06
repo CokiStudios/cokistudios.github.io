@@ -3,6 +3,6 @@
   "version": "1.2.0",
   "language": "cpp",
   "entry_point": "loop_math_3d.hpp",
-  "author": "Holo Entertainment",
-  "description": "Motor de matrices 4x4, cuaterniones y proyecciones de perspectiva 3D compilado nativamente en C++ para Looping."
+  "author": "Coki Studios Performance Lab",
+  "description": "Motor acelerado en C++ de \u00e1lgebra lineal, cuaterniones, matrices 4x4 y f\u00edsica de proyectiles para juegos en Loop OS."
 }

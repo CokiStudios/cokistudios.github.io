@@ -412,8 +412,9 @@
                 <span class="dot"></span>
                 <span>Zero Trust: @cokistudios.com</span>
             </div>
-            <a href="csims.html" class="btn-primary" style="padding: 8px 14px; font-size: 12px;">
-                <span>💬 Abrir CSIMS</span>
+            <a href="csims.html" class="btn-primary" style="padding: 8px 14px; font-size: 12px; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>Abrir CSIMS</span>
             </a>
         </div>
     </header>
@@ -428,12 +429,14 @@
                 Protegido perimetralmente con políticas de <strong>Cloudflare Zero Trust Access</strong> y cifrado de extremo a extremo con respaldo de hardware Apple SEP / AndroidKeyStore.
             </p>
             <div class="hero-actions">
-                <a href="csims.html" class="btn-primary">
-                    <span>💬 Iniciar CSIMS (Internal Messenger)</span>
+                <a href="csims.html" class="btn-primary" style="display:inline-flex; align-items:center; gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>Iniciar CSIMS (Internal Messenger)</span>
                     <span>→</span>
                 </a>
-                <a href="forkar.html" class="btn-secondary" target="_blank">
-                    <span>🌐 Ver Forkar Público</span>
+                <a href="forkar.html" class="btn-secondary" target="_blank" style="display:inline-flex; align-items:center; gap:8px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span>Ver Forkar Público</span>
                 </a>
             </div>
         </section>
@@ -465,14 +468,16 @@
         <!-- Internal Services -->
         <section>
             <h2 class="section-title">
-                <span>🛡️</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green); vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 <span>Servicios y Módulos Internos</span>
             </h2>
 
             <div class="services-grid">
                 <!-- CSIMS -->
                 <div class="service-card">
-                    <div class="service-icon">💬</div>
+                    <div class="service-icon" style="display:flex; align-items:center; justify-content:center;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
                     <div class="service-title">CSIMS (Coki Studios Internal Messaging Service)</div>
                     <div class="service-desc">
                         Mensajería instantánea interna para el equipo. Soporta canales clasificados, salas de ingeniería y chat directo cifrado punto a punto.
@@ -485,7 +490,9 @@
 
                 <!-- Moderación AI -->
                 <div class="service-card">
-                    <div class="service-icon">⚡</div>
+                    <div class="service-icon" style="display:flex; align-items:center; justify-content:center;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
                     <div class="service-title">Telemetría de Moderación Workers AI</div>
                     <div class="service-desc">
                         Monitoreo en tiempo real de llamadas al endpoint /api/moderate y detección heurística de albures y evasión anti-filtro.
@@ -498,7 +505,9 @@
 
                 <!-- Control de Calidad -->
                 <div class="service-card">
-                    <div class="service-icon">🧪</div>
+                    <div class="service-icon" style="display:flex; align-items:center; justify-content:center;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31L4.69 17.5A2 2 0 0 0 6.32 21h11.36a2 2 0 0 0 1.63-3.5L14 9.31V2"/><line x1="8" y1="2" x2="16" y2="2"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+                    </div>
                     <div class="service-title">Forkar QA & Multiplatform Builds</div>
                     <div class="service-desc">
                         Control de versiones de compilación universal para iOS (iPhone Duo, Apple Watch, macOS) y paridad nativa Android Compose.
@@ -588,7 +597,7 @@
                     mainContainer.style.pointerEvents = "none";
                 }
                 if (errorBox) {
-                    errorBox.textContent = `⚠️ Acceso denegado: Tu cuenta actual (${email}) no pertenece a @cokistudios.com. Debes ingresar con tu cuenta corporativa Microsoft.`;
+                    errorBox.textContent = `Acceso denegado: Tu cuenta actual (${email}) no pertenece a @cokistudios.com. Debes ingresar con tu cuenta corporativa Microsoft.`;
                     errorBox.style.display = "block";
                 }
                 return;
