@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shine Find Browser — El Navegador de Coki Studios</title>
-    <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
-        }
-    </script>
+    <script src="coki-theme.js"></script>
     <link rel="icon" type="image/svg+xml" href="assets/shine-find-icon.svg">
     <link rel="alternate icon" type="image/jpeg" href="assets/shine-find-icon.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/xtraps.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -404,19 +401,7 @@
                 <a href="shine-maps" class="nav-link">Shine Maps</a>
                 <a href="products" class="nav-link">Productos</a>
                 <a href="dashboard" class="nav-link">Mi CSID</a>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema">
-                    <svg id="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                    </svg>
-                </button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <a href="https://github.com/CokiStudios/cokistudios.github.io/tree/main/ShineFind" target="_blank" class="btn-cta">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     <span>Descargar CEF Build</span>
@@ -864,39 +849,7 @@
             document.getElementById('csid-modal').classList.remove('active');
         }
 
-        // ── THEME TOGGLE ──
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        
-        function updateThemeDisplay() {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            if (isLight) {
-                themeIcon.innerHTML = `
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                `;
-            } else {
-                themeIcon.innerHTML = `
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                `;
-            }
-        }
 
-        if (themeToggle) {
-            updateThemeDisplay();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateThemeDisplay();
-            });
-        }
 
         // Initialize tabs on start
         renderTabs();

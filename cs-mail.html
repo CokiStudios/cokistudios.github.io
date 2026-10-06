@@ -4,15 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS Mail Web • Coki Studios & Zoho Mail</title>
-    <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
-        }
-    </script>
+    <script src="coki-theme.js"></script>
     <link rel="icon" href="https://avatars.githubusercontent.com/u/161494639?s=200&v=4">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <style>
         :root {
             --bg: #06090f;
@@ -475,19 +472,7 @@
 
         verifyAccess();
 
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
-            });
-        }
+
     </script>
 <script type="module" src="i18n.js"></script>
 </body>

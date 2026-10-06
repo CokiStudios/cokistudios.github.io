@@ -8,6 +8,10 @@
     <link rel="icon" type="image/svg+xml" href="assets/felte-icon.svg">
     <link rel="apple-touch-icon" href="assets/felte-icon.png">
     
+    <!-- Theme Engine & Toolbar Styles -->
+    <script src="coki-theme.js"></script>
+    <link rel="stylesheet" href="assets/css/toolbar.css">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +43,58 @@
             --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
             --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-code: 'JetBrains Mono', monospace;
+        }
+
+        html.light-theme {
+            --bg-base: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --bg-card-hover: rgba(241, 245, 249, 0.95);
+            --border-glass: rgba(0, 0, 0, 0.08);
+            --border-glow: rgba(0, 180, 150, 0.25);
+            --border-purple: rgba(124, 58, 237, 0.2);
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+            --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        html.light-theme .felte-nav {
+            background: rgba(255, 255, 255, 0.88);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        html.light-theme .search-container {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        html.light-theme .search-input {
+            color: #0f172a;
+        }
+
+        html.light-theme .search-input::placeholder {
+            color: #94a3b8;
+        }
+
+        html.light-theme .btn-nav-ghost {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #0f172a;
+        }
+
+        html.light-theme .hero-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.9) 100%);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        html.light-theme .app-card,
+        html.light-theme .tab-chip,
+        html.light-theme .spec-pill,
+        html.light-theme .featured-card {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #0f172a;
         }
 
         * {
@@ -811,6 +867,7 @@
 
         <!-- Navigation Buttons -->
         <div class="nav-actions">
+            <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema" title="Cambiar tema"></button>
             <a href="index.html" class="btn-nav-ghost">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 Portal CS

@@ -5,10 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coki Studios — Making the world Shine, together</title>
+    <script src="coki-theme.js"></script>
     <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
-        }
         // Intercept OAuth callback hash if Supabase defaults to root URL
         if (window.location.hash && window.location.hash.includes('access_token')) {
             const redirectApp = new URLSearchParams(window.location.search).get('app_redirect');
@@ -26,6 +24,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="assets/css/shine-ui.css">
     <link rel="stylesheet" href="assets/css/xtraps.css">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <style>
         *,
         *::before,
@@ -53,11 +52,12 @@
         html.light-theme {
             --bg: #f8fafc;
             --bg2: #f1f5f9;
-            --card: rgba(0, 0, 0, 0.02);
-            --card-hover: rgba(0, 0, 0, 0.04);
-            --border: rgba(0, 0, 0, 0.06);
-            --border-glow: rgba(99, 102, 241, 0.3);
+            --card: #ffffff;
+            --card-hover: #ffffff;
+            --border: rgba(0, 0, 0, 0.08);
+            --border-glow: rgba(79, 70, 229, 0.25);
             --accent: #4f46e5;
+            --accent2: #7c3aed;
             --text: #0f172a;
             --text-sub: #475569;
             --text-muted: #64748b;
@@ -762,6 +762,81 @@
             color: var(--text-muted);
         }
 
+        /* ── LIGHT THEME SECTION OVERRIDES ── */
+        html.light-theme body::before {
+            background-image:
+                linear-gradient(rgba(79, 70, 229, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79, 70, 229, 0.02) 1px, transparent 1px);
+        }
+
+        html.light-theme .hero-glow {
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, transparent 70%);
+        }
+
+        html.light-theme .product-card {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+        }
+
+        html.light-theme .product-card:hover {
+            border-color: rgba(79, 70, 229, 0.3);
+            background: #ffffff;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+        }
+
+        html.light-theme .product-tag {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #475569;
+        }
+
+        html.light-theme .csid-section {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.04), #ffffff);
+            border-color: rgba(79, 70, 229, 0.18);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03);
+        }
+
+        html.light-theme .csid-feature {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        html.light-theme .csid-feature:hover {
+            border-color: rgba(79, 70, 229, 0.3);
+            background: #ffffff;
+        }
+
+        html.light-theme .code-snippet {
+            background: #0f172a;
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #f8fafc;
+        }
+
+        html.light-theme .dev-cta {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        html.light-theme footer {
+            background: #f8fafc;
+            border-top-color: rgba(0, 0, 0, 0.08);
+        }
+
+        html.light-theme .footer-copy {
+            color: #64748b;
+        }
+
+        html.light-theme .footer-link {
+            color: #475569;
+        }
+
+        html.light-theme .footer-link:hover {
+            color: #0f172a;
+        }
+
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -1127,24 +1202,6 @@
 
         function closeShineAlert() {
             document.getElementById('shineAlertModal').classList.remove('active');
-        }
-
-        const SUN_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-        const MOON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.innerHTML = isLight ? MOON_SVG : SUN_SVG;
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
-            });
-        }
-
     </script>
     <script type="module" src="i18n.js"></script>
 </body>

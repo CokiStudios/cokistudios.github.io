@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consola de Desarrolladores — Coki Studios</title>
-    <meta name="description" content="Gestor oficial de paquetes smiledev, LoopModules, Edge CDN y aplicaciones OAuth 2.0 en Coki Studios.">
+    <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/cs-industrial.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -81,6 +82,7 @@
             </a>
 
             <div style="display: flex; align-items: center; gap: 12px;">
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
                 <a href="dashboard" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Mi Cuenta CS ID</a>
                 <span id="nav-user" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-text-sub);">...</span>
                 <button id="btn-logout" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Salir</button>

@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consola de Moderación — Coki Studios</title>
+    <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
-        }
-    </script>
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -473,20 +470,7 @@
             return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            themeToggle.textContent = isLight ? '' : '';
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
-            });
-        }
+
 
         init();
     </script>

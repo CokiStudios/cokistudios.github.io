@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forkar Eco Hub Program — Coki Studios & Sostenibilidad</title>
-    <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
-        }
-    </script>
+    <script src="coki-theme.js"></script>
     <meta name="description" content="Forkar Eco Hub Program: Ahorra CO2 en cada viaje, acumula Puntos Eco, canjea recompensas sustentables y valida estaciones con QR o NFC.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/xtraps.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -936,20 +933,7 @@
 
         loadTranslations();
 
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.innerHTML = isLight ? MOON_SVG : SUN_SVG;
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
-            });
-        }
+
 
         // Dynamic Island & Metrics Sync
         const island = document.getElementById('eco-dynamic-island');

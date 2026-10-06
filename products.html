@@ -9,11 +9,8 @@
         content="Descubre los productos de Coki Studios: Horizon Maps, Forkar, CSMS, Shine Find Browser y CSID.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <script>
-        if (localStorage.getItem('coki-theme') === 'light') {
-            document.documentElement.classList.add('light-theme');
-        }
-    </script>
+    <script src="coki-theme.js"></script>
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <style>
         *,
         *::before,
@@ -685,21 +682,6 @@
         </div>
     </footer>
 
-    <script>
-        const themeToggle = document.getElementById('theme-toggle');
-        const updateToggleIcon = () => {
-            const isLight = document.documentElement.classList.contains('light-theme');
-            if (themeToggle) themeToggle.textContent = isLight ? '' : '';
-        };
-        if (themeToggle) {
-            updateToggleIcon();
-            themeToggle.addEventListener('click', () => {
-                const wasLight = document.documentElement.classList.toggle('light-theme');
-                localStorage.setItem('coki-theme', wasLight ? 'light' : 'dark');
-                updateToggleIcon();
-            });
-        }
-    </script>
     <script type="module" src="i18n.js"></script>
 </body>
 

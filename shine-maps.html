@@ -14,6 +14,10 @@
     <link rel="alternate icon" type="image/jpeg" href="assets/shine-maps-icon.jpg">
     <link rel="apple-touch-icon" href="assets/shine-maps-icon.jpg">
 
+    <!-- Theme Engine & Toolbar Styles -->
+    <script src="coki-theme.js"></script>
+    <link rel="stylesheet" href="assets/css/toolbar.css">
+
     <!-- Fonts & Leaflet CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -737,12 +741,15 @@
             <div id="search-dropdown" class="search-dropdown"></div>
         </div>
 
-        <!-- User CS ID Widget -->
-        <div class="user-widget" id="csid-user-widget" onclick="handleUserClick()">
-            <div class="user-avatar" id="csid-avatar">CS</div>
-            <div class="user-info">
-                <div class="user-name" id="csid-name">Iniciar sesión</div>
-                <div class="user-status" id="csid-status">CS ID</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema" title="Cambiar tema"></button>
+            <!-- User CS ID Widget -->
+            <div class="user-widget" id="csid-user-widget" onclick="handleUserClick()">
+                <div class="user-avatar" id="csid-avatar">CS</div>
+                <div class="user-info">
+                    <div class="user-name" id="csid-name">Iniciar sesión</div>
+                    <div class="user-status" id="csid-status">CS ID</div>
+                </div>
             </div>
         </div>
     </div>
@@ -933,7 +940,31 @@
                 maxZoom: 22
             });
 
-            tileLayers.dark.addTo(map);
+            const initialTheme = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
+            if (initialTheme === 'light') {
+                currentLayer = 'street';
+                tileLayers.street.addTo(map);
+            } else {
+                currentLayer = 'dark';
+                tileLayers.dark.addTo(map);
+            }
+
+            window.addEventListener('coki-theme-change', (e) => {
+                if (!map || !tileLayers) return;
+                if (e.detail && e.detail.theme === 'light') {
+                    if (currentLayer === 'dark') {
+                        map.removeLayer(tileLayers.dark);
+                        currentLayer = 'street';
+                        tileLayers.street.addTo(map);
+                    }
+                } else {
+                    if (currentLayer === 'street') {
+                        map.removeLayer(tileLayers.street);
+                        currentLayer = 'dark';
+                        tileLayers.dark.addTo(map);
+                    }
+                }
+            });
 
             // Leaflet Zoom bottom right
             L.control.zoom({ position: 'bottomright' }).addTo(map);

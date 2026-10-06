@@ -5,12 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cuenta de Coki Studios</title>
-    <script>
-        if (localStorage.getItem('coki-theme') === 'dark') {
-            document.documentElement.classList.add('dark-theme');
-        }
-    </script>
+    <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/cs-account.css">
     <style>
         .input-row-group {
@@ -75,9 +72,7 @@
             </a>
 
             <div style="display: flex; align-items: center; gap: 12px;">
-                <button id="theme-toggle" class="cs-btn-subtle" style="padding: 6px 12px; font-size: 12px;" title="Cambiar tema">
-                    ◑ Tema
-                </button>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
                 <button id="btn-logout" class="cs-btn-apple" style="padding: 6px 16px; font-size: 13px;">
                     Cerrar sesión
                 </button>
@@ -784,11 +779,6 @@
             }
         };
 
-        // Theme toggle
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            const isDark = document.documentElement.classList.toggle('dark-theme');
-            localStorage.setItem('coki-theme', isDark ? 'dark' : 'light');
-        });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
             await logoutCoki();
