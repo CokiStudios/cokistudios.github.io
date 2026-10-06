@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════════
+   COKI STUDIOS INDUSTRIAL HIGH-TECH DESIGN SYSTEM (CS-UI v3.0)
+   Precision Engineering Aesthetic — Zero Generic AI Slop
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --cs-bg: #07080b;
+    --cs-bg-card: #0d0f15;
+    --cs-bg-card-sub: #12151e;
+    --cs-bg-input: #0a0c10;
+    --cs-hairline: rgba(255, 255, 255, 0.08);
+    --cs-hairline-bright: rgba(255, 255, 255, 0.18);
+    --cs-hairline-accent: rgba(0, 229, 153, 0.4);
+    
+    /* Vibrant Hardware Colors */
+    --cs-green: #00e599;
+    --cs-green-glow: rgba(0, 229, 153, 0.18);
+    --cs-amber: #ff9e00;
+    --cs-amber-glow: rgba(255, 158, 0, 0.18);
+    --cs-cyan: #00d4ff;
+    --cs-cyan-glow: rgba(0, 212, 255, 0.18);
+    --cs-red: #ff3355;
+    --cs-red-glow: rgba(255, 51, 85, 0.18);
+    
+    /* Typography */
+    --cs-text-bright: #f0f3f8;
+    --cs-text-sub: #8d98aa;
+    --cs-text-muted: #4e5768;
+    --cs-font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --cs-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+html.light-theme {
+    --cs-bg: #f3f5f8;
+    --cs-bg-card: #ffffff;
+    --cs-bg-card-sub: #f8fafc;
+    --cs-bg-input: #ffffff;
+    --cs-hairline: rgba(0, 0, 0, 0.08);
+    --cs-hairline-bright: rgba(0, 0, 0, 0.18);
+    --cs-hairline-accent: rgba(0, 180, 120, 0.4);
+    --cs-text-bright: #090c10;
+    --cs-text-sub: #4b5563;
+    --cs-text-muted: #9ca3af;
+}
+
+/* Base Canvas with Subtle Engineering Dot Grid */
+.cs-industrial-body {
+    background-color: var(--cs-bg);
+    background-image: radial-gradient(var(--cs-hairline) 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--cs-text-bright);
+    font-family: var(--cs-font-sans);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Precision Hairline Panels */
+.cs-panel {
+    background: var(--cs-bg-card);
+    border: 1px solid var(--cs-hairline);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cs-panel:hover {
+    border-color: var(--cs-hairline-bright);
+}
+
+.cs-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--cs-hairline);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+}
+
+.cs-panel-title {
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cs-text-bright);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cs-tag {
+    font-family: var(--cs-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cs-tag-green {
+    background: var(--cs-green-glow);
+    color: var(--cs-green);
+    border: 1px solid rgba(0, 229, 153, 0.3);
+}
+
+.cs-tag-amber {
+    background: var(--cs-amber-glow);
+    color: var(--cs-amber);
+    border: 1px solid rgba(255, 158, 0, 0.3);
+}
+
+.cs-tag-cyan {
+    background: var(--cs-cyan-glow);
+    color: var(--cs-cyan);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.cs-tag-red {
+    background: var(--cs-red-glow);
+    color: var(--cs-red);
+    border: 1px solid rgba(255, 51, 85, 0.3);
+}
+
+/* Pulsing Status LED */
+.cs-led {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.cs-led-green {
+    background: var(--cs-green);
+    box-shadow: 0 0 8px var(--cs-green);
+    animation: csLedPulse 2s infinite ease-in-out;
+}
+
+.cs-led-amber {
+    background: var(--cs-amber);
+    box-shadow: 0 0 8px var(--cs-amber);
+}
+
+.cs-led-cyan {
+    background: var(--cs-cyan);
+    box-shadow: 0 0 8px var(--cs-cyan);
+}
+
+@keyframes csLedPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* High-Tech Segmented Tabs */
+.cs-tabs-bar {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    background: var(--cs-bg-card-sub);
+    padding: 4px;
+    border: 1px solid var(--cs-hairline);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+}
+
+.cs-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--cs-text-sub);
+    font-family: var(--cs-font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 8px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.cs-tab-btn:hover {
+    color: var(--cs-text-bright);
+    background: rgba(255,255,255,0.04);
+}
+
+.cs-tab-btn.active {
+    background: var(--cs-bg-card);
+    color: var(--cs-text-bright);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    border: 1px solid var(--cs-hairline-bright);
+}
+
+/* Technical Inputs & Code Snippets */
+.cs-input {
+    background: var(--cs-bg-input);
+    border: 1px solid var(--cs-hairline);
+    border-radius: 8px;
+    color: var(--cs-text-bright);
+    font-family: var(--cs-font-sans);
+    font-size: 13.5px;
+    padding: 10px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.cs-input:focus {
+    border-color: var(--cs-cyan);
+    box-shadow: 0 0 0 2px var(--cs-cyan-glow);
+}
+
+.cs-code-box {
+    background: #050608;
+    border: 1px solid var(--cs-hairline);
+    border-radius: 8px;
+    font-family: var(--cs-font-mono);
+    font-size: 12.5px;
+    color: var(--cs-green);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow-x: auto;
+}
+
+/* Crisp Industrial Buttons */
+.cs-btn {
+    font-family: var(--cs-font-sans);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-radius: 8px;
+    padding: 9px 18px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.cs-btn-primary {
+    background: var(--cs-green);
+    color: #050806;
+}
+
+.cs-btn-primary:hover {
+    background: #10fca6;
+    box-shadow: 0 0 15px var(--cs-green-glow);
+}
+
+.cs-btn-secondary {
+    background: rgba(255,255,255,0.05);
+    color: var(--cs-text-bright);
+    border-color: var(--cs-hairline);
+}
+
+.cs-btn-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--cs-hairline-bright);
+}
+
+.cs-btn-danger {
+    background: var(--cs-red-glow);
+    color: var(--cs-red);
+    border-color: rgba(255, 51, 85, 0.3);
+}
+
+.cs-btn-danger:hover {
+    background: var(--cs-red);
+    color: white;
+}

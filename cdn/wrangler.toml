@@ -1,0 +1,10 @@
+name = "cs-edge-cdn"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+SUPABASE_URL = "https://ayxklxciqgqeyuzkziov.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGtseGNpcWdxZXl1emt6aW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTY4MzIsImV4cCI6MjEwNjc5MjgzMn0.03wUc8blB-cNq9F8Nz5o88GShtMIXeHsNYqmeK_N-hI"
+
+[observability]
+enabled = true

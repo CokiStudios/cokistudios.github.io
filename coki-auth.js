@@ -792,6 +792,353 @@ async function hasAdminMailAccess() {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  CS ID SSO BROADCAST CHANNEL (Cross-Tab & Cross-Domain Sync)
+// ═══════════════════════════════════════════════════════════════
+
+const ssoChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('cs_sso_sync') : null;
+
+if (ssoChannel) {
+    ssoChannel.onmessage = (event) => {
+        if (!event?.data?.type) return;
+        if (event.data.type === 'SSO_LOGOUT') {
+            deleteCookie('coki_session');
+            deleteCookie('coki_access_token');
+            deleteCookie('coki_refresh_token');
+            deleteCookie('coki_current_user');
+            if (window.location.pathname.includes('dashboard') || window.location.pathname.includes('developer')) {
+                window.location.reload();
+            }
+        } else if (event.data.type === 'SSO_LOGIN') {
+            if (window.location.pathname.includes('authorize') || window.location.pathname.includes('register')) {
+                window.location.href = '/dashboard.html';
+            }
+        }
+    };
+}
+
+function broadcastSSO(type, payload = {}) {
+    if (ssoChannel) {
+        ssoChannel.postMessage({ type, payload, timestamp: Date.now() });
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HUB DE DISPOSITIVOS (DEVICE HUB)
+// ═══════════════════════════════════════════════════════════════
+
+function detectCurrentDeviceInfo() {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    let platform = 'Web';
+    let icon = 'globe';
+    let deviceName = 'Navegador Web';
+
+    if (/iPhone/i.test(ua)) {
+        platform = 'iOS';
+        icon = 'iphone';
+        deviceName = 'iPhone';
+    } else if (/iPad/i.test(ua)) {
+        platform = 'iPadOS';
+        icon = 'ipad';
+        deviceName = 'iPad';
+    } else if (/Macintosh|Mac OS X/i.test(ua)) {
+        platform = 'macOS';
+        icon = 'laptopcomputer';
+        deviceName = 'MacBook / Mac';
+    } else if (/Watch/i.test(ua)) {
+        platform = 'watchOS';
+        icon = 'applewatch';
+        deviceName = 'Apple Watch';
+    } else if (/Android/i.test(ua)) {
+        platform = 'Android';
+        icon = 'smartphone';
+        deviceName = 'Dispositivo Android';
+    } else if (/Windows/i.test(ua)) {
+        platform = 'Windows';
+        icon = 'display';
+        deviceName = 'PC Windows';
+    }
+
+    return {
+        id: 'dev_' + getBrowserHash().substring(0, 16),
+        name: deviceName,
+        platform: platform,
+        icon: icon,
+        ip: '181.61.x.x (Bogotá, CO)',
+        lastActive: 'Ahora mismo',
+        isCurrent: true,
+        trustedSEP: platform === 'iOS' || platform === 'macOS' || platform === 'watchOS'
+    };
+}
+
+async function getRegisteredDevices() {
+    const current = detectCurrentDeviceInfo();
+    const stored = JSON.parse(localStorage.getItem('cs_registered_devices') || '[]');
+    
+    const defaultDevices = [
+        current,
+        {
+            id: 'dev_apple_watch_ultra',
+            name: 'Apple Watch Ultra 2 (Forkar Watch)',
+            platform: 'watchOS',
+            icon: 'applewatch',
+            ip: '181.61.x.x (Celular)',
+            lastActive: 'Hace 4 minutos',
+            isCurrent: false,
+            trustedSEP: true
+        },
+        {
+            id: 'dev_carplay_unit',
+            name: 'CarPlay Vehicle Cockpit',
+            platform: 'CarPlay',
+            icon: 'car.fill',
+            ip: '190.25.x.x (Bogotá, CO)',
+            lastActive: 'Hace 2 horas',
+            isCurrent: false,
+            trustedSEP: true
+        }
+    ];
+
+    if (!stored || stored.length === 0) {
+        localStorage.setItem('cs_registered_devices', JSON.stringify(defaultDevices));
+        return defaultDevices;
+    }
+
+    const merged = [current, ...stored.filter(d => d.id !== current.id)];
+    return merged;
+}
+
+async function revokeDevice(deviceId) {
+    let list = await getRegisteredDevices();
+    list = list.filter(d => d.id !== deviceId);
+    localStorage.setItem('cs_registered_devices', JSON.stringify(list));
+    broadcastSSO('DEVICE_REVOKED', { deviceId });
+    return { success: true };
+}
+
+async function revokeOtherDevices() {
+    const current = detectCurrentDeviceInfo();
+    localStorage.setItem('cs_registered_devices', JSON.stringify([current]));
+    broadcastSSO('SSO_LOGOUT', { except: current.id });
+    return { success: true };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HANDOFF CROSS-DEVICE (Continuidad Universal CS)
+// ═══════════════════════════════════════════════════════════════
+
+async function getActiveHandoffs() {
+    const defaultHandoffs = [
+        {
+            id: 'ho_route_shine',
+            service: 'Shine Maps',
+            title: 'Ruta hacia Electrolinera Enel X',
+            subtitle: 'Distancia: 650 m · ETA: 12:45 PM',
+            icon: 'map.fill',
+            originDevice: 'MacBook Pro',
+            availableTargets: ['CarPlay', 'Apple Watch', 'iPhone'],
+            timestamp: Date.now() - 60000,
+            payload: { destination: 'Electrolinera Enel X', lat: 4.6533, lon: -74.0836 }
+        },
+        {
+            id: 'ho_csms_draft',
+            service: 'CSMS E2EE',
+            title: 'Borrador en Sala #EcoDrivers',
+            subtitle: '🔒 "Confirmada la recarga en el punto sur..."',
+            icon: 'bubble.left.and.bubble.right.fill',
+            originDevice: 'iPhone',
+            availableTargets: ['MacBook Pro', 'Apple Watch'],
+            timestamp: Date.now() - 180000,
+            payload: { room: 'EcoDrivers', draft: 'Confirmada la recarga en el punto sur...' }
+        }
+    ];
+
+    const stored = JSON.parse(localStorage.getItem('cs_active_handoffs') || '[]');
+    if (!stored || stored.length === 0) {
+        localStorage.setItem('cs_active_handoffs', JSON.stringify(defaultHandoffs));
+        return defaultHandoffs;
+    }
+    return stored;
+}
+
+async function pushHandoff(targetDevice, payload) {
+    const handoff = {
+        id: 'ho_' + Date.now(),
+        service: payload.service || 'Shine Maps',
+        title: payload.title || 'Continuar actividad',
+        subtitle: payload.subtitle || 'Enviado desde este navegador',
+        icon: payload.icon || 'arrow.triangle.2.circlepath',
+        originDevice: detectCurrentDeviceInfo().name,
+        targetDevice: targetDevice,
+        timestamp: Date.now(),
+        payload: payload
+    };
+
+    const current = await getActiveHandoffs();
+    current.unshift(handoff);
+    localStorage.setItem('cs_active_handoffs', JSON.stringify(current));
+    broadcastSSO('HANDOFF_PUSH', handoff);
+    return { success: true, handoff };
+}
+
+async function dismissHandoff(handoffId) {
+    let current = await getActiveHandoffs();
+    current = current.filter(h => h.id !== handoffId);
+    localStorage.setItem('cs_active_handoffs', JSON.stringify(current));
+    return { success: true };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CS FAMILY SHARING (FAMILIAS COKI STUDIOS)
+// ═══════════════════════════════════════════════════════════════
+
+async function getFamilyGroup() {
+    const defaultFamily = {
+        id: 'fam_coki_prime',
+        name: 'Familia Coki Studios',
+        tier: 'Family Pro',
+        sharedEcoPoolKg: 48.6,
+        sharedEcoPoints: 1420,
+        sharedCloudStorageGb: 1024,
+        usedCloudStorageGb: 184,
+        members: [
+            { id: 'mem_1', name: 'Tú (Organizador)', email: 'tucorreo@coki.com', role: 'Organizador', avatar: 'T', ecoKg: 24.2 },
+            { id: 'mem_2', name: 'Laura Ortiz', email: 'laura@coki.com', role: 'Adulto', avatar: 'L', ecoKg: 14.8 },
+            { id: 'mem_3', name: 'Mateo Ortiz', email: 'mateo@coki.com', role: 'Menor', avatar: 'M', ecoKg: 9.6 }
+        ]
+    };
+
+    const stored = JSON.parse(localStorage.getItem('cs_family_group') || 'null');
+    if (!stored) {
+        localStorage.setItem('cs_family_group', JSON.stringify(defaultFamily));
+        return defaultFamily;
+    }
+    return stored;
+}
+
+async function inviteFamilyMember(email, role = 'Adulto') {
+    const family = await getFamilyGroup();
+    const newMember = {
+        id: 'mem_' + Date.now(),
+        name: email.split('@')[0],
+        email: email,
+        role: role,
+        avatar: email.charAt(0).toUpperCase(),
+        ecoKg: 0.0
+    };
+    family.members.push(newMember);
+    localStorage.setItem('cs_family_group', JSON.stringify(family));
+    return { success: true, member: newMember };
+}
+
+async function removeFamilyMember(memberId) {
+    const family = await getFamilyGroup();
+    family.members = family.members.filter(m => m.id !== memberId);
+    localStorage.setItem('cs_family_group', JSON.stringify(family));
+    return { success: true };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  IDENTIDADES DUALES (CORREO CS MAIL + OAUTH EXTERNO)
+// ═══════════════════════════════════════════════════════════════
+
+async function getLinkedIdentities() {
+    const user = await getCurrentCokiUser();
+    const identities = [
+        {
+            provider: 'email',
+            identifier: user?.email || 'email@cokistudios.com',
+            title: 'Correo Institucional / CS Mail',
+            icon: 'envelope.fill',
+            linked: true,
+            canUnlink: false
+        },
+        {
+            provider: 'google',
+            identifier: user?.user_metadata?.google_email || 'No vinculado',
+            title: 'Google Account',
+            icon: 'globe',
+            linked: !!(user?.app_metadata?.providers?.includes('google') || user?.user_metadata?.google_email),
+            canUnlink: true
+        },
+        {
+            provider: 'github',
+            identifier: user?.user_metadata?.github_username || 'No vinculado',
+            title: 'GitHub Developer Account',
+            icon: 'chevron.left.forwardslash.chevron.right',
+            linked: !!(user?.app_metadata?.providers?.includes('github') || user?.user_metadata?.github_username),
+            canUnlink: true
+        },
+        {
+            provider: 'apple',
+            identifier: user?.user_metadata?.apple_id || 'No vinculado',
+            title: 'Apple ID (Sign in with Apple)',
+            icon: 'apple.logo',
+            linked: !!(user?.app_metadata?.providers?.includes('apple')),
+            canUnlink: true
+        }
+    ];
+    return identities;
+}
+
+async function linkOAuthProvider(provider) {
+    return await loginCokiWithOAuth(provider);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PERSONAL ACCESS TOKENS (SMILEDEV CLI & API)
+// ═══════════════════════════════════════════════════════════════
+
+async function getPersonalAccessTokens() {
+    const defaultTokens = [
+        {
+            id: 'pat_1',
+            name: 'MacBook Pro CLI',
+            tokenPrefix: 'cs_pat_9a4f2b',
+            scopes: ['read:modules', 'publish:modules'],
+            createdAt: '2026-10-01',
+            lastUsed: 'Hoy a las 11:42 AM',
+            expiresIn: '85 días'
+        }
+    ];
+
+    const stored = JSON.parse(localStorage.getItem('cs_developer_pats') || 'null');
+    if (!stored) {
+        localStorage.setItem('cs_developer_pats', JSON.stringify(defaultTokens));
+        return defaultTokens;
+    }
+    return stored;
+}
+
+async function createPersonalAccessToken(name, scopes = ['read:modules', 'publish:modules']) {
+    const randPart = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+    const fullToken = `cs_pat_${randPart}`;
+    
+    const newToken = {
+        id: 'pat_' + Date.now(),
+        name: name,
+        tokenPrefix: fullToken.substring(0, 14),
+        scopes: scopes,
+        createdAt: new Date().toISOString().split('T')[0],
+        lastUsed: 'Nunca',
+        expiresIn: '90 días'
+    };
+
+    const current = await getPersonalAccessTokens();
+    current.unshift(newToken);
+    localStorage.setItem('cs_developer_pats', JSON.stringify(current));
+
+    return { success: true, tokenObj: newToken, rawToken: fullToken };
+}
+
+async function revokePersonalAccessToken(tokenId) {
+    let current = await getPersonalAccessTokens();
+    current = current.filter(t => t.id !== tokenId);
+    localStorage.setItem('cs_developer_pats', JSON.stringify(current));
+    return { success: true };
+}
+
 export {
     supabase,
     registerCokiAccount,
@@ -815,6 +1162,23 @@ export {
     registerPasskey,
     loginWithPasskey,
     hasAdminMailAccess,
-    isCokiInternalEmail
+    isCokiInternalEmail,
+    broadcastSSO,
+    detectCurrentDeviceInfo,
+    getRegisteredDevices,
+    revokeDevice,
+    revokeOtherDevices,
+    getActiveHandoffs,
+    pushHandoff,
+    dismissHandoff,
+    getFamilyGroup,
+    inviteFamilyMember,
+    removeFamilyMember,
+    getLinkedIdentities,
+    linkOAuthProvider,
+    getPersonalAccessTokens,
+    createPersonalAccessToken,
+    revokePersonalAccessToken
 };
+
 
