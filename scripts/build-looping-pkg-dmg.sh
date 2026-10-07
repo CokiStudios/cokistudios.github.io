@@ -82,70 +82,71 @@ echo "💿 4/4 Assembling and compressing Disk Image (.DMG)..."
 cp "$PKG_OUTPUT" "$STAGING_DIR/Instalar Looping.pkg"
 
 # Create double-clickable Terminal Installer script
-cat << 'EOF' > "$STAGING_DIR/Instalar_por_Terminal.command"
+cat << 'EOF' > "$STAGING_DIR/Install_via_Terminal.command"
 #!/bin/bash
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "=========================================================="
-echo "🌟 Instalador de Looping Engine & smiledev v2.5.0 (Coki Studios)"
+echo "🌟 Looping Engine & smiledev v2.5.0 Installer (Coki Studios)"
 echo "=========================================================="
-echo "Instalando en /usr/local/bin/looping y /usr/local/bin/smiledev..."
-sudo installer -pkg "$DIR/Instalar Looping.pkg" -target /
+echo "Installing into /usr/local/bin/looping and /usr/local/bin/smiledev..."
+sudo installer -pkg "$DIR/Install Looping.pkg" -target /
 echo ""
-echo "✅ ¡Looping y smiledev se han instalado exitosamente en el PATH del sistema!"
+echo "✅ Looping and smiledev have been installed successfully in your system PATH!"
 echo "   Looping:  /usr/local/bin/looping"
 echo "   smiledev: /usr/local/bin/smiledev"
-echo "   Versión:  $(/usr/local/bin/looping --version 2>/dev/null || echo '2.5.0')"
+echo "   Version:  $(/usr/local/bin/looping --version 2>/dev/null || echo '2.5.0')"
 echo ""
-echo "Comandos disponibles:"
-echo "   looping tu_archivo.loop"
-echo "   smiledev install <modulo>"
+echo "Available commands:"
+echo "   looping your_file.loop"
+echo "   smiledev install <module>"
 echo "   smiledev list"
 echo ""
-read -p "Presiona ENTER para cerrar..."
+read -p "Press ENTER to exit..."
 EOF
-chmod 755 "$STAGING_DIR/Instalar_por_Terminal.command"
+chmod 755 "$STAGING_DIR/Install_via_Terminal.command"
 
 # Create double-clickable Terminal Uninstaller script
-cat << 'EOF' > "$STAGING_DIR/Desinstalar_Looping.command"
+cat << 'EOF' > "$STAGING_DIR/Uninstall_Looping.command"
 #!/bin/bash
 echo "=========================================================="
-echo "🗑️ Desinstalador de Looping Engine (Coki Studios)"
+echo "🗑️ Looping Engine Uninstaller (Coki Studios)"
 echo "=========================================================="
-read -p "¿Deseas desinstalar Looping de /usr/local/bin? (s/N): " confirm
-if [[ "$confirm" =~ ^[sSyY]$ ]]; then
-    sudo rm -f /usr/local/bin/looping /usr/local/bin/ruuping /etc/paths.d/looping
-    echo "✅ Looping desinstalado correctamente."
+read -p "Do you want to uninstall Looping from /usr/local/bin? (y/N): " confirm
+if [[ "$confirm" =~ ^[yY]$ ]]; then
+    sudo rm -f /usr/local/bin/looping /usr/local/bin/ruuping /usr/local/bin/smiledev /etc/paths.d/looping
+    echo "✅ Looping uninstalled successfully."
 else
-    echo "Operación cancelada."
+    echo "Operation cancelled."
 fi
-read -p "Presiona ENTER para cerrar..."
+read -p "Press ENTER to exit..."
 EOF
-chmod 755 "$STAGING_DIR/Desinstalar_Looping.command"
+chmod 755 "$STAGING_DIR/Uninstall_Looping.command"
 
 # Copy sample compiled projects
-mkdir -p "$STAGING_DIR/Proyectos Compilados"
+mkdir -p "$STAGING_DIR/Compiled Projects"
 if [ -d "$ROOT_DIR/sample_loop_projects/compiled" ]; then
-    cp -R "$ROOT_DIR/sample_loop_projects/compiled/"* "$STAGING_DIR/Proyectos Compilados/"
+    cp -R "$ROOT_DIR/sample_loop_projects/compiled/"* "$STAGING_DIR/Compiled Projects/"
 fi
 
 # Add Readme
-cat << 'EOF' > "$STAGING_DIR/LEEME.txt"
+cat << 'EOF' > "$STAGING_DIR/README.txt"
 ═══════════════════════════════════════════════════════════════
 🌟 LOOPING PROGRAMMING LANGUAGE & RUNTIME v2.5.0
 Holo Entertainment • Coki Studios
 ═══════════════════════════════════════════════════════════════
 
-¿Cómo instalar Looping en el PATH del sistema?
-1. Haz doble clic en "Instalar Looping.pkg" y sigue el asistente oficial de macOS.
-2. O haz doble clic en "Instalar_por_Terminal.command".
+How to install Looping in your system PATH:
+1. Double-click "Install Looping.pkg" and follow the macOS installer wizard.
+2. Or double-click "Install_via_Terminal.command".
 
-Una vez instalado:
-- El comando "looping" y "ruuping" estarán disponibles globalmente en cualquier terminal.
-- Los scripts con shebang (como ./ShineLauncher_flUI) se ejecutarán directamente con doble clic o desde terminal.
+Once installed:
+- "looping", "ruuping", and "smiledev" are available globally in any terminal.
+- Scripts with shebangs can be executed directly from terminal or double-click.
 
-Verificar instalación en Terminal:
+Verify installation in Terminal:
 $ looping --version
+$ smiledev version
 $ looping test
 EOF
 

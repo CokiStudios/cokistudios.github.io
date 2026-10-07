@@ -4,5 +4,5 @@
   "language": "python",
   "entry_point": "loop_gui_qt.py",
   "author": "Coki Studios Core Team",
-  "description": "Interoperabilidad nativa con PyQt6 / PySide6 para Looping (.loop). Ventanas QMainWindow modernas, botones con estilos QSS y layout manager."
+  "description": "Native PyQt6 / PySide6 interoperability for Looping (.loop). Modern QMainWindow windows, styled QSS buttons, and layout manager."
 }

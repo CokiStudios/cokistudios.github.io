@@ -4,5 +4,5 @@
   "language": "cpp",
   "entry_point": "loop_math_3d.hpp",
   "author": "Coki Studios Performance Lab",
-  "description": "Motor acelerado en C++ de \u00e1lgebra lineal, cuaterniones, matrices 4x4 y f\u00edsica de proyectiles para juegos en Loop OS."
+  "description": "Hardware-accelerated C++ engine for linear algebra, quaternions, 4x4 matrices, and projectile physics for Loop OS games."
 }
