@@ -1263,7 +1263,7 @@ async function revokeUserApp(appId) {
 //  PERSONAL ACCESS TOKENS (SMILEDEV CLI) — SUPABASE REAL
 // ═══════════════════════════════════════════════════════════════
 
-async function getPersonalAccessTokens() {
+export async function getPersonalAccessTokens() {
     const user = await getCurrentCokiUser();
     if (!user) return [];
     
@@ -1290,7 +1290,7 @@ async function getPersonalAccessTokens() {
     });
 }
 
-async function createPersonalAccessToken(name, scopes = ['read:modules', 'publish:modules']) {
+export async function createPersonalAccessToken(name, scopes = ['read:modules', 'publish:modules']) {
     const user = await getCurrentCokiUser();
     if (!user) return { success: false, error: 'No autenticado' };
     
@@ -1316,7 +1316,7 @@ async function createPersonalAccessToken(name, scopes = ['read:modules', 'publis
     return { success: true, tokenObj: data, rawToken: fullToken };
 }
 
-async function revokePersonalAccessToken(tokenId) {
+export async function revokePersonalAccessToken(tokenId) {
     const { error } = await supabase
         .from('developer_pats')
         .delete()
@@ -1328,7 +1328,7 @@ async function revokePersonalAccessToken(tokenId) {
 //  MÉTRICAS ECOLÓGICAS, ROLES Y CATEGORÍAS REALES DE SUPABASE
 // ═══════════════════════════════════════════════════════════════
 
-async function getUserEcoStats(userId) {
+export async function getUserEcoStats(userId) {
     const { data, error } = await supabase
         .from('forkman_user_eco')
         .select('co2_saved, points_earned')
@@ -1345,7 +1345,7 @@ async function getUserEcoStats(userId) {
     return { co2: co2.toFixed(1), points: points };
 }
 
-async function getUserRole(userId) {
+export async function getUserRole(userId) {
     const { data } = await supabase
         .from('user_roles')
         .select('role')
@@ -1355,13 +1355,22 @@ async function getUserRole(userId) {
     return data?.role || 'user';
 }
 
-async function getSocialCategories() {
+export async function getSocialCategories() {
     const { data, error } = await supabase
         .from('social_categories')
         .select('*')
         .order('name');
         
     return data || DEFAULT_CATEGORIES;
+}
+
+if (typeof window !== 'undefined') {
+    window.createPersonalAccessToken = createPersonalAccessToken;
+    window.getPersonalAccessTokens = getPersonalAccessTokens;
+    window.revokePersonalAccessToken = revokePersonalAccessToken;
+    window.getUserEcoStats = getUserEcoStats;
+    window.getUserRole = getUserRole;
+    window.getSocialCategories = getSocialCategories;
 }
 
 export {
