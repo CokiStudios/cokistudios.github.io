@@ -1263,7 +1263,7 @@ async function revokeUserApp(appId) {
 //  PERSONAL ACCESS TOKENS (SMILEDEV CLI) — SUPABASE REAL
 // ═══════════════════════════════════════════════════════════════
 
-export async function getPersonalAccessTokens() {
+async function getPersonalAccessTokens() {
     const user = await getCurrentCokiUser();
     if (!user) return [];
     
@@ -1290,7 +1290,7 @@ export async function getPersonalAccessTokens() {
     });
 }
 
-export async function createPersonalAccessToken(name, scopes = ['read:modules', 'publish:modules']) {
+async function createPersonalAccessToken(name, scopes = ['read:modules', 'publish:modules']) {
     const user = await getCurrentCokiUser();
     if (!user) return { success: false, error: 'No autenticado' };
     
@@ -1316,7 +1316,7 @@ export async function createPersonalAccessToken(name, scopes = ['read:modules', 
     return { success: true, tokenObj: data, rawToken: fullToken };
 }
 
-export async function revokePersonalAccessToken(tokenId) {
+async function revokePersonalAccessToken(tokenId) {
     const { error } = await supabase
         .from('developer_pats')
         .delete()
@@ -1328,7 +1328,7 @@ export async function revokePersonalAccessToken(tokenId) {
 //  MÉTRICAS ECOLÓGICAS, ROLES Y CATEGORÍAS REALES DE SUPABASE
 // ═══════════════════════════════════════════════════════════════
 
-export async function getUserEcoStats(userId) {
+async function getUserEcoStats(userId) {
     const { data, error } = await supabase
         .from('forkman_user_eco')
         .select('co2_saved, points_earned')
@@ -1345,7 +1345,7 @@ export async function getUserEcoStats(userId) {
     return { co2: co2.toFixed(1), points: points };
 }
 
-export async function getUserRole(userId) {
+async function getUserRole(userId) {
     const { data } = await supabase
         .from('user_roles')
         .select('role')
@@ -1355,7 +1355,7 @@ export async function getUserRole(userId) {
     return data?.role || 'user';
 }
 
-export async function getSocialCategories() {
+async function getSocialCategories() {
     const { data, error } = await supabase
         .from('social_categories')
         .select('*')
