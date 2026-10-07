@@ -38,8 +38,9 @@ if [ ! -f "$CONFIG_FILE" ]; then
     cat <<EOF > "$CONFIG_FILE"
 {
   "version": "$SMILE_VERSION",
-  "default_repo": "$SUPABASE_URL/rest/v1/loop_modules",
+  "default_repo": "https://repo.cokistudios.com/modules",
   "repos": [
+    "https://repo.cokistudios.com/modules",
     "https://cmkumxprmmhuinxfppxl.supabase.co/rest/v1/loop_modules"
   ],
   "author": "Coki Studios Developer"
@@ -180,6 +181,15 @@ manifest = {
 
 target_dir = os.path.abspath(f"modules/{name}")
 global_dir = os.path.expanduser(f"~/.smiledev/modules/{name}")
+
+if not payload:
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"https://repo.cokistudios.com/modules/{name}/code", headers={"User-Agent": "smiledev/2.5.0 (Coki Studios)"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            payload = r.read().decode("utf-8")
+    except Exception:
+        pass
 
 for base_dir in [target_dir, global_dir]:
     os.makedirs(base_dir, exist_ok=True)

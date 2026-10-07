@@ -1,0 +1,8 @@
+{
+  "name": "pyloop-requests",
+  "version": "1.2.0",
+  "language": "python",
+  "entry_point": "pyloop_requests.py",
+  "author": "Coki Studios Network Team",
+  "description": "Lightweight HTTP/HTTPS network client with TLS verification, JSON parsing, and retry logic for Looping applications."
+}

@@ -1,0 +1,8 @@
+{
+  "name": "pyloop-ai",
+  "version": "1.0.0",
+  "language": "python",
+  "entry_point": "pyloop_ai.py",
+  "author": "Coki Studios AI Research",
+  "description": "Python AI & Neural inference bridge for Looping. Connects Looping games and tools to LLMs, text generation, and prompt pipelines."
+}
