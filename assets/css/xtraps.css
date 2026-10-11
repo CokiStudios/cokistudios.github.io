@@ -1,16 +1,32 @@
-/* XTRAPS Refined Ambient Mesh CSS (Apple / Google Clean Tone) */
+/* ═══════════════════════════════════════════════════════════════
+ * 🌌 XTRAPS BACKGROUND SYSTEM — Coki Studios Brand Identity
+ * Precision Dual Bezier Curves (Wave 1 & Wave 2) with Ambient Mesh
+ * Matches XtrapsBackground.swift & Shine OS Design Language
+ * ═══════════════════════════════════════════════════════════════ */
+
 :root {
-    --xtraps-bg-base: #f5f5f7;
-    --xtraps-glow-1: rgba(0, 113, 227, 0.05);
-    --xtraps-glow-2: rgba(52, 199, 89, 0.04);
+    --xtraps-bg-base: #060913;
+    --xtraps-color-1: #6366f1; /* Vibrant Indigo */
+    --xtraps-color-2: #38bdf8; /* Cyan Glow */
+    --xtraps-color-3: #c084fc; /* Aurora Purple */
+    --xtraps-color-4: #ec4899; /* Radiant Pink */
+    --xtraps-glow-1: rgba(99, 102, 241, 0.12);
+    --xtraps-glow-2: rgba(56, 189, 248, 0.10);
+    --xtraps-glow-3: rgba(192, 132, 252, 0.08);
 }
 
-html.dark-theme, body.dark-mode {
-    --xtraps-bg-base: #121214;
-    --xtraps-glow-1: rgba(41, 151, 255, 0.07);
-    --xtraps-glow-2: rgba(48, 209, 88, 0.05);
+html.light-theme, body.light-mode {
+    --xtraps-bg-base: #f8fafc;
+    --xtraps-color-1: #4f46e5;
+    --xtraps-color-2: #0284c7;
+    --xtraps-color-3: #9333ea;
+    --xtraps-color-4: #db2777;
+    --xtraps-glow-1: rgba(79, 70, 229, 0.06);
+    --xtraps-glow-2: rgba(2, 132, 199, 0.05);
+    --xtraps-glow-3: rgba(147, 51, 234, 0.04);
 }
 
+/* Base Container */
 .xtraps-bg {
     position: fixed;
     inset: 0;
@@ -18,28 +34,96 @@ html.dark-theme, body.dark-mode {
     pointer-events: none;
     overflow: hidden;
     background: var(--xtraps-bg-base);
-    transition: background 0.3s ease;
+    transition: background 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.xtraps-bg.rainbow::before {
+/* Rainbow Mode: 10s Continuous Hue Rotation Cycle (GPU Accelerated) */
+.xtraps-bg.rainbow, .xtraps-bg.rainbow-active {
+    animation: xtrapsRainbowCycle 10s linear infinite;
+    will-change: filter;
+}
+
+@keyframes xtrapsRainbowCycle {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+/* Ambient Radial Halos */
+.xtraps-bg::before {
     content: '';
     position: absolute;
-    top: -20%;
-    left: 20%;
-    width: 60vw;
-    height: 60vh;
+    top: -15%;
+    left: 15%;
+    width: 65vw;
+    height: 65vh;
     border-radius: 50%;
     background: radial-gradient(circle, var(--xtraps-glow-1) 0%, transparent 70%);
-    filter: blur(80px);
+    filter: blur(90px);
+    pointer-events: none;
 }
 
 .xtraps-bg .xtraps-wave {
     position: absolute;
-    bottom: -10%;
-    right: 15%;
-    width: 50vw;
-    height: 50vh;
+    bottom: -15%;
+    right: 10%;
+    width: 55vw;
+    height: 55vh;
     border-radius: 50%;
     background: radial-gradient(circle, var(--xtraps-glow-2) 0%, transparent 70%);
-    filter: blur(80px);
+    filter: blur(90px);
+    pointer-events: none;
+}
+
+/* ── XTRAPS DUAL PRECISION BEZIER CURVES SVG LAYER ── */
+.xtraps-svg-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+/* Wave 1: Dynamic Top-Left to Right Steep Rise */
+.xtraps-path-wave1 {
+    stroke-dasharray: 2400;
+    stroke-dashoffset: 0;
+    animation: xtrapsFloatWave1 4.5s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+@keyframes xtrapsFloatWave1 {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(6px, 14px);
+    }
+}
+
+/* Wave 2: Mid-Left to Steep Top-Right Arc */
+.xtraps-path-wave2 {
+    stroke-dasharray: 2400;
+    stroke-dashoffset: 0;
+    animation: xtrapsFloatWave2 5.0s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+@keyframes xtrapsFloatWave2 {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(-8px, -12px);
+    }
+}
+
+/* Xtraps Divider component for sections */
+.xtraps-divider {
+    width: 100%;
+    height: 48px;
+    position: relative;
+    overflow: visible;
+    margin: 24px 0;
+    pointer-events: none;
 }

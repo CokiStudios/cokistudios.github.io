@@ -1,146 +1,757 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Demo — Login con Coki Studios</title>
+    <title>CS ID Connect — Playground & Portal de Desarrolladores | Coki Studios</title>
+    <meta name="description" content="Playground interactivo para CS ID Connect: Identidad federada, OAuth 2.0 + PKCE (S256), One-Tap Sign In y Hardware-Backed E2EE por Coki Studios.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300F5D4'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>body{font-family:'Inter',sans-serif}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        coki: {
+                            bg: '#070A12',
+                            card: '#0D1322',
+                            cardBorder: '#1E293B',
+                            accent: '#00F5D4',
+                            cyan: '#38BDF8',
+                            amber: '#FBBF24',
+                            purple: '#A855F7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #070A12;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(0, 245, 212, 0.07) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(13, 19, 34, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(20, 28, 48, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glow-accent {
+            box-shadow: 0 0 25px -5px rgba(0, 245, 212, 0.25);
+        }
+        pre, code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(10, 14, 23, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.25); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 245, 212, 0.45); }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-        <div id="login-view" class="bg-white rounded-2xl shadow-sm p-8">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span class="text-white font-bold text-2xl">D</span>
-                </div>
-                <h1 class="text-2xl font-bold text-slate-800">App Demo</h1>
-                <p class="text-slate-500">Ejemplo de app que usa Coki Studios OAuth</p>
-            </div>
-            <button id="btn-coki-login" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-blue-500 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all mb-4">
-                <div class="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-                    <span class="text-white font-bold text-xs">C</span>
-                </div>
-                Iniciar sesión con Coki Studios
-            </button>
-        </div>
+<body class="min-h-screen text-slate-100 flex flex-col selection:bg-teal-500/30 selection:text-teal-200">
 
-        <div id="dashboard-view" class="hidden">
-            <div class="bg-white rounded-2xl shadow-sm p-8 mb-4">
-                <div class="flex items-center gap-4 mb-6">
-                    <div id="user-avatar" class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl">U</div>
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-slate-950/60 sticky top-0 z-40 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-sky-400 to-teal-400 p-[1.5px] transition-transform duration-200 group-hover:scale-105">
+                        <div class="w-full h-full bg-[#070A12] rounded-[10px] flex items-center justify-center">
+                            <span class="text-sm font-extrabold bg-gradient-to-r from-amber-300 via-cyan-300 to-teal-300 bg-clip-text text-transparent">CS</span>
+                        </div>
+                    </div>
                     <div>
-                        <h2 id="user-name" class="text-xl font-bold text-slate-800">Usuario</h2>
-                        <p id="user-email" class="text-slate-500">email@coki.com</p>
-                        <span class="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full"> Verificado por Coki Studios</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold tracking-tight text-white text-base">CS ID Connect</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">v2.0 SDK</span>
+                        </div>
+                        <p class="text-xs text-slate-400 font-medium">Playground & Developer Portal</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Header Badges & Actions -->
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs font-mono text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>OAuth 2.0 • PKCE S256</span>
+                </div>
+                <a href="authorize.html" target="_blank" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-750 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <span>Portal de Autorización</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+
+        <!-- Hero Section -->
+        <section class="text-center sm:text-left sm:flex sm:items-center sm:justify-between gap-6 pb-2">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    Autenticación Federada <span class="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">Coki Studios</span>
+                </h1>
+                <p class="text-slate-400 text-sm sm:text-base mt-1 max-w-2xl">
+                    Implementa inicio de sesión sin contraseñas, One-Tap SSO y cifrado JWE AES-256 de extremo a extremo en cualquier aplicación web, iOS o Android.
+                </p>
+            </div>
+            <!-- Trust Pills -->
+            <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2 mt-4 sm:mt-0">
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-950/60 text-teal-300 border border-teal-800/50">
+                    🔒 Cero Rastreos
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md bg-cyan-950/60 text-cyan-300 border border-cyan-800/50">
+                    🛡️ E2EE Ready
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-950/60 text-purple-300 border border-purple-800/50">
+                    ⚡ Sin Pagos
+                </span>
+            </div>
+        </section>
+
+        <!-- Two Column Interactive Playground -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- LEFT COLUMN: SDK Configurator & Action Hub (7 Cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- 1. Interactive Button Customizer -->
+                <div class="glass-panel rounded-2xl p-6 shadow-xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 font-bold text-sm">
+                                🎨
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-white">Diseñador del Botón Oficial</h2>
+                                <p class="text-xs text-slate-400">Personaliza la apariencia para integrarla a tu producto</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-mono text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20">SDK v2</span>
+                    </div>
+
+                    <!-- Customizer Form Controls -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                        <!-- Theme -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1.5">Tema Visual</label>
+                            <select id="cfg-theme" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500 transition">
+                                <option value="glass" selected>Glassmorphism (Glass)</option>
+                                <option value="dark">Dark Cyber</option>
+                                <option value="light">Minimal Light</option>
+                                <option value="outline">Neon Outline</option>
+                            </select>
+                        </div>
+
+                        <!-- Shape -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1.5">Forma</label>
+                            <select id="cfg-shape" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500 transition">
+                                <option value="pill" selected>Píldora (Pill)</option>
+                                <option value="rounded">Redondeado (12px)</option>
+                                <option value="square">Cuadrado (4px)</option>
+                            </select>
+                        </div>
+
+                        <!-- Size -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1.5">Tamaño</label>
+                            <select id="cfg-size" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500 transition">
+                                <option value="small">Compacto (Small)</option>
+                                <option value="medium" selected>Estándar (Medium)</option>
+                                <option value="large">Grande (Large)</option>
+                            </select>
+                        </div>
+
+                        <!-- Text -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1.5">Llamado a la acción</label>
+                            <select id="cfg-text" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500 transition">
+                                <option value="continue" selected>Continuar con CS ID</option>
+                                <option value="signin">Iniciar sesión con CS ID</option>
+                                <option value="connect">Conectar con CS ID</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Flow Mode Selector -->
+                    <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800/80 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <span class="text-xs font-semibold text-slate-200">Modo de Autorización:</span>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Ventana emergente sin recargar la página vs navegación completa</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-medium">
+                            <label class="cursor-pointer px-3 py-1 rounded-md transition flex items-center gap-1.5" id="label-mode-popup">
+                                <input type="radio" name="auth-mode" value="popup" checked class="hidden">
+                                <span>🪟 Popup (Recomendado)</span>
+                            </label>
+                            <label class="cursor-pointer px-3 py-1 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5" id="label-mode-redirect">
+                                <input type="radio" name="auth-mode" value="redirect" class="hidden">
+                                <span>↗️ Redirect</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Live Rendered Button Sandbox -->
+                    <div class="rounded-xl border border-dashed border-teal-500/30 bg-slate-950/70 p-6 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-cyan-500/5 to-transparent pointer-events-none"></div>
+                        <span class="text-[11px] font-mono uppercase tracking-wider text-teal-400/80">Vista Previa Interactiva</span>
+                        
+                        <!-- Target where CSIDConnect.renderButton injects the component -->
+                        <div id="demo-button-target" class="transition-all duration-300"></div>
+
+                        <span class="text-[11px] text-slate-500">Haz clic en el botón de arriba para probar el flujo real de autenticación</span>
                     </div>
                 </div>
-                <button id="btn-logout" class="w-full py-3 border-2 border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors">Cerrar sesión</button>
+
+                <!-- 2. Test Actions & One-Tap Sandbox -->
+                <div class="glass-panel rounded-2xl p-6 shadow-xl border border-slate-800">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-sm">
+                            ⚡
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Disparadores de Prueba</h2>
+                            <p class="text-xs text-slate-400">Ejecuta llamadas de API directas del SDK</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button id="btn-trigger-popup" class="flex flex-col items-start p-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-teal-500/40 transition group">
+                            <div class="flex items-center gap-2 text-teal-400 font-semibold text-xs mb-1">
+                                <span>🪟</span>
+                                <span>CSID.signIn({ popup })</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 text-left">Abre modal centrado con postMessage seguro</span>
+                        </button>
+
+                        <button id="btn-trigger-redirect" class="flex flex-col items-start p-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-cyan-500/40 transition group">
+                            <div class="flex items-center gap-2 text-cyan-400 font-semibold text-xs mb-1">
+                                <span>↗️</span>
+                                <span>CSID.signIn({ redirect })</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 text-left">Redirige a authorize.html y regresa con code</span>
+                        </button>
+
+                        <button id="btn-trigger-onetap" class="flex flex-col items-start p-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-amber-500/40 transition group">
+                            <div class="flex items-center gap-2 text-amber-400 font-semibold text-xs mb-1">
+                                <span>✨</span>
+                                <span>CSID.promptOneTap()</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 text-left">Muestra tarjeta flotante si hay sesión activa previa</span>
+                        </button>
+                    </div>
+
+                    <!-- Reset & Session Cleaner -->
+                    <div class="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                        <span class="text-slate-400">¿Quieres probar desde cero como nuevo usuario?</span>
+                        <button id="btn-clear-session" class="px-3 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 font-medium transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <span>Borrar Sesión Local</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Quickstart Snippets for Developers -->
+                <div class="glass-panel rounded-2xl p-6 shadow-xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm">
+                                💻
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-white">Código de Integración</h2>
+                                <p class="text-xs text-slate-400">Copia y pega en tu proyecto en menos de 2 minutos</p>
+                            </div>
+                        </div>
+
+                        <!-- Snippet Tabs -->
+                        <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs font-mono">
+                            <button id="tab-webcomponent" class="px-2.5 py-1 rounded bg-slate-800 text-white font-medium transition">HTML Tag</button>
+                            <button id="tab-vanillajs" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">JavaScript</button>
+                            <button id="tab-swift" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">iOS Swift</button>
+                        </div>
+                    </div>
+
+                    <!-- Code Preview Block -->
+                    <div class="relative bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs text-slate-300 overflow-x-auto">
+                        <button id="btn-copy-code" class="absolute top-3 right-3 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-sans border border-slate-700 transition flex items-center gap-1">
+                            <span>Copiar</span>
+                        </button>
+                        <pre id="code-snippet-content"><code>&lt;!-- 1. Cargar el SDK oficial de CS ID Connect --&gt;
+&lt;script type="module" src="https://cokistudios.github.io/csid-connect.js"&gt;&lt;/script&gt;
+
+&lt;!-- 2. Declarar el botón web oficial --&gt;
+&lt;csid-connect-button 
+    client-id="tu-app-id" 
+    theme="glass" 
+    shape="pill" 
+    mode="popup"&gt;
+&lt;/csid-connect-button&gt;
+
+&lt;script&gt;
+    document.querySelector('csid-connect-button').addEventListener('success', (e) =&gt; {
+        console.log('Usuario autenticado:', e.detail.user);
+    });
+&lt;/script&gt;</code></pre>
+                    </div>
+                </div>
+
             </div>
+
+            <!-- RIGHT COLUMN: Identity State Inspector & Console Logs (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- 1. Live Identity Inspector (Logged In vs Unauthenticated) -->
+                <div class="glass-panel rounded-2xl p-6 shadow-xl border border-slate-800 relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-slate-600" id="status-dot"></span>
+                            <h2 class="text-base font-bold text-white">Estado de la Sesión</h2>
+                        </div>
+                        <span id="session-badge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                            Desconectado
+                        </span>
+                    </div>
+
+                    <!-- View: Unauthenticated State -->
+                    <div id="view-unauth" class="py-6 text-center space-y-3">
+                        <div class="w-14 h-14 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-600 text-2xl">
+                            🔒
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-300">No hay usuario autenticado</h3>
+                        <p class="text-xs text-slate-500 max-w-xs mx-auto">
+                            Inicia sesión usando el botón interactivo de la izquierda para ver los tokens y reclamos de identidad en tiempo real.
+                        </p>
+                    </div>
+
+                    <!-- View: Authenticated User Card -->
+                    <div id="view-auth" class="hidden space-y-5">
+                        <div class="flex items-center gap-3.5 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80">
+                            <div id="user-avatar" class="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-400 via-sky-400 to-teal-400 text-slate-950 font-bold text-lg flex items-center justify-center shrink-0 overflow-hidden shadow-md">
+                                U
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 id="user-display-name" class="text-sm font-bold text-white truncate">Usuario</h3>
+                                    <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">Verificado</span>
+                                </div>
+                                <p id="user-display-email" class="text-xs text-slate-400 truncate">usuario@ejemplo.com</p>
+                                <p id="user-display-sub" class="text-[10px] font-mono text-slate-500 truncate mt-0.5">sub: coki-usr-xxxx</p>
+                            </div>
+                        </div>
+
+                        <!-- Scopes & Security Info -->
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                                <span class="text-slate-400">Scopes Autorizados:</span>
+                                <span id="user-scopes" class="font-mono text-teal-400 font-semibold">openid profile email</span>
+                            </div>
+                            <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                                <span class="text-slate-400">Formato de Token:</span>
+                                <span class="font-mono text-cyan-400">JWE Compact (AES-256-GCM)</span>
+                            </div>
+                            <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                                <span class="text-slate-400">Seguridad Criptográfica:</span>
+                                <span class="text-amber-400 font-medium">Hardware E2EE Salt v1</span>
+                            </div>
+                        </div>
+
+                        <!-- Raw Token Payload Viewer -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-xs font-semibold text-slate-300">Decoded Claims (Payload)</span>
+                                <span class="text-[10px] font-mono text-slate-500">RFC 7519</span>
+                            </div>
+                            <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 font-mono text-[11px] text-teal-300 overflow-x-auto max-h-48">
+                                <pre id="json-claims">{}</pre>
+                            </div>
+                        </div>
+
+                        <!-- Sign Out Button -->
+                        <button id="btn-logout" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-red-950/40 text-slate-300 hover:text-red-300 border border-slate-800 hover:border-red-800/50 text-xs font-semibold transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            <span>Cerrar Sesión (Sign Out)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Live Console Logs -->
+                <div class="glass-panel rounded-2xl p-6 shadow-xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+                            <h2 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Consola de Eventos en Vivo</h2>
+                        </div>
+                        <button id="btn-clear-logs" class="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition">
+                            Limpiar
+                        </button>
+                    </div>
+
+                    <div id="live-console" class="bg-slate-950 rounded-xl p-3 border border-slate-800/80 font-mono text-[11px] space-y-1.5 h-56 overflow-y-auto">
+                        <!-- Populated by logger -->
+                        <div class="text-slate-500">[--:--:--] Inicializando consola de CS ID Connect...</div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
-    </div>
 
+        <!-- Ecosystem Architecture Info Section -->
+        <section class="glass-panel rounded-2xl p-6 border border-slate-800 text-xs space-y-3">
+            <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                <span>🌐</span>
+                <span>Arquitectura Federada Zero-Trust de Coki Studios</span>
+            </h3>
+            <p class="text-slate-400 leading-relaxed">
+                CS ID Connect cumple con el estándar RFC 6749 (OAuth 2.0) y RFC 7636 (PKCE con algoritmo S256). Todos los intercambios de credenciales se procesan sin exponer contraseñas a las aplicaciones clientes. Los tokens de identidad utilizan JWE (JSON Web Encryption) cifrados con AES-256-GCM y derivación respaldada por hardware en dispositivos compatibles (Apple Secure Enclave, Android StrongBox/TEE).
+            </p>
+            <div class="flex flex-wrap gap-4 pt-2 text-slate-500">
+                <span>Cliente Demo ID: <code class="text-slate-400">demo-app-123</code></span>
+                <span>Endpoint: <code class="text-slate-400">https://cokistudios.github.io/authorize.html</code></span>
+                <span>Algoritmo PKCE: <code class="text-slate-400">S256</code></span>
+                <span>Cero Pasarelas de Pago • Privacidad Protegida</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
+        <p>© 2026 Coki Studios. Todos los derechos reservados. Identidad Digital Soberana.</p>
+    </footer>
+
+    <!-- SDK & Playground Logic -->
     <script type="module">
-        import { generateCode, sha256 } from './oauth-server.js';
-        import { setCookie, getCookie, deleteCookie, setCookieJSON, getCookieJSON } from './cookie-utils.js';
+        import { CSIDConnect } from './csid-connect.js';
 
-        const COKI_AUTH_URL = 'https://cokistudios.github.io/authorize.html';
-        const CLIENT_ID = 'demo-app-123';
-        const REDIRECT_URI = 'https://cokistudios.github.io/client-demo.html';
-        const SCOPE = 'openid profile email';
+        // ═══════════════════════════════════════════════════════════
+        //  SISTEMA DE LOGS EN VIVO
+        // ═══════════════════════════════════════════════════════════
+        const consoleEl = document.getElementById('live-console');
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const row = document.createElement('div');
+            row.className = 'flex items-start gap-1.5 leading-snug';
 
-        document.getElementById('btn-coki-login').addEventListener('click', async () => {
-            const codeVerifier = generateCode(128);
-            const codeChallenge = await sha256(codeVerifier);
+            const colors = {
+                info: 'text-slate-400',
+                success: 'text-teal-300 font-medium',
+                warn: 'text-amber-300',
+                error: 'text-red-400 font-semibold',
+                brand: 'text-cyan-300'
+            };
 
-            //  Guardar code_verifier en cookie (10 minutos)
-            setCookie('coki_oauth_code_verifier', codeVerifier, { maxAge: 600 });
+            row.innerHTML = `<span class="text-slate-600 shrink-0">[${time}]</span> <span class="${colors[type] || colors.info}">${message}</span>`;
+            consoleEl.appendChild(row);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
 
-            const authUrl = new URL(COKI_AUTH_URL);
-            authUrl.searchParams.set('client_id', CLIENT_ID);
-            authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
-            authUrl.searchParams.set('response_type', 'code');
-            authUrl.searchParams.set('scope', SCOPE);
-            authUrl.searchParams.set('code_challenge', codeChallenge);
-            authUrl.searchParams.set('code_challenge_method', 'S256');
-            authUrl.searchParams.set('state', generateCode(16));
-
-            console.log(' Auth URL:', authUrl.toString());
-            window.location.href = authUrl.toString();
+        document.getElementById('btn-clear-logs').addEventListener('click', () => {
+            consoleEl.innerHTML = '';
+            log('Consola reiniciada.', 'info');
         });
 
-        async function handleCallback() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const error = urlParams.get('error');
+        // ═══════════════════════════════════════════════════════════
+        //  CONFIGURACIÓN DEL SDK Y DEMO
+        // ═══════════════════════════════════════════════════════════
+        const CLIENT_ID = 'demo-app-123';
+        const REDIRECT_URI = window.location.href.split('?')[0];
 
-            if (error) {
-                alert('Error OAuth: ' + (urlParams.get('error_description') || error));
-                return;
-            }
+        CSIDConnect.init({
+            clientId: CLIENT_ID,
+            redirectUri: REDIRECT_URI,
+            scope: 'openid profile email offline_access',
+            mode: 'popup'
+        });
 
-            if (!code) return;
+        log('CS ID Connect SDK v2.0 inicializado con Client ID: demo-app-123', 'brand');
 
-            //  Leer code_verifier de cookie
-            const codeVerifier = getCookie('coki_oauth_code_verifier');
-            if (!codeVerifier) {
-                alert('Error: PKCE verifier perdido');
-                return;
-            }
+        // ═══════════════════════════════════════════════════════════
+        //  RENDERIZADOR DINÁMICO DEL BOTÓN
+        // ═══════════════════════════════════════════════════════════
+        const themeSelect = document.getElementById('cfg-theme');
+        const shapeSelect = document.getElementById('cfg-shape');
+        const sizeSelect = document.getElementById('cfg-size');
+        const textSelect = document.getElementById('cfg-text');
 
-            deleteCookie('coki_oauth_code_verifier');
-
-            const { exchangeCodeForToken } = await import('./oauth-server.js');
-            const result = await exchangeCodeForToken(code, REDIRECT_URI, codeVerifier);
-
-            if (result.error) {
-                alert('Error: ' + (result.error_description || result.error));
-                return;
-            }
-
-            //  Guardar tokens en cookies (7 días)
-            setCookie('coki_access_token', result.access_token, { maxAge: 7 * 24 * 60 * 60 });
-            setCookie('coki_id_token', result.id_token, { maxAge: 7 * 24 * 60 * 60 });
-
-            const payload = JSON.parse(atob(result.id_token.split('.')[1]));
-            setCookieJSON('coki_user', {
-                id: payload.sub,
-                email: payload.email,
-                name: payload.name,
-                picture: payload.picture
-            }, { maxAge: 7 * 24 * 60 * 60 });
-
-            window.history.replaceState({}, document.title, window.location.pathname);
-            updateUI();
+        function getActiveMode() {
+            const checked = document.querySelector('input[name="auth-mode"]:checked');
+            return checked ? checked.value : 'popup';
         }
 
-        function updateUI() {
-            const user = getCookieJSON('coki_user');
-            const token = getCookie('coki_access_token');
+        function refreshButton() {
+            const theme = themeSelect.value;
+            const shape = shapeSelect.value;
+            const size = sizeSelect.value;
+            const text = textSelect.value;
+            const mode = getActiveMode();
 
-            if (user && token) {
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('dashboard-view').classList.remove('hidden');
-                document.getElementById('user-name').textContent = user.name || 'Usuario';
-                document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-avatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+            log(`Renderizando botón: theme=${theme}, shape=${shape}, size=${size}, mode=${mode}`, 'info');
+
+            CSIDConnect.renderButton('#demo-button-target', {
+                theme,
+                shape,
+                size,
+                text,
+                mode,
+                onSuccess: (res) => {
+                    log(`¡Autorización completada con éxito! Usuario: ${res.user?.email || res.user?.name || 'OK'}`, 'success');
+                    updateIdentityUI();
+                },
+                onError: (err) => {
+                    log(`Error en autorización: ${err.message}`, 'error');
+                }
+            });
+        }
+
+        themeSelect.addEventListener('change', refreshButton);
+        shapeSelect.addEventListener('change', refreshButton);
+        sizeSelect.addEventListener('change', refreshButton);
+        textSelect.addEventListener('change', refreshButton);
+
+        // Selector visual Popup vs Redirect
+        const modeRadios = document.querySelectorAll('input[name="auth-mode"]');
+        const labelPopup = document.getElementById('label-mode-popup');
+        const labelRedirect = document.getElementById('label-mode-redirect');
+
+        function updateModeLabels() {
+            const mode = getActiveMode();
+            if (mode === 'popup') {
+                labelPopup.className = 'cursor-pointer px-3 py-1 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/40 transition flex items-center gap-1.5';
+                labelRedirect.className = 'cursor-pointer px-3 py-1 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5';
             } else {
-                document.getElementById('login-view').classList.remove('hidden');
-                document.getElementById('dashboard-view').classList.add('hidden');
+                labelRedirect.className = 'cursor-pointer px-3 py-1 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition flex items-center gap-1.5';
+                labelPopup.className = 'cursor-pointer px-3 py-1 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5';
             }
+            refreshButton();
         }
+
+        modeRadios.forEach(r => r.addEventListener('change', updateModeLabels));
+        updateModeLabels();
+
+        // ═══════════════════════════════════════════════════════════
+        //  BOTONES DE ACCIÓN RÁPIDA
+        // ═══════════════════════════════════════════════════════════
+        document.getElementById('btn-trigger-popup').addEventListener('click', async () => {
+            log('Iniciando flujo Popup con PKCE (S256)...', 'brand');
+            try {
+                const res = await CSIDConnect.signIn({ mode: 'popup' });
+                log(`Popup exitoso. Token recibido (expires_in: ${res.expiresIn || 3600}s)`, 'success');
+                updateIdentityUI();
+            } catch (err) {
+                log(`Cancelado o error: ${err.message}`, 'warn');
+            }
+        });
+
+        document.getElementById('btn-trigger-redirect').addEventListener('click', async () => {
+            log('Iniciando redirección a authorize.html con PKCE...', 'brand');
+            await CSIDConnect.signIn({ mode: 'redirect' });
+        });
+
+        document.getElementById('btn-trigger-onetap').addEventListener('click', () => {
+            log('Evaluando One-Tap Sign In...', 'info');
+            const currentUser = CSIDConnect.getCurrentUser();
+            if (!currentUser) {
+                log('One-Tap requiere una sesión previa activa en CS ID. Inicia sesión primero.', 'warn');
+            } else {
+                log(`Mostrando tarjeta One-Tap para usuario: ${currentUser.email || currentUser.name}`, 'brand');
+            }
+            CSIDConnect.promptOneTap({
+                onAuth: (res) => {
+                    log(`One-Tap exitoso para: ${res.user?.email || res.user?.name}`, 'success');
+                    updateIdentityUI();
+                },
+                onDismiss: () => {
+                    log('One-Tap cerrado por el usuario.', 'info');
+                }
+            });
+        });
+
+        document.getElementById('btn-clear-session').addEventListener('click', () => {
+            CSIDConnect.signOut();
+            log('Sesión local y cookies eliminadas.', 'warn');
+            updateIdentityUI();
+        });
 
         document.getElementById('btn-logout').addEventListener('click', () => {
-            deleteCookie('coki_access_token');
-            deleteCookie('coki_id_token');
-            deleteCookie('coki_user');
-            deleteCookie('coki_oauth_code_verifier');
-            updateUI();
+            CSIDConnect.signOut();
+            log('Sesión cerrada correctamente.', 'info');
+            updateIdentityUI();
         });
 
-        handleCallback();
-        updateUI();
+        // ═══════════════════════════════════════════════════════════
+        //  ACTUALIZACIÓN DEL ESTADO DE IDENTIDAD EN VIVO
+        // ═══════════════════════════════════════════════════════════
+        const viewUnauth = document.getElementById('view-unauth');
+        const viewAuth = document.getElementById('view-auth');
+        const statusDot = document.getElementById('status-dot');
+        const sessionBadge = document.getElementById('session-badge');
+
+        async function updateIdentityUI() {
+            const user = CSIDConnect.getCurrentUser();
+            const accessToken = CSIDConnect.getAccessToken();
+            const idToken = CSIDConnect.getIdToken();
+
+            if (user) {
+                viewUnauth.classList.add('hidden');
+                viewAuth.classList.remove('hidden');
+
+                statusDot.className = 'w-3 h-3 rounded-full bg-emerald-400 animate-pulse';
+                sessionBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30';
+                sessionBadge.textContent = 'Conectado';
+
+                const name = user.name || user.email?.split('@')[0] || 'Usuario';
+                document.getElementById('user-display-name').textContent = name;
+                document.getElementById('user-display-email').textContent = user.email || 'Sin correo público';
+                document.getElementById('user-display-sub').textContent = `sub: ${user.sub || user.id || 'coki-anon-id'}`;
+
+                const avatarEl = document.getElementById('user-avatar');
+                if (user.picture) {
+                    avatarEl.innerHTML = `<img src="${user.picture}" alt="${name}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarEl.textContent = name.charAt(0).toUpperCase();
+                }
+
+                // Desencriptar o mostrar claims
+                let claims = { ...user };
+                if (idToken) {
+                    try {
+                        const decrypted = await CSIDConnect.decryptToken(idToken);
+                        if (decrypted) claims = { ...claims, ...decrypted };
+                    } catch (_) {}
+                }
+                document.getElementById('json-claims').textContent = JSON.stringify(claims, null, 2);
+
+            } else {
+                viewUnauth.classList.remove('hidden');
+                viewAuth.classList.add('hidden');
+
+                statusDot.className = 'w-3 h-3 rounded-full bg-slate-600';
+                sessionBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+                sessionBadge.textContent = 'Desconectado';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  PROCESAR RETORNO DE REDIRECT CALLBACK (?code=...)
+        // ═══════════════════════════════════════════════════════════
+        async function checkRedirectCallback() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('code')) {
+                log('Parámetro ?code detectado en URL. Procesando intercambio PKCE...', 'brand');
+                try {
+                    const res = await CSIDConnect.handleRedirectCallback();
+                    if (res) {
+                        log(`Autenticación por redirección exitosa para ${res.user?.email || 'Usuario'}`, 'success');
+                    }
+                } catch (err) {
+                    log(`Error procesando callback: ${err.message}`, 'error');
+                }
+            }
+            updateIdentityUI();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  SNIPPET TABS & COPIAR
+        // ═══════════════════════════════════════════════════════════
+        const snippets = {
+            webcomponent: `<!-- 1. Cargar el SDK oficial de CS ID Connect -->
+<script type="module" src="https://cokistudios.github.io/csid-connect.js"><\/script>
+
+<!-- 2. Declarar el botón web oficial -->
+<csid-connect-button 
+    client-id="tu-app-id" 
+    theme="glass" 
+    shape="pill" 
+    mode="popup">
+</csid-connect-button>
+
+<script>
+    document.querySelector('csid-connect-button').addEventListener('success', (e) => {
+        console.log('Usuario autenticado:', e.detail.user);
+    });
+<\/script>`,
+
+            vanillajs: `import { CSIDConnect } from 'https://cokistudios.github.io/csid-connect.js';
+
+// Inicializar cliente
+CSIDConnect.init({ clientId: 'tu-app-id' });
+
+// Iniciar sesión con un botón personalizado
+document.getElementById('mi-boton').addEventListener('click', async () => {
+    try {
+        const { user, accessToken } = await CSIDConnect.signIn({ mode: 'popup' });
+        console.log('Sesión iniciada con:', user.email);
+    } catch (err) {
+        console.error('Error de login:', err.message);
+    }
+});`,
+
+            swift: `// iOS & macOS — ASWebAuthenticationSession con PKCE
+import AuthenticationServices
+import CryptoKit
+
+let authUrl = URL(string: "https://cokistudios.github.io/authorize.html?client_id=tu-app-id&redirect_uri=forkar://auth&response_type=code&code_challenge=\(pkceChallenge)&code_challenge_method=S256")!
+
+let session = ASWebAuthenticationSession(url: authUrl, callbackURLScheme: "forkar") { callbackURL, error in
+    guard let callbackURL = callbackURL,
+          let code = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
+            .queryItems?.first(where: { $0.name == "code" })?.value else { return }
+    // Intercambiar code por JWE Token con Secure Enclave
+}`
+        };
+
+        const tabWebComponent = document.getElementById('tab-webcomponent');
+        const tabVanillaJS = document.getElementById('tab-vanillajs');
+        const tabSwift = document.getElementById('tab-swift');
+        const snippetEl = document.getElementById('code-snippet-content');
+
+        function setSnippetTab(activeTab, key) {
+            [tabWebComponent, tabVanillaJS, tabSwift].forEach(tab => {
+                tab.className = 'px-2.5 py-1 rounded text-slate-400 hover:text-white transition';
+            });
+            activeTab.className = 'px-2.5 py-1 rounded bg-slate-800 text-white font-medium transition';
+            snippetEl.textContent = snippets[key];
+        }
+
+        tabWebComponent.addEventListener('click', () => setSnippetTab(tabWebComponent, 'webcomponent'));
+        tabVanillaJS.addEventListener('click', () => setSnippetTab(tabVanillaJS, 'vanillajs'));
+        tabSwift.addEventListener('click', () => setSnippetTab(tabSwift, 'swift'));
+
+        document.getElementById('btn-copy-code').addEventListener('click', () => {
+            navigator.clipboard.writeText(snippetEl.textContent).then(() => {
+                const btn = document.getElementById('btn-copy-code');
+                const prev = btn.innerHTML;
+                btn.innerHTML = '<span>¡Copiado!</span>';
+                setTimeout(() => btn.innerHTML = prev, 1500);
+            });
+        });
+
+        // Inicialización
+        checkRedirectCallback();
     </script>
 </body>
 </html>

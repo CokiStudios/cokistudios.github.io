@@ -3,255 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autorizar acceso — CSID</title>
-    <script src="coki-theme.js"></script>
-    <link rel="stylesheet" href="assets/css/toolbar.css">
-    <link rel="stylesheet" href="assets/css/cs-account.css">
+    <title>CS ID Connect — Autorizar Acceso</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-deep: #07090E;
+            --card-bg: rgba(13, 19, 33, 0.88);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --cyan: #00F5D4;
+            --blue: #38BDF8;
+            --amber: #FBBF24;
+            --text-main: #F8FAFC;
+            --text-sub: #94A3B8;
+            --text-muted: #64748B;
+        }
+
         body {
-            background-color: var(--bg-page);
-            color: var(--text-primary);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
         }
 
         .auth-container {
             width: 100%;
-            max-width: 460px;
+            max-width: 470px;
             position: relative;
-            z-index: 1;
+            z-index: 10;
+            animation: authFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .auth-header {
+        @keyframes authFadeIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 26px;
+            padding: 32px 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(0, 245, 212, 0.08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        .brand-header {
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
-        .auth-logo {
-            width: 52px;
-            height: 52px;
-            background: var(--text-primary);
-            color: var(--bg-card);
-            border-radius: 14px;
+        .cs-logo-badge {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 12px;
+            border-radius: 18px;
+            background: #0B1120;
+            border: 1.5px solid rgba(0, 245, 212, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 245, 212, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .brand-title span {
+            background: linear-gradient(135deg, var(--amber), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .security-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            background: rgba(0, 245, 212, 0.08);
+            border: 1px solid rgba(0, 245, 212, 0.25);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cyan);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* ── CLIENT INFO CARD ── */
+        .client-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+        }
+
+        .client-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 24px;
-            margin: 0 auto 16px;
-            box-shadow: var(--shadow-card);
-        }
-
-        .auth-header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-        }
-
-        .auth-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .auth-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            font-size: 18px;
+            color: var(--blue);
+            flex-shrink: 0;
             overflow: hidden;
-            padding: 28px;
-            box-shadow: var(--shadow-elevated);
         }
 
-        #login-section p {
-            color: var(--text-secondary);
-            font-size: 14.5px;
-            text-align: center;
-            margin-bottom: 22px;
-            line-height: 1.5;
+        .client-meta {
+            flex: 1;
+            min-width: 0;
         }
 
-        #login-section p strong {
-            color: var(--text-primary);
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 12px 18px;
-            background: var(--accent-blue);
-            color: white;
-            display: block;
-            text-align: center;
-            border: none;
-            border-radius: 12px;
-            font-size: 14.5px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            font-family: inherit;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-blue-hover);
-        }
-
-        #consent-section {
-            display: none;
-        }
-
-        .user-card {
+        .client-name-row {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 14px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            gap: 6px;
+        }
+
+        .client-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #FFF;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .verified-badge {
+            color: var(--cyan);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .client-desc {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        /* ── USER PROFILE CHIP ── */
+        .user-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 14px;
+            padding: 10px 14px;
             margin-bottom: 20px;
-            box-shadow: var(--shadow-card);
+        }
+
+        .user-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .user-avatar {
-            width: 42px;
-            height: 42px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
-            background: var(--bg-hover);
+            background: linear-gradient(135deg, var(--amber), var(--blue));
+            color: #000;
+            font-weight: 800;
+            font-size: 13px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-primary);
             overflow: hidden;
-            flex-shrink: 0;
-            border: 1px solid var(--border-color);
         }
 
-        .user-name {
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .user-name-text { font-size: 13.5px; font-weight: 600; color: #FFF; }
+        .user-email-text { font-size: 11.5px; color: var(--text-muted); }
+
+        .btn-switch-account {
+            background: none;
+            border: none;
+            color: var(--blue);
+            font-size: 11.5px;
             font-weight: 600;
-            color: var(--text-primary);
-            font-size: 15px;
+            cursor: pointer;
+            text-decoration: underline;
         }
 
-        .user-email {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .consent-info {
-            text-align: center;
-            margin-bottom: 20px;
-            color: var(--text-secondary);
-            font-size: 14.5px;
-            line-height: 1.5;
-        }
-
-        .consent-info strong {
-            color: var(--text-primary);
-            font-weight: 700;
-            font-size: 16px;
-        }
-
+        /* ── SCOPES LIST ── */
         .scopes-box {
-            background: var(--bg-card-sub);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 22px;
+            background: rgba(11, 17, 32, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 24px;
         }
 
-        .scopes-title {
+        .scopes-header {
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: var(--text-tertiary);
+            color: var(--text-muted);
             margin-bottom: 12px;
         }
 
         .scope-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
-            color: var(--text-primary);
-            font-size: 13.5px;
-            font-weight: 500;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
+        .scope-item:last-child { margin-bottom: 0; }
 
-        .scope-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .scope-icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(52, 199, 89, 0.15);
-            color: var(--accent-green);
+        .scope-icon-wrap {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: rgba(0, 245, 212, 0.12);
+            color: var(--cyan);
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 13px;
             flex-shrink: 0;
+            margin-top: 1px;
         }
 
-        .actions {
+        .scope-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #F1F5F9;
+        }
+
+        .scope-desc {
+            font-size: 11.5px;
+            color: var(--text-sub);
+            margin-top: 2px;
+            line-height: 1.35;
+        }
+
+        /* ── ACTIONS ── */
+        .actions-row {
             display: flex;
             gap: 12px;
         }
 
-        .btn-deny {
+        .btn-cancel {
             flex: 1;
-            padding: 12px;
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 14.5px;
+            height: 46px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-sub);
+            border-radius: 14px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.15s ease;
             font-family: inherit;
         }
-
-        .btn-deny:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: #FFF;
         }
 
-        .debug-box {
-            background: rgba(255, 149, 0, 0.1);
-            border: 1px solid rgba(255, 149, 0, 0.2);
-            color: var(--accent-orange);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 20px;
-            font-family: monospace;
-            font-size: 11px;
-            display: none;
-            white-space: pre-wrap;
-        }
-
-        .floating-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            width: 38px;
-            height: 38px;
+        .btn-authorize {
+            flex: 1.4;
+            height: 46px;
+            background: linear-gradient(135deg, #0EA5E9, #00F5D4);
+            border: none;
+            border-radius: 14px;
+            color: #07090E;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-secondary);
-            cursor: pointer;
+            gap: 8px;
+            box-shadow: 0 4px 18px rgba(0, 245, 212, 0.25);
+        }
+        .btn-authorize:hover {
+            opacity: 0.94;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(0, 245, 212, 0.35);
+        }
+
+        .notice-footer {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .notice-footer a { color: var(--blue); text-decoration: none; }
+
+        /* Estado No Logueado */
+        #login-state-box {
+            display: none;
+            text-align: center;
+        }
+
+        .login-btn {
+            display: block;
+            width: 100%;
+            height: 46px;
+            line-height: 46px;
+            background: linear-gradient(135deg, #38BDF8, #00F5D4);
+            color: #07090E;
+            font-weight: 800;
+            border-radius: 14px;
+            text-decoration: none;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        /* Banner de error in-page */
+        .error-card {
+            display: none;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #FCA5A5;
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        .success-overlay {
+            display: none;
+            text-align: center;
+            padding: 24px 0;
+        }
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(0, 245, 212, 0.15);
+            border: 2px solid var(--cyan);
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 16px;
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.3);
         }
     </style>
 </head>
@@ -260,144 +385,293 @@
     <div class="xtraps-bg rainbow">
         <div class="xtraps-wave"></div>
     </div>
-    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
+
     <div class="auth-container">
-        <div class="auth-header">
-            <div class="auth-logo">C</div>
-            <h1>CS <span>ID</span></h1>
-            <p data-i18n="authz_subtitle">Una aplicación externa solicita acceso a tu cuenta CSID</p>
-        </div>
-
-        <div id="debug-info" class="debug-box">
-            <strong>Debug Info:</strong><br><span id="debug-text"></span>
-        </div>
-
-        <!--  ESTADO 1: NO LOGUEADO -->
-        <div class="auth-card" id="login-section">
-            <p>Primero inicia sesión en tu cuenta de <strong>CSID</strong> para autorizar a esta aplicación.</p>
-            <a href="register" class="btn-primary" id="login-link">Iniciar sesión</a>
-        </div>
-
-        <!-- [OK] ESTADO 2: LOGUEADO -->
-        <div id="consent-section">
-            <div class="user-card">
-                <div class="user-avatar" id="user-avatar">U</div>
-                <div>
-                    <div class="user-name" id="user-name">Usuario</div>
-                    <div class="user-email" id="user-email">email@coki.com</div>
+        <div class="auth-card">
+            <!-- Header -->
+            <div class="brand-header">
+                <div class="cs-logo-badge">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C15.3137 20 18.1569 17.9853 19.3431 15.0627C19.5314 14.5999 19.1627 14.1 18.6667 14.1H16.8284C16.4526 14.1 16.1265 14.3474 16.024 14.7088C15.2853 17.3147 12.8366 18.2 12 18.2C8.57584 18.2 5.8 15.4242 5.8 12C5.8 8.57584 8.57584 5.8 12 5.8C14.1611 5.8 15.6547 6.94528 16.5147 7.91472C16.8047 8.24156 17.3075 8.27202 17.6366 7.98292L18.9142 6.86274C19.2636 6.55627 19.2743 6.01736 18.9374 5.69608C17.2627 4.09991 14.8633 4 12 4Z" fill="url(#auth-cs-grad)"/>
+                        <circle cx="12" cy="12" r="2.4" fill="#00F5D4"/>
+                        <defs>
+                            <linearGradient id="auth-cs-grad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#FBBF24"/>
+                                <stop offset="0.5" stop-color="#38BDF8"/>
+                                <stop offset="1" stop-color="#00F5D4"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h1 class="brand-title">CS <span>ID Connect</span></h1>
+                <div class="security-pill">
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                    PKCE S256 • Hardware-Backed
                 </div>
             </div>
 
-            <div class="auth-card">
-                <div class="consent-info">
-                    <strong id="client-name">App Externa</strong> quiere acceder a tu CSID.
-                </div>
-                
-                <div class="scopes-box">
-                    <div class="scopes-title">Permisos solicitados:</div>
-                    <div class="scope-item">
-                        <div class="scope-icon">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            <!-- Error Banner -->
+            <div id="error-card" class="error-card"></div>
+
+            <!-- Loading View -->
+            <div id="loading-view" style="text-align: center; padding: 24px 0; color: var(--text-sub);">
+                <div style="font-size: 13.5px;">Verificando credenciales y origen de la aplicación...</div>
+            </div>
+
+            <!-- Success Overlay (Popup mode) -->
+            <div id="success-view" class="success-overlay">
+                <div class="success-icon">✓</div>
+                <h2 style="font-size: 18px; font-weight: 700; color: #FFF; margin-bottom: 6px;">¡Acceso Autorizado!</h2>
+                <p style="font-size: 13px; color: var(--text-sub);">Conectando con la aplicación...</p>
+            </div>
+
+            <!-- Estado 1: No logueado -->
+            <div id="login-state-box">
+                <p style="font-size: 14px; color: var(--text-sub); line-height: 1.5;">
+                    Debes iniciar sesión con tu cuenta de <strong>Coki Studios ID</strong> para autorizar la conexión con esta aplicación.
+                </p>
+                <a href="register.html" class="login-btn" id="btn-login-redirect">Iniciar Sesión con CS ID</a>
+            </div>
+
+            <!-- Estado 2: Consentimiento Activo -->
+            <div id="consent-state-box" style="display: none;">
+                <!-- App Solicitante -->
+                <div class="client-box">
+                    <div class="client-avatar" id="client-avatar">App</div>
+                    <div class="client-meta">
+                        <div class="client-name-row">
+                            <span class="client-name" id="client-name">Aplicación Externa</span>
+                            <span class="verified-badge" title="Cliente verificado">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            </span>
                         </div>
-                        Tu correo electrónico
-                    </div>
-                    <div class="scope-item">
-                        <div class="scope-icon">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                        </div>
-                        Tu nombre y foto de perfil
+                        <div class="client-desc" id="client-origin">Solicita acceso federado a tu identidad</div>
                     </div>
                 </div>
 
-                <div class="actions">
-                    <button id="btn-deny" class="btn-deny" data-i18n="authz_deny">Cancelar y Regresar</button>
-                    <button id="btn-approve" class="btn-primary" style="flex:1;" data-i18n="authz_allow">Permitir Acceso</button>
+                <!-- Usuario conectado -->
+                <div class="user-box">
+                    <div class="user-left">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <div>
+                            <div class="user-name-text" id="user-name">Usuario</div>
+                            <div class="user-email-text" id="user-email">user@coki.com</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-switch-account" id="btn-switch-account">Cambiar</button>
+                </div>
+
+                <!-- Scopes Desglosados -->
+                <div class="scopes-box">
+                    <div class="scopes-header">Permisos solicitados:</div>
+                    
+                    <div class="scope-item">
+                        <div class="scope-icon-wrap">👤</div>
+                        <div>
+                            <div class="scope-title">Perfil e Identidad Básica</div>
+                            <div class="scope-desc">Nombre, foto de perfil e ID único del ecosistema Coki Studios.</div>
+                        </div>
+                    </div>
+
+                    <div class="scope-item">
+                        <div class="scope-icon-wrap">📧</div>
+                        <div>
+                            <div class="scope-title">Correo Electrónico Verificado</div>
+                            <div class="scope-desc">Dirección de email para identificar tu cuenta sin contraseñas adicionales.</div>
+                        </div>
+                    </div>
+
+                    <div class="scope-item">
+                        <div class="scope-icon-wrap">🔄</div>
+                        <div>
+                            <div class="scope-title">Inicio de Sesión Continuo</div>
+                            <div class="scope-desc">Mantiene tu sesión activa sin volver a solicitar consentimiento repetitivo.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="actions-row">
+                    <button type="button" class="btn-cancel" id="btn-cancel">Rechazar</button>
+                    <button type="button" class="btn-authorize" id="btn-approve">
+                        <span>Permitir Acceso</span>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </button>
+                </div>
+
+                <div class="notice-footer">
+                    Tus credenciales nunca se comparten con la aplicación.<br>
+                    Gestiona o revoca permisos en cualquier momento en tu <a href="dashboard.html" target="_blank">Consola CS ID</a>.
                 </div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { getCurrentCokiUser } from './coki-auth.js';
+        import { getCurrentCokiUser, logoutCokiAccount } from './coki-auth.js';
         import { handleAuthorizeRequest, approveAuthorization } from './oauth-server.js';
         import { setCookie } from './cookie-utils.js';
 
-        function showDebug(msg) {
-            const box = document.getElementById('debug-info');
-            const text = document.getElementById('debug-text');
-            box.style.display = 'block';
-            text.textContent += msg + '\n';
-        }
-
         const urlParams = new URLSearchParams(window.location.search);
         const codeChallenge = urlParams.get('code_challenge');
+        const mode = urlParams.get('mode'); // 'popup' | 'redirect'
 
-        if (!codeChallenge) {
-            alert('Error: URL inválida. Falta code_challenge.');
-            throw new Error('Missing code_challenge');
+        const loadingView = document.getElementById('loading-view');
+        const errorCard = document.getElementById('error-card');
+        const loginStateBox = document.getElementById('login-state-box');
+        const consentStateBox = document.getElementById('consent-state-box');
+        const successView = document.getElementById('success-view');
+
+        function showError(msg) {
+            loadingView.style.display = 'none';
+            consentStateBox.style.display = 'none';
+            loginStateBox.style.display = 'none';
+            errorCard.style.display = 'block';
+            errorCard.textContent = msg;
         }
 
-        let validation;
-        try {
-            validation = await handleAuthorizeRequest(urlParams);
-        } catch (e) {
-            alert('Error crítico: ' + e.message);
-            throw e;
-        }
+        async function initFlow() {
+            if (!codeChallenge) {
+                showError('Error: Parámetro "code_challenge" (PKCE) faltante en la solicitud de autorización.');
+                return;
+            }
 
-        if (!validation || !validation.valid) {
-            const errMsg = (validation?.error_description) || (validation?.error) || 'Unknown error';
-            alert('Error OAuth: ' + errMsg);
-            throw new Error(validation?.error || 'unknown');
-        }
+            let validation;
+            try {
+                validation = await handleAuthorizeRequest(urlParams);
+            } catch (e) {
+                showError('Error validando cliente OAuth: ' + e.message);
+                return;
+            }
 
-        document.getElementById('client-name').textContent = validation.client_name || 'App Externa';
+            if (!validation || !validation.valid) {
+                const errMsg = validation?.error_description || validation?.error || 'Cliente no autorizado.';
+                showError('Error de Autorización: ' + errMsg);
+                return;
+            }
 
-        const loginLink = document.getElementById('login-link');
-        if (loginLink) loginLink.href = `register.html?redirect=${encodeURIComponent(window.location.href)}`;
+            // Actualizar vista de cliente
+            const clientName = validation.client_name || 'App Externa';
+            document.getElementById('client-name').textContent = clientName;
+            document.getElementById('client-avatar').textContent = clientName.charAt(0).toUpperCase();
 
-        async function checkSession() {
+            const redirectUri = urlParams.get('redirect_uri') || '';
+            try {
+                const parsedUrl = new URL(redirectUri);
+                document.getElementById('client-origin').textContent = `Origen: ${parsedUrl.host}`;
+            } catch (_) {}
+
+            // Configurar enlace de login si no hay sesión
+            const btnLogin = document.getElementById('btn-login-redirect');
+            if (btnLogin) {
+                btnLogin.href = `register.html?redirect=${encodeURIComponent(window.location.href)}`;
+            }
+
+            // Verificar sesión del usuario
             const user = await getCurrentCokiUser();
+            loadingView.style.display = 'none';
+
             if (user) {
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('consent-section').style.display = 'block';
-                
-                document.getElementById('user-name').textContent = user.name || user.email || 'Usuario';
+                consentStateBox.style.display = 'block';
+                document.getElementById('user-name').textContent = user.name || user.email.split('@')[0] || 'Usuario';
                 document.getElementById('user-email').textContent = user.email;
-                
-                const avatar = document.getElementById('user-avatar');
+
+                const avatarEl = document.getElementById('user-avatar');
                 if (user.picture) {
-                    avatar.innerHTML = `<img src="${user.picture}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
+                    avatarEl.innerHTML = `<img src="${user.picture}" alt="${user.name}">`;
                 } else {
-                    avatar.textContent = (user.name || user.email).charAt(0).toUpperCase();
+                    avatarEl.textContent = (user.name || user.email).charAt(0).toUpperCase();
                 }
             } else {
                 setCookie('coki_oauth_pending', window.location.search, { maxAge: 600 });
+                loginStateBox.style.display = 'block';
             }
         }
-        checkSession();
 
+        // Aprobar autorización
         document.getElementById('btn-approve').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-approve');
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            btn.textContent = 'Autorizando...';
+
             const user = await getCurrentCokiUser();
-            if (!user) return alert('Error: Sesión perdida');
-            const userData = { id: user.id, email: user.email, name: user.name || user.email || 'Usuario', picture: user.picture };
+            if (!user) {
+                showError('Error: La sesión expiró durante la autorización. Inicia sesión nuevamente.');
+                return;
+            }
+
+            const userData = {
+                id: user.id,
+                email: user.email,
+                name: user.name || user.email || 'Usuario',
+                picture: user.picture
+            };
+
             const result = await approveAuthorization(codeChallenge, userData);
-            if (result.success) window.location.href = result.redirect_url;
-            else alert('Error: ' + (result.error_description || result.error));
+
+            if (result.success) {
+                // Si es popup o tiene opener
+                if (window.opener && (mode === 'popup' || window.name === 'csid_connect_popup')) {
+                    consentStateBox.style.display = 'none';
+                    successView.style.display = 'block';
+
+                    const authCode = new URL(result.redirect_url).searchParams.get('code');
+                    const state = new URL(result.redirect_url).searchParams.get('state');
+
+                    window.opener.postMessage({
+                        type: 'CSID_AUTH_SUCCESS',
+                        code: authCode,
+                        state: state,
+                        redirect_url: result.redirect_url
+                    }, '*');
+
+                    setTimeout(() => {
+                        window.close();
+                    }, 400);
+                } else {
+                    window.location.href = result.redirect_url;
+                }
+            } else {
+                showError('Error autorizando: ' + (result.error_description || result.error));
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.textContent = 'Permitir Acceso';
+            }
         });
 
-        document.getElementById('btn-deny').addEventListener('click', () => {
-            const redirectUri = urlParams.get('redirect_uri');
-            const state = urlParams.get('state');
-            const url = new URL(redirectUri);
-            url.searchParams.set('error', 'access_denied');
-            url.searchParams.set('error_description', 'User denied authorization');
-            if (state) url.searchParams.set('state', state);
-            window.location.href = url.toString();
+        // Cancelar y denegar
+        document.getElementById('btn-cancel').addEventListener('click', () => {
+            if (window.opener && (mode === 'popup' || window.name === 'csid_connect_popup')) {
+                window.opener.postMessage({
+                    type: 'CSID_AUTH_DENIED',
+                    error: 'access_denied',
+                    error_description: 'User denied authorization'
+                }, '*');
+                window.close();
+            } else {
+                const redirectUri = urlParams.get('redirect_uri');
+                const state = urlParams.get('state');
+                if (redirectUri) {
+                    const url = new URL(redirectUri);
+                    url.searchParams.set('error', 'access_denied');
+                    url.searchParams.set('error_description', 'User denied authorization');
+                    if (state) url.searchParams.set('state', state);
+                    window.location.href = url.toString();
+                } else {
+                    window.location.href = '/';
+                }
+            }
         });
 
+        // Cambiar cuenta
+        document.getElementById('btn-switch-account').addEventListener('click', async () => {
+            await logoutCokiAccount();
+            window.location.href = `register.html?redirect=${encodeURIComponent(window.location.href)}`;
+        });
 
+        initFlow();
     </script>
-<script type="module" src="i18n.js"></script>
+    <script src="assets/js/xtraps.js" defer></script>
 </body>
 </html>

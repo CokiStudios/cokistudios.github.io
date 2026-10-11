@@ -467,6 +467,21 @@ supabase.auth.onAuthStateChange((event, session) => {
         if (session.refresh_token) {
             setCookie('coki_refresh_token', session.refresh_token, { maxAge: 7 * 24 * 60 * 60 });
         }
+
+        // 🔔 Enviar notificación de inicio de sesión por Zoho SMTP desde csidsignoti@cokistudios.com
+        if (email && typeof window !== 'undefined' && !sessionStorage.getItem('csid_signin_notified_' + user.id)) {
+            sessionStorage.setItem('csid_signin_notified_' + user.id, '1');
+            const device = navigator.userAgent.includes('iPhone') ? 'iPhone (iOS)' :
+                           navigator.userAgent.includes('iPad') ? 'iPad (iPadOS)' :
+                           navigator.userAgent.includes('Mac') ? 'Mac (macOS)' :
+                           navigator.userAgent.includes('Android') ? 'Android Device' :
+                           navigator.userAgent.includes('Windows') ? 'Windows PC' : 'Navegador Web';
+            fetch('/api/notify/signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, device })
+            }).catch(e => console.warn('[CSID] Error enviando alerta de sign-in:', e));
+        }
     }
     
     if (event === 'SIGNED_OUT') {
@@ -478,7 +493,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 async function sendCokiOTP(email) {
     try {
-        const response = await fetch('http://localhost:5001/auth/send-otp', {
+        const response = await fetch('/api/notify/otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
@@ -494,7 +509,7 @@ async function sendCokiOTP(email) {
 
 async function verifyCokiOTP(email, code) {
     try {
-        const response = await fetch('http://localhost:5001/auth/verify-otp', {
+        const response = await fetch('/api/notify/verify-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, code })
@@ -1156,6 +1171,23 @@ async function inviteFamilyMember(email, role = 'Adulto') {
         .single();
         
     if (error) return { success: false, error: error.message };
+
+    // 👨‍👩‍👧‍👦 Enviar notificación e invitación familiar por Zoho SMTP desde csidsignoti@cokistudios.com
+    try {
+        const inviter = user.name || user.email.split('@')[0];
+        fetch('/api/notify/family-invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                inviterName: inviter,
+                familyName: fam.name,
+                role: role,
+                joinLink: (typeof window !== 'undefined' ? window.location.origin : 'https://cokistudios.com') + '/dashboard?tab=family'
+            })
+        }).catch(err => console.warn('[CSID] Error enviando invitación familiar vía Zoho SMTP:', err));
+    } catch (e) {}
+
     return { success: true, member: data };
 }
 

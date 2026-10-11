@@ -1067,11 +1067,60 @@
             searchTimer = setTimeout(() => searchPlaces(val), 350);
         });
 
-        async function searchPlaces(query) {
-            // 1. Try Mapbox Geocoding API with proximity sorting
+        function normalizeSearchQuery(q) {
+            if (!q) return '';
+            return q
+                .replace(/\b(c\.?c\.?|c\/c)\b/gi, 'Centro Comercial')
+                .replace(/\b(cra|cr|kra)\b/gi, 'Carrera')
+                .replace(/\b(cll|cl)\b/gi, 'Calle')
+                .replace(/\b(av|avda)\b/gi, 'Avenida')
+                .replace(/\b(diag|dg)\b/gi, 'Diagonal')
+                .replace(/\b(trans|tv)\b/gi, 'Transversal')
+                .replace(/\b(autonorte|auto norte)\b/gi, 'Autopista Norte')
+                .replace(/\b(autosur|auto sur)\b/gi, 'Autopista Sur')
+                .replace(/\b(pque|prq)\b/gi, 'Parque')
+                .trim();
+        }
+
+        async function searchPlaces(rawQuery) {
+            const query = normalizeSearchQuery(rawQuery);
+            if (!query || query.length < 2) return;
+
+            // 1. First Priority: OpenStreetMap Nominatim with local country bias and acronym expansion
+            // Guarantees POIs like "Centro Comercial Fontanar" in Chía resolve accurately instead of drifting to Europe
+            try {
+                const osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=co&limit=6&addressdetails=1`;
+                const res = await fetch(osmUrl, { headers: { 'Accept-Language': 'es,en' } });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        dropdown.innerHTML = data.map(item => {
+                            const lat = parseFloat(item.lat);
+                            const lon = parseFloat(item.lon);
+                            const title = item.name || item.display_name.split(',')[0];
+                            const sub = item.display_name;
+                            return `
+                                <div class="search-item" onclick="selectLocation(${lat}, ${lon}, '${escapeHtml(sub)}')">
+                                    <div class="search-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                                    <div>
+                                        <div class="search-item-title">${escapeHtml(title)}</div>
+                                        <div class="search-item-sub">${escapeHtml(sub)}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        dropdown.classList.add('open');
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn('Nominatim prioritized search failed, trying Mapbox:', err);
+            }
+
+            // 2. Second Priority: Mapbox Geocoding strictly constrained to Colombia (country=CO) to avoid European leaks
             if (MAPBOX_TOKEN) {
                 try {
-                    const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&proximity=${currentPos.lng},${currentPos.lat}&language=es,en&limit=5`;
+                    const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&proximity=${currentPos.lng},${currentPos.lat}&country=CO&language=es,en&limit=5`;
                     const res = await fetch(mbUrl);
                     if (res.ok) {
                         const data = await res.json();
@@ -1095,18 +1144,18 @@
                         }
                     }
                 } catch (err) {
-                    console.warn('Mapbox Geocoding fallback to Nominatim:', err);
+                    console.warn('Mapbox Geocoding fallback failed:', err);
                 }
             }
 
-            // 2. Fallback to OpenStreetMap Nominatim
+            // 3. Global OpenStreetMap Fallback if no local Colombia matches found
             try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-                const res = await fetch(url, { headers: { 'Accept-Language': 'es,en' } });
+                const globalOsmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
+                const res = await fetch(globalOsmUrl, { headers: { 'Accept-Language': 'es,en' } });
                 const data = await res.json();
 
                 if (!data || data.length === 0) {
-                    dropdown.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--text-sub);text-align:center;">Sin resultados para "${query}"</div>`;
+                    dropdown.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--text-sub);text-align:center;">Sin resultados para "${escapeHtml(rawQuery)}"</div>`;
                     dropdown.classList.add('open');
                     return;
                 }
