@@ -508,7 +508,7 @@
     </div>
 
     <script type="module">
-        import { getCurrentCokiUser, logoutCokiAccount } from './coki-auth.js';
+        import { getCurrentCokiUser, logoutCoki } from './coki-auth.js';
         import { handleAuthorizeRequest, approveAuthorization } from './oauth-server.js';
         import { setCookie } from './cookie-utils.js';
 
@@ -666,7 +666,7 @@
 
         // Cambiar cuenta
         document.getElementById('btn-switch-account').addEventListener('click', async () => {
-            await logoutCokiAccount();
+            await logoutCoki();
             window.location.href = `register.html?redirect=${encodeURIComponent(window.location.href)}`;
         });
 

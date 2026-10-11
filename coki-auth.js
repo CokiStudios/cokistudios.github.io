@@ -1415,6 +1415,7 @@ export {
     updateCokiProfile,
     changeCokiPassword,
     logoutCoki,
+    logoutCoki as logoutCokiAccount,
     getCurrentCokiUser,
     sendCokiOTP,
     verifyCokiOTP,
