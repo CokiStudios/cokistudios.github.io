@@ -142,30 +142,48 @@ const BUILTIN_OAUTH_CLIENTS = {
         client_id: 'demo-app-123',
         client_name: 'App Demo (CS ID Connect)',
         redirect_uris: [
+            'https://cokistudios.com/client-demo',
+            'https://cokistudios.com/client-demo.html',
+            'https://www.cokistudios.com/client-demo',
+            'https://www.cokistudios.com/client-demo.html',
+            'https://cokistudios.github.io/client-demo',
             'https://cokistudios.github.io/client-demo.html',
             'https://cokistudios.github.io/oauth-callback.html',
+            'http://localhost:3000/client-demo',
             'http://localhost:3000/client-demo.html',
+            'http://127.0.0.1:3000/client-demo',
             'http://127.0.0.1:3000/client-demo.html',
+            'http://localhost:8080/client-demo',
             'http://localhost:8080/client-demo.html',
+            'http://127.0.0.1:8080/client-demo',
             'http://127.0.0.1:8080/client-demo.html'
         ],
         allowed_scopes: ['openid', 'profile', 'email', 'offline_access'],
-        logo_url: 'https://cokistudios.github.io/assets/images/logo.png',
+        logo_url: 'https://cokistudios.com/assets/images/logo.png',
         is_active: true
     },
     'csid-connect-demo': {
         client_id: 'csid-connect-demo',
         client_name: 'CS ID Connect Playground',
         redirect_uris: [
+            'https://cokistudios.com/client-demo',
+            'https://cokistudios.com/client-demo.html',
+            'https://www.cokistudios.com/client-demo',
+            'https://www.cokistudios.com/client-demo.html',
+            'https://cokistudios.github.io/client-demo',
             'https://cokistudios.github.io/client-demo.html',
             'https://cokistudios.github.io/oauth-callback.html',
+            'http://localhost:3000/client-demo',
             'http://localhost:3000/client-demo.html',
+            'http://127.0.0.1:3000/client-demo',
             'http://127.0.0.1:3000/client-demo.html',
+            'http://localhost:8080/client-demo',
             'http://localhost:8080/client-demo.html',
+            'http://127.0.0.1:8080/client-demo',
             'http://127.0.0.1:8080/client-demo.html'
         ],
         allowed_scopes: ['openid', 'profile', 'email', 'offline_access'],
-        logo_url: 'https://cokistudios.github.io/assets/images/logo.png',
+        logo_url: 'https://cokistudios.com/assets/images/logo.png',
         is_active: true
     },
     'ourcommonhome': {
@@ -181,6 +199,28 @@ const BUILTIN_OAUTH_CLIENTS = {
         is_active: true
     }
 };
+
+// Normalizar URIs para comparación flexible en todo el ecosystem
+function normalizeOAuthUri(u) {
+    if (!u) return '';
+    try {
+        const parsed = new URL(u);
+        let host = parsed.host.toLowerCase();
+        // Unificar dominios hermanos del ecosistema Coki Studios
+        if (host === 'cokistudios.github.io' || host === 'www.cokistudios.com') {
+            host = 'cokistudios.com';
+        }
+        let pathname = parsed.pathname.replace(/\/+$/, '');
+        if (pathname.endsWith('.html')) {
+            pathname = pathname.slice(0, -5);
+        }
+        return `${parsed.protocol}//${host}${pathname}`.toLowerCase();
+    } catch (_) {
+        let s = (u || '').replace(/\/+$/, '');
+        if (s.endsWith('.html')) s = s.slice(0, -5);
+        return s.toLowerCase();
+    }
+}
 
 async function validateClient(clientId, redirectUri) {
     console.log(' validateClient:', { clientId, redirectUri });
@@ -202,6 +242,11 @@ async function validateClient(clientId, redirectUri) {
 
     if (!client && BUILTIN_OAUTH_CLIENTS[clientId]) {
         client = BUILTIN_OAUTH_CLIENTS[clientId];
+    } else if (client && BUILTIN_OAUTH_CLIENTS[clientId]) {
+        // Enriquecer cliente de Supabase con redirect_uris del ecosistema
+        const builtinUris = BUILTIN_OAUTH_CLIENTS[clientId].redirect_uris || [];
+        const existingUris = Array.isArray(client.redirect_uris) ? client.redirect_uris : [];
+        client.redirect_uris = Array.from(new Set([...existingUris, ...builtinUris]));
     }
     
     if (!client) {
@@ -212,19 +257,9 @@ async function validateClient(clientId, redirectUri) {
     console.log(' Cliente encontrado:', client.client_name);
     console.log(' Redirect URIs registrados:', client.redirect_uris);
 
-    // Normalizar URIs para comparación flexible
-    const normalize = (u) => {
-        try {
-            const parsed = new URL(u);
-            return `${parsed.origin}${parsed.pathname}`.replace(/\/+$/, '');
-        } catch (_) {
-            return (u || '').replace(/\/+$/, '');
-        }
-    };
-
-    const normRedirectUri = normalize(redirectUri);
+    const normRedirectUri = normalizeOAuthUri(redirectUri);
     const isAllowed = (client.redirect_uris || []).some(registeredUri => {
-        return normalize(registeredUri) === normRedirectUri;
+        return normalizeOAuthUri(registeredUri) === normRedirectUri;
     });
     
     if (!isAllowed) {
@@ -368,7 +403,7 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     let storedRedirectUri = codeData.redirect_uri;
     let receivedRedirectUri = redirectUri;
     
-    if (storedRedirectUri !== receivedRedirectUri) {
+    if (storedRedirectUri !== receivedRedirectUri && normalizeOAuthUri(storedRedirectUri) !== normalizeOAuthUri(receivedRedirectUri)) {
         console.log(' Redirect URI mismatch:', { stored: storedRedirectUri, received: receivedRedirectUri });
         return { error: 'invalid_grant', error_description: 'Redirect URI mismatch' };
     }

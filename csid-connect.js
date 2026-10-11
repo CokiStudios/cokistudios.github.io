@@ -24,7 +24,7 @@ const CS_LOGO_SVG = `
 
 const DEFAULT_AUTH_URL = typeof window !== 'undefined'
     ? `${window.location.origin}/authorize.html`
-    : 'https://cokistudios.github.io/authorize.html';
+    : 'https://cokistudios.com/authorize.html';
 
 class CSIDConnectClient {
     constructor() {
