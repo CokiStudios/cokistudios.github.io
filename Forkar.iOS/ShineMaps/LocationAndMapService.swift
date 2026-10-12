@@ -692,4 +692,55 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
         }
         return "arrow.up"
     }
+
+    // MARK: - ShineMaps Community Co-Navigation & Caravans (P2P Mesh / Supabase Realtime)
+    @Published public var activeCaravanMembers: [CommunityCaravanMember] = []
+    @Published public var isCaravanActive: Bool = false
+
+    public struct CommunityCaravanMember: Identifiable, Codable, Equatable {
+        public let id: String
+        public let name: String
+        public let latitude: Double
+        public let longitude: Double
+        public let speedKmh: Double
+        public let lastUpdate: Date
+
+        public init(id: String, name: String, latitude: Double, longitude: Double, speedKmh: Double, lastUpdate: Date = Date()) {
+            self.id = id
+            self.name = name
+            self.latitude = latitude
+            self.longitude = longitude
+            self.speedKmh = speedKmh
+            self.lastUpdate = lastUpdate
+        }
+    }
+
+    public func startCommunityCaravan(caravanId: String, memberName: String) {
+        self.isCaravanActive = true
+        // Simular o publicar posición propia periódicamente en tiempo real
+        if let loc = self.currentLocation {
+            let myMember = CommunityCaravanMember(
+                id: "me",
+                name: memberName,
+                latitude: loc.coordinate.latitude,
+                longitude: loc.coordinate.longitude,
+                speedKmh: self.currentSpeedKmh
+            )
+            self.activeCaravanMembers = [myMember]
+        }
+    }
+
+    public func updateCaravanMember(member: CommunityCaravanMember) {
+        if let idx = activeCaravanMembers.firstIndex(where: { $0.id == member.id }) {
+            activeCaravanMembers[idx] = member
+        } else {
+            activeCaravanMembers.append(member)
+        }
+    }
+
+    public func stopCommunityCaravan() {
+        self.isCaravanActive = false
+        self.activeCaravanMembers.removeAll()
+    }
 }
+

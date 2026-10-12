@@ -488,6 +488,143 @@ class CSIDConnectClient {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    //  FIDO2 / WEBAUTHN PASSKEYS — HARDWARE-BACKED BIOMETRICS
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Comprueba si el dispositivo soporta Passkeys con biometría de hardware
+     */
+    async isPasskeySupported() {
+        if (typeof window === 'undefined' || !window.PublicKeyCredential) return false;
+        try {
+            return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        } catch (_) {
+            return false;
+        }
+    }
+
+    /**
+     * Registrar una Passkey biométrica (FIDO2) vinculada a CS ID
+     * @param {Object} user - Objeto de usuario CS ID con email y displayName
+     */
+    async registerPasskey(user = {}) {
+        if (!await this.isPasskeySupported()) {
+            throw new Error('Este dispositivo no soporta autenticación biométrica de plataforma (Passkeys).');
+        }
+
+        const userEmail = user.email || this.getCurrentUser()?.email || 'dev@cokistudios.com';
+        const userName = user.name || userEmail.split('@')[0];
+        const userIdBytes = new TextEncoder().encode(user.id || userEmail);
+        const challengeBytes = crypto.getRandomValues(new Uint8Array(32));
+
+        const createOptions = {
+            publicKey: {
+                challenge: challengeBytes,
+                rp: {
+                    name: 'Coki Studios ID',
+                    id: window.location.hostname
+                },
+                user: {
+                    id: userIdBytes,
+                    name: userEmail,
+                    displayName: userName
+                },
+                pubKeyCredParams: [
+                    { alg: -7, type: 'public-key' },  // ES256 (NIST P-256)
+                    { alg: -257, type: 'public-key' } // RS256
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: 'platform',
+                    userVerification: 'required',
+                    residentKey: 'preferred'
+                },
+                timeout: 60000,
+                attestation: 'none'
+            }
+        };
+
+        const credential = await navigator.credentials.create(createOptions);
+        if (!credential) {
+            throw new Error('Registro de Passkey cancelado');
+        }
+
+        const passkeyData = {
+            id: credential.id,
+            rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+            type: credential.type,
+            userEmail: userEmail,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            localStorage.setItem('csid_passkey_cred_' + userEmail, JSON.stringify(passkeyData));
+        } catch (_) {}
+
+        return {
+            success: true,
+            passkey: passkeyData
+        };
+    }
+
+    /**
+     * Autenticar con Passkey biométrica (Face ID / Touch ID / Sensor Android)
+     * @param {string} userEmail - Email opcional para filtrar credenciales
+     */
+    async signInWithPasskey(userEmail = '') {
+        if (!await this.isPasskeySupported()) {
+            throw new Error('Passkeys biométricas no disponibles en este navegador o sistema.');
+        }
+
+        const challengeBytes = crypto.getRandomValues(new Uint8Array(32));
+        const getOptions = {
+            publicKey: {
+                challenge: challengeBytes,
+                timeout: 60000,
+                userVerification: 'required',
+                rpId: window.location.hostname
+            }
+        };
+
+        if (userEmail) {
+            try {
+                const stored = localStorage.getItem('csid_passkey_cred_' + userEmail);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    const rawIdBytes = Uint8Array.from(atob(parsed.rawId), c => c.charCodeAt(0));
+                    getOptions.publicKey.allowCredentials = [{
+                        id: rawIdBytes,
+                        type: 'public-key',
+                        transports: ['internal']
+                    }];
+                }
+            } catch (_) {}
+        }
+
+        const assertion = await navigator.credentials.get(getOptions);
+        if (!assertion) {
+            throw new Error('Verificación biométrica no completada.');
+        }
+
+        // Simular o resolver token con sesión soberana
+        const verifiedEmail = userEmail || this.getCurrentUser()?.email || 'soberano@cokistudios.com';
+        const userObj = {
+            id: 'csid_fido2_' + assertion.id.substring(0, 16),
+            email: verifiedEmail,
+            name: verifiedEmail.split('@')[0],
+            is_passkey_authenticated: true
+        };
+
+        setCookieJSON('coki_current_user', userObj, { maxAge: 7 * 24 * 60 * 60 });
+        setCookie('coki_access_token', 'cs_passkey_tok_' + assertion.id, { maxAge: 7 * 24 * 60 * 60 });
+
+        return {
+            success: true,
+            user: userObj,
+            credentialId: assertion.id
+        };
+    }
+
     _decodeJwePayload(jweToken) {
         if (!jweToken || typeof jweToken !== 'string') return null;
         try {

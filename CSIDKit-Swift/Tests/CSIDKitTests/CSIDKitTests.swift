@@ -26,4 +26,15 @@ final class CSIDKitTests: XCTestCase {
         XCTAssertEqual(user.initial, "D")
         XCTAssertEqual(user.id, "usr_123")
     }
+
+    func testCSIDHardwareVaultRoundtrip() throws {
+        let vault = CSIDHardwareVault.shared
+        let originalText = "Coki Studios Secure Payload 2026"
+        let seed = "room-test-1234"
+        let encrypted = try vault.encryptString(originalText, seedString: seed)
+        XCTAssertTrue(encrypted.hasPrefix("🔒 enc:v1:"))
+        let decrypted = vault.decryptString(encrypted, seedString: seed)
+        XCTAssertEqual(decrypted, originalText)
+    }
 }
+

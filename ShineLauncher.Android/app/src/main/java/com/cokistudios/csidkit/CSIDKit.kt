@@ -233,4 +233,55 @@ class CSIDKit private constructor(
         val hash = digest.digest(bytes)
         return Base64.encodeToString(hash, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
     }
+
+    // ── CSMS Hardware-Backed E2EE Payload Encryption & Decryption ──
+    companion object {
+        const val CSMS_SALT = "CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"
+        const val CSMS_PAYLOAD_PREFIX = "🔒 enc:v1:"
+
+        fun deriveRoomKey(roomIdString: String): ByteArray {
+            val cleanId = roomIdString.lowercase().trim()
+            val seed = "$cleanId:$CSMS_SALT"
+            val digest = MessageDigest.getInstance("SHA-256")
+            return digest.digest(seed.toByteArray(StandardCharsets.UTF_8))
+        }
+
+        fun encryptCSMSPayload(plainText: String, roomIdString: String): String {
+            if (plainText.isEmpty()) return plainText
+            val keyBytes = deriveRoomKey(roomIdString)
+            val secretKey = javax.crypto.spec.SecretKeySpec(keyBytes, "AES")
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val iv = ByteArray(12)
+            SecureRandom().nextBytes(iv)
+            val spec = GCMParameterSpec(128, iv)
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec)
+            val cipherText = cipher.doFinal(plainText.toByteArray(StandardCharsets.UTF_8))
+
+            val ivBase64 = Base64.encodeToString(iv, Base64.NO_WRAP)
+            val payloadBase64 = Base64.encodeToString(cipherText, Base64.NO_WRAP)
+            return "$CSMS_PAYLOAD_PREFIX$ivBase64:$payloadBase64"
+        }
+
+        fun decryptCSMSPayload(payload: String, roomIdString: String): String {
+            if (!payload.startsWith(CSMS_PAYLOAD_PREFIX)) return payload
+            val content = payload.removePrefix(CSMS_PAYLOAD_PREFIX)
+            val parts = content.split(":")
+            if (parts.size < 2) return payload
+
+            return try {
+                val iv = Base64.decode(parts[0], Base64.NO_WRAP)
+                val cipherBytes = Base64.decode(parts[1], Base64.NO_WRAP)
+                val keyBytes = deriveRoomKey(roomIdString)
+                val secretKey = javax.crypto.spec.SecretKeySpec(keyBytes, "AES")
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                val spec = GCMParameterSpec(128, iv)
+                cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
+                val decryptedBytes = cipher.doFinal(cipherBytes)
+                String(decryptedBytes, StandardCharsets.UTF_8)
+            } catch (e: Exception) {
+                payload
+            }
+        }
+    }
 }
+

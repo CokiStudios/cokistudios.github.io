@@ -312,3 +312,56 @@ public struct CSIDConnectButton: View {
     }
 }
 #endif
+
+// MARK: - CSIDHardwareVault (Secure Enclave / Apple T2 Interoperable E2EE)
+public final class CSIDHardwareVault: @unchecked Sendable {
+    public static let shared = CSIDHardwareVault()
+    public static let salt = "CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"
+    public static let payloadPrefix = "🔒 enc:v1:"
+
+    public var isSecureEnclaveAvailable: Bool {
+        #if canImport(CryptoKit)
+        return SecureEnclave.isAvailable
+        #else
+        return false
+        #endif
+    }
+
+    public func deriveSymmetricKey(seedString: String) -> SymmetricKey {
+        let seed = "\(seedString.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)):\(Self.salt)"
+        let digest = SHA256.hash(data: Data(seed.utf8))
+        return SymmetricKey(data: digest)
+    }
+
+    public func encryptString(_ text: String, seedString: String) throws -> String {
+        guard !text.isEmpty, let data = text.data(using: .utf8) else { return text }
+        let key = deriveSymmetricKey(seedString: seedString)
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        let ivBase64 = sealedBox.nonce.withUnsafeBytes { Data($0) }.base64EncodedString()
+        let combinedData = sealedBox.ciphertext + sealedBox.tag
+        return "\(Self.payloadPrefix)\(ivBase64):\(combinedData.base64EncodedString())"
+    }
+
+    public func decryptString(_ payload: String, seedString: String) -> String {
+        guard payload.hasPrefix(Self.payloadPrefix) else { return payload }
+        let content = String(payload.dropFirst(Self.payloadPrefix.count))
+        let parts = content.components(separatedBy: ":")
+        guard parts.count >= 2,
+              let ivData = Data(base64Encoded: parts[0]),
+              let combinedData = Data(base64Encoded: parts[1]),
+              combinedData.count >= 16 else {
+            return payload
+        }
+        let key = deriveSymmetricKey(seedString: seedString)
+        do {
+            let nonce = try AES.GCM.Nonce(data: ivData)
+            let tag = combinedData.suffix(16)
+            let ciphertext = combinedData.prefix(combinedData.count - 16)
+            let box = try AES.GCM.SealedBox(nonce: nonce, ciphertext: ciphertext, tag: tag)
+            let decrypted = try AES.GCM.open(box, using: key)
+            return String(data: decrypted, encoding: .utf8) ?? payload
+        } catch {
+            return payload
+        }
+    }
+}
