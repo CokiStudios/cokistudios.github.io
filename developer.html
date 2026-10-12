@@ -7,61 +7,125 @@
     <title>Consola de Desarrolladores — Coki Studios</title>
     <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/shine-ui.css">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
     <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/cs-industrial.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .cs-nav {
-            border-bottom: 1px solid var(--cs-hairline);
-            background: rgba(7, 8, 11, 0.85);
-            backdrop-filter: blur(12px);
-            position: sticky; top: 0; z-index: 100;
+        :root {
+            --brand-primary: #6366f1;
+            --brand-cyan: #00d4ff;
+            --brand-gradient: linear-gradient(135deg, #0284c7 0%, #4f46e5 50%, #7c3aed 100%);
+            --glass-bg: rgba(6, 9, 15, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-glow: rgba(99, 102, 241, 0.15);
         }
-        html.light-theme .cs-nav {
-            background: rgba(243, 245, 248, 0.85);
+
+        html.light-theme {
+            --glass-bg: rgba(248, 250, 252, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --card-glow: rgba(79, 70, 229, 0.1);
+        }
+
+        body.cs-industrial-body {
+            position: relative;
+            overflow-x: hidden;
+            background-color: var(--cs-bg);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.18), transparent 70%),
+                radial-gradient(var(--cs-hairline) 1px, transparent 1px);
+            background-size: 100% 100%, 28px 28px;
+        }
+
+        .cs-nav {
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 100;
+            transition: all 0.25s ease;
         }
 
         .cs-nav-inner {
             max-width: 1240px;
             margin: 0 auto;
-            padding: 12px 20px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            height: 68px;
+        }
+
+        .nav-logo-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--cs-font-mono);
+            font-weight: 900;
+            font-size: 13px;
+            color: #38bdf8;
+            letter-spacing: 0.05em;
         }
 
         .cs-container {
             max-width: 1240px;
             margin: 0 auto;
-            padding: 28px 20px 80px;
+            padding: 32px 24px 80px;
+        }
+
+        .cs-panel {
+            background: var(--cs-bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(12px);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .cs-panel:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
         }
 
         .pkg-card {
             background: var(--cs-bg-card-sub);
             border: 1px solid var(--cs-hairline);
-            border-radius: 10px;
-            padding: 18px;
-            transition: all 0.15s ease;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            position: relative;
         }
 
         .pkg-card:hover {
-            border-color: var(--cs-hairline-bright);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
         }
 
         .modal-overlay {
             display: none; position: fixed; inset: 0; z-index: 200;
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
             align-items: center; justify-content: center; padding: 20px;
         }
         .modal-overlay.open { display: flex; }
         .modal-card {
             background: var(--cs-bg-card); border: 1px solid var(--cs-hairline-bright);
-            border-radius: 14px; width: 100%; max-width: 580px; padding: 26px;
+            border-radius: 18px; width: 100%; max-width: 580px; padding: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
         }
     </style>
 </head>
@@ -71,28 +135,31 @@
     <!-- Top Navigation -->
     <nav class="cs-nav">
         <div class="cs-nav-inner">
-            <a href="index" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--cs-text-bright);">
-                <div style="width: 32px; height: 32px; background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline-bright); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--cs-font-mono); font-weight: 800; font-size: 14px; color: var(--cs-cyan);">
-                    DEV
+            <a href="index" style="display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--cs-text-bright);">
+                <div class="nav-logo-box">
+                    CS
                 </div>
                 <div>
-                    <div style="font-weight: 800; font-size: 14px; letter-spacing: 0.04em;">COKI STUDIOS DEVELOPER</div>
-                    <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub);">SMILEDEV // LOOPMODULES // CDN</div>
+                    <div style="font-weight: 800; font-size: 15px; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px;">
+                        <span>Coki Studios</span>
+                        <span style="font-size: 11px; padding: 2px 7px; border-radius: 6px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3);">Developers</span>
+                    </div>
+                    <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub); letter-spacing: 0.05em;">SMILEDEV // LOOPMODULES // CS ID CONNECT</div>
                 </div>
             </a>
 
             <div style="display: flex; align-items: center; gap: 12px;">
                 <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
                 <div id="auth-logged-out" style="display: none; align-items: center; gap: 8px;">
-                    <a href="login?redirect=/developer.html" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Iniciar Sesión</a>
-                    <a href="https://cokistudios.com/authorize?client_id=demo-app-123&redirect_uri=https://cokistudios.com/developer.html&response_type=code&scope=openid+profile+email+offline_access" class="cs-btn cs-btn-primary" style="font-size: 11px; padding: 6px 14px; background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 700;">
+                    <a href="login?redirect=/developer.html" class="cs-btn cs-btn-secondary" style="font-size: 12px; padding: 7px 14px;">Iniciar Sesión</a>
+                    <a href="https://cokistudios.com/authorize?client_id=demo-app-123&redirect_uri=https://cokistudios.com/developer.html&response_type=code&scope=openid+profile+email+offline_access" class="cs-btn cs-btn-primary" style="font-size: 12px; padding: 7px 18px; background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 700; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);">
                         Conectar con CS ID
                     </a>
                 </div>
                 <div id="auth-logged-in" style="display: none; align-items: center; gap: 10px;">
-                    <a href="dashboard" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Mi Cuenta CS ID</a>
-                    <span id="nav-user" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-cyan); font-weight: 700;">...</span>
-                    <button id="btn-logout" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Salir</button>
+                    <a href="dashboard" class="cs-btn cs-btn-secondary" style="font-size: 12px; padding: 7px 14px;">Mi Cuenta CS ID</a>
+                    <span id="nav-user" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-cyan); font-weight: 700; padding: 4px 10px; background: rgba(0,212,255,0.08); border-radius: 6px; border: 1px solid rgba(0,212,255,0.2);">...</span>
+                    <button id="btn-logout" class="cs-btn cs-btn-secondary" style="font-size: 12px; padding: 7px 14px;">Salir</button>
                 </div>
             </div>
         </div>
@@ -101,24 +168,25 @@
     <main class="cs-container">
 
         <!-- Top Console Banner -->
-        <div class="cs-panel" style="margin-bottom: 24px; padding: 22px 26px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div class="cs-panel" style="margin-bottom: 24px; padding: 28px 32px; background: linear-gradient(135deg, rgba(13, 17, 23, 0.95), rgba(30, 27, 75, 0.4)); border: 1px solid rgba(99, 102, 241, 0.25); position: relative; overflow: hidden;">
+            <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%); pointer-events: none;"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 1;">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <h1 style="font-size: 22px; font-weight: 800;">Consola de Desarrolladores</h1>
-                        <span class="cs-tag cs-tag-cyan">SMILEDEV v2.5</span>
-                        <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> REGISTRY ONLINE</span>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <h1 style="font-size: 26px; font-weight: 900; letter-spacing: -0.02em; background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Consola de Desarrolladores</h1>
+                        <span class="cs-tag cs-tag-cyan" style="box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);">SMILEDEV v2.5</span>
+                        <span class="cs-tag cs-tag-green" style="box-shadow: 0 0 12px rgba(0, 229, 153, 0.25);"><span class="cs-led cs-led-green"></span> REGISTRY ONLINE</span>
                     </div>
-                    <p style="font-size: 13px; color: var(--cs-text-sub); margin-top: 4px;">
-                        Publica y distribuye módulos nativos en C++, Python y Loop. Gestiona autenticación de CLI y aplicaciones OAuth.
+                    <p style="font-size: 14px; color: var(--cs-text-sub); max-width: 680px; line-height: 1.5;">
+                        Centro unificado para compilar, publicar y distribuir módulos nativos en C++, Python y Loop OS. Gestiona identidades OAuth 2.0 y federación multiplataforma con CS ID Connect.
                     </p>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button id="btn-quick-token" class="cs-btn cs-btn-primary">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button id="btn-quick-token" class="cs-btn cs-btn-primary" style="background: linear-gradient(135deg, #0284c7, #2563eb); border: none; padding: 10px 20px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);">
                         + Generar Token CLI (PAT)
                     </button>
-                    <button id="btn-create-app-modal" class="cs-btn cs-btn-secondary">
+                    <button id="btn-create-app-modal" class="cs-btn cs-btn-secondary" style="border: 1px solid rgba(255,255,255,0.14); padding: 10px 20px; font-size: 13px; font-weight: 600;">
                         + Registrar App OAuth
                     </button>
                 </div>
@@ -126,22 +194,26 @@
         </div>
 
         <!-- Metric Badges Strip -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
-            <div class="cs-panel" style="padding: 16px;">
-                <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub); text-transform: uppercase;">Módulos en LoopModules</div>
-                <div style="font-size: 24px; font-weight: 800; color: var(--cs-cyan); margin-top: 4px;" id="stat-total-modules">6 disponibles</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+            <div class="cs-panel" style="padding: 20px; background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(255,255,255,0.07);">
+                <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); text-transform: uppercase; letter-spacing: 0.05em;">Módulos en LoopModules</div>
+                <div style="font-size: 26px; font-weight: 800; color: #38bdf8; margin-top: 6px;" id="stat-total-modules">6 disponibles</div>
+                <div style="font-size: 11px; color: var(--cs-text-muted); margin-top: 4px;">C++, Python & Loop</div>
             </div>
-            <div class="cs-panel" style="padding: 16px;">
-                <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub); text-transform: uppercase;">Cloudflare Edge CDN</div>
-                <div style="font-size: 24px; font-weight: 800; color: var(--cs-green); margin-top: 4px;" id="stat-cdn-status">14 ms (Activo)</div>
+            <div class="cs-panel" style="padding: 20px; background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(255,255,255,0.07);">
+                <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); text-transform: uppercase; letter-spacing: 0.05em;">Cloudflare Edge CDN</div>
+                <div style="font-size: 26px; font-weight: 800; color: #10b981; margin-top: 6px;" id="stat-cdn-status">14 ms (Activo)</div>
+                <div style="font-size: 11px; color: var(--cs-text-muted); margin-top: 4px;">Global Anycast Cache</div>
             </div>
-            <div class="cs-panel" style="padding: 16px;">
-                <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub); text-transform: uppercase;">Apps OAuth Propias</div>
-                <div style="font-size: 24px; font-weight: 800; color: var(--cs-amber); margin-top: 4px;" id="stat-oauth-apps">0 registradas</div>
+            <div class="cs-panel" style="padding: 20px; background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(255,255,255,0.07);">
+                <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); text-transform: uppercase; letter-spacing: 0.05em;">Apps OAuth Propias</div>
+                <div style="font-size: 26px; font-weight: 800; color: #f59e0b; margin-top: 6px;" id="stat-oauth-apps">0 registradas</div>
+                <div style="font-size: 11px; color: var(--cs-text-muted); margin-top: 4px;">PKCE S256 Respaldado</div>
             </div>
-            <div class="cs-panel" style="padding: 16px;">
-                <div style="font-family: var(--cs-font-mono); font-size: 10px; color: var(--cs-text-sub); text-transform: uppercase;">CLI Auth Estado</div>
-                <div style="font-size: 24px; font-weight: 800; color: var(--cs-text-bright); margin-top: 4px;">cs_pat_ activo</div>
+            <div class="cs-panel" style="padding: 20px; background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(255,255,255,0.07);">
+                <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); text-transform: uppercase; letter-spacing: 0.05em;">CLI Auth Estado</div>
+                <div style="font-size: 26px; font-weight: 800; color: var(--cs-text-bright); margin-top: 6px;">cs_pat_ activo</div>
+                <div style="font-size: 11px; color: var(--cs-text-muted); margin-top: 4px;">smiledev & Looping Engine</div>
             </div>
         </div>
 
@@ -428,6 +500,31 @@
         </div>
 
     </main>
+
+    <!-- ── OFFICIAL COKI STUDIOS FOOTER ── -->
+    <footer style="border-top: 1px solid var(--cs-hairline); background: rgba(7, 8, 11, 0.7); backdrop-filter: blur(16px); padding: 36px 24px; margin-top: 60px;">
+        <div style="max-width: 1240px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="nav-logo-box" style="width: 28px; height: 28px; font-size: 11px;">CS</div>
+                <div>
+                    <span style="font-weight: 700; font-size: 14px; color: var(--cs-text-bright);">Coki Studios Developer</span>
+                    <div style="font-size: 11px; color: var(--cs-text-sub);">Potenciando el ecosistema abierto con Looping Engine & CS ID</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; font-size: 13px; font-weight: 500;">
+                <a href="index" style="color: var(--cs-text-sub); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='var(--cs-text-sub)'">Inicio</a>
+                <a href="products" style="color: var(--cs-text-sub); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='var(--cs-text-sub)'">Productos</a>
+                <a href="forkar" style="color: var(--cs-text-sub); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='var(--cs-text-sub)'">Forkar</a>
+                <a href="terms" style="color: var(--cs-text-sub); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='var(--cs-text-sub)'">Términos y Privacidad</a>
+                <a href="dashboard" style="color: var(--cs-text-sub); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='var(--cs-text-sub)'">Mi Cuenta CS ID</a>
+            </div>
+
+            <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-muted);">
+                &copy; 2026 Coki Studios LLC. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
 
     <!-- Modal Crear App OAuth -->
     <div class="modal-overlay" id="oauth-modal">
