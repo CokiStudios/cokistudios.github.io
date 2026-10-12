@@ -271,18 +271,46 @@
             
             <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
                 <div>
-                    <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 4px;">NOMBRE DE LA APP</label>
-                    <input type="text" id="modal-app-name" class="cs-input" placeholder="Mi App Increíble">
+                    <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 4px;">NOMBRE DE LA APLICACIÓN</label>
+                    <input type="text" id="modal-app-name" class="cs-input" placeholder="Ej: Mi Servicio Web / Juego Indie">
                 </div>
                 <div>
-                    <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 4px;">REDIRECT URIS (separadas por coma)</label>
-                    <input type="text" id="modal-app-uris" class="cs-input" placeholder="https://miapp.com/callback, http://localhost:3000/callback">
+                    <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 4px;">REDIRECT URIS PERMITIDAS (Separadas por comas)</label>
+                    <input type="text" id="modal-app-uris" class="cs-input" placeholder="https://miapp.com/callback, myapp://oauth/callback, http://localhost:3000">
+                    <span style="font-size: 10px; color: var(--cs-text-muted); margin-top: 2px; display: block;">Soporta tanto URLs HTTPS como Universal Links de iOS/Android y localhost.</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 4px;">LOGO URL (OPCIONAL)</label>
+                        <input type="text" id="modal-app-logo" class="cs-input" placeholder="https://miapp.com/logo.png">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 4px;">SITIO WEB OFICIAL</label>
+                        <input type="text" id="modal-app-website" class="cs-input" placeholder="https://miapp.com">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub); display: block; margin-bottom: 6px;">PERMISOS SOLICITADOS (SCOPES)</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="scope-openid" checked disabled> <code>openid</code> (Identidad)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="scope-profile" checked> <code>profile</code> (Nombre y avatar)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="scope-email" checked> <code>email</code> (Correo verificado)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="scope-offline" checked> <code>offline_access</code> (Refresh Token)
+                        </label>
+                    </div>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="cs-btn cs-btn-secondary" onclick="closeOAuthModal()">Cancelar</button>
-                <button class="cs-btn cs-btn-primary" id="btn-save-oauth-app">Guardar App</button>
+                <button class="cs-btn cs-btn-primary" id="btn-save-oauth-app">Registrar Aplicación</button>
             </div>
         </div>
     </div>
@@ -434,45 +462,127 @@
             const container = document.getElementById('oauth-apps-container');
 
             if (apps.length === 0) {
-                container.innerHTML = '<p style="color:var(--cs-text-sub); text-align:center; padding:20px 0;">No tienes apps registradas todavía.</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--cs-hairline-bright); border-radius: 12px;">
+                        <div style="font-size: 32px; margin-bottom: 10px;">🔐</div>
+                        <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">No tienes aplicaciones OAuth registradas</div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); max-width: 420px; margin: 0 auto 16px;">
+                            Registra tu aplicación web, app móvil (iOS/Android) o servicio de escritorio para permitir inicio de sesión seguro con CS ID Connect y PKCE.
+                        </div>
+                        <button class="cs-btn cs-btn-primary" onclick="openOAuthModal()">+ Registrar Mi Primera App</button>
+                    </div>
+                `;
                 return;
             }
 
-            container.innerHTML = apps.map(app => `
-                <div class="cs-panel" style="padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 800; font-size: 15px;">${app.client_name}</div>
-                        <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-cyan); margin-top: 2px;">Client ID: ${app.client_id}</div>
+            container.innerHTML = apps.map(app => {
+                const uris = Array.isArray(app.redirect_uris) ? app.redirect_uris : [];
+                const scopes = Array.isArray(app.allowed_scopes) ? app.allowed_scopes : ['openid', 'profile', 'email'];
+                return `
+                <div class="cs-panel" style="padding: 20px; margin-bottom: 16px; border: 1px solid var(--cs-hairline-bright); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            ${app.logo_url 
+                                ? `<img src="${app.logo_url}" alt="${app.client_name}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid var(--cs-hairline);">`
+                                : `<div style="width: 40px; height: 40px; border-radius: 8px; background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--cs-cyan);">${app.client_name.charAt(0).toUpperCase()}</div>`
+                            }
+                            <div>
+                                <div style="font-weight: 800; font-size: 16px; color: var(--cs-text-bright);">${app.client_name}</div>
+                                <div style="font-size: 11px; color: var(--cs-text-sub);">${app.website_url || 'Sin sitio web'}</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="cs-tag ${app.is_active ? 'cs-tag-green' : 'cs-tag-red'}">${app.is_active ? '● ACTIVA' : '○ INACTIVA'}</span>
+                            <button class="cs-btn cs-btn-secondary" style="font-size: 10px; padding: 4px 8px;" onclick="window.toggleAppActive('${app.id}', ${!app.is_active})">
+                                ${app.is_active ? 'Desactivar' : 'Activar'}
+                            </button>
+                            <button class="cs-btn cs-btn-danger" style="font-size: 10px; padding: 4px 8px;" onclick="window.deleteOAuthApp('${app.id}', '${app.client_name}')">
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
-                    <span class="cs-tag ${app.is_active ? 'cs-tag-green' : 'cs-tag-red'}">${app.is_active ? 'ACTIVA' : 'INACTIVA'}</span>
+
+                    <!-- Credenciales & URIs -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 8px; padding: 12px; margin-bottom: 12px; font-family: var(--cs-font-mono); font-size: 11px;">
+                        <div>
+                            <span style="color: var(--cs-text-muted); display: block; font-size: 10px; margin-bottom: 2px;">CLIENT ID</span>
+                            <span style="color: var(--cs-cyan); word-break: break-all;">${app.client_id}</span>
+                            <button style="background: none; border: none; color: var(--cs-text-sub); cursor: pointer; margin-left: 6px;" onclick="navigator.clipboard.writeText('${app.client_id}')" title="Copiar Client ID">📋</button>
+                        </div>
+                        <div>
+                            <span style="color: var(--cs-text-muted); display: block; font-size: 10px; margin-bottom: 2px;">CLIENT SECRET (CONFIDENCIAL)</span>
+                            <span style="color: var(--cs-amber); filter: blur(4px); cursor: pointer;" onclick="this.style.filter='none'" title="Clic para revelar">${app.client_secret || 'cs_sec_••••••••••••'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Permisos y URIs -->
+                    <div style="font-size: 11px; color: var(--cs-text-sub);">
+                        <div style="margin-bottom: 4px;"><strong>Redirect URIs:</strong> ${uris.map(u => `<code style="color: var(--cs-green); margin-right: 6px;">${u}</code>`).join(' ')}</div>
+                        <div><strong>Scopes Permitidos:</strong> ${scopes.map(s => `<code style="color: var(--cs-cyan); margin-right: 4px;">${s}</code>`).join(' ')}</div>
+                    </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
+
+        window.toggleAppActive = async (id, newActive) => {
+            await supabase.from('oauth_clients').update({ is_active: newActive }).eq('id', id);
+            await loadOAuthApps();
+        };
+
+        window.deleteOAuthApp = async (id, name) => {
+            if (confirm(`¿Estás seguro de eliminar la aplicación "${name}"? Se revocarán todos los tokens autorizados.`)) {
+                await supabase.from('oauth_clients').delete().eq('id', id);
+                await loadOAuthApps();
+            }
+        };
 
         window.openOAuthModal = () => document.getElementById('oauth-modal').classList.add('open');
         window.closeOAuthModal = () => document.getElementById('oauth-modal').classList.remove('open');
         document.getElementById('btn-create-app-modal').addEventListener('click', openOAuthModal);
 
         document.getElementById('btn-save-oauth-app').addEventListener('click', async () => {
-            const name = document.getElementById('modal-app-name').value;
-            const uris = document.getElementById('modal-app-uris').value.split(',').map(u => u.trim());
-            if (!name) return alert('Introduce un nombre');
+            const name = document.getElementById('modal-app-name').value.trim();
+            const urisRaw = document.getElementById('modal-app-uris').value.trim();
+            const logo = document.getElementById('modal-app-logo')?.value.trim() || null;
+            const website = document.getElementById('modal-app-website')?.value.trim() || null;
 
-            const clientId = 'cs_app_' + Math.random().toString(36).substring(2, 10);
-            const clientSecret = 'cs_sec_' + Math.random().toString(36).substring(2, 16);
+            if (!name) return alert('Por favor introduce un nombre para la aplicación');
+            if (!urisRaw) return alert('Por favor introduce al menos una Redirect URI');
 
-            await supabase.from('oauth_clients').insert([{
+            const uris = urisRaw.split(',').map(u => u.trim()).filter(Boolean);
+
+            const scopes = ['openid'];
+            if (document.getElementById('scope-profile')?.checked) scopes.push('profile');
+            if (document.getElementById('scope-email')?.checked) scopes.push('email');
+            if (document.getElementById('scope-offline')?.checked) scopes.push('offline_access');
+
+            const clientId = 'cs_app_' + Array.from(crypto.getRandomValues(new Uint8Array(8)))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+            const clientSecret = 'cs_sec_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+
+            const { error } = await supabase.from('oauth_clients').insert([{
                 developer_id: currentUser?.id,
                 client_name: name,
                 client_id: clientId,
                 client_secret: clientSecret,
                 redirect_uris: uris,
+                allowed_scopes: scopes,
+                logo_url: logo,
+                website_url: website,
                 is_active: true
             }]);
 
+            if (error) {
+                alert('Error al registrar la aplicación: ' + error.message);
+                return;
+            }
+
             closeOAuthModal();
             await loadOAuthApps();
-            alert('¡App creada con éxito!');
+            alert(`¡Aplicación "${name}" registrada exitosamente!\nClient ID: ${clientId}`);
         });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {

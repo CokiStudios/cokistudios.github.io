@@ -170,11 +170,61 @@ public struct CSIDAuthSheet: View {
                 }
                 .disabled(isLoading)
 
+                #if canImport(AuthenticationServices)
+                // Separator
+                HStack {
+                    Rectangle().fill(ShineMapsTheme.borderSubtle).frame(height: 1)
+                    Text("O BIEN").font(.system(size: 10, weight: .bold)).foregroundColor(ShineMapsTheme.textSub)
+                    Rectangle().fill(ShineMapsTheme.borderSubtle).frame(height: 1)
+                }
+                .padding(.vertical, 4)
+
+                // Web / SSO Auth via PKCE
+                Button {
+                    signInWithBrowserSSO()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "safari")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Iniciar con CS ID en el Navegador")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .foregroundColor(ShineMapsTheme.textPrimary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(ShineMapsTheme.cardGlass)
+                    .cornerRadius(14)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(ShineMapsTheme.borderSubtle, lineWidth: 1))
+                }
+                .disabled(isLoading)
+                #endif
+
                 Spacer()
             }
             .padding(24)
         }
     }
+
+    #if canImport(AuthenticationServices)
+    private func signInWithBrowserSSO() {
+        errorMessage = nil
+        isLoading = true
+        Task {
+            do {
+                _ = try await csidManager.loginWithOAuthPKCE()
+                await MainActor.run {
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    #endif
 
     private func submitAuth() {
         let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)

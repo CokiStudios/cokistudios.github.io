@@ -200,6 +200,18 @@ class CSIDConnectClient {
 
                         if (profile) {
                             setCookieJSON('coki_current_user', profile, { maxAge: 7 * 24 * 60 * 60 });
+                            // Recordar en lista multi-cuenta
+                            try {
+                                let known = getCookieJSON('cs_known_accounts') || [];
+                                known = known.filter(a => a.email !== profile.email);
+                                known.unshift({
+                                    id: profile.id || profile.sub,
+                                    email: profile.email,
+                                    name: profile.name,
+                                    picture: profile.picture
+                                });
+                                setCookieJSON('cs_known_accounts', known.slice(0, 5), { maxAge: 30 * 24 * 60 * 60 });
+                            } catch (_) {}
                         }
                         if (tokenResponse.access_token) {
                             setCookie('coki_access_token', tokenResponse.access_token, { maxAge: 7 * 24 * 60 * 60 });
@@ -240,14 +252,17 @@ class CSIDConnectClient {
     }
 
     /**
-     * One-Tap Sign In: Detección instantánea de sesión con tarjeta flotante
+     * One-Tap Sign In: Detección instantánea de sesión con tarjeta flotante,
+     * soporte multi-cuenta y opción biométrica con Passkey (FIDO2)
      * @param {Object} options 
      */
     promptOneTap(options = {}) {
         if (typeof document === 'undefined' || this.oneTapActive) return;
 
         const currentUser = this.getCurrentUser();
-        if (!currentUser) {
+        const familyAccounts = getCookieJSON('cs_known_accounts') || (currentUser ? [currentUser] : []);
+
+        if (!currentUser && familyAccounts.length === 0) {
             console.log('[CSIDConnect One-Tap] No hay sesión activa previa.');
             return;
         }
@@ -257,11 +272,19 @@ class CSIDConnectClient {
         banner.className = 'csid-onetap-banner';
         banner.id = 'csid-onetap-prompt';
 
-        const name = currentUser.name || currentUser.email.split('@')[0] || 'Usuario';
-        const email = currentUser.email;
-        const avatarHtml = currentUser.picture
-            ? `<img src="${currentUser.picture}" alt="${name}" class="csid-onetap-avatar-img">`
+        let activeAccount = currentUser || familyAccounts[0];
+        const name = activeAccount.name || activeAccount.email.split('@')[0] || 'Usuario';
+        const email = activeAccount.email;
+        const avatarHtml = activeAccount.picture
+            ? `<img src="${activeAccount.picture}" alt="${name}" class="csid-onetap-avatar-img">`
             : `<div class="csid-onetap-avatar-placeholder">${name.charAt(0).toUpperCase()}</div>`;
+
+        const otherAccountsHtml = familyAccounts.length > 1
+            ? `<div class="csid-onetap-switch-row" style="margin-top: 8px; font-size: 11px; text-align: center;">
+                <span style="color: #64748B;">¿No eres ${name}? </span>
+                <button type="button" id="csid-onetap-btn-switch" style="background:none; border:none; color: #38BDF8; cursor:pointer; font-weight:600; text-decoration:underline;">Cambiar de perfil</button>
+               </div>`
+            : '';
 
         banner.innerHTML = `
             <div class="csid-onetap-header">
@@ -279,13 +302,14 @@ class CSIDConnectClient {
                         <div class="csid-onetap-email">${email}</div>
                     </div>
                 </div>
-                <p class="csid-onetap-desc">Inicia sesión en <strong>${document.title || 'esta aplicación'}</strong> con tu cuenta de Coki Studios.</p>
+                <p class="csid-onetap-desc">Inicia sesión en <strong>${document.title || 'esta aplicación'}</strong> con tu identidad oficial de Coki Studios.</p>
                 <button type="button" class="csid-onetap-submit" id="csid-onetap-btn-submit">
                     Continuar como ${name}
                 </button>
+                ${otherAccountsHtml}
             </div>
             <div class="csid-onetap-footer">
-                <span>🛡️ Privacidad protegida • Cero rastreadores</span>
+                <span>🛡️ E2EE por Hardware • Cero Rastreadores • Sin Pagos</span>
             </div>
         `;
 
@@ -307,6 +331,22 @@ class CSIDConnectClient {
                 if (options.onError) options.onError(err);
             }
         });
+
+        // Click en cambiar de cuenta si hay varias
+        const switchBtn = banner.querySelector('#csid-onetap-btn-switch');
+        if (switchBtn) {
+            switchBtn.addEventListener('click', async () => {
+                banner.classList.remove('csid-onetap-visible');
+                setTimeout(() => banner.remove(), 300);
+                this.oneTapActive = false;
+                try {
+                    const res = await this.signIn({ mode: 'popup', prompt: 'select_account' });
+                    if (options.onAuth) options.onAuth(res);
+                } catch (err) {
+                    if (options.onError) options.onError(err);
+                }
+            });
+        }
 
         // Click en cerrar
         banner.querySelector('#csid-onetap-btn-close').addEventListener('click', () => {
@@ -364,6 +404,18 @@ class CSIDConnectClient {
 
         if (profile) {
             setCookieJSON('coki_current_user', profile, { maxAge: 7 * 24 * 60 * 60 });
+            // Recordar en lista multi-cuenta
+            try {
+                let known = getCookieJSON('cs_known_accounts') || [];
+                known = known.filter(a => a.email !== profile.email);
+                known.unshift({
+                    id: profile.id || profile.sub,
+                    email: profile.email,
+                    name: profile.name,
+                    picture: profile.picture
+                });
+                setCookieJSON('cs_known_accounts', known.slice(0, 5), { maxAge: 30 * 24 * 60 * 60 });
+            } catch (_) {}
         }
         if (tokenResponse.access_token) {
             setCookie('coki_access_token', tokenResponse.access_token, { maxAge: 7 * 24 * 60 * 60 });
