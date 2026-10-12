@@ -10,16 +10,8 @@ export class CSIDNotificationService {
         this.senderEmail = 'no-reply@cokistudios.com';
         this.systemName = 'CS ID Security Core';
         
-        // Configuración oficial SMTP Zoho para envío de notificaciones, OTPs y familias
-        this.smtpConfig = {
-            host: 'smtppro.zoho.com',
-            port: 465,
-            secure: true, // SSL
-            auth: {
-                user: 'csidsignoti@cokistudios.com',
-                pass: 'CsID2627**'
-            }
-        };
+        // Notificaciones y correos transaccionales delegados al backend seguro (Cloudflare Worker API)
+        this.apiEndpoint = '/api/notify';
     }
 
     /**

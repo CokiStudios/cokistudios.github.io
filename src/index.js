@@ -2092,10 +2092,15 @@ async function readSmtpResponse(reader, decoder, state) {
 }
 
 async function sendZohoEmail({ to, subject, html, text, fromName = 'CS ID Security Core', env }) {
-  const host = 'smtppro.zoho.com';
-  const port = 465;
-  const user = 'csidsignoti@cokistudios.com';
-  const pass = (env && env.ZOHO_SMTP_PASSWORD) ? env.ZOHO_SMTP_PASSWORD : 'CsID2627**';
+  const host = (env && env.ZOHO_SMTP_HOST) || 'smtppro.zoho.com';
+  const port = parseInt((env && env.ZOHO_SMTP_PORT) || '465', 10);
+  const user = (env && env.ZOHO_SMTP_USER) || 'csidsignoti@cokistudios.com';
+  const pass = (env && env.ZOHO_SMTP_PASSWORD) ? env.ZOHO_SMTP_PASSWORD : '';
+
+  if (!pass) {
+    console.warn('[Zoho SMTP] ZOHO_SMTP_PASSWORD environment secret is not configured.');
+    return { success: false, error: 'ZOHO_SMTP_PASSWORD not configured' };
+  }
 
   let socket;
   try {
