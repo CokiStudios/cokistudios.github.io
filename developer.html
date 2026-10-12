@@ -83,9 +83,17 @@
 
             <div style="display: flex; align-items: center; gap: 12px;">
                 <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
-                <a href="dashboard" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Mi Cuenta CS ID</a>
-                <span id="nav-user" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-text-sub);">...</span>
-                <button id="btn-logout" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Salir</button>
+                <div id="auth-logged-out" style="display: none; align-items: center; gap: 8px;">
+                    <a href="login?redirect=/developer.html" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Iniciar Sesión</a>
+                    <a href="https://cokistudios.com/authorize?client_id=demo-app-123&redirect_uri=https://cokistudios.com/developer.html&response_type=code&scope=openid+profile+email+offline_access" class="cs-btn cs-btn-primary" style="font-size: 11px; padding: 6px 14px; background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 700;">
+                        Conectar con CS ID
+                    </a>
+                </div>
+                <div id="auth-logged-in" style="display: none; align-items: center; gap: 10px;">
+                    <a href="dashboard" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Mi Cuenta CS ID</a>
+                    <span id="nav-user" style="font-family: var(--cs-font-mono); font-size: 12px; color: var(--cs-cyan); font-weight: 700;">...</span>
+                    <button id="btn-logout" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 6px 12px;">Salir</button>
+                </div>
             </div>
         </div>
     </nav>
@@ -510,9 +518,26 @@
         });
 
         async function init() {
+            // Check for OAuth return code (?code=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const authCode = urlParams.get('code');
+            if (authCode) {
+                console.log('CS ID Connect code recibido:', authCode);
+                // Limpiar query params de la URL sin recargar
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             currentUser = await getCurrentCokiUser();
+            const loggedInEl = document.getElementById('auth-logged-in');
+            const loggedOutEl = document.getElementById('auth-logged-out');
+
             if (currentUser) {
+                if (loggedInEl) loggedInEl.style.display = 'flex';
+                if (loggedOutEl) loggedOutEl.style.display = 'none';
                 document.getElementById('nav-user').textContent = currentUser.name || currentUser.email;
+            } else {
+                if (loggedInEl) loggedInEl.style.display = 'none';
+                if (loggedOutEl) loggedOutEl.style.display = 'flex';
             }
 
             renderPackages(modulesData);
