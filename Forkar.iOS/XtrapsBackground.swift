@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Xtraps Precision Bezier Curve Shapes (Exact match to Coki Studios Brand Sketch)
+// MARK: - Xtraps Precision Bezier Curve Shapes (Coki Studios Brand Identity)
 
 public struct XtrapsWave1: Shape {
     public func path(in rect: CGRect) -> Path {
@@ -56,15 +56,17 @@ public struct XtrapsWave2: Shape {
     }
 }
 
-// MARK: - Xtraps Background (Vivid & Animated)
+// MARK: - Xtraps Background (Vivid, Fluid & GPU Accelerated)
 
 public struct XtrapsBackground: View {
     public let strokeColor: Color
     public let opacity: Double
     public let animated: Bool
     public let lineWidth: CGFloat
-    @State private var phase: CGFloat = 0.0
-    @State private var hue: Double = 0.0
+    public let rainbow: Bool
+    
+    @State private var waveProgress: CGFloat = -1.0
+    @State private var hueAngle: Double = 0.0
     
     public init(
         strokeColor: Color = Color(red: 99/255, green: 102/255, blue: 241/255), // Vibrant Indigo
@@ -79,62 +81,66 @@ public struct XtrapsBackground: View {
         self.lineWidth = lineWidth
         self.rainbow = rainbow
     }
-    // New property for rainbow animation
-    private let rainbow: Bool
     
     public var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Determine current color based on rainbow flag
-                let currentColor = rainbow ? Color(hue: hue, saturation: 0.8, brightness: 0.9) : strokeColor
                 // Wave 1 Gradient Stroke
                 XtrapsWave1()
                     .stroke(
                         LinearGradient(
                             colors: [
-                                currentColor.opacity(opacity * 0.5),
-                                currentColor.opacity(opacity * 1.0),
-                                currentColor.opacity(opacity * 0.6)
+                                strokeColor.opacity(opacity * 0.45),
+                                strokeColor.opacity(opacity * 1.0),
+                                strokeColor.opacity(opacity * 0.6)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         ),
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                     )
-                    .offset(y: animated ? sin(phase) * 8 : 0)
+                    .offset(
+                        x: animated ? waveProgress * 4 : 0,
+                        y: animated ? waveProgress * 9 : 0
+                    )
                 
                 // Wave 2 Gradient Stroke
                 XtrapsWave2()
                     .stroke(
                         LinearGradient(
                             colors: [
-                                currentColor.opacity(opacity * 0.4),
-                                currentColor.opacity(opacity * 0.85),
-                                currentColor.opacity(opacity * 1.0)
+                                strokeColor.opacity(opacity * 0.35),
+                                strokeColor.opacity(opacity * 0.85),
+                                strokeColor.opacity(opacity * 1.0)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         ),
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                     )
-                    .offset(y: animated ? cos(phase) * 8 : 0)
+                    .offset(
+                        x: animated ? -waveProgress * 5 : 0,
+                        y: animated ? -waveProgress * 8 : 0
+                    )
             }
+            .hueRotation(rainbow ? .degrees(hueAngle) : .zero)
         }
         .allowsHitTesting(false)
         .onAppear {
             if animated {
-                withAnimation(Animation.easeInOut(duration: 5.0).repeatForever(autoreverses: true)) {
-                    phase = .pi * 2
+                withAnimation(
+                    Animation.easeInOut(duration: 4.5)
+                        .repeatForever(autoreverses: true)
+                ) {
+                    waveProgress = 1.0
                 }
             }
             if rainbow {
-                // Start hue animation loop
-                withAnimation(Animation.linear(duration: 12.0).repeatForever(autoreverses: false)) {
-                    hue = 1.0
-                }
-                // Periodic timer to update hue smoothly
-                Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
-                    hue = (hue + 0.002).truncatingRemainder(dividingBy: 1.0)
+                withAnimation(
+                    Animation.linear(duration: 10.0)
+                        .repeatForever(autoreverses: false)
+                ) {
+                    hueAngle = 360.0
                 }
             }
         }

@@ -1,0 +1,8 @@
+{
+  "name": "loop-cpp-snippets",
+  "version": "1.0.0",
+  "language": "cpp",
+  "entry_point": "cpp_snippets.hpp",
+  "author": "Coki Studios Performance Lab",
+  "description": "Essential C++ snippets for Looping & high-performance apps: RAII BenchmarkTimer, RingBuffer, FNV-1a string hashing, ColorRGBA, AABB collisions, and Window helpers."
+}

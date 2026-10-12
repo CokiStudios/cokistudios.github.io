@@ -281,7 +281,30 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
         return ("Ubicación fijada", "Lat: \(String(format: "%.4f", coordinate.latitude)), Lng: \(String(format: "%.4f", coordinate.longitude))")
     }
 
-    // MARK: - Hybrid Search Places (Apple Maps POI & Geocoding + Mapbox GL Proximity)
+    // MARK: - Acronym Normalization & Resilience
+    public static func normalizeSearchQuery(_ query: String) -> String {
+        var q = query
+        let replacements: [(String, String)] = [
+            (#"\b(c\.?c\.?|c\/c)\b"#, "Centro Comercial"),
+            (#"\b(cra|cr|kra)\b"#, "Carrera"),
+            (#"\b(cll|cl)\b"#, "Calle"),
+            (#"\b(av|avda)\b"#, "Avenida"),
+            (#"\b(diag|dg)\b"#, "Diagonal"),
+            (#"\b(trans|tv)\b"#, "Transversal"),
+            (#"\b(autonorte|auto norte)\b"#, "Autopista Norte"),
+            (#"\b(autosur|auto sur)\b"#, "Autopista Sur"),
+            (#"\b(pque|prq)\b"#, "Parque")
+        ]
+        for (pattern, replacement) in replacements {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                let range = NSRange(q.startIndex..., in: q)
+                q = regex.stringByReplacingMatches(in: q, options: [], range: range, withTemplate: replacement)
+            }
+        }
+        return q.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Hybrid Search Places (Apple Maps POI & Geocoding + OSM Resilience + Mapbox GL Proximity)
     public func searchPlaces(query: String) async {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
@@ -292,20 +315,22 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
             return
         }
 
+        let normalized = LocationAndMapService.normalizeSearchQuery(trimmed)
+
         await MainActor.run { self.isSearching = true }
 
         let userLat = currentLocation?.coordinate.latitude ?? 4.7110
         let userLng = currentLocation?.coordinate.longitude ?? -74.0721
         let userLoc = currentLocation ?? CLLocation(latitude: userLat, longitude: userLng)
 
-        // 1. First priority: Apple Maps Natural Language & POI Search
+        // 1. First priority: Apple Maps Natural Language & POI Search with normalized query
         var combinedResults: [SearchResult] = []
         let appleReq = MKLocalSearch.Request()
-        appleReq.naturalLanguageQuery = trimmed
+        appleReq.naturalLanguageQuery = normalized
         appleReq.region = MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: userLat, longitude: userLng),
-            latitudinalMeters: 25000,
-            longitudinalMeters: 25000
+            latitudinalMeters: 30000,
+            longitudinalMeters: 30000
         )
 
         do {
@@ -333,12 +358,47 @@ public class LocationAndMapService: NSObject, ObservableObject, CLLocationManage
                 )
             }
         } catch {
-            // Proceed to Mapbox geocoding if Apple Maps had no matches or simulator GeoServices error
+            // Proceed to OSM/Mapbox geocoding if Apple Maps had no matches or simulator GeoServices error
         }
 
-        // 2. Mapbox Places Proximity Geocoding for GL Routing Parity
-        if let encoded = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: "https://api.mapbox.com/geocoding/v5/mapbox.places/\(encoded).json?access_token=\(mapboxToken)&proximity=\(userLng),\(userLat)&language=es,en&limit=6") {
+        // 2. OpenStreetMap Nominatim with Colombia filter (exact POIs like CC Fontanar in Chía)
+        if combinedResults.isEmpty,
+           let osmEncoded = normalized.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let osmUrl = URL(string: "https://nominatim.openstreetmap.org/search?format=json&q=\(osmEncoded)&countrycodes=co&limit=6&addressdetails=1") {
+            var request = URLRequest(url: osmUrl)
+            request.setValue("CokiStudiosShineMaps/1.0", forHTTPHeaderField: "User-Agent")
+            do {
+                let (data, _) = try await URLSession.shared.data(for: request)
+                if let items = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                    for item in items {
+                        guard let latStr = item["lat"] as? String, let lat = Double(latStr),
+                              let lonStr = item["lon"] as? String, let lon = Double(lonStr) else { continue }
+                        let title = (item["name"] as? String) ?? ((item["display_name"] as? String)?.components(separatedBy: ",").first ?? "Lugar")
+                        let address = (item["display_name"] as? String) ?? title
+                        let dist = userLoc.distance(from: CLLocation(latitude: lat, longitude: lon))
+                        let icon = iconForCategory(name: title + " " + address, poiCat: nil)
+
+                        combinedResults.append(
+                            SearchResult(
+                                title: title,
+                                address: address,
+                                latitude: lat,
+                                longitude: lon,
+                                distanceMeters: dist,
+                                systemIconName: icon,
+                                source: .openStreetMap
+                            )
+                        )
+                    }
+                }
+            } catch {
+                // Fallback to Mapbox
+            }
+        }
+
+        // 3. Mapbox Places Proximity Geocoding strictly constrained to Colombia (country=CO)
+        if let encoded = normalized.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let url = URL(string: "https://api.mapbox.com/geocoding/v5/mapbox.places/\(encoded).json?access_token=\(mapboxToken)&proximity=\(userLng),\(userLat)&country=CO&language=es,en&limit=6") {
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],

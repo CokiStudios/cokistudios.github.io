@@ -2422,6 +2422,8 @@ export default {
     const url = new URL(request.url);
     const host = url.hostname;
     const isRepoHost = host === 'repo.cokistudios.com';
+    const isDevHost = host === 'developer.cokistudios.com';
+    const isCdnHost = host === 'cdn.cokistudios.com';
     const isModulesPath = url.pathname.startsWith('/modules');
 
     // CORS Headers
@@ -2434,6 +2436,41 @@ export default {
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    // ── SUBDOMINIO: developer.cokistudios.com ──
+    if (isDevHost) {
+      if (url.pathname === '/' || url.pathname === '/developer' || url.pathname === '') {
+        const devUrl = new URL(request.url);
+        devUrl.pathname = '/developer.html';
+        return env.ASSETS.fetch(new Request(devUrl.toString(), request));
+      }
+      return env.ASSETS.fetch(request);
+    }
+
+    // ── SUBDOMINIO: cdn.cokistudios.com & /cdn/* ──
+    if (isCdnHost || url.pathname.startsWith('/cdn/')) {
+      // Reenrutar descargas de módulos y assets directamente desde Edge
+      if (url.pathname.startsWith('/cdn/v1/modules/') || url.pathname.startsWith('/modules/')) {
+        const modName = url.pathname.replace(/^\/(?:cdn\/v1\/modules|modules)\//, '').split('/')[0];
+        if (modName) {
+          const liveModules = await fetchLiveModules();
+          const m = liveModules.find(x => x.name === modName);
+          if (m && m.code_payload) {
+            const mime = m.language === 'python' ? 'text/x-python' : (m.language === 'node' || m.language === 'javascript' ? 'application/javascript' : (m.language === 'cpp' ? 'text/x-c++src' : 'text/plain'));
+            return new Response(m.code_payload, {
+              headers: {
+                ...corsHeaders,
+                "Content-Type": `${mime}; charset=utf-8`,
+                "Cache-Control": "public, max-age=86400, s-maxage=86400",
+                "X-CS-Edge-CDN": "HIT-POP"
+              }
+            });
+          }
+        }
+      }
+      // Servir assets estáticos del CDN
+      return env.ASSETS.fetch(request);
     }
 
     // ── NOTIFICATIONS & ZOHO SMTP ENDPOINTS (csidsignoti@cokistudios.com) ──

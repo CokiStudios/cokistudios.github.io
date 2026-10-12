@@ -1,0 +1,25 @@
+<resources>
+    <!-- Core Dark Cyber Palette -->
+    <color name="bg_base">#02050E</color>
+    <color name="bg_surface">#B30B1120</color>
+    <color name="bg_surface_card">#CC111827</color>
+    <color name="border_subtle">#1AFFFFFF</color>
+    <color name="border_active">#8000F5D4</color>
+
+    <!-- Accents -->
+    <color name="accent_cyan">#00F5D4</color>
+    <color name="accent_blue">#38BDF8</color>
+    <color name="accent_purple">#A855F7</color>
+    <color name="accent_amber">#F59E0B</color>
+    <color name="accent_emerald">#10B981</color>
+    <color name="accent_red">#EF4444</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
+    <color name="text_muted">#66FFFFFF</color>
+
+    <!-- Vintage Phosphor -->
+    <color name="vintage_amber_glow">#FFB000</color>
+    <color name="vintage_dark_case">#1A1612</color>
+</resources>

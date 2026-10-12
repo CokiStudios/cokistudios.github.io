@@ -1,0 +1,56 @@
+from pyloop import runpy
+define app "NodeHTML5WindowDemo" version 2.5:
+
+    print "[Loop] Iniciando ventana dinamica HTML5 con Node.js y Loop..."
+    
+    insert pysnippet as launch_window:
+        import subprocess, json, time, urllib.request, os, sys
+
+        # Ubicar script loop-node-window
+        candidates = [
+            "modules/loop-node-window/index.js",
+            os.path.expanduser("~/.smiledev/modules/loop-node-window/index.js"),
+            os.path.expanduser("~/cokistudios.github.io/modules/loop-node-window/index.js")
+        ]
+        mod_path = next((p for p in candidates if os.path.exists(p)), "modules/loop-node-window/index.js")
+
+        print(f"  [Bridge] Ejecutando: node {mod_path}")
+        # Iniciar loop-node-window (sin --no-open para que abra el navegador automáticamente)
+        p = subprocess.Popen(
+            ["node", mod_path, "--title", "Looping Engine HTML5 HUD", "--port", "7895"],
+            stdin=subprocess.PIPE, text=True
+        )
+
+        time.sleep(1.2)
+
+        # Enviar estado inicial vía stdin IPC
+        p.stdin.write('{"metric":"LoopStatus","value":"Active Engine v2.5"}\n')
+        p.stdin.write('{"metric":"PlayerScore","value":1500}\n')
+        p.stdin.write('{"metric":"RenderFPS","value":120}\n')
+        p.stdin.write('{"log":"[Loop OS] Engine connected to HTML5 dynamic window"}\n')
+        p.stdin.flush()
+
+        print("  [Bridge] 🌐 ¡Ventana HTML5 interactiva abierta en tu navegador (http://localhost:7895)!")
+        print("  [Bridge] Transmitiendo telemetría continua en vivo...")
+        print("  [Bridge] 👉 Presiona Ctrl+C en la terminal cuando desees cerrar la ventana.")
+
+        try:
+            step = 0
+            while True:
+                time.sleep(1.0)
+                step += 1
+                score = 1500 + step * 25
+                fps = 118 + (step % 5)
+                p.stdin.write(f'{{"metric":"PlayerScore","value":{score}}}\n')
+                p.stdin.write(f'{{"metric":"RenderFPS","value":{fps}}}\n')
+                if step % 5 == 0:
+                    p.stdin.write(f'{{"log":"[Live Pulse] Loop Tick #{step} -> Telemetría activa"}}\n')
+                p.stdin.flush()
+        except KeyboardInterrupt:
+            print("\n  [Bridge] Cerrando ventana y deteniendo servidor...")
+        finally:
+            p.terminate()
+            print("  [Bridge] Servidor detenido correctamente.")
+
+    runpy launch_window
+    print "[Loop] Demo de ventana HTML5 finalizada con exito!"

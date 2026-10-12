@@ -33,25 +33,43 @@ public struct LauncherView: View {
                     // 1. Top Telemetry & Status Bar
                     TopTelemetryBar(vm: vm)
 
-                    // 2. Category Selector Navigation Pills
-                    categoryBar()
-                        .padding(.top, 14)
-                        .padding(.bottom, 6)
-
-                    // 3. Main Center Content (Carousel or Grid)
+                    // 2. Main Content based on Ecosystem Mode
                     ZStack {
-                        if vm.viewMode == .carousel {
-                            AppCarouselView(vm: vm)
-                                .transition(.opacity.combined(with: .scale(scale: 0.96)))
-                        } else {
-                            AppGridView(vm: vm)
-                                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                        switch vm.ecosystemMode {
+                        case .drive:
+                            ShineDriveView(vm: vm)
+                                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+
+                        case .arcade:
+                            VStack(spacing: 0) {
+                                // Category Selector Navigation Pills
+                                categoryBar()
+                                    .padding(.top, 14)
+                                    .padding(.bottom, 6)
+
+                                // Main Center Content (Carousel or Grid)
+                                ZStack {
+                                    if vm.viewMode == .carousel {
+                                        AppCarouselView(vm: vm)
+                                            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                                    } else {
+                                        AppGridView(vm: vm)
+                                            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                                // Bottom Gamepad Navigation Hints Dock
+                                BottomDockView(vm: vm)
+                            }
+                            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+
+                        case .studio:
+                            ShineStudioView(vm: vm)
+                                .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                    // 4. Bottom Gamepad Navigation Hints Dock
-                    BottomDockView(vm: vm)
                 }
 
                 // 5. Settings Drawer (Slide-out from Right)
@@ -194,6 +212,19 @@ public struct LauncherView: View {
                 return nil
             case 17: // 'T' key (Turbo Overclock toggle)
                 self.vm.performanceProfile = (self.vm.performanceProfile == .turbo) ? .balanced : .turbo
+                SoundSynthesizer.shared.playActionBlip()
+                return nil
+            case 18: // '1' key (Shine Drive)
+                self.vm.setEcosystemMode(.drive)
+                return nil
+            case 19: // '2' key (Shine Arcade)
+                self.vm.setEcosystemMode(.arcade)
+                return nil
+            case 20: // '3' key (Shine Studio)
+                self.vm.setEcosystemMode(.studio)
+                return nil
+            case 4: // 'H' key (Toggle Windshield Mirrored HUD in Drive mode)
+                self.vm.isHudMirrored.toggle()
                 SoundSynthesizer.shared.playActionBlip()
                 return nil
             case 37: // 'L' key (.loop code inspector)

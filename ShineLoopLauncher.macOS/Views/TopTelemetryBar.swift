@@ -80,8 +80,47 @@ public struct TopTelemetryBar: View {
 
             Spacer()
 
-            // Center: Bubbly Dot Dynamic Island
-            BubblyDotView(vm: vm)
+            // Center: Ecosystem Mode Switcher & Bubbly Dot Dynamic Island
+            HStack(spacing: 12) {
+                // Ecosystem Mode Switcher Pills
+                HStack(spacing: 4) {
+                    ForEach(EcosystemMode.allCases, id: \.self) { mode in
+                        let isSelected = (vm.ecosystemMode == mode)
+                        Button {
+                            vm.setEcosystemMode(mode)
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: mode.iconName)
+                                    .font(.system(size: 10, weight: .bold))
+                                Text(mode.shortName)
+                                    .font(.system(size: 10, weight: isSelected ? .black : .semibold, design: .rounded))
+                            }
+                            .foregroundColor(isSelected ? .white : .white.opacity(0.6))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                isSelected
+                                    ? Color(hex: mode.accentColorHex).opacity(0.25)
+                                    : Color.clear
+                            )
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule().stroke(
+                                    isSelected ? Color(hex: mode.accentColorHex).opacity(0.7) : Color.white.opacity(0.06),
+                                    lineWidth: 1
+                                )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(3)
+                .background(Color.black.opacity(0.4))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
+
+                BubblyDotView(vm: vm)
+            }
 
             Spacer()
 

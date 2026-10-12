@@ -143,6 +143,8 @@
             <button class="cs-tab-btn" data-tab="tab-cli-auth">02. AUTENTICACIÓN SMILEDEV CLI</button>
             <button class="cs-tab-btn" data-tab="tab-cdn-view">03. COKI EDGE CDN TELEMETRÍA</button>
             <button class="cs-tab-btn" data-tab="tab-oauth-clients">04. APLICACIONES OAUTH 2.0</button>
+            <button class="cs-tab-btn" data-tab="tab-csid-docs">05. GUÍA CS ID CONNECT (JS, SWIFT, KOTLIN)</button>
+            <button class="cs-tab-btn" data-tab="tab-csidkit">06. CSIDKit SDK SUITE</button>
         </div>
 
         <!-- ══════════════ TAB 1: SMILEDEV & LOOPMODULES REGISTRY ══════════════ -->
@@ -253,6 +255,166 @@
                 
                 <div id="oauth-apps-container">
                     <p style="color: var(--cs-text-sub); text-align: center; padding: 30px 0;">Cargando aplicaciones...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ TAB 5: GUÍA DE INTEGRACIÓN CS ID CONNECT (JS, SWIFT, KOTLIN) ══════════════ -->
+        <div id="tab-csid-docs" class="dev-tab-content" style="display: none;">
+            <div class="cs-panel" style="margin-bottom: 24px;">
+                <div class="cs-panel-header">
+                    <div class="cs-panel-title">Arquitectura Universal de Integración CS ID Connect v2.0</div>
+                    <span class="cs-tag cs-tag-green">RFC 6749 • RFC 7636 PKCE S256</span>
+                </div>
+                <p style="font-size: 13px; color: var(--cs-text-sub); line-height: 1.6; margin-bottom: 20px;">
+                    CS ID Connect proporciona identidad federada respaldada por hardware en navegadores y aplicaciones nativas. Todos los intercambios de credenciales se procesan sin exponer contraseñas a clientes externos. Los tokens son cifrados usando JWE (AES-256-GCM) y compatibles con Apple Secure Enclave y Android StrongBox.
+                </p>
+
+                <!-- Sub-tabs Selector for Languages -->
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--cs-hairline); padding-bottom: 12px;">
+                    <button class="cs-btn cs-btn-primary csid-doc-tab" onclick="switchDocLang('js')">JavaScript / Web</button>
+                    <button class="cs-btn cs-btn-secondary csid-doc-tab" onclick="switchDocLang('swift')">Swift / SwiftUI (iOS & macOS)</button>
+                    <button class="cs-btn cs-btn-secondary csid-doc-tab" onclick="switchDocLang('kotlin')">Kotlin / Android (16 & 17)</button>
+                </div>
+
+                <!-- Doc JS Content -->
+                <div id="doc-js" class="doc-lang-content">
+                    <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--cs-cyan);">Opción A: Web Component Oficial (1 línea de código)</h3>
+                    <div class="cs-code-box" style="margin-bottom: 16px;">
+                        <div>
+                            <span style="color:var(--cs-text-sub);">&lt;!-- Importa el SDK desde el CDN de Coki Studios --&gt;</span><br>
+                            &lt;script type="module" src="https://cdn.cokistudios.com/csid-connect.js"&gt;&lt;/script&gt;<br><br>
+                            <span style="color:var(--cs-text-sub);">&lt;!-- Agrega el botón oficial a tu interfaz HTML --&gt;</span><br>
+                            &lt;csid-connect-button client-id="tu_client_id" theme="glass" shape="pill" mode="popup"&gt;&lt;/csid-connect-button&gt;<br><br>
+                            <span style="color:var(--cs-text-sub);">&lt;!-- Escucha el evento de autenticación exitosa --&gt;</span><br>
+                            &lt;script&gt;<br>
+                            &nbsp;&nbsp;document.querySelector('csid-connect-button').addEventListener('success', (e) =&gt; {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;console.log('Usuario autenticado:', e.detail.user);<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;console.log('Token de acceso:', e.detail.accessToken);<br>
+                            &nbsp;&nbsp;});<br>
+                            &lt;/script&gt;
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--cs-cyan);">Opción B: SDK Modular JavaScript & One-Tap</h3>
+                    <div class="cs-code-box">
+                        <div>
+                            <span style="color:var(--cs-text-sub);">// Inicializar CS ID Connect con soporte One-Tap</span><br>
+                            import { CSIDConnect } from 'https://cdn.cokistudios.com/csid-connect.js';<br><br>
+                            CSIDConnect.init({ clientId: 'tu_client_id', mode: 'popup' });<br><br>
+                            <span style="color:var(--cs-text-sub);">// 1. Mostrar tarjeta flotante One-Tap si ya hay sesión</span><br>
+                            CSIDConnect.promptOneTap({<br>
+                            &nbsp;&nbsp;onAuth: (res) =&gt; console.log('One-Tap exitoso:', res.user),<br>
+                            &nbsp;&nbsp;onDismiss: () =&gt; console.log('Descartado por usuario')<br>
+                            });<br><br>
+                            <span style="color:var(--cs-text-sub);">// 2. Disparar inicio de sesión manual con botón personalizado</span><br>
+                            const auth = await CSIDConnect.signIn({ mode: 'popup' });
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doc Swift Content -->
+                <div id="doc-swift" class="doc-lang-content" style="display: none;">
+                    <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--cs-amber);">Integración Nativa en SwiftUI & ASWebAuthenticationSession</h3>
+                    <p style="font-size: 12px; color: var(--cs-text-sub); margin-bottom: 12px;">
+                        Utiliza <code>ASWebAuthenticationSession</code> y <code>CryptoKit</code> con soporte nativo para Universal Links (<code>https://cokistudios.com/authorize</code>) o esquemas personalizados (<code>miapp://auth</code>):
+                    </p>
+                    <div class="cs-code-box">
+                        <div>
+                            <span style="color:var(--cs-text-sub);">// 1. Iniciar sesión mediante CSIDManager en Swift</span><br>
+                            import SwiftUI<br>
+                            import AuthenticationServices<br>
+                            import CryptoKit<br><br>
+                            Task {<br>
+                            &nbsp;&nbsp;do {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;let user = try await CSIDManager.shared.loginWithOAuthPKCE(<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clientId: "tu_client_id",<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;redirectUri: "miapp://auth"<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;print("Bienvenido \(user.name) (\(user.email))")<br>
+                            &nbsp;&nbsp;} catch {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;print("Error de autenticación: \(error)")<br>
+                            &nbsp;&nbsp;}<br>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doc Kotlin Content -->
+                <div id="doc-kotlin" class="doc-lang-content" style="display: none;">
+                    <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--cs-green);">Integración en Android (Kotlin) con CSIDKit</h3>
+                    <p style="font-size: 12px; color: var(--cs-text-sub); margin-bottom: 12px;">
+                        Usa Custom Tabs y PKCE respaldado por AndroidKeyStore (StrongBox/TEE) en Android 16 y 17:
+                    </p>
+                    <div class="cs-code-box">
+                        <div>
+                            <span style="color:var(--cs-text-sub);">// 1. Inicializar CSIDKit en Kotlin</span><br>
+                            val csid = CSIDClient.Builder(context)<br>
+                            &nbsp;&nbsp;.setClientId("tu_client_id")<br>
+                            &nbsp;&nbsp;.setRedirectUri("miapp://auth")<br>
+                            &nbsp;&nbsp;.build()<br><br>
+                            <span style="color:var(--cs-text-sub);">// 2. Iniciar flujo de autorización segura</span><br>
+                            csid.launchAuth(activity) { result -&gt;<br>
+                            &nbsp;&nbsp;when (result) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;is CSIDResult.Success -&gt; {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Log.d("CSID", "Conectado como: ${result.user.email}")<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;is CSIDResult.Error -&gt; Log.e("CSID", result.message)<br>
+                            &nbsp;&nbsp;}<br>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ TAB 6: CSIDKit SDK SUITE ══════════════ -->
+        <div id="tab-csidkit" class="dev-tab-content" style="display: none;">
+            <div class="cs-panel">
+                <div class="cs-panel-header">
+                    <div class="cs-panel-title">CSIDKit: La Suite Multiplataforma Oficial</div>
+                    <span class="cs-tag cs-tag-cyan">UNIVERSAL SDK</span>
+                </div>
+                <p style="font-size: 13px; color: var(--cs-text-sub); margin-bottom: 20px;">
+                    CSIDKit abstrae la complejidad criptográfica (JWE AES-256-GCM, PKCE S256 y WebAuthn) en librerías ligeras sin dependencias externas para cada plataforma.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                    <div class="pkg-card">
+                        <div>
+                            <div style="font-weight: 800; font-size: 16px; color: var(--cs-cyan); margin-bottom: 4px;">CSIDKit for Web</div>
+                            <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.4; margin-bottom: 12px;">
+                                Web Component autónomo &lt;csid-connect-button&gt;, One-Tap Sign In y desencriptación nativa JWE en el navegador con Web Crypto API.
+                            </div>
+                        </div>
+                        <div class="cs-code-box" style="font-size: 11px;">
+                            npm install @cokistudios/csid-connect
+                        </div>
+                    </div>
+
+                    <div class="pkg-card">
+                        <div>
+                            <div style="font-weight: 800; font-size: 16px; color: var(--cs-amber); margin-bottom: 4px;">CSIDKit for Apple</div>
+                            <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.4; margin-bottom: 12px;">
+                                Paquete Swift (SPM) para iOS, iPadOS y macOS. Criptografía Secure Enclave Processor (SEP), ASWebAuthenticationSession y componentes SwiftUI.
+                            </div>
+                        </div>
+                        <div class="cs-code-box" style="font-size: 11px;">
+                            .package(url: "https://github.com/CokiStudios/CSIDKit-Swift", from: "1.0.0")
+                        </div>
+                    </div>
+
+                    <div class="pkg-card">
+                        <div>
+                            <div style="font-weight: 800; font-size: 16px; color: var(--cs-green); margin-bottom: 4px;">CSIDKit for Android</div>
+                            <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.4; margin-bottom: 12px;">
+                                Librería Kotlin para Android 16/17 (flUI, XuI, UI, hiUI). Custom Tabs, TEE / StrongBox Keymaster y Jetpack Compose.
+                            </div>
+                        </div>
+                        <div class="cs-code-box" style="font-size: 11px;">
+                            implementation("com.cokistudios:csidkit:1.0.0")
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -584,6 +746,16 @@
             await loadOAuthApps();
             alert(`¡Aplicación "${name}" registrada exitosamente!\nClient ID: ${clientId}`);
         });
+
+        window.switchDocLang = (lang) => {
+            document.querySelectorAll('.csid-doc-tab').forEach(b => {
+                b.className = 'cs-btn cs-btn-secondary csid-doc-tab';
+            });
+            document.querySelectorAll('.doc-lang-content').forEach(c => c.style.display = 'none');
+            const activeTarget = document.getElementById(`doc-${lang}`);
+            if (activeTarget) activeTarget.style.display = 'block';
+            event.target.className = 'cs-btn cs-btn-primary csid-doc-tab';
+        };
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
             await logoutCoki();

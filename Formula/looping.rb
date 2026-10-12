@@ -5,7 +5,7 @@ class Looping < Formula
   license "MIT"
 
   url "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v2.5.0/looping-v2.5.0-darwin-universal.tar.gz"
-  sha256 "8ad7ee7f7eb30114b92ea4252ecd3484c44d0ac197b9674480c769755d6c2a53"
+  sha256 "4c681a67f7d6813526b699cb5f15f5362768a35828b6033eac65fa84745d6350"
 
   def install
     bin.install "looping"

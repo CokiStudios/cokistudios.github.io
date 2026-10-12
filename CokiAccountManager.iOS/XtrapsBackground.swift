@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Xtraps Precision Bezier Curve Shapes (Exact match to Coki Studios Brand Sketch)
+// MARK: - Xtraps Precision Bezier Curve Shapes (Coki Studios Brand Identity)
 
 public struct XtrapsWave1: Shape {
     public func path(in rect: CGRect) -> Path {
@@ -56,25 +56,30 @@ public struct XtrapsWave2: Shape {
     }
 }
 
-// MARK: - Xtraps Background (Vivid & Animated)
+// MARK: - Xtraps Background (Vivid, Fluid & GPU Accelerated)
 
 public struct XtrapsBackground: View {
     public let strokeColor: Color
     public let opacity: Double
     public let animated: Bool
     public let lineWidth: CGFloat
-    @State private var phase: CGFloat = 0.0
+    public let rainbow: Bool
+    
+    @State private var waveProgress: CGFloat = -1.0
+    @State private var hueAngle: Double = 0.0
     
     public init(
         strokeColor: Color = Color(red: 99/255, green: 102/255, blue: 241/255), // Vibrant Indigo
         opacity: Double = 0.55,
         animated: Bool = true,
-        lineWidth: CGFloat = 2.2
+        lineWidth: CGFloat = 2.2,
+        rainbow: Bool = false
     ) {
         self.strokeColor = strokeColor
         self.opacity = opacity
         self.animated = animated
         self.lineWidth = lineWidth
+        self.rainbow = rainbow
     }
     
     public var body: some View {
@@ -85,7 +90,7 @@ public struct XtrapsBackground: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                strokeColor.opacity(opacity * 0.5),
+                                strokeColor.opacity(opacity * 0.45),
                                 strokeColor.opacity(opacity * 1.0),
                                 strokeColor.opacity(opacity * 0.6)
                             ],
@@ -94,14 +99,17 @@ public struct XtrapsBackground: View {
                         ),
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                     )
-                    .offset(y: animated ? sin(phase) * 8 : 0)
+                    .offset(
+                        x: animated ? waveProgress * 4 : 0,
+                        y: animated ? waveProgress * 9 : 0
+                    )
                 
                 // Wave 2 Gradient Stroke
                 XtrapsWave2()
                     .stroke(
                         LinearGradient(
                             colors: [
-                                strokeColor.opacity(opacity * 0.4),
+                                strokeColor.opacity(opacity * 0.35),
                                 strokeColor.opacity(opacity * 0.85),
                                 strokeColor.opacity(opacity * 1.0)
                             ],
@@ -110,14 +118,29 @@ public struct XtrapsBackground: View {
                         ),
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                     )
-                    .offset(y: animated ? cos(phase) * 8 : 0)
+                    .offset(
+                        x: animated ? -waveProgress * 5 : 0,
+                        y: animated ? -waveProgress * 8 : 0
+                    )
             }
+            .hueRotation(rainbow ? .degrees(hueAngle) : .zero)
         }
         .allowsHitTesting(false)
         .onAppear {
             if animated {
-                withAnimation(Animation.easeInOut(duration: 5.0).repeatForever(autoreverses: true)) {
-                    phase = .pi * 2
+                withAnimation(
+                    Animation.easeInOut(duration: 4.5)
+                        .repeatForever(autoreverses: true)
+                ) {
+                    waveProgress = 1.0
+                }
+            }
+            if rainbow {
+                withAnimation(
+                    Animation.linear(duration: 10.0)
+                        .repeatForever(autoreverses: false)
+                ) {
+                    hueAngle = 360.0
                 }
             }
         }

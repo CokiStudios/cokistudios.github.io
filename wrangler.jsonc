@@ -13,6 +13,8 @@
   "routes": [
     "cokistudios.com/*",
     "www.cokistudios.com/*",
-    "repo.cokistudios.com/*"
+    "repo.cokistudios.com/*",
+    "developer.cokistudios.com/*",
+    "cdn.cokistudios.com/*"
   ]
 }

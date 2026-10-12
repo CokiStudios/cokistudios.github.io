@@ -49,6 +49,10 @@ public class ShineMapsWatchConnectivity: NSObject, ObservableObject, WCSessionDe
     @Published public var speedLimitKmh: Int = 60
     @Published public var nextInstruction: String = "En 450m gira a la derecha"
     @Published public var nearbyPOIs: [WatchPOI] = []
+    @Published public var userLatitude: Double = 4.7110
+    @Published public var userLongitude: Double = -74.0721
+    @Published public var destinationLatitude: Double = 4.8840
+    @Published public var destinationLongitude: Double = -74.0350
     
     private var lastHapticStepId: String = ""
     private var hasTriggered100mHaptic: Bool = false
@@ -140,6 +144,14 @@ public class ShineMapsWatchConnectivity: NSObject, ObservableObject, WCSessionDe
         }
         if let next = data["next_instruction"] as? String {
             self.nextInstruction = next
+        }
+        if let uLat = data["user_lat"] as? Double, let uLon = data["user_lon"] as? Double {
+            self.userLatitude = uLat
+            self.userLongitude = uLon
+        }
+        if let dLat = data["dest_lat"] as? Double, let dLon = data["dest_lon"] as? Double {
+            self.destinationLatitude = dLat
+            self.destinationLongitude = dLon
         }
         if let rawPOIs = data["nearby_pois"] as? [[String: Any]] {
             self.nearbyPOIs = rawPOIs.compactMap { dict in

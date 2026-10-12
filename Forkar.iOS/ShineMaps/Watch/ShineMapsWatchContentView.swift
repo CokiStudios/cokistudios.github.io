@@ -9,6 +9,7 @@
 
 import SwiftUI
 import WatchKit
+import MapKit
 
 struct ShineMapsWatchContentView: View {
     @ObservedObject var connectivity = ShineMapsWatchConnectivity.shared
@@ -20,22 +21,26 @@ struct ShineMapsWatchContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // MARK: - TAB 1: Live Maneuver HUD / Idle Screen
+            // MARK: - TAB 0: Live Maneuver HUD / Idle Screen
             if connectivity.isNavigating {
-                ActiveNavigationHUDView(connectivity: connectivity)
+                ActiveNavigationHUDView(connectivity: connectivity, onShowMap: { selectedTab = 1 })
                     .tag(0)
             } else {
-                IdleStartHUDView(connectivity: connectivity, onGoToPOIs: { selectedTab = 1 })
+                IdleStartHUDView(connectivity: connectivity, onGoToPOIs: { selectedTab = 2 }, onGoToMap: { selectedTab = 1 })
                     .tag(0)
             }
             
+            // MARK: - TAB 1: Live Interactive Watch Map
+            WatchLiveMapView(connectivity: connectivity)
+                .tag(1)
+            
             // MARK: - TAB 2: Nearby POIs (EV, Parking, Eco)
             NearbyPOIsView(connectivity: connectivity)
-                .tag(1)
+                .tag(2)
             
             // MARK: - TAB 3: Telemetry & Connection Status
             LiveTelemetryStatusView(connectivity: connectivity)
-                .tag(2)
+                .tag(3)
         }
         .tabViewStyle(.page)
     }
@@ -44,6 +49,7 @@ struct ShineMapsWatchContentView: View {
 // MARK: - 1. Active Navigation HUD View
 struct ActiveNavigationHUDView: View {
     @ObservedObject var connectivity: ShineMapsWatchConnectivity
+    var onShowMap: () -> Void = {}
     
     private let cyanAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
     private let emeraldAccent = Color(red: 16/255, green: 185/255, blue: 129/255)
@@ -146,17 +152,29 @@ struct ActiveNavigationHUDView: View {
                     .padding(.horizontal, 6)
                 }
                 
-                // Actions: Stop & Reroute
-                HStack(spacing: 8) {
+                // Actions: Stop, View Map & Reroute
+                HStack(spacing: 6) {
                     Button(action: {
                         connectivity.stopNavigation()
                     }) {
-                        Label("Finalizar", systemImage: "xmark.circle.fill")
-                            .font(.system(size: 11, weight: .bold))
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.red)
                     }
                     .buttonStyle(.bordered)
                     .tint(.red.opacity(0.3))
+                    
+                    Button(action: onShowMap) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "map.fill")
+                                .font(.system(size: 10))
+                            Text("Mapa")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundColor(emeraldAccent)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(emeraldAccent.opacity(0.3))
                     
                     Button(action: {
                         connectivity.requestReroute()
@@ -179,43 +197,52 @@ struct ActiveNavigationHUDView: View {
 struct IdleStartHUDView: View {
     @ObservedObject var connectivity: ShineMapsWatchConnectivity
     var onGoToPOIs: () -> Void
+    var onGoToMap: () -> Void = {}
     
     private let cyanAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
     private let emeraldAccent = Color(red: 16/255, green: 185/255, blue: 129/255)
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             ZStack {
                 Circle()
                     .stroke(LinearGradient(colors: [cyanAccent, emeraldAccent], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
-                    .frame(width: 52, height: 52)
+                    .frame(width: 46, height: 46)
                 
                 Image(systemName: "map.fill")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(LinearGradient(colors: [cyanAccent, emeraldAccent], startPoint: .top, endPoint: .bottom))
             }
-            .padding(.top, 4)
+            .padding(.top, 2)
             
             Text("Shine Maps")
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
             
-            Text(connectivity.isReachable ? "Conectado a iPhone" : "GPS Autónomo")
-                .font(.system(size: 10, weight: .medium))
+            Text(connectivity.isReachable ? "Sincronizado con iPhone" : "GPS Autónomo")
+                .font(.system(size: 9, weight: .medium))
                 .foregroundColor(connectivity.isReachable ? emeraldAccent : .orange)
             
-            Button(action: onGoToPOIs) {
-                HStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Button(action: onGoToMap) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 10))
+                        Text("Ver Mapa")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(cyanAccent)
+                
+                Button(action: onGoToPOIs) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 11, weight: .bold))
-                    Text("Puntos Cercanos")
-                        .font(.system(size: 12, weight: .bold))
                 }
-                .foregroundColor(.white)
+                .buttonStyle(.bordered)
+                .tint(emeraldAccent)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(emeraldAccent)
-            .padding(.top, 4)
+            .padding(.top, 2)
         }
         .padding(.horizontal, 6)
     }
@@ -364,4 +391,210 @@ struct LiveTelemetryStatusView: View {
             .padding(.horizontal, 4)
         }
     }
+}
+
+// MARK: - 4. Interactive Live Watch Map View
+struct WatchLiveMapView: View {
+    @ObservedObject var connectivity: ShineMapsWatchConnectivity
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 4.7110, longitude: -74.0721),
+        span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
+    )
+    
+    private let cyanAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    private let emeraldAccent = Color(red: 16/255, green: 185/255, blue: 129/255)
+
+    var body: some View {
+        ZStack {
+            Map(coordinateRegion: $region, annotationItems: mapAnnotations) { item in
+                MapAnnotation(coordinate: item.coordinate) {
+                    if item.isUser {
+                        ZStack {
+                            Circle()
+                                .fill(cyanAccent.opacity(0.35))
+                                .frame(width: 22, height: 22)
+                            Circle()
+                                .fill(cyanAccent)
+                                .frame(width: 10, height: 10)
+                            Circle()
+                                .stroke(Color.white, lineWidth: 1.5)
+                                .frame(width: 10, height: 10)
+                        }
+                    } else if item.isDestination {
+                        VStack(spacing: 2) {
+                            Image(systemName: "flag.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(emeraldAccent)
+                            Text(item.title)
+                                .font(.system(size: 7, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 3)
+                                .padding(.vertical, 1)
+                                .background(Color.black.opacity(0.8))
+                                .cornerRadius(3)
+                        }
+                    } else {
+                        Image(systemName: item.icon)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.orange)
+                            .padding(3)
+                            .background(Color.black.opacity(0.75))
+                            .clipShape(Circle())
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .onAppear {
+                centerOnUserOrDest()
+            }
+            .onChange(of: connectivity.userLatitude) { _ in
+                centerOnUserOrDest()
+            }
+            
+            // Floating Mini Maneuver Pill
+            VStack {
+                if connectivity.isNavigating {
+                    HStack(spacing: 5) {
+                        Image(systemName: connectivity.currentManeuverIcon)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(emeraldAccent)
+                        Text(connectivity.distanceToNextManeuver)
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                        Text(connectivity.currentInstruction)
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.black.opacity(0.85))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(emeraldAccent.opacity(0.5), lineWidth: 1)
+                    )
+                    .padding(.top, 2)
+                }
+                
+                Spacer()
+                
+                // Bottom Floating Controls
+                HStack {
+                    Button(action: centerOnUser) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(cyanAccent)
+                            .padding(5)
+                            .background(Color.black.opacity(0.8))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Spacer()
+                    
+                    // Zoom In/Out
+                    HStack(spacing: 3) {
+                        Button(action: zoomIn) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(4)
+                                .background(Color.black.opacity(0.8))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        
+                        Button(action: zoomOut) {
+                            Image(systemName: "minus")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(4)
+                                .background(Color.black.opacity(0.8))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 4)
+                .padding(.bottom, 2)
+            }
+        }
+    }
+    
+    private var mapAnnotations: [WatchMapItem] {
+        var items: [WatchMapItem] = []
+        // User Location
+        items.append(WatchMapItem(
+            id: "user",
+            title: "Tú",
+            coordinate: CLLocationCoordinate2D(latitude: connectivity.userLatitude, longitude: connectivity.userLongitude),
+            isUser: true,
+            isDestination: false,
+            icon: "location.fill"
+        ))
+        
+        // Destination if navigating
+        if connectivity.isNavigating {
+            items.append(WatchMapItem(
+                id: "dest",
+                title: connectivity.destinationName,
+                coordinate: CLLocationCoordinate2D(latitude: connectivity.destinationLatitude, longitude: connectivity.destinationLongitude),
+                isUser: false,
+                isDestination: true,
+                icon: "flag.fill"
+            ))
+        }
+        
+        // Nearby POIs
+        for poi in connectivity.nearbyPOIs.prefix(4) {
+            items.append(WatchMapItem(
+                id: poi.id,
+                title: poi.name,
+                coordinate: CLLocationCoordinate2D(latitude: poi.latitude, longitude: poi.longitude),
+                isUser: false,
+                isDestination: false,
+                icon: poi.icon
+            ))
+        }
+        return items
+    }
+    
+    private func centerOnUserOrDest() {
+        if connectivity.isNavigating {
+            let midLat = (connectivity.userLatitude + connectivity.destinationLatitude) / 2.0
+            let midLon = (connectivity.userLongitude + connectivity.destinationLongitude) / 2.0
+            let spanLat = max(abs(connectivity.userLatitude - connectivity.destinationLatitude) * 1.4, 0.01)
+            let spanLon = max(abs(connectivity.userLongitude - connectivity.destinationLongitude) * 1.4, 0.01)
+            region = MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: midLat, longitude: midLon),
+                span: MKCoordinateSpan(latitudeDelta: min(spanLat, 0.2), longitudeDelta: min(spanLon, 0.2))
+            )
+        } else {
+            centerOnUser()
+        }
+    }
+    
+    private func centerOnUser() {
+        region.center = CLLocationCoordinate2D(latitude: connectivity.userLatitude, longitude: connectivity.userLongitude)
+    }
+    
+    private func zoomIn() {
+        region.span.latitudeDelta = max(region.span.latitudeDelta / 2, 0.003)
+        region.span.longitudeDelta = max(region.span.longitudeDelta / 2, 0.003)
+    }
+    
+    private func zoomOut() {
+        region.span.latitudeDelta = min(region.span.latitudeDelta * 2, 0.1)
+        region.span.longitudeDelta = min(region.span.longitudeDelta * 2, 0.1)
+    }
+}
+
+struct WatchMapItem: Identifiable {
+    let id: String
+    let title: String
+    let coordinate: CLLocationCoordinate2D
+    let isUser: Bool
+    let isDestination: Bool
+    let icon: String
 }

@@ -84,6 +84,49 @@ public:
         return 0;
     }
 
+    int64_t size() const {
+        if (type == ValueType::List && list_val) return static_cast<int64_t>(list_val->size());
+        if (type == ValueType::Map && map_val) return static_cast<int64_t>(map_val->size());
+        if (type == ValueType::String) return static_cast<int64_t>(str_val.size());
+        if (type == ValueType::Tuple) return 2;
+        return 0;
+    }
+
+    void push(const Value& item) {
+        if (type != ValueType::List) {
+            type = ValueType::List;
+            list_val = std::make_shared<std::vector<Value>>();
+        } else if (!list_val) {
+            list_val = std::make_shared<std::vector<Value>>();
+        }
+        list_val->push_back(item);
+    }
+
+    Value pop() {
+        if (type == ValueType::List && list_val && !list_val->empty()) {
+            Value back = list_val->back();
+            list_val->pop_back();
+            return back;
+        }
+        return Value();
+    }
+
+    bool contains(const Value& item) const {
+        if (type == ValueType::List && list_val) {
+            for (const auto& elem : *list_val) {
+                if (elem == item) return true;
+            }
+            return false;
+        }
+        if (type == ValueType::Map && map_val) {
+            return map_val->find(item.as_string()) != map_val->end();
+        }
+        if (type == ValueType::String) {
+            return str_val.find(item.as_string()) != std::string::npos;
+        }
+        return false;
+    }
+
     std::string as_string() const {
         switch (type) {
             case ValueType::Nil: return "nil";

@@ -70,11 +70,69 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val styleNames = listOf(
-        "navigation-night-v1",
-        "satellite-streets-v12",
-        "navigation-day-v1"
+        "google-mapkit",
+        "apple-mapkit",
+        "google-hybrid",
+        "shine-night"
     )
     private var currentStyleIndex = 0
+
+    private fun getGoogleMapsStyleJson(type: String = "m"): String {
+        return """
+        {
+          "version": 8,
+          "name": "GoogleMapsStyle",
+          "sources": {
+            "google-tiles": {
+              "type": "raster",
+              "tiles": [
+                "https://mt0.google.com/vt/lyrs=$type&hl=es&x={x}&y={y}&z={z}",
+                "https://mt1.google.com/vt/lyrs=$type&hl=es&x={x}&y={y}&z={z}",
+                "https://mt2.google.com/vt/lyrs=$type&hl=es&x={x}&y={y}&z={z}",
+                "https://mt3.google.com/vt/lyrs=$type&hl=es&x={x}&y={y}&z={z}"
+              ],
+              "tileSize": 256,
+              "maxzoom": 22
+            }
+          },
+          "layers": [
+            {
+              "id": "google-tiles-layer",
+              "type": "raster",
+              "source": "google-tiles"
+            }
+          ]
+        }
+        """.trimIndent()
+    }
+
+    private fun getAppleMapKitStyleJson(): String {
+        return """
+        {
+          "version": 8,
+          "name": "AppleMapKitStyle",
+          "sources": {
+            "mapkit-tiles": {
+              "type": "raster",
+              "tiles": [
+                "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+                "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+                "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
+              ],
+              "tileSize": 256,
+              "maxzoom": 20
+            }
+          },
+          "layers": [
+            {
+              "id": "mapkit-tiles-layer",
+              "type": "raster",
+              "source": "mapkit-tiles"
+            }
+          ]
+        }
+        """.trimIndent()
+    }
 
     private fun getMapboxRasterStyleJson(styleName: String): String {
         return """
@@ -258,10 +316,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadMapStyle(index: Int) {
-        val styleName = styleNames[index]
+        val styleKey = styleNames[index % styleNames.size]
         loadingIndicator.visibility = View.VISIBLE
 
-        val styleJson = getMapboxRasterStyleJson(styleName)
+        val styleJson = when (styleKey) {
+            "google-mapkit" -> getGoogleMapsStyleJson("m")
+            "apple-mapkit" -> getAppleMapKitStyleJson()
+            "google-hybrid" -> getGoogleMapsStyleJson("y")
+            else -> getMapboxRasterStyleJson("navigation-night-v1")
+        }
+
         map?.setStyle(Style.Builder().fromJson(styleJson)) { style ->
             loadingIndicator.visibility = View.GONE
             enableLocationComponent(style)
@@ -834,9 +898,10 @@ class MainActivity : AppCompatActivity() {
             currentStyleIndex = (currentStyleIndex + 1) % styleNames.size
             loadMapStyle(currentStyleIndex)
             val name = when (currentStyleIndex) {
-                0 -> "Modo Nocturno / Shine Dark"
-                1 -> "Satélite Híbrido"
-                else -> "Calles de Día"
+                0 -> "Google Maps (Estilo Apple MapKit)"
+                1 -> "Apple MapKit (Carto Voyager)"
+                2 -> "Google Satélite Híbrido"
+                else -> "Shine Modo Nocturno"
             }
             Toast.makeText(this, "Capa: $name", Toast.LENGTH_SHORT).show()
         }

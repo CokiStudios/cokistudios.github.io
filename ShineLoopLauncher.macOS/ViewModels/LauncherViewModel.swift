@@ -7,8 +7,67 @@ public enum ViewMode: String, CaseIterable {
     case grid = "Cuadrícula"
 }
 
+// MARK: - Ecosystem Mode
+public enum EcosystemMode: String, CaseIterable {
+    case drive = "Drive"
+    case arcade = "Arcade"
+    case studio = "Studio"
+
+    public var displayName: String {
+        switch self {
+        case .drive: return "🚗 Shine Drive"
+        case .arcade: return "🎮 Shine Arcade"
+        case .studio: return "⚡ Shine Studio"
+        }
+    }
+
+    public var shortName: String {
+        switch self {
+        case .drive: return "DRIVE"
+        case .arcade: return "ARCADE"
+        case .studio: return "STUDIO"
+        }
+    }
+
+    public var iconName: String {
+        switch self {
+        case .drive: return "car.fill"
+        case .arcade: return "gamecontroller.fill"
+        case .studio: return "sparkles"
+        }
+    }
+
+    public var accentColorHex: String {
+        switch self {
+        case .drive: return "00f5d4"
+        case .arcade: return "38bdf8"
+        case .studio: return "a855f7"
+        }
+    }
+}
+
 // MARK: - Main Launcher State ViewModel (100% .loop Driven)
 public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
+    // Universal Ecosystem Mode Switcher
+    @Published public var ecosystemMode: EcosystemMode = .drive
+
+    // Shine Drive / Automotive Cockpit State
+    @Published public var speedKmh: Double = 68.0
+    @Published public var speedUnit: String = "KM/H"
+    @Published public var speedLimit: Int = 80
+    @Published public var isHudMirrored: Bool = false
+    @Published public var tripDistanceKm: Double = 24.6
+    @Published public var estimatedRangeKm: Int = 380
+    @Published public var forkarEcoScore: Int = 94
+    @Published public var currentManeuverIcon: String = "arrow.turn.up.right"
+    @Published public var nextStreetName: String = "Av. Las Américas hacia Coki Hub"
+    @Published public var distanceToNextManeuverMeters: Int = 350
+    @Published public var etaTimeString: String = "19:42"
+    @Published public var remainingMinutes: Int = 14
+    @Published public var mediaTrackTitle: String = "Cyber Shimmer (Drive Mix)"
+    @Published public var mediaArtist: String = "Coki Studios Audio Core"
+    @Published public var isPlayingMedia: Bool = true
+
     // Looping Language Parser & Runtime
     @Published public var loopEngine = LoopingScriptEngine()
     @Published public var activeScriptFile: String = "sample_loop_projects/shine_launcher.loop"
@@ -229,14 +288,33 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
 
     // MARK: - Telemetry & Clock Simulation
     private func startTelemetryLoop() {
-        telemetryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        telemetryTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.updateTimeString()
 
             let variation = Int.random(in: -4...5)
             self.cpuLoadPercent = min(max(self.cpuLoadPercent + variation, 14), 68)
             self.wifiPingMs = Int.random(in: 6...12)
+
+            // Dynamic Vehicle Simulation in Drive Mode
+            if self.ecosystemMode == .drive {
+                let speedDelta = Double.random(in: -1.8...2.2)
+                self.speedKmh = min(max(self.speedKmh + speedDelta, 56.0), 84.0)
+                self.tripDistanceKm += (self.speedKmh / 3600.0)
+
+                if self.distanceToNextManeuverMeters > 40 {
+                    self.distanceToNextManeuverMeters -= Int(self.speedKmh * 0.28)
+                } else {
+                    self.distanceToNextManeuverMeters = 850
+                    self.currentManeuverIcon = ["arrow.turn.up.right", "arrow.turn.up.left", "arrow.triangle.merge", "arrow.up"].randomElement() ?? "arrow.turn.up.right"
+                }
+            }
         }
+    }
+
+    public func setEcosystemMode(_ mode: EcosystemMode) {
+        self.ecosystemMode = mode
+        SoundSynthesizer.shared.playActionBlip()
     }
 
     private func updateTimeString() {
@@ -386,6 +464,12 @@ public final class LauncherViewModel: ObservableObject, @unchecked Sendable {
         processRunner.stop()
         isRunningSheetPresented = false
         activeLaunchedApp = nil
+    }
+
+    public func launchAppByTitle(_ title: String) {
+        if let found = allApps.first(where: { $0.title.localizedCaseInsensitiveContains(title) }) {
+            launchApp(found)
+        }
     }
 
     deinit {

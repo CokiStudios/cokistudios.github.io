@@ -76,6 +76,29 @@ public:
     InterpolatedStringExpr(const std::string& t) : raw_template(t) {}
 };
 
+// List Literal: [1, 2, 3]
+class ListExpr : public Expr {
+public:
+    std::vector<std::shared_ptr<Expr>> elements;
+    ListExpr(const std::vector<std::shared_ptr<Expr>>& elems) : elements(elems) {}
+};
+
+// Map Literal: {"key": val, "k2": v2}
+class MapExpr : public Expr {
+public:
+    std::vector<std::pair<std::string, std::shared_ptr<Expr>>> entries;
+    MapExpr(const std::vector<std::pair<std::string, std::shared_ptr<Expr>>>& ents) : entries(ents) {}
+};
+
+// Index Expression: target[index]
+class IndexExpr : public Expr {
+public:
+    std::shared_ptr<Expr> target;
+    std::shared_ptr<Expr> index;
+    IndexExpr(std::shared_ptr<Expr> tgt, std::shared_ptr<Expr> idx)
+        : target(tgt), index(idx) {}
+};
+
 // Base Statement
 class Stmt {
 public:
@@ -136,6 +159,27 @@ public:
     std::vector<std::shared_ptr<Stmt>> body;
     ForRangeStmt(const std::string& var, std::shared_ptr<Expr> s, std::shared_ptr<Expr> e, const std::vector<std::shared_ptr<Stmt>>& b)
         : var_name(var), start_expr(s), end_expr(e), body(b) {}
+};
+
+// For-Each Loop: for (item in list_expr) { ... }
+class ForEachStmt : public Stmt {
+public:
+    std::string var_name;
+    std::shared_ptr<Expr> collection_expr;
+    std::vector<std::shared_ptr<Stmt>> body;
+    ForEachStmt(const std::string& var, std::shared_ptr<Expr> coll, const std::vector<std::shared_ptr<Stmt>>& b)
+        : var_name(var), collection_expr(coll), body(b) {}
+};
+
+// Index Assignment Statement: arr[0] = 10, map["key"] = "val"
+class SetIndexStmt : public Stmt {
+public:
+    std::string var_name;
+    std::shared_ptr<Expr> index_expr;
+    std::string op;
+    std::shared_ptr<Expr> value_expr;
+    SetIndexStmt(const std::string& name, std::shared_ptr<Expr> idx, const std::string& o, std::shared_ptr<Expr> val)
+        : var_name(name), index_expr(idx), op(o), value_expr(val) {}
 };
 
 // Return Statement: return <expr>

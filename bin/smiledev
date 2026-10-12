@@ -115,6 +115,7 @@ m = data[0]
 lang_badge = {
     'cpp': '${C_BLUE}[C++ NATIVE]${C_RESET}',
     'python': '${C_YELLOW}[PYTHON PYLOOP]${C_RESET}',
+    'node': '${C_GREEN}[NODE.JS HTML5]${C_RESET}',
     'loop': '${C_GREEN}[PURE LOOP]${C_RESET}'
 }.get(m.get('language'), '[UNKNOWN]')
 
@@ -165,7 +166,7 @@ data = json.load(sys.stdin)[0]
 name = data["name"]
 lang = data.get("language", "loop")
 ver = data.get("version", "1.0.0")
-entry = data.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else f"{name}.loop"))
+entry = data.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else ("index.js" if lang=="node" else f"{name}.loop")))
 payload = data.get("code_payload", "")
 if "\\n" in payload and "\n" not in payload:
     payload = payload.replace("\\n", "\n").replace("\\t", "    ")

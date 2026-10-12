@@ -71,8 +71,17 @@ public:
 
     // Parse entire script into statements
     std::vector<std::shared_ptr<Stmt>> parse_script() {
+        std::vector<std::string> raw_lines = split_lines(source);
+        std::vector<std::string> lines;
+        for (const auto& rl : raw_lines) {
+            if (rl.find(';') != std::string::npos) {
+                auto sub = split_semicolons(rl);
+                for (const auto& sl : sub) lines.push_back(sl);
+            } else {
+                lines.push_back(rl);
+            }
+        }
         std::vector<std::shared_ptr<Stmt>> statements;
-        std::vector<std::string> lines = split_lines(source);
         size_t line_idx = 0;
 
         while (line_idx < lines.size()) {
@@ -362,6 +371,18 @@ public:
 
             // 3. For in Range Loop: for (i in 0..5) { ... } OR for i in 0..5 { ... }
             if (line.rfind("for ", 0) == 0 || line.rfind("for(", 0) == 0) {
+                // Single line range loop: for (i in 0..5) { ... }
+                std::regex for_range_single(R"(for\s*\(?\s*([A-Za-z0-9_]+)\s+in\s+([0-9A-Za-z_\.]+)\s*\.\.\s*([0-9A-Za-z_\.]+)\s*\)?\s*\{\s*(.*?)\s*\}\s*$)");
+                std::smatch sm;
+                if (std::regex_search(line, sm, for_range_single)) {
+                    std::string var_name = sm[1];
+                    auto start_expr = parse_single_expr(sm[2]);
+                    auto end_expr = parse_single_expr(sm[3]);
+                    Parser sub_p(sm[4]);
+                    statements.push_back(std::make_shared<ForRangeStmt>(var_name, start_expr, end_expr, sub_p.parse_script()));
+                    continue;
+                }
+
                 std::regex for_r(R"(for\s*\(?\s*([A-Za-z0-9_]+)\s+in\s+([0-9A-Za-z_\.]+)\s*\.\.\s*([0-9A-Za-z_\.]+)\s*\)?\s*\{?)");
                 std::smatch m;
                 if (std::regex_search(line, m, for_r)) {
@@ -378,6 +399,44 @@ public:
 
                     Parser sub_p(join_lines(body_lines));
                     statements.push_back(std::make_shared<ForRangeStmt>(var_name, start_expr, end_expr, sub_p.parse_script()));
+                    continue;
+                }
+
+                // 3b. For in Collection: single line or multiline
+                std::regex for_each_single_paren(R"(^\s*for\s*\(\s*([A-Za-z0-9_]+)\s+in\s+(.+?)\s*\)\s*\{\s*(.*?)\s*\}\s*$)");
+                std::regex for_each_single_plain(R"(^\s*for\s+([A-Za-z0-9_]+)\s+in\s+(.+?)\s*\{\s*(.*?)\s*\}\s*$)");
+                std::smatch sfem;
+                if (std::regex_search(line, sfem, for_each_single_paren) || std::regex_search(line, sfem, for_each_single_plain)) {
+                    std::string var_name = sfem[1];
+                    auto coll_expr = parse_single_expr(trim(sfem[2]));
+                    std::string inner_body = sfem[3];
+                    Parser sub_p(inner_body);
+                    statements.push_back(std::make_shared<ForEachStmt>(var_name, coll_expr, sub_p.parse_script()));
+                    continue;
+                }
+
+                std::regex for_each_paren(R"(^\s*for\s*\(\s*([A-Za-z0-9_]+)\s+in\s+(.+?)\s*\)\s*(?:\{)?\s*$)");
+                std::regex for_each_plain(R"(^\s*for\s+([A-Za-z0-9_]+)\s+in\s+(.+?)\s*(?:\{)?\s*$)");
+                std::smatch fem;
+                if (std::regex_search(line, fem, for_each_paren) || std::regex_search(line, fem, for_each_plain)) {
+                    std::string var_name = fem[1];
+                    auto coll_expr = parse_single_expr(trim(fem[2]));
+                    std::vector<std::string> body_lines;
+
+                    int b_depth = 1;
+                    while (line_idx < lines.size()) {
+                        std::string next = lines[line_idx++];
+                        std::string t = trim(next);
+                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#')) b_depth++;
+                        if (t == "}" || t == "end") {
+                            b_depth--;
+                            if (b_depth == 0) break;
+                        }
+                        body_lines.push_back(next);
+                    }
+
+                    Parser sub_p(join_lines(body_lines));
+                    statements.push_back(std::make_shared<ForEachStmt>(var_name, coll_expr, sub_p.parse_script()));
                     continue;
                 }
             }
@@ -1028,8 +1087,19 @@ public:
             return std::make_shared<EmitParticlesStmt>(x, y, col);
         }
 
-        // 23. Shorthand Assignment: x = 10, x += 5, x -= 2
-        std::regex assign_regex(R"(^([A-Za-z0-9_]+)\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
+        // 23a. Indexed Assignment: arr[idx] = val, map["key"] = val
+        std::regex assign_idx_regex(R"(^([A-Za-z0-9_]+)\s*\[\s*(.*?)\s*\]\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
+        std::smatch aim;
+        if (std::regex_search(s, aim, assign_idx_regex)) {
+            std::string name = aim[1];
+            std::string idx_str = aim[2];
+            std::string op = aim[3];
+            std::string expr_str = aim[4];
+            return std::make_shared<SetIndexStmt>(name, parse_single_expr(idx_str), op, parse_single_expr(expr_str));
+        }
+
+        // 23. Shorthand Assignment: x = 10, x += 5, x -= 2, user.name = "Alice"
+        std::regex assign_regex(R"(^([A-Za-z0-9_\.]+)\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
         std::smatch am;
         if (std::regex_search(s, am, assign_regex)) {
             std::string name = am[1];
@@ -1042,7 +1112,7 @@ public:
 
         // 24. Function call statement: callee(...) OR call callee(...)
         if (s.rfind("call ", 0) == 0) {
-            std::regex call_r(R"(call\s+([A-Za-z0-9_]+)\s*(?:\((.*?)\))?)");
+            std::regex call_r(R"(call\s+([A-Za-z0-9_\.]+)\s*(?:\((.*?)\))?)");
             std::smatch m;
             if (std::regex_search(s, m, call_r)) {
                 std::string fn_name = m[1];
@@ -1055,7 +1125,7 @@ public:
                 return std::make_shared<CallStmt>(fn_name, args);
             }
         }
-        std::regex fn_stmt_r(R"(^([A-Za-z0-9_]+)\s*\((.*?)\)$)");
+        std::regex fn_stmt_r(R"(^([A-Za-z0-9_\.]+)\s*\((.*?)\)$)");
         std::smatch fsm;
         if (std::regex_search(s, fsm, fn_stmt_r)) {
             std::string fn_name = fsm[1];
@@ -1107,18 +1177,17 @@ public:
     }
 
     // Parse single expression with operator precedence climbing
+    // Parse single expression with operator precedence climbing and robust grouping
     std::shared_ptr<Expr> parse_single_expr(const std::string& raw) {
         std::string s = trim(raw);
         if (s.empty()) return std::make_shared<LiteralExpr>(Value());
 
         // 0. Pipeline operator |>
-        std::vector<std::string> pipe_tokens = split_binary(s, {" |> "});
-        if (pipe_tokens.size() > 1) {
-            auto root = parse_single_expr(pipe_tokens[0]);
-            for (size_t i = 1; i < pipe_tokens.size(); ++i) {
-                root = std::make_shared<BinaryExpr>(root, "|>", parse_single_expr(pipe_tokens[i]));
-            }
-            return root;
+        size_t pipe_pos = find_level_0_op_rightmost(s, "|>");
+        if (pipe_pos != std::string::npos) {
+            auto left = parse_single_expr(trim(s.substr(0, pipe_pos)));
+            auto right = parse_single_expr(trim(s.substr(pipe_pos + 2)));
+            return std::make_shared<BinaryExpr>(left, "|>", right);
         }
 
         // 1. Python inline: py!(code) OR @py(code) OR py: code
@@ -1135,7 +1204,111 @@ public:
             return std::make_shared<PyInlineExpr>(code);
         }
 
-        // 2. Interpolated String: $"Hello {name}" OR f"..." OR "Hello {name}"
+        // 2. Parenthesized Grouping & Tuples: (expr) OR (x, y)
+        if (is_enclosed_in_matching_parens(s)) {
+            std::string inner = trim(s.substr(1, s.size() - 2));
+            // Check if there is a top-level comma inside
+            bool has_comma = false;
+            size_t comma_idx = std::string::npos;
+            int d = 0;
+            bool in_sq = false, in_dq = false;
+            for (size_t ci = 0; ci < inner.size(); ++ci) {
+                char c = inner[ci];
+                if (c == '\'' && !in_dq) in_sq = !in_sq;
+                else if (c == '"' && !in_sq) in_dq = !in_dq;
+                else if (!in_sq && !in_dq) {
+                    if (c == '(' || c == '[' || c == '{') d++;
+                    else if (c == ')' || c == ']' || c == '}') d--;
+                    else if (c == ',' && d == 0) {
+                        has_comma = true;
+                        comma_idx = ci;
+                        break;
+                    }
+                }
+            }
+            if (has_comma) {
+                auto x_expr = parse_single_expr(trim(inner.substr(0, comma_idx)));
+                auto y_expr = parse_single_expr(trim(inner.substr(comma_idx + 1)));
+                return std::make_shared<TupleExpr>(x_expr, y_expr);
+            } else {
+                // Pure grouping expression: unwrap and parse!
+                return parse_single_expr(inner);
+            }
+        }
+
+        // 3. List Literals: [1, 2, 3]
+        if (is_enclosed_in_matching_brackets(s)) {
+            std::string inner = trim(s.substr(1, s.size() - 2));
+            std::vector<std::shared_ptr<Expr>> elements;
+            if (!inner.empty()) {
+                auto raw_items = split_level_0(inner, ',');
+                for (const auto& item_s : raw_items) {
+                    elements.push_back(parse_single_expr(trim(item_s)));
+                }
+            }
+            return std::make_shared<ListExpr>(elements);
+        }
+
+        // 4. Map Literals: {"key": val, "k2": v2}
+        if (is_enclosed_in_matching_braces(s)) {
+            std::string inner = trim(s.substr(1, s.size() - 2));
+            std::vector<std::pair<std::string, std::shared_ptr<Expr>>> entries;
+            if (!inner.empty()) {
+                auto raw_entries = split_level_0(inner, ',');
+                for (const auto& entry_s : raw_entries) {
+                    std::string e = trim(entry_s);
+                    if (e.empty()) continue;
+                    size_t colon_p = std::string::npos;
+                    int d = 0;
+                    bool in_sq = false, in_dq = false;
+                    for (size_t ci = 0; ci < e.size(); ++ci) {
+                        char c = e[ci];
+                        if (c == '\'' && !in_dq) in_sq = !in_sq;
+                        else if (c == '"' && !in_sq) in_dq = !in_dq;
+                        else if (!in_sq && !in_dq) {
+                            if (c == '(' || c == '[' || c == '{') d++;
+                            else if (c == ')' || c == ']' || c == '}') d--;
+                            else if (c == ':' && d == 0) { colon_p = ci; break; }
+                        }
+                    }
+                    if (colon_p != std::string::npos) {
+                        std::string k = trim_quotes(trim(e.substr(0, colon_p)));
+                        std::string v = trim(e.substr(colon_p + 1));
+                        entries.push_back({k, parse_single_expr(v)});
+                    }
+                }
+            }
+            return std::make_shared<MapExpr>(entries);
+        }
+
+        // 5. Indexing Expression: target[index]
+        if (s.back() == ']' && !is_enclosed_in_matching_brackets(s)) {
+            int b_depth = 0;
+            long long match_idx = -1;
+            bool in_sq = false, in_dq = false;
+            for (long long i = static_cast<long long>(s.size()) - 1; i >= 0; --i) {
+                char c = s[i];
+                if (c == '\'' && !in_dq) in_sq = !in_sq;
+                else if (c == '"' && !in_sq) in_dq = !in_dq;
+                else if (!in_sq && !in_dq) {
+                    if (c == ']') b_depth++;
+                    else if (c == '[') {
+                        b_depth--;
+                        if (b_depth == 0) {
+                            match_idx = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (match_idx > 0) {
+                std::string target_part = trim(s.substr(0, match_idx));
+                std::string index_part = trim(s.substr(match_idx + 1, s.size() - match_idx - 2));
+                return std::make_shared<IndexExpr>(parse_single_expr(target_part), parse_single_expr(index_part));
+            }
+        }
+
+        // 6. Interpolated String: $"Hello {name}" OR f"..." OR "Hello {name}"
         if ((s.front() == '$' || s.front() == 'f') && s.size() >= 3) {
             std::string inner = s.substr(1);
             if ((inner.front() == '"' && inner.back() == '"') || (inner.front() == '\'' && inner.back() == '\'')) {
@@ -1146,24 +1319,79 @@ public:
         if ((s.front() == '"' && s.back() == '"' && s.size() >= 2) ||
             (s.front() == '\'' && s.back() == '\'' && s.size() >= 2)) {
             std::string content = s.substr(1, s.size() - 2);
-            if (content.find('{') != std::string::npos && content.find('}') != std::string::npos) {
-                return std::make_shared<InterpolatedStringExpr>(content);
-            }
-            return std::make_shared<LiteralExpr>(Value(content));
+            return std::make_shared<LiteralExpr>(Value(unescape_string_literal(content)));
         }
 
-        // 3. Tuple (x, y)
-        if (s.front() == '(' && s.back() == ')' && s.size() >= 3) {
-            std::string inner = s.substr(1, s.size() - 2);
-            auto comma_pos = inner.find(',');
-            if (comma_pos != std::string::npos) {
-                auto x_expr = parse_single_expr(inner.substr(0, comma_pos));
-                auto y_expr = parse_single_expr(inner.substr(comma_pos + 1));
-                return std::make_shared<TupleExpr>(x_expr, y_expr);
+        // 7. Logical OR (or, ||)
+        for (const std::string& or_op : {" or ", " || "}) {
+            size_t p = find_level_0_op_rightmost(s, or_op);
+            if (p != std::string::npos) {
+                auto left = parse_single_expr(trim(s.substr(0, p)));
+                auto right = parse_single_expr(trim(s.substr(p + or_op.size())));
+                return std::make_shared<BinaryExpr>(left, "or", right);
             }
         }
 
-        // 4. Number literal
+        // 8. Logical AND (and, &&)
+        for (const std::string& and_op : {" and ", " && "}) {
+            size_t p = find_level_0_op_rightmost(s, and_op);
+            if (p != std::string::npos) {
+                auto left = parse_single_expr(trim(s.substr(0, p)));
+                auto right = parse_single_expr(trim(s.substr(p + and_op.size())));
+                return std::make_shared<BinaryExpr>(left, "and", right);
+            }
+        }
+
+        // 9. Comparisons (==, !=, <=, >=, <, >)
+        for (const std::string& cmp : {"==", "!=", "<=", ">=", "<", ">"}) {
+            size_t p = find_level_0_op_rightmost(s, cmp);
+            if (p != std::string::npos) {
+                auto left = parse_single_expr(trim(s.substr(0, p)));
+                auto right = parse_single_expr(trim(s.substr(p + cmp.size())));
+                return std::make_shared<BinaryExpr>(left, cmp, right);
+            }
+        }
+
+        // 10. Addition and Subtraction (+, -)
+        for (const std::string& add_op : {"+", "-"}) {
+            size_t p = find_level_0_op_rightmost(s, add_op);
+            if (p != std::string::npos) {
+                auto left = parse_single_expr(trim(s.substr(0, p)));
+                auto right = parse_single_expr(trim(s.substr(p + 1)));
+                return std::make_shared<BinaryExpr>(left, add_op, right);
+            }
+        }
+
+        // 11. Multiplication, Division, Modulo (*, /, %)
+        for (const std::string& mul_op : {"*", "/", "%"}) {
+            size_t p = find_level_0_op_rightmost(s, mul_op);
+            if (p != std::string::npos) {
+                auto left = parse_single_expr(trim(s.substr(0, p)));
+                auto right = parse_single_expr(trim(s.substr(p + 1)));
+                return std::make_shared<BinaryExpr>(left, mul_op, right);
+            }
+        }
+
+        // 12. Power (^)
+        size_t pow_p = find_level_0_op_rightmost(s, "^");
+        if (pow_p != std::string::npos) {
+            auto left = parse_single_expr(trim(s.substr(0, pow_p)));
+            auto right = parse_single_expr(trim(s.substr(pow_p + 1)));
+            return std::make_shared<BinaryExpr>(left, "^", right);
+        }
+
+        // 13. Unary Operators: -x, !x, not x
+        if (s.front() == '-' && s.size() > 1 && !is_numeric(s)) {
+            return std::make_shared<UnaryExpr>("-", parse_single_expr(trim(s.substr(1))));
+        }
+        if (s.front() == '!' && s.size() > 1) {
+            return std::make_shared<UnaryExpr>("!", parse_single_expr(trim(s.substr(1))));
+        }
+        if (s.rfind("not ", 0) == 0) {
+            return std::make_shared<UnaryExpr>("not", parse_single_expr(trim(s.substr(4))));
+        }
+
+        // 14. Number literal
         if (is_numeric(s)) {
             if (s.find('.') != std::string::npos) {
                 return std::make_shared<LiteralExpr>(Value(std::stod(s)));
@@ -1172,67 +1400,16 @@ public:
             }
         }
 
-        // 5. Boolean & Nil
+        // 15. Boolean & Nil
         if (s == "true") return std::make_shared<LiteralExpr>(Value(true));
         if (s == "false") return std::make_shared<LiteralExpr>(Value(false));
         if (s == "nil" || s == "null" || s == "none") return std::make_shared<LiteralExpr>(Value());
 
-        // 6. Logical OR (or, ||)
-        std::vector<std::string> or_tokens = split_binary(s, {" or ", " || "});
-        if (or_tokens.size() > 1) {
-            auto root = parse_single_expr(or_tokens[0]);
-            for (size_t i = 1; i < or_tokens.size(); ++i) {
-                root = std::make_shared<BinaryExpr>(root, "or", parse_single_expr(or_tokens[i]));
-            }
-            return root;
-        }
-
-        // 7. Logical AND (and, &&)
-        std::vector<std::string> and_tokens = split_binary(s, {" and ", " && "});
-        if (and_tokens.size() > 1) {
-            auto root = parse_single_expr(and_tokens[0]);
-            for (size_t i = 1; i < and_tokens.size(); ++i) {
-                root = std::make_shared<BinaryExpr>(root, "and", parse_single_expr(and_tokens[i]));
-            }
-            return root;
-        }
-
-        // 8. Comparisons (==, !=, <=, >=, <, >)
-        for (const std::string& cmp : {"==", "!=", "<=", ">=", "<", ">"}) {
-            auto p = find_operator_outside_quotes(s, cmp);
-            if (p != std::string::npos) {
-                auto left = parse_single_expr(s.substr(0, p));
-                auto right = parse_single_expr(s.substr(p + cmp.size()));
-                return std::make_shared<BinaryExpr>(left, cmp, right);
-            }
-        }
-
-        // 9. Addition and Subtraction (+, -)
-        for (const std::string& add_op : {" + ", " - "}) {
-            auto p = find_operator_outside_quotes(s, add_op);
-            if (p != std::string::npos) {
-                auto left = parse_single_expr(s.substr(0, p));
-                auto right = parse_single_expr(s.substr(p + add_op.size()));
-                return std::make_shared<BinaryExpr>(left, trim(add_op), right);
-            }
-        }
-
-        // 10. Multiplication, Division, Modulo (*, /, %)
-        for (const std::string& mul_op : {" * ", " / ", " % "}) {
-            auto p = find_operator_outside_quotes(s, mul_op);
-            if (p != std::string::npos) {
-                auto left = parse_single_expr(s.substr(0, p));
-                auto right = parse_single_expr(s.substr(p + mul_op.size()));
-                return std::make_shared<BinaryExpr>(left, trim(mul_op), right);
-            }
-        }
-
-        // 11. Function calls: callee(args) or namespace::func(args) or namespace.func(args)
+        // 16. Function calls: callee(args) or namespace::func(args) or namespace.func(args)
         std::regex fn_call_r(R"(^([A-Za-z0-9_\.:]+)\s*\((.*?)\)$)");
         std::smatch fcm;
         if (std::regex_search(s, fcm, fn_call_r)) {
             std::string callee = fcm[1];
-            // Normalize :: to .
             auto col_col = callee.find("::");
             if (col_col != std::string::npos) {
                 callee.replace(col_col, 2, ".");
@@ -1281,6 +1458,25 @@ private:
             return s.substr(1, s.size() - 2);
         }
         return s;
+    }
+
+    static std::string unescape_string_literal(const std::string& s) {
+        std::string res;
+        for (size_t i = 0; i < s.size(); ++i) {
+            if (s[i] == '\\' && i + 1 < s.size()) {
+                char next = s[i + 1];
+                if (next == 'n') { res += '\n'; i++; }
+                else if (next == 't') { res += '\t'; i++; }
+                else if (next == 'r') { res += '\r'; i++; }
+                else if (next == '"') { res += '"'; i++; }
+                else if (next == '\'') { res += '\''; i++; }
+                else if (next == '\\') { res += '\\'; i++; }
+                else { res += s[i]; }
+            } else {
+                res += s[i];
+            }
+        }
+        return res;
     }
 
     static std::vector<std::string> split_lines(const std::string& text) {
@@ -1356,8 +1552,8 @@ private:
                 else if (quote_char == c) { in_quotes = false; }
             }
             if (!in_quotes) {
-                if (c == '(' || c == '[') paren_depth++;
-                else if (c == ')' || c == ']') paren_depth--;
+                if (c == '(' || c == '[' || c == '{') paren_depth++;
+                else if (c == ')' || c == ']' || c == '}') paren_depth--;
                 else if (c == ',' && paren_depth == 0) {
                     args.push_back(trim(curr));
                     curr.clear();
@@ -1413,6 +1609,89 @@ private:
         return {s};
     }
 
+    static bool is_enclosed_in_matching_parens(const std::string& s) {
+        if (s.size() < 2 || s.front() != '(' || s.back() != ')') return false;
+        int depth = 0;
+        bool in_single = false, in_double = false;
+        for (size_t i = 0; i < s.size(); ++i) {
+            char c = s[i];
+            if (c == '\'' && !in_double && (i == 0 || s[i - 1] != '\\')) in_single = !in_single;
+            else if (c == '"' && !in_single && (i == 0 || s[i - 1] != '\\')) in_double = !in_double;
+            else if (!in_single && !in_double) {
+                if (c == '(') depth++;
+                else if (c == ')') {
+                    depth--;
+                    if (depth == 0 && i < s.size() - 1) return false;
+                }
+            }
+        }
+        return depth == 0;
+    }
+
+    static bool is_enclosed_in_matching_brackets(const std::string& s) {
+        if (s.size() < 2 || s.front() != '[' || s.back() != ']') return false;
+        int depth = 0;
+        bool in_single = false, in_double = false;
+        for (size_t i = 0; i < s.size(); ++i) {
+            char c = s[i];
+            if (c == '\'' && !in_double && (i == 0 || s[i - 1] != '\\')) in_single = !in_single;
+            else if (c == '"' && !in_single && (i == 0 || s[i - 1] != '\\')) in_double = !in_double;
+            else if (!in_single && !in_double) {
+                if (c == '[') depth++;
+                else if (c == ']') {
+                    depth--;
+                    if (depth == 0 && i < s.size() - 1) return false;
+                }
+            }
+        }
+        return depth == 0;
+    }
+
+    static bool is_enclosed_in_matching_braces(const std::string& s) {
+        if (s.size() < 2 || s.front() != '{' || s.back() != '}') return false;
+        int depth = 0;
+        bool in_single = false, in_double = false;
+        for (size_t i = 0; i < s.size(); ++i) {
+            char c = s[i];
+            if (c == '\'' && !in_double && (i == 0 || s[i - 1] != '\\')) in_single = !in_single;
+            else if (c == '"' && !in_single && (i == 0 || s[i - 1] != '\\')) in_double = !in_double;
+            else if (!in_single && !in_double) {
+                if (c == '{') depth++;
+                else if (c == '}') {
+                    depth--;
+                    if (depth == 0 && i < s.size() - 1) return false;
+                }
+            }
+        }
+        return depth == 0;
+    }
+
+    static std::vector<std::string> split_level_0(const std::string& s, char delim) {
+        std::vector<std::string> res;
+        std::string curr = "";
+        int depth = 0;
+        bool in_single = false, in_double = false;
+        for (size_t i = 0; i < s.size(); ++i) {
+            char c = s[i];
+            if (c == '\'' && !in_double && (i == 0 || s[i - 1] != '\\')) { in_single = !in_single; curr += c; }
+            else if (c == '"' && !in_single && (i == 0 || s[i - 1] != '\\')) { in_double = !in_double; curr += c; }
+            else if (!in_single && !in_double) {
+                if (c == '(' || c == '[' || c == '{') { depth++; curr += c; }
+                else if (c == ')' || c == ']' || c == '}') { depth--; curr += c; }
+                else if (c == delim && depth == 0) {
+                    res.push_back(curr);
+                    curr = "";
+                } else {
+                    curr += c;
+                }
+            } else {
+                curr += c;
+            }
+        }
+        if (!curr.empty()) res.push_back(curr);
+        return res;
+    }
+
     static size_t find_operator_outside_quotes(const std::string& s, const std::string& op) {
         bool in_quotes = false;
         char quote_char = 0;
@@ -1425,11 +1704,57 @@ private:
                 else if (quote_char == c) { in_quotes = false; }
             }
             if (!in_quotes) {
-                if (c == '(' || c == '[') paren_depth++;
-                else if (c == ')' || c == ']') paren_depth--;
+                if (c == '(' || c == '[' || c == '{') paren_depth++;
+                else if (c == ')' || c == ']' || c == '}') paren_depth--;
                 else if (paren_depth == 0) {
                     if (s.substr(i, op.size()) == op) {
                         return i;
+                    }
+                }
+            }
+        }
+        return std::string::npos;
+    }
+
+    static size_t find_level_0_op_rightmost(const std::string& s, const std::string& op) {
+        if (s.size() < op.size()) return std::string::npos;
+        bool in_single = false, in_double = false;
+        int depth = 0;
+
+        std::vector<int> depths(s.size(), 0);
+        std::vector<bool> in_str(s.size(), false);
+
+        for (size_t i = 0; i < s.size(); ++i) {
+            char c = s[i];
+            if (c == '\'' && !in_double && (i == 0 || s[i - 1] != '\\')) in_single = !in_single;
+            else if (c == '"' && !in_single && (i == 0 || s[i - 1] != '\\')) in_double = !in_double;
+            in_str[i] = (in_single || in_double);
+            if (!in_single && !in_double) {
+                if (c == '(' || c == '[' || c == '{') depth++;
+                else if (c == ')' || c == ']' || c == '}') depth--;
+            }
+            depths[i] = depth;
+        }
+
+        for (long long i = static_cast<long long>(s.size()) - static_cast<long long>(op.size()); i >= 0; --i) {
+            if (!in_str[i] && depths[i] == 0) {
+                if (s.substr(i, op.size()) == op) {
+                    if (i > 0 && i + op.size() < s.size()) {
+                        if (op == "-") {
+                            long long p = i - 1;
+                            while (p >= 0 && std::isspace(static_cast<unsigned char>(s[p]))) p--;
+                            if (p >= 0) {
+                                char prev = s[p];
+                                if (prev == '+' || prev == '-' || prev == '*' || prev == '/' || 
+                                    prev == '%' || prev == '^' || prev == '(' || prev == '[' || 
+                                    prev == '=' || prev == '<' || prev == '>' || prev == '!' || prev == ',') {
+                                    continue;
+                                }
+                            } else {
+                                continue;
+                            }
+                        }
+                        return static_cast<size_t>(i);
                     }
                 }
             }

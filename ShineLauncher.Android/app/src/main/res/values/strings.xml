@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Shine Launcher</string>
+    <string name="search_apps_hint">Buscar aplicaciones o acciones…</string>
+    <string name="mode_flui">flUI (Plegables)</string>
+    <string name="mode_xui">XuI (Gama Alta)</string>
+    <string name="mode_ui">UI (Nomad 1)</string>
+    <string name="mode_hiui">hiUI (A1)</string>
+    <string name="mode_vintage">Vintage (niminticos)</string>
+    
+    <!-- Vintage Toolbar Labels -->
+    <string name="tuilbar_phone">Llamadas</string>
+    <string name="tuilbar_notes">Notas</string>
+    <string name="tuilbar_music">Música</string>
+    <string name="tuilbar_maps">Shine Maps</string>
+    <string name="tuilbar_sos">SOS</string>
+</resources>

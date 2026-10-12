@@ -20,6 +20,7 @@ public struct CSIDUser: Codable, Identifiable {
 public enum SearchSource: String, Codable {
     case appleMaps = "Apple Maps"
     case mapbox = "Mapbox"
+    case openStreetMap = "OpenStreetMap"
     case saved = "Guardado"
 }
 

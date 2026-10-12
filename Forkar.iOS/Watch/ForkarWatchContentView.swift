@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 public struct ForkarWatchContentView: View {
     @StateObject private var watchBridge = ForkarWatchConnectivity.shared
@@ -30,6 +31,10 @@ public struct ForkarWatchContentView: View {
             // MARK: - Tab 3: Estado & Llave Criptográfica
             hardwareStatusPage
                 .tag(2)
+            
+            // MARK: - Tab 4: Shine Maps Navegación
+            shineMapsWristPage
+                .tag(3)
         }
         .tabViewStyle(.page)
         .overlay(alignment: .topTrailing) {
@@ -233,5 +238,56 @@ public struct ForkarWatchContentView: View {
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.white)
         }
+    }
+    
+    // MARK: - Tab 4: Shine Maps Navegación en Muñeca
+    private var shineMapsWristPage: some View {
+        VStack(spacing: 6) {
+            HStack {
+                Image(systemName: "location.north.circle.fill")
+                    .foregroundColor(.cyan)
+                    .font(.system(size: 11, weight: .bold))
+                Text("Shine Maps")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("GPS Live")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.green)
+            }
+            .padding(.horizontal, 4)
+            
+            // Native mini map
+            Map(coordinateRegion: .constant(MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 4.7110, longitude: -74.0721),
+                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+            )))
+            .frame(height: 75)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.cyan.opacity(0.4), lineWidth: 1)
+            )
+            
+            HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Navegación Activa")
+                        .font(.system(size: 8))
+                        .foregroundColor(.gray)
+                    Text("CC Fontanar · Chía")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "arrow.turn.up.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.cyan)
+            }
+            .padding(6)
+            .background(Color.white.opacity(0.08))
+            .cornerRadius(8)
+        }
+        .padding(.horizontal, 4)
     }
 }
