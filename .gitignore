@@ -31,3 +31,9 @@ LoopingEngine/cpp/looping
 LoopingEngine/cpp/looping_bin
 LoopingEngine/cpp/build/
 
+# Swift Package Manager Build Outputs
+.build/
+Packages/
+*.xcodeproj/
+*.xcworkspace/
+

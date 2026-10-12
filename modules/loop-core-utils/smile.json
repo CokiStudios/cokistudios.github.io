@@ -3,6 +3,6 @@
   "version": "1.1.0",
   "language": "loop",
   "entry_point": "core_utils.loop",
-  "author": "Coki Studios Community",
-  "description": "Standard utilities written 100% in Looping: string formatting, array validators, and high-performance stopwatch timer."
+  "author": "Coki Studios Foundation",
+  "description": "Colecci\u00f3n de utilidades fundamentales escritas 100% en sintaxis Loop: colecciones reactivas, formatters y parsers JSON."
 }
