@@ -667,7 +667,7 @@
                                 ${pkg.downloads} descargas
                             </span>
                         </div>
-                        <button class="cs-btn cs-btn-secondary" style="width: 100%; justify-content: center; font-size: 11px;" onclick="copyInstallCmd('${pkg.name}')">
+                        <button class="cs-btn cs-btn-secondary" style="width: 100%; justify-content: center; font-size: 11px;" onclick="copyInstallCmd('${pkg.name}', this)">
                             $ smiledev install ${pkg.name}
                         </button>
                     </div>
@@ -676,9 +676,36 @@
             document.getElementById('stat-total-modules').textContent = `${list.length} disponibles`;
         }
 
-        window.copyInstallCmd = (name) => {
+        window.showToast = (msg, icon = '✔') => {
+            let toast = document.getElementById('cs-dev-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'cs-dev-toast';
+                toast.style.cssText = 'position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,rgba(13,17,23,0.95),rgba(30,27,75,0.95));border:1px solid rgba(56,189,248,0.4);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:10px;font-family:var(--cs-font-mono);font-size:12px;color:#f8fafc;box-shadow:0 12px 36px rgba(0,0,0,0.5);z-index:9999;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);transform:translateY(20px);opacity:0;';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<span style="color:#00d4ff;font-weight:900;">${icon}</span> <span>${msg}</span>`;
+            toast.style.transform = 'translateY(0)';
+            toast.style.opacity = '1';
+            clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => {
+                toast.style.transform = 'translateY(20px)';
+                toast.style.opacity = '0';
+            }, 3000);
+        };
+
+        window.copyInstallCmd = (name, btn) => {
             navigator.clipboard.writeText(`smiledev install ${name}`);
-            alert(`Comando copiado: smiledev install ${name}`);
+            if (btn) {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✔ ¡Copiado!';
+                btn.style.borderColor = 'var(--cs-cyan)';
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.style.borderColor = '';
+                }, 1800);
+            }
+            showToast(`smiledev install ${name}`);
         };
 
         // Filtro buscador
@@ -792,7 +819,7 @@
                         <div>
                             <span style="color: var(--cs-text-muted); display: block; font-size: 10px; margin-bottom: 2px;">CLIENT ID</span>
                             <span style="color: var(--cs-cyan); word-break: break-all;">${app.client_id}</span>
-                            <button style="background: none; border: none; color: var(--cs-text-sub); cursor: pointer; margin-left: 6px;" onclick="navigator.clipboard.writeText('${app.client_id}')" title="Copiar Client ID">📋</button>
+                            <button style="background: none; border: none; color: var(--cs-text-sub); cursor: pointer; margin-left: 6px;" onclick="navigator.clipboard.writeText('${app.client_id}'); showToast('Client ID copiado')" title="Copiar Client ID">📋</button>
                         </div>
                         <div>
                             <span style="color: var(--cs-text-muted); display: block; font-size: 10px; margin-bottom: 2px;">CLIENT SECRET (CONFIDENCIAL)</span>
@@ -813,12 +840,14 @@
         window.toggleAppActive = async (id, newActive) => {
             await supabase.from('oauth_clients').update({ is_active: newActive }).eq('id', id);
             await loadOAuthApps();
+            showToast(newActive ? 'Aplicación activada' : 'Aplicación desactivada');
         };
 
         window.deleteOAuthApp = async (id, name) => {
             if (confirm(`¿Estás seguro de eliminar la aplicación "${name}"? Se revocarán todos los tokens autorizados.`)) {
                 await supabase.from('oauth_clients').delete().eq('id', id);
                 await loadOAuthApps();
+                showToast(`Aplicación "${name}" eliminada`);
             }
         };
 
@@ -866,7 +895,8 @@
 
             closeOAuthModal();
             await loadOAuthApps();
-            alert(`¡Aplicación "${name}" registrada exitosamente!\nClient ID: ${clientId}`);
+            showToast(`¡App "${name}" creada! Client ID copiado`);
+            navigator.clipboard.writeText(clientId);
         });
 
         window.switchDocLang = (lang) => {
