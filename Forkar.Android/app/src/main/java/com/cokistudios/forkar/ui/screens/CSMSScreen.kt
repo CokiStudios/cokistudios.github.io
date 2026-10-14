@@ -22,12 +22,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -72,6 +76,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.cokistudios.forkar.data.CokiGeminiAssistant
 import com.cokistudios.forkar.data.SupabaseManager
 import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
@@ -121,6 +126,11 @@ fun CSMSScreen(
     var dmTargetEmail by remember { mutableStateOf("") }
     var chatToDelete by remember { mutableStateOf<CSMSChat?>(null) }
     var isDeletingChat by remember { mutableStateOf(false) }
+
+    // Coki with Gemini Intelligence Chat Summarization
+    var showSummaryDialog by remember { mutableStateOf(false) }
+    var summaryText by remember { mutableStateOf("") }
+    var isSummarizing by remember { mutableStateOf(false) }
 
     // Media Attachments (Photos & Videos)
     var attachedUri by remember { mutableStateOf<Uri?>(null) }
@@ -302,6 +312,18 @@ fun CSMSScreen(
                     iconColor = Color.White,
                     onIconClick = { activeChat = null },
                     actions = {
+                        IconButton(onClick = {
+                            coroutineScope.launch {
+                                isSummarizing = true
+                                showSummaryDialog = true
+                                val texts = activeMessages.map { it.text }
+                                val roomName = activeChat?.name ?: "Chat"
+                                summaryText = CokiGeminiAssistant.summarizeChat(texts, roomName)
+                                isSummarizing = false
+                            }
+                        }) {
+                            Text("✨", fontSize = 18.sp)
+                        }
                         IconButton(onClick = { activeChat?.id?.let { loadMessages(it) } }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Recargar mensajes", tint = PurpleAccent)
                         }
@@ -769,6 +791,28 @@ fun CSMSScreen(
                     ) {
                         items(activeMessages) { msg ->
                             val isMine = msg.isMine
+                            val isCokiAI = msg.senderName.contains("Coki with", ignoreCase = true)
+                            val currentUserName = manager.currentUser?.userMetadata?.displayName ?: ""
+                            val isUserMentioned = !isMine && currentUserName.isNotBlank() && msg.text.contains("@$currentUserName", ignoreCase = true)
+
+                            val bubbleBrush = if (isCokiAI) {
+                                Brush.linearGradient(listOf(Color(0xFF0F172A), Color(0xFF1E1B4B)))
+                            } else if (isMine) {
+                                Brush.linearGradient(listOf(IndigoPrimary, PurpleAccent))
+                            } else {
+                                Brush.linearGradient(listOf(Color(0xFF1E293B), Color(0xFF0F172A)))
+                            }
+
+                            val bubbleBorder = if (isCokiAI) {
+                                androidx.compose.foundation.BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(Color(0xFF8B5CF6), Color(0xFF38BDF8), Color(0xFF10B981))))
+                            } else if (isUserMentioned) {
+                                androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFF59E0B))
+                            } else if (isMine) {
+                                androidx.compose.foundation.BorderStroke(1.dp, PurpleAccent.copy(alpha = 0.6f))
+                            } else {
+                                androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155))
+                            }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
@@ -783,36 +827,88 @@ fun CSMSScreen(
                                                 bottomEnd = if (isMine) 2.dp else 16.dp
                                             )
                                         )
-                                        .background(
-                                            if (isMine) {
-                                                Brush.linearGradient(listOf(IndigoPrimary, PurpleAccent))
-                                            } else {
-                                                Brush.linearGradient(listOf(Color(0xFF1E293B), Color(0xFF0F172A)))
-                                            }
-                                        )
-                                        .border(
-                                            1.dp,
-                                            if (isMine) PurpleAccent.copy(alpha = 0.6f) else Color(0xFF334155),
-                                            RoundedCornerShape(16.dp)
-                                        )
+                                        .background(bubbleBrush)
+                                        .border(bubbleBorder, RoundedCornerShape(16.dp))
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
-                                        .fillMaxWidth(if (!msg.mediaUrl.isNullOrBlank()) 0.75f else 0.85f)
+                                        .fillMaxWidth(if (!msg.mediaUrl.isNullOrBlank()) 0.78f else 0.85f)
                                 ) {
                                     Column {
-                                        if (!isMine) {
-                                            Text(
-                                                text = msg.senderName,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = PurpleAccent
-                                            )
-                                            Spacer(modifier = Modifier.height(2.dp))
+                                        if (isCokiAI) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(bottom = 6.dp)
+                                            ) {
+                                                Text("🤖", fontSize = 13.sp)
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "Coki with Gemini Intelligence",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF38BDF8)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(Color(0xFF0369A1).copy(alpha = 0.5f))
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text("AI COPILOT", fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFBAE6FD))
+                                                }
+                                            }
+                                        } else if (!isMine) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(bottom = 4.dp)
+                                            ) {
+                                                Text(
+                                                    text = msg.senderName,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = PurpleAccent
+                                                )
+                                                if (isUserMentioned) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .clip(RoundedCornerShape(6.dp))
+                                                            .background(Color(0xFF78350F).copy(alpha = 0.85f))
+                                                            .border(0.5.dp, Color(0xFFF59E0B), RoundedCornerShape(6.dp))
+                                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    ) {
+                                                        Text("📢 Te mencionó", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFDE68A))
+                                                    }
+                                                }
+                                            }
                                         }
 
-                                        // Texto del mensaje
+                                        // Texto del mensaje con formato enriquecido para @menciones y /comandos
                                         if (msg.text.isNotBlank()) {
+                                            val annotatedText = remember(msg.text) {
+                                                buildAnnotatedString {
+                                                    val words = msg.text.split(" ")
+                                                    for (idx in words.indices) {
+                                                        val w = words[idx]
+                                                        if (w.startsWith("@") && w.length > 1) {
+                                                            val color = if (w.equals("@Coki", ignoreCase = true)) Color(0xFF38BDF8) else Color(0xFFFBBF24)
+                                                            withStyle(SpanStyle(color = color, fontWeight = FontWeight.Bold)) {
+                                                                append(w)
+                                                            }
+                                                        } else if (w.startsWith("/") && w.length > 1) {
+                                                            withStyle(SpanStyle(color = Color(0xFFA78BFA), fontWeight = FontWeight.Bold)) {
+                                                                append(w)
+                                                            }
+                                                        } else {
+                                                            append(w)
+                                                        }
+                                                        if (idx < words.size - 1) append(" ")
+                                                    }
+                                                }
+                                            }
                                             Text(
-                                                text = msg.text,
+                                                text = annotatedText,
                                                 fontSize = 14.sp,
                                                 color = Color.White
                                             )
@@ -921,7 +1017,80 @@ fun CSMSScreen(
                         }
                     }
 
-                    // Barra Inferior de Entrada (Con botón de adjuntar fotos y videos)
+                    // Menciones y Comandos Activos en CSMS
+                    val lastToken = typedMessage.substringAfterLast(" ", typedMessage)
+                    val chatMembers = remember(activeMessages) {
+                        activeMessages.map { it.senderName }
+                            .filter { it.isNotBlank() && !it.contains("Coki", ignoreCase = true) }
+                            .distinct()
+                    }
+
+                    class MentionItem(val label: String, val insertText: String, val icon: String, val isAI: Boolean = false)
+
+                    val mentionSuggestions = remember(typedMessage, chatMembers) {
+                        if (lastToken.startsWith("/")) {
+                            val q = lastToken.removePrefix("/").lowercase()
+                            listOf(
+                                MentionItem("/Coki", "/Coki ", "🤖", isAI = true),
+                                MentionItem("/Genimg", "/Genimg ", "🎨", isAI = true)
+                            ).filter { it.label.lowercase().contains(q) }
+                        } else if (lastToken.startsWith("@")) {
+                            val q = lastToken.removePrefix("@").lowercase()
+                            val list = mutableListOf<MentionItem>()
+                            list.add(MentionItem("@Coki", "@Coki ", "🤖", isAI = true))
+                            chatMembers.forEach { member ->
+                                list.add(MentionItem("@$member", "@$member ", "👤", isAI = false))
+                            }
+                            list.add(MentionItem("@todos", "@todos ", "📢", isAI = false))
+                            list.filter { it.label.lowercase().contains(q) }
+                        } else {
+                            emptyList()
+                        }
+                    }
+
+                    // Sugerencias Flotantes para @menciones y /comandos
+                    if (mentionSuggestions.isNotEmpty()) {
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF0F172A))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(mentionSuggestions) { sug ->
+                                Card(
+                                    modifier = Modifier.clickable {
+                                        val before = typedMessage.substringBeforeLast(lastToken)
+                                        typedMessage = before + sug.insertText
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (sug.isAI) Color(0xFF1E1B4B) else Color(0xFF1E293B)
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        if (sug.isAI) PurpleAccent else Color(0xFF334155)
+                                    )
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(sug.icon, fontSize = 12.sp)
+                                        Text(
+                                            sug.label,
+                                            color = if (sug.isAI) Color(0xFFBAE6FD) else Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Barra Inferior de Entrada (Con botón de adjuntar fotos y videos, magia IA y envío)
                     val sendMessageAction = {
                         val text = typedMessage.trim()
                         val uri = attachedUri
@@ -945,6 +1114,10 @@ fun CSMSScreen(
                                     if (uploadedType == "video") "🎥 Video adjunto" else "📷 Foto adjunta"
                                 }
 
+                                val isCokiCommand = text.startsWith("/Coki", ignoreCase = true)
+                                val isCokiMention = text.contains("@Coki", ignoreCase = true)
+                                val isGenImgCommand = text.startsWith("/Genimg", ignoreCase = true)
+
                                 manager.sendChatMessage(
                                     rawRoomId = currentChat.id,
                                     content = finalContent,
@@ -956,6 +1129,32 @@ fun CSMSScreen(
                                 attachedUri = null
                                 isSendingMessage = false
                                 loadMessages(currentChat.id)
+
+                                if (isCokiCommand || isCokiMention) {
+                                    val query = if (isCokiCommand) {
+                                        text.replaceFirst(Regex("^/Coki\\s*", RegexOption.IGNORE_CASE), "")
+                                    } else {
+                                        text.replace(Regex("@Coki\\s*", RegexOption.IGNORE_CASE), "")
+                                    }.trim()
+
+                                    val recentContext = activeMessages.takeLast(6).joinToString("\n") { "${it.senderName}: ${it.text}" }
+                                    val aiReply = CokiGeminiAssistant.askCokiAI(query, recentContext)
+
+                                    manager.sendChatMessage(
+                                        rawRoomId = currentChat.id,
+                                        content = aiReply,
+                                        customAuthor = "Coki with Gemini Intelligence"
+                                    )
+                                    loadMessages(currentChat.id)
+                                } else if (isGenImgCommand) {
+                                    val notice = "🎨 El comando /Genimg está conectado con la API ImagePlayground nativa de Apple Intelligence en iOS 27, iPadOS 27 y macOS 27. En Android 17, puedes adjuntar fotos y creaciones usando el botón 📎 de multimedia."
+                                    manager.sendChatMessage(
+                                        rawRoomId = currentChat.id,
+                                        content = notice,
+                                        customAuthor = "Coki with Gemini Intelligence"
+                                    )
+                                    loadMessages(currentChat.id)
+                                }
                             }
                         }
                     }
@@ -980,12 +1179,30 @@ fun CSMSScreen(
                             Text("📎", fontSize = 18.sp)
                         }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        // Botón Rápido de Magia IA (/Coki y @mención)
+                        IconButton(
+                            onClick = {
+                                if (!typedMessage.startsWith("/Coki ")) {
+                                    typedMessage = "/Coki $typedMessage"
+                                }
+                            },
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1E1B4B))
+                                .border(1.dp, PurpleAccent.copy(alpha = 0.5f), CircleShape)
+                        ) {
+                            Text("✨", fontSize = 16.sp)
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
 
                         OutlinedTextField(
                             value = typedMessage,
                             onValueChange = { typedMessage = it },
-                            placeholder = { Text("Escribe un mensaje en CSMS...", fontSize = 13.sp) },
+                            placeholder = { Text("Mensaje, @mención o /Coki...", fontSize = 13.sp) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(24.dp),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
@@ -1018,6 +1235,55 @@ fun CSMSScreen(
                     }
                 }
             }
+        }
+
+        // Coki with Gemini Intelligence Chat Summary Dialog
+        if (showSummaryDialog) {
+            AlertDialog(
+                onDismissRequest = { showSummaryDialog = false },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("🤖", fontSize = 20.sp)
+                        Text(
+                            text = "Coki with Gemini Intelligence",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                },
+                text = {
+                    if (isSummarizing) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(color = PurpleAccent, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Resumiendo con Gemini Nano...", color = Color.White, fontSize = 13.sp)
+                        }
+                    } else {
+                        Text(
+                            text = summaryText,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            color = Color(0xFFE2E8F0)
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showSummaryDialog = false }) {
+                        Text("Cerrar", color = PurpleAccent, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = Color(0xFF0F172A)
+            )
         }
     }
 }

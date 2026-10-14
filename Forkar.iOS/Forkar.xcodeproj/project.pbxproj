@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B8E00000000000000000000B /* ForkarEcoWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B81B81F73060CE5C00D4464A /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = B81B81F63060CE5C00D4464A /* FirebaseAI */; };
 		B81B81F93060CE5C00D4464A /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = B81B81F83060CE5C00D4464A /* FirebaseAILogic */; };
 		B81B81FB3060CE5C00D4464A /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B81B81FA3060CE5C00D4464A /* FirebaseAnalytics */; };
@@ -32,14 +31,68 @@
 		B81B82213060CE5C00D4464A /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = B81B82203060CE5C00D4464A /* FirebaseRemoteConfig */; };
 		B81B82233060CE5C00D4464A /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = B81B82223060CE5C00D4464A /* FirebaseStorage */; };
 		B81B82253060CE5C00D4464A /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = B81B82243060CE5C00D4464A /* FirebaseStorageCombine-Community */; };
+		B8E00000000000000000000B /* ForkarEcoWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B8E6D720307ED6840089044E /* Forkar for Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B8E6D716307ED6830089044E /* Forkar for Watch Watch App.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B8E00000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B80595922FFF02310045B9C8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B8E000000000000000000001;
+			remoteInfo = ForkarEcoWidgetExtension;
+		};
+		B8E6D71E307ED6840089044E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B80595922FFF02310045B9C8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B8E6D715307ED6830089044E;
+			remoteInfo = "Forkar for Watch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B8E00000000000000000000E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B8E00000000000000000000B /* ForkarEcoWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8E6D724307ED6840089044E /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B8E6D720307ED6840089044E /* Forkar for Watch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ForkarEcoWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B805959A2FFF02310045B9C8 /* Forkar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Forkar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ForkarEcoWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B8E6D716307ED6830089044E /* Forkar for Watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Forkar for Watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B80595BF2FFF0CBA0045B9C8 /* Exceptions for "Forkar" folder in "Forkar" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				README.md,
+				Watch,
+			);
+			target = B80595992FFF02310045B9C8 /* Forkar */;
+		};
 		B8E000000000000000000009 /* Exceptions for "ForkarEcoWidgetExtension" folder in "ForkarEcoWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -47,24 +100,9 @@
 			);
 			target = B8E000000000000000000001 /* ForkarEcoWidgetExtension */;
 		};
-		B80595BF2FFF0CBA0045B9C8 /* Exceptions for "Forkar" folder in "Forkar" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = B80595992FFF02310045B9C8 /* Forkar */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B8E000000000000000000008 /* ForkarEcoWidgetExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				B8E000000000000000000009 /* Exceptions for "ForkarEcoWidgetExtension" folder in "ForkarEcoWidgetExtension" target */,
-			);
-			path = ForkarEcoWidgetExtension;
-			sourceTree = "<group>";
-		};
 		B805959C2FFF02310045B9C8 /* Forkar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -73,16 +111,22 @@
 			path = Forkar;
 			sourceTree = "<group>";
 		};
+		B8E000000000000000000008 /* ForkarEcoWidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B8E000000000000000000009 /* Exceptions for "ForkarEcoWidgetExtension" folder in "ForkarEcoWidgetExtension" target */,
+			);
+			path = ForkarEcoWidgetExtension;
+			sourceTree = "<group>";
+		};
+		B8E6D717307ED6830089044E /* Forkar for Watch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Forkar for Watch Watch App";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		B8E000000000000000000006 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B80595972FFF02310045B9C8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -114,6 +158,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B8E000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8E6D713307ED6830089044E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -122,6 +180,7 @@
 			children = (
 				B8E000000000000000000008 /* ForkarEcoWidgetExtension */,
 				B805959C2FFF02310045B9C8 /* Forkar */,
+				B8E6D717307ED6830089044E /* Forkar for Watch Watch App */,
 				B805959B2FFF02310045B9C8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -131,66 +190,14 @@
 			children = (
 				B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */,
 				B805959A2FFF02310045B9C8 /* Forkar.app */,
+				B8E6D716307ED6830089044E /* Forkar for Watch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
-
-/* Begin PBXContainerItemProxy section */
-		B8E00000000000000000000C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B80595922FFF02310045B9C8 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B8E000000000000000000001;
-			remoteInfo = ForkarEcoWidgetExtension;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		B8E00000000000000000000E /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				B8E00000000000000000000B /* ForkarEcoWidgetExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		B8E00000000000000000000D /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			platformFilter = ios;
-			target = B8E000000000000000000001 /* ForkarEcoWidgetExtension */;
-			targetProxy = B8E00000000000000000000C /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 /* Begin PBXNativeTarget section */
-		B8E000000000000000000001 /* ForkarEcoWidgetExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B8E000000000000000000002 /* Build configuration list for PBXNativeTarget "ForkarEcoWidgetExtension" */;
-			buildPhases = (
-				B8E000000000000000000005 /* Sources */,
-				B8E000000000000000000006 /* Frameworks */,
-				B8E000000000000000000007 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				B8E000000000000000000008 /* ForkarEcoWidgetExtension */,
-			);
-			name = ForkarEcoWidgetExtension;
-			productName = ForkarEcoWidgetExtension;
-			productReference = B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		B80595992FFF02310045B9C8 /* Forkar */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B80595A72FFF02330045B9C8 /* Build configuration list for PBXNativeTarget "Forkar" */;
@@ -199,11 +206,13 @@
 				B80595972FFF02310045B9C8 /* Frameworks */,
 				B80595982FFF02310045B9C8 /* Resources */,
 				B8E00000000000000000000E /* Embed Foundation Extensions */,
+				B8E6D724307ED6840089044E /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				B8E00000000000000000000D /* PBXTargetDependency */,
+				B8E6D71F307ED6840089044E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B805959C2FFF02310045B9C8 /* Forkar */,
@@ -239,6 +248,48 @@
 			productReference = B805959A2FFF02310045B9C8 /* Forkar.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B8E000000000000000000001 /* ForkarEcoWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B8E000000000000000000002 /* Build configuration list for PBXNativeTarget "ForkarEcoWidgetExtension" */;
+			buildPhases = (
+				B8E000000000000000000005 /* Sources */,
+				B8E000000000000000000006 /* Frameworks */,
+				B8E000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B8E000000000000000000008 /* ForkarEcoWidgetExtension */,
+			);
+			name = ForkarEcoWidgetExtension;
+			productName = ForkarEcoWidgetExtension;
+			productReference = B8E00000000000000000000A /* ForkarEcoWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B8E6D715307ED6830089044E /* Forkar for Watch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B8E6D721307ED6840089044E /* Build configuration list for PBXNativeTarget "Forkar for Watch Watch App" */;
+			buildPhases = (
+				B8E6D712307ED6830089044E /* Sources */,
+				B8E6D713307ED6830089044E /* Frameworks */,
+				B8E6D714307ED6830089044E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B8E6D717307ED6830089044E /* Forkar for Watch Watch App */,
+			);
+			name = "Forkar for Watch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "Forkar for Watch Watch App";
+			productReference = B8E6D716307ED6830089044E /* Forkar for Watch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -246,14 +297,17 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2650;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					B80595992FFF02310045B9C8 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					B8E000000000000000000001 = {
 						CreatedOnToolsVersion = 16.0;
 					};
-					B80595992FFF02310045B9C8 = {
-						CreatedOnToolsVersion = 26.5;
+					B8E6D715307ED6830089044E = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -276,11 +330,19 @@
 			targets = (
 				B8E000000000000000000001 /* ForkarEcoWidgetExtension */,
 				B80595992FFF02310045B9C8 /* Forkar */,
+				B8E6D715307ED6830089044E /* Forkar for Watch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B80595982FFF02310045B9C8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B8E000000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -288,7 +350,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B80595982FFF02310045B9C8 /* Resources */ = {
+		B8E6D714307ED6830089044E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -298,6 +360,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B80595962FFF02310045B9C8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B8E000000000000000000005 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -305,7 +374,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B80595962FFF02310045B9C8 /* Sources */ = {
+		B8E6D712307ED6830089044E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -314,73 +383,22 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		B8E00000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = B8E000000000000000000001 /* ForkarEcoWidgetExtension */;
+			targetProxy = B8E00000000000000000000C /* PBXContainerItemProxy */;
+		};
+		B8E6D71F307ED6840089044E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = B8E6D715307ED6830089044E /* Forkar for Watch Watch App */;
+			targetProxy = B8E6D71E307ED6840089044E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
-		B8E000000000000000000003 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9CBRG74884;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ForkarEcoWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Forkar Eco";
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.Forkar.ForkarEcoWidgetExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
-		};
-		B8E000000000000000000004 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9CBRG74884;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ForkarEcoWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Forkar Eco";
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.Forkar.ForkarEcoWidgetExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
-		};
 		B80595A52FFF02330045B9C8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -516,9 +534,14 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Forkar/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Forkar necesita acceso a la cámara para escanear códigos QR de retos y estaciones ecológicas.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -555,9 +578,14 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Forkar/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Forkar necesita acceso a la cámara para escanear códigos QR de retos y estaciones ecológicas.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -580,18 +608,141 @@
 			};
 			name = Release;
 		};
+		B8E000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9CBRG74884;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ForkarEcoWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Forkar Eco";
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.Forkar.ForkarEcoWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B8E000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9CBRG74884;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ForkarEcoWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Forkar Eco";
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.Forkar.ForkarEcoWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B8E6D722307ED6840089044E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9CBRG74884;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Forkar for Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.cokistudios.Forkar;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.Forkar.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		B8E6D723307ED6840089044E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9CBRG74884;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Forkar for Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.cokistudios.Forkar;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.Forkar.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B8E000000000000000000002 /* Build configuration list for PBXNativeTarget "ForkarEcoWidgetExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B8E000000000000000000003 /* Debug */,
-				B8E000000000000000000004 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		B80595952FFF02310045B9C8 /* Build configuration list for PBXProject "Forkar" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -606,6 +757,24 @@
 			buildConfigurations = (
 				B80595A82FFF02330045B9C8 /* Debug */,
 				B80595A92FFF02330045B9C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B8E000000000000000000002 /* Build configuration list for PBXNativeTarget "ForkarEcoWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8E000000000000000000003 /* Debug */,
+				B8E000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B8E6D721307ED6840089044E /* Build configuration list for PBXNativeTarget "Forkar for Watch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8E6D722307ED6840089044E /* Debug */,
+				B8E6D723307ED6840089044E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

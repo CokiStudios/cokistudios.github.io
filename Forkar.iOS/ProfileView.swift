@@ -11,6 +11,7 @@ struct ProfileView: View {
     @State private var showSetupWizard = false
     @State private var showLogoutConfirmation = false
     @State private var showMyQRCode = false
+    @State private var showWatchPairing = false
     
     var body: some View {
         MultiplatformNavigationStack {
@@ -66,19 +67,36 @@ struct ProfileView: View {
                                         .font(.system(size: 12))
                                         .foregroundColor(ForkarTheme.textSub)
                                     
-                                    Button(action: {
-                                        showMyQRCode = true
-                                    }) {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: "qrcode")
-                                            Text("Mi Código QR")
+                                    HStack(spacing: 12) {
+                                        Button(action: {
+                                            showMyQRCode = true
+                                        }) {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "qrcode")
+                                                Text("Mi Código QR")
+                                            }
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(Color.emerald)
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 14)
+                                            .background(Color.emerald.opacity(0.12))
+                                            .cornerRadius(10)
                                         }
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(Color.emerald)
-                                        .padding(.vertical, 6)
-                                        .padding(.horizontal, 14)
-                                        .background(Color.emerald.opacity(0.12))
-                                        .cornerRadius(10)
+                                        
+                                        Button(action: {
+                                            showWatchPairing = true
+                                        }) {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "applewatch")
+                                                Text("Apple Watch")
+                                            }
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(ForkarTheme.accent)
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 14)
+                                            .background(ForkarTheme.accent.opacity(0.12))
+                                            .cornerRadius(10)
+                                        }
                                     }
                                     .padding(.top, 4)
                                 }
@@ -219,6 +237,13 @@ struct ProfileView: View {
                         #if os(macOS)
                         .frame(minWidth: 420, idealWidth: 480, minHeight: 480, idealHeight: 540)
                         #endif
+                    }
+                    .sheet(isPresented: $showWatchPairing) {
+                        ForkarWatchPairingView()
+                            .environmentObject(authManager)
+                            #if os(macOS)
+                            .frame(minWidth: 500, idealWidth: 600, minHeight: 600, idealHeight: 700)
+                            #endif
                     }
                 } else {
                     // Not logged in view

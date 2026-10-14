@@ -1,5 +1,8 @@
 import SwiftUI
 internal import Combine
+#if canImport(ImagePlayground)
+import ImagePlayground
+#endif
 
 struct ChatRoomDetailView: View {
     @EnvironmentObject var authManager: SupabaseManager
@@ -20,6 +23,14 @@ struct ChatRoomDetailView: View {
     @State private var showInviteSheet = false
     @State private var communityUsers: [CommunityUser] = []
     @State private var isLoadingUsers = false
+    @State private var showCokiSummarySheet = false
+    @State private var cokiSummaryText = ""
+    @State private var isSummarizingWithCoki = false
+    
+    // Coki with Apple Intelligence & Apple Playground
+    @State private var showImagePlayground = false
+    @State private var playgroundConcept = "auto deportivo eléctrico y sostenible"
+    @State private var isProcessingCokiAI = false
     
     @State private var activeChatRoom: ChatRoom? = nil
     @State private var navigateToChat = false
@@ -55,8 +66,28 @@ struct ChatRoomDetailView: View {
                         }
                         .font(.caption2)
                         .foregroundColor(ForkarTheme.textSub)
-                    }
                     Spacer()
+                    
+                    if !messages.isEmpty {
+                        Button(action: {
+                            summarizeChatWithCoki()
+                        }) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "apple.intelligence")
+                                    .font(.system(size: 12))
+                                Text("Resumen Coki")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(ForkarTheme.accent.opacity(0.12))
+                            .foregroundColor(ForkarTheme.accent)
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ForkarTheme.accent.opacity(0.3), lineWidth: 1))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .help("Resumir conversación privada on-device con Coki with Apple Intelligence")
+                    }
                 }
                 .padding()
                 .background(ForkarTheme.card)
@@ -94,8 +125,13 @@ struct ChatRoomDetailView: View {
                         ScrollView {
                             LazyVStack(spacing: 14) {
                                 ForEach(messages) { message in
-                                    MessageBubbleView(message: message, isCurrentUser: message.user_id == authManager.currentUser?.id, knownNames: knownNames)
-                                        .id(message.id)
+                                    MessageBubbleView(
+                                        message: message,
+                                        isCurrentUser: message.user_id == authManager.currentUser?.id,
+                                        knownNames: knownNames,
+                                        currentUserName: authManager.currentUser?.resolvedName
+                                    )
+                                    .id(message.id)
                                 }
                             }
                             .padding()
@@ -115,19 +151,118 @@ struct ChatRoomDetailView: View {
                     }
                 }
                 
+                // Indicador de Respuesta Coki AI en progreso
+                if isProcessingCokiAI {
+                    HStack(spacing: 8) {
+                        Image(systemName: "apple.intelligence")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(Color.purple)
+                        Text("Coki with Apple Intelligence está respondiendo...")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(ForkarTheme.textSub)
+                        Spacer()
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: Color.purple))
+                            .scaleEffect(0.7)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Color.purple.opacity(0.08))
+                    .transition(.opacity)
+                }
+                
+                // Barra Flotante de Sugerencias de Menciones (@alguien, /Coki, /Genimg)
+                if !activeMentionSuggestions.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(activeMentionSuggestions) { item in
+                                Button(action: {
+                                    selectMentionSuggestion(item)
+                                }) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: item.iconName)
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(item.isAI ? Color.purple : (item.isPlayground ? Color.pink : ForkarTheme.accent))
+                                        
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(item.displayTitle)
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(ForkarTheme.text)
+                                            Text(item.subtitle)
+                                                .font(.system(size: 9))
+                                                .foregroundColor(ForkarTheme.textSub)
+                                        }
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(ForkarTheme.card)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(item.isAI ? Color.purple.opacity(0.5) : (item.isPlayground ? Color.pink.opacity(0.5) : ForkarTheme.border), lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                    }
+                    .background(ForkarTheme.card.opacity(0.92))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                
                 // Message Input Area
-                HStack(spacing: 12) {
-                    TextField("Escribe un mensaje...", text: $newMessageText)
+                HStack(spacing: 10) {
+                    // Botón Menú Rápido de IA y Playground
+                    Menu {
+                        Button(action: {
+                            insertCommand("/Coki ")
+                        }) {
+                            Label("Preguntar a /Coki (IA)", systemImage: "apple.intelligence")
+                        }
+                        
+                        Button(action: {
+                            launchPlaygroundGeneration()
+                        }) {
+                            Label("Generar con /Genimg (Apple Playground)", systemImage: "sparkles.rectangle.stack.fill")
+                        }
+                        
+                        Divider()
+                        
+                        ForEach(knownNames.prefix(6), id: \.self) { name in
+                            Button(action: {
+                                insertMention("@\(name)")
+                            }) {
+                                Label("Mencionar @\(name)", systemImage: "at")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Color.purple)
+                            .frame(width: 36, height: 36)
+                            .background(Color.purple.opacity(0.12))
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.purple.opacity(0.3), lineWidth: 1))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Comandos rápidos: /Coki y /Genimg (Apple Playground)")
+                    
+                    TextField("Escribe un mensaje, /Coki o @usuario...", text: $newMessageText)
                         .foregroundColor(ForkarTheme.text)
                         .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 14)
                         .background(ForkarTheme.card)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(ForkarTheme.border, lineWidth: 1)
+                                .stroke(newMessageText.hasPrefix("/Coki") || newMessageText.hasPrefix("@Coki") ? Color.purple.opacity(0.6) : (newMessageText.hasPrefix("/Genimg") ? Color.pink.opacity(0.6) : ForkarTheme.border), lineWidth: 1)
                         )
                         .disabled(isSending)
+                        .onSubmit {
+                            sendCurrentMessage()
+                        }
                     
                     Button(action: {
                         sendCurrentMessage()
@@ -230,6 +365,61 @@ struct ChatRoomDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showCokiSummarySheet) {
+            NavigationStack {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "apple.intelligence")
+                            .font(.system(size: 20))
+                            .foregroundColor(ForkarTheme.accent)
+                        Text("Coki with Apple Intelligence")
+                            .font(.headline)
+                            .foregroundColor(ForkarTheme.text)
+                    }
+                    .padding(.top, 4)
+                    
+                    Text("Resumen Privado On-Device (Hardware Neural Engine)")
+                        .font(.caption)
+                        .foregroundColor(ForkarTheme.textSub)
+                    
+                    if isSummarizingWithCoki {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: ForkarTheme.accent))
+                            Text("Generando resumen local...")
+                                .font(.subheadline)
+                                .foregroundColor(ForkarTheme.textSub)
+                        }
+                        .padding(.vertical, 24)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        ScrollView {
+                            Text(cokiSummaryText)
+                                .font(.body)
+                                .foregroundColor(ForkarTheme.text)
+                                .lineSpacing(4)
+                                .padding(16)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(ForkarTheme.card)
+                                .cornerRadius(12)
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(ForkarTheme.border, lineWidth: 1))
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Button("Entendido") {
+                        showCokiSummarySheet = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(ForkarTheme.accent)
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(20)
+                .frame(minWidth: 420, idealWidth: 480, minHeight: 320, idealHeight: 420)
+                .background(ForkarTheme.bg)
+            }
+        }
         .onAppear {
             Task {
                 await loadInitialData()
@@ -243,11 +433,28 @@ struct ChatRoomDetailView: View {
         .environment(\.openURL, OpenURLAction { url in
             if url.scheme == "mention" {
                 let username = url.host ?? ""
+                if username.lowercased() == "coki" {
+                    newMessageText = "/Coki "
+                    return .handled
+                }
                 openDirectChat(withUsername: username)
+                return .handled
+            } else if url.scheme == "action" && url.host == "genimg" {
+                launchPlaygroundGeneration()
                 return .handled
             }
             return .systemAction
         })
+        .csmsImagePlayground(
+            isPresented: $showImagePlayground,
+            concept: playgroundConcept,
+            onCompletion: { url in
+                handlePlaygroundImageGenerated(url: url)
+            },
+            onCancellation: {
+                showImagePlayground = false
+            }
+        )
         .background(
             NavigationLink(
                 destination: Group {
@@ -260,6 +467,7 @@ struct ChatRoomDetailView: View {
                 label: { EmptyView() }
             )
         )
+        }
     }
     
     private func loadInitialData() async {
@@ -337,9 +545,168 @@ struct ChatRoomDetailView: View {
         }
     }
     
+    private var activeMentionSuggestions: [CSMSMentionSuggestion] {
+        let text = newMessageText
+        guard !text.isEmpty else { return [] }
+        
+        let tokens = text.components(separatedBy: " ")
+        guard let lastToken = tokens.last, !lastToken.isEmpty else { return [] }
+        
+        if lastToken.hasPrefix("@") {
+            let query = String(lastToken.dropFirst()).lowercased()
+            var list: [CSMSMentionSuggestion] = []
+            
+            if "coki".contains(query) || query.isEmpty {
+                list.append(
+                    CSMSMentionSuggestion(
+                        id: "mention_coki",
+                        trigger: "@",
+                        displayTitle: "@Coki",
+                        subtitle: "Coki with Apple Intelligence (Copiloto IA)",
+                        iconName: "apple.intelligence",
+                        isAI: true,
+                        isPlayground: false,
+                        insertText: "@Coki "
+                    )
+                )
+            }
+            
+            for name in knownNames {
+                if query.isEmpty || name.lowercased().contains(query) {
+                    list.append(
+                        CSMSMentionSuggestion(
+                            id: "mention_\(name)",
+                            trigger: "@",
+                            displayTitle: "@\(name)",
+                            subtitle: "Miembro de la sala",
+                            iconName: "person.crop.circle.fill",
+                            isAI: false,
+                            isPlayground: false,
+                            insertText: "@\(name) "
+                        )
+                    )
+                }
+            }
+            return list
+        } else if lastToken.hasPrefix("/") {
+            let query = String(lastToken.dropFirst()).lowercased()
+            var list: [CSMSMentionSuggestion] = []
+            
+            if "coki".contains(query) || query.isEmpty {
+                list.append(
+                    CSMSMentionSuggestion(
+                        id: "slash_coki",
+                        trigger: "/",
+                        displayTitle: "/Coki",
+                        subtitle: "Consulta rápida con Apple Intelligence",
+                        iconName: "apple.intelligence",
+                        isAI: true,
+                        isPlayground: false,
+                        insertText: "/Coki "
+                    )
+                )
+            }
+            
+            if "genimg".contains(query) || "imagen".contains(query) || query.isEmpty {
+                list.append(
+                    CSMSMentionSuggestion(
+                        id: "slash_genimg",
+                        trigger: "/",
+                        displayTitle: "/Genimg",
+                        subtitle: "Generar imagen con Apple Playground API",
+                        iconName: "sparkles.rectangle.stack.fill",
+                        isAI: false,
+                        isPlayground: true,
+                        insertText: "/Genimg "
+                    )
+                )
+            }
+            return list
+        }
+        return []
+    }
+    
+    private func selectMentionSuggestion(_ item: CSMSMentionSuggestion) {
+        var tokens = newMessageText.components(separatedBy: " ")
+        if !tokens.isEmpty {
+            tokens.removeLast()
+        }
+        tokens.append(item.insertText)
+        newMessageText = tokens.joined(separator: " ")
+        
+        if item.isPlayground {
+            launchPlaygroundGeneration()
+        }
+    }
+    
+    private func insertCommand(_ command: String) {
+        newMessageText = command
+    }
+    
+    private func insertMention(_ mention: String) {
+        if newMessageText.isEmpty {
+            newMessageText = "\(mention) "
+        } else {
+            newMessageText += " \(mention) "
+        }
+    }
+    
+    private func launchPlaygroundGeneration(concept: String? = nil) {
+        let clean = concept?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !clean.isEmpty {
+            self.playgroundConcept = clean
+        } else if self.playgroundConcept.isEmpty {
+            self.playgroundConcept = "auto deportivo eléctrico y sostenible"
+        }
+        
+        #if canImport(ImagePlayground) && !os(watchOS) && !os(tvOS)
+        if #available(iOS 18.2, macOS 15.2, *) {
+            if ImagePlaygroundViewController.isAvailable {
+                self.showImagePlayground = true
+                return
+            }
+        }
+        #endif
+        
+        self.moderationErrorAlert = "🎨 Apple Playground API requiere iOS 18.2+, macOS 15.2+ y soporte de Apple Intelligence en el hardware."
+        self.showModerationErrorAlert = true
+    }
+    
+    private func handlePlaygroundImageGenerated(url: URL) {
+        showImagePlayground = false
+        Task {
+            do {
+                let data = try Data(contentsOf: url)
+                let base64 = data.base64EncodedString()
+                let dataUri = "data:image/png;base64,\(base64)"
+                let text = "🎨 Creado con Apple Playground API: \"\(playgroundConcept)\""
+                
+                let newMsg = try await authManager.sendMessage(
+                    roomId: room.id,
+                    content: text,
+                    mediaUrl: dataUri,
+                    mediaType: "image"
+                )
+                await MainActor.run {
+                    self.messages.append(newMsg)
+                }
+            } catch {
+                print("Error loading playground image: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     private func sendCurrentMessage() {
         let content = newMessageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !content.isEmpty else { return }
+        
+        // Atajo directo para /Genimg
+        if content.hasPrefix("/Genimg") {
+            let prompt = String(content.dropFirst(7)).trimmingCharacters(in: .whitespacesAndNewlines)
+            newMessageText = ""
+            launchPlaygroundGeneration(concept: prompt.isEmpty ? nil : prompt)
+            return
+        }
         
         isSending = true
         newMessageText = ""
@@ -357,17 +724,68 @@ struct ChatRoomDetailView: View {
                 return
             }
             
+            let isCokiQuery = content.hasPrefix("/Coki") || content.hasPrefix("@Coki")
+            
             do {
                 let newMsg = try await authManager.sendMessage(roomId: room.id, content: content)
                 await MainActor.run {
                     self.messages.append(newMsg)
                     self.isSending = false
                 }
+                
+                // Si el mensaje es una consulta a Coki, responder en tiempo real con la IA
+                if isCokiQuery {
+                    var query = content
+                    if query.hasPrefix("/Coki") {
+                        query = String(query.dropFirst(5)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    } else if query.hasPrefix("@Coki") {
+                        query = String(query.dropFirst(5)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                    
+                    await MainActor.run {
+                        self.isProcessingCokiAI = true
+                    }
+                    
+                    let answer = await AppleContentModerator.shared.askCokiAI(query: query, context: room.displayName)
+                    
+                    do {
+                        let cokiMsg = try await authManager.sendMessage(
+                            roomId: room.id,
+                            content: answer,
+                            customAuthor: "Coki with Apple Intelligence"
+                        )
+                        await MainActor.run {
+                            self.messages.append(cokiMsg)
+                            self.isProcessingCokiAI = false
+                        }
+                    } catch {
+                        print("Error posting Coki response: \(error.localizedDescription)")
+                        await MainActor.run {
+                            self.isProcessingCokiAI = false
+                        }
+                    }
+                }
             } catch {
                 print("Error sending message: \(error.localizedDescription)")
                 await MainActor.run {
                     self.isSending = false
                 }
+            }
+        }
+    }
+    
+    private func summarizeChatWithCoki() {
+        guard !messages.isEmpty else { return }
+        isSummarizingWithCoki = true
+        showCokiSummarySheet = true
+        cokiSummaryText = "Coki with Apple Intelligence está analizando la conversación privada en el Neural Engine local..."
+        
+        Task {
+            let contents = messages.map { $0.content }
+            let summary = await AppleContentModerator.shared.summarizeChat(messages: contents, roomName: room.displayName)
+            await MainActor.run {
+                self.cokiSummaryText = summary
+                self.isSummarizingWithCoki = false
             }
         }
     }
@@ -545,13 +963,114 @@ struct InviteUsersSheetView: View {
     }
 }
 
+// MARK: - CSMS Mention Suggestion Item
+struct CSMSMentionSuggestion: Identifiable, Hashable {
+    let id: String
+    let trigger: String // "@" or "/"
+    let displayTitle: String
+    let subtitle: String
+    let iconName: String
+    let isAI: Bool
+    let isPlayground: Bool
+    let insertText: String
+}
+
+// MARK: - CSMS Media Image View (Universal: Data URI, file URL & HTTP)
+struct CSMSMediaImageView: View {
+    let urlString: String
+    
+    var body: some View {
+        if urlString.hasPrefix("data:image"),
+           let commaIndex = urlString.firstIndex(of: ","),
+           let data = Data(base64Encoded: String(urlString[urlString.index(after: commaIndex)...])) {
+            #if os(macOS)
+            if let nsImage = NSImage(data: data) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 260, maxHeight: 220)
+                    .cornerRadius(10)
+            }
+            #else
+            if let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 260, maxHeight: 220)
+                    .cornerRadius(10)
+            }
+            #endif
+        } else if let url = URL(string: urlString) {
+            AsyncImage(url: url) { image in
+                image.resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 260, maxHeight: 220)
+                    .cornerRadius(10)
+            } placeholder: {
+                ProgressView()
+                    .frame(width: 80, height: 80)
+            }
+        }
+    }
+}
+
+// MARK: - Apple Image Playground View Modifier
+extension View {
+    @ViewBuilder
+    func csmsImagePlayground(
+        isPresented: Binding<Bool>,
+        concept: String,
+        onCompletion: @escaping (URL) -> Void,
+        onCancellation: (() -> Void)? = nil
+    ) -> some View {
+        #if canImport(ImagePlayground) && !os(watchOS) && !os(tvOS)
+        if #available(iOS 18.2, macOS 15.2, *) {
+            self.imagePlaygroundSheet(
+                isPresented: isPresented,
+                concept: concept,
+                onCompletion: onCompletion,
+                onCancellation: onCancellation
+            )
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+}
+
 struct MessageBubbleView: View {
     let message: ChatMessage
     let isCurrentUser: Bool
     let knownNames: [String]
+    var currentUserName: String? = nil
+
+    var isCokiAssistant: Bool {
+        message.author_name.contains("Coki") ||
+        message.author_name.contains("Apple Intelligence") ||
+        message.author_name.contains("Gemini")
+    }
+
+    var isUserMentioned: Bool {
+        guard let current = currentUserName, !current.isEmpty else { return false }
+        return message.content.localizedCaseInsensitiveContains("@\(current)")
+    }
 
     var formattedContent: LocalizedStringKey {
         var formatted = message.content
+        
+        // Highlight /Coki and /Genimg commands
+        if formatted.contains("/Coki") {
+            formatted = formatted.replacingOccurrences(of: "/Coki", with: "**[🤖 /Coki](mention:Coki)**")
+        }
+        if formatted.contains("@Coki") {
+            formatted = formatted.replacingOccurrences(of: "@Coki", with: "**[🤖 @Coki](mention:Coki)**")
+        }
+        if formatted.contains("/Genimg") {
+            formatted = formatted.replacingOccurrences(of: "/Genimg", with: "**[🎨 /Genimg](action:genimg)**")
+        }
+
         let sortedNames = knownNames.sorted { $0.count > $1.count }
         for name in sortedNames {
             let mentionTag = "@\(name)"
@@ -573,39 +1092,73 @@ struct MessageBubbleView: View {
     
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            if !isCurrentUser {
+            if isCokiAssistant {
+                Image(systemName: "apple.intelligence")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.purple, Color.indigo, Color.pink],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+            } else if !isCurrentUser {
                 CircleAvatarPlaceholder(initials: message.initials)
             } else {
                 Spacer()
             }
             
-            VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 4) {
-                if !isCurrentUser {
-                    Text(message.author_name)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(ForkarTheme.textSub)
+            VStack(alignment: isCurrentUser && !isCokiAssistant ? .trailing : .leading, spacing: 4) {
+                if !isCurrentUser || isCokiAssistant {
+                    HStack(spacing: 6) {
+                        Text(message.author_name)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(isCokiAssistant ? Color.purple : ForkarTheme.textSub)
+                        
+                        if isCokiAssistant {
+                            HStack(spacing: 3) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 8))
+                                Text("Copiloto On-Device")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .foregroundColor(Color.purple)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.purple.opacity(0.12))
+                            .cornerRadius(6)
+                        } else if isUserMentioned {
+                            HStack(spacing: 3) {
+                                Image(systemName: "at")
+                                    .font(.system(size: 8, weight: .black))
+                                Text("Te mencionó")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .foregroundColor(Color.emerald)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.emerald.opacity(0.15))
+                            .cornerRadius(6)
+                        }
+                    }
                 }
                 
-                VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 6) {
+                VStack(alignment: isCurrentUser && !isCokiAssistant ? .trailing : .leading, spacing: 6) {
                     if !message.content.isEmpty {
                         Text(formattedContent)
                             .font(.system(size: 14))
                     }
                     
-                    // 📎 Media Attachments
-                    if let mediaUrl = message.media_url, let url = URL(string: mediaUrl) {
+                    // 📎 Media Attachments (Supports base64 data URIs, local files & HTTP)
+                    if let mediaUrl = message.media_url, !mediaUrl.isEmpty {
                         let type = message.media_type ?? (mediaUrl.hasSuffix(".mp4") || mediaUrl.hasSuffix(".mov") ? "video" : "image")
                         if type == "image" {
-                            AsyncImage(url: url) { image in
-                                image.resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 240, maxHeight: 200)
-                                    .cornerRadius(10)
-                            } placeholder: {
-                                ProgressView()
-                                    .frame(width: 80, height: 80)
-                            }
-                        } else if type == "video" {
+                            CSMSMediaImageView(urlString: mediaUrl)
+                        } else if type == "video", let url = URL(string: mediaUrl) {
                             Link(destination: url) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "video.fill")
@@ -617,7 +1170,7 @@ struct MessageBubbleView: View {
                                 .background(Color.black.opacity(0.3))
                                 .cornerRadius(8)
                             }
-                        } else {
+                        } else if let url = URL(string: mediaUrl) {
                             Link(destination: url) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "doc.fill")
@@ -634,21 +1187,21 @@ struct MessageBubbleView: View {
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 14)
-                .background(isCurrentUser ? ForkarTheme.accent : ForkarTheme.card)
-                .foregroundColor(isCurrentUser ? .white : ForkarTheme.text)
+                .background(isCokiAssistant ? ForkarTheme.card : (isCurrentUser ? ForkarTheme.accent : ForkarTheme.card))
+                .foregroundColor(isCurrentUser && !isCokiAssistant ? .white : ForkarTheme.text)
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
+                            isCokiAssistant
+                                ? LinearGradient(colors: [.purple, .indigo, .orange, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                : (isUserMentioned
+                                    ? LinearGradient(colors: [Color.emerald, Color.green], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    : LinearGradient(colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)], startPoint: .topLeading, endPoint: .bottomTrailing)),
+                            lineWidth: isCokiAssistant || isUserMentioned ? 1.5 : 1
                         )
                 )
-                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                .shadow(color: isCokiAssistant ? Color.purple.opacity(0.2) : Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
                 .padding(.horizontal, 4)
                 
                 HStack(spacing: 4) {
@@ -663,9 +1216,9 @@ struct MessageBubbleView: View {
                 .padding(.horizontal, 6)
             }
             
-            if isCurrentUser {
+            if isCurrentUser && !isCokiAssistant {
                 CircleAvatarPlaceholder(initials: message.initials)
-            } else {
+            } else if !isCokiAssistant {
                 Spacer()
             }
         }

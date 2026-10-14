@@ -51,6 +51,19 @@ struct ForkarApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authManager)
+                .onAppear {
+                    #if os(iOS)
+                    ForkarWatchSyncManager.shared.activate()
+                    if let user = authManager.currentUser {
+                        let displayName = user.email?.components(separatedBy: "@").first?.capitalized ?? "Miembro Coki"
+                        ForkarWatchSyncManager.shared.syncUserProfile(
+                            name: displayName,
+                            email: user.email ?? "",
+                            userId: user.id.uuidString
+                        )
+                    }
+                    #endif
+                }
         }
         #if os(macOS)
         .defaultSize(width: 1080, height: 720)

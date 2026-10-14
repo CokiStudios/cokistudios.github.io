@@ -1340,12 +1340,13 @@ class SupabaseManager private constructor(context: Context) {
         rawRoomId: String,
         content: String,
         mediaUrl: String? = null,
-        mediaType: String? = null
+        mediaType: String? = null,
+        customAuthor: String? = null
     ): Boolean = withContext(Dispatchers.IO) {
         val roomId = ensureValidRoomUUID(rawRoomId)
         val user = currentUser
         val senderId = getValidUserUUID()
-        val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario CSMS"
+        val authorName = customAuthor ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario CSMS"
         val nowIso = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
         }.format(java.util.Date())

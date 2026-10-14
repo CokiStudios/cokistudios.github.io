@@ -53,10 +53,19 @@ A partir de la documentación oficial de Apple Developer para Apple Intelligence
    - Reescritura, resumen y corrección asistida por IA integrada nativamente en los controles del sistema.
 
 ### B. Aplicación Estratégica en Coki Studios & Forkar
-- **Forkar iOS/macOS**:
-  - Adoptar `AppIntents` con Entity Schemas para posts de autos, rutas de telemetría y salas de chat cifradas de CSMS.
-  - Implementar View Annotations para que Siri AI entienda la pantalla de navegación en **ShineMaps** y la telemetría en **ForkarEcoView**.
-  - Integrar `Foundation Models framework` para el copiloto vehicular local sin servidores externos.
+- **Coki with Apple Intelligence (iOS 27, iPadOS 27, macOS 27 & watchOS 27)**:
+  - **Framework `FoundationModels` On-Device**: Habilitado nativamente on-device en iOS 27, iPadOS 27 y macOS 27 mediante `SystemLanguageModel` y `LanguageModelSession` en [`AppleContentModerator.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/AppleContentModerator.swift) con guardrails de hardware y privacidad total.
+  - **Insignia Dinámica**: [`CreatePostView.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/CreatePostView.swift) exhibe `"Coki with Apple Intelligence (iOS 27 / iPadOS 27 / macOS 27)"` y certifica publicaciones en el Neural Engine.
+  - **Resúmenes Privados On-Device de Chat CSMS**: [`ChatRoomDetailView.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/ChatRoomDetailView.swift) incluye botón y modal "Resumen Coki" para resumir conversaciones cifradas sin enviarlas fuera del dispositivo.
+  - **Diagnóstico Automotriz y Mantenimiento**: [`ForkarEcoView.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/ForkarEcoView.swift) incorpora diagnóstico en vivo de síntomas mecánicos y testigos con Coki with Apple Intelligence.
+  - **App Intents y Siri AI (`ForkarAppIntents.swift`)**: Integración de `AppShortcutsProvider` para buscar puntos de recarga (`FindEcoChargingPointsIntent`), unirse a caravanas P2P (`JoinCaravanIntent`), validar check-ins verdes (`EcoCheckInIntent`) y resumir chats por voz con Siri AI.
+  - **Copiloto en Apple Watch (`watchOS 27`)**: [`ForkarWatchContentView.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/Watch/ForkarWatchContentView.swift) y [`ForkarWatchComplications.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/Watch/ForkarWatchComplications.swift) integran Coki Copilot con sugerencias eco-eficientes y respuestas rápidas asistidas por IA.
+
+- **Coki with Gemini Intelligence (Android 17 & Gemini Nano AICore)**:
+  - **Arquitectura On-Device AICore**: Integración en [`CokiGeminiAssistant.kt`](file:///Users/jerix/cokistudios.github.io/Forkar.Android/app/src/main/java/com/cokistudios/forkar/data/CokiGeminiAssistant.kt) ejecutando Gemini Nano v3 directamente sobre la NPU de Android 17 con cero salida de datos (Zero Data Egress).
+  - **Insignia y Moderación On-Device**: [`CreatePostScreen.kt`](file:///Users/jerix/cokistudios.github.io/Forkar.Android/app/src/main/java/com/cokistudios/forkar/ui/screens/CreatePostScreen.kt) muestra el badge `"Coki with Gemini Intelligence (Android 17 AICore)"` y realiza moderación contextual y anti-evasión previa a publicación en Supabase.
+  - **Resúmenes Privados de Salas CSMS E2EE**: [`CSMSScreen.kt`](file:///Users/jerix/cokistudios.github.io/Forkar.Android/app/src/main/java/com/cokistudios/forkar/ui/screens/CSMSScreen.kt) cuenta con botón y diálogo en vivo ("✨ Resumen Coki") para procesar el hilo de chat descifrado localmente en RAM sin telemetría externa.
+  - **Diagnóstico Automotriz en Eco Hub**: [`EcoHubScreen.kt`](file:///Users/jerix/cokistudios.github.io/Forkar.Android/app/src/main/java/com/cokistudios/forkar/ui/screens/EcoHubScreen.kt) incorpora tarjeta y modal interactivo de diagnóstico vehicular (Check Engine, frenos, batería, neumáticos TPMS) asistido por Gemini Nano.
 
 ---
 
@@ -99,6 +108,46 @@ A partir de la documentación oficial de Apple Developer para Apple Intelligence
 - Localización y navegación con MapKit y Mapbox en [`LocationAndMapService.swift`](file:///Users/jerix/cokistudios.github.io/Forkar.iOS/ShineMaps/LocationAndMapService.swift).
 - Soporte para **Co-Navegación Comunitaria / Caravanas P2P**: modelo `CommunityCaravanMember` y telemetría compartida.
 
+### 5. Integración Universal Forkar iOS & watchOS (`ForkarWatchSyncManager` & `Forkar for Watch Watch App`)
+- **Vinculación Obligatoria al iPhone para Datos Reales de los 3 (Cero Hardcoding)**:
+  - Eliminados todos los valores estáticos (`co2Saved = 0.0`, `ecoPoints = 0`, identidades vacías).
+  - El Apple Watch requiere enlace activo con el iPhone (`isPhoneLinked`, `hasReceivedInitialSync`). Si no está vinculado, muestra la barrera: *"Vincular con iPhone • Abre Forkar en tu iPhone para sincronizar los datos reales de los 3 (CO₂, Puntos y Nivel)"*.
+  - Handshake interactivo: `requestSyncFromiPhone()` despacha `action: "request_sync"`, disparando `pushFullEcosystemSync()` en el iPhone para transferir los datos autenticados en Supabase (`forkman_user_eco`) y el perfil del usuario.
+- **Sincronización Bidireccional (`WCSessionDelegate`)**:
+  - `syncEcoImpact(co2:points:level:)`: Transmite balances y métricas en vivo de Supabase Eco Hub entre iPhone y Apple Watch (`updateApplicationContext` y `sendMessage`).
+  - `syncUserProfile(name:email:userId:)`: Proporciona credenciales autenticadas al reloj para identificación en la red CSMS.
+  - `syncCopilotInsight(_:)`: Pasa recomendaciones contextuales de Coki Copilot directamente a la muñeca.
+  - **Acciones Inmediatas en la Muñeca**:
+    - `"eco_check_in"`: Registra acciones sostenibles desde el Apple Watch persistiendo en Supabase (`SupabaseManager.shared.logUserEcoImpact`), refresca widgets en iOS y emite eventos en Dynamic Island.
+    - `"send_chat_message"`: Envía mensajes rápidos desde el reloj a salas CSMS protegidas (`CSMSCanonicalRooms.communityGlobal`) mediante `SupabaseManager.shared.sendMessage`.
+- **Arquitectura watchOS Multitab (`ContentView.swift` & `CSMSWatchApp.swift`)**:
+  - `WatchEcoDashboardView`: Tacómetro circular de CO₂ ahorrado con `Gauge`, balance de Puntos Eco, tarjeta Coki Copilot y botón de registro rápido con certificación *"iPhone Vinculado • Datos Reales"*.
+  - `WatchRoomsListView`: Visualizador de salas protegidas CSMS y respuestas rápidas (bloqueado con aviso si no está vinculado).
+  - `WatchHardwareStatusView`: Diagnóstico en vivo de Secure Enclave (SEP), cifrado AES-256-GCM y estado del enlace WCSession.
+### 6. Pantallas de Vinculación y Sincronización Oficial (`ForkarWatchPairingView.swift` & `WCSession` Robusto)
+- **Resolución de Errores WCSession**:
+  - `isActivating` evita activaciones concurrentes (`already in progress or activated`).
+  - `pendingEcoSync` retiene actualizaciones hasta que `activationState == .activated`, eliminando `WCErrorCodeSessionNotActivated` y `Application context data is nil`.
+  - Verificación de `isReachable` y mitigación de caída de handlers (`cannot add handler to 0 from 0 - dropping`).
+- **Pantalla Oficial de Vinculación (`ForkarWatchPairingView.swift`)**:
+  - Cabecera animada con ondas de enlace iPhone <-> Apple Watch.
+  - Tarjeta de diagnóstico de sesión (`WCSession`, `isPaired`, `isWatchAppInstalled`, `isReachable`).
+  - Tarjeta de los 3 datos reales autenticados de Supabase (`CO₂`, `Puntos Eco`, `Nivel`).
+  - Puntos de entrada en la app: accesible desde el botón de estado en `ForkarEcoView.swift` y desde la tarjeta de perfil en `ProfileView.swift`.
+
+### 7. CSMS Menciones Universales, Copiloto /Coki y Playground /Genimg
+- **Menciones Universales (@alguien)**:
+  - Detección reactiva de `@` con chips de autocompletado basados en los miembros reales del chat (cero identidades inventadas) y `@Coki`.
+  - Distintivo visual `"📢 Te mencionó"` en burbujas dirigidas al usuario autenticado.
+- **Consultas Rápidas `/Coki` (Apple Intelligence & Gemini Nano)**:
+  - En Apple (iOS, iPadOS, macOS, watchOS): Procesa `/Coki [consulta]` usando `FoundationModels` on-device (`SystemLanguageModel` / `LanguageModelSession` de iOS 27 y macOS 27) y responde como *"Coki with Apple Intelligence"*.
+  - En Android 17: Procesa consultas con Google AICore / Gemini Nano y responde como *"Coki with Gemini Intelligence"*.
+  - En watchOS: Responde con métricas reales de sostenibilidad y telemetría de conducción.
+- **Generación Visual `/Genimg` (Apple Playground API)**:
+  - En iOS, iPadOS y macOS: Invoca la hoja nativa `.imagePlaygroundSheet` de `ImagePlayground.framework`, renderiza conceptos con Apple Intelligence on-device, convierte a Base64 y envía la imagen generada directamente a la sala.
+  - `CSMSMediaImageView` compatible universalmente con Base64 data URIs, archivos locales y URLs remotas de CDN.
+  - En Android: Despliega guía explicativa indicando la exclusividad de ImagePlayground en Apple OSes y permitiendo adjuntos directos con `📎`.
+
 ---
 
 ## 4. RUTAS Y ARCHIVOS CLAVE
@@ -109,8 +158,15 @@ A partir de la documentación oficial de Apple Developer para Apple Intelligence
   - `public/`: Directorio de distribución estática para Wrangler.
 - **Swift Package**: `/Users/jerix/cokistudios.github.io/CSIDKit-Swift/`
 - **Proyecto Forkar Apple**: `/Users/jerix/cokistudios.github.io/Forkar.iOS/`
+  - `ForkarWatchSyncManager.swift`: Gestor blindado de enlace y sincronización WCSession.
+  - `ForkarWatchPairingView.swift`: Deck interactivo de vinculación, diagnóstico y datos reales de los 3.
+  - `ForkarEcoView.swift` & `ProfileView.swift`: Integración de accesos al emparejamiento.
   - Ruta de sincronización Xcode: `/Users/jerix/Documents/Xcode/Forkar/Forkar/Forkar/`
-- **Proyecto Android**: `/Users/jerix/cokistudios.github.io/ShineLauncher.Android/`
+- **Proyecto Forkar Apple Watch**:
+  - Repo: `/Users/jerix/cokistudios.github.io/Forkar for Watch Watch App/`
+  - Xcode: `/Users/jerix/Documents/Xcode/Forkar/Forkar/Forkar for Watch Watch App/`
+- **Proyecto CSMS watchOS**: `/Users/jerix/cokistudios.github.io/CSMS.watchOS/` (`CSMS_Watch.xcodeproj`)
+- **Proyecto Android**: `/Users/jerix/cokistudios.github.io/ShineLauncher.Android/` & `Forkar.Android/`
 - **Motor Looping**: `/Users/jerix/cokistudios.github.io/LoopingEngine/`
 
 ---

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,12 +32,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +59,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cokistudios.forkar.data.CokiGeminiAssistant
 import com.cokistudios.forkar.data.EcoAction
 import com.cokistudios.forkar.data.EcoMapPoint
 import com.cokistudios.forkar.data.SupabaseManager
@@ -80,6 +84,12 @@ fun EcoHubScreen(
     val ecoActions = remember { mutableStateListOf<EcoAction>() }
     val mapPoints = remember { mutableStateListOf<EcoMapPoint>() }
     var isLoading by remember { mutableStateOf(false) }
+
+    // Coki with Gemini Intelligence Vehicular Diagnostics
+    var showDiagDialog by remember { mutableStateOf(false) }
+    var diagInput by remember { mutableStateOf("") }
+    var diagResult by remember { mutableStateOf<String?>(null) }
+    var isDiagnosing by remember { mutableStateOf(false) }
 
     val loadData = {
         coroutineScope.launch {
@@ -248,6 +258,47 @@ fun EcoHubScreen(
                 }
             }
 
+            // Coki with Gemini Intelligence Vehicular Diagnostics Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+                    .clickable { showDiagDialog = true },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B).copy(alpha = 0.85f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF818CF8).copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("🤖", fontSize = 22.sp)
+                        Column {
+                            Text(
+                                text = "Diagnóstico Coki with Gemini Intelligence",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = "Analiza testigos de motor, frenos y mantenimiento en Android 17",
+                                color = Color(0xFFC7D2FE),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                    Text("Abrir ›", color = Color(0xFFA5B4FC), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+
             // ── TAB SELECTOR ──
             TabRow(
                 selectedTabIndex = selectedTab,
@@ -392,6 +443,103 @@ fun EcoHubScreen(
                     }
                 }
             }
+        }
+
+        // Coki with Gemini Intelligence Vehicular Diagnostic Dialog
+        if (showDiagDialog) {
+            AlertDialog(
+                onDismissRequest = { showDiagDialog = false },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("🚗", fontSize = 20.sp)
+                        Text(
+                            text = "Diagnóstico Coki with Gemini Intelligence",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Describe la falla, ruido o testigo de tablero de tu vehículo:",
+                            fontSize = 12.sp,
+                            color = Color(0xFFCBD5E1)
+                        )
+
+                        // Quick suggestion pills
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            listOf("Check Engine", "Frenos chillan", "Batería baja").forEach { pill ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFF312E81))
+                                        .clickable { diagInput = pill }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(pill, fontSize = 10.sp, color = Color.White)
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = diagInput,
+                            onValueChange = { diagInput = it },
+                            placeholder = { Text("Ej: El auto pierde potencia al acelerar...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    isDiagnosing = true
+                                    diagResult = CokiGeminiAssistant.diagnoseVehicle(diagInput)
+                                    isDiagnosing = false
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = diagInput.isNotBlank() && !isDiagnosing,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                        ) {
+                            if (isDiagnosing) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White)
+                            } else {
+                                Text("Diagnosticar con Gemini Nano", fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        if (diagResult != null) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF6366F1).copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = diagResult ?: "",
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showDiagDialog = false }) {
+                        Text("Cerrar", color = Color(0xFFA5B4FC), fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = Color(0xFF1E1B4B)
+            )
         }
     }
 }

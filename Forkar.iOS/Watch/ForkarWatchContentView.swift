@@ -98,6 +98,20 @@ public struct ForkarWatchContentView: View {
                 .background(Color.yellow.opacity(0.15))
                 .cornerRadius(12)
                 
+                // Sugerencia Copiloto IA watchOS 27
+                HStack(spacing: 5) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 10))
+                        .foregroundColor(.purple)
+                    Text("Coki Copilot: Conducción suave ahorra +15% de energía.")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(2)
+                }
+                .padding(6)
+                .background(Color.purple.opacity(0.15))
+                .cornerRadius(8)
+                
                 // Acción Rápida: Validar Check-In en Muñeca
                 Button(action: {
                     watchBridge.sendWristCheckIn()
@@ -113,7 +127,7 @@ public struct ForkarWatchContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
-                .padding(.top, 4)
+                .padding(.top, 2)
                 .alert("¡Acción Registrada!", isPresented: $showCheckInSuccess) {
                     Button("Listo", role: .cancel) { }
                 } message: {
@@ -137,15 +151,18 @@ public struct ForkarWatchContentView: View {
                         .foregroundColor(.green)
                         .tracking(1.0)
                     Spacer()
+                    Image(systemName: "apple.intelligence")
+                        .font(.system(size: 10))
+                        .foregroundColor(.purple)
                 }
                 .padding(.horizontal, 4)
                 
-                // Respuestas Rápidas Pre-configuradas
+                // Respuestas Rápidas Asistidas por Coki with Apple Intelligence
                 VStack(spacing: 5) {
-                    quickReplyButton("En camino 🚗")
-                    quickReplyButton("Punto Verde validado 🌱")
-                    quickReplyButton("Confirmado ✅")
-                    quickReplyButton("Nos vemos pronto 👋")
+                    quickReplyButton("En camino 🚗", isAI: false)
+                    quickReplyButton("Ruta despejada (Coki) 🛣️", isAI: true)
+                    quickReplyButton("Punto Verde validado 🌱", isAI: false)
+                    quickReplyButton("Llegando (Coki IA) ⏱️", isAI: true)
                 }
                 
                 // Botón de Dictado por Voz
@@ -162,22 +179,27 @@ public struct ForkarWatchContentView: View {
         }
     }
     
-    private func quickReplyButton(_ text: String) -> some View {
+    private func quickReplyButton(_ text: String, isAI: Bool = false) -> some View {
         Button(action: {
             watchBridge.sendQuickReply(text: text)
         }) {
             HStack {
+                if isAI {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 8))
+                        .foregroundColor(.purple)
+                }
                 Text(text)
                     .font(.system(size: 11, weight: .medium))
                     .lineLimit(1)
                 Spacer()
                 Image(systemName: "paperplane.fill")
                     .font(.system(size: 9))
-                    .foregroundColor(.mint)
+                    .foregroundColor(isAI ? .purple : .mint)
             }
         }
         .buttonStyle(.bordered)
-        .tint(.gray.opacity(0.3))
+        .tint(isAI ? .purple.opacity(0.3) : .gray.opacity(0.3))
     }
     
     // MARK: - Estado de Hardware y Llaves Criptográficas

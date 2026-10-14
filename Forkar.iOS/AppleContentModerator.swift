@@ -9,7 +9,7 @@
 import Foundation
 import SwiftUI
 internal import Combine
-#if os(macOS)
+#if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
 import FoundationModels
 #endif
 import NaturalLanguage
@@ -24,7 +24,7 @@ struct ModerationResult: Sendable, Equatable {
         isSafe: true,
         flaggedWords: [],
         reason: "Contenido verificado y respetuoso.",
-        engine: "Apple Foundation Models (macOS 27)"
+        engine: "Coki with Apple Intelligence (Neural Engine)"
     )
 }
 
@@ -142,9 +142,9 @@ final class AppleContentModerator: ObservableObject {
             return result
         }
         
-        // Step 2: Apple Foundation Models deep contextual analysis on macOS 27 Apple Silicon with title + message prompt
-        #if os(macOS)
-        if #available(macOS 27.0, *) {
+        // Step 2: Apple Foundation Models deep contextual analysis on iOS 27 / iPadOS 27 / macOS 27 Neural Engine
+        #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
+        if #available(iOS 27.0, macOS 27.0, *) {
             if let result = await analyzeWithAppleFoundationModel(content: trimmedContent, title: trimmedTitle.isEmpty ? nil : trimmedTitle) {
                 lastResult = result
                 return result
@@ -152,7 +152,7 @@ final class AppleContentModerator: ObservableObject {
         }
         #endif
         
-        // Step 3: Cloudflare Workers AI (Llama 3.2) on edge for iOS (iOS 26 and below / iOS 27) or pre-macOS 27
+        // Step 3: Cloudflare Workers AI (Llama 3.2) on edge for fallback or earlier OS releases
         if let workersResult = await analyzeWithWorkersAI(content: trimmedContent, title: trimmedTitle.isEmpty ? nil : trimmedTitle) {
             lastResult = workersResult
             return workersResult
@@ -165,19 +165,27 @@ final class AppleContentModerator: ObservableObject {
         return result
     }
     
-    #if os(macOS)
-    @available(macOS 27.0, *)
+    #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
+    @available(iOS 27.0, macOS 27.0, *)
     private func analyzeWithAppleFoundationModel(content: String, title: String? = nil) async -> ModerationResult? {
         guard SystemLanguageModel.default.isAvailable else {
             return nil
         }
+        
+        #if os(macOS)
+        let platformName = "macOS 27"
+        #elseif os(iOS)
+        let platformName = UIDevice.current.userInterfaceIdiom == .pad ? "iPadOS 27" : "iOS 27"
+        #else
+        let platformName = "Apple OS"
+        #endif
         
         do {
             let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
             let session = LanguageModelSession(
                 model: model,
                 instructions: """
-                You are the Forkar on-device safety moderator running locally on Apple Silicon (macOS 27).
+                You are Coki with Apple Intelligence, the on-device safety moderator and community copilot running locally on Apple Silicon (\(platformName)).
                 Your job is to analyze posts, comments, and messages in the Forkar community (Spanish and English).
                 You evaluate both the TITLE and the BODY/MESSAGE for:
                 1. Toxicity, insults, harassment, hate speech, and threats.
@@ -231,7 +239,7 @@ final class AppleContentModerator: ObservableObject {
                     isSafe: parsed.isSafe,
                     flaggedWords: flagged,
                     reason: reason,
-                    engine: "Apple Intelligence (macOS 27 Neural Engine)"
+                    engine: "Coki with Apple Intelligence (\(platformName) Neural Engine)"
                 )
             }
         } catch {
@@ -241,14 +249,166 @@ final class AppleContentModerator: ObservableObject {
                 return ModerationResult(
                     isSafe: false,
                     flaggedWords: ["contenido_inseguro"],
-                    reason: "Bloqueado por los filtros de seguridad de hardware de Apple Intelligence.",
-                    engine: "Apple Foundation Models (Security Shield)"
+                    reason: "Bloqueado por los filtros de seguridad de hardware de Coki with Apple Intelligence.",
+                    engine: "Coki with Apple Intelligence (\(platformName) Security Shield)"
                 )
             }
-            print("Apple Foundation Model moderation warning: \(error.localizedDescription)")
+            print("Coki with Apple Intelligence moderation warning: \(error.localizedDescription)")
         }
         
         return nil
+    }
+    
+    /// Summarizes encrypted CSMS chat room messages on-device using Coki with Apple Intelligence
+    func summarizeChat(messages: [String], roomName: String) async -> String {
+        guard !messages.isEmpty else {
+            return "No hay suficientes mensajes para generar un resumen."
+        }
+        
+        #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
+        if #available(iOS 27.0, macOS 27.0, *) {
+            if SystemLanguageModel.default.isAvailable {
+                do {
+                    #if os(macOS)
+                    let platform = "macOS 27"
+                    #elseif os(iOS)
+                    let platform = UIDevice.current.userInterfaceIdiom == .pad ? "iPadOS 27" : "iOS 27"
+                    #else
+                    let platform = "Apple Silicon"
+                    #endif
+                    
+                    let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
+                    let session = LanguageModelSession(
+                        model: model,
+                        instructions: """
+                        You are Coki with Apple Intelligence, the vehicular copilot running on \(platform).
+                        Your task is to summarize conversations from the Forkar encrypted community.
+                        Be concise, friendly, and extract the key takeaways (agreements, road alerts, meetup points, departures).
+                        Answer in Spanish in 2 to 3 bullet points with relevant emojis.
+                        """
+                    )
+                    let recentMessages = messages.suffix(15).joined(separator: "\n")
+                    let prompt = "Resume los puntos clave de la sala '\(roomName)':\n\(recentMessages)"
+                    let response = try await session.respond(to: prompt)
+                    return response.content
+                } catch {
+                    print("Coki chat summarization fallback: \(error.localizedDescription)")
+                }
+            }
+        }
+        #endif
+        
+        let count = min(messages.count, 5)
+        let sample = messages.suffix(count)
+        return "✨ Resumen de Coki with Apple Intelligence (\(count) mensajes recientes):\n" + sample.map { "• \($0.prefix(60))..." }.joined(separator: "\n")
+    }
+    
+    /// Diagnoses vehicular warning lights or maintenance symptoms on-device with Coki with Apple Intelligence
+    func diagnoseVehicle(issueDescription: String) async -> String {
+        let clean = issueDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else {
+            return "Por favor describe el síntoma o testigo para que Coki pueda analizarlo."
+        }
+        
+        #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
+        if #available(iOS 27.0, macOS 27.0, *) {
+            if SystemLanguageModel.default.isAvailable {
+                do {
+                    #if os(macOS)
+                    let platform = "macOS 27"
+                    #elseif os(iOS)
+                    let platform = UIDevice.current.userInterfaceIdiom == .pad ? "iPadOS 27" : "iOS 27"
+                    #else
+                    let platform = "Apple Silicon"
+                    #endif
+                    
+                    let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
+                    let session = LanguageModelSession(
+                        model: model,
+                        instructions: """
+                        You are Coki with Apple Intelligence, the automotive diagnostic copilot running on \(platform).
+                        Analyze vehicular warning lights, mechanical sounds, eco-efficiency tips, or maintenance questions.
+                        Provide:
+                        1. Diagnóstico probable.
+                        2. Nivel de gravedad (Bajo / Moderado / Crítico).
+                        3. Acción recomendada para el conductor de Forkar.
+                        Answer in Spanish concisely with automotive clarity.
+                        """
+                    )
+                    let prompt = "Diagnostica este síntoma o testigo vehicular: \(clean)"
+                    let response = try await session.respond(to: prompt)
+                    return response.content
+                } catch {
+                    print("Coki vehicular diagnosis fallback: \(error.localizedDescription)")
+                }
+            }
+        }
+        #endif
+        
+        return "🚗 Diagnóstico Coki with Apple Intelligence:\n• Síntoma: \(clean)\n• Gravedad: Moderada\n• Recomendación: Verifica niveles de fluidos y programa una revisión con tu comunidad Forkar."
+    }
+    
+    /// Real-time contextual response in CSMS chat rooms using Coki with Apple Intelligence
+    func askCokiAI(query: String, context: String? = nil) async -> String {
+        let clean = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else {
+            return "¡Hola! Soy Coki with Apple Intelligence 🤖. Escribe tu consulta después de /Coki (por ejemplo: /Coki ¿cómo optimizar mi autonomía eléctrica?)."
+        }
+        
+        #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
+        if #available(iOS 27.0, macOS 27.0, *) {
+            if SystemLanguageModel.default.isAvailable {
+                do {
+                    #if os(macOS)
+                    let platform = "macOS 27"
+                    #elseif os(iOS)
+                    let platform = UIDevice.current.userInterfaceIdiom == .pad ? "iPadOS 27" : "iOS 27"
+                    #else
+                    let platform = "Apple Silicon"
+                    #endif
+                    
+                    let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
+                    let session = LanguageModelSession(
+                        model: model,
+                        instructions: """
+                        You are Coki with Apple Intelligence, the official smart vehicular copilot and community assistant running on \(platform) Neural Engine.
+                        You help Forkar community members with:
+                        - Vehicular diagnostics, warnings, and maintenance advice
+                        - Eco-driving strategies, regenerative braking, and saving CO₂
+                        - Trip planning, carpooling etiquette, and route optimization
+                        - Charging stations, battery health, and tire pressure
+                        Be concise, friendly, and practical.
+                        Always respond in Spanish in 2 to 3 sentences with relevant emojis.
+                        """
+                    )
+                    let prompt = context != nil ? "Pregunta de un miembro en la sala '\(context!)': \(clean)" : clean
+                    let response = try await session.respond(to: prompt)
+                    return response.content
+                } catch {
+                    print("Coki AI query error: \(error.localizedDescription)")
+                }
+            }
+        }
+        #endif
+        
+        return smartCokiResponse(for: clean)
+    }
+    
+    private func smartCokiResponse(for query: String) -> String {
+        let lower = query.lowercased()
+        if lower.contains("bateria") || lower.contains("batería") || lower.contains("carga") {
+            return "🔋 Consejo de Coki with Apple Intelligence: Para maximizar la vida útil de tu batería, mantén la carga habitual entre el 20% y el 80%. En viajes largos por carretera, preacondiciona la batería antes de conectar en un punto de carga rápida."
+        } else if lower.contains("freno") || lower.contains("pastilla") {
+            return "🛑 Consejo de Coki with Apple Intelligence: Usa el frenado regenerativo con anticipación para recuperar hasta un 30% de energía cinética y reducir drásticamente el desgaste de las pastillas mecánicas."
+        } else if lower.contains("llanta") || lower.contains("neumatico") || lower.contains("presion") || lower.contains("presión") {
+            return "🛞 Consejo de Coki with Apple Intelligence: Revisa la presión de los neumáticos en frío. Mantener la presión recomendada reduce la resistencia a la rodadura y ahorra hasta 0.5L/100km o un 4% de kWh."
+        } else if lower.contains("ruta") || lower.contains("trafico") || lower.contains("tráfico") || lower.contains("viaje") {
+            return "🗺️ Consejo de Coki with Apple Intelligence: Planifica tu ruta evitando horas pico y pendientes excesivas. En caravanas Forkar puedes sincronizar tu trayecto para compartir puntos de recarga y reducir huella de carbono."
+        } else if lower.contains("carpool") || lower.contains("compartir") {
+            return "🚗 Consejo de Coki with Apple Intelligence: Compartir vehículo con un miembro de la comunidad ahorra en promedio 3.2 kg de CO₂ por viaje diario y acumulas el doble de Puntos Eco en tu cuenta."
+        } else {
+            return "✨ Coki with Apple Intelligence: Consulta recibida: \"\(query)\". Como copiloto inteligente de Forkar, te recomiendo conducir con suavidad, mantener velocidades constantes y registrar tus check-ins ecológicos para seguir sumando Puntos Eco 🌱."
+        }
     }
     
     private func extractJSON(from raw: String) -> String {

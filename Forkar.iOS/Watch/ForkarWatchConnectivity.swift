@@ -21,6 +21,7 @@ public class ForkarWatchConnectivity: NSObject, ObservableObject, WCSessionDeleg
     @Published public var userInitials: String = "CS"
     @Published public var recentMessages: [WatchChatMessage] = []
     @Published public var isHardwareSEPActive: Bool = true
+    private var isActivating: Bool = false
     
     private let userDefaults = UserDefaults.standard
     
@@ -31,9 +32,11 @@ public class ForkarWatchConnectivity: NSObject, ObservableObject, WCSessionDeleg
     }
     
     private func setupWatchConnectivity() {
-        if WCSession.isSupported() {
-            let session = WCSession.default
-            session.delegate = self
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        session.delegate = self
+        if session.activationState == .notActivated && !isActivating {
+            isActivating = true
             session.activate()
         }
     }
@@ -104,6 +107,7 @@ public class ForkarWatchConnectivity: NSObject, ObservableObject, WCSessionDeleg
     // MARK: - WCSessionDelegate
     public func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
+            self.isActivating = false
             self.isReachable = session.isReachable
         }
     }

@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-public struct DuoControlDeckView: View {
+struct DuoControlDeckView: View {
     @Binding var selectedItem: NavigationItem?
     @Binding var selectedTab: Int
     @ObservedObject var authManager: SupabaseManager
@@ -18,7 +18,7 @@ public struct DuoControlDeckView: View {
     @State private var showEcoScanner = false
     @State private var showSimulatedHingeSheet = false
     
-    public init(
+    init(
         selectedItem: Binding<NavigationItem?>,
         selectedTab: Binding<Int>,
         authManager: SupabaseManager
@@ -28,7 +28,7 @@ public struct DuoControlDeckView: View {
         self.authManager = authManager
     }
     
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 12) {
             // MARK: - Posture & Hardware Security Status Strip
             HStack(spacing: 10) {

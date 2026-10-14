@@ -73,17 +73,18 @@ public struct ForkarWatchComplicationEntryView: View {
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    Image(systemName: "leaf.fill")
-                        .foregroundColor(.green)
-                    Text("Forkar Eco")
+                    Image(systemName: "apple.intelligence")
+                        .foregroundColor(.purple)
+                        .font(.system(size: 10))
+                    Text("Coki Copilot")
                         .font(.system(size: 11, weight: .bold))
                 }
-                Text("\(entry.co2Saved, specifier: "%.1f") kg CO₂ ahorrados")
+                Text("\(entry.co2Saved, specifier: "%.1f") kg CO₂ · \(entry.ecoPoints) pts")
                     .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                Text("\(entry.ecoPoints) pts acumulados")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.yellow)
+                    .foregroundColor(.white)
+                Text("Ruta eco activa · watchOS 27")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(.green)
             }
             
         case .accessoryInline:

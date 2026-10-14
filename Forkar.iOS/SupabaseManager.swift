@@ -878,7 +878,13 @@ class SupabaseManager: ObservableObject {
         return messages
     }
     
-    func sendMessage(roomId: UUID, content: String) async throws -> ChatMessage {
+    func sendMessage(
+        roomId: UUID,
+        content: String,
+        customAuthor: String? = nil,
+        mediaUrl: String? = nil,
+        mediaType: String? = nil
+    ) async throws -> ChatMessage {
         guard let user = currentUser else {
             throw NSError(domain: "SupabaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "Inicia sesión para enviar mensajes"])
         }
@@ -895,7 +901,7 @@ class SupabaseManager: ObservableObject {
         }
         
         let path = "/rest/v1/chat_messages"
-        let authorName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
+        let authorName = customAuthor ?? user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.components(separatedBy: "@").first ?? "Usuario"
         let authorAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
         
         // Cifrado de Extremo a Extremo (E2EE) con respaldo de hardware (SEP / T2)
@@ -929,6 +935,12 @@ class SupabaseManager: ObservableObject {
         
         if let avatar = authorAvatar {
             bodyJson["author_avatar"] = avatar
+        }
+        if let mUrl = mediaUrl {
+            bodyJson["media_url"] = mUrl
+        }
+        if let mType = mediaType {
+            bodyJson["media_type"] = mType
         }
         
         let bodyData = try JSONSerialization.data(withJSONObject: bodyJson)

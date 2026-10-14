@@ -8,7 +8,7 @@
 //
 
 import SwiftUI
-internal import Combine
+public import Combine
 
 // MARK: - iPhone Duo Posture and Display Models
 public enum DuoPosture: String, CaseIterable, Equatable {
@@ -183,6 +183,16 @@ extension View {
     }
     
     /// Conforms to Apple HIG for iPhone Duo toolbar items (icon + label support for vertical/overflow bars)
+    #if os(macOS)
+    public func duoToolbarAction(
+        title: String,
+        icon: String,
+        placement: ToolbarItemPlacement = .primaryAction,
+        action: @escaping () -> Void
+    ) -> some View {
+        self.modifier(ForkarDuoToolbarItemModifier(title: title, icon: icon, placement: placement, action: action))
+    }
+    #else
     public func duoToolbarAction(
         title: String,
         icon: String,
@@ -191,6 +201,7 @@ extension View {
     ) -> some View {
         self.modifier(ForkarDuoToolbarItemModifier(title: title, icon: icon, placement: placement, action: action))
     }
+    #endif
 }
 
 // MARK: - Universal Adaptive Arrangement View (Apple ArrangementView Pattern)

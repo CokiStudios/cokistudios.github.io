@@ -14,6 +14,23 @@ struct ForkarEcoView: View {
     @State private var showQRScanner = false
     @State private var showMyQRCode = false
     @State private var qrScanResult: String? = nil
+    @State private var showDiagnosticSheet = false
+    @State private var diagnosticQuery = ""
+    @State private var diagnosticResult: String? = nil
+    @State private var isAnalyzingDiagnostic = false
+    @State private var showWatchPairingSheet = false
+    
+    private var levelTitle: String {
+        if ecoPoints >= 500 {
+            return "Nivel Campeón Eco"
+        } else if ecoPoints >= 200 {
+            return "Nivel Avanzado"
+        } else if ecoPoints >= 100 {
+            return "Nivel Pro"
+        } else {
+            return "Nivel Sostenible"
+        }
+    }
     
     var body: some View {
         MultiplatformNavigationStack {
@@ -48,11 +65,37 @@ struct ForkarEcoView: View {
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(.yellow)
                                 
-                                Label("Nivel Sostenible", systemImage: "shield.fill")
+                                Label(levelTitle, systemImage: "shield.fill")
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(Color.emerald)
                             }
                             .padding(.top, 4)
+                            
+                            #if os(iOS)
+                            Button(action: {
+                                showWatchPairingSheet = true
+                            }) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "applewatch.radiowaves.left.and.right")
+                                        .font(.system(size: 10, weight: .bold))
+                                    Text("Apple Watch: Vinculado • Datos reales de los 3")
+                                        .font(.system(size: 10, weight: .semibold))
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 8, weight: .bold))
+                                }
+                                .foregroundColor(Color.emerald.opacity(0.95))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(Color.emerald.opacity(0.12))
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .padding(.top, 2)
+                            .sheet(isPresented: $showWatchPairingSheet) {
+                                ForkarWatchPairingView()
+                                    .environmentObject(authManager)
+                            }
+                            #endif
                             
                             // Acciones Rápidas
                             VStack(spacing: 10) {
@@ -129,6 +172,26 @@ struct ForkarEcoView: View {
                                     }
                                 }
                                 #endif
+                                
+                                Button(action: { showDiagnosticSheet = true }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "apple.intelligence")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.purple)
+                                        Text("Diagnóstico Coki with Apple Intelligence")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Image(systemName: "sparkles")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.purple)
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .background(Color.purple.opacity(0.18))
+                                    .cornerRadius(10)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.purple.opacity(0.4), lineWidth: 1))
+                                }
                             }
                             .padding(.top, 12)
                         }
@@ -259,6 +322,79 @@ struct ForkarEcoView: View {
                 .frame(minWidth: 420, idealWidth: 480, minHeight: 480, idealHeight: 540)
                 #endif
             }
+            .sheet(isPresented: $showDiagnosticSheet) {
+                NavigationStack {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "apple.intelligence")
+                                .font(.system(size: 22))
+                                .foregroundColor(.purple)
+                            Text("Coki with Apple Intelligence")
+                                .font(.headline)
+                                .foregroundColor(ForkarTheme.text)
+                        }
+                        .padding(.top, 4)
+                        
+                        Text("Diagnóstico Automotriz y Asesor de Mantenimiento On-Device")
+                            .font(.caption)
+                            .foregroundColor(ForkarTheme.textSub)
+                        
+                        TextField("Describe un síntoma o testigo (ej. 'ruido al frenar', 'luz de batería')", text: $diagnosticQuery)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .padding(.top, 4)
+                        
+                        Button(action: {
+                            runDiagnostic()
+                        }) {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                Text(isAnalyzingDiagnostic ? "Analizando con Neural Engine..." : "Analizar con Coki")
+                            }
+                            .font(.system(size: 13, weight: .bold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
+                        .disabled(diagnosticQuery.isEmpty || isAnalyzingDiagnostic)
+                        
+                        if isAnalyzingDiagnostic {
+                            HStack(spacing: 10) {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .purple))
+                                Text("Evaluando telemetría en hardware Apple Silicon...")
+                                    .font(.caption)
+                                    .foregroundColor(ForkarTheme.textSub)
+                            }
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        } else if let result = diagnosticResult {
+                            ScrollView {
+                                Text(result)
+                                    .font(.body)
+                                    .foregroundColor(ForkarTheme.text)
+                                    .lineSpacing(4)
+                                    .padding(14)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(ForkarTheme.card)
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.purple.opacity(0.3), lineWidth: 1))
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Button("Cerrar") {
+                            showDiagnosticSheet = false
+                        }
+                        .buttonStyle(.bordered)
+                        .frame(maxWidth: .infinity)
+                    }
+                    .padding(20)
+                    .frame(minWidth: 420, idealWidth: 480, minHeight: 340, idealHeight: 460)
+                    .background(ForkarTheme.bg)
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenEcoQRScanner"))) { _ in
                 showQRScanner = true
             }
@@ -305,9 +441,26 @@ struct ForkarEcoView: View {
                     pts: self.ecoPoints,
                     message: "Sincronizado"
                 )
+                #if os(iOS)
+                ForkarWatchSyncManager.shared.syncEcoImpact(co2: self.co2Saved, points: self.ecoPoints, level: self.levelTitle)
+                #endif
             }
         } catch {
             // Fallback to local
+        }
+    }
+    
+    private func runDiagnostic() {
+        guard !diagnosticQuery.isEmpty else { return }
+        isAnalyzingDiagnostic = true
+        diagnosticResult = nil
+        
+        Task {
+            let res = await AppleContentModerator.shared.diagnoseVehicle(issueDescription: diagnosticQuery)
+            await MainActor.run {
+                self.diagnosticResult = res
+                self.isAnalyzingDiagnostic = false
+            }
         }
     }
     
@@ -355,6 +508,9 @@ struct ForkarEcoView: View {
             pts: ecoPoints,
             message: "+\(String(format: "%.1f", co2)) kg CO₂ (\(title))"
         )
+        #if os(iOS)
+        ForkarWatchSyncManager.shared.syncEcoImpact(co2: co2Saved, points: ecoPoints, level: levelTitle)
+        #endif
         
         Task {
             _ = try? await authManager.logUserEcoImpact(

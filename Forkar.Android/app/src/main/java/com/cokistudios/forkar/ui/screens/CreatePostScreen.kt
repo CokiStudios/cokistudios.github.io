@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cokistudios.forkar.data.Category
+import com.cokistudios.forkar.data.CokiGeminiAssistant
 import com.cokistudios.forkar.data.SupabaseManager
 import com.cokistudios.forkar.ui.components.PrimaryButton
 import com.cokistudios.forkar.ui.theme.BorderDark
@@ -186,6 +187,36 @@ fun CreatePostScreen(
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            // Coki with Gemini Intelligence Badge
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF1E1B4B).copy(alpha = 0.5f))
+                    .border(1.dp, Color(0xFF6366F1).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("🤖", fontSize = 16.sp)
+                    Column {
+                        Text(
+                            text = "Coki with Gemini Intelligence (Android 17 AICore)",
+                            color = Color(0xFFA5B4FC),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Moderación de seguridad en el dispositivo activa",
+                            color = Color.LightGray,
+                            fontSize = 10.sp
+                        )
                     }
                 }
             }
@@ -386,6 +417,14 @@ fun CreatePostScreen(
                                 "[🧪 QA] ${title.trim()}"
                             } else {
                                 title.trim()
+                            }
+
+                            // Coki with Gemini Intelligence moderation check
+                            val modResult = CokiGeminiAssistant.checkContent(finalContent, finalTitle)
+                            if (!modResult.isSafe) {
+                                Toast.makeText(context, "⚠️ Coki with Gemini Intelligence:\n${modResult.reason}", Toast.LENGTH_LONG).show()
+                                isPublishing = false
+                                return@launch
                             }
 
                             manager.createPost(finalTitle, finalContent, catId)
