@@ -1,0 +1,53 @@
+{
+  "name": "Coki Studios",
+  "short_name": "CokiStudios",
+  "description": "Making the world Shine, together. Looping Engine, CSMS E2EE, Forkar, CSID y ecosistema digital.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06090f",
+  "theme_color": "#06090f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/cs-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/cs-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/cs-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["developer", "games", "utilities", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Looping Engine",
+      "short_name": "Looping",
+      "description": "Explorar motor nativo Looping v2.6",
+      "url": "/#engine-section",
+      "icons": [{ "src": "/assets/cs-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "CSMS Messenger",
+      "short_name": "CSMS",
+      "description": "Mensajería ultrarrápida cifrada E2EE",
+      "url": "/messenger",
+      "icons": [{ "src": "/assets/cs-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Forkar Eco Hub",
+      "short_name": "Eco Hub",
+      "description": "Red regional de sostenibilidad Sabana de Bogotá",
+      "url": "/forkar",
+      "icons": [{ "src": "/assets/cs-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

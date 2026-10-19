@@ -37,6 +37,7 @@ const rootFiles = fs.readdirSync(rootDir).filter(file => {
     file.endsWith('.html') ||
     file.endsWith('.js') ||
     file.endsWith('.json') ||
+    file.endsWith('.xml') ||
     file.endsWith('.apk') ||
     file === 'CNAME' ||
     file === 'robots.txt' ||
