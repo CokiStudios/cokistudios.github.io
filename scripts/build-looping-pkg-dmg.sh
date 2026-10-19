@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
 # 🌟 PROFESSIONAL macOS .PKG & .DMG INSTALLER GENERATOR
-# For Looping & Ruuping Dual Hybrid Engine v2.5.0
+# For Looping & Ruuping Dual Hybrid Engine v2.6.0
 # Developed by Holo Entertainment & Coki Studios
 # ═══════════════════════════════════════════════════════════════
 
@@ -12,8 +12,8 @@ DIST_DIR="$ROOT_DIR/dist-dmg"
 BUILD_TEMP="$DIST_DIR/build-temp"
 STAGING_DIR="$DIST_DIR/dmg-staging"
 PKG_OUTPUT="$DIST_DIR/Instalar Looping.pkg"
-DMG_OUTPUT="$DIST_DIR/Looping-Engine-v2.5.0-macOS.dmg"
-VERSION="2.5.0"
+DMG_OUTPUT="$DIST_DIR/Looping-Engine-v2.6.0-macOS.dmg"
+VERSION="2.6.0"
 IDENTIFIER="com.cokistudios.looping"
 
 echo "=========================================================="
@@ -87,7 +87,7 @@ cat << 'EOF' > "$STAGING_DIR/Install_via_Terminal.command"
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "=========================================================="
-echo "🌟 Looping Engine & smiledev v2.5.0 Installer (Coki Studios)"
+echo "🌟 Looping Engine & smiledev v2.6.0 Installer (Coki Studios)"
 echo "=========================================================="
 echo "Installing into /usr/local/bin/looping and /usr/local/bin/smiledev..."
 sudo installer -pkg "$DIR/Install Looping.pkg" -target /
@@ -95,7 +95,7 @@ echo ""
 echo "✅ Looping and smiledev have been installed successfully in your system PATH!"
 echo "   Looping:  /usr/local/bin/looping"
 echo "   smiledev: /usr/local/bin/smiledev"
-echo "   Version:  $(/usr/local/bin/looping --version 2>/dev/null || echo '2.5.0')"
+echo "   Version:  $(/usr/local/bin/looping --version 2>/dev/null || echo '2.6.0')"
 echo ""
 echo "Available commands:"
 echo "   looping your_file.loop"
@@ -132,7 +132,7 @@ fi
 # Add Readme
 cat << 'EOF' > "$STAGING_DIR/README.txt"
 ═══════════════════════════════════════════════════════════════
-🌟 LOOPING PROGRAMMING LANGUAGE & RUNTIME v2.5.0
+🌟 LOOPING PROGRAMMING LANGUAGE & RUNTIME v2.6.0
 Holo Entertainment • Coki Studios
 ═══════════════════════════════════════════════════════════════
 
@@ -158,7 +158,7 @@ fi
 # 7. Generate Compressed Read-Only DMG
 rm -f "$DMG_OUTPUT"
 hdiutil create -srcfolder "$STAGING_DIR" \
-               -volname "Looping Engine v2.5.0" \
+               -volname "Looping Engine v2.6.0" \
                -fs HFS+ \
                -fsargs "-c c=64,a=16,e=16" \
                -format UDZO \

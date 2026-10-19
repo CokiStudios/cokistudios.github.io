@@ -99,6 +99,16 @@ public:
         : target(tgt), index(idx) {}
 };
 
+// Ternary Conditional Expression: cond ? then_expr : else_expr
+class TernaryExpr : public Expr {
+public:
+    std::shared_ptr<Expr> condition;
+    std::shared_ptr<Expr> then_expr;
+    std::shared_ptr<Expr> else_expr;
+    TernaryExpr(std::shared_ptr<Expr> c, std::shared_ptr<Expr> t, std::shared_ptr<Expr> e)
+        : condition(c), then_expr(t), else_expr(e) {}
+};
+
 // Base Statement
 class Stmt {
 public:
@@ -150,15 +160,18 @@ public:
         : condition(cond), body(b) {}
 };
 
-// For Range Loop: for i in start..end { ... }
+// For Range Loop: for i in start..end { ... } / start..=end / step S
 class ForRangeStmt : public Stmt {
 public:
     std::string var_name;
     std::shared_ptr<Expr> start_expr;
     std::shared_ptr<Expr> end_expr;
     std::vector<std::shared_ptr<Stmt>> body;
-    ForRangeStmt(const std::string& var, std::shared_ptr<Expr> s, std::shared_ptr<Expr> e, const std::vector<std::shared_ptr<Stmt>>& b)
-        : var_name(var), start_expr(s), end_expr(e), body(b) {}
+    bool inclusive = false;
+    std::shared_ptr<Expr> step_expr = nullptr;
+    ForRangeStmt(const std::string& var, std::shared_ptr<Expr> s, std::shared_ptr<Expr> e,
+                 const std::vector<std::shared_ptr<Stmt>>& b, bool inc = false, std::shared_ptr<Expr> st = nullptr)
+        : var_name(var), start_expr(s), end_expr(e), body(b), inclusive(inc), step_expr(st) {}
 };
 
 // For-Each Loop: for (item in list_expr) { ... }
@@ -193,6 +206,61 @@ public:
 class BreakStmt : public Stmt {
 public:
     BreakStmt() = default;
+};
+
+// Continue Statement: continue
+class ContinueStmt : public Stmt {
+public:
+    ContinueStmt() = default;
+};
+
+// Pattern Match Statement: match <expr> { pattern => stmt ... }
+struct MatchArm {
+    std::shared_ptr<Expr> pattern; // nullptr for wildcard _ / default
+    std::vector<std::shared_ptr<Stmt>> body;
+};
+
+class MatchStmt : public Stmt {
+public:
+    std::shared_ptr<Expr> target;
+    std::vector<MatchArm> arms;
+    MatchStmt(std::shared_ptr<Expr> tgt, const std::vector<MatchArm>& a)
+        : target(tgt), arms(a) {}
+};
+
+// Destructuring Declaration: let [a, b] = expr OR let (x, y) = expr
+class DestructureStmt : public Stmt {
+public:
+    std::vector<std::string> var_names;
+    std::shared_ptr<Expr> value_expr;
+    DestructureStmt(const std::vector<std::string>& names, std::shared_ptr<Expr> val)
+        : var_names(names), value_expr(val) {}
+};
+
+// Try / Catch Block: try { ... } catch (err) { ... }
+class TryCatchStmt : public Stmt {
+public:
+    std::vector<std::shared_ptr<Stmt>> try_body;
+    std::string err_var;
+    std::vector<std::shared_ptr<Stmt>> catch_body;
+    TryCatchStmt(const std::vector<std::shared_ptr<Stmt>>& tb, const std::string& ev, const std::vector<std::shared_ptr<Stmt>>& cb)
+        : try_body(tb), err_var(ev), catch_body(cb) {}
+};
+
+// Throw Statement: throw <expr>
+class ThrowStmt : public Stmt {
+public:
+    std::shared_ptr<Expr> error_expr;
+    ThrowStmt(std::shared_ptr<Expr> e) : error_expr(e) {}
+};
+
+// Assert Statement: assert(cond, msg) / assert cond
+class AssertStmt : public Stmt {
+public:
+    std::shared_ptr<Expr> condition;
+    std::shared_ptr<Expr> message;
+    AssertStmt(std::shared_ptr<Expr> c, std::shared_ptr<Expr> m = nullptr)
+        : condition(c), message(m) {}
 };
 
 // Expression Statement: expr (e.g. pipelines, function calls)
@@ -280,17 +348,23 @@ public:
     TargetCompileStmt(const std::string& t) : target_ui(t) {}
 };
 
-// Draw UI: draw card / button / input
+// Draw UI: draw card / button / input / slider / toggle / progress
 class DrawUIStmt : public Stmt {
 public:
-    std::string ui_type; // "card", "button", "input", "label"
-    double x = 0, y = 0, w = 0, h = 0;
+    std::string ui_type; // "card", "button", "input", "label", "slider", "toggle", "progress"
+    double x = -1, y = -1, w = 0, h = 0;
     std::string title;
     std::string text;
     std::string action;
     std::string placeholder;
     std::string var_name;
     std::string color;
+    std::string snippet;
+    double min_val = 0, max_val = 100, current_val = 0;
+    bool is_checked = false;
+    std::string position = "top";
+    std::string visible_when;
+    std::vector<std::string> actions_list;
 };
 
 // Spawn Entity: spawn sprite / platform / coin / bubbly_dot

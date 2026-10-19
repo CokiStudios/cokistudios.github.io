@@ -1,11 +1,12 @@
 class Looping < Formula
   desc "Dual hybrid high-performance engine and programming language for Loop OS"
   homepage "https://cokistudios.github.io"
-  version "2.5.0"
+  version "2.6.0"
   license "MIT"
 
-  url "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v2.5.0/looping-v2.5.0-darwin-universal.tar.gz"
-  sha256 "4c681a67f7d6813526b699cb5f15f5362768a35828b6033eac65fa84745d6350"
+  url "https://repo.cokistudios.com/engine/looping-v2.6.0-darwin-universal.tar.gz"
+  mirror "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v2.6.0/looping-v2.6.0-darwin-universal.tar.gz"
+  sha256 "c028b5e0e78545d038b5cb18877514f835deba49ae00dae7d3ee30c5b9eca4bd"
 
   def install
     bin.install "looping"

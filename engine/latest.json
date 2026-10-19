@@ -1,0 +1,31 @@
+{
+  "version": "2.6.0",
+  "engine": "Looping",
+  "package_manager": "smiledev",
+  "release_name": "Looping Dual Hybrid Engine & smiledev v2.6.0 (Universal Native)",
+  "release_date": "2026-10-19",
+  "architectures": ["arm64", "x86_64"],
+  "min_macos": "11.0",
+  "release_notes": "Looping Engine v2.6.0: Native support for ternary (? :), null-coalescing (??), pattern matching blocks (match), inclusive/step ranges (..=, step), continue, destructuring assignment, try/catch/throw, and extended stdlib (crypto.sha256, crypto.base64, crypto.uuid, crypto.csms_key, and functional collection methods: map, filter, reduce, unique, zip, chunk, find, any, all). Automatic engine self-updater in smiledev upgrade.",
+  "tarball_url": "https://repo.cokistudios.com/engine/looping-v2.6.0-darwin-universal.tar.gz",
+  "tarball_sha256": "c028b5e0e78545d038b5cb18877514f835deba49ae00dae7d3ee30c5b9eca4bd",
+  "installer_script_url": "https://repo.cokistudios.com/engine/install.sh",
+  "pkg_url": "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
+  "pkg_sha256": "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
+  "dmg_url": "https://repo.cokistudios.com/engine/Looping-Engine-v2.6.0-macOS.dmg",
+  "dmg_sha256": "894031195bd258d7239512b43f429074cf6123cedc0374296b1a0c2881b994f2",
+  "binaries": {
+    "looping": {
+      "url": "https://repo.cokistudios.com/engine/looping",
+      "sha256": "4a1e9391d7b78e4bcb51ddd53c694e9e659cdbce188a716f80519c81bcc4a894"
+    },
+    "smiledev": {
+      "url": "https://repo.cokistudios.com/engine/smiledev",
+      "sha256": "79d33f01d8a56ab045c0d8deedcf47d3fc4de44802a036ee33ccef6e9babf036"
+    }
+  },
+  "homebrew": {
+    "tap_command": "brew tap CokiStudios/cokistudios.github.io",
+    "install_command": "brew install looping smiledev"
+  }
+}

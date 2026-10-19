@@ -2654,6 +2654,67 @@ export default {
       }
     }
 
+    // ── REPO.COKISTUDIOS.COM/engine & /engine ENDPOINTS (LOOPING & SMILEDEV RELEASES) ──
+    if (url.pathname === '/engine' || url.pathname.startsWith('/engine/')) {
+      // 1. JSON Manifest: /engine/latest.json or /engine/version.json
+      if (url.pathname === '/engine/latest.json' || url.pathname === '/engine/version.json') {
+        const engineMetadata = {
+          version: "2.6.0",
+          engine: "Looping",
+          package_manager: "smiledev",
+          release_name: "Looping Dual Hybrid Engine & smiledev v2.6.0 (Universal Native)",
+          release_date: "2026-10-19",
+          architectures: ["arm64", "x86_64"],
+          min_macos: "11.0",
+          release_notes: "Looping Engine v2.6.0: Native support for ternary (? :), null-coalescing (??), pattern matching blocks (match), inclusive/step ranges (..=, step), continue, destructuring assignment, try/catch/throw, and extended stdlib (crypto.sha256, crypto.base64, crypto.uuid, crypto.csms_key, and functional collection methods: map, filter, reduce, unique, zip, chunk, find, any, all). Automatic engine self-updater in smiledev upgrade.",
+          tarball_url: "https://repo.cokistudios.com/engine/looping-v2.6.0-darwin-universal.tar.gz",
+          tarball_sha256: "c028b5e0e78545d038b5cb18877514f835deba49ae00dae7d3ee30c5b9eca4bd",
+          installer_script_url: "https://repo.cokistudios.com/engine/install.sh",
+          pkg_url: "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
+          pkg_sha256: "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
+          dmg_url: "https://repo.cokistudios.com/engine/Looping-Engine-v2.6.0-macOS.dmg",
+          dmg_sha256: "894031195bd258d7239512b43f429074cf6123cedc0374296b1a0c2881b994f2",
+          binaries: {
+            looping: {
+              url: "https://repo.cokistudios.com/engine/looping",
+              sha256: "4a1e9391d7b78e4bcb51ddd53c694e9e659cdbce188a716f80519c81bcc4a894"
+            },
+            smiledev: {
+              url: "https://repo.cokistudios.com/engine/smiledev",
+              sha256: "79d33f01d8a56ab045c0d8deedcf47d3fc4de44802a036ee33ccef6e9babf036"
+            }
+          },
+          homebrew: {
+            tap_command: "brew tap CokiStudios/cokistudios.github.io",
+            install_command: "brew install looping smiledev"
+          }
+        };
+        return Response.json(engineMetadata, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "public, max-age=60, s-maxage=300"
+          }
+        });
+      }
+
+      // 2. Direct browser view /engine -> /engine/index.html
+      if (url.pathname === '/engine' || url.pathname === '/engine/') {
+        const accept = request.headers.get("Accept") || "";
+        if (accept.includes("application/json") || url.searchParams.get("format") === "json") {
+          const redirectUrl = new URL(request.url);
+          redirectUrl.pathname = '/engine/latest.json';
+          return Response.redirect(redirectUrl.toString(), 302);
+        }
+        const engineHtmlUrl = new URL(request.url);
+        engineHtmlUrl.pathname = '/engine/index.html';
+        return env.ASSETS.fetch(new Request(engineHtmlUrl.toString(), request));
+      }
+
+      // 3. Fallback: serve static assets (.tar.gz, .pkg, .dmg, .sh, .sha256)
+      return env.ASSETS.fetch(request);
+    }
+
     // ── REPO.COKISTUDIOS.COM & /modules ENDPOINT ──
     if (isRepoHost || isModulesPath) {
       const liveModules = await fetchLiveModules();
@@ -2760,6 +2821,67 @@ export default {
             "Cache-Control": "public, max-age=60"
           }
         });
+      }
+    }
+
+    // Coki Universal AI Assistant Endpoint (Powered by Cloudflare Workers AI)
+    if ((url.pathname === '/api/coki' || url.pathname === '/api/ask') && request.method === 'POST') {
+      try {
+        const body = await request.json().catch(() => ({}));
+        const query = (body.query || body.content || '').trim();
+        const context = (body.context || body.title || '').trim();
+
+        if (!query) {
+          return Response.json({
+            answer: "¡Hola! Soy Coki with AI 🤖. Pregúntame sobre programación, terminales, ciencia, ideas o dudas generales.",
+            engine: "Cloudflare Edge AI"
+          }, { headers: corsHeaders });
+        }
+
+        if (env.AI) {
+          const systemPrompt = `You are Coki, the official versatile, insightful, and friendly AI assistant of Coki Studios.
+You assist with everything the user asks:
+- Programming, code (Swift, JavaScript, Python, etc.), terminals/CLI, debugging, and software architecture
+- Science, technology, mathematics, everyday explanations, productivity, and ideas
+- Sustainable mobility or vehicles ONLY IF the user explicitly asks about it
+Do NOT limit your persona or responses to cars or vehicles.
+Always respond in Spanish in 2 to 4 concise, clear sentences with relevant emojis.`;
+
+          const userPrompt = context ? `Contexto del chat: "${context}"\nPregunta: ${query}` : query;
+
+          const aiResponse = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 300
+          });
+
+          let reply = '';
+          if (aiResponse && typeof aiResponse === 'object' && aiResponse.response) {
+            reply = aiResponse.response;
+          } else if (aiResponse && Array.isArray(aiResponse.choices) && aiResponse.choices[0]?.message?.content) {
+            reply = aiResponse.choices[0].message.content;
+          } else if (typeof aiResponse === 'string') {
+            reply = aiResponse;
+          }
+
+          if (reply.trim()) {
+            return Response.json({
+              answer: reply.trim(),
+              engine: "Workers AI (@cf/meta/llama-3.2-3b-instruct)"
+            }, { headers: corsHeaders });
+          }
+        }
+
+        // Lightweight edge fallback if env.AI is unavailable
+        return Response.json({
+          answer: `✨ Coki AI: Recibí tu consulta sobre "${query}". En Coki Studios estoy diseñado para ayudarte con desarrollo, terminales, tecnología y temas generales. ¡Exploremos la solución juntos! 💡`,
+          engine: "Edge Heuristic Fallback"
+        }, { headers: corsHeaders });
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 500, headers: corsHeaders });
       }
     }
 

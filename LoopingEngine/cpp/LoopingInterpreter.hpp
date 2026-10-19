@@ -162,6 +162,142 @@ private:
     }
 };
 
+struct CryptoUtils {
+    static std::string fnv1a_hex(const std::string& data) {
+        uint64_t hash = 14695981039346656037ULL;
+        for (unsigned char c : data) {
+            hash ^= static_cast<uint64_t>(c);
+            hash *= 1099511628211ULL;
+        }
+        std::ostringstream ss;
+        ss << std::hex << std::setfill('0') << std::setw(16) << hash;
+        return ss.str();
+    }
+
+    static inline uint32_t rotr(uint32_t x, uint32_t n) {
+        return (x >> n) | (x << (32 - n));
+    }
+
+    static std::string sha256_hex(const std::string& input) {
+        static const uint32_t K[64] = {
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        };
+
+        uint32_t h[8] = {
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        };
+
+        std::vector<uint8_t> msg(input.begin(), input.end());
+        uint64_t bit_len = static_cast<uint64_t>(msg.size()) * 8ULL;
+        msg.push_back(0x80);
+        while ((msg.size() % 64) != 56) msg.push_back(0x00);
+        for (int i = 7; i >= 0; --i) {
+            msg.push_back(static_cast<uint8_t>((bit_len >> (i * 8)) & 0xFF));
+        }
+
+        for (size_t offset = 0; offset < msg.size(); offset += 64) {
+            uint32_t w[64];
+            for (int i = 0; i < 16; ++i) {
+                w[i] = (static_cast<uint32_t>(msg[offset + i * 4]) << 24) |
+                       (static_cast<uint32_t>(msg[offset + i * 4 + 1]) << 16) |
+                       (static_cast<uint32_t>(msg[offset + i * 4 + 2]) << 8) |
+                       (static_cast<uint32_t>(msg[offset + i * 4 + 3]));
+            }
+            for (int i = 16; i < 64; ++i) {
+                uint32_t s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >> 3);
+                uint32_t s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >> 10);
+                w[i] = w[i - 16] + s0 + w[i - 7] + s1;
+            }
+
+            uint32_t a = h[0], b = h[1], c = h[2], d = h[3];
+            uint32_t e = h[4], f = h[5], g = h[6], hh = h[7];
+
+            for (int i = 0; i < 64; ++i) {
+                uint32_t S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+                uint32_t ch = (e & f) ^ ((~e) & g);
+                uint32_t temp1 = hh + S1 + ch + K[i] + w[i];
+                uint32_t S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+                uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+                uint32_t temp2 = S0 + maj;
+
+                hh = g; g = f; f = e; e = d + temp1;
+                d = c; c = b; b = a; a = temp1 + temp2;
+            }
+
+            h[0] += a; h[1] += b; h[2] += c; h[3] += d;
+            h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+        }
+
+        std::ostringstream ss;
+        for (int i = 0; i < 8; ++i) {
+            ss << std::hex << std::setfill('0') << std::setw(8) << h[i];
+        }
+        return ss.str();
+    }
+
+    static std::string base64_encode(const std::string& in) {
+        static const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        std::string out;
+        int val = 0, valb = -6;
+        for (unsigned char c : in) {
+            val = (val << 8) + c;
+            valb += 8;
+            while (valb >= 0) {
+                out.push_back(b64[(val >> valb) & 0x3F]);
+                valb -= 6;
+            }
+        }
+        if (valb > -6) out.push_back(b64[((val << 8) >> (valb + 8)) & 0x3F]);
+        while (out.size() % 4) out.push_back('=');
+        return out;
+    }
+
+    static std::string base64_decode(const std::string& in) {
+        static const std::string b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        std::vector<int> T(256, -1);
+        for (int i = 0; i < 64; i++) T[static_cast<unsigned char>(b64[i])] = i;
+        std::string out;
+        int val = 0, valb = -8;
+        for (unsigned char c : in) {
+            if (T[c] == -1) break;
+            val = (val << 6) + T[c];
+            valb += 6;
+            if (valb >= 0) {
+                out.push_back(char((val >> valb) & 0xFF));
+                valb -= 8;
+            }
+        }
+        return out;
+    }
+
+    static std::string uuid_v4() {
+        static const char* hex = "0123456789abcdef";
+        auto now_ns = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        static uint64_t seed = 0x5bd1e995ULL;
+        seed ^= static_cast<uint64_t>(now_ns) + 0x9e3779b97f4a7c15ULL;
+        auto next_nibble = [&]() -> int {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            return static_cast<int>(seed & 0xF);
+        };
+        std::string res = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+        for (char& c : res) {
+            if (c == 'x') c = hex[next_nibble()];
+            else if (c == 'y') c = hex[(next_nibble() & 0x3) | 0x8];
+        }
+        return res;
+    }
+};
+
 class Interpreter {
 public:
     std::unordered_map<std::string, Value> variables;
@@ -171,7 +307,7 @@ public:
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
-    std::string app_version = "2.5.0";
+    std::string app_version = "2.6.0";
     std::string target_platform = "Shine Loop Console (Holo Looping OoS)";
     std::string ui_profile = "xui";
     std::string theme = "frosted_aqua_a17";
@@ -181,6 +317,9 @@ public:
 
     bool has_returned = false;
     bool has_broken = false;
+    bool has_continued = false;
+    bool has_thrown = false;
+    std::string thrown_error = "";
     Value last_return_value;
 
     void set_target_ui(const std::string& target_name) {
@@ -259,7 +398,7 @@ public:
     void print_banner() {
         std::cout << "\n" << color::BOLD << color::PURPLE << "----------------------------------------------------------------------" << color::RESET << "\n";
         std::cout << color::BOLD << color::CYAN << "[LOOPING C++ NATIVE]" << color::RESET << " " 
-                  << color::GREEN << "Core High-Performance Engine v2.5.0" << color::RESET << " " 
+                  << color::GREEN << "Core High-Performance Engine v" << app_version << color::RESET << " " 
                   << color::YELLOW << "(POSIX / Win32 Native)" << color::RESET << "\n";
         std::cout << color::BOLD << "Target Platform: " << color::RESET << target_platform 
                   << " | " << color::BOLD << "Kernel: " << color::RESET << "Holo Looping OoS 1.0 (C++ Subsystem)\n";
@@ -428,6 +567,12 @@ public:
             return python_bridge.eval_expr(py_expr->py_code, variables);
         }
 
+        // 5b. Ternary Conditional Expression: cond ? then_expr : else_expr
+        if (auto tern = std::dynamic_pointer_cast<TernaryExpr>(expr)) {
+            Value c = eval(tern->condition);
+            return c.is_truthy() ? eval(tern->then_expr) : eval(tern->else_expr);
+        }
+
         // 6. Binary Operators
         if (auto bin = std::dynamic_pointer_cast<BinaryExpr>(expr)) {
             std::string op = bin->op;
@@ -450,6 +595,13 @@ public:
                     return eval(call_e);
                 }
                 return l;
+            }
+
+            // Null-coalescing operator: left ?? right
+            if (op == "??") {
+                Value l = eval(bin->left);
+                if (l.type != ValueType::Nil) return l;
+                return eval(bin->right);
             }
 
             // Short-circuit logical operators
@@ -501,7 +653,13 @@ public:
             if (col_p != std::string::npos) name.replace(col_p, 2, ".");
 
             std::vector<Value> evaluated_args;
+            std::vector<std::string> raw_arg_names;
             for (const auto& a : call->args) {
+                if (auto v_expr = std::dynamic_pointer_cast<VariableExpr>(a)) {
+                    raw_arg_names.push_back(v_expr->name);
+                } else {
+                    raw_arg_names.push_back("");
+                }
                 evaluated_args.push_back(eval(a));
             }
 
@@ -762,8 +920,36 @@ public:
                 double by = evaluated_args.size() > 3 ? evaluated_args[3].as_number() : -1;
                 double bw = evaluated_args.size() > 4 ? evaluated_args[4].as_number() : 150;
                 double bh = evaluated_args.size() > 5 ? evaluated_args[5].as_number() : 42;
-                current_window.add_button(b_text, b_action, bx, by, bw, bh);
+                std::string b_snip = evaluated_args.size() > 6 ? evaluated_args[6].as_string() : "";
+                current_window.add_button(b_text, b_action, bx, by, bw, bh, b_snip);
+                if (!b_snip.empty()) {
+                    std::string act_id = b_action.empty() ? DynamicWindow::sanitize_id(b_text) : b_action;
+                    python_snippets[act_id] = b_snip;
+                    python_snippets[b_text] = b_snip;
+                    variables["__btn_snippet_" + act_id] = Value(b_snip);
+                }
                 return Value(static_cast<int64_t>(current_window.buttons.size() - 1));
+            }
+            if (name == "window.click" || name == "window.trigger" || name == "button.click") {
+                if (!evaluated_args.empty()) {
+                    std::string target = evaluated_args[0].as_string();
+                    for (const auto& b : current_window.buttons) {
+                        if (b.text == target || b.action == target) {
+                            if (!b.snippet.empty()) {
+                                std::string snip = b.snippet;
+                                size_t p = snip.find_first_not_of(" \t\r\n");
+                                std::string prefix = (p != std::string::npos) ? snip.substr(p) : "";
+                                if (prefix.rfind("#!python", 0) == 0 || prefix.rfind("import ", 0) == 0) {
+                                    python_bridge.execute_block(snip, variables);
+                                } else {
+                                    execute_code(snip);
+                                }
+                            }
+                            return Value(true);
+                        }
+                    }
+                }
+                return Value(false);
             }
             if (name == "window.add_input") {
                 std::string placeholder = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "Texto...";
@@ -781,6 +967,64 @@ public:
                 current_window.add_tone(freq, dur);
                 return Value(true);
             }
+            if (name == "window.add_slider") {
+                std::string s_label = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "Slider";
+                double s_min = evaluated_args.size() > 1 ? evaluated_args[1].as_number() : 0;
+                double s_max = evaluated_args.size() > 2 ? evaluated_args[2].as_number() : 100;
+                double s_cur = evaluated_args.size() > 3 ? evaluated_args[3].as_number() : 50;
+                std::string s_bind = evaluated_args.size() > 4 ? evaluated_args[4].as_string() : "";
+                current_window.add_slider(s_label, s_min, s_max, s_cur, s_bind);
+                return Value(static_cast<int64_t>(current_window.sliders.size() - 1));
+            }
+            if (name == "window.add_toggle") {
+                std::string t_label = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "Toggle";
+                bool t_chk = evaluated_args.size() > 1 ? evaluated_args[1].is_truthy() : false;
+                std::string t_bind = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : "";
+                current_window.add_toggle(t_label, t_chk, t_bind);
+                return Value(static_cast<int64_t>(current_window.toggles.size() - 1));
+            }
+            if (name == "window.add_progress") {
+                std::string p_label = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "Progress";
+                double p_val = evaluated_args.size() > 1 ? evaluated_args[1].as_number() : 0;
+                std::string p_bind = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : "";
+                current_window.add_progress(p_label, p_val, p_bind);
+                return Value(static_cast<int64_t>(current_window.progress_bars.size() - 1));
+            }
+            if (name == "window.get_sliders") {
+                std::vector<Value> ss;
+                for (const auto& s : current_window.sliders) {
+                    std::unordered_map<std::string, Value> item;
+                    item["label"] = Value(s.label);
+                    item["min"] = Value(s.min_val);
+                    item["max"] = Value(s.max_val);
+                    item["value"] = Value(s.current_val);
+                    item["bind"] = Value(s.binding);
+                    ss.push_back(Value(item));
+                }
+                return Value(ss);
+            }
+            if (name == "window.get_toggles") {
+                std::vector<Value> ts;
+                for (const auto& t : current_window.toggles) {
+                    std::unordered_map<std::string, Value> item;
+                    item["label"] = Value(t.label);
+                    item["checked"] = Value(t.is_checked);
+                    item["bind"] = Value(t.binding);
+                    ts.push_back(Value(item));
+                }
+                return Value(ts);
+            }
+            if (name == "window.get_progress") {
+                std::vector<Value> ps;
+                for (const auto& p : current_window.progress_bars) {
+                    std::unordered_map<std::string, Value> item;
+                    item["label"] = Value(p.label);
+                    item["progress"] = Value(p.progress);
+                    item["bind"] = Value(p.binding);
+                    ps.push_back(Value(item));
+                }
+                return Value(ps);
+            }
             if (name == "window.get_state" || name == "window.info") {
                 std::unordered_map<std::string, Value> st;
                 st["title"] = Value(current_window.title);
@@ -791,6 +1035,9 @@ public:
                 st["cards_count"] = Value(static_cast<int64_t>(current_window.cards.size()));
                 st["buttons_count"] = Value(static_cast<int64_t>(current_window.buttons.size()));
                 st["inputs_count"] = Value(static_cast<int64_t>(current_window.inputs.size()));
+                st["sliders_count"] = Value(static_cast<int64_t>(current_window.sliders.size()));
+                st["toggles_count"] = Value(static_cast<int64_t>(current_window.toggles.size()));
+                st["progress_count"] = Value(static_cast<int64_t>(current_window.progress_bars.size()));
                 return Value(st);
             }
             if (name == "window.get_cards") {
@@ -819,6 +1066,7 @@ public:
                     item["y"] = Value(b.y);
                     item["w"] = Value(b.width);
                     item["h"] = Value(b.height);
+                    item["snippet"] = Value(b.snippet);
                     bs.push_back(Value(item));
                 }
                 return Value(bs);
@@ -827,8 +1075,22 @@ public:
                 current_window.cards.clear();
                 current_window.buttons.clear();
                 current_window.inputs.clear();
+                current_window.sliders.clear();
+                current_window.toggles.clear();
+                current_window.progress_bars.clear();
                 current_window.tones.clear();
                 return Value(true);
+            }
+            if (name == "window.export_native" || name == "window.save_native") {
+                std::string path = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                if (path.empty()) path = "build/" + current_window.app_name + "_native.py";
+                bool ok = current_window.save_native_gui(path);
+                return Value(ok ? path : "");
+            }
+            if (name == "window.show_native" || name == "window.open_native" || name == "window.native") {
+                bool launch = evaluated_args.size() > 0 ? evaluated_args[0].is_truthy() : true;
+                bool ok = current_window.show_native(launch);
+                return Value(ok);
             }
             if (name == "window.export_html") {
                 std::string path = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
@@ -1090,6 +1352,43 @@ public:
                 }
                 return evaluated_args.empty() ? Value() : evaluated_args[0];
             }
+            if (name == "map") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    std::vector<Value> mapped;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        mapped.push_back(invoke_callable(target_fn, { item }));
+                    }
+                    return Value(mapped);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "filter") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    std::vector<Value> filtered;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        Value res = invoke_callable(target_fn, { item });
+                        if (res.is_truthy()) filtered.push_back(item);
+                    }
+                    return Value(filtered);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "reduce") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    const auto& list = *evaluated_args[0].list_val;
+                    if (list.empty()) return evaluated_args.size() > 2 ? evaluated_args[2] : Value();
+                    Value acc = evaluated_args.size() > 2 ? evaluated_args[2] : list[0];
+                    size_t start_i = evaluated_args.size() > 2 ? 0 : 1;
+                    for (size_t i = start_i; i < list.size(); ++i) {
+                        acc = invoke_callable(target_fn, { acc, list[i] });
+                    }
+                    return acc;
+                }
+                return Value();
+            }
             if (name == "keys") {
                 if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::Map && evaluated_args[0].map_val) {
                     std::vector<Value> ks;
@@ -1105,6 +1404,298 @@ public:
                     return Value(vs);
                 }
                 return Value(std::vector<Value>{});
+            }
+            if (name == "entries") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::Map && evaluated_args[0].map_val) {
+                    std::vector<Value> ents;
+                    for (const auto& [k, v] : *evaluated_args[0].map_val) {
+                        ents.push_back(Value(std::vector<Value>{Value(k), v}));
+                    }
+                    return Value(ents);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "merge") {
+                std::unordered_map<std::string, Value> merged;
+                for (const auto& arg : evaluated_args) {
+                    if (arg.type == ValueType::Map && arg.map_val) {
+                        for (const auto& [k, v] : *arg.map_val) merged[k] = v;
+                    }
+                }
+                return Value(merged);
+            }
+            if (name == "zip") {
+                if (evaluated_args.size() >= 2 &&
+                    evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val &&
+                    evaluated_args[1].type == ValueType::List && evaluated_args[1].list_val) {
+                    const auto& l1 = *evaluated_args[0].list_val;
+                    const auto& l2 = *evaluated_args[1].list_val;
+                    size_t sz = std::min(l1.size(), l2.size());
+                    std::vector<Value> out;
+                    for (size_t i = 0; i < sz; ++i) {
+                        out.push_back(Value(std::vector<Value>{l1[i], l2[i]}));
+                    }
+                    return Value(out);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "enumerate") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    const auto& l = *evaluated_args[0].list_val;
+                    std::vector<Value> out;
+                    for (size_t i = 0; i < l.size(); ++i) {
+                        out.push_back(Value(std::vector<Value>{Value(static_cast<int64_t>(i)), l[i]}));
+                    }
+                    return Value(out);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "unique") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    const auto& l = *evaluated_args[0].list_val;
+                    std::vector<Value> out;
+                    for (const auto& item : l) {
+                        bool exists = false;
+                        for (const auto& u : out) {
+                            if (u == item) { exists = true; break; }
+                        }
+                        if (!exists) out.push_back(item);
+                    }
+                    return Value(out);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "flatten") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    const auto& l = *evaluated_args[0].list_val;
+                    std::vector<Value> out;
+                    for (const auto& item : l) {
+                        if (item.type == ValueType::List && item.list_val) {
+                            for (const auto& sub : *item.list_val) out.push_back(sub);
+                        } else {
+                            out.push_back(item);
+                        }
+                    }
+                    return Value(out);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "chunk") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    const auto& l = *evaluated_args[0].list_val;
+                    size_t chunk_sz = static_cast<size_t>( std::max<int64_t>(1, evaluated_args[1].as_int()) );
+                    std::vector<Value> out;
+                    for (size_t i = 0; i < l.size(); i += chunk_sz) {
+                        std::vector<Value> sub;
+                        for (size_t j = i; j < l.size() && j < i + chunk_sz; ++j) {
+                            sub.push_back(l[j]);
+                        }
+                        out.push_back(Value(sub));
+                    }
+                    return Value(out);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "find") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        if (invoke_callable(target_fn, { item }).is_truthy()) return item;
+                    }
+                }
+                return Value();
+            }
+            if (name == "any") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        if (invoke_callable(target_fn, { item }).is_truthy()) return Value(true);
+                    }
+                }
+                return Value(false);
+            }
+            if (name == "all") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        if (!invoke_callable(target_fn, { item }).is_truthy()) return Value(false);
+                    }
+                    return Value(true);
+                }
+                return Value(false);
+            }
+            if (name == "count") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = raw_arg_names.size() > 1 ? raw_arg_names[1] : "";
+                    bool is_fn = !target_fn.empty() && functions.find(target_fn) != functions.end();
+                    int64_t cnt = 0;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        if (is_fn) {
+                            if (invoke_callable(target_fn, { item }).is_truthy()) cnt++;
+                        } else {
+                            if (item == evaluated_args[1]) cnt++;
+                        }
+                    }
+                    return Value(cnt);
+                }
+                return Value(static_cast<int64_t>(0));
+            }
+            if (name == "typeof" || name == "type") {
+                if (evaluated_args.empty()) return Value("nil");
+                switch (evaluated_args[0].type) {
+                    case ValueType::Nil: return Value("nil");
+                    case ValueType::Int: return Value("int");
+                    case ValueType::Float: return Value("float");
+                    case ValueType::Bool: return Value("bool");
+                    case ValueType::String: return Value("string");
+                    case ValueType::Tuple: return Value("tuple");
+                    case ValueType::List: return Value("list");
+                    case ValueType::Map: return Value("map");
+                }
+                return Value("nil");
+            }
+
+            // Extended Math & Statistical Builtins
+            if (name == "math.sum" || name == "sum") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    double total = 0;
+                    bool has_float = false;
+                    for (const auto& v : *evaluated_args[0].list_val) {
+                        if (v.type == ValueType::Float) has_float = true;
+                        total += v.as_number();
+                    }
+                    return has_float ? Value(total) : Value(static_cast<int64_t>(total));
+                }
+                return Value(static_cast<int64_t>(0));
+            }
+            if (name == "math.mean" || name == "mean" || name == "avg") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val && !evaluated_args[0].list_val->empty()) {
+                    double total = 0;
+                    for (const auto& v : *evaluated_args[0].list_val) total += v.as_number();
+                    return Value(total / static_cast<double>(evaluated_args[0].list_val->size()));
+                }
+                return Value(0.0);
+            }
+            if (name == "math.gcd" || name == "gcd") {
+                if (evaluated_args.size() >= 2) {
+                    int64_t a = std::abs(evaluated_args[0].as_int());
+                    int64_t b = std::abs(evaluated_args[1].as_int());
+                    while (b != 0) { int64_t t = b; b = a % b; a = t; }
+                    return Value(a);
+                }
+                return Value(static_cast<int64_t>(0));
+            }
+            if (name == "math.lcm" || name == "lcm") {
+                if (evaluated_args.size() >= 2) {
+                    int64_t a = std::abs(evaluated_args[0].as_int());
+                    int64_t b = std::abs(evaluated_args[1].as_int());
+                    if (a == 0 || b == 0) return Value(static_cast<int64_t>(0));
+                    int64_t ga = a, gb = b;
+                    while (gb != 0) { int64_t t = gb; gb = ga % gb; ga = t; }
+                    return Value((a / ga) * b);
+                }
+                return Value(static_cast<int64_t>(0));
+            }
+            if (name == "math.fact" || name == "factorial") {
+                int64_t n = evaluated_args.empty() ? 0 : evaluated_args[0].as_int();
+                int64_t res = 1;
+                for (int64_t i = 2; i <= n && i <= 20; ++i) res *= i;
+                return Value(res);
+            }
+            if (name == "math.fib" || name == "fibonacci") {
+                int64_t n = evaluated_args.empty() ? 0 : evaluated_args[0].as_int();
+                if (n <= 0) return Value(static_cast<int64_t>(0));
+                if (n == 1) return Value(static_cast<int64_t>(1));
+                int64_t a = 0, b = 1;
+                for (int64_t i = 2; i <= n && i <= 92; ++i) { int64_t c = a + b; a = b; b = c; }
+                return Value(b);
+            }
+            if (name == "math.deg" || name == "deg") {
+                double rad = evaluated_args.empty() ? 0.0 : evaluated_args[0].as_number();
+                return Value(rad * (180.0 / 3.14159265358979323846));
+            }
+            if (name == "math.rad" || name == "rad") {
+                double deg = evaluated_args.empty() ? 0.0 : evaluated_args[0].as_number();
+                return Value(deg * (3.14159265358979323846 / 180.0));
+            }
+            if (name == "math.sign" || name == "sign") {
+                double x = evaluated_args.empty() ? 0.0 : evaluated_args[0].as_number();
+                return Value(static_cast<int64_t>((x > 0) ? 1 : ((x < 0) ? -1 : 0)));
+            }
+
+            // Extended String Utilities
+            if (name == "pad_left" || name == "str.pad_left") {
+                if (evaluated_args.size() >= 2) {
+                    std::string s = evaluated_args[0].as_string();
+                    size_t target_len = static_cast<size_t>(std::max<int64_t>(0, evaluated_args[1].as_int()));
+                    std::string pad_ch = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : " ";
+                    if (pad_ch.empty()) pad_ch = " ";
+                    while (s.size() < target_len) s = pad_ch[0] + s;
+                    return Value(s);
+                }
+                return Value("");
+            }
+            if (name == "pad_right" || name == "str.pad_right") {
+                if (evaluated_args.size() >= 2) {
+                    std::string s = evaluated_args[0].as_string();
+                    size_t target_len = static_cast<size_t>(std::max<int64_t>(0, evaluated_args[1].as_int()));
+                    std::string pad_ch = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : " ";
+                    if (pad_ch.empty()) pad_ch = " ";
+                    while (s.size() < target_len) s += pad_ch[0];
+                    return Value(s);
+                }
+                return Value("");
+            }
+            if (name == "repeat_str" || name == "str.repeat") {
+                if (evaluated_args.size() >= 2) {
+                    std::string s = evaluated_args[0].as_string();
+                    int64_t count = evaluated_args[1].as_int();
+                    std::string out;
+                    for (int64_t i = 0; i < count; ++i) out += s;
+                    return Value(out);
+                }
+                return Value("");
+            }
+            if (name == "index_of" || name == "str.index_of") {
+                if (evaluated_args.size() >= 2) {
+                    std::string s = evaluated_args[0].as_string();
+                    std::string sub = evaluated_args[1].as_string();
+                    size_t p = s.find(sub);
+                    return Value(p == std::string::npos ? static_cast<int64_t>(-1) : static_cast<int64_t>(p));
+                }
+                return Value(static_cast<int64_t>(-1));
+            }
+            if (name == "chars" || name == "str.chars") {
+                std::vector<Value> out;
+                if (!evaluated_args.empty()) {
+                    for (char c : evaluated_args[0].as_string()) out.push_back(Value(std::string(1, c)));
+                }
+                return Value(out);
+            }
+
+            // Crypto & Security Builtins (crypto.*)
+            if (name == "crypto.sha256" || name == "sha256") {
+                std::string data = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::sha256_hex(data));
+            }
+            if (name == "crypto.fnv1a" || name == "fnv1a") {
+                std::string data = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::fnv1a_hex(data));
+            }
+            if (name == "crypto.base64_encode" || name == "base64.encode") {
+                std::string data = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::base64_encode(data));
+            }
+            if (name == "crypto.base64_decode" || name == "base64.decode") {
+                std::string data = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::base64_decode(data));
+            }
+            if (name == "crypto.uuid" || name == "uuid") {
+                return Value(CryptoUtils::uuid_v4());
+            }
+            if (name == "crypto.csms_key") {
+                std::string room_id = evaluated_args.empty() ? "default" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::sha256_hex(room_id + ":CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"));
             }
 
             // File I/O Builtins
@@ -1255,7 +1846,7 @@ public:
                 last_return_value = Value();
                 for (auto& s : fn->body) {
                     execute_statement(s);
-                    if (has_returned) break;
+                    if (has_returned || has_thrown) break;
                 }
                 Value ret = last_return_value;
                 has_returned = false;
@@ -1280,13 +1871,94 @@ public:
         return Value();
     }
 
+    Value invoke_callable(const std::string& fn_name, const std::vector<Value>& call_args) {
+        auto call_e = std::make_shared<CallExpr>(fn_name, std::vector<std::shared_ptr<Expr>>{});
+        for (const auto& a : call_args) {
+            call_e->args.push_back(std::make_shared<LiteralExpr>(a));
+        }
+        return eval(call_e);
+    }
+
     // ── Statement Executor ──
     void execute_statement(std::shared_ptr<Stmt> stmt) {
-        if (!stmt || has_returned || has_broken) return;
+        if (!stmt || has_returned || has_broken || has_continued || has_thrown) return;
 
-        // 0. Break
+        // 0. Break & Continue
         if (std::dynamic_pointer_cast<BreakStmt>(stmt)) {
             has_broken = true;
+            return;
+        }
+        if (std::dynamic_pointer_cast<ContinueStmt>(stmt)) {
+            has_continued = true;
+            return;
+        }
+
+        // 0b. Throw & Assert
+        if (auto th = std::dynamic_pointer_cast<ThrowStmt>(stmt)) {
+            thrown_error = th->error_expr ? eval(th->error_expr).as_string() : "Runtime Error";
+            has_thrown = true;
+            return;
+        }
+        if (auto as_st = std::dynamic_pointer_cast<AssertStmt>(stmt)) {
+            Value cond_v = eval(as_st->condition);
+            if (!cond_v.is_truthy()) {
+                thrown_error = as_st->message ? eval(as_st->message).as_string() : "Assertion failed";
+                has_thrown = true;
+                std::cerr << color::RED << "[ASSERTION FAILED]" << color::RESET << " " << thrown_error << "\n";
+            }
+            return;
+        }
+
+        // 0c. Try / Catch Block
+        if (auto tc = std::dynamic_pointer_cast<TryCatchStmt>(stmt)) {
+            for (auto& s : tc->try_body) {
+                execute_statement(s);
+                if (has_thrown || has_returned || has_broken || has_continued) break;
+            }
+            if (has_thrown) {
+                has_thrown = false;
+                variables[tc->err_var] = Value(thrown_error);
+                for (auto& s : tc->catch_body) {
+                    execute_statement(s);
+                    if (has_returned || has_broken || has_continued || has_thrown) break;
+                }
+            }
+            return;
+        }
+
+        // 0d. Pattern Match Statement: match <expr> { pattern => stmt ... }
+        if (auto ms = std::dynamic_pointer_cast<MatchStmt>(stmt)) {
+            Value target_v = eval(ms->target);
+            for (const auto& arm : ms->arms) {
+                bool matched = false;
+                if (!arm.pattern) {
+                    matched = true;
+                } else {
+                    Value pat_v = eval(arm.pattern);
+                    if (target_v == pat_v) matched = true;
+                }
+                if (matched) {
+                    for (auto& s : arm.body) {
+                        execute_statement(s);
+                        if (has_returned || has_broken || has_continued || has_thrown) break;
+                    }
+                    break;
+                }
+            }
+            return;
+        }
+
+        // 0e. Destructuring Declaration: let [a, b] = [10, 20] OR let (x, y) = (10, 20)
+        if (auto ds = std::dynamic_pointer_cast<DestructureStmt>(stmt)) {
+            Value val = eval(ds->value_expr);
+            if (val.type == ValueType::List && val.list_val) {
+                for (size_t i = 0; i < ds->var_names.size(); ++i) {
+                    variables[ds->var_names[i]] = (i < val.list_val->size()) ? (*val.list_val)[i] : Value();
+                }
+            } else if (val.type == ValueType::Tuple) {
+                if (ds->var_names.size() > 0) variables[ds->var_names[0]] = Value(val.tuple_val.first);
+                if (ds->var_names.size() > 1) variables[ds->var_names[1]] = Value(val.tuple_val.second);
+            }
             return;
         }
 
@@ -1386,29 +2058,36 @@ public:
             if (cond_val.is_truthy()) {
                 for (auto& s : if_st->then_branch) {
                     execute_statement(s);
-                    if (has_returned || has_broken) break;
+                    if (has_returned || has_broken || has_continued || has_thrown) break;
                 }
             } else {
                 for (auto& s : if_st->else_branch) {
                     execute_statement(s);
-                    if (has_returned || has_broken) break;
+                    if (has_returned || has_broken || has_continued || has_thrown) break;
                 }
             }
             return;
         }
 
-        // 5. For Range Loop: for (i in start..end) { ... }
+        // 5. For Range Loop: for (i in start..end) / start..=end / step S
         if (auto for_r = std::dynamic_pointer_cast<ForRangeStmt>(stmt)) {
             int64_t start_v = eval(for_r->start_expr).as_int();
             int64_t end_v = eval(for_r->end_expr).as_int();
-            for (int64_t i = start_v; i < end_v; ++i) {
+            int64_t step_v = for_r->step_expr ? eval(for_r->step_expr).as_int() : ((start_v <= end_v) ? 1 : -1);
+            if (step_v == 0) step_v = 1;
+            auto check_cond = [&](int64_t curr) -> bool {
+                if (step_v > 0) return for_r->inclusive ? (curr <= end_v) : (curr < end_v);
+                else return for_r->inclusive ? (curr >= end_v) : (curr > end_v);
+            };
+            for (int64_t i = start_v; check_cond(i); i += step_v) {
                 variables[for_r->var_name] = Value(i);
                 for (auto& s : for_r->body) {
                     execute_statement(s);
-                    if (has_broken || has_returned) break;
+                    if (has_broken || has_returned || has_continued || has_thrown) break;
                 }
+                if (has_continued) { has_continued = false; continue; }
                 if (has_broken) { has_broken = false; break; }
-                if (has_returned) break;
+                if (has_returned || has_thrown) break;
             }
             return;
         }
@@ -1422,10 +2101,11 @@ public:
                     variables[fe->var_name] = item;
                     for (auto& s : fe->body) {
                         execute_statement(s);
-                        if (has_broken || has_returned) break;
+                        if (has_broken || has_returned || has_continued || has_thrown) break;
                     }
+                    if (has_continued) { has_continued = false; continue; }
                     if (has_broken) { has_broken = false; break; }
-                    if (has_returned) break;
+                    if (has_returned || has_thrown) break;
                 }
             } else if (coll.type == ValueType::Map && coll.map_val) {
                 auto map_copy = *(coll.map_val);
@@ -1433,10 +2113,11 @@ public:
                     variables[fe->var_name] = Value(k);
                     for (auto& s : fe->body) {
                         execute_statement(s);
-                        if (has_broken || has_returned) break;
+                        if (has_broken || has_returned || has_continued || has_thrown) break;
                     }
+                    if (has_continued) { has_continued = false; continue; }
                     if (has_broken) { has_broken = false; break; }
-                    if (has_returned) break;
+                    if (has_returned || has_thrown) break;
                 }
             } else if (coll.type == ValueType::String) {
                 std::string s_copy = coll.str_val;
@@ -1444,10 +2125,11 @@ public:
                     variables[fe->var_name] = Value(std::string(1, ch));
                     for (auto& s : fe->body) {
                         execute_statement(s);
-                        if (has_broken || has_returned) break;
+                        if (has_broken || has_returned || has_continued || has_thrown) break;
                     }
+                    if (has_continued) { has_continued = false; continue; }
                     if (has_broken) { has_broken = false; break; }
-                    if (has_returned) break;
+                    if (has_returned || has_thrown) break;
                 }
             }
             return;
@@ -1460,10 +2142,11 @@ public:
             while (eval(wh->condition).is_truthy() && iter++ < max_iterations) {
                 for (auto& s : wh->body) {
                     execute_statement(s);
-                    if (has_broken || has_returned) break;
+                    if (has_broken || has_returned || has_continued || has_thrown) break;
                 }
+                if (has_continued) { has_continued = false; continue; }
                 if (has_broken) { has_broken = false; break; }
-                if (has_returned) break;
+                if (has_returned || has_thrown) break;
             }
             return;
         }
@@ -1476,10 +2159,11 @@ public:
                 variables["loop_index"] = Value(i);
                 for (auto& s : rep->body) {
                     execute_statement(s);
-                    if (has_broken || has_returned) break;
+                    if (has_broken || has_returned || has_continued || has_thrown) break;
                 }
+                if (has_continued) { has_continued = false; continue; }
                 if (has_broken) { has_broken = false; break; }
-                if (has_returned) break;
+                if (has_returned || has_thrown) break;
             }
             return;
         }
@@ -1579,14 +2263,27 @@ public:
             return;
         }
 
-        // 15. Draw UI: Card / Button / Input
+        // 15. Draw UI: Card / Button / Input / Slider / Toggle / Progress
         if (auto draw = std::dynamic_pointer_cast<DrawUIStmt>(stmt)) {
             if (draw->ui_type == "card") {
                 current_window.add_card(draw->title.empty() ? "Card" : draw->title, draw->text, draw->x, draw->y, draw->w, draw->h);
             } else if (draw->ui_type == "button") {
-                current_window.add_button(draw->text.empty() ? "Button" : draw->text, draw->action, draw->x, draw->y, draw->w, draw->h);
+                std::string btn_label = draw->text.empty() ? "Button" : draw->text;
+                std::string act_id = draw->action.empty() ? DynamicWindow::sanitize_id(btn_label) : draw->action;
+                current_window.add_button(btn_label, act_id, draw->x, draw->y, draw->w > 0 ? draw->w : 150, draw->h > 0 ? draw->h : 42, draw->snippet);
+                if (!draw->snippet.empty()) {
+                    python_snippets[act_id] = draw->snippet;
+                    python_snippets[btn_label] = draw->snippet;
+                    variables["__btn_snippet_" + act_id] = Value(draw->snippet);
+                }
             } else if (draw->ui_type == "input") {
                 current_window.add_input(draw->placeholder, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+            } else if (draw->ui_type == "slider") {
+                current_window.add_slider(draw->text, draw->min_val, draw->max_val, draw->current_val, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+            } else if (draw->ui_type == "toggle") {
+                current_window.add_toggle(draw->text, draw->is_checked, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+            } else if (draw->ui_type == "progress") {
+                current_window.add_progress(draw->text, draw->current_val, draw->var_name, draw->x, draw->y, draw->w, draw->h);
             }
             std::string label = draw->ui_type;
             label[0] = std::toupper(label[0]);

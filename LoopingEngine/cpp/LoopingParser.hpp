@@ -118,6 +118,44 @@ public:
                 continue;
             }
 
+            // 1a. Button with Snippet Block:
+            // insert button "Incrementar" with snippet:
+            // draw button at (50, 150) with text "Resetear" and action "reset_act" with snippet:
+            if ((line.rfind("insert button", 0) == 0 || line.rfind("draw button", 0) == 0 || line.rfind("ui.btn", 0) == 0) &&
+                (line.find("with snippet:") != std::string::npos || line.find("with snippet {") != std::string::npos ||
+                 line.find("snippet:") != std::string::npos) &&
+                (line.back() == ':' || line.back() == '{')) {
+                auto d = std::make_shared<DrawUIStmt>();
+                d->ui_type = "button";
+                d->x = -1;
+                d->y = -1;
+                d->w = 150;
+                d->h = 42;
+
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex tx_r(R"(text\s*["'](.*?)["'])");
+                std::regex ins_r(R"(insert\s+button\s+["'](.*?)["'])");
+                std::regex ac_r(R"(action\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(line, m, at_r)) { d->x = std::stod(m[1]); d->y = std::stod(m[2]); }
+                if (std::regex_search(line, m, sz_r)) { d->w = std::stod(m[1]); d->h = std::stod(m[2]); }
+                if (std::regex_search(line, m, tx_r)) { d->text = m[1]; }
+                else if (std::regex_search(line, m, ins_r)) { d->text = m[1]; }
+                if (std::regex_search(line, m, ac_r)) { d->action = m[1]; }
+
+                std::vector<std::string> snip_lines;
+                while (line_idx < lines.size()) {
+                    std::string next_raw = lines[line_idx++];
+                    std::string next_t = trim(next_raw);
+                    if (next_t == "end" || next_t == "}") break;
+                    snip_lines.push_back(next_raw);
+                }
+                d->snippet = join_lines(dedent(snip_lines));
+                statements.push_back(d);
+                continue;
+            }
+
             // 1b. Python snippet definition: insert pysnippet as <name>: ... OR insert snippet as <name>: ...
             std::regex snip_inline_r(R"(^(?:insert\s+)?(?:py(?:thon)?snippet|snippet|python)\s+(?:as\s+)?([A-Za-z0-9_]+)\s*:\s*(.+)$)");
             std::smatch snip_in_m;
@@ -261,7 +299,6 @@ public:
                 auto stmt = std::make_shared<DynamicProgramCompileStmt>(prog_name, target_ui, out_path, version);
                 stmt->and_run = and_run;
 
-                // Collect block lines (supports both { } and indented / end blocks)
                 std::vector<std::string> block_lines;
                 size_t base_indent = raw_line.find_first_not_of(" \t");
                 if (base_indent == std::string::npos) base_indent = 0;
@@ -317,6 +354,95 @@ public:
                 continue;
             }
 
+            // 1d. Pattern Matching Block: match <expr> { pattern => stmt ... }
+            if ((line.rfind("match ", 0) == 0 || line.rfind("match(", 0) == 0) && line.find('{') != std::string::npos) {
+                size_t brace_pos = line.find('{');
+                std::string target_str = trim(line.substr(5, brace_pos - 5));
+                if (is_enclosed_in_matching_parens(target_str)) {
+                    target_str = trim(target_str.substr(1, target_str.size() - 2));
+                }
+                auto target_expr = parse_single_expr(target_str);
+
+                std::vector<MatchArm> arms;
+                while (line_idx < lines.size()) {
+                    std::string next_raw = lines[line_idx++];
+                    std::string next_t = trim(next_raw);
+                    if (next_t.empty() || next_t.rfind("//", 0) == 0 || next_t.rfind("#", 0) == 0) continue;
+                    if (next_t == "}" || next_t == "end") break;
+
+                    // Strip trailing comma if present
+                    if (!next_t.empty() && next_t.back() == ',') next_t.pop_back();
+                    next_t = trim(next_t);
+
+                    size_t arrow_p = next_t.find("=>");
+                    if (arrow_p == std::string::npos) arrow_p = next_t.find("->");
+                    if (arrow_p != std::string::npos) {
+                        std::string pat_str = trim(next_t.substr(0, arrow_p));
+                        std::string arm_body_str = trim(next_t.substr(arrow_p + 2));
+
+                        MatchArm arm;
+                        if (pat_str == "_" || pat_str == "default" || pat_str == "else") {
+                            arm.pattern = nullptr;
+                        } else {
+                            arm.pattern = parse_single_expr(pat_str);
+                        }
+
+                        if (!arm_body_str.empty() && arm_body_str.front() == '{' && arm_body_str.back() == '}') {
+                            arm_body_str = trim(arm_body_str.substr(1, arm_body_str.size() - 2));
+                        }
+                        Parser sub_p(arm_body_str);
+                        arm.body = sub_p.parse_script();
+                        arms.push_back(arm);
+                    }
+                }
+                statements.push_back(std::make_shared<MatchStmt>(target_expr, arms));
+                continue;
+            }
+
+            // 1e. Try / Catch Block: try { ... } catch (err) { ... }
+            if (line == "try {" || line == "try:" || line == "try") {
+                std::vector<std::string> try_lines;
+                std::vector<std::string> catch_lines;
+                std::string err_var = "error";
+                bool in_catch = false;
+
+                while (line_idx < lines.size()) {
+                    std::string next_raw = lines[line_idx++];
+                    std::string next_t = trim(next_raw);
+                    if (!in_catch && (next_t.rfind("} catch", 0) == 0 || next_t.rfind("catch", 0) == 0)) {
+                        in_catch = true;
+                        std::regex catch_r(R"(catch\s*\(?\s*([A-Za-z0-9_]+)\s*\)?)");
+                        std::smatch cm;
+                        if (std::regex_search(next_t, cm, catch_r)) {
+                            err_var = cm[1];
+                        }
+                        continue;
+                    }
+                    if (next_t == "}" || next_t == "end") {
+                        if (in_catch) break;
+                        // Check if next line is catch
+                        if (line_idx < lines.size() && trim(lines[line_idx]).rfind("catch", 0) == 0) {
+                            std::string c_line = trim(lines[line_idx++]);
+                            in_catch = true;
+                            std::regex catch_r(R"(catch\s*\(?\s*([A-Za-z0-9_]+)\s*\)?)");
+                            std::smatch cm;
+                            if (std::regex_search(c_line, cm, catch_r)) {
+                                err_var = cm[1];
+                            }
+                            continue;
+                        }
+                        break;
+                    }
+                    if (in_catch) catch_lines.push_back(next_raw);
+                    else try_lines.push_back(next_raw);
+                }
+
+                Parser p_try(join_lines(try_lines));
+                Parser p_catch(join_lines(catch_lines));
+                statements.push_back(std::make_shared<TryCatchStmt>(p_try.parse_script(), err_var, p_catch.parse_script()));
+                continue;
+            }
+
             // 2. Function definition: fn <name>(<args>) { ... } OR fn <name>(<args>) => <expr>
             if (line.rfind("fn ", 0) == 0 || line.rfind("fun ", 0) == 0 || 
                 line.rfind("function ", 0) == 0 || line.rfind("def ", 0) == 0) {
@@ -369,36 +495,46 @@ public:
                 }
             }
 
-            // 3. For in Range Loop: for (i in 0..5) { ... } OR for i in 0..5 { ... }
+            // 3. For in Range Loop: for (i in 0..5) { ... } / for (i in 0..=5) / for (i in 0..10 step 2)
             if (line.rfind("for ", 0) == 0 || line.rfind("for(", 0) == 0) {
                 // Single line range loop: for (i in 0..5) { ... }
-                std::regex for_range_single(R"(for\s*\(?\s*([A-Za-z0-9_]+)\s+in\s+([0-9A-Za-z_\.]+)\s*\.\.\s*([0-9A-Za-z_\.]+)\s*\)?\s*\{\s*(.*?)\s*\}\s*$)");
+                std::regex for_range_single(R"(for\s*\(?\s*([A-Za-z0-9_]+)\s+in\s+([0-9A-Za-z_\.\-]+)\s*(\.\.=?)\s*([0-9A-Za-z_\.\-]+)(?:\s+step\s+([0-9A-Za-z_\.\-]+))?\s*\)?\s*\{\s*(.*?)\s*\}\s*$)");
                 std::smatch sm;
                 if (std::regex_search(line, sm, for_range_single)) {
                     std::string var_name = sm[1];
                     auto start_expr = parse_single_expr(sm[2]);
-                    auto end_expr = parse_single_expr(sm[3]);
-                    Parser sub_p(sm[4]);
-                    statements.push_back(std::make_shared<ForRangeStmt>(var_name, start_expr, end_expr, sub_p.parse_script()));
+                    bool inc = (sm[3].str() == "..=");
+                    auto end_expr = parse_single_expr(sm[4]);
+                    std::shared_ptr<Expr> step_e = sm[5].matched ? parse_single_expr(sm[5].str()) : nullptr;
+                    Parser sub_p(sm[6]);
+                    statements.push_back(std::make_shared<ForRangeStmt>(var_name, start_expr, end_expr, sub_p.parse_script(), inc, step_e));
                     continue;
                 }
 
-                std::regex for_r(R"(for\s*\(?\s*([A-Za-z0-9_]+)\s+in\s+([0-9A-Za-z_\.]+)\s*\.\.\s*([0-9A-Za-z_\.]+)\s*\)?\s*\{?)");
+                std::regex for_r(R"(for\s*\(?\s*([A-Za-z0-9_]+)\s+in\s+([0-9A-Za-z_\.\-]+)\s*(\.\.=?)\s*([0-9A-Za-z_\.\-]+)(?:\s+step\s+([0-9A-Za-z_\.\-]+))?\s*\)?\s*\{?)");
                 std::smatch m;
                 if (std::regex_search(line, m, for_r)) {
                     std::string var_name = m[1];
                     auto start_expr = parse_single_expr(m[2]);
-                    auto end_expr = parse_single_expr(m[3]);
+                    bool inc = (m[3].str() == "..=");
+                    auto end_expr = parse_single_expr(m[4]);
+                    std::shared_ptr<Expr> step_e = m[5].matched ? parse_single_expr(m[5].str()) : nullptr;
                     std::vector<std::string> body_lines;
 
+                    int b_depth = 1;
                     while (line_idx < lines.size()) {
                         std::string next = lines[line_idx++];
-                        if (trim(next) == "}" || trim(next) == "end") break;
+                        std::string t = trim(next);
+                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#' && t.rfind("//", 0) != 0)) b_depth++;
+                        if (t == "}" || t == "end") {
+                            b_depth--;
+                            if (b_depth == 0) break;
+                        }
                         body_lines.push_back(next);
                     }
 
                     Parser sub_p(join_lines(body_lines));
-                    statements.push_back(std::make_shared<ForRangeStmt>(var_name, start_expr, end_expr, sub_p.parse_script()));
+                    statements.push_back(std::make_shared<ForRangeStmt>(var_name, start_expr, end_expr, sub_p.parse_script(), inc, step_e));
                     continue;
                 }
 
@@ -427,7 +563,7 @@ public:
                     while (line_idx < lines.size()) {
                         std::string next = lines[line_idx++];
                         std::string t = trim(next);
-                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#')) b_depth++;
+                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#' && t.rfind("//", 0) != 0)) b_depth++;
                         if (t == "}" || t == "end") {
                             b_depth--;
                             if (b_depth == 0) break;
@@ -447,15 +583,21 @@ public:
                 std::smatch m;
                 if (std::regex_search(line, m, wh_regex)) {
                     std::string cond_str = trim(m[1]);
-                    if (cond_str.front() == '(' && cond_str.back() == ')') {
+                    if (is_enclosed_in_matching_parens(cond_str)) {
                         cond_str = trim(cond_str.substr(1, cond_str.size() - 2));
                     }
                     auto cond_expr = parse_single_expr(cond_str);
                     std::vector<std::string> body_lines;
 
+                    int b_depth = 1;
                     while (line_idx < lines.size()) {
                         std::string next = lines[line_idx++];
-                        if (trim(next) == "}" || trim(next) == "end") break;
+                        std::string t = trim(next);
+                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#' && t.rfind("//", 0) != 0)) b_depth++;
+                        if (t == "}" || t == "end") {
+                            b_depth--;
+                            if (b_depth == 0) break;
+                        }
                         body_lines.push_back(next);
                     }
 
@@ -466,13 +608,19 @@ public:
             }
 
             // 5. Repeat / Loop count: loop (N) { ... } OR loop N { ... } OR repeat N times { ... }
-            if (line.rfind("repeat ", 0) == 0 || line.rfind("loop ", 0) == 0 || line.rfind("loop(", 0) == 0) {
+            if (line.rfind("repeat ", 0) == 0 || line.rfind("loop ", 0) == 0 || line.rfind("loop(", 0) == 0 || line == "loop {") {
                 // Infinite loop: loop { ... }
                 if (line == "loop {" || line == "loop") {
                     std::vector<std::string> body_lines;
+                    int b_depth = 1;
                     while (line_idx < lines.size()) {
                         std::string next = lines[line_idx++];
-                        if (trim(next) == "}" || trim(next) == "end") break;
+                        std::string t = trim(next);
+                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#' && t.rfind("//", 0) != 0)) b_depth++;
+                        if (t == "}" || t == "end") {
+                            b_depth--;
+                            if (b_depth == 0) break;
+                        }
                         body_lines.push_back(next);
                     }
                     Parser sub_p(join_lines(body_lines));
@@ -486,9 +634,15 @@ public:
                     std::string count_str = m[1];
                     std::vector<std::string> body_lines;
 
+                    int b_depth = 1;
                     while (line_idx < lines.size()) {
                         std::string next = lines[line_idx++];
-                        if (trim(next) == "}" || trim(next) == "end") break;
+                        std::string t = trim(next);
+                        if (t == "{" || (!t.empty() && t.back() == '{' && t.front() != '#' && t.rfind("//", 0) != 0)) b_depth++;
+                        if (t == "}" || t == "end") {
+                            b_depth--;
+                            if (b_depth == 0) break;
+                        }
                         body_lines.push_back(next);
                     }
 
@@ -498,34 +652,95 @@ public:
                 }
             }
 
-            // 6. Block Conditional: if (cond) { ... } else { ... }
+            // 6. Block Conditional: if (cond) { ... } else if (cond2) { ... } else { ... }
             if ((line.rfind("if ", 0) == 0 || line.rfind("if(", 0) == 0) && (line.back() == '{' || line.find('{') != std::string::npos)) {
                 size_t brace_pos = line.find('{');
                 std::string cond_part = trim(line.substr(2, brace_pos - 2));
-                if (cond_part.front() == '(' && cond_part.back() == ')') {
+                if (is_enclosed_in_matching_parens(cond_part)) {
                     cond_part = trim(cond_part.substr(1, cond_part.size() - 2));
                 }
                 auto cond_expr = parse_single_expr(cond_part);
 
-                std::vector<std::string> then_lines;
-                std::vector<std::string> else_lines;
-                bool in_else = false;
+                struct CondBranch {
+                    std::shared_ptr<Expr> cond; // nullptr for final else
+                    std::vector<std::string> lines;
+                };
+                std::vector<CondBranch> branches;
+                branches.push_back({cond_expr, {}});
 
+                int depth = 1;
                 while (line_idx < lines.size()) {
                     std::string next = lines[line_idx++];
                     std::string t_next = trim(next);
-                    if (t_next == "} else {" || t_next == "} else" || t_next == "else {" || t_next == "else") {
-                        in_else = true;
+
+                    if (depth == 1 && (t_next.rfind("} else if ", 0) == 0 || t_next.rfind("} else if(", 0) == 0 ||
+                                       t_next.rfind("else if ", 0) == 0 || t_next.rfind("else if(", 0) == 0)) {
+                        size_t eif_pos = t_next.find("else if");
+                        size_t b_pos = t_next.find('{', eif_pos);
+                        std::string c_str = (b_pos != std::string::npos)
+                            ? trim(t_next.substr(eif_pos + 7, b_pos - (eif_pos + 7)))
+                            : trim(t_next.substr(eif_pos + 7));
+                        if (is_enclosed_in_matching_parens(c_str)) {
+                            c_str = trim(c_str.substr(1, c_str.size() - 2));
+                        }
+                        branches.push_back({parse_single_expr(c_str), {}});
                         continue;
                     }
-                    if (t_next == "}" || t_next == "end") break;
-                    if (in_else) else_lines.push_back(next);
-                    else then_lines.push_back(next);
+                    if (depth == 1 && (t_next == "} else {" || t_next == "} else" || t_next == "else {" || t_next == "else")) {
+                        branches.push_back({nullptr, {}});
+                        continue;
+                    }
+
+                    if (!t_next.empty() && t_next.front() != '#' && t_next.rfind("//", 0) != 0) {
+                        for (char ch : t_next) {
+                            if (ch == '{') depth++;
+                            else if (ch == '}') depth--;
+                        }
+                    }
+                    if (depth <= 0 || (depth == 1 && t_next == "end")) {
+                        // Check if immediately followed by `else` on next line
+                        if (line_idx < lines.size()) {
+                            std::string peek_t = trim(lines[line_idx]);
+                            if (peek_t.rfind("else if ", 0) == 0 || peek_t.rfind("else if(", 0) == 0) {
+                                line_idx++;
+                                depth = 1;
+                                size_t eif_pos = peek_t.find("else if");
+                                size_t b_pos = peek_t.find('{', eif_pos);
+                                std::string c_str = (b_pos != std::string::npos)
+                                    ? trim(peek_t.substr(eif_pos + 7, b_pos - (eif_pos + 7)))
+                                    : trim(peek_t.substr(eif_pos + 7));
+                                if (is_enclosed_in_matching_parens(c_str)) {
+                                    c_str = trim(c_str.substr(1, c_str.size() - 2));
+                                }
+                                branches.push_back({parse_single_expr(c_str), {}});
+                                continue;
+                            } else if (peek_t == "else {" || peek_t == "else") {
+                                line_idx++;
+                                depth = 1;
+                                branches.push_back({nullptr, {}});
+                                continue;
+                            }
+                        }
+                        break;
+                    }
+                    branches.back().lines.push_back(next);
                 }
 
-                Parser p_then(join_lines(then_lines));
-                Parser p_else(join_lines(else_lines));
-                statements.push_back(std::make_shared<IfStmt>(cond_expr, p_then.parse_script(), p_else.parse_script()));
+                // Fold branches from back to front into nested IfStmt nodes
+                std::vector<std::shared_ptr<Stmt>> current_else;
+                for (long long bi = static_cast<long long>(branches.size()) - 1; bi >= 0; --bi) {
+                    Parser p_br(join_lines(branches[bi].lines));
+                    auto br_stmts = p_br.parse_script();
+                    if (branches[bi].cond == nullptr) {
+                        current_else = br_stmts;
+                    } else {
+                        auto if_node = std::make_shared<IfStmt>(branches[bi].cond, br_stmts, current_else);
+                        current_else = { if_node };
+                    }
+                }
+                if (!current_else.empty()) {
+                    statements.push_back(current_else[0]);
+                }
                 continue;
             }
 
@@ -569,9 +784,28 @@ public:
         s = trim(s);
         if (s.empty()) return nullptr;
 
-        // 1. Break
+        // 1. Break & Continue
         if (s == "break") {
             return std::make_shared<BreakStmt>();
+        }
+        if (s == "continue") {
+            return std::make_shared<ContinueStmt>();
+        }
+
+        // 1b. Throw & Assert
+        if (s.rfind("throw ", 0) == 0) {
+            return std::make_shared<ThrowStmt>(parse_single_expr(trim(s.substr(6))));
+        }
+        if (s.rfind("assert(", 0) == 0 && s.back() == ')') {
+            auto raw_args = split_arguments(s.substr(7, s.size() - 8));
+            if (!raw_args.empty()) {
+                auto cond_e = parse_single_expr(raw_args[0]);
+                auto msg_e = raw_args.size() > 1 ? parse_single_expr(raw_args[1]) : nullptr;
+                return std::make_shared<AssertStmt>(cond_e, msg_e);
+            }
+        }
+        if (s.rfind("assert ", 0) == 0) {
+            return std::make_shared<AssertStmt>(parse_single_expr(trim(s.substr(7))));
         }
 
         // 2. Return: return <expr> OR return OR -> <expr>
@@ -584,7 +818,6 @@ public:
         }
 
         // 3. From-import: from <mod> import <symbols...>
-        // e.g. from pyloop import snippets runpy OR from pyloop import snippets, runpy
         if (s.rfind("from ", 0) == 0) {
             auto imp_pos = s.find(" import ");
             if (imp_pos != std::string::npos) {
@@ -726,7 +959,7 @@ public:
                 }
             }
             if (!cond_part.empty() && !stmt_part.empty()) {
-                if (cond_part.front() == '(' && cond_part.back() == ')') {
+                if (is_enclosed_in_matching_parens(cond_part)) {
                     cond_part = trim(cond_part.substr(1, cond_part.size() - 2));
                 }
                 auto cond_expr = parse_single_expr(cond_part);
@@ -762,15 +995,21 @@ public:
             return std::make_shared<PrintStmt>(exprs);
         }
 
-        // 10. Modern Variable Declarations:
+        // 10. Modern Variable Declarations & Destructuring:
+        //     let [a, b] = [1, 2], let (x, y) = (10, 20)
         //     let x = 10, mut x = 10, val x = 10, var x = 10
         if (s.rfind("let ", 0) == 0 || s.rfind("mut ", 0) == 0 || s.rfind("val ", 0) == 0 || s.rfind("var ", 0) == 0) {
             std::string rem = trim(s.substr(4));
             auto eq_pos = rem.find('=');
             if (eq_pos != std::string::npos) {
-                std::string name = trim(rem.substr(0, eq_pos));
+                std::string lhs = trim(rem.substr(0, eq_pos));
                 std::string expr_str = trim(rem.substr(eq_pos + 1));
-                return std::make_shared<SetStmt>(name, "=", parse_single_expr(expr_str));
+                if ((lhs.front() == '[' && lhs.back() == ']') || (lhs.front() == '(' && lhs.back() == ')')) {
+                    std::string inner_names = lhs.substr(1, lhs.size() - 2);
+                    std::vector<std::string> names = split_params(inner_names);
+                    return std::make_shared<DestructureStmt>(names, parse_single_expr(expr_str));
+                }
+                return std::make_shared<SetStmt>(lhs, "=", parse_single_expr(expr_str));
             }
         }
 
@@ -822,8 +1061,8 @@ public:
             d->ui_type = "card";
             if (s.find('(') != std::string::npos && s.rfind("draw card", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-                auto at = args.get_pair("at");
-                auto sz = args.get_pair("size");
+                auto at = args.get_pair("at", {-1, -1});
+                auto sz = args.get_pair("size", {0, 0});
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
                 d->title = args.get("title");
@@ -842,25 +1081,35 @@ public:
             return d;
         }
 
-        // 15. UI Button Directives: ui.btn(...) / ui.button(...) / @ui::btn(...) / draw button ...
+        // 15. UI Button Directives: ui.btn(...) / ui.button(...) / @ui::btn(...) / draw button ... / insert button ...
         if (s.rfind("ui.btn(", 0) == 0 || s.rfind("ui.button(", 0) == 0 || s.rfind("@ui::btn(", 0) == 0 || 
-            s.rfind("@ui::button(", 0) == 0 || s.rfind("button(", 0) == 0 || s.rfind("draw button", 0) == 0) {
+            s.rfind("@ui::button(", 0) == 0 || s.rfind("button(", 0) == 0 || s.rfind("draw button", 0) == 0 ||
+            s.rfind("insert button", 0) == 0) {
             auto d = std::make_shared<DrawUIStmt>();
             d->ui_type = "button";
-            if (s.find('(') != std::string::npos && s.rfind("draw button", 0) != 0) {
+            if (s.find('(') != std::string::npos && s.rfind("draw button", 0) != 0 && s.rfind("insert button", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-                auto at = args.get_pair("at");
+                auto at = args.get_pair("at", {-1, -1});
+                auto sz = args.get_pair("size", {150, 42});
                 d->x = at.first; d->y = at.second;
+                d->w = sz.first; d->h = sz.second;
                 d->text = args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "");
                 d->action = args.get("action");
+                d->snippet = args.get("snippet");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
                 std::regex tx_r(R"(text\s*["'](.*?)["'])");
+                std::regex ins_r(R"(insert\s+button\s+["'](.*?)["'])");
                 std::regex ac_r(R"(action\s*["'](.*?)["'])");
+                std::regex sn_r(R"(snippet\s*["'](.*?)["'])");
                 std::smatch m;
                 if (std::regex_search(s, m, at_r)) { d->x = std::stod(m[1]); d->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { d->w = std::stod(m[1]); d->h = std::stod(m[2]); }
                 if (std::regex_search(s, m, tx_r)) d->text = m[1];
+                else if (std::regex_search(s, m, ins_r)) d->text = m[1];
                 if (std::regex_search(s, m, ac_r)) d->action = m[1];
+                if (std::regex_search(s, m, sn_r)) d->snippet = m[1];
             }
             return d;
         }
@@ -871,8 +1120,8 @@ public:
             d->ui_type = "input";
             if (s.find('(') != std::string::npos && s.rfind("draw input", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-                auto at = args.get_pair("at");
-                auto sz = args.get_pair("size");
+                auto at = args.get_pair("at", {-1, -1});
+                auto sz = args.get_pair("size", {220, 40});
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
                 d->placeholder = args.get("placeholder");
@@ -881,12 +1130,110 @@ public:
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
                 std::regex pl_r(R"(placeholder\s*["'](.*?)["'])");
-                std::regex vr_r(R"(var\s*["'](.*?)["'])");
+                std::regex vr_r(R"((?:var|bind)\s*["'](.*?)["'])");
                 std::smatch m;
                 if (std::regex_search(s, m, at_r)) { d->x = std::stod(m[1]); d->y = std::stod(m[2]); }
                 if (std::regex_search(s, m, sz_r)) { d->w = std::stod(m[1]); d->h = std::stod(m[2]); }
                 if (std::regex_search(s, m, pl_r)) d->placeholder = m[1];
                 if (std::regex_search(s, m, vr_r)) d->var_name = m[1];
+            }
+            return d;
+        }
+
+        // 16b. UI Slider Directives: ui.slider(...) / @ui::slider(...) / draw slider ...
+        if (s.rfind("ui.slider(", 0) == 0 || s.rfind("@ui::slider(", 0) == 0 || s.rfind("slider(", 0) == 0 || s.rfind("draw slider", 0) == 0) {
+            auto d = std::make_shared<DrawUIStmt>();
+            d->ui_type = "slider";
+            d->min_val = 0; d->max_val = 100; d->current_val = 50;
+            if (s.find('(') != std::string::npos && s.rfind("draw slider", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {-1, -1});
+                auto sz = args.get_pair("size", {220, 40});
+                d->x = at.first; d->y = at.second;
+                d->w = sz.first; d->h = sz.second;
+                d->text = args.has("label") ? args.get("label") : (args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "Slider"));
+                d->min_val = args.get_num("min", 0);
+                d->max_val = args.get_num("max", 100);
+                d->current_val = args.has("val") ? args.get_num("val", 50) : args.get_num("value", 50);
+                d->var_name = args.has("bind") ? args.get("bind") : args.get("var");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex lb_r(R"((?:label|text)\s*["'](.*?)["'])");
+                std::regex mn_r(R"(min\s*([0-9\.\-]+))");
+                std::regex mx_r(R"(max\s*([0-9\.\-]+))");
+                std::regex vl_r(R"((?:val|value)\s*([0-9\.\-]+))");
+                std::regex bd_r(R"((?:bind|var)\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { d->x = std::stod(m[1]); d->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { d->w = std::stod(m[1]); d->h = std::stod(m[2]); }
+                if (std::regex_search(s, m, lb_r)) d->text = m[1];
+                if (std::regex_search(s, m, mn_r)) d->min_val = std::stod(m[1]);
+                if (std::regex_search(s, m, mx_r)) d->max_val = std::stod(m[1]);
+                if (std::regex_search(s, m, vl_r)) d->current_val = std::stod(m[1]);
+                if (std::regex_search(s, m, bd_r)) d->var_name = m[1];
+            }
+            return d;
+        }
+
+        // 16c. UI Toggle Directives: ui.toggle(...) / @ui::toggle(...) / draw toggle ...
+        if (s.rfind("ui.toggle(", 0) == 0 || s.rfind("@ui::toggle(", 0) == 0 || s.rfind("toggle(", 0) == 0 || s.rfind("draw toggle", 0) == 0) {
+            auto d = std::make_shared<DrawUIStmt>();
+            d->ui_type = "toggle";
+            d->is_checked = false;
+            if (s.find('(') != std::string::npos && s.rfind("draw toggle", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {-1, -1});
+                auto sz = args.get_pair("size", {160, 36});
+                d->x = at.first; d->y = at.second;
+                d->w = sz.first; d->h = sz.second;
+                d->text = args.has("label") ? args.get("label") : (args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "Toggle"));
+                d->var_name = args.has("bind") ? args.get("bind") : args.get("var");
+                std::string chk = args.get("checked", "false");
+                d->is_checked = (chk == "true" || chk == "1");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex lb_r(R"((?:label|text)\s*["'](.*?)["'])");
+                std::regex bd_r(R"((?:bind|var)\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { d->x = std::stod(m[1]); d->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { d->w = std::stod(m[1]); d->h = std::stod(m[2]); }
+                if (std::regex_search(s, m, lb_r)) d->text = m[1];
+                if (std::regex_search(s, m, bd_r)) d->var_name = m[1];
+                if (s.find("checked") != std::string::npos && s.find("unchecked") == std::string::npos) {
+                    d->is_checked = true;
+                }
+            }
+            return d;
+        }
+
+        // 16d. UI Progress Directives: ui.progress(...) / @ui::progress(...) / draw progress ...
+        if (s.rfind("ui.progress(", 0) == 0 || s.rfind("@ui::progress(", 0) == 0 || s.rfind("progress(", 0) == 0 || s.rfind("draw progress", 0) == 0) {
+            auto d = std::make_shared<DrawUIStmt>();
+            d->ui_type = "progress";
+            d->current_val = 0;
+            if (s.find('(') != std::string::npos && s.rfind("draw progress", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {-1, -1});
+                auto sz = args.get_pair("size", {240, 28});
+                d->x = at.first; d->y = at.second;
+                d->w = sz.first; d->h = sz.second;
+                d->text = args.has("label") ? args.get("label") : (args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "Progress"));
+                d->current_val = args.has("val") ? args.get_num("val", 0) : (args.has("value") ? args.get_num("value", 0) : args.get_num("progress", 0));
+                d->var_name = args.has("bind") ? args.get("bind") : args.get("var");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex lb_r(R"((?:label|text)\s*["'](.*?)["'])");
+                std::regex vl_r(R"((?:val|value|progress)\s*([0-9\.\-]+))");
+                std::regex bd_r(R"((?:bind|var)\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { d->x = std::stod(m[1]); d->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { d->w = std::stod(m[1]); d->h = std::stod(m[2]); }
+                if (std::regex_search(s, m, lb_r)) d->text = m[1];
+                if (std::regex_search(s, m, vl_r)) d->current_val = std::stod(m[1]);
+                if (std::regex_search(s, m, bd_r)) d->var_name = m[1];
             }
             return d;
         }
@@ -1048,7 +1395,7 @@ public:
             return sp;
         }
 
-        // 21. Audio Tone Directives: audio.tone(...) / @audio::tone(...) / sound.tone(...) / play tone ...
+        // 24. Audio Tone Directives: audio.tone(...) / @audio::tone(...) / sound.tone(...) / play tone ...
         if (s.rfind("audio.tone(", 0) == 0 || s.rfind("@audio::tone(", 0) == 0 || 
             s.rfind("sound.tone(", 0) == 0 || s.rfind("play tone", 0) == 0) {
             double freq = 440, dur = 100;
@@ -1068,7 +1415,7 @@ public:
             return std::make_shared<PlayToneStmt>(freq, dur);
         }
 
-        // 22. FX Particles: fx.particles(...) / @fx::particles(...) / emit particles ...
+        // 25. FX Particles: fx.particles(...) / @fx::particles(...) / emit particles ...
         if (s.rfind("fx.particles(", 0) == 0 || s.rfind("@fx::particles(", 0) == 0 || s.rfind("emit particles", 0) == 0) {
             double x = 0, y = 0;
             std::string col = "#38bdf8";
@@ -1087,7 +1434,7 @@ public:
             return std::make_shared<EmitParticlesStmt>(x, y, col);
         }
 
-        // 23a. Indexed Assignment: arr[idx] = val, map["key"] = val
+        // 26a. Indexed Assignment: arr[idx] = val, map["key"] = val
         std::regex assign_idx_regex(R"(^([A-Za-z0-9_]+)\s*\[\s*(.*?)\s*\]\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
         std::smatch aim;
         if (std::regex_search(s, aim, assign_idx_regex)) {
@@ -1098,7 +1445,7 @@ public:
             return std::make_shared<SetIndexStmt>(name, parse_single_expr(idx_str), op, parse_single_expr(expr_str));
         }
 
-        // 23. Shorthand Assignment: x = 10, x += 5, x -= 2, user.name = "Alice"
+        // 26b. Shorthand Assignment: x = 10, x += 5, x -= 2, user.name = "Alice"
         std::regex assign_regex(R"(^([A-Za-z0-9_\.]+)\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
         std::smatch am;
         if (std::regex_search(s, am, assign_regex)) {
@@ -1110,7 +1457,7 @@ public:
             }
         }
 
-        // 24. Function call statement: callee(...) OR call callee(...)
+        // 27. Function call statement: callee(...) OR call callee(...)
         if (s.rfind("call ", 0) == 0) {
             std::regex call_r(R"(call\s+([A-Za-z0-9_\.]+)\s*(?:\((.*?)\))?)");
             std::smatch m;
@@ -1139,13 +1486,13 @@ public:
             return std::make_shared<CallStmt>(fn_name, args);
         }
 
-        // 24b. runpy shorthand statement: runpy sn1 OR runpy "sn1"
+        // 27b. runpy shorthand statement: runpy sn1 OR runpy "sn1"
         if (s.rfind("runpy ", 0) == 0) {
             std::string arg = trim(s.substr(6));
             return std::make_shared<CallStmt>("runpy", std::vector<std::shared_ptr<Expr>>{parse_single_expr(arg)});
         }
 
-        // 25. Syscall & Process
+        // 28. Syscall & Process
         if (s.rfind("syscall", 0) == 0) {
             std::regex sc_r(R"(syscall\s+([A-Za-z0-9_]+)(?:\s+with\s+args\s+["'](.*?)["'])?)");
             std::smatch m;
@@ -1161,13 +1508,13 @@ public:
             }
         }
 
-        // 26. Python inline statement: py: ...
+        // 29. Python inline statement: py: ...
         if (s.rfind("py:", 0) == 0 || s.rfind("py ", 0) == 0) {
             std::string code = trim(s.substr(s.rfind("py:", 0) == 0 ? 3 : 2));
             return std::make_shared<PythonBlockStmt>(code);
         }
 
-        // 27. Expression Statement (pipelines: expr |> out, function invocations, etc.)
+        // 30. Expression Statement (pipelines: expr |> out, function invocations, etc.)
         if (s.find("|>") != std::string::npos || s.find('(') != std::string::npos || s.rfind("py!(", 0) == 0) {
             auto e = parse_single_expr(s);
             if (e) return std::make_shared<ExprStmt>(e);
@@ -1176,7 +1523,6 @@ public:
         return nullptr;
     }
 
-    // Parse single expression with operator precedence climbing
     // Parse single expression with operator precedence climbing and robust grouping
     std::shared_ptr<Expr> parse_single_expr(const std::string& raw) {
         std::string s = trim(raw);
@@ -1188,6 +1534,28 @@ public:
             auto left = parse_single_expr(trim(s.substr(0, pipe_pos)));
             auto right = parse_single_expr(trim(s.substr(pipe_pos + 2)));
             return std::make_shared<BinaryExpr>(left, "|>", right);
+        }
+
+        // 0b. Ternary operator: cond ? then_expr : else_expr
+        size_t q_pos = find_level_0_op_rightmost(s, "?");
+        if (q_pos != std::string::npos && (q_pos == 0 || s[q_pos - 1] != '?') && (q_pos + 1 >= s.size() || s[q_pos + 1] != '?')) {
+            std::string cond_str = trim(s.substr(0, q_pos));
+            std::string rem = trim(s.substr(q_pos + 1));
+            size_t col_pos = find_level_0_op_rightmost(rem, ":");
+            if (col_pos != std::string::npos) {
+                auto cond_e = parse_single_expr(cond_str);
+                auto then_e = parse_single_expr(trim(rem.substr(0, col_pos)));
+                auto else_e = parse_single_expr(trim(rem.substr(col_pos + 1)));
+                return std::make_shared<TernaryExpr>(cond_e, then_e, else_e);
+            }
+        }
+
+        // 0c. Null-coalescing operator: left ?? right
+        size_t nc_pos = find_level_0_op_rightmost(s, "??");
+        if (nc_pos != std::string::npos) {
+            auto left = parse_single_expr(trim(s.substr(0, nc_pos)));
+            auto right = parse_single_expr(trim(s.substr(nc_pos + 2)));
+            return std::make_shared<BinaryExpr>(left, "??", right);
         }
 
         // 1. Python inline: py!(code) OR @py(code) OR py: code
@@ -1207,7 +1575,6 @@ public:
         // 2. Parenthesized Grouping & Tuples: (expr) OR (x, y)
         if (is_enclosed_in_matching_parens(s)) {
             std::string inner = trim(s.substr(1, s.size() - 2));
-            // Check if there is a top-level comma inside
             bool has_comma = false;
             size_t comma_idx = std::string::npos;
             int d = 0;
@@ -1231,7 +1598,6 @@ public:
                 auto y_expr = parse_single_expr(trim(inner.substr(comma_idx + 1)));
                 return std::make_shared<TupleExpr>(x_expr, y_expr);
             } else {
-                // Pure grouping expression: unwrap and parse!
                 return parse_single_expr(inner);
             }
         }
@@ -1308,7 +1674,7 @@ public:
             }
         }
 
-        // 6. Interpolated String: $"Hello {name}" OR f"..." OR "Hello {name}"
+        // 6. Interpolated String: $"Hello {name}" OR f"..."
         if ((s.front() == '$' || s.front() == 'f') && s.size() >= 3) {
             std::string inner = s.substr(1);
             if ((inner.front() == '"' && inner.back() == '"') || (inner.front() == '\'' && inner.back() == '\'')) {
@@ -1747,7 +2113,8 @@ private:
                                 char prev = s[p];
                                 if (prev == '+' || prev == '-' || prev == '*' || prev == '/' || 
                                     prev == '%' || prev == '^' || prev == '(' || prev == '[' || 
-                                    prev == '=' || prev == '<' || prev == '>' || prev == '!' || prev == ',') {
+                                    prev == '=' || prev == '<' || prev == '>' || prev == '!' || prev == ',' ||
+                                    prev == '?' || prev == ':') {
                                     continue;
                                 }
                             } else {

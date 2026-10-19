@@ -1,5 +1,5 @@
 # Looping Programming Language — Official Syntax & Reference Guide
-> **Language Specification v2.5 (Signature Syntax & C++ Native Engine)**  
+> **Language Specification v2.6 (Signature Syntax & C++ Native Engine)**  
 > *Developed by Holo Entertainment (Sub-division of Coki Studios)*  
 > *Target Hardware & OS: Shine Loop Console • Holo Looping OoS (Linux Gaming Subsystem)*
 
@@ -8,7 +8,7 @@
 ## 1. Introducción & Filosofía de Diseño
 **Looping** (extensiones de archivo `.loop` y `.ruup`) es un lenguaje de programación moderno, expresivo y de alto rendimiento diseñado para la creación ágil de videojuegos 2D, aplicaciones gráficas interactivas, síntesis de audio en tiempo real y lógica multimedia.
 
-En la versión **v2.5**, Looping abandona el estilo de "prosa en inglés" de las primeras versiones preliminares para consolidar una **sintaxis propia, concisa, auténtica y distintiva** (`let`, `mut`, `val`, `:=`, `fn`, `loop (N)`, `for..in`, `|>`, `ui.*`, `spawn.*`, `audio.*`, `py!`), manteniendo un rendimiento de ejecución nativo en C++17 de **< 1.0 ms** y cero dependencias de Node.js.
+En la versión **v2.6**, Looping consolida su **sintaxis propia, concisa y distintiva** (`let`, `mut`, `val`, `:=`, `fn`, `match`, `? :`, `??`, `try / catch`, destructuring `[a, b]`, `loop (N)`, `for..in` con `..=` y `step`, `|>`, `ui.*`, `spawn.*`, `audio.*`, `crypto.*`, `py!`), manteniendo un rendimiento de ejecución nativo en C++17 de **< 1.0 ms** y cero dependencias de Node.js.
 
 ---
 
@@ -24,12 +24,16 @@ El ejecutable nativo compilado reside directamente en el repositorio:
 | Comando | Descripción |
 | :--- | :--- |
 | `looping <archivo.loop>` | Ejecuta un archivo de código `.loop` o `.ruup` |
-| `looping compile <archivo.loop> --target <shine_ui\|xui\|flui> [-o out]` | Compila el script para una arquitectura de interfaz nativa |
-| `looping build <archivo.loop> -t <target>` | Alias de compilación de interfaz para scripts de sistema |
+| `looping --gui <archivo.loop>` | Ejecuta el script abriendo la ventana gráfica interactiva |
+| `looping --native <archivo.loop>` | Ejecuta el script sintetizando una ventana nativa del SO (sin HTML5) |
+| `looping compile <archivo.loop> --target <shine_ui\|xui\|flui\|c2> [-o out]` | Compila el script para una arquitectura de interfaz nativa |
+| `looping check <archivo.loop>` | Analizador estático de sintaxis y reporte de métricas AST en microsegundos |
+| `looping bench` | Ejecuta el benchmark de rendimiento de la máquina virtual nativa C++17 |
+| `looping doctor` | Verifica el estado del motor C++, perfiles de UI, criptografía e interoperabilidad Python |
 | `looping repl` | Inicia la consola interactiva (REPL) con memoria de variables en vivo |
 | `looping eval "<code>"` | Evalúa una instrucción o bloque de código en línea |
-| `looping test` | Ejecuta la suite de verificación unitaria (12/12 pruebas) |
-| `looping --version` | Muestra la versión del motor nativo |
+| `looping test` | Ejecuta la suite de verificación unitaria (36/36 pruebas) |
+| `looping --version` | Muestra la versión del motor nativo (`v2.6.0`) |
 | `looping --help` | Despliega el menú de ayuda |
 
 ---
@@ -403,6 +407,73 @@ Al ejecutarse, el motor exporta automáticamente las variables de entorno de sis
 | **UI Button** | `draw button at (30,150) with text...` | `ui.btn(at: (30, 150), text: "Go", action: "act")` |
 | **2D Entities** | `spawn sprite "Hero" at (10,10)...` | `spawn.sprite("Hero", at: (10, 10), color: "#fff")` |
 | **Audio** | `play tone at 587 Hz for 80 ms` | `audio.tone(587, 80)` |
+
+---
+
+## 16. Novedades de Looping v2.6 (Pattern Matching, Stdlib Funcional, Crypto & UI Extendida)
+
+### 16.1 Expresiones Ternarias (`? :`) y Null-Coalescing (`??`)
+```loop
+val tier = score >= 90 ? "DIAMOND" : "GOLD";
+val active_theme = custom_theme ?? "frosted_aqua_a17";
+```
+
+### 16.2 Pattern Matching (`match`)
+```loop
+match rank_code {
+    "S" => out("Grandmaster")
+    "A" => out("Commander")
+    _   => out("Recruit")
+}
+```
+
+### 16.3 Rangos Inclusivos (`..=`), Paso (`step`) y `continue`
+```loop
+for (i in 1..=10 step 2) {
+    if (i == 5) -> continue
+    out($"Pulso impar: {i}")
+}
+```
+
+### 16.4 Destructuring y Manejo de Errores (`try / catch / throw`)
+```loop
+let [first, second, third] = [100, 200, 300]
+let (pos_x, pos_y) = (45, 90)
+
+try {
+    throw "OverheatFault"
+} catch (err) {
+    out($"[RECOVERY] Error capturado: {err}")
+}
+```
+
+### 16.5 Biblioteca Estándar Funcional, Estadística y Criptográfica (`crypto.*`)
+```loop
+fn square(x) => x * x
+fn is_even(x) => x % 2 == 0
+
+val evens = [1, 2, 3, 4, 5, 6] |> filter(is_even) |> map(square)
+val dedup = unique([1, 2, 2, 3, 1])
+val flat  = flatten([[1, 2], [3, 4]])
+val avg   = math.mean([10, 20, 30, 40])
+
+// Criptografía nativa C++17 (cero dependencias externas)
+val hash_hex = crypto.sha256("HoloOoS")
+val b64      = crypto.base64_encode("ShineLoop")
+val session  = crypto.uuid()
+val room_key = crypto.csms_key("room_alpha")
+```
+
+### 16.6 Componentes UI Extendidos (`slider`, `toggle`, `progress` y Snippets en Botones)
+```loop
+draw slider at (10, 20) with label "Volumen" and min 0 and max 100 and val 75 and bind "vol"
+draw toggle at (10, 70) with label "Modo Oscuro" and bind "dark_mode" checked
+draw progress at (10, 110) with label "Batería" and val 90 and bind "batt"
+
+insert button "Incrementar" with snippet:
+    counter += 1
+end
+```
 
 ---
 

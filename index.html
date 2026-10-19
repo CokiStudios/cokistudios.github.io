@@ -877,6 +877,7 @@
                 <a href="felte.html" class="nav-link" style="color:#00f5d4; font-weight:700;">Felte Store</a>
                 <a href="forkar" class="nav-link" data-i18n="nav_forkar">Forkar</a>
                 <a href="messenger" class="nav-link" data-i18n="nav_csms">CSMS</a>
+                <a href="https://repo.cokistudios.com/engine" class="nav-link" data-i18n="nav_engine">Looping Engine</a>
                 <a href="products" class="nav-link" data-i18n="nav_products">Productos</a>
                 <select class="lang-select"
                     style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;"
@@ -1010,6 +1011,92 @@
                     </span>
                     <div class="product-arrow"></div>
                 </a>
+
+                <a href="https://repo.cokistudios.com/engine" class="product-card card-indigo" target="_self">
+                    <div class="product-icon"
+                        style="background:transparent; padding:2px; display:flex; align-items:center; justify-content:center;">
+                        <div style="width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg, #06b6d4, #6366f1); display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(99,102,241,0.35);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="product-name" data-i18n="card_looping_title">Looping Engine</div>
+                    <div class="product-desc" data-i18n="card_looping_desc">Motor híbrido universal nativo en C++ para Loop OS y macOS. Pipelines funcionales, criptografía CSMS y el gestor de paquetes smiledev.</div>
+                    <span class="product-tag" data-i18n="card_looping_tag">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                        Motor & Lenguaje
+                    </span>
+                    <div class="product-arrow"></div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── LOOPING ENGINE & REGISTRY SHOWCASE ── -->
+    <section id="engine-section" style="padding: 20px 0 40px;">
+        <div class="section-inner">
+            <div class="csid-section" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(99, 102, 241, 0.07)); border-color: rgba(6, 182, 212, 0.25);">
+                <div>
+                    <div class="section-label" style="color: #38bdf8;">Motor Híbrido & Ecosistema de Paquetes</div>
+                    <h2 class="section-title" style="max-width: 440px;">Looping v2.6.0 & Registry</h2>
+                    <p style="color: var(--text-sub); font-size: 15px; line-height: 1.7; margin-top: 12px;">
+                        Desarrollado en C++ nativo sin contenedores web pesados. Diseñado para ofrecer latencia inferior a 0.2ms en Loop OS, compilación de interfaz (XUI, Shine UI, flUI), criptografía CSMS por hardware y pipelines funcionales.
+                    </p>
+
+                    <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button id="btn-tab-brew" onclick="setEngineTab('brew')" style="padding: 7px 14px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; border: 1px solid rgba(56,189,248,0.4); background: rgba(56,189,248,0.2); color: #fff;">🍺 Homebrew</button>
+                            <button id="btn-tab-curl" onclick="setEngineTab('curl')" style="padding: 7px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: transparent; color: var(--text-sub);">⚡ 1-Line Curl</button>
+                            <button id="btn-tab-upgrade" onclick="setEngineTab('upgrade')" style="padding: 7px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: transparent; color: var(--text-sub);">🔄 Auto-Updater</button>
+                        </div>
+                        <div id="engine-cmd-box" style="background: rgba(3, 7, 18, 0.85); border: 1px solid rgba(56,189,248,0.25); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">
+                            <span id="engine-cmd-text" style="white-space: nowrap;">brew tap CokiStudios/cokistudios.github.io && brew install looping smiledev</span>
+                            <button onclick="copyEngineCmd(this)" style="margin-left: 12px; background: rgba(56,189,248,0.2); border: 1px solid rgba(56,189,248,0.4); color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">Copiar</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 28px; display: flex; gap: 14px; flex-wrap: wrap;">
+                        <a href="https://repo.cokistudios.com/engine" class="btn-hero-primary" style="padding: 11px 20px; font-size: 14px;">
+                            Explorar repo.cokistudios.com/engine →
+                        </a>
+                        <a href="https://repo.cokistudios.com/modules" class="btn-hero-secondary" style="padding: 11px 20px; font-size: 14px;">
+                            Catálogo de Módulos (smiledev)
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Code Preview Card -->
+                    <div style="background: #030712; border: 1px solid rgba(56,189,248,0.25); border-radius: 18px; overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.5);">
+                        <div style="background: rgba(15,23,42,0.8); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <div style="display: flex; gap: 6px;">
+                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                            </div>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8;">demo_v2_6.loop</span>
+                            <span style="font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 700; font-family: 'JetBrains Mono';">v2.6.0 Universal</span>
+                        </div>
+                        <pre style="margin: 0; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; color: #f1f5f9; overflow-x: auto;"><code><span style="color:#94a3b8;">// 🌟 Novedades Looping v2.6.0</span>
+<span style="color:#c084fc;">use module</span> <span style="color:#38bdf8;">"pyloop-crypto"</span>
+
+<span style="color:#64748b;">// 1. Ternario & Null-Coalescing</span>
+<span style="color:#38bdf8;">val</span> estado := conectado <span style="color:#00f5d4;">?</span> <span style="color:#a7f3d0;">"Online"</span> <span style="color:#00f5d4;">:</span> <span style="color:#f87171;">"Offline"</span>
+<span style="color:#38bdf8;">val</span> puerto := config[<span style="color:#a7f3d0;">"port"</span>] <span style="color:#00f5d4;">??</span> 8080
+
+<span style="color:#64748b;">// 2. Pattern Matching Nativo</span>
+<span style="color:#c084fc;">match</span> modo {
+    <span style="color:#a7f3d0;">"eco"</span> => eco_points += 50
+    <span style="color:#a7f3d0;">"turbo"</span> => apu_clock := 240
+    <span style="color:#94a3b8;">_</span> => print(<span style="color:#a7f3d0;">"Modo estándar"</span>)
+}
+
+<span style="color:#64748b;">// 3. Pipeline Funcional (|>) & Cripto CSMS</span>
+<span style="color:#38bdf8;">val</span> hash := crypto.sha256(<span style="color:#a7f3d0;">"CSMS_Payload"</span>)
+<span style="color:#38bdf8;">val</span> pares := 0..=10 step 2 |> filter(is_pos)
+
+print(<span style="color:#a7f3d0;">$"✓ Looping v2.6 listo: $hash"</span>)</code></pre>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1120,6 +1207,8 @@
             </div>
             <div class="footer-links">
                 <a href="products" class="footer-link" data-i18n="nav_products">Productos</a>
+                <a href="https://repo.cokistudios.com/engine" class="footer-link">Looping Engine</a>
+                <a href="https://repo.cokistudios.com/modules" class="footer-link">Módulos</a>
                 <a href="forkar" class="footer-link" data-i18n="nav_forkar">Forkar</a>
                 <a href="messenger" class="footer-link" data-i18n="nav_csms">CSMS</a>
                 <a href="dashboard" class="footer-link" data-i18n="nav_account">Mi Cuenta</a>
@@ -1202,6 +1291,51 @@
 
         function closeShineAlert() {
             document.getElementById('shineAlertModal').classList.remove('active');
+        }
+
+        function setEngineTab(type) {
+            const btnBrew = document.getElementById('btn-tab-brew');
+            const btnCurl = document.getElementById('btn-tab-curl');
+            const btnUpgrade = document.getElementById('btn-tab-upgrade');
+            const text = document.getElementById('engine-cmd-text');
+            if (!btnBrew || !btnCurl || !btnUpgrade || !text) return;
+            
+            [btnBrew, btnCurl, btnUpgrade].forEach(b => {
+                b.style.borderColor = 'rgba(255,255,255,0.08)';
+                b.style.background = 'transparent';
+                b.style.color = 'var(--text-sub)';
+                b.style.fontWeight = '600';
+            });
+            
+            if (type === 'brew') {
+                btnBrew.style.borderColor = 'rgba(56,189,248,0.4)';
+                btnBrew.style.background = 'rgba(56,189,248,0.2)';
+                btnBrew.style.color = '#fff';
+                btnBrew.style.fontWeight = '700';
+                text.innerText = 'brew tap CokiStudios/cokistudios.github.io && brew install looping smiledev';
+            } else if (type === 'curl') {
+                btnCurl.style.borderColor = 'rgba(56,189,248,0.4)';
+                btnCurl.style.background = 'rgba(56,189,248,0.2)';
+                btnCurl.style.color = '#fff';
+                btnCurl.style.fontWeight = '700';
+                text.innerText = 'curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash';
+            } else if (type === 'upgrade') {
+                btnUpgrade.style.borderColor = 'rgba(56,189,248,0.4)';
+                btnUpgrade.style.background = 'rgba(56,189,248,0.2)';
+                btnUpgrade.style.color = '#fff';
+                btnUpgrade.style.fontWeight = '700';
+                text.innerText = 'smiledev upgrade';
+            }
+        }
+
+        function copyEngineCmd(btn) {
+            const textEl = document.getElementById('engine-cmd-text');
+            if (!textEl) return;
+            navigator.clipboard.writeText(textEl.innerText).then(() => {
+                const prev = btn.innerText;
+                btn.innerText = '¡Copiado!';
+                setTimeout(() => btn.innerText = prev, 2000);
+            });
         }
     </script>
     <script src="assets/js/xtraps.js" defer></script>

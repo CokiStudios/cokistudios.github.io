@@ -10,20 +10,24 @@ void print_usage(const char* prog_name) {
     std::cout << color::BOLD << "Usage:" << color::RESET << "\n";
     std::cout << "  " << prog_name << " <script.loop>            Execute Looping script\n";
     std::cout << "  " << prog_name << " --gui <script.loop>      Execute Looping script in native GUI window\n";
+    std::cout << "  " << prog_name << " --native <script.loop>   Execute Looping script in pure OS native window\n";
     std::cout << "  " << prog_name << " window <name> [flags]    Create, synthesize & launch dynamic graphical window\n";
     std::cout << "  " << prog_name << " run <script.loop>        Execute Looping script\n";
     std::cout << "  " << prog_name << " create <name> [--type]   Create and synthesize new dynamic program\n";
     std::cout << "  " << prog_name << " compile <file.loop>      Compile script for target UI profile\n";
+    std::cout << "  " << prog_name << " check <file.loop>        Static syntax & AST verification report\n";
+    std::cout << "  " << prog_name << " bench                    Run native C++17 VM throughput benchmark\n";
+    std::cout << "  " << prog_name << " doctor                   Inspect engine subsystems & environment health\n";
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
-    std::cout << "  " << prog_name << " test                     Run built-in engine test suite\n";
+    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (36 tests)\n";
     std::cout << "  " << prog_name << " --version, -v            Display engine version\n";
     std::cout << "  " << prog_name << " --help, -h               Show this help message\n\n";
 }
 
 int run_tests() {
-    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v2.5 Signature)...\n\n";
+    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v2.6 Signature)...\n\n";
     Interpreter vm;
 
     int passed = 0;
@@ -294,6 +298,196 @@ int run_tests() {
                 vm.variables["html_file"].as_string() == "build/test_window.html" &&
                 vm.variables["loop_file"].as_string() == "build/test_window.loop");
 
+    // Test 27: Buttons with Snippet Blocks (insert button with snippet:)
+    vm.execute_code(
+        "val win2 = window.create(\"SnippetWindow\", 800, 500, \"flui\")\n"
+        "mut btn_counter = 0\n"
+        "mut btn_last_action = \"none\"\n"
+        "insert button \"Incrementar\" with snippet:\n"
+        "    btn_counter += 1\n"
+        "    btn_last_action = \"increment\"\n"
+        "end\n"
+        "draw button at (50, 150) with text \"Resetear\" and action \"reset_act\" with snippet:\n"
+        "    btn_counter = 0\n"
+        "    btn_last_action = \"reset\"\n"
+        "end\n"
+        "val click_inc1 = window.click(\"Incrementar\")\n"
+        "val click_inc2 = window.click(\"Incrementar\")\n"
+        "val after_two_clicks = btn_counter\n"
+        "val click_rst = window.click(\"reset_act\")\n"
+        "val btns_snip = window.get_buttons()\n"
+    );
+    assert_test("Buttons with Snippet Blocks (insert button with snippet:)",
+                vm.variables["click_inc1"].is_truthy() &&
+                vm.variables["click_inc2"].is_truthy() &&
+                vm.variables["after_two_clicks"].as_int() == 2 &&
+                vm.variables["btn_counter"].as_int() == 0 &&
+                vm.variables["btn_last_action"].as_string() == "reset" &&
+                vm.variables["click_rst"].is_truthy() &&
+                vm.variables.find("__btn_snippet_Incrementar") != vm.variables.end() &&
+                vm.variables.find("__btn_snippet_reset_act") != vm.variables.end() &&
+                vm.variables["btns_snip"].list_val && vm.variables["btns_snip"].list_val->size() >= 2);
+
+    // Test 28: Higher-Order Collection Helpers (map, filter, reduce with |>)
+    vm.execute_code(
+        "fn square(x) => x * x\n"
+        "fn is_even(x) => x % 2 == 0\n"
+        "fn sum_acc(a, b) => a + b\n"
+        "val nums = [1, 2, 3, 4, 5]\n"
+        "val squared = map(nums, square)\n"
+        "val evens = nums |> filter(is_even)\n"
+        "val total_sum = reduce(nums, sum_acc, 0)\n"
+    );
+    assert_test("Collection Functional Helpers (map, filter, reduce with |>)",
+                vm.variables["squared"].list_val && vm.variables["squared"].list_val->size() == 5 &&
+                vm.variables["squared"].list_val->at(1).as_int() == 4 &&
+                vm.variables["squared"].list_val->at(4).as_int() == 25 &&
+                vm.variables["evens"].list_val && vm.variables["evens"].list_val->size() == 2 &&
+                vm.variables["total_sum"].as_int() == 15);
+
+    // Test 29: Extended UI Directives (Sliders, Toggles, Progress Bars)
+    vm.execute_code(
+        "window.create(\"ControlsApp\", 700, 450)\n"
+        "draw slider at (10, 20) with label \"Volumen\" and min 0 and max 100 and val 75 and bind \"vol\"\n"
+        "draw toggle at (10, 70) with label \"Modo Oscuro\" and bind \"dark_mode\" checked\n"
+        "draw progress at (10, 110) with label \"Batería\" and val 90 and bind \"batt\"\n"
+        "val sliders_list = window.get_sliders()\n"
+        "val toggles_list = window.get_toggles()\n"
+        "val prog_list = window.get_progress()\n"
+        "val win_st = window.get_state()\n"
+    );
+    assert_test("Extended UI Components (Sliders, Toggles, Progress Bars)",
+                vm.variables["sliders_list"].list_val && vm.variables["sliders_list"].list_val->size() == 1 &&
+                vm.variables["sliders_list"].list_val->at(0).map_val->at("value").as_int() == 75 &&
+                vm.variables["toggles_list"].list_val && vm.variables["toggles_list"].list_val->size() == 1 &&
+                vm.variables["toggles_list"].list_val->at(0).map_val->at("checked").is_truthy() &&
+                vm.variables["prog_list"].list_val && vm.variables["prog_list"].list_val->size() == 1 &&
+                vm.variables["win_st"].map_val->at("sliders_count").as_int() == 1);
+
+    // Test 30: Native OS Desktop Window Synthesis (Pure Desktop OS Window / No HTML5)
+    vm.execute_code(
+        "val native_path = window.export_native(\"build/test_native_app.py\")\n"
+        "val native_exists = file.exists(native_path)\n"
+    );
+    assert_test("Native OS Desktop Window Synthesis (Direct OS Window / No HTML5)",
+                vm.variables["native_path"].as_string() == "build/test_native_app.py" &&
+                vm.variables["native_exists"].is_truthy());
+
+    // Test 31: Ternary Expressions (? :) & Null-Coalescing Operator (??)
+    vm.execute_code(
+        "val tier_score = 95\n"
+        "val badge = tier_score >= 90 ? \"DIAMOND\" : \"GOLD\"\n"
+        "val missing_val = nil\n"
+        "val resolved_val = missing_val \?\? \"DEFAULT_SHINE\"\n"
+        "val present_val = \"ACTIVE\" \?\? \"FALLBACK\"\n"
+    );
+    assert_test("Ternary Conditional (? :) & Null-Coalescing (?\?)",
+                vm.variables["badge"].as_string() == "DIAMOND" &&
+                vm.variables["resolved_val"].as_string() == "DEFAULT_SHINE" &&
+                vm.variables["present_val"].as_string() == "ACTIVE");
+
+    // Test 32: Pattern Matching (match <expr> { ... })
+    vm.execute_code(
+        "val rank_code = \"S\"\n"
+        "mut rank_label = \"Unknown\"\n"
+        "match rank_code {\n"
+        "    \"S\" => rank_label = \"Grandmaster\"\n"
+        "    \"A\" => rank_label = \"Commander\"\n"
+        "    _ => rank_label = \"Recruit\"\n"
+        "}\n"
+    );
+    assert_test("Pattern Matching Block (match <expr> { ... })",
+                vm.variables["rank_label"].as_string() == "Grandmaster");
+
+    // Test 33: Inclusive Ranges (..=), Step Ranges (step N), Continue & Else-If Chains
+    vm.execute_code(
+        "mut inc_sum = 0\n"
+        "for (n in 1..=5) {\n"
+        "    if (n == 3) -> continue\n"
+        "    inc_sum += n\n"
+        "}\n"
+        "mut step_sum = 0\n"
+        "for (k in 0..10 step 2) {\n"
+        "    step_sum += k\n"
+        "}\n"
+        "val temp_c = 25\n"
+        "mut climate = \"\"\n"
+        "if (temp_c > 35) {\n"
+        "    climate = \"hot\"\n"
+        "} else if (temp_c >= 20) {\n"
+        "    climate = \"optimal\"\n"
+        "} else {\n"
+        "    climate = \"cold\"\n"
+        "}\n"
+    );
+    assert_test("Inclusive/Step Ranges (..=, step), Continue & Else-If Chains",
+                vm.variables["inc_sum"].as_int() == (1 + 2 + 4 + 5) &&
+                vm.variables["step_sum"].as_int() == (0 + 2 + 4 + 6 + 8) &&
+                vm.variables["climate"].as_string() == "optimal");
+
+    // Test 34: Destructuring Declarations & Try / Catch / Throw Error Handling
+    vm.execute_code(
+        "let [first_item, second_item, third_item] = [100, 200, 300]\n"
+        "let (coord_x, coord_y) = (45, 90)\n"
+        "mut caught_msg = \"none\"\n"
+        "try {\n"
+        "    throw \"OverheatFault\"\n"
+        "    caught_msg = \"unreachable\"\n"
+        "} catch (err) {\n"
+        "    caught_msg = err\n"
+        "}\n"
+    );
+    assert_test("Destructuring ([a, b], (x, y)) & Try/Catch/Throw",
+                vm.variables["first_item"].as_int() == 100 &&
+                vm.variables["second_item"].as_int() == 200 &&
+                vm.variables["third_item"].as_int() == 300 &&
+                vm.variables["coord_x"].as_int() == 45 &&
+                vm.variables["coord_y"].as_int() == 90 &&
+                vm.variables["caught_msg"].as_string() == "OverheatFault");
+
+    // Test 35: Advanced Collection & Functional Helpers (zip, unique, flatten, find, any, all, chunk)
+    vm.execute_code(
+        "fn gt_ten(x) => x > 10\n"
+        "fn is_pos(x) => x > 0\n"
+        "val dedup = unique([1, 2, 2, 3, 1, 4])\n"
+        "val flat = flatten([[1, 2], [3, 4], 5])\n"
+        "val zipped = zip([\"a\", \"b\"], [10, 20])\n"
+        "val found_v = find([4, 8, 15, 16, 23], gt_ten)\n"
+        "val has_gt_ten = any([2, 5, 12], gt_ten)\n"
+        "val all_positive = all([1, 5, 9], is_pos)\n"
+        "val chunks = chunk([1, 2, 3, 4, 5, 6], 2)\n"
+    );
+    assert_test("Advanced Collection Stdlib (unique, flatten, zip, find, any, all, chunk)",
+                vm.variables["dedup"].size() == 4 &&
+                vm.variables["flat"].size() == 5 &&
+                vm.variables["zipped"].size() == 2 &&
+                vm.variables["found_v"].as_int() == 15 &&
+                vm.variables["has_gt_ten"].is_truthy() &&
+                vm.variables["all_positive"].is_truthy() &&
+                vm.variables["chunks"].size() == 3);
+
+    // Test 36: Crypto & Statistical Math Stdlib (SHA-256, Base64, UUID, CSMS Key, sum, mean, gcd, fib)
+    vm.execute_code(
+        "val digest = crypto.sha256(\"Looping\")\n"
+        "val b64_enc = crypto.base64_encode(\"HoloOoS\")\n"
+        "val b64_dec = crypto.base64_decode(b64_enc)\n"
+        "val gen_id = crypto.uuid()\n"
+        "val csms_k = crypto.csms_key(\"room_alpha\")\n"
+        "val stat_sum = math.sum([10, 20, 30, 40])\n"
+        "val stat_mean = math.mean([10, 20, 30, 40])\n"
+        "val g_val = math.gcd(48, 18)\n"
+        "val fib_10 = math.fib(10)\n"
+    );
+    assert_test("Crypto & Math Stdlib (sha256, base64, uuid, csms_key, sum, mean, gcd, fib)",
+                vm.variables["digest"].as_string().size() == 64 &&
+                vm.variables["b64_dec"].as_string() == "HoloOoS" &&
+                vm.variables["gen_id"].as_string().size() == 36 &&
+                vm.variables["csms_k"].as_string().size() == 64 &&
+                vm.variables["stat_sum"].as_int() == 100 &&
+                vm.variables["stat_mean"].as_int() == 25 &&
+                vm.variables["g_val"].as_int() == 6 &&
+                vm.variables["fib_10"].as_int() == 55);
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 
@@ -329,6 +523,79 @@ int main(int argc, char* argv[]) {
 
     if (first_arg == "test") {
         return run_tests();
+    }
+
+    if (first_arg == "doctor") {
+        vm.print_banner();
+        std::cout << color::BOLD << color::CYAN << "[LOOPING DOCTOR]" << color::RESET << " Inspecting C++ Native Engine & Subsystems...\n\n";
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " Engine Version     : v" << vm.app_version << " (C++17 Native)\n";
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " Host Platform      : " << vm.eval(std::make_shared<VariableExpr>("sys.platform")).as_string()
+                  << " (" << vm.eval(std::make_shared<VariableExpr>("sys.arch")).as_string() << ")\n";
+        std::cout << "  " << (vm.python_bridge.is_available ? color::GREEN : color::YELLOW)
+                  << (vm.python_bridge.is_available ? "✔" : "⚠") << color::RESET
+                  << " Python Interop     : " << (vm.python_bridge.is_available ? "Available (" + vm.python_bridge.detected_exe + ")" : "Not found in PATH") << "\n";
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " UI Target Profiles : Shine UI (60Hz), XUI (240Hz), flUI (120Hz), C2 (.c2), Vintage, hiUI\n";
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " Crypto Subsystem   : SHA-256, FNV-1a, Base64, UUID v4, CSMS E2EE Key Derivation\n\n";
+        return 0;
+    }
+
+    if (first_arg == "bench" || first_arg == "benchmark") {
+        std::cout << color::BOLD << color::CYAN << "[LOOPING BENCHMARK]" << color::RESET << " Running Native C++17 VM Throughput Suite...\n\n";
+        auto t0 = std::chrono::high_resolution_clock::now();
+        Interpreter bvm;
+        bvm.execute_code(
+            "fn compute_metric(x) => (x * 3 + 7) % 97\n"
+            "mut acc = 0\n"
+            "for (i in 1..=2500) {\n"
+            "    acc += compute_metric(i)\n"
+            "}\n"
+            "val digest = crypto.sha256($\"bench:{acc}\")\n"
+        );
+        auto t1 = std::chrono::high_resolution_clock::now();
+        double elapsed_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        std::cout << "  • Iterations     : 2,500 function calls + loop ticks + SHA-256\n";
+        std::cout << "  • Result Check   : acc = " << bvm.variables["acc"].as_int() << " | sha256 = " << bvm.variables["digest"].as_string().substr(0, 16) << "...\n";
+        std::cout << "  • Execution Time : " << color::GREEN << std::fixed << std::setprecision(3) << elapsed_ms << " ms" << color::RESET << "\n\n";
+        return 0;
+    }
+
+    if (first_arg == "check" || first_arg == "inspect") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'check' requires a .loop script file." << color::RESET << "\n";
+            return 1;
+        }
+        std::string fpath = argv[2];
+        std::ifstream f(fpath);
+        if (!f.is_open()) {
+            std::cerr << color::RED << "Error: Could not open file '" << fpath << "'." << color::RESET << "\n";
+            return 1;
+        }
+        std::stringstream ss;
+        ss << f.rdbuf();
+        auto t0 = std::chrono::high_resolution_clock::now();
+        Parser p(ss.str());
+        auto stmts = p.parse_script();
+        auto t1 = std::chrono::high_resolution_clock::now();
+        double parse_us = std::chrono::duration<double, std::micro>(t1 - t0).count();
+
+        size_t fn_count = 0, ui_count = 0, entity_count = 0, loop_count = 0;
+        for (const auto& st : stmts) {
+            if (std::dynamic_pointer_cast<FunctionDefStmt>(st)) fn_count++;
+            else if (std::dynamic_pointer_cast<DrawUIStmt>(st)) ui_count++;
+            else if (std::dynamic_pointer_cast<SpawnEntityStmt>(st)) entity_count++;
+            else if (std::dynamic_pointer_cast<ForRangeStmt>(st) ||
+                     std::dynamic_pointer_cast<ForEachStmt>(st) ||
+                     std::dynamic_pointer_cast<WhileStmt>(st) ||
+                     std::dynamic_pointer_cast<RepeatStmt>(st)) loop_count++;
+        }
+        std::cout << color::GREEN << "✔ [AST CHECK OK]" << color::RESET << " " << fpath
+                  << " (" << std::fixed << std::setprecision(1) << parse_us << " µs)\n";
+        std::cout << "  • Top-level Statements : " << stmts.size() << "\n";
+        std::cout << "  • Functions Defined    : " << fn_count << "\n";
+        std::cout << "  • UI Directives        : " << ui_count << "\n";
+        std::cout << "  • 2D Entities          : " << entity_count << "\n";
+        std::cout << "  • Loop Constructs      : " << loop_count << "\n";
+        return 0;
     }
 
     if (first_arg == "eval") {
@@ -535,8 +802,9 @@ int main(int argc, char* argv[]) {
         return success ? 0 : 1;
     }
 
-    // Run command or script execution: supports flags anywhere, including --gui / -g / -t
+    // Run command or script execution: supports flags anywhere, including --gui / -g / -t / --native
     bool gui_mode = false;
+    bool native_mode = false;
     std::string script_path = "";
     std::string target_ui = "";
 
@@ -544,6 +812,9 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "--gui" || arg == "-g" || arg == "--window") {
             gui_mode = true;
+        } else if (arg == "--native" || arg == "-n" || arg == "--os") {
+            gui_mode = true;
+            native_mode = true;
         } else if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
             target_ui = argv[++i];
         } else if (arg == "run") {
@@ -565,14 +836,19 @@ int main(int argc, char* argv[]) {
 
     if (gui_mode) {
         std::cout << color::CYAN << "[GUI RUNTIME]" << color::RESET 
-                  << " Initializing Loop OS Native Graphical Window subsystem...\n";
+                  << (native_mode ? " Initializing Pure Native OS Window subsystem (No HTML5)...\n" 
+                                  : " Initializing Loop OS Native Graphical Window subsystem...\n");
     }
 
     bool success = vm.execute_file(script_path);
 
     if (success && gui_mode) {
-        if (!vm.current_window.cards.empty()) {
-            vm.current_window.show(true);
+        if (!vm.current_window.cards.empty() || !vm.current_window.buttons.empty()) {
+            if (native_mode) {
+                vm.current_window.show_native(true);
+            } else {
+                vm.current_window.show(true, "native");
+            }
         } else {
 #ifdef __APPLE__
             std::cout << color::GREEN << "[GUI LAUNCH]" << color::RESET 

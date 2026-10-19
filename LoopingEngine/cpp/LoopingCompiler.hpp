@@ -13,6 +13,7 @@
 #include <map>
 #include <algorithm>
 #include <sys/stat.h>
+#include <unistd.h>
 
 namespace looping {
 
@@ -74,7 +75,49 @@ inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
         };
     }
 
-    // 3. Default: Shine UI (Shine Loop Handheld Console / 60 FPS)
+    // 3. Component 2 (.c2 - Shine Modular Android UI Bundle)
+    if (s == "c2" || s == "component2" || s == "component_2" || s == "c2_module" || s == "c2-module") {
+        return {
+            "Component 2 (.c2)",
+            "c2",
+            "c2_modular_surface",
+            "#38bdf8",
+            "#10b981",
+            120,
+            "Modular Android UI Hot-Reload Pipeline (.c2)",
+            "Dynamic Component 2 Bundle for Shine OS & Forkar Services"
+        };
+    }
+
+    // 4. Vintage (niminticos / curved toolbar)
+    if (s == "vintage" || s == "niminticos" || s == "tuilbar") {
+        return {
+            "Vintage",
+            "vintage",
+            "amber_retro_mono",
+            "#f59e0b",
+            "#78350f",
+            60,
+            "Curved Toolbar Ergonomic Hardware Engine",
+            "Lower Curved tUIlbar & High-Contrast Monospace"
+        };
+    }
+
+    // 5. hiUI (A1 / Low-RAM Lightweight)
+    if (s == "hiui" || s == "hi_ui" || s == "hi-ui" || s == "a1") {
+        return {
+            "hiUI",
+            "hiui",
+            "feather_lite_a1",
+            "#06b6d4",
+            "#0e7490",
+            60,
+            "Low-Memory Ultra-Efficient Engine (<30MB RAM)",
+            "Lightweight Single-Layer Responsive Surface"
+        };
+    }
+
+    // 6. Default: Shine UI (Shine Loop Handheld Console / 60 FPS)
     return {
         "Shine UI",
         "shine_ui",
@@ -298,6 +341,7 @@ public:
         std::string icon;
         std::string button_text;
         std::string action;
+        std::string visible_when;
     };
 
     struct ButtonItem {
@@ -307,6 +351,8 @@ public:
         double y = 0;
         double width = 140;
         double height = 40;
+        std::string snippet;
+        std::string visible_when;
     };
 
     struct InputItem {
@@ -316,6 +362,51 @@ public:
         double y = 0;
         double width = 220;
         double height = 40;
+        std::string visible_when;
+    };
+
+    struct SliderItem {
+        std::string label;
+        double min_val = 0;
+        double max_val = 100;
+        double current_val = 50;
+        std::string binding;
+        double x = 0;
+        double y = 0;
+        double width = 220;
+        double height = 40;
+        std::string visible_when;
+    };
+
+    struct ToggleItem {
+        std::string label;
+        bool is_checked = false;
+        std::string binding;
+        double x = 0;
+        double y = 0;
+        double width = 160;
+        double height = 36;
+        std::string visible_when;
+    };
+
+    struct ProgressItem {
+        std::string label;
+        double progress = 0;
+        std::string binding;
+        double x = 0;
+        double y = 0;
+        double width = 240;
+        double height = 28;
+        std::string visible_when;
+    };
+
+    struct ToolbarItem {
+        std::string id;
+        std::string text;
+        std::string icon;
+        std::string action;
+        std::string position = "top";
+        std::string visible_when;
     };
 
     struct ToneItem {
@@ -328,11 +419,16 @@ public:
     double width = 850;
     double height = 540;
     std::string theme = "frosted_aqua_a17";
+    std::string background = "";
     std::string target_ui = "shine_ui";
     std::string version = "1.0";
     std::vector<CardItem> cards;
     std::vector<ButtonItem> buttons;
     std::vector<InputItem> inputs;
+    std::vector<SliderItem> sliders;
+    std::vector<ToggleItem> toggles;
+    std::vector<ProgressItem> progress_bars;
+    std::vector<ToolbarItem> toolbar_items;
     std::vector<ToneItem> tones;
     std::vector<std::string> custom_statements;
 
@@ -362,10 +458,33 @@ public:
         return *this;
     }
 
+    DynamicWindow& set_background(const std::string& bg) {
+        background = bg;
+        return *this;
+    }
+
+    DynamicWindow& set_bg(const std::string& bg) {
+        return set_background(bg);
+    }
+
     DynamicWindow& set_target(const std::string& tgt) {
         target_ui = tgt;
         UIProfileSpecs specs = resolve_ui_profile(tgt);
         theme = specs.theme;
+        return *this;
+    }
+
+    DynamicWindow& add_toolbar_item(const std::string& tb_text, const std::string& tb_action = "",
+                                   const std::string& tb_icon = "", const std::string& tb_pos = "top",
+                                   const std::string& tb_id = "", const std::string& tb_vis = "") {
+        ToolbarItem item;
+        item.text = tb_text;
+        item.id = tb_id.empty() ? sanitize_id(tb_text) : tb_id;
+        item.action = tb_action.empty() ? item.id : tb_action;
+        item.icon = tb_icon;
+        item.position = tb_pos.empty() ? "top" : tb_pos;
+        item.visible_when = tb_vis;
+        toolbar_items.push_back(item);
         return *this;
     }
 
@@ -402,10 +521,12 @@ public:
     }
 
     DynamicWindow& add_button(const std::string& btn_text, const std::string& action = "",
-                             double x = -1, double y = -1, double w = 150, double h = 42) {
+                             double x = -1, double y = -1, double w = 150, double h = 42,
+                             const std::string& snippet_code = "") {
         ButtonItem b;
         b.text = btn_text;
         b.action = action.empty() ? sanitize_id(btn_text) : action;
+        b.snippet = snippet_code;
         if (x < 0 || y < 0) {
             size_t idx = buttons.size();
             b.x = 24 + idx * (w + 16);
@@ -438,6 +559,62 @@ public:
         return *this;
     }
 
+    DynamicWindow& add_slider(const std::string& label, double min_v = 0, double max_v = 100, double cur_v = 50,
+                             const std::string& binding = "", double x = -1, double y = -1, double w = 220, double h = 40) {
+        SliderItem s;
+        s.label = label;
+        s.min_val = min_v;
+        s.max_val = max_v;
+        s.current_val = cur_v;
+        s.binding = binding.empty() ? sanitize_id(label) : binding;
+        if (x < 0 || y < 0) {
+            s.x = 24;
+            s.y = 80 + (cards.size() * 50) + (sliders.size() * 45);
+        } else {
+            s.x = x; s.y = y;
+        }
+        s.width = w > 0 ? w : 220;
+        s.height = h > 0 ? h : 40;
+        sliders.push_back(s);
+        return *this;
+    }
+
+    DynamicWindow& add_toggle(const std::string& label, bool checked = false,
+                             const std::string& binding = "", double x = -1, double y = -1, double w = 160, double h = 36) {
+        ToggleItem t;
+        t.label = label;
+        t.is_checked = checked;
+        t.binding = binding.empty() ? sanitize_id(label) : binding;
+        if (x < 0 || y < 0) {
+            t.x = 24;
+            t.y = 80 + (cards.size() * 50) + (toggles.size() * 40);
+        } else {
+            t.x = x; t.y = y;
+        }
+        t.width = w > 0 ? w : 160;
+        t.height = h > 0 ? h : 36;
+        toggles.push_back(t);
+        return *this;
+    }
+
+    DynamicWindow& add_progress(const std::string& label, double progress = 0,
+                               const std::string& binding = "", double x = -1, double y = -1, double w = 240, double h = 28) {
+        ProgressItem p;
+        p.label = label;
+        p.progress = progress;
+        p.binding = binding.empty() ? sanitize_id(label) : binding;
+        if (x < 0 || y < 0) {
+            p.x = 24;
+            p.y = 80 + (cards.size() * 50) + (progress_bars.size() * 35);
+        } else {
+            p.x = x; p.y = y;
+        }
+        p.width = w > 0 ? w : 240;
+        p.height = h > 0 ? h : 28;
+        progress_bars.push_back(p);
+        return *this;
+    }
+
     DynamicWindow& add_tone(double freq, double dur_ms) {
         tones.push_back({freq, dur_ms});
         return *this;
@@ -459,7 +636,16 @@ public:
         ss << "define app \"" << app_name << "\" version " << version << ":\n";
         ss << "    create window with title \"" << title << "\" and size (" << width << ", " << height << ")\n";
         ss << "    compile target \"" << target_ui << "\"\n";
-        ss << "    set theme to \"" << theme << "\"\n\n";
+        ss << "    set theme to \"" << theme << "\"\n";
+        if (!background.empty()) {
+            ss << "    set background to \"" << background << "\"\n";
+        }
+        ss << "\n";
+
+        for (const auto& tb : toolbar_items) {
+            ss << "    draw toolbar item \"" << tb.text << "\" action \"" << tb.action << "\" position \"" << tb.position << "\"\n";
+        }
+        if (!toolbar_items.empty()) ss << "\n";
 
         for (const auto& c : cards) {
             ss << "    draw card at (" << c.x << ", " << c.y << ") with size (" << c.width << ", " << c.height 
@@ -468,8 +654,19 @@ public:
         if (!cards.empty()) ss << "\n";
 
         for (const auto& b : buttons) {
-            ss << "    draw button at (" << b.x << ", " << b.y << ") with text \"" << b.text 
-               << "\" and action \"" << b.action << "\"\n";
+            if (!b.snippet.empty()) {
+                ss << "    draw button at (" << b.x << ", " << b.y << ") with text \"" << b.text 
+                   << "\" and action \"" << b.action << "\" with snippet:\n";
+                std::istringstream ssnip(b.snippet);
+                std::string snip_l;
+                while (std::getline(ssnip, snip_l)) {
+                    ss << "        " << snip_l << "\n";
+                }
+                ss << "    end\n";
+            } else {
+                ss << "    draw button at (" << b.x << ", " << b.y << ") with text \"" << b.text 
+                   << "\" and action \"" << b.action << "\"\n";
+            }
         }
         if (!buttons.empty()) ss << "\n";
 
@@ -757,9 +954,11 @@ public:
         }
         h << "      </div>\n";
         h << "      <div class=\"buttons-toolbar\">\n";
-        for (const auto& b : buttons) {
-            h << "        <button class=\"btn\" onclick=\"onButtonClick('" << escape_html(b.text) << "', '" << escape_html(b.action) << "')\">" 
-              << escape_html(b.text) << "</button>\n";
+        for (size_t i = 0; i < buttons.size(); ++i) {
+            const auto& b = buttons[i];
+            std::string label = (!b.snippet.empty() ? "⚡ " : "") + escape_html(b.text);
+            h << "        <button class=\"btn\" onclick=\"onButtonClick(" << i << ")\">" 
+              << label << "</button>\n";
         }
         h << "        <button class=\"code-toggle\" onclick=\"toggleCode()\">⚡ Ver Código .loop</button>\n";
         h << "      </div>\n";
@@ -776,6 +975,15 @@ public:
         h << "    </div>\n";
         h << "  </div>\n";
         h << "  <script>\n";
+        h << "    const buttonConfigs = [\n";
+        for (size_t i = 0; i < buttons.size(); ++i) {
+            const auto& b = buttons[i];
+            h << "      { text: \"" << escape_js(b.text) << "\", action: \"" << escape_js(b.action) 
+              << "\", snippet: \"" << escape_js(b.snippet) << "\" }";
+            if (i + 1 < buttons.size()) h << ",";
+            h << "\n";
+        }
+        h << "    ];\n";
         h << "    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();\n";
         h << "    function playTone(freq, durMs) {\n";
         h << "      try {\n";
@@ -801,9 +1009,19 @@ public:
         h << "      log.appendChild(div);\n";
         h << "      log.scrollTop = log.scrollHeight;\n";
         h << "    }\n";
-        h << "    function onButtonClick(btnText, action) {\n";
+        h << "    function onButtonClick(idx) {\n";
+        h << "      const cfg = buttonConfigs[idx];\n";
+        h << "      if (!cfg) return;\n";
         h << "      playTone(620, 90);\n";
-        h << "      appendLog(\"Botón '\" + btnText + \"' presionado → Acción: \" + action, 'log-action');\n";
+        h << "      appendLog(\"Botón '\" + cfg.text + \"' presionado → Acción: \" + cfg.action, 'log-action');\n";
+        h << "      if (cfg.snippet && cfg.snippet.trim().length > 0) {\n";
+        h << "        const lines = cfg.snippet.split('\\n');\n";
+        h << "        for (const line of lines) {\n";
+        h << "          if (line.trim().length > 0) {\n";
+        h << "            appendLog(\"  ⚡ \" + line, 'log-success');\n";
+        h << "          }\n";
+        h << "        }\n";
+        h << "      }\n";
         h << "    }\n";
         h << "    function toggleCode() {\n";
         h << "      const p = document.getElementById('code-panel');\n";
@@ -956,32 +1174,311 @@ public:
         return true;
     }
 
-    bool show(bool launch_interactive = true) const {
+    std::string emit_native_gui_script() const {
+        UIProfileSpecs specs = resolve_ui_profile(target_ui);
+        std::ostringstream py;
+        py << "#!/usr/bin/env python3\n";
+        py << "# -*- coding: utf-8 -*-\n";
+        py << "# =====================================================================\n";
+        py << "# ⚡ LOOP OS NATIVE DESKTOP WINDOW: " << title << "\n";
+        py << "# Generated by Looping Engine v2.5 (Direct Native OS - No HTML5 Required)\n";
+        py << "# =====================================================================\n\n";
+        py << "import tkinter as tk\n";
+        py << "from tkinter import ttk\n";
+        py << "import subprocess, sys, os, datetime\n\n";
+
+        std::string bg_color = "#0b0f19";
+        std::string card_bg = "#151d30";
+        std::string card_border = "#22314e";
+        std::string btn_bg = "#0284c7";
+        std::string btn_fg = "#ffffff";
+        std::string primary_color = specs.primary_color.empty() ? "#38bdf8" : specs.primary_color;
+
+        if (specs.theme.find("aqua") != std::string::npos) {
+            bg_color = "#04161f";
+            card_bg = "#082736";
+            card_border = "#134e6b";
+            btn_bg = "#00b4d8";
+            primary_color = "#00f5d4";
+        } else if (specs.theme.find("indigo") != std::string::npos || specs.theme.find("fold") != std::string::npos) {
+            bg_color = "#0d091a";
+            card_bg = "#1a1333";
+            card_border = "#352466";
+            btn_bg = "#7c3aed";
+            primary_color = "#c084fc";
+        }
+
+        std::string accent_color = (specs.accent_color.empty() || specs.accent_color == "#082f49") ? "#00f5d4" : specs.accent_color;
+
+        py << "THEME = {\n";
+        py << "    'bg': '" << bg_color << "',\n";
+        py << "    'card_bg': '" << card_bg << "',\n";
+        py << "    'card_border': '" << card_border << "',\n";
+        py << "    'primary': '" << primary_color << "',\n";
+        py << "    'accent': '" << accent_color << "',\n";
+        py << "    'fg': '#f8fafc',\n";
+        py << "    'sub_fg': '#94a3b8',\n";
+        py << "    'btn_bg': '" << btn_bg << "',\n";
+        py << "    'btn_fg': '" << btn_fg << "',\n";
+        py << "    'log_bg': '#070a12',\n";
+        py << "    'log_fg': '#10b981'\n";
+        py << "}\n\n";
+
+        py << "BUTTONS = [\n";
+        for (const auto& b : buttons) {
+            py << "    {'text': \"" << escape_py(b.text) << "\", 'action': \"" << escape_py(b.action) 
+               << "\", 'snippet': \"" << escape_py(b.snippet) << "\"},\n";
+        }
+        py << "]\n\n";
+
+        py << "class LoopNativeWindow(tk.Tk):\n";
+        py << "    def __init__(self):\n";
+        py << "        super().__init__()\n";
+        py << "        self.title(\"" << escape_py(title) << " — Loop OS Native Window\")\n";
+        py << "        self.geometry(f\"" << static_cast<int>(width) << "x" << static_cast<int>(height) << "\")\n";
+        py << "        self.configure(bg=THEME['bg'])\n";
+        py << "        self.minsize(580, 400)\n\n";
+        py << "        self.setup_ui()\n";
+        py << "        self.log(\"[Loop OS Native] Ventana '" << escape_py(title) << "' inicializada (" << specs.name << " " << specs.pipeline << ").\", 'success')\n\n";
+
+        py << "    def setup_ui(self):\n";
+        py << "        self.c_hdr = tk.Canvas(self, height=52, bg=THEME['card_bg'], highlightthickness=0)\n";
+        py << "        self.c_hdr.pack(fill='x', side='top')\n";
+        std::string t_prefix = (title.rfind("✦", 0) == 0) ? "" : "✦ ";
+        py << "        self.c_hdr.create_text(20, 26, text=\"" << t_prefix << escape_py(title) << "\", anchor='w', fill=THEME['primary'], font=('Helvetica', 13, 'bold'))\n";
+        py << "        self.c_hdr.create_rectangle(740, 13, 960, 39, fill=THEME['accent'], outline='', tags='hdr_badge_bg')\n";
+        py << "        self.c_hdr.create_text(850, 26, text=\"" << specs.name << " • " << specs.target_fps << " FPS Direct\", fill='#0b0f19', font=('Helvetica', 9, 'bold'), tags='hdr_badge_txt')\n";
+        py << "        def _on_hdr_resize(e):\n";
+        py << "            w = e.width\n";
+        py << "            self.c_hdr.coords('hdr_badge_bg', w - 210, 13, w - 16, 39)\n";
+        py << "            self.c_hdr.coords('hdr_badge_txt', w - 113, 26)\n";
+        py << "        self.c_hdr.bind('<Configure>', _on_hdr_resize)\n\n";
+
+        py << "        main_frame = tk.Frame(self, bg=THEME['bg'], padx=14, pady=10)\n";
+        py << "        main_frame.pack(fill='both', expand=True)\n\n";
+
+        if (!cards.empty()) {
+            py << "        cards_data = [\n";
+            for (const auto& c : cards) {
+                std::string card_t = (c.icon.empty() ? "✦ " : c.icon + " ") + c.title;
+                py << "            {'title': \"" << escape_py(card_t) << "\", 'badge': \"" << escape_py(c.badge) << "\", 'text': \"" << escape_py(c.text) << "\"},\n";
+            }
+            py << "        ]\n";
+            py << "        self.c_cards = tk.Canvas(main_frame, height=225, bg=THEME['bg'], highlightthickness=0)\n";
+            py << "        self.c_cards.pack(fill='x', pady=(0, 10))\n";
+            py << "        def _redraw_cards(e=None):\n";
+            py << "            self.c_cards.delete('all')\n";
+            py << "            w = self.c_cards.winfo_width()\n";
+            py << "            if w < 100: w = 950\n";
+            py << "            cols = 2 if w >= 600 else 1\n";
+            py << "            gap = 14\n";
+            py << "            cw = (w - gap) // cols if cols == 2 else w\n";
+            py << "            ch = 98\n";
+            py << "            for i, c in enumerate(cards_data):\n";
+            py << "                col = i % cols\n";
+            py << "                row = i // cols\n";
+            py << "                x = col * (cw + gap)\n";
+            py << "                y = row * (ch + 10)\n";
+            py << "                self.c_cards.create_rectangle(x, y, x + cw, y + ch, fill=THEME['card_bg'], outline=THEME['card_border'], width=1)\n";
+            py << "                self.c_cards.create_text(x + 14, y + 20, text=c['title'], anchor='w', fill=THEME['primary'], font=('Helvetica', 11, 'bold'))\n";
+            py << "                if c['badge']:\n";
+            py << "                    bw = len(c['badge']) * 7 + 16\n";
+            py << "                    bx2 = x + cw - 12\n";
+            py << "                    bx1 = bx2 - bw\n";
+            py << "                    self.c_cards.create_rectangle(bx1, y + 10, bx2, y + 30, fill='#22314e', outline='')\n";
+            py << "                    self.c_cards.create_text((bx1 + bx2) // 2, y + 20, text=c['badge'], fill=THEME['accent'], font=('Helvetica', 8, 'bold'))\n";
+            py << "                self.c_cards.create_text(x + 14, y + 60, text=c['text'], anchor='w', fill=THEME['fg'], font=('Helvetica', 9), width=cw - 28)\n";
+            py << "        self.c_cards.bind('<Configure>', _redraw_cards)\n";
+            py << "        self.after(50, _redraw_cards)\n\n";
+        }
+
+        if (!inputs.empty() || !sliders.empty() || !toggles.empty() || !progress_bars.empty()) {
+            py << "        ctrl_frame = tk.Frame(main_frame, bg=THEME['card_bg'], highlightbackground=THEME['card_border'], highlightthickness=1, padx=14, pady=10)\n";
+            py << "        ctrl_frame.pack(fill='x', pady=(0, 10))\n\n";
+
+            for (size_t i = 0; i < inputs.size(); ++i) {
+                const auto& inp = inputs[i];
+                py << "        tk.Label(ctrl_frame, text=\"Input [" << escape_py(inp.binding) << "]:\", font=('Helvetica', 9, 'bold'), fg=THEME['sub_fg'], bg=THEME['card_bg']).pack(anchor='w')\n";
+                py << "        self.inp_" << i << " = tk.Entry(ctrl_frame, bg='#1e293b', fg=THEME['fg'], insertbackground='white', highlightbackground=THEME['card_border'], relief='flat')\n";
+                py << "        self.inp_" << i << ".insert(0, \"" << escape_py(inp.placeholder) << "\")\n";
+                py << "        self.inp_" << i << ".pack(fill='x', pady=(2, 6))\n";
+            }
+
+            for (size_t i = 0; i < sliders.size(); ++i) {
+                const auto& sl = sliders[i];
+                py << "        self.sl_lbl_" << i << " = tk.Label(ctrl_frame, text=\"" << escape_py(sl.label) << ": " << sl.current_val << "\", font=('Helvetica', 9, 'bold'), fg=THEME['sub_fg'], bg=THEME['card_bg'])\n";
+                py << "        self.sl_lbl_" << i << ".pack(anchor='w')\n";
+                py << "        def on_sl_" << i << "(val):\n";
+                py << "            self.sl_lbl_" << i << ".config(text=f\"" << escape_py(sl.label) << ": {float(val):.0f}\")\n";
+                py << "        self.sl_" << i << " = tk.Scale(ctrl_frame, from_=" << sl.min_val << ", to=" << sl.max_val 
+                   << ", orient='horizontal', bg=THEME['card_bg'], fg=THEME['fg'], highlightthickness=0, troughcolor=THEME['log_bg'], activebackground=THEME['primary'], showvalue=0, command=on_sl_" << i << ")\n";
+                py << "        self.sl_" << i << ".set(" << sl.current_val << ")\n";
+                py << "        self.sl_" << i << ".pack(fill='x', pady=(2, 6))\n";
+            }
+
+            for (size_t i = 0; i < toggles.size(); ++i) {
+                const auto& tg = toggles[i];
+                py << "        self.tg_var_" << i << " = tk.BooleanVar(value=" << (tg.is_checked ? "True" : "False") << ")\n";
+                py << "        def on_tg_" << i << "():\n";
+                py << "            st = 'ACTIVADO' if self.tg_var_" << i << ".get() else 'DESACTIVADO'\n";
+                py << "            self.log(f\"Toggle '" << escape_py(tg.label) << "' -> {st}\", 'action')\n";
+                py << "        tk.Checkbutton(ctrl_frame, text=\"" << escape_py(tg.label) << "\", variable=self.tg_var_" << i << ", command=on_tg_" << i 
+                   << ", font=('Helvetica', 9), fg=THEME['fg'], bg=THEME['card_bg'], selectcolor=THEME['log_bg'], activebackground=THEME['card_bg']).pack(anchor='w', pady=2)\n";
+            }
+
+            for (size_t i = 0; i < progress_bars.size(); ++i) {
+                const auto& pr = progress_bars[i];
+                py << "        tk.Label(ctrl_frame, text=\"" << escape_py(pr.label) << " (" << pr.progress << "%)\", font=('Helvetica', 9, 'bold'), fg=THEME['sub_fg'], bg=THEME['card_bg']).pack(anchor='w', pady=(4, 2))\n";
+                py << "        self.c_pr_" << i << " = tk.Canvas(ctrl_frame, height=12, bg=THEME['log_bg'], highlightthickness=1, highlightbackground=THEME['card_border'])\n";
+                py << "        self.c_pr_" << i << ".pack(fill='x', pady=(0, 4))\n";
+                py << "        def _draw_pr_" << i << "(e=None):\n";
+                py << "            self.c_pr_" << i << ".delete('all')\n";
+                py << "            w = self.c_pr_" << i << ".winfo_width()\n";
+                py << "            pct = " << pr.progress << "\n";
+                py << "            self.c_pr_" << i << ".create_rectangle(0, 0, int(w * pct / 100), 12, fill=THEME['accent'], outline='')\n";
+                py << "        self.c_pr_" << i << ".bind('<Configure>', _draw_pr_" << i << ")\n";
+                py << "        self.after(60, _draw_pr_" << i << ")\n";
+            }
+        }
+
+        py << "        # Buttons Toolbar\n";
+        py << "        btn_bar = tk.Frame(main_frame, bg=THEME['bg'])\n";
+        py << "        btn_bar.pack(fill='x', pady=(2, 10))\n\n";
+
+        for (size_t i = 0; i < buttons.size(); ++i) {
+            const auto& b = buttons[i];
+            std::string label = (!b.snippet.empty() ? "⚡ " : "") + b.text;
+            py << "        btn_" << i << " = tk.Button(btn_bar, text=\"" << escape_py(label) 
+               << "\", font=('Helvetica', 9, 'bold'), bg=THEME['btn_bg'], fg=THEME['btn_fg'], relief='flat', padx=8, pady=5, activebackground=THEME['primary'], cursor='hand2', command=lambda idx=" << i << ": self.on_btn_click(idx))\n";
+            py << "        btn_" << i << ".pack(side='left', padx=(0, 8))\n";
+        }
+
+        py << "\n        # Interactive Console Log Drawer\n";
+        py << "        log_frame = tk.Frame(main_frame, bg=THEME['log_bg'], highlightbackground=THEME['card_border'], highlightthickness=1)\n";
+        py << "        log_frame.pack(fill='both', expand=True)\n";
+        py << "        log_scroll = tk.Scrollbar(log_frame)\n";
+        py << "        log_scroll.pack(side='right', fill='y')\n";
+        py << "        self.log_txt = tk.Text(log_frame, bg=THEME['log_bg'], fg=THEME['log_fg'], font=('Courier', 10), yscrollcommand=log_scroll.set, wrap='word', height=7, padx=10, pady=8, relief='flat')\n";
+        py << "        self.log_txt.pack(fill='both', expand=True)\n";
+        py << "        log_scroll.config(command=self.log_txt.yview)\n";
+        py << "        self.log_txt.tag_config('action', foreground='#38bdf8')\n";
+        py << "        self.log_txt.tag_config('success', foreground='#10b981')\n";
+        py << "        self.log_txt.tag_config('snippet', foreground='#facc15')\n\n";
+
+        py << "    def log(self, msg, tag='success'):\n";
+        py << "        now = datetime.datetime.now().strftime('%H:%M:%S')\n";
+        py << "        self.log_txt.insert('end', f'[{now}] {msg}\\n', tag)\n";
+        py << "        self.log_txt.see('end')\n\n";
+
+        py << "    def on_btn_click(self, idx):\n";
+        py << "        cfg = BUTTONS[idx]\n";
+        py << "        try:\n";
+        py << "            self.bell()\n";
+        py << "        except Exception:\n";
+        py << "            pass\n";
+        py << "        self.log(f\"Botón '{cfg['text']}' presionado → Acción: {cfg['action']}\", 'action')\n";
+        py << "        snip = cfg.get('snippet', '').strip()\n";
+        py << "        if snip:\n";
+        py << "            for line in snip.splitlines():\n";
+        py << "                if line.strip():\n";
+        py << "                    self.log(f\"  ⚡ {line}\", 'snippet')\n";
+        py << "            if snip.startswith('#!python') or snip.startswith('import '):\n";
+        py << "                try:\n";
+        py << "                    exec(snip, globals())\n";
+        py << "                except Exception as e:\n";
+        py << "                    self.log(f\"[Python Error] {e}\", 'action')\n";
+        py << "            else:\n";
+        py << "                candidates = ['./bin/looping', './LoopingEngine/cpp/looping', './looping', 'looping']\n";
+        py << "                bin_path = next((c for c in candidates if os.path.exists(c)), 'looping')\n";
+        py << "                try:\n";
+        py << "                    res = subprocess.run([bin_path, 'eval', snip], capture_output=True, text=True, timeout=3)\n";
+        py << "                    if res.stdout.strip():\n";
+        py << "                        for l in res.stdout.strip().splitlines():\n";
+        py << "                            self.log(f\"    {l}\", 'success')\n";
+        py << "                except Exception as e:\n";
+        py << "                    pass\n\n";
+
+        py << "if __name__ == '__main__':\n";
+        py << "    app = LoopNativeWindow()\n";
+        py << "    app.mainloop()\n";
+
+        return py.str();
+    }
+
+    bool save_native_gui(const std::string& path) const {
+        size_t slash = path.find_last_of("/\\");
+        if (slash != std::string::npos) {
+            std::string dir = path.substr(0, slash);
+            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
+            system(mkdir_cmd.c_str());
+        }
+        std::ofstream out(path);
+        if (!out.is_open()) return false;
+        out << emit_native_gui_script();
+        return true;
+    }
+
+    bool show_native(bool launch_interactive = true) const {
+        std::cout << render_ascii() << "\n";
+        system("mkdir -p build");
+
+        std::string py_path = "build/" + app_name + "_native.py";
+        save_native_gui(py_path);
+
+        std::cout << color::GREEN << "✔ [NATIVE OS WINDOW]" << color::RESET << " Native desktop window synthesized successfully:\n";
+        std::cout << "  • Native GUI App: " << color::CYAN << py_path << color::RESET << " (Direct OS / Tkinter Native Engine)\n";
+
+        if (launch_interactive) {
+#ifdef _WIN32
+            std::string open_cmd = "start pythonw \"" + py_path + "\"";
+#else
+            std::string open_cmd = "python3 \"" + py_path + "\" >/dev/null 2>&1 &";
+#endif
+            std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Launching native desktop OS window...\n";
+            system(open_cmd.c_str());
+        }
+        return true;
+    }
+
+    bool show(bool launch_interactive = true, const std::string& mode = "native") const {
         std::cout << render_ascii() << "\n";
         system("mkdir -p build");
 
         std::string loop_path = "build/" + app_name + ".loop";
         std::string html_path = "build/" + app_name + ".html";
+        std::string py_path = "build/" + app_name + "_native.py";
 
         save_loop(loop_path);
         save_html(html_path);
+        save_native_gui(py_path);
 
         std::cout << color::GREEN << "✔ [DYNAMIC WINDOW]" << color::RESET << " Window synthesized successfully:\n";
         std::cout << "  • Source Script: " << color::CYAN << loop_path << color::RESET << "\n";
-        std::cout << "  • Interactive GUI: " << color::CYAN << html_path << color::RESET << "\n";
+        std::cout << "  • Native OS GUI: " << color::CYAN << py_path << color::RESET << " (Pure Desktop OS Window)\n";
+        std::cout << "  • Interactive HTML5: " << color::CYAN << html_path << color::RESET << "\n";
 
         if (launch_interactive) {
+            if (mode == "html" || mode == "web") {
 #ifdef __APPLE__
-            std::cout << color::CYAN << "[LAUNCH GUI]" << color::RESET << " Opening dynamic window in native viewer...\n";
-            std::string open_cmd = "open \"" + html_path + "\"";
-            system(open_cmd.c_str());
+                std::cout << color::CYAN << "[LAUNCH GUI]" << color::RESET << " Opening dynamic window in web viewer...\n";
+                std::string open_cmd = "open \"" + html_path + "\"";
+                system(open_cmd.c_str());
 #elif defined(_WIN32)
-            std::string open_cmd = "start \"\" \"" + html_path + "\"";
-            system(open_cmd.c_str());
+                std::string open_cmd = "start \"\" \"" + html_path + "\"";
+                system(open_cmd.c_str());
 #else
-            std::string open_cmd = "xdg-open \"" + html_path + "\" 2>/dev/null &";
-            system(open_cmd.c_str());
+                std::string open_cmd = "xdg-open \"" + html_path + "\" 2>/dev/null &";
+                system(open_cmd.c_str());
 #endif
+            } else {
+#ifdef _WIN32
+                std::string open_cmd = "start pythonw \"" + py_path + "\"";
+#else
+                std::string open_cmd = "python3 \"" + py_path + "\" >/dev/null 2>&1 &";
+#endif
+                std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Opening native desktop OS window...\n";
+                system(open_cmd.c_str());
+            }
         }
         return true;
     }
@@ -1037,6 +1534,33 @@ private:
             else if (c == '>') out += "&gt;";
             else if (c == '&') out += "&amp;";
             else if (c == '"') out += "&quot;";
+            else out += c;
+        }
+        return out;
+    }
+
+    static std::string escape_js(const std::string& in) {
+        std::string out;
+        for (char c : in) {
+            if (c == '\\') out += "\\\\";
+            else if (c == '"') out += "\\\"";
+            else if (c == '\'') out += "\\'";
+            else if (c == '\n') out += "\\n";
+            else if (c == '\r') out += "\\r";
+            else if (c == '\t') out += "\\t";
+            else out += c;
+        }
+        return out;
+    }
+
+    static std::string escape_py(const std::string& in) {
+        std::string out;
+        for (char c : in) {
+            if (c == '\\') out += "\\\\";
+            else if (c == '"') out += "\\\"";
+            else if (c == '\n') out += "\\n";
+            else if (c == '\r') out += "\\r";
+            else if (c == '\t') out += "\\t";
             else out += c;
         }
         return out;
@@ -1107,6 +1631,73 @@ public:
         // Make executable
         std::string chmod_cmd = "chmod +x \"" + out_file + "\"";
         system(chmod_cmd.c_str());
+
+        // Packaging for Component 2 (.c2) bundles
+        if (specs.code == "c2" || (out_file.size() >= 3 && out_file.substr(out_file.size() - 3) == ".c2")) {
+            std::string c2_file = out_file;
+            if (c2_file.size() < 3 || c2_file.substr(c2_file.size() - 3) != ".c2") {
+                c2_file += ".c2";
+            }
+            char cwd_buf[2048];
+            std::string abs_c2_file = c2_file;
+            std::string abs_out_file = out_file;
+            if (getcwd(cwd_buf, sizeof(cwd_buf)) != nullptr) {
+                if (abs_c2_file.empty() || abs_c2_file[0] != '/') {
+                    abs_c2_file = std::string(cwd_buf) + "/" + abs_c2_file;
+                }
+                if (abs_out_file.empty() || abs_out_file[0] != '/') {
+                    abs_out_file = std::string(cwd_buf) + "/" + abs_out_file;
+                }
+            }
+            std::string tmp_dir = "/tmp/c2_build_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+            system(("mkdir -p \"" + tmp_dir + "\"").c_str());
+
+            // 1. Manifest
+            std::ofstream mf(tmp_dir + "/manifest.json");
+            mf << "{\n"
+               << "  \"c2_version\": \"2.0\",\n"
+               << "  \"component_id\": \"com.cokistudios.c2." << specs.code << "\",\n"
+               << "  \"name\": \"" << specs.name << "\",\n"
+               << "  \"target_device\": \"shine_all\",\n"
+               << "  \"target_fps\": " << specs.target_fps << ",\n"
+               << "  \"theme\": \"" << specs.theme << "\",\n"
+               << "  \"primary_color\": \"" << specs.primary_color << "\",\n"
+               << "  \"entrypoint\": \"source.loop\"\n"
+               << "}\n";
+            mf.close();
+
+            // 2. Tokens
+            std::ofstream tk(tmp_dir + "/tokens.json");
+            tk << "{\n"
+               << "  \"primary\": \"" << specs.primary_color << "\",\n"
+               << "  \"accent\": \"" << specs.accent_color << "\",\n"
+               << "  \"fps\": " << specs.target_fps << ",\n"
+               << "  \"layout_mode\": \"" << specs.layout_mode << "\"\n"
+               << "}\n";
+            tk.close();
+
+            // 3. Layout
+            std::ofstream ly(tmp_dir + "/layout.json");
+            ly << "{\n"
+               << "  \"version\": \"2.0\",\n"
+               << "  \"type\": \"modular_surface\",\n"
+               << "  \"title\": \"" << specs.name << "\",\n"
+               << "  \"components\": [\"dock\", \"widgets\", \"cards\"]\n"
+               << "}\n";
+            ly.close();
+
+            // 4. Source
+            system(("cp \"" + abs_out_file + "\" \"" + tmp_dir + "/source.loop\"").c_str());
+
+            // 5. Signature
+            std::string sig_cmd = "(cd \"" + tmp_dir + "\" && shasum -a 256 manifest.json tokens.json layout.json source.loop > signature.sha256)";
+            system(sig_cmd.c_str());
+
+            // 6. Zip into .c2 (Remove pre-existing file so zip creates a clean new archive)
+            std::string zip_cmd = "rm -f \"" + abs_c2_file + "\" && (cd \"" + tmp_dir + "\" && zip -q -r \"" + abs_c2_file + "\" .) && rm -rf \"" + tmp_dir + "\"";
+            system(zip_cmd.c_str());
+            std::cout << "\033[36m📦 [C2 PACKAGER]\033[0m Assembled Android Component 2 package: \033[1m" << abs_c2_file << "\033[0m\n";
+        }
 
         if (out_created_path) {
             *out_created_path = out_file;

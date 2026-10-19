@@ -86,7 +86,7 @@ function copyFilteredDir(srcDir, destDir, relDir = '') {
   }
 }
 
-const webDirs = ['assets', 'apt', 'debian'];
+const webDirs = ['assets', 'apt', 'debian', 'engine'];
 for (const dir of webDirs) {
   const src = path.join(rootDir, dir);
   const dest = path.join(publicDir, dir);
