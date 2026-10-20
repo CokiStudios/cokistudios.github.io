@@ -170,7 +170,25 @@
                 filterBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const tag = btn.dataset.tag;
-                if (window.filterPostsByTag) window.filterPostsByTag(tag);
+                if (window.filterPostsByTag) {
+                    window.filterPostsByTag(tag);
+                } else {
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput) {
+                        if (tag === 'all') {
+                            searchInput.value = '';
+                        } else if (tag === 'eco') {
+                            searchInput.value = 'eco';
+                        } else if (tag === 'games') {
+                            searchInput.value = 'juego';
+                        } else if (tag === 'help') {
+                            searchInput.value = 'ayuda';
+                        } else if (tag === 'bici') {
+                            searchInput.value = 'bici';
+                        }
+                        searchInput.dispatchEvent(new Event('input'));
+                    }
+                }
             });
         });
     }

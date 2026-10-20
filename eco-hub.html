@@ -663,6 +663,39 @@
         </div>
     </section>
 
+    <!-- ── RETOS FORKMAN & SONDEOS DE LA COMUNIDAD ── -->
+    <section class="section-container" style="margin-bottom: 50px;">
+        <div class="section-header">
+            <h2 class="section-title">Retos Ecológicos & Sondeos de la Comunidad</h2>
+            <p class="section-desc">Gana Puntos Eco cumpliendo metas semanales en la Sabana y participa en la votación de nuevas estaciones:</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; align-items: start;">
+            <!-- RETOS SEMANALES -->
+            <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border); border-radius: 20px; padding: 22px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:20px;">🌱</span>
+                        <span style="font-size:14px; font-weight:800; color:#10b981; text-transform:uppercase; letter-spacing:0.5px;">Retos Forkman Semanales</span>
+                    </div>
+                    <span style="font-size:12px; color:var(--text-sub);">Cota • Chía • Bogotá</span>
+                </div>
+                <div id="forkar-quests-list"></div>
+            </div>
+
+            <!-- SONDEO COMUNITARIO -->
+            <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border); border-radius: 20px; padding: 22px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:20px;">🗳️</span>
+                        <span style="font-size:14px; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px;">Participación & Sondeos</span>
+                    </div>
+                    <span style="font-size:12px; color:var(--text-sub);">Voz Ciudadana</span>
+                </div>
+                <div id="forkar-poll-box" class="cs-poll-box" style="margin-bottom:0; background:transparent; border:none; padding:0;"></div>
+            </div>
+        </div>
+    </section>
+
     <!-- ── REWARDS STORE ── -->
     <section class="section-container">
         <div class="section-header">
@@ -1161,5 +1194,6 @@
     <script src="assets/js/coki-ai-widget.js" defer></script>
     <script src="assets/js/mobile-drawer.js" defer></script>
     <script src="assets/js/shine-sound-lab.js" defer></script>
+    <script src="assets/js/forkar-community-enhancements.js" defer></script>
 </body>
 </html>
