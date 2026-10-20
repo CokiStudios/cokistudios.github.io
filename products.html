@@ -6,11 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos — Coki Studios</title>
     <meta name="description"
-        content="Descubre los productos de Coki Studios: Horizon Maps, Forkar, CSMS, Shine Find Browser y CSID.">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        content="Descubre los productos de Coki Studios: Looping Engine, Forkar Eco Hub, CSMS Messenger, Shine Handheld, Felte Store y CSID.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/cs-icon-192.png">
+    <link rel="apple-touch-icon" href="assets/cs-icon-192.png">
+
+    <!-- OpenGraph & Twitter Cards -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Productos — Coki Studios">
+    <meta property="og:description" content="Ecosistema unificado de Coki Studios: Looping Engine, CSMS E2EE, Forkar Eco Hub, Shine Handheld y Felte Store.">
+    <meta property="og:image" content="https://cokistudios.github.io/assets/cs-logo.png">
+    <meta property="og:url" content="https://cokistudios.github.io/products">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
         rel="stylesheet">
     <script src="coki-theme.js"></script>
     <link rel="stylesheet" href="assets/css/toolbar.css">
+    <link rel="stylesheet" href="assets/css/web-enhancements.css">
     <style>
         *,
         *::before,
@@ -482,15 +495,25 @@
                 <a href="forkar" class="nav-link" data-i18n="nav_forkar">Forkar</a>
                 <a href="messenger" class="nav-link" data-i18n="nav_csms">CSMS</a>
                 <a href="developer" class="nav-link" data-i18n="nav_developers">Developers</a>
+                <button class="spotlight-trigger-btn" id="cmdPaletteTrigger" aria-label="Buscar"><kbd>⌘K</kbd> Buscar</button>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es"> ES</option>
-                    <option value="en"> EN</option>
-                    <option value="fr"> FR</option>
-                    <option value="pt"> PT</option>
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="pt">🇧🇷 PT</option>
                 </select>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
             </div>
-            <a href="register" class="nav-cta">CSID</a>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <a href="register" class="nav-cta">CSID</a>
+                <button class="mobile-hamburger-btn" id="mobileMenuBtn" aria-label="Abrir Menú">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -708,6 +731,10 @@
         </div>
     </footer>
 
+    <script src="assets/js/command-palette.js" defer></script>
+    <script src="assets/js/coki-ai-widget.js" defer></script>
+    <script src="assets/js/mobile-drawer.js" defer></script>
+    <script src="assets/js/shine-sound-lab.js" defer></script>
     <script type="module" src="i18n.js"></script>
 </body>
 

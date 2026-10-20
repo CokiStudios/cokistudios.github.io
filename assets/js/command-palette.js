@@ -82,6 +82,39 @@
             }
         },
         {
+            title: "Simulador Consola Shine Handheld & Phone Duo",
+            category: "Hardware",
+            desc: "Probar el chasis 3D, controles táctiles y minijuego espacial Holo",
+            action: () => { window.location.hash = '#shine-hardware-simulator'; }
+        },
+        {
+            title: "Radar Forkar Eco Hub (Cota • Chía • Bogotá)",
+            category: "Eco Hub",
+            desc: "Calculadora de CO₂, validación en estaciones y árboles Majuy",
+            action: () => { window.location.hash = '#eco-radar-section'; }
+        },
+        {
+            title: "CSMS Web Messenger (Chat en Vivo)",
+            category: "Mensajería",
+            desc: "Simulador de chat E2EE con canales temáticos y notas de voz",
+            action: () => { window.location.hash = '#csms-web-simulator-section'; }
+        },
+        {
+            title: "Centro de Passkeys & Seguridad Biométrica CSID",
+            category: "Seguridad",
+            desc: "Probar Touch ID / Face ID con firma criptográfica P-256",
+            action: () => {
+                window.location.hash = '#csid-passkeys-list';
+                if (window.simulateBiometricAuth) window.simulateBiometricAuth();
+            }
+        },
+        {
+            title: "Bolsa de Compras Felte Store",
+            category: "Tienda",
+            desc: "Ver carrito, seleccionar moneda (COP/USD/EUR) y canjear Puntos Eco",
+            action: () => { window.location.hash = '#felte-store-section'; }
+        },
+        {
             title: "Abrir Asistente Coki AI",
             category: "IA",
             desc: "Preguntar sobre Looping, smiledev, CSMS o Eco Hub",

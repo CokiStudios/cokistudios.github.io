@@ -670,3 +670,211 @@ html.light-theme .coki-ai-input {
     from { opacity: 0; transform: scale(0.96) translateY(8px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* ── 10. FORKAR ECO HUB RADAR & IMPACT CALCULATOR ── */
+.cs-station-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+.cs-station-card:hover {
+    border-color: #10b981;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+}
+.cs-station-validate-btn {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #a7f3d0;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cs-station-validate-btn:hover {
+    background: #10b981;
+    color: #030712;
+}
+
+/* ── 11. SHINE HARDWARE SIMULATOR (HANDHELD & PHONE DUO) ── */
+.cs-shine-chassis {
+    background: linear-gradient(145deg, #181d28, #0e121a);
+    border: 2px solid rgba(56, 189, 248, 0.35);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cs-shine-chassis.mode-phone-duo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    border-radius: 20px;
+    border-color: rgba(192, 132, 252, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(192, 132, 252, 0.25);
+}
+.cs-shine-screen-wrap {
+    background: #000;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+}
+.cs-dpad-grid {
+    display: grid;
+    grid-template-columns: 32px 32px 32px;
+    grid-template-rows: 32px 32px 32px;
+    gap: 2px;
+}
+.cs-dpad-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s, transform 0.1s;
+}
+.cs-dpad-btn:active, .cs-dpad-btn.pressed {
+    background: #00f5d4;
+    color: #000;
+    transform: scale(0.92);
+}
+.cs-action-btn-cluster {
+    display: grid;
+    grid-template-columns: 34px 34px;
+    gap: 10px;
+    transform: rotate(15deg);
+}
+.cs-act-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s;
+}
+.cs-act-btn.btn-a { border-color: #00f5d4; color: #00f5d4; }
+.cs-act-btn.btn-b { border-color: #ef4444; color: #ef4444; }
+.cs-act-btn.btn-x { border-color: #38bdf8; color: #38bdf8; }
+.cs-act-btn.btn-y { border-color: #f59e0b; color: #f59e0b; }
+.cs-act-btn:active, .cs-act-btn.pressed {
+    transform: scale(0.9);
+    filter: brightness(1.4);
+}
+
+/* ── 12. FELTE STORE SHOWCASE & CART DRAWER ── */
+.cs-felte-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.25s ease;
+}
+.cs-felte-card:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.cs-felte-add-btn {
+    background: linear-gradient(135deg, #06b6d4, #6366f1);
+    border: none;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cs-felte-add-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+.felte-curr-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-sub);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.felte-curr-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+/* ── 13. CSMS WEB CLIENT SIMULATOR ── */
+.csms-sim-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-sub);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.csms-sim-tab.active {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #fff;
+}
+.csms-sim-bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+}
+.csms-sim-bubble.them {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.07);
+    border-bottom-left-radius: 4px;
+}
+.csms-sim-bubble.me {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.cs-spin {
+    animation: csSpin 1s linear infinite;
+}
+@keyframes csSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
