@@ -8,12 +8,14 @@
     <script src="coki-theme.js"></script>
     <meta name="description"
         content="Forkar es la comunidad de Coki Studios. Comparte ideas, haz preguntas y conecta con otros builders y desarrolladores.">
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="assets/forkar-icon.svg">
     <link rel="alternate icon" type="image/jpeg" href="assets/forkar-icon.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="assets/css/xtraps.css">
     <link rel="stylesheet" href="assets/css/toolbar.css">
+    <link rel="stylesheet" href="assets/css/web-enhancements.css">
     <style>
         *,
         *::before,
@@ -766,11 +768,12 @@
                     style="margin-right:12px; text-decoration:none; font-size:14px; font-weight:600; color:var(--text-sub); transition:color 0.2s;"
                     onmouseover="this.style.color='var(--text)'"
                     onmouseout="this.style.color='var(--text-sub)'">CSMS</a>
+                <button class="spotlight-trigger-btn" id="cmdPaletteTrigger" aria-label="Buscar"><kbd>⌘K</kbd> Buscar</button>
                 <select id="lang-switcher" class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es"> ES</option>
-                    <option value="en"> EN</option>
-                    <option value="fr"> FR</option>
-                    <option value="pt"> PT</option>
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="pt">🇧🇷 PT</option>
                 </select>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <a href="dashboard" id="nav-profile">
@@ -778,6 +781,13 @@
                     <span id="nav-name">Mi cuenta</span>
                 </a>
                 <a href="register" id="nav-login">Iniciar sesión</a>
+                <button class="mobile-hamburger-btn" id="mobileMenuBtn" aria-label="Abrir Menú">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
@@ -844,6 +854,34 @@
                         <span class="label">Miembros</span><span class="value" id="stat-members">—</span>
                     </div>
                 </div>
+
+                <!-- ── FORKMAN ECO GUIDE ── -->
+                <div class="sidebar-card" style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 18px; padding: 18px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <span style="font-size:22px;">🤖</span>
+                        <div>
+                            <div style="font-weight:700; font-size:13.5px; color:var(--text);">Forkman Eco Guide</div>
+                            <span style="font-size:11px; color:#38bdf8; font-weight:700;">Asistente de la Sabana</span>
+                        </div>
+                    </div>
+                    <p style="font-size:12px; color:var(--text-sub); line-height:1.45; margin-bottom:12px;">
+                        ¿Dudas sobre reciclaje, rutas de bici o Puntos Eco en Cota y Chía? Pregúntale a Forkman:
+                    </p>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <button onclick="window.askForkman('cota_raee')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); text-align:left; padding:6px 10px; border-radius:8px; font-size:11.5px; cursor:pointer;">
+                            🔋 ¿Dónde reciclar baterías en Cota?
+                        </button>
+                        <button onclick="window.askForkman('chia_centro')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); text-align:left; padding:6px 10px; border-radius:8px; font-size:11.5px; cursor:pointer;">
+                            📦 Punto de acopio en Chía Centro
+                        </button>
+                        <button onclick="window.askForkman('bici_cota')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); text-align:left; padding:6px 10px; border-radius:8px; font-size:11.5px; cursor:pointer;">
+                            🚲 Mejor ruta ciclista Bogotá - Cota
+                        </button>
+                        <button onclick="window.askForkman('recompensas')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); text-align:left; padding:6px 10px; border-radius:8px; font-size:11.5px; cursor:pointer;">
+                            🎁 ¿Cómo canjear mis Puntos Eco?
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- ── FEED ── -->
@@ -861,6 +899,27 @@
                     <span class="label">Filtrado por:</span>
                     <span class="filter-chip" id="filter-name">General</span>
                     <button class="filter-clear" onclick="clearFilter()"></button>
+                </div>
+
+                <!-- ── FORKAR COMMUNITY FILTERS ── -->
+                <div class="forkar-filters-bar">
+                    <button class="forkar-filter-pill active" data-tag="all">🔥 Todo</button>
+                    <button class="forkar-filter-pill" data-tag="eco">🌱 Retos Eco</button>
+                    <button class="forkar-filter-pill" data-tag="games">🎮 Videojuegos & Holo</button>
+                    <button class="forkar-filter-pill" data-tag="help">💡 Dudas & Ayuda</button>
+                    <button class="forkar-filter-pill" data-tag="bici">🚲 Rutas Sabana</button>
+                </div>
+
+                <!-- ── COMMUNITY PULSE POLL ── -->
+                <div id="forkar-poll-box" class="cs-poll-box"></div>
+
+                <!-- ── WEEKLY ECO QUESTS (RETOS FORKMAN) ── -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-size:13px; font-weight:800; color:#10b981; text-transform:uppercase; letter-spacing:0.5px;">Retos Ecológicos de la Semana</span>
+                        <a href="eco-hub" style="font-size:12px; color:var(--text-sub); text-decoration:none;">Ver Eco Hub →</a>
+                    </div>
+                    <div id="forkar-quests-list"></div>
                 </div>
 
                 <div id="posts-list">
@@ -1573,6 +1632,11 @@
         initI18n();
     </script>
     <script src="assets/js/xtraps.js" defer></script>
+    <script src="assets/js/command-palette.js" defer></script>
+    <script src="assets/js/coki-ai-widget.js" defer></script>
+    <script src="assets/js/mobile-drawer.js" defer></script>
+    <script src="assets/js/shine-sound-lab.js" defer></script>
+    <script src="assets/js/forkar-community-enhancements.js" defer></script>
 </body>
 
 </html>

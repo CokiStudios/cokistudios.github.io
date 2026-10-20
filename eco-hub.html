@@ -6,9 +6,12 @@
     <title>Forkar Eco Hub Program — Coki Studios & Sostenibilidad</title>
     <script src="coki-theme.js"></script>
     <meta name="description" content="Forkar Eco Hub Program: Ahorra CO2 en cada viaje, acumula Puntos Eco, canjea recompensas sustentables y valida estaciones con QR o NFC.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="assets/forkar-icon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/xtraps.css">
+    <link rel="stylesheet" href="assets/css/web-enhancements.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -520,14 +523,22 @@
                 <a href="messenger" class="nav-link" data-i18n="nav_csms">CSMS</a>
                 <a href="dashboard" class="nav-link" data-i18n="nav_account">Mi Cuenta</a>
                 
+                <button class="spotlight-trigger-btn" id="cmdPaletteTrigger" aria-label="Buscar"><kbd>⌘K</kbd> Buscar</button>
                 <select id="lang-switcher" class="lang-select" aria-label="Idioma">
-                    <option value="es"> ES</option>
-                    <option value="en"> EN</option>
-                    <option value="fr"> FR</option>
-                    <option value="pt"> PT</option>
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="pt">🇧🇷 PT</option>
                 </select>
 
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+                <button class="mobile-hamburger-btn" id="mobileMenuBtn" aria-label="Abrir Menú">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
@@ -1146,5 +1157,9 @@
         // Initialize metrics view
         updateAllMetrics();
     </script>
+    <script src="assets/js/command-palette.js" defer></script>
+    <script src="assets/js/coki-ai-widget.js" defer></script>
+    <script src="assets/js/mobile-drawer.js" defer></script>
+    <script src="assets/js/shine-sound-lab.js" defer></script>
 </body>
 </html>
