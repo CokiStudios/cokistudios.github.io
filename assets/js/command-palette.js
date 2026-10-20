@@ -7,10 +7,22 @@
 (function () {
     const COMMANDS = [
         {
-            title: "Looping Engine v2.6.0",
+            title: "Looping Engine v2.7.0 Quantum Signature",
             category: "Motor",
-            desc: "Novedades, sintaxis, terminal REPL y compilador C++",
+            desc: "Regex, HMAC-SHA256, Data Science Math, AST Inspector y REPL C++17",
             action: () => { window.location.hash = '#engine-section'; }
+        },
+        {
+            title: "hiOP Studio Web IDE (Looping v2.7)",
+            category: "IDE",
+            desc: "Editor interactivo .loop con vista previa 60FPS, AST y formateador",
+            action: () => { window.location.href = 'hiop-ide'; }
+        },
+        {
+            title: "Forkar Eco Hub — Retos, Sondeos & Certificado CO₂",
+            category: "Eco Hub",
+            desc: "Misiones semanales, sondeos ciudadanos, ranking Sabana y certificado PNG",
+            action: () => { window.location.href = 'eco-hub'; }
         },
         {
             title: "Instalar vía Homebrew (brew install looping smiledev)",

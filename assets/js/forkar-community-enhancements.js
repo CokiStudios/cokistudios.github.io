@@ -51,10 +51,22 @@
 
     let userVotedPoll = localStorage.getItem('forkar_poll_vote');
 
+    // ── 3. SABANA REGIONAL LEADERBOARD STATE ──
+    const DEFAULT_MUNICIPALITIES = [
+        { id: 'cota', name: 'Cota (Centro & Veredas)', co2: 418.5, citizens: 142, streak: '🔥 14 días' },
+        { id: 'chia', name: 'Chía (Av. Pradilla & Sindamanoy)', co2: 386.0, citizens: 128, streak: '🔥 11 días' },
+        { id: 'bogota', name: 'Bogotá Norte (Suba & Calle 80)', co2: 342.5, citizens: 115, streak: '🌱 9 días' },
+        { id: 'cajica', name: 'Cajicá & Variante Tabio', co2: 215.0, citizens: 74, streak: '🌱 7 días' }
+    ];
+
     window.initForkarEnhancements = function () {
         renderEcoQuests();
         renderCommunityPoll();
+        renderMunicipalityLeaderboard();
         setupQuickFilters();
+        if (document.getElementById('eco-cert-canvas')) {
+            window.renderEcoCertificateCanvas();
+        }
     };
 
     function renderEcoQuests() {
@@ -205,6 +217,171 @@
         const answer = FORKMAN_KNOWLEDGE[topic] || "Forkman: Recuerda que cada pedalazo y residuo separado cuenta para la sostenibilidad de la Sabana.";
         if (window.triggerSoundEffect) window.triggerSoundEffect('powerup');
         alert(`🤖 Forkman responde:\n\n${answer}`);
+    };
+
+    // ── SABANA REGIONAL LEADERBOARD ──
+    function getMunicipalities() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('forkar_sabana_leaderboard') || 'null');
+            if (Array.isArray(saved) && saved.length) return saved;
+        } catch (e) {}
+        return DEFAULT_MUNICIPALITIES;
+    }
+
+    function renderMunicipalityLeaderboard() {
+        const box = document.getElementById('eco-municipality-leaderboard');
+        if (!box) return;
+
+        const munis = getMunicipalities().sort((a, b) => b.co2 - a.co2);
+        const maxCo2 = Math.max(...munis.map(m => m.co2), 100);
+
+        box.innerHTML = munis.map((m, idx) => {
+            const pct = Math.min(100, Math.round((m.co2 / maxCo2) * 100));
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🌿'));
+            return `
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 14px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:16px;">${medal}</span>
+                            <div>
+                                <div style="font-size:13px; font-weight:700; color:var(--text);">${m.name}</div>
+                                <div style="font-size:11px; color:var(--text-sub);">${m.citizens} eco-ciudadanos • ${m.streak}</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:13px; font-weight:800; color:#10b981; font-family:'JetBrains Mono',monospace;">${m.co2.toFixed(1)} kg CO₂</div>
+                            <button class="cs-quest-btn" style="margin-top:4px; padding:2px 8px; font-size:10px;" onclick="window.pledgeMunicipalityEco('${m.id}')">+ Sumar mi Ruta</button>
+                        </div>
+                    </div>
+                    <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
+                        <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #10b981, #38bdf8);"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.pledgeMunicipalityEco = function (muniId) {
+        const munis = getMunicipalities();
+        const item = munis.find(m => m.id === muniId);
+        if (!item) return;
+
+        item.co2 = Number((item.co2 + 2.5).toFixed(1));
+        item.citizens += 1;
+        localStorage.setItem('forkar_sabana_leaderboard', JSON.stringify(munis));
+
+        if (window.triggerSoundEffect) window.triggerSoundEffect('coin');
+        renderMunicipalityLeaderboard();
+        if (window.renderEcoCertificateCanvas) window.renderEcoCertificateCanvas();
+    };
+
+    // ── OFFICIAL CARBON CERTIFICATE GENERATOR (CANVAS) ──
+    window.renderEcoCertificateCanvas = function () {
+        const canvas = document.getElementById('eco-cert-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const nameInput = document.getElementById('eco-cert-name-input');
+        const holderName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Ciudadano Eco Sabana';
+
+        const co2Text = document.getElementById('metric-co2')?.textContent || '24.5 kg';
+        const ptsText = document.getElementById('metric-points')?.textContent || '120 pts';
+        const treesText = document.getElementById('metric-trees')?.textContent || '3';
+
+        // Background gradient
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#041310');
+        grad.addColorStop(0.5, '#07221c');
+        grad.addColorStop(1, '#061527');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Outer & Inner Ornamental Borders
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(26, 26, canvas.width - 52, canvas.height - 52);
+
+        // Header Badge
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 13px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('COKI STUDIOS • FORKAR ECO HUB PROGRAM • RED REGIONAL SABANA', canvas.width / 2, 62);
+
+        // Main Title
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 26px "Plus Jakarta Sans", system-ui, sans-serif';
+        ctx.fillText('CERTIFICADO DE IMPACTO AMBIENTAL', canvas.width / 2, 102);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '14px "Plus Jakarta Sans", system-ui, sans-serif';
+        ctx.fillText('Otorgado oficialmente por movilidad sostenible y reducción verificada de huella a:', canvas.width / 2, 134);
+
+        // Recipient Name
+        ctx.fillStyle = '#34d399';
+        ctx.font = 'bold 30px "Plus Jakarta Sans", system-ui, sans-serif';
+        ctx.fillText(holderName.toUpperCase(), canvas.width / 2, 178);
+
+        // Divider Line
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(160, 195);
+        ctx.lineTo(canvas.width - 160, 195);
+        ctx.stroke();
+
+        // Metrics Boxes
+        const boxes = [
+            { label: 'CO₂ AHORRADO', val: co2Text, color: '#10b981' },
+            { label: 'PUNTOS ECO', val: ptsText, color: '#fbbf24' },
+            { label: 'ÁRBOLES EQUIV.', val: `${treesText} Árboles`, color: '#38bdf8' }
+        ];
+        const boxW = 180, boxH = 68, gap = 24;
+        const startX = (canvas.width - (boxW * 3 + gap * 2)) / 2;
+
+        boxes.forEach((b, i) => {
+            const bx = startX + i * (boxW + gap);
+            const by = 216;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+            ctx.fillRect(bx, by, boxW, boxH);
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.strokeRect(bx, by, boxW, boxH);
+
+            ctx.fillStyle = b.color;
+            ctx.font = 'bold 20px "JetBrains Mono", monospace';
+            ctx.fillText(b.val, bx + boxW / 2, by + 34);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(b.label, bx + boxW / 2, by + 54);
+        });
+
+        // Footer Signature & Verification Hash
+        const hashSuffix = Math.abs(holderName.split('').reduce((a, c) => ((a << 5) - a) + c.charCodeAt(0), 0)).toString(16).toUpperCase().padStart(8, '0');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px "JetBrains Mono", monospace';
+        ctx.fillText(`HASH: FORKAR-SABANA-${hashSuffix}  •  FECHA: ${dateStr}  •  COTA / CHÍA / BOGOTÁ`, canvas.width / 2, 322);
+    };
+
+    window.downloadEcoCertificate = function () {
+        window.renderEcoCertificateCanvas();
+        const canvas = document.getElementById('eco-cert-canvas');
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = 'Certificado-Forkar-EcoHub-2026.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        if (window.triggerSoundEffect) window.triggerSoundEffect('powerup');
+    };
+
+    window.filterByTrend = function (term) {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.value = term;
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     };
 
     document.addEventListener('DOMContentLoaded', window.initForkarEnhancements);

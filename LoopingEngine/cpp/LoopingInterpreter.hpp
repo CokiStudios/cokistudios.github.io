@@ -296,6 +296,87 @@ struct CryptoUtils {
         }
         return res;
     }
+
+    static std::string hex_to_bytes(const std::string& hex) {
+        std::string bytes;
+        bytes.reserve(hex.size() / 2);
+        for (size_t i = 0; i + 1 < hex.size(); i += 2) {
+            unsigned int byte = 0;
+            std::stringstream ss;
+            ss << std::hex << hex.substr(i, 2);
+            ss >> byte;
+            bytes.push_back(static_cast<char>(byte));
+        }
+        return bytes;
+    }
+
+    static std::string hmac_sha256(std::string key, const std::string& message) {
+        const size_t block_size = 64;
+        if (key.size() > block_size) {
+            key = hex_to_bytes(sha256_hex(key));
+        }
+        if (key.size() < block_size) {
+            key.append(block_size - key.size(), '\0');
+        }
+        std::string o_key_pad(block_size, '\0');
+        std::string i_key_pad(block_size, '\0');
+        for (size_t i = 0; i < block_size; ++i) {
+            o_key_pad[i] = static_cast<char>(static_cast<unsigned char>(key[i]) ^ 0x5c);
+            i_key_pad[i] = static_cast<char>(static_cast<unsigned char>(key[i]) ^ 0x36);
+        }
+        std::string inner_hex = sha256_hex(i_key_pad + message);
+        return sha256_hex(o_key_pad + hex_to_bytes(inner_hex));
+    }
+
+    static std::string random_hex(size_t num_bytes) {
+        static const char* hex = "0123456789abcdef";
+        auto now_ns = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        static uint64_t seed = 0x9e3779b97f4a7c15ULL;
+        seed ^= static_cast<uint64_t>(now_ns);
+        std::string out;
+        out.reserve(num_bytes * 2);
+        for (size_t i = 0; i < num_bytes * 2; ++i) {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            out.push_back(hex[seed & 0xF]);
+        }
+        return out;
+    }
+
+    static std::string url_encode(const std::string& value) {
+        std::ostringstream escaped;
+        escaped.fill('0');
+        escaped << std::hex << std::uppercase;
+        for (unsigned char c : value) {
+            if (std::isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+                escaped << c;
+            } else {
+                escaped << '%' << std::setw(2) << int(c);
+            }
+        }
+        return escaped.str();
+    }
+
+    static std::string url_decode(const std::string& value) {
+        std::string out;
+        for (size_t i = 0; i < value.size(); ++i) {
+            if (value[i] == '%' && i + 2 < value.size()) {
+                unsigned int code = 0;
+                std::istringstream iss(value.substr(i + 1, 2));
+                if (iss >> std::hex >> code) {
+                    out.push_back(static_cast<char>(code));
+                    i += 2;
+                    continue;
+                }
+            } else if (value[i] == '+') {
+                out.push_back(' ');
+                continue;
+            }
+            out.push_back(value[i]);
+        }
+        return out;
+    }
 };
 
 class Interpreter {
@@ -307,7 +388,7 @@ public:
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
-    std::string app_version = "2.6.0";
+    std::string app_version = "2.7.0";
     std::string target_platform = "Shine Loop Console (Holo Looping OoS)";
     std::string ui_profile = "xui";
     std::string theme = "frosted_aqua_a17";
@@ -443,6 +524,12 @@ public:
 #else
                 return Value("unknown");
 #endif
+            }
+            if (n == "sys.cpus") {
+                return Value(static_cast<int64_t>(std::max(1u, std::thread::hardware_concurrency())));
+            }
+            if (n == "sys.version" || n == "looping.version") {
+                return Value(app_version);
             }
 
             auto it = variables.find(n);
@@ -1696,6 +1783,129 @@ public:
             if (name == "crypto.csms_key") {
                 std::string room_id = evaluated_args.empty() ? "default" : evaluated_args[0].as_string();
                 return Value(CryptoUtils::sha256_hex(room_id + ":CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"));
+            }
+            if (name == "crypto.hmac_sha256" || name == "hmac_sha256") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string msg = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                return Value(CryptoUtils::hmac_sha256(key, msg));
+            }
+            if (name == "crypto.random_hex" || name == "random_hex") {
+                size_t bytes = evaluated_args.empty() ? 16 : static_cast<size_t>(std::max<int64_t>(1, evaluated_args[0].as_int()));
+                return Value(CryptoUtils::random_hex(bytes));
+            }
+
+            // URL & Encoding Builtins (url.*)
+            if (name == "url.encode" || name == "urlencode") {
+                std::string s = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::url_encode(s));
+            }
+            if (name == "url.decode" || name == "urldecode") {
+                std::string s = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::url_decode(s));
+            }
+
+            // Regex Subsystem (regex.*)
+            if (name == "regex.match" || name == "regex.test") {
+                if (evaluated_args.size() >= 2) {
+                    try {
+                        std::regex re(evaluated_args[1].as_string());
+                        return Value(std::regex_search(evaluated_args[0].as_string(), re));
+                    } catch (...) {
+                        return Value(false);
+                    }
+                }
+                return Value(false);
+            }
+            if (name == "regex.find_all") {
+                std::vector<Value> matches;
+                if (evaluated_args.size() >= 2) {
+                    try {
+                        std::string text = evaluated_args[0].as_string();
+                        std::regex re(evaluated_args[1].as_string());
+                        auto begin = std::sregex_iterator(text.begin(), text.end(), re);
+                        auto end = std::sregex_iterator();
+                        for (auto it = begin; it != end; ++it) {
+                            matches.push_back(Value(it->str()));
+                        }
+                    } catch (...) {}
+                }
+                return Value(matches);
+            }
+            if (name == "regex.replace") {
+                if (evaluated_args.size() >= 3) {
+                    try {
+                        std::regex re(evaluated_args[1].as_string());
+                        return Value(std::regex_replace(evaluated_args[0].as_string(), re, evaluated_args[2].as_string()));
+                    } catch (...) {
+                        return evaluated_args[0];
+                    }
+                }
+                return Value("");
+            }
+
+            // Extended Statistical Math & Primality (v2.7.0)
+            if (name == "math.median" || name == "median") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val && !evaluated_args[0].list_val->empty()) {
+                    std::vector<double> nums;
+                    for (const auto& v : *evaluated_args[0].list_val) nums.push_back(v.as_number());
+                    std::sort(nums.begin(), nums.end());
+                    size_t n = nums.size();
+                    if (n % 2 == 1) return Value(nums[n / 2]);
+                    return Value((nums[n / 2 - 1] + nums[n / 2]) / 2.0);
+                }
+                return Value(0.0);
+            }
+            if (name == "math.variance" || name == "variance") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val && !evaluated_args[0].list_val->empty()) {
+                    const auto& lst = *evaluated_args[0].list_val;
+                    double sum = 0;
+                    for (const auto& v : lst) sum += v.as_number();
+                    double mean = sum / static_cast<double>(lst.size());
+                    double sq_diff = 0;
+                    for (const auto& v : lst) {
+                        double d = v.as_number() - mean;
+                        sq_diff += d * d;
+                    }
+                    return Value(sq_diff / static_cast<double>(lst.size()));
+                }
+                return Value(0.0);
+            }
+            if (name == "math.stddev" || name == "stddev") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val && !evaluated_args[0].list_val->empty()) {
+                    const auto& lst = *evaluated_args[0].list_val;
+                    double sum = 0;
+                    for (const auto& v : lst) sum += v.as_number();
+                    double mean = sum / static_cast<double>(lst.size());
+                    double sq_diff = 0;
+                    for (const auto& v : lst) {
+                        double d = v.as_number() - mean;
+                        sq_diff += d * d;
+                    }
+                    return Value(std::sqrt(sq_diff / static_cast<double>(lst.size())));
+                }
+                return Value(0.0);
+            }
+            if (name == "math.is_prime" || name == "is_prime") {
+                int64_t n = evaluated_args.empty() ? 0 : evaluated_args[0].as_int();
+                if (n < 2) return Value(false);
+                if (n == 2 || n == 3) return Value(true);
+                if (n % 2 == 0 || n % 3 == 0) return Value(false);
+                for (int64_t i = 5; i * i <= n; i += 6) {
+                    if (n % i == 0 || n % (i + 2) == 0) return Value(false);
+                }
+                return Value(true);
+            }
+            if (name == "sys.cpus") {
+                return Value(static_cast<int64_t>(std::max(1u, std::thread::hardware_concurrency())));
+            }
+            if (name == "sys.env" || name == "env.get") {
+                if (!evaluated_args.empty()) {
+                    std::string k = evaluated_args[0].as_string();
+                    const char* v = std::getenv(k.c_str());
+                    if (v) return Value(std::string(v));
+                    if (evaluated_args.size() >= 2) return evaluated_args[1];
+                }
+                return Value("");
             }
 
             // File I/O Builtins

@@ -16,18 +16,21 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " create <name> [--type]   Create and synthesize new dynamic program\n";
     std::cout << "  " << prog_name << " compile <file.loop>      Compile script for target UI profile\n";
     std::cout << "  " << prog_name << " check <file.loop>        Static syntax & AST verification report\n";
+    std::cout << "  " << prog_name << " ast <file.loop>          Display visual AST node tree & structure\n";
+    std::cout << "  " << prog_name << " fmt <file.loop> [--write] Format & normalize .loop source file\n";
+    std::cout << "  " << prog_name << " doc [topic]              Built-in reference manual (syntax, math, crypto, regex, ui)\n";
     std::cout << "  " << prog_name << " bench                    Run native C++17 VM throughput benchmark\n";
     std::cout << "  " << prog_name << " doctor                   Inspect engine subsystems & environment health\n";
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
-    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (36 tests)\n";
+    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (40 tests)\n";
     std::cout << "  " << prog_name << " --version, -v            Display engine version\n";
     std::cout << "  " << prog_name << " --help, -h               Show this help message\n\n";
 }
 
 int run_tests() {
-    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v2.6 Signature)...\n\n";
+    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v2.7 Quantum Signature)...\n\n";
     Interpreter vm;
 
     int passed = 0;
@@ -488,6 +491,55 @@ int run_tests() {
                 vm.variables["g_val"].as_int() == 6 &&
                 vm.variables["fib_10"].as_int() == 55);
 
+    // Test 37: Regex Subsystem (regex.match, regex.find_all, regex.replace)
+    vm.execute_code(
+        "val re_ok = regex.match(\"forkar-eco-2026\", \"[0-9]{4}\")\n"
+        "val re_matches = regex.find_all(\"pts: 50, bonus: 120, extra: 30\", \"[0-9]+\")\n"
+        "val re_clean = regex.replace(\"Cota   Chia   Bogota\", \"\\\\s+\", \"-\")\n"
+    );
+    assert_test("Regex Subsystem (regex.match, regex.find_all, regex.replace)",
+                vm.variables["re_ok"].is_truthy() &&
+                vm.variables["re_matches"].size() == 3 &&
+                vm.variables["re_clean"].as_string() == "Cota-Chia-Bogota");
+
+    // Test 38: HMAC-SHA256, Random Hex & URL Encoding (crypto.hmac_sha256, url.encode/decode)
+    vm.execute_code(
+        "val sig = crypto.hmac_sha256(\"cs_secret_key\", \"payload_v27\")\n"
+        "val rhex = crypto.random_hex(16)\n"
+        "val u_enc = url.encode(\"Sabana de Bogota & Cota\")\n"
+        "val u_dec = url.decode(u_enc)\n"
+    );
+    assert_test("HMAC-SHA256, Random Hex & URL Encoding",
+                vm.variables["sig"].as_string().size() == 64 &&
+                vm.variables["rhex"].as_string().size() == 32 &&
+                vm.variables["u_dec"].as_string() == "Sabana de Bogota & Cota");
+
+    // Test 39: Data Science & Primality Math (math.median, math.variance, math.stddev, math.is_prime)
+    vm.execute_code(
+        "val med = math.median([10, 50, 20, 40, 30])\n"
+        "val vari = math.variance([2, 4, 4, 4, 5, 5, 7, 9])\n"
+        "val sdev = math.stddev([2, 4, 4, 4, 5, 5, 7, 9])\n"
+        "val p97 = math.is_prime(97)\n"
+        "val p100 = math.is_prime(100)\n"
+    );
+    assert_test("Data Science & Primality Math (median, variance, stddev, is_prime)",
+                vm.variables["med"].as_int() == 30 &&
+                vm.variables["vari"].as_int() == 4 &&
+                vm.variables["sdev"].as_int() == 2 &&
+                vm.variables["p97"].is_truthy() &&
+                !vm.variables["p100"].is_truthy());
+
+    // Test 40: System Hardware & Environment Inspection (sys.cpus, sys.version, sys.env)
+    vm.execute_code(
+        "val cores = sys.cpus\n"
+        "val eng_v = sys.version\n"
+        "val fallback_env = sys.env(\"LOOPING_NONEXISTENT_VAR\", \"default_ok\")\n"
+    );
+    assert_test("System Hardware & Environment Inspection (sys.cpus, sys.version, sys.env)",
+                vm.variables["cores"].as_int() >= 1 &&
+                vm.variables["eng_v"].as_string() == "2.7.0" &&
+                vm.variables["fallback_env"].as_string() == "default_ok");
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 
@@ -595,6 +647,122 @@ int main(int argc, char* argv[]) {
         std::cout << "  • UI Directives        : " << ui_count << "\n";
         std::cout << "  • 2D Entities          : " << entity_count << "\n";
         std::cout << "  • Loop Constructs      : " << loop_count << "\n";
+        return 0;
+    }
+
+    if (first_arg == "ast") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'ast' requires a .loop script file." << color::RESET << "\n";
+            return 1;
+        }
+        std::string fpath = argv[2];
+        std::ifstream f(fpath);
+        if (!f.is_open()) {
+            std::cerr << color::RED << "Error: Could not open file '" << fpath << "'." << color::RESET << "\n";
+            return 1;
+        }
+        std::stringstream ss;
+        ss << f.rdbuf();
+        Parser p(ss.str());
+        auto stmts = p.parse_script();
+        std::cout << color::BOLD << color::CYAN << "[LOOPING AST TREE] " << color::RESET << fpath << " (" << stmts.size() << " root nodes)\n";
+        for (size_t i = 0; i < stmts.size(); ++i) {
+            std::string branch = (i + 1 == stmts.size()) ? "└── " : "├── ";
+            const auto& st = stmts[i];
+            std::string label = "Stmt";
+            if (auto s = std::dynamic_pointer_cast<SetStmt>(st)) label = "SetVar(" + s->var_name + " " + s->op + ")";
+            else if (auto idx = std::dynamic_pointer_cast<SetIndexStmt>(st)) label = "SetIndex(" + idx->var_name + "[] " + idx->op + ")";
+            else if (auto fn = std::dynamic_pointer_cast<FunctionDefStmt>(st)) label = "FunctionDef(" + fn->name + ", params=" + std::to_string(fn->params.size()) + ")";
+            else if (auto fr = std::dynamic_pointer_cast<ForRangeStmt>(st)) label = "ForRange(" + fr->var_name + ")";
+            else if (auto fe = std::dynamic_pointer_cast<ForEachStmt>(st)) label = "ForEach(" + fe->var_name + ")";
+            else if (std::dynamic_pointer_cast<IfStmt>(st)) label = "IfConditionalBlock";
+            else if (std::dynamic_pointer_cast<MatchStmt>(st)) label = "MatchPatternBlock";
+            else if (std::dynamic_pointer_cast<TryCatchStmt>(st)) label = "TryCatchBlock";
+            else if (auto ui = std::dynamic_pointer_cast<DrawUIStmt>(st)) label = "DrawUI(" + ui->ui_type + ": \"" + ui->title + "\")";
+            else if (auto sp = std::dynamic_pointer_cast<SpawnEntityStmt>(st)) label = "SpawnEntity(" + sp->entity_type + ": \"" + sp->name + "\")";
+            else if (std::dynamic_pointer_cast<PrintStmt>(st)) label = "PrintStmt";
+            else if (std::dynamic_pointer_cast<ExprStmt>(st)) label = "ExprStmt";
+            std::cout << "  " << color::PURPLE << branch << color::RESET << color::BOLD << label << color::RESET << "\n";
+        }
+        return 0;
+    }
+
+    if (first_arg == "fmt") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'fmt' requires a .loop script file." << color::RESET << "\n";
+            return 1;
+        }
+        std::string fpath = argv[2];
+        bool write_in_place = (argc >= 4 && (std::string(argv[3]) == "--write" || std::string(argv[3]) == "-w"));
+        std::ifstream f(fpath);
+        if (!f.is_open()) {
+            std::cerr << color::RED << "Error: Could not open file '" << fpath << "'." << color::RESET << "\n";
+            return 1;
+        }
+        std::vector<std::string> formatted;
+        std::string line;
+        int indent_level = 0;
+        while (std::getline(f, line)) {
+            while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '\r')) line.pop_back();
+            size_t first_non_space = line.find_first_not_of(" \t");
+            std::string trimmed = (first_non_space == std::string::npos) ? "" : line.substr(first_non_space);
+            if (trimmed.empty()) {
+                formatted.push_back("");
+                continue;
+            }
+            if (trimmed.rfind("}", 0) == 0 || trimmed == "end") {
+                indent_level = std::max(0, indent_level - 1);
+            }
+            formatted.push_back(std::string(indent_level * 4, ' ') + trimmed);
+            if (trimmed.back() == '{' || trimmed.back() == ':') {
+                indent_level++;
+            }
+        }
+        f.close();
+        std::ostringstream out_ss;
+        for (const auto& l : formatted) out_ss << l << "\n";
+        if (write_in_place) {
+            std::ofstream out(fpath);
+            out << out_ss.str();
+            std::cout << color::GREEN << "✔ [FMT]" << color::RESET << " Formatted " << fpath << " in-place.\n";
+        } else {
+            std::cout << out_ss.str();
+        }
+        return 0;
+    }
+
+    if (first_arg == "doc" || first_arg == "docs") {
+        std::string topic = (argc >= 3) ? argv[2] : "all";
+        std::cout << color::BOLD << color::CYAN << "═══ LOOPING v" << vm.app_version << " BUILT-IN REFERENCE MANUAL ═══" << color::RESET << "\n\n";
+        if (topic == "all" || topic == "syntax") {
+            std::cout << color::YELLOW << "▸ SYNTAX & CONTROL FLOW:" << color::RESET << "\n"
+                      << "  let x = 10 | mut y = 20 | val z := 30\n"
+                      << "  fn calc(a, b) => a * b + 1\n"
+                      << "  for (i in 1..=10 step 2) { ... } | match x { 1 => ... _ => ... }\n"
+                      << "  try { ... } catch (err) { ... } | val v = opt \?\? \"fallback\"\n\n";
+        }
+        if (topic == "all" || topic == "math") {
+            std::cout << color::YELLOW << "▸ MATH & DATA SCIENCE (math.*):" << color::RESET << "\n"
+                      << "  math.sqrt, math.pow, math.clamp, math.lerp, math.hypot\n"
+                      << "  math.sum(list), math.mean(list), math.median(list), math.variance(list), math.stddev(list)\n"
+                      << "  math.gcd(a,b), math.lcm(a,b), math.fib(n), math.fact(n), math.is_prime(n)\n\n";
+        }
+        if (topic == "all" || topic == "crypto") {
+            std::cout << color::YELLOW << "▸ CRYPTOGRAPHY & SECURITY (crypto.* / url.*):" << color::RESET << "\n"
+                      << "  crypto.sha256(str), crypto.hmac_sha256(key, msg), crypto.fnv1a(str)\n"
+                      << "  crypto.base64_encode(str), crypto.base64_decode(b64), crypto.uuid()\n"
+                      << "  crypto.random_hex(bytes), crypto.csms_key(room_id)\n"
+                      << "  url.encode(str), url.decode(str)\n\n";
+        }
+        if (topic == "all" || topic == "regex") {
+            std::cout << color::YELLOW << "▸ REGEX ENGINE (regex.*):" << color::RESET << "\n"
+                      << "  regex.match(text, pattern), regex.find_all(text, pattern), regex.replace(text, pat, rep)\n\n";
+        }
+        if (topic == "all" || topic == "ui") {
+            std::cout << color::YELLOW << "▸ UI & NATIVE WINDOWS (ui.* / window.*):" << color::RESET << "\n"
+                      << "  window.create(title, w, h, target), ui.card(at: (x,y), size: (w,h), title: \"...\")\n"
+                      << "  draw slider, draw toggle, draw progress, spawn.sprite, audio.tone(hz, ms)\n\n";
+        }
         return 0;
     }
 

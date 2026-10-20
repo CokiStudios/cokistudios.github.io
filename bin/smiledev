@@ -7,7 +7,7 @@
 
 set -e
 
-SMILE_VERSION="2.6.0"
+SMILE_VERSION="2.7.0"
 CONFIG_DIR="$HOME/.smiledev"
 GLOBAL_MODULES_DIR="$CONFIG_DIR/modules"
 LOCAL_MODULES_DIR="$(pwd)/modules"
@@ -70,6 +70,8 @@ cmd_help() {
     echo -e "  ${C_YELLOW}list${C_RESET}                   List locally and globally installed modules"
     echo -e "  ${C_AQUA}search${C_RESET} <term>          Search modules in LoopModules cloud"
     echo -e "  ${C_CYAN}init${C_RESET} <name> [--lang]   Initialize a new module (cpp, python, loop)"
+    echo -e "  ${C_AQUA}run${C_RESET} <module|script>    Execute an installed module or .loop script with Looping"
+    echo -e "  ${C_BLUE}doctor${C_RESET}                 Verify smiledev, Looping engine, and registry health"
     echo -e "  ${C_PURPLE}upgrade${C_RESET} [--force]      Auto-update smiledev & Looping engine from repo.cokistudios.com/engine"
     echo -e "  ${C_GREEN}update${C_RESET} [module]        Update module or run engine upgrade (--self)"
     echo ""
@@ -806,6 +808,20 @@ except Exception as e:
         fi
     fi
 
+    # Also sync ~/.local/bin and /opt/homebrew/bin if they exist and are writable
+    for extra_dir in "$HOME/.local/bin" "/opt/homebrew/bin"; do
+        if [ -d "$extra_dir" ] && [ -w "$extra_dir" ] && [ "$extra_dir" != "$target_dir" ]; then
+            if [ -f "$extra_dir/smiledev" ] || [ -f "$extra_dir/looping" ]; then
+                cp "$tmp_dir/looping" "$extra_dir/looping"
+                chmod 755 "$extra_dir/looping"
+                ln -sf "$extra_dir/looping" "$extra_dir/ruuping" 2>/dev/null || true
+                cp "$tmp_dir/smiledev" "$extra_dir/smiledev"
+                chmod 755 "$extra_dir/smiledev"
+                echo -e "   ${C_GREEN}✔ Synchronized binaries in:${C_RESET} $extra_dir"
+            fi
+        fi
+    done
+
     rm -rf "$tmp_dir"
     rm -f "$CONFIG_DIR/latest_available_version" 2>/dev/null || true
     date +%s > "$CONFIG_DIR/last_update_check" 2>/dev/null || true
@@ -822,6 +838,52 @@ except Exception as e:
         "$target_dir/smiledev" version
     fi
     echo ""
+}
+
+cmd_doctor() {
+    print_banner
+    echo -e "${C_BOLD}${C_CYAN}[SMILEDEV DOCTOR]${C_RESET} Running diagnostics on Looping & Package Manager...\n"
+    echo -e "  ${C_GREEN}✔${C_RESET} smiledev CLI      : v$SMILE_VERSION ($0)"
+    local lbin
+    lbin=$(command -v looping 2>/dev/null || echo "")
+    if [ -n "$lbin" ]; then
+        local lver
+        lver=$("$lbin" --version 2>/dev/null | head -n1)
+        echo -e "  ${C_GREEN}✔${C_RESET} Looping Binary    : $lver ($lbin)"
+    else
+        echo -e "  ${C_RED}✘${C_RESET} Looping Binary    : Not found in PATH"
+    fi
+    echo -e "  ${C_GREEN}✔${C_RESET} Global Modules    : $GLOBAL_MODULES_DIR"
+    if [ -f "$AUTH_FILE" ]; then
+        echo -e "  ${C_GREEN}✔${C_RESET} CS ID Auth        : Authenticated ($AUTH_FILE)"
+    else
+        echo -e "  ${C_YELLOW}•${C_RESET} CS ID Auth        : Anonymous (run 'smiledev login' to publish)"
+    fi
+    if curl -fsSL --max-time 4 "https://repo.cokistudios.com/engine/latest.json" >/dev/null 2>&1; then
+        echo -e "  ${C_GREEN}✔${C_RESET} Engine Repository : Online (https://repo.cokistudios.com/engine)"
+    else
+        echo -e "  ${C_YELLOW}•${C_RESET} Engine Repository : Offline / Local Workspace Mode"
+    fi
+    echo ""
+}
+
+cmd_run() {
+    local target="$1"
+    if [ -z "$target" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Specify a .loop script or installed module name to run."
+        exit 1
+    fi
+    shift
+    if [ -f "$target" ]; then
+        exec looping "$target" "$@"
+    elif [ -f "$LOCAL_MODULES_DIR/$target/$target.loop" ]; then
+        exec looping "$LOCAL_MODULES_DIR/$target/$target.loop" "$@"
+    elif [ -f "$GLOBAL_MODULES_DIR/$target/$target.loop" ]; then
+        exec looping "$GLOBAL_MODULES_DIR/$target/$target.loop" "$@"
+    else
+        echo -e "${C_RED}✘ Error:${C_RESET} Could not find script or module '$target'."
+        exit 1
+    fi
 }
 
 # ── COMMAND ROUTER ──
@@ -855,6 +917,13 @@ case "$1" in
     init|new)
         shift
         cmd_init "$@"
+        ;;
+    run|exec)
+        shift
+        cmd_run "$@"
+        ;;
+    doctor|check)
+        cmd_doctor
         ;;
     upgrade|self-update|upgrade-engine)
         shift

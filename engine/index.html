@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Looping Engine & smiledev v2.6.0 — Coki Studios Official Registry</title>
-    <meta name="description" content="Official distribution and update repository for Looping Engine and smiledev package manager (v2.6.0 Universal Native).">
+    <title>Looping Engine & smiledev v2.7.0 — Coki Studios Official Registry</title>
+    <meta name="description" content="Official distribution and update repository for Looping Engine and smiledev package manager (v2.7.0 Quantum Signature Universal Native).">
     <link rel="icon" type="image/svg+xml" href="/assets/cs-logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -396,19 +396,19 @@
             <span class="brand-title">Coki Studios <span style="font-weight: 400; color: var(--text-dim);">Engine Registry</span></span>
         </a>
         <div class="nav-links">
-            <span class="badge-ver"><span class="badge-dot"></span> v2.6.0 Universal</span>
+            <span class="badge-ver"><span class="badge-dot"></span> v2.7.0 Quantum</span>
             <a href="https://cokistudios.com">Inicio</a>
-            <a href="https://repo.cokistudios.com/modules">Módulos</a>
-            <a href="https://developer.cokistudios.com">Docs</a>
+            <a href="/hiop-ide">hiOP Web IDE</a>
+            <a href="/developer">Docs</a>
             <a href="/engine/latest.json" target="_blank" style="color: var(--aqua);">latest.json</a>
         </div>
     </header>
 
     <main>
         <div class="hero">
-            <span class="badge-ver" style="margin-bottom: 14px;"><span class="badge-dot"></span> Engine v2.6.0 Native Universal (arm64 & x86_64)</span>
+            <span class="badge-ver" style="margin-bottom: 14px;"><span class="badge-dot"></span> Engine v2.7.0 Quantum Signature (arm64 & x86_64)</span>
             <h1>Looping Engine & smiledev</h1>
-            <p>El motor híbrido de alto rendimiento para macOS & Loop OS. Distribución oficial centralizada, paquetes nativos y actualizador automático.</p>
+            <p>El motor híbrido C++17 de alto rendimiento para macOS & Loop OS. Distribución oficial centralizada, paquetes nativos, 40/40 pruebas verificadas y actualizador automático.</p>
         </div>
 
         <div class="install-box">
@@ -416,6 +416,7 @@
                 <button class="tab-btn active" onclick="switchTab('brew')">🍺 Homebrew Tap</button>
                 <button class="tab-btn" onclick="switchTab('curl')">⚡ 1-Line Installer</button>
                 <button class="tab-btn" onclick="switchTab('smile')">🔄 smiledev upgrade</button>
+                <button class="tab-btn" onclick="switchTab('doctor')">🩺 smiledev doctor</button>
             </div>
 
             <div id="cmd-brew" class="cmd-display">
@@ -432,6 +433,11 @@
                 <span class="cmd-text">smiledev upgrade</span>
                 <button class="btn-copy" onclick="copySnippet('smiledev upgrade', this)">Copiar</button>
             </div>
+
+            <div id="cmd-doctor" class="cmd-display" style="display: none;">
+                <span class="cmd-text">smiledev doctor && looping test</span>
+                <button class="btn-copy" onclick="copySnippet('smiledev doctor && looping test', this)">Copiar</button>
+            </div>
         </div>
 
         <div class="grid-downloads">
@@ -441,12 +447,12 @@
                         <span class="card-icon">📦</span>
                         <div>
                             <h3 class="card-title">Universal Tarball</h3>
-                            <span style="font-size: 0.78rem; color: var(--aqua); font-family: 'JetBrains Mono';">v2.6.0 • 652 KB</span>
+                            <span style="font-size: 0.78rem; color: var(--aqua); font-family: 'JetBrains Mono';">v2.7.0 • 668 KB</span>
                         </div>
                     </div>
-                    <p class="card-sub">Contiene los binarios universales de <code>looping</code> y el gestor <code>smiledev</code> para Apple Silicon & Intel.</p>
+                    <p class="card-sub">Contiene los binarios universales de <code>looping</code> v2.7.0 y el gestor <code>smiledev</code> v2.7.0 para Apple Silicon & Intel.</p>
                 </div>
-                <a href="/engine/looping-v2.6.0-darwin-universal.tar.gz" class="btn-download">Descargar .tar.gz</a>
+                <a href="/engine/looping-v2.7.0-darwin-universal.tar.gz" class="btn-download">Descargar .tar.gz (v2.7.0)</a>
             </div>
 
             <div class="card">
@@ -455,7 +461,7 @@
                         <span class="card-icon">💿</span>
                         <div>
                             <h3 class="card-title">macOS DMG Image</h3>
-                            <span style="font-size: 0.78rem; color: var(--purple); font-family: 'JetBrains Mono';">v2.6.0 • 811 KB</span>
+                            <span style="font-size: 0.78rem; color: var(--purple); font-family: 'JetBrains Mono';">macOS Universal • 811 KB</span>
                         </div>
                     </div>
                     <p class="card-sub">Imagen de disco montable con instalador interactivo de Terminal y desinstalador integrado.</p>
@@ -469,7 +475,7 @@
                         <span class="card-icon">📜</span>
                         <div>
                             <h3 class="card-title">Apple PKG Installer</h3>
-                            <span style="font-size: 0.78rem; color: var(--primary); font-family: 'JetBrains Mono';">v2.6.0 • 654 KB</span>
+                            <span style="font-size: 0.78rem; color: var(--primary); font-family: 'JetBrains Mono';">macOS Installer • 654 KB</span>
                         </div>
                     </div>
                     <p class="card-sub">Instalador gráfico estándar de macOS que configura automáticamente <code>/usr/local/bin</code> en el PATH del sistema.</p>
@@ -479,31 +485,88 @@
         </div>
 
         <div class="features-section">
-            <h2 class="section-title">✨ Novedades en Looping Engine v2.6.0</h2>
+            <h2 class="section-title">🚀 Novedades en Looping Engine v2.7.0 (Quantum Signature)</h2>
             <div class="features-grid">
                 <div class="feature-item">
-                    <h4>? : & ??</h4>
-                    <p>Operadores ternarios y null-coalescing de evaluación perezosa para simplificar flujos condicionales.</p>
+                    <h4>regex.* Subsystem</h4>
+                    <p>Motor nativo de expresiones regulares C++17: <code>regex.match</code>, <code>regex.find_all</code> y <code>regex.replace</code>.</p>
                 </div>
                 <div class="feature-item">
-                    <h4>match <expr> { }</h4>
-                    <p>Pattern matching estructural nativo con soporte para comodín default <code>_</code>.</p>
+                    <h4>HMAC-SHA256 & URL</h4>
+                    <p>Autenticación criptográfica <code>crypto.hmac_sha256</code>, <code>crypto.random_hex</code> y codificación <code>url.encode / decode</code>.</p>
                 </div>
                 <div class="feature-item">
-                    <h4>0..=N & step N</h4>
-                    <p>Rangos inclusivos y pasos configurables con soporte completo para <code>continue</code> en bucles.</p>
+                    <h4>Data Science Math</h4>
+                    <p>Estadística y teoría de números nativa: <code>math.median</code>, <code>math.variance</code>, <code>math.stddev</code> y <code>math.is_prime</code>.</p>
                 </div>
                 <div class="feature-item">
-                    <h4>[a, b] & (x, y)</h4>
-                    <p>Destructuración nativa de listas y tuplas, y manejo robusto con <code>try / catch / throw</code>.</p>
+                    <h4>looping ast & fmt</h4>
+                    <p>Inspector visual de árbol sintáctico (<code>looping ast</code>), formateador de código (<code>looping fmt --write</code>) y manual (<code>looping doc</code>).</p>
                 </div>
                 <div class="feature-item">
-                    <h4>crypto.* & CSMS</h4>
-                    <p>Primitivas criptográficas: <code>crypto.sha256</code>, <code>crypto.base64</code>, <code>crypto.uuid</code> y <code>crypto.csms_key</code>.</p>
+                    <h4>smiledev doctor & run</h4>
+                    <p>Diagnóstico integral del ecosistema (<code>smiledev doctor</code>) y ejecución directa de paquetes (<code>smiledev run</code>).</p>
                 </div>
                 <div class="feature-item">
-                    <h4>Functional Stdlib</h4>
-                    <p>Procesamiento funcional de colecciones con pipeline (<code>|></code>): <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>unique</code>, <code>zip</code>, <code>chunk</code>.</p>
+                    <h4>40/40 Native Tests</h4>
+                    <p>Suite de verificación en tiempo real ampliada a 40 pruebas unitarias para sintaxis, UI, criptografía y concurrencia.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+                <h2 class="section-title" style="margin-bottom:0;">📦 Explorador de Módulos Oficiales (LoopModules Registry)</h2>
+                <input type="text" id="mod-search" placeholder="Filtrar módulos (ej. gui, math, ai, cpp)..." oninput="filterModules(this.value)" style="background:#030712; border:1px solid rgba(56,189,248,0.3); color:#fff; padding:8px 14px; border-radius:10px; font-size:0.85rem; min-width:260px; outline:none;">
+            </div>
+            <div class="features-grid" id="modules-grid">
+                <div class="feature-item" data-mod="loop-gui-tk python ui">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4>loop-gui-tk</h4>
+                        <span style="font-size:10px; background:rgba(250,204,21,0.15); color:#facc15; padding:2px 6px; border-radius:4px; font-family:monospace;">PYLOOP</span>
+                    </div>
+                    <p style="margin-bottom:10px;">Bindings de ventanas nativas Tkinter de alta velocidad para interfaces de escritorio.</p>
+                    <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev install loop-gui-tk', this)">smiledev install loop-gui-tk</button>
+                </div>
+                <div class="feature-item" data-mod="loop-gui-qt cpp ui">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4>loop-gui-qt</h4>
+                        <span style="font-size:10px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 6px; border-radius:4px; font-family:monospace;">C++ NATIVE</span>
+                    </div>
+                    <p style="margin-bottom:10px;">Renderizado acelerado por hardware Qt6 para paneles XUI a 240Hz.</p>
+                    <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev install loop-gui-qt', this)">smiledev install loop-gui-qt</button>
+                </div>
+                <div class="feature-item" data-mod="loop-math-3d loop math physics">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4>loop-math-3d</h4>
+                        <span style="font-size:10px; background:rgba(0,245,212,0.15); color:#00f5d4; padding:2px 6px; border-radius:4px; font-family:monospace;">PURE LOOP</span>
+                    </div>
+                    <p style="margin-bottom:10px;">Vectores 3D, cuaterniones y matrices de proyección para videojuegos en Shine Console.</p>
+                    <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev install loop-math-3d', this)">smiledev install loop-math-3d</button>
+                </div>
+                <div class="feature-item" data-mod="pyloop-ai python ai ml">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4>pyloop-ai</h4>
+                        <span style="font-size:10px; background:rgba(192,132,252,0.15); color:#c084fc; padding:2px 6px; border-radius:4px; font-family:monospace;">AI BRIDGE</span>
+                    </div>
+                    <p style="margin-bottom:10px;">Inferencia neuronal y conectores LLM para agentes autónomos en Looping.</p>
+                    <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev install pyloop-ai', this)">smiledev install pyloop-ai</button>
+                </div>
+                <div class="feature-item" data-mod="loop-core-utils loop stdlib">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4>loop-core-utils</h4>
+                        <span style="font-size:10px; background:rgba(0,245,212,0.15); color:#00f5d4; padding:2px 6px; border-radius:4px; font-family:monospace;">PURE LOOP</span>
+                    </div>
+                    <p style="margin-bottom:10px;">Colección de estructuras de datos avanzadas, colas de prioridad y cachés LRU.</p>
+                    <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev install loop-core-utils', this)">smiledev install loop-core-utils</button>
+                </div>
+                <div class="feature-item" data-mod="loop-cpp-snippets cpp kernel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4>loop-cpp-snippets</h4>
+                        <span style="font-size:10px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 6px; border-radius:4px; font-family:monospace;">C++ NATIVE</span>
+                    </div>
+                    <p style="margin-bottom:10px;">Macros SIMD y plantillas C++17 de latencia cero para el kernel Holo Looping OoS.</p>
+                    <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev install loop-cpp-snippets', this)">smiledev install loop-cpp-snippets</button>
                 </div>
             </div>
         </div>
@@ -520,9 +583,19 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>looping-v2.6.0-darwin-universal.tar.gz</strong></td>
+                        <td><strong>looping-v2.7.0-darwin-universal.tar.gz</strong></td>
                         <td>SHA-256</td>
-                        <td><code>c028b5e0e78545d038b5cb18877514f835deba49ae00dae7d3ee30c5b9eca4bd</code></td>
+                        <td><code>2cdfb20f27d453e3a85640e2d6fbf48d853d4df7b64112fdb070be43a9b9d53a</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>bin/looping v2.7.0 (Universal Mach-O)</strong></td>
+                        <td>SHA-256</td>
+                        <td><code>da94032910141a15d34ecb5c03a7db90b61d2be6f39beae37a0f309564ae5590</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>bin/smiledev v2.7.0 (Bash CLI)</strong></td>
+                        <td>SHA-256</td>
+                        <td><code>29d43058f59ab4f46f39f7ddabb6c7fbd9b4974a691ed4a50f95463452255eac</code></td>
                     </tr>
                     <tr>
                         <td><strong>Instalar Looping.pkg</strong></td>
@@ -533,16 +606,6 @@
                         <td><strong>Looping-Engine-v2.6.0-macOS.dmg</strong></td>
                         <td>SHA-256</td>
                         <td><code>894031195bd258d7239512b43f429074cf6123cedc0374296b1a0c2881b994f2</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>bin/looping (Universal Mach-O)</strong></td>
-                        <td>SHA-256</td>
-                        <td><code>4a1e9391d7b78e4bcb51ddd53c694e9e659cdbce188a716f80519c81bcc4a894</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>bin/smiledev (Bash CLI)</strong></td>
-                        <td>SHA-256</td>
-                        <td><code>79d33f01d8a56ab045c0d8deedcf47d3fc4de44802a036ee33ccef6e9babf036</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -567,7 +630,18 @@
             } else if (type === 'smile') {
                 event.target.classList.add('active');
                 document.getElementById('cmd-smile').style.display = 'flex';
+            } else if (type === 'doctor') {
+                event.target.classList.add('active');
+                document.getElementById('cmd-doctor').style.display = 'flex';
             }
+        }
+
+        function filterModules(query) {
+            const q = (query || '').toLowerCase().trim();
+            document.querySelectorAll('#modules-grid .feature-item').forEach(card => {
+                const tags = (card.getAttribute('data-mod') || '') + ' ' + card.innerText.toLowerCase();
+                card.style.display = (!q || tags.includes(q)) ? 'block' : 'none';
+            });
         }
 
         function copySnippet(text, btn) {
