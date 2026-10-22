@@ -20,12 +20,34 @@
             --sidebar-bg: #06090f;
             --editor-bg: #0a0e17;
             --panel-bg: #080c14;
+            --title-bar-bg: #06080d;
+            --tabs-bg: #080c14;
+            --viewport-bg: #04060a;
+            --terminal-bg: #06090e;
             --status-bar-bg: #6366f1;
             --accent: #6366f1;
             --accent-cyan: #38bdf8;
             --text-main: #f1f5f9;
             --text-muted: #64748b;
             --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        html.light-theme {
+            --ide-bg: #f8fafc;
+            --activity-bar-bg: #e2e8f0;
+            --sidebar-bg: #f1f5f9;
+            --editor-bg: #ffffff;
+            --panel-bg: #f8fafc;
+            --title-bar-bg: #f1f5f9;
+            --tabs-bg: #e2e8f0;
+            --viewport-bg: #0f172a;
+            --terminal-bg: #ffffff;
+            --status-bar-bg: #4f46e5;
+            --accent: #4f46e5;
+            --accent-cyan: #0284c7;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0, 0, 0, 0.1);
         }
 
         body {
@@ -41,7 +63,7 @@
         /* ── Top Title Bar ── */
         .title-bar {
             height: 38px;
-            background: #06080d;
+            background: var(--title-bar-bg);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -178,7 +200,7 @@
 
         .editor-tabs {
             height: 36px;
-            background: #080c14;
+            background: var(--tabs-bg);
             display: flex;
             border-bottom: 1px solid var(--border-color);
         }
@@ -211,7 +233,7 @@
 
         .preview-header {
             height: 36px;
-            background: #06080d;
+            background: var(--title-bar-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -226,7 +248,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #04060a;
+            background: var(--viewport-bg);
             position: relative;
             overflow: hidden;
         }
@@ -243,7 +265,7 @@
         .terminal-pane {
             flex: 0.8;
             border-top: 1px solid var(--border-color);
-            background: #06090e;
+            background: var(--terminal-bg);
             display: flex;
             flex-direction: column;
             font-family: 'JetBrains Mono', monospace;
@@ -252,7 +274,7 @@
 
         .terminal-header {
             padding: 6px 16px;
-            background: #04060a;
+            background: var(--tabs-bg);
             font-size: 11px;
             color: var(--text-muted);
             border-bottom: 1px solid var(--border-color);
@@ -264,6 +286,21 @@
             overflow-y: auto;
             color: #a5b4fc;
             line-height: 1.6;
+        }
+
+        html.light-theme .terminal-logs {
+            color: #334155;
+        }
+
+        html.light-theme .btn-run[id="btn-dl-code"] {
+            background: rgba(0,0,0,0.06) !important;
+            border: 1px solid rgba(0,0,0,0.15) !important;
+            color: #0f172a !important;
+        }
+
+        html.light-theme #theme-toggle {
+            background: rgba(0,0,0,0.05) !important;
+            color: #0f172a !important;
         }
 
         .log-error { color: #ef4444; }
@@ -298,6 +335,7 @@
             <span style="font-size:11px; color:#94a3b8; margin-left:8px; border-left:1px solid rgba(255,255,255,0.15); padding-left:8px;">Target: <strong>Shine Loop Console</strong> (Holo Looping OoS)</span>
         </div>
         <div class="title-actions" style="align-items:center;">
+            <button class="cs-theme-btn" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema" style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);border:1px solid var(--border-color);color:inherit;cursor:pointer;">🌓</button>
             <button class="cs-waffle-btn" id="cs-waffle-toggle" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios" style="width:28px;height:28px;border-radius:7px;"></button>
             <button class="btn-run" id="btn-ast-code" style="background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.4); color:#38bdf8;">
                 <span>🌳 AST</span>
@@ -516,15 +554,23 @@ define app "QuantumConfig" version 2.7:
                 }
             });
 
+            const isLightInit = document.documentElement.classList.contains('light-theme');
             const editor = monaco.editor.create(document.getElementById('monaco-container'), {
                 value: sampleCodes["arcade.loop"],
                 language: 'looping',
-                theme: 'vs-dark',
+                theme: isLightInit ? 'vs' : 'vs-dark',
                 fontSize: 13,
                 fontFamily: 'JetBrains Mono, monospace',
                 minimap: { enabled: false },
                 automaticLayout: true
             });
+
+            // Sync editor theme with light/dark changes
+            const themeObserver = new MutationObserver(() => {
+                const isLight = document.documentElement.classList.contains('light-theme');
+                monaco.editor.setTheme(isLight ? 'vs' : 'vs-dark');
+            });
+            themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
             // Run button event
             document.getElementById('btn-run-code').addEventListener('click', () => {

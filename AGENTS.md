@@ -23,6 +23,17 @@
 * **Aislamiento Condicional**: Aislar APIs específicas con `#if os(macOS)` / `#if os(iOS)` (`CoreNFC`, `ActivityKit`, `@NSApplicationDelegateAdaptor`).
 * **Extensiones Embebidas**: Toda extensión de iOS como `ForkarEcoWidgetExtension.appex` debe tener `platformFilter = ios;` en `project.pbxproj` para permitir la firma y compilación limpia en macOS.
 
+## Reglas de Contenido Web y Landing Pages de Coki Studios
+* **No digas todo en la web**: La landing principal (`index.html`) debe mantenerse limpia, directa y enfocada. Prohibido sobrecargar con simuladores técnicos o benchmarks en la portada.
+* **En el index solo lo relevante**:
+  * Hero minimalista y elegante de Coki Studios.
+  * Catálogo de Productos y Servicios principales (Forkar, CSMS, Shine Maps, Shine Find, Felte, Developers).
+  * CS ID (Identidad universal, seguridad y cuenta única).
+  * Llamado a la acción (CTA) para registro/inicio de sesión.
+* **Cero menciones de dispositivos específicos en el index**: Prohibido usar "Mac", "iPhone", "Apple Watch", "Android" en textos de portada. Siempre referirse a "Coki Studios", "Ecosistema CS" o "en todos tus dispositivos".
+* **Looping y laboratorios al Portal Developers**: Todo lo referente a Looping Engine, smiledev, REPL, benchmarks y Shine Sound Lab pertenece exclusivamente a `developer.html`.
+* **Modo Claro y Oscuro Universal**: Coherencia y contraste perfecto en modo claro y oscuro en todas las pantallas. Sin texto invisible ni elementos con colores oscuros fijos sobre fondos claros.
+
 <!-- BEGIN AWS Agent Toolkit rules -->
 # AWS Guidance for the new AWS experience
 

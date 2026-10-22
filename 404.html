@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coki Studios — Redirigiendo</title>
     <link rel="icon" type="image/svg+xml" href="assets/cs-logo.svg">
+    <script src="coki-theme.js"></script>
+    <link rel="stylesheet" href="assets/css/toolbar.css">
     <script>
         // Si la ruta es /oauth-callback sin extensión, redirigir a oauth-callback.html preservando query y hash
         const path = window.location.pathname;
@@ -26,7 +28,7 @@
         }
     </script>
 </head>
-<body style="background:#07090e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
-    <p>Redirigiendo a Coki Studios...</p>
+<body style="background:var(--bg);color:var(--text);font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <p style="color:var(--text-sub);">Redirigiendo a Coki Studios...</p>
 </body>
 </html>
