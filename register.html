@@ -4,11 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuenta CSID</title>
+    <title>Cuenta CS ID — Coki Studios</title>
+    <link rel="icon" type="image/svg+xml" href="assets/cs-logo.svg">
+    <link rel="alternate icon" type="image/png" sizes="192x192" href="assets/cs-icon-192.png">
+    <link rel="apple-touch-icon" href="assets/cs-icon-192.png">
     <script src="coki-theme.js"></script>
     <meta name="description"
         content="Inicia sesión o crea tu cuenta CSID para acceder a todas nuestras aplicaciones de forma segura.">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
     <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/cs-account.css">
     <style>
@@ -284,11 +289,18 @@
 </head>
 
 <body>
-    <button class="theme-toggle-btn floating-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
+    <div class="xtraps-bg rainbow">
+        <div class="xtraps-wave"></div>
+    </div>
+
+    <div class="cs-waffle-floating-bar">
+        <button class="cs-waffle-btn" id="cs-waffle-toggle" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+    </div>
 
     <div class="auth-container">
         <div class="auth-header">
-            <div class="auth-logo">C</div>
+            <div class="auth-logo" style="background:transparent;padding:0;overflow:hidden;"><img src="assets/cs-logo.svg" alt="Coki Studios" style="width:100%;height:100%;object-fit:cover;"></div>
             <h1 data-i18n="logon_title">Bienvenido a tu CSID</h1>
             <p data-i18n="logon_subtitle">Tu cuenta unificada para todo el ecosistema Coki Studios</p>
         </div>

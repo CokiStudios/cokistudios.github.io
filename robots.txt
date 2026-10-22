@@ -1,4 +1,10 @@
 User-agent: *
+Disallow: /cs-mail.html
+Disallow: /cs-mail
+Disallow: /csims.html
+Disallow: /csims
+Disallow: /forkar-internal.html
+Disallow: /forkar-internal
 Allow: /
 
 Sitemap: https://cokistudios.github.io/sitemap.xml

@@ -4,10 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuenta de Coki Studios</title>
+    <title>Cuenta CS ID — Coki Studios</title>
+    <link rel="icon" type="image/svg+xml" href="assets/cs-logo.svg">
+    <link rel="alternate icon" type="image/png" sizes="192x192" href="assets/cs-icon-192.png">
+    <link rel="apple-touch-icon" href="assets/cs-icon-192.png">
     <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
     <link rel="stylesheet" href="assets/css/toolbar.css">
+    <link rel="stylesheet" href="assets/css/web-enhancements.css">
     <link rel="stylesheet" href="assets/css/cs-account.css">
     <style>
         .input-row-group {
@@ -60,20 +65,32 @@
 
 <body>
 
-    <!-- Header Superior (Estilo Apple / Google) -->
+    <div class="xtraps-bg rainbow">
+        <div class="xtraps-wave"></div>
+    </div>
+
+    <!-- Header Superior Unificado Coki Studios -->
     <header class="cs-header">
         <div class="cs-header-content">
-            <a href="index" class="cs-logo-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-blue);">
-                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                    <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <span><strong>Coki Studios</strong> Cuenta</span>
+            <a href="index.html" class="cs-logo-title">
+                <img src="assets/cs-logo.svg" alt="Coki Studios" style="width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 0 18px rgba(99, 102, 241, 0.35);">
+                <span style="font-weight: 800;">Coki Studios</span>
+                <span style="color: var(--text-tertiary); font-weight: 400; margin: 0 2px;">/</span>
+                <span style="font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(99, 102, 241, 0.14); color: var(--accent-blue); border: 1px solid rgba(99, 102, 241, 0.28);">Cuenta CS ID</span>
             </a>
 
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="cs-header-nav">
+                <a href="index.html" class="nav-link" style="font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:8px; text-decoration:none;">Inicio</a>
+                <a href="forkar.html" class="nav-link" style="font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:8px; text-decoration:none;">Forkar</a>
+                <a href="messenger.html" class="nav-link" style="font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:8px; text-decoration:none;">CSMS</a>
+                <a href="felte.html" class="nav-link" style="font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:8px; text-decoration:none;">Felte</a>
+                <a href="products.html" class="nav-link" style="font-size:13.5px; font-weight:500; padding:6px 12px; border-radius:8px; text-decoration:none;">Productos</a>
+            </div>
+
+            <div class="cs-header-right" style="display: flex; align-items: center; gap: 8px;">
+                <button id="cs-waffle-toggle" class="cs-waffle-btn" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
                 <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
-                <button id="btn-logout" class="cs-btn-apple" style="padding: 6px 16px; font-size: 13px;">
+                <button id="btn-logout" class="cs-btn-apple" style="padding: 7px 16px; font-size: 13px; font-weight: 600;">
                     Cerrar sesión
                 </button>
             </div>
@@ -529,7 +546,25 @@
         async function initAccount() {
             const user = await getCurrentCokiUser();
             if (!user) {
-                window.location.href = '/register.html';
+                document.getElementById('badge-plan').textContent = 'Sin sesión activa';
+                document.getElementById('profile-name').textContent = 'Cuenta CS ID';
+                document.getElementById('profile-email').textContent = 'Inicia sesión para sincronizar tus datos';
+                document.getElementById('profile-avatar').textContent = 'CS';
+                document.getElementById('label-current-name').textContent = 'No autenticado';
+                document.getElementById('label-current-email').textContent = '—';
+                document.getElementById('label-current-bio').textContent = 'Inicia sesión con tu CS ID para gestionar tu perfil.';
+                document.getElementById('display-master-key').textContent = 'Inicia sesión para ver tu CS Master Key';
+                document.getElementById('home-devices-count').textContent = 'Inicia sesión para ver dispositivos';
+                document.getElementById('home-family-plan').textContent = 'Requiere sesión CS ID';
+                const btnLogout = document.getElementById('btn-logout');
+                if (btnLogout) {
+                    btnLogout.textContent = 'Iniciar sesión';
+                    btnLogout.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.href = '/register.html?redirect=/dashboard.html';
+                    };
+                }
+                await renderTastesChips();
                 return;
             }
             currentUser = user;
@@ -895,6 +930,10 @@
         });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
+            if (!currentUser) {
+                window.location.href = '/register.html?redirect=/dashboard.html';
+                return;
+            }
             await logoutCoki();
             window.location.href = '/index.html';
         });

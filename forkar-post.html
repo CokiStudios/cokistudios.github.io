@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publicación — Forkar</title>
+    <link rel="icon" type="image/svg+xml" href="assets/forkar-icon.svg">
+    <link rel="alternate icon" type="image/jpeg" href="assets/forkar-icon.jpg">
     <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -21,6 +23,9 @@
         :root {
             --bg: #06090f;
             --bg2: #0d1117;
+            --modal-bg: #111827;
+            --input-bg: rgba(255, 255, 255, 0.04);
+            --surface-subtle: rgba(0, 0, 0, 0.2);
             --card: rgba(255, 255, 255, 0.04);
             --card-hover: rgba(255, 255, 255, 0.07);
             --border: rgba(255, 255, 255, 0.07);
@@ -36,10 +41,13 @@
         html.light-theme {
             --bg: #f8fafc;
             --bg2: #f1f5f9;
-            --card: rgba(0, 0, 0, 0.02);
-            --card-hover: rgba(0, 0, 0, 0.04);
-            --border: rgba(0, 0, 0, 0.06);
-            --border-glow: rgba(99, 102, 241, 0.3);
+            --modal-bg: #ffffff;
+            --input-bg: #f8fafc;
+            --surface-subtle: rgba(15, 23, 42, 0.04);
+            --card: rgba(255, 255, 255, 0.9);
+            --card-hover: #ffffff;
+            --border: rgba(15, 23, 42, 0.09);
+            --border-glow: rgba(79, 70, 229, 0.35);
             --accent: #4f46e5;
             --text: #0f172a;
             --text-sub: #475569;
@@ -242,17 +250,18 @@
         }
 
         .btn-follow.following {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
             color: var(--text-sub);
         }
 
         .btn-follow.follow {
             background: rgba(99, 102, 241, 0.15);
-            color: #a5b4fc;
+            color: var(--accent);
         }
 
         .btn-follow.follow:hover {
-            background: rgba(99, 102, 241, 0.25);
+            background: var(--accent);
             color: white;
         }
 
@@ -393,18 +402,27 @@
             z-index: 1000;
         }
 
+        html.light-theme .modal-overlay {
+            background: rgba(15, 23, 42, 0.45);
+        }
+
         .modal-overlay.open {
             display: flex;
         }
 
         .modal {
-            background: #111;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
             border-radius: 16px;
             width: 90%;
             max-width: 500px;
             padding: 24px;
-            color: #fff;
+            color: var(--text);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        html.light-theme .modal {
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
         }
 
         /* ── COMMENTS ── */
@@ -461,7 +479,7 @@
 
         .comment-textarea {
             width: 100%;
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px 16px;
@@ -495,7 +513,7 @@
         }
 
         .login-prompt {
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--surface-subtle);
             border: 1px dashed var(--border);
             border-radius: 12px;
             padding: 20px;
@@ -504,7 +522,7 @@
         }
 
         .login-prompt p {
-            color: var(--text-muted);
+            color: var(--text-sub);
             font-size: 14px;
             margin-bottom: 12px;
         }
@@ -518,7 +536,8 @@
         }
 
         .login-prompt a:hover {
-            color: #a5b4fc;
+            color: #4f46e5;
+            text-decoration: underline;
         }
 
         .comments-list {
@@ -582,6 +601,7 @@
                 Volver a Forkar
             </a>
             <div class="nav-right">
+                <button class="cs-waffle-btn" id="cs-waffle-toggle" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <a href="dashboard.html" id="nav-profile" style="display: flex;">
                     <div id="nav-avatar"></div>
@@ -633,9 +653,9 @@
     <div class="modal-overlay" id="modal-report">
         <div class="modal">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <div style="font-size: 18px; font-weight: bold;">Reportar contenido</div>
+                <div style="font-size: 18px; font-weight: bold; color: var(--text);">Reportar contenido</div>
                 <button onclick="closeReportModal()"
-                    style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;"></button>
+                    style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 8px; width: 32px; height: 32px; color: var(--text-sub); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
             </div>
             <div>
                 <input type="hidden" id="report-target-id">
@@ -648,7 +668,7 @@
                         style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">MOTIVO
                         DEL REPORTE</label>
                     <select id="report-reason"
-                        style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none;">
+                        style="width:100%; background:var(--input-bg); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none;">
                         <option value="spam">Spam / Publicidad</option>
                         <option value="harassment">Acoso o agresión</option>
                         <option value="inappropriate">Contenido inapropiado / explícito</option>
@@ -662,12 +682,12 @@
                         ADICIONALES (OPCIONAL)</label>
                     <textarea id="report-details"
                         placeholder="Escribe más detalles sobre por qué reportas este contenido..."
-                        style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none; resize:vertical; min-height:80px;"></textarea>
+                        style="width:100%; background:var(--input-bg); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-family:inherit; outline:none; resize:vertical; min-height:80px;"></textarea>
                 </div>
             </div>
             <div style="margin-top: 24px; display:flex; gap:12px; justify-content:flex-end;">
                 <button onclick="closeReportModal()"
-                    style="padding:10px 20px; border-radius:10px; background:rgba(255,255,255,0.05); color:var(--text-sub); border:none; cursor:pointer;">Cancelar</button>
+                    style="padding:10px 20px; border-radius:10px; background:var(--surface-subtle); color:var(--text-sub); border:1px solid var(--border); cursor:pointer;">Cancelar</button>
                 <button id="btn-submit-report" onclick="submitReport()"
                     style="padding:10px 20px; border-radius:10px; background:var(--accent); color:white; border:none; cursor:pointer; font-weight:bold;">Enviar
                     Reporte</button>
@@ -696,10 +716,48 @@
         let loadedComments = [];
 
         function escHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag]));
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function sanitizeUrl(url) {
+            if (!url || typeof url !== 'string') return '';
+            const trimmed = url.trim();
+            if (trimmed.startsWith('/') || trimmed.startsWith('./')) {
+                return escHtml(trimmed);
+            }
+            try {
+                const parsed = new URL(trimmed, window.location.origin);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    return escHtml(parsed.href);
+                }
+                if (parsed.protocol === 'data:' && trimmed.startsWith('data:image/')) {
+                    return escHtml(trimmed);
+                }
+            } catch (e) {}
+            return '';
+        }
+
+        function sanitizeEmbedVideoUrl(url) {
+            if (!url || typeof url !== 'string') return null;
+            const trimmed = url.trim();
+            try {
+                const parsed = new URL(trimmed);
+                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+                if (parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be')) {
+                    const embed = trimmed.replace('watch?v=', 'embed/');
+                    return { type: 'iframe', url: escHtml(embed) };
+                }
+                if (trimmed.match(/\.(mp4|mov|webm)$/i)) {
+                    return { type: 'video', url: escHtml(trimmed) };
+                }
+            } catch (e) {}
+            return null;
         }
 
         async function init() {
@@ -728,12 +786,13 @@
                 document.getElementById('nav-name').textContent = name;
 
                 const avatar = getUserAvatar(currentUser);
+                const safeAvatar = sanitizeUrl(avatar);
                 const navAvatar = document.getElementById('nav-avatar');
                 const formAvatar = document.getElementById('form-avatar');
 
-                if (avatar) {
-                    navAvatar.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-                    formAvatar.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+                if (safeAvatar) {
+                    navAvatar.innerHTML = `<img src="${safeAvatar}" style="width:100%;height:100%;object-fit:cover;">`;
+                    formAvatar.innerHTML = `<img src="${safeAvatar}" style="width:100%;height:100%;object-fit:cover;">`;
                 } else {
                     const initials = getInitials(name);
                     navAvatar.textContent = initials;
@@ -762,7 +821,10 @@
 
             const name = postData.author_name || 'Usuario';
             const avatar = postData.author_avatar;
+            const safeAvatar = sanitizeUrl(avatar);
             const initials = getInitials(name);
+            const safeImgUrl = sanitizeUrl(postData.image_url);
+            const safeVideo = sanitizeEmbedVideoUrl(postData.video_url);
             const cat = postData.category;
             const isOwner = currentUser?.id === postData.user_id;
 
@@ -781,7 +843,7 @@
                 <div class="post-header-top">
                     <div class="post-author-box">
                         <div class="post-avatar-large">
-                            ${avatar ? `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">` : initials}
+                            ${safeAvatar ? `<img src="${safeAvatar}" style="width:100%;height:100%;object-fit:cover;">` : escHtml(initials)}
                         </div>
                         <div>
                             <div class="post-author-name">
@@ -813,8 +875,8 @@
                 
                 <h1 class="post-title">${escHtml(postData.title)}</h1>
                 <div class="post-body">${escHtml(postData.content)}</div>
-                ${postData.image_url ? `<div style="margin: 16px 0; border-radius: 16px; overflow: hidden; max-height: 500px; border: 1px solid var(--border);"><img src="${escHtml(postData.image_url)}" style="width: 100%; height: auto; display: block; object-fit: cover;" alt="Foto adjunta"></div>` : ''}
-                ${postData.video_url ? `<div style="margin: 16px 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--border);">${postData.video_url.includes('youtube.com') || postData.video_url.includes('youtu.be') ? `<iframe src="${escHtml(postData.video_url.replace('watch?v=', 'embed/'))}" style="width:100%; height:360px; border:none;" allowfullscreen></iframe>` : `<video src="${escHtml(postData.video_url)}" controls style="width:100%; max-height:450px; display:block;"></video>`}</div>` : ''}
+                ${safeImgUrl ? `<div style="margin: 16px 0; border-radius: 16px; overflow: hidden; max-height: 500px; border: 1px solid var(--border);"><img src="${safeImgUrl}" style="width: 100%; height: auto; display: block; object-fit: cover;" alt="Foto adjunta"></div>` : ''}
+                ${safeVideo ? `<div style="margin: 16px 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--border);">${safeVideo.type === 'iframe' ? `<iframe src="${safeVideo.url}" style="width:100%; height:360px; border:none;" allowfullscreen></iframe>` : `<video src="${safeVideo.url}" controls style="width:100%; max-height:450px; display:block;"></video>`}</div>` : ''}
                 
                 <div class="post-actions">
                     <button onclick="toggleLike()" id="btn-like" class="btn-action ${userLiked ? 'liked' : ''}">
@@ -852,13 +914,14 @@
             list.innerHTML = comments.map(comment => {
                 const name = comment.author_name || 'Usuario';
                 const avatar = comment.author_avatar;
+                const safeAvatar = sanitizeUrl(avatar);
                 const initials = getInitials(name);
                 const isOwner = currentUser?.id === comment.user_id;
 
                 return `
                     <div class="comment-item">
                         <div class="comment-avatar">
-                            ${avatar ? `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">` : initials}
+                            ${safeAvatar ? `<img src="${safeAvatar}" style="width:100%;height:100%;object-fit:cover;">` : escHtml(initials)}
                         </div>
                         <div class="comment-body">
                             <div class="comment-header">
@@ -1000,7 +1063,7 @@
                     previewEl.style.display = 'block';
                     previewEl.innerHTML = `
                         <label style="display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:8px;">CONTENIDO A REPORTAR</label>
-                        <div style="padding:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); border-radius:12px; font-size:14px; color:var(--text-sub); font-style:italic; line-height:1.4;">
+                        <div style="padding:12px; background:var(--surface-subtle); border:1px solid var(--border); border-radius:12px; font-size:14px; color:var(--text-sub); font-style:italic; line-height:1.4;">
                             "${previewText}"
                         </div>
                     `;

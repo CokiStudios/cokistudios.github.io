@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="ecoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#ecoBg)"/>
+  <path d="M368 144 C240 144 144 224 144 352 C272 352 368 272 368 144 Z" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linejoin="round"/>
+  <path d="M144 368 C196 316 248 264 308 216" fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round"/>
+</svg>

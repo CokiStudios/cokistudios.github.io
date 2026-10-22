@@ -8,7 +8,8 @@
     <meta name="description"
         content="Descubre los productos de Coki Studios: Looping Engine, Forkar Eco Hub, CSMS Messenger, Shine Handheld, Felte Store y CSID.">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/cs-icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="assets/cs-logo.svg">
+    <link rel="alternate icon" type="image/png" sizes="192x192" href="assets/cs-icon-192.png">
     <link rel="apple-touch-icon" href="assets/cs-icon-192.png">
 
     <!-- OpenGraph & Twitter Cards -->
@@ -484,17 +485,17 @@
     <!-- ── NAV ── -->
     <nav>
         <div class="nav-inner">
-            <a href="index" class="nav-brand">
-                <div class="nav-logo">C</div>
+            <a href="index.html" class="nav-brand">
+                <div class="nav-logo" style="overflow:hidden;padding:0;background:transparent;"><img src="assets/cs-logo.svg" alt="CS" style="width:100%;height:100%;object-fit:cover;border-radius:9px;"></div>
                 <span class="nav-brand-name">Coki Studios</span>
             </a>
             <div class="nav-links">
-                <a href="index" class="nav-link" data-i18n="nav_home">Inicio</a>
-                <a href="products" class="nav-link active" data-i18n="nav_products">Productos</a>
-                <a href="felte" class="nav-link" data-i18n="nav_felte">Felte Store</a>
-                <a href="forkar" class="nav-link" data-i18n="nav_forkar">Forkar</a>
-                <a href="messenger" class="nav-link" data-i18n="nav_csms">CSMS</a>
-                <a href="developer" class="nav-link" data-i18n="nav_developers">Developers</a>
+                <a href="index.html" class="nav-link" data-i18n="nav_home">Inicio</a>
+                <a href="products.html" class="nav-link active" data-i18n="nav_products">Productos</a>
+                <a href="felte.html" class="nav-link" data-i18n="nav_felte">Felte Store</a>
+                <a href="forkar.html" class="nav-link" data-i18n="nav_forkar">Forkar</a>
+                <a href="messenger.html" class="nav-link" data-i18n="nav_csms">CSMS</a>
+                <a href="developer.html" class="nav-link" data-i18n="nav_developers">Developers</a>
                 <button class="spotlight-trigger-btn" id="cmdPaletteTrigger" aria-label="Buscar"><kbd>⌘K</kbd> Buscar</button>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
                     <option value="es">🇪🇸 ES</option>
@@ -502,10 +503,11 @@
                     <option value="fr">🇫🇷 FR</option>
                     <option value="pt">🇧🇷 PT</option>
                 </select>
-                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-                <a href="register" class="nav-cta">CSID</a>
+                <button class="cs-waffle-btn" id="cs-waffle-toggle" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+                <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
+                <a href="dashboard.html" class="nav-cta">CS ID</a>
                 <button class="mobile-hamburger-btn" id="mobileMenuBtn" aria-label="Abrir Menú">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="3" y1="12" x2="21" y2="12"></line>

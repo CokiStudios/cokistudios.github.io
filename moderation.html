@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consola de Moderación — Coki Studios</title>
+    <link rel="icon" type="image/svg+xml" href="assets/cs-logo.svg">
+    <link rel="alternate icon" type="image/png" sizes="192x192" href="assets/cs-icon-192.png">
     <script src="coki-theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/toolbar.css">
@@ -137,8 +139,8 @@
     <!-- NAVBAR -->
     <nav>
         <div class="nav-inner">
-            <a href="index" class="nav-brand">
-                <div class="nav-logo">C</div>
+            <a href="index.html" class="nav-brand">
+                <div class="nav-logo" style="overflow:hidden;padding:0;background:transparent;"><img src="assets/cs-logo.svg" alt="CS" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"></div>
                 <span class="nav-title">Coki Studios</span>
                 <span class="nav-badge">Moderación</span>
             </a>
@@ -147,14 +149,15 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                     <span>Conectar ChatGPT</span>
                 </button>
-                <a href="forkar" class="nav-link">Comunidad</a>
-                <a href="dashboard" class="nav-link">Mi Cuenta</a>
+                <a href="forkar.html" class="nav-link">Comunidad</a>
+                <a href="dashboard.html" class="nav-link">Mi Cuenta</a>
                 <select class="lang-select" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; cursor:pointer; outline:none;" aria-label="Idioma">
-                    <option value="es"> ES</option>
-                    <option value="en"> EN</option>
-                    <option value="fr"> FR</option>
-                    <option value="pt"> PT</option>
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="pt">🇧🇷 PT</option>
                 </select>
+                <button class="cs-waffle-btn" id="cs-waffle-toggle" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
             </div>
         </div>

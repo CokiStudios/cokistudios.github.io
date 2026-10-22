@@ -11,13 +11,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/toolbar.css">
     <link rel="stylesheet" href="assets/css/xtraps.css">
-    <link rel="stylesheet" href="assets/css/web-enhancements.css">
+    <link rel="stylesheet" href="assets/css/web-enhancements.css?v=2.6.1">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --bg: #06090f;
             --card: rgba(13, 17, 23, 0.85);
+            --panel-bg: rgba(15, 23, 42, 0.45);
+            --input-bg: rgba(3, 7, 18, 0.8);
             --border: rgba(16, 185, 129, 0.2);
             --border-glow: rgba(16, 185, 129, 0.35);
             --accent: #10b981;
@@ -32,6 +34,8 @@
         html.light-theme {
             --bg: #f8fafc;
             --card: rgba(255, 255, 255, 0.95);
+            --panel-bg: rgba(255, 255, 255, 0.92);
+            --input-bg: #ffffff;
             --border: rgba(16, 185, 129, 0.25);
             --border-glow: rgba(16, 185, 129, 0.3);
             --accent: #059669;
@@ -531,6 +535,7 @@
                     <option value="pt">🇧🇷 PT</option>
                 </select>
 
+                <button class="cs-waffle-btn" id="cs-waffle-toggle" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
                 <button class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema"></button>
                 <button class="mobile-hamburger-btn" id="mobileMenuBtn" aria-label="Abrir Menú">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -671,11 +676,11 @@
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; align-items: start;">
             <!-- RETOS SEMANALES -->
-            <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border); border-radius: 20px; padding: 22px;">
+            <div style="background: var(--panel-bg); border: 1px solid var(--border); border-radius: 20px; padding: 22px; box-shadow: 0 8px 24px rgba(15,23,42,0.04);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:20px;">🌱</span>
-                        <span style="font-size:14px; font-weight:800; color:#10b981; text-transform:uppercase; letter-spacing:0.5px;">Retos Forkman Semanales</span>
+                        <span style="font-size:14px; font-weight:800; color:var(--emerald); text-transform:uppercase; letter-spacing:0.5px;">Retos Forkman Semanales</span>
                     </div>
                     <span style="font-size:12px; color:var(--text-sub);">Cota • Chía • Bogotá</span>
                 </div>
@@ -684,22 +689,22 @@
 
             <!-- SONDEO COMUNITARIO & LEADERBOARD REGIONAL -->
             <div style="display:flex; flex-direction:column; gap:20px;">
-                <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border); border-radius: 20px; padding: 22px;">
+                <div style="background: var(--panel-bg); border: 1px solid var(--border); border-radius: 20px; padding: 22px; box-shadow: 0 8px 24px rgba(15,23,42,0.04);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-size:20px;">🗳️</span>
-                            <span style="font-size:14px; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px;">Participación & Sondeos</span>
+                            <span style="font-size:14px; font-weight:800; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px;">Participación & Sondeos</span>
                         </div>
                         <span style="font-size:12px; color:var(--text-sub);">Voz Ciudadana</span>
                     </div>
                     <div id="forkar-poll-box" class="cs-poll-box" style="margin-bottom:0; background:transparent; border:none; padding:0;"></div>
                 </div>
 
-                <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border); border-radius: 20px; padding: 22px;">
+                <div style="background: var(--panel-bg); border: 1px solid var(--border); border-radius: 20px; padding: 22px; box-shadow: 0 8px 24px rgba(15,23,42,0.04);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-size:20px;">🏆</span>
-                            <span style="font-size:14px; font-weight:800; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px;">Ranking Regional Sabana</span>
+                            <span style="font-size:14px; font-weight:800; color:#d97706; text-transform:uppercase; letter-spacing:0.5px;">Ranking Regional Sabana</span>
                         </div>
                         <span style="font-size:12px; color:var(--text-sub);">CO₂ Colectivo</span>
                     </div>
@@ -709,15 +714,15 @@
         </div>
 
         <!-- GENERADOR DE CERTIFICADO OFICIAL DE IMPACTO CO2 -->
-        <div style="margin-top: 28px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 22px; padding: 26px;">
+        <div style="margin-top: 28px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), var(--panel-bg)); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 22px; padding: 26px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:18px;">
                 <div>
-                    <div style="font-size:12px; font-weight:800; color:#10b981; text-transform:uppercase; letter-spacing:0.8px;">Verificación Criptográfica Forkar Eco Hub</div>
+                    <div style="font-size:12px; font-weight:800; color:var(--emerald); text-transform:uppercase; letter-spacing:0.8px;">Verificación Criptográfica Forkar Eco Hub</div>
                     <h3 style="font-size:20px; font-weight:800; color:var(--text); margin-top:4px;">🏅 Certificado Oficial de Reducción de Huella de Carbono</h3>
                     <p style="font-size:13px; color:var(--text-sub); margin-top:2px;">Personaliza y descarga tu certificado digital verificable con tus métricas de sostenibilidad en la Sabana de Bogotá.</p>
                 </div>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <input type="text" id="eco-cert-name-input" placeholder="Tu nombre o alias..." value="Ciudadano Eco Sabana" oninput="window.renderEcoCertificateCanvas && window.renderEcoCertificateCanvas()" style="background:rgba(3,7,18,0.8); border:1px solid rgba(16,185,129,0.4); color:var(--text); padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600; outline:none; min-width:210px;">
+                    <input type="text" id="eco-cert-name-input" placeholder="Tu nombre o alias..." value="Ciudadano Eco Sabana" oninput="window.renderEcoCertificateCanvas && window.renderEcoCertificateCanvas()" style="background:var(--input-bg); border:1px solid rgba(16,185,129,0.4); color:var(--text); padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600; outline:none; min-width:210px;">
                     <button class="btn-action btn-primary-eco" onclick="window.downloadEcoCertificate && window.downloadEcoCertificate()" style="padding:10px 18px; font-size:13px;">
                         ⬇ Descargar Certificado (.PNG)
                     </button>

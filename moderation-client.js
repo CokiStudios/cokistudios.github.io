@@ -122,26 +122,26 @@ export function setupChatGPTModalUI() {
   if (document.getElementById('coki-chatgpt-modal')) return;
 
   const modalHtml = `
-    <div id="coki-chatgpt-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
-      <div style="background:var(--bg2, #0d1117); border:1px solid var(--border-glow, rgba(99,102,241,0.4)); border-radius:20px; max-width:480px; width:100%; padding:28px; box-shadow:0 24px 64px rgba(0,0,0,0.6); color:var(--text, #f1f5f9); font-family:inherit;">
+    <div id="coki-chatgpt-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
+      <div style="background:var(--modal-bg, var(--bg2, #0d1117)); border:1px solid var(--border-glow, rgba(99,102,241,0.4)); border-radius:20px; max-width:480px; width:100%; padding:28px; box-shadow:0 24px 64px rgba(0,0,0,0.35); color:var(--text, #f1f5f9); font-family:inherit;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="width:36px; height:36px; border-radius:10px; background:#10a37f; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; font-weight:bold;">⚡</div>
             <div>
-              <h3 style="font-size:18px; font-weight:700; margin:0;">Conectar con ChatGPT</h3>
+              <h3 style="font-size:18px; font-weight:700; margin:0; color:var(--text, #f1f5f9);">Conectar con ChatGPT</h3>
               <p style="font-size:12px; color:var(--text-sub, #94a3b8); margin:0;">OpenAI API para moderación y análisis avanzado</p>
             </div>
           </div>
-          <button id="close-chatgpt-modal-btn" style="background:none; border:none; color:var(--text-sub, #94a3b8); font-size:22px; cursor:pointer; padding:4px;">&times;</button>
+          <button id="close-chatgpt-modal-btn" style="background:var(--surface-subtle, rgba(15,23,42,0.06)); border:1px solid var(--border, rgba(255,255,255,0.1)); border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-sub, #94a3b8); font-size:20px; cursor:pointer; padding:0;">&times;</button>
         </div>
 
-        <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:12px 14px; margin-bottom:18px; font-size:13px; line-height:1.5;">
+        <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:12px 14px; margin-bottom:18px; font-size:13px; line-height:1.5; color:var(--text, #f1f5f9);">
           <strong>🛡️ Modo Híbrido Activo:</strong> Tu web ya cuenta con <strong>Cloudflare Workers AI</strong> en el Edge de forma gratuita. Conectar tu clave de OpenAI te permite usar modelos de última generación (GPT-4o) para detectar chistes de doble sentido complejos con precisión máxima.
         </div>
 
         <div style="margin-bottom:18px;">
           <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text, #f1f5f9);">OpenAI API Key (sk-...)</label>
-          <input type="password" id="coki-chatgpt-key-input" placeholder="sk-proj-..." style="width:100%; padding:10px 14px; background:rgba(0,0,0,0.3); border:1px solid var(--border, rgba(255,255,255,0.1)); border-radius:10px; color:var(--text, #f1f5f9); font-size:14px; font-family:monospace; box-sizing:border-box; outline:none;" />
+          <input type="password" id="coki-chatgpt-key-input" placeholder="sk-proj-..." style="width:100%; padding:10px 14px; background:var(--input-bg, rgba(15,23,42,0.05)); border:1px solid var(--border, rgba(148,163,184,0.25)); border-radius:10px; color:var(--text, #f1f5f9); font-size:14px; font-family:monospace; box-sizing:border-box; outline:none;" />
           <span style="font-size:11px; color:var(--text-muted, #64748b); display:block; margin-top:4px;">Tu clave se almacena de forma segura únicamente en tu navegador (localStorage).</span>
         </div>
 

@@ -92,15 +92,15 @@
                     <div style="margin: 10px 0 6px;">
                         <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-sub); margin-bottom:4px;">
                             <span>Progreso de la Comunidad</span>
-                            <span style="font-family:'JetBrains Mono',monospace; color:#34d399; font-weight:700;">${q.progress}/${q.goal} ${q.unit} (${pct}%)</span>
+                            <span style="font-family:'JetBrains Mono',monospace; color:#10b981; font-weight:700;">${q.progress}/${q.goal} ${q.unit} (${pct}%)</span>
                         </div>
-                        <div style="width:100%; height:6px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
+                        <div class="cs-progress-track">
                             <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #10b981, #34d399); border-radius:999px;"></div>
                         </div>
                     </div>
 
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                        <span style="font-size:11px; color:#f59e0b; font-weight:600;">🏅 Badge: ${q.badge}</span>
+                        <span style="font-size:11px; color:#d97706; font-weight:600;">🏅 Badge: ${q.badge}</span>
                         <button class="cs-quest-btn ${isJoined ? 'joined' : ''}" onclick="window.toggleJoinQuest('${q.id}', ${q.reward})">
                             ${isJoined ? '✔ Reto Activo' : '+ Unirme al Reto'}
                         </button>
@@ -239,7 +239,7 @@
             const pct = Math.min(100, Math.round((m.co2 / maxCo2) * 100));
             const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🌿'));
             return `
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 14px; margin-bottom:10px;">
+                <div class="cs-muni-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-size:16px;">${medal}</span>
@@ -253,7 +253,7 @@
                             <button class="cs-quest-btn" style="margin-top:4px; padding:2px 8px; font-size:10px;" onclick="window.pledgeMunicipalityEco('${m.id}')">+ Sumar mi Ruta</button>
                         </div>
                     </div>
-                    <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
+                    <div class="cs-progress-track" style="height:5px;">
                         <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #10b981, #38bdf8);"></div>
                     </div>
                 </div>

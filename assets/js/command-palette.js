@@ -191,6 +191,16 @@
         });
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function renderResults(filterText = '') {
         const resultsEl = document.getElementById('cs-cmd-results');
         const term = filterText.toLowerCase().trim();
@@ -204,17 +214,17 @@
         selectedIndex = 0;
 
         if (filteredCommands.length === 0) {
-            resultsEl.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-sub); font-size:14px;">No se encontraron resultados para "${filterText}"</div>`;
+            resultsEl.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-sub); font-size:14px;">No se encontraron resultados para "${escapeHtml(filterText)}"</div>`;
             return;
         }
 
         resultsEl.innerHTML = filteredCommands.map((cmd, idx) => `
             <div class="cs-cmd-item ${idx === 0 ? 'selected' : ''}" data-idx="${idx}">
                 <div class="cs-cmd-item-left">
-                    <span class="cs-cmd-item-badge">${cmd.category}</span>
+                    <span class="cs-cmd-item-badge">${escapeHtml(cmd.category)}</span>
                     <div>
-                        <div style="font-weight: 600; font-size: 14px;">${cmd.title}</div>
-                        <div style="font-size: 12px; color: var(--text-sub); margin-top: 2px;">${cmd.desc}</div>
+                        <div style="font-weight: 600; font-size: 14px;">${escapeHtml(cmd.title)}</div>
+                        <div style="font-size: 12px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(cmd.desc)}</div>
                     </div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-sub);"><polyline points="9 18 15 12 9 6"></polyline></svg>

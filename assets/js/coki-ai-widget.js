@@ -146,8 +146,20 @@
         return div;
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function formatMarkdown(text) {
-        return text
+        if (!text) return '';
+        const escaped = escapeHtml(text);
+        return escaped
             .replace(/```bash([\s\S]*?)```/g, '<pre style="background:rgba(3,7,18,0.9); padding:8px 10px; border-radius:6px; font-family:\'JetBrains Mono\',monospace; font-size:12px; margin:6px 0; overflow-x:auto; color:#38bdf8;"><code>$1</code></pre>')
             .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:4px; font-family:monospace; font-size:12px; color:#38bdf8;">$1</code>')
             .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')

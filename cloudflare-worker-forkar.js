@@ -33,8 +33,9 @@ export default {
         ""
       ).trim().toLowerCase();
 
-      // En entornos de desarrollo o previews se puede evaluar parámetro de simulación seguro
-      const devEmail = url.searchParams.get("cf_email")?.toLowerCase() || "";
+      // En entornos de desarrollo estrictamente locales se permite simulación segura
+      const isLocalDev = hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local");
+      const devEmail = isLocalDev ? (url.searchParams.get("cf_email")?.toLowerCase() || "") : "";
       const evaluatedEmail = cfAccessEmail || devEmail;
 
       const isCokiStudiosEmail = evaluatedEmail.endsWith("@cokistudios.com");

@@ -138,3 +138,337 @@ html.light-theme .search-input {
 html.light-theme .search-input::placeholder {
     color: #94a3b8 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CS WAFLERA (UNIVERSAL APP LAUNCHER) & COHERENCIA VISUAL
+   ═══════════════════════════════════════════════════════════════ */
+
+.cs-waffle-btn,
+#cs-waffle-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.cs-waffle-btn:hover,
+#cs-waffle-toggle:hover,
+.cs-waffle-btn.active,
+#cs-waffle-toggle.active {
+    color: #ffffff;
+    background: rgba(99, 102, 241, 0.14);
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+html.light-theme .cs-waffle-btn,
+html.light-theme #cs-waffle-toggle {
+    color: #475569 !important;
+}
+
+html.light-theme .cs-waffle-btn:hover,
+html.light-theme #cs-waffle-toggle:hover,
+html.light-theme .cs-waffle-btn.active,
+html.light-theme #cs-waffle-toggle.active {
+    color: #4f46e5 !important;
+    background: rgba(79, 70, 229, 0.1) !important;
+    border-color: rgba(79, 70, 229, 0.28) !important;
+}
+
+.cs-waffle-btn svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cs-waffle-btn:hover svg,
+.cs-waffle-btn.active svg {
+    transform: scale(1.08);
+}
+
+/* Floating Waflera Wrapper when auto-injected on standalone pages */
+.cs-waffle-floating-bar {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border-radius: 14px;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+html.light-theme .cs-waffle-floating-bar {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(15, 23, 42, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Popover Container */
+.cs-waffle-popover {
+    position: fixed;
+    top: 64px;
+    right: 20px;
+    width: 348px;
+    max-width: calc(100vw - 24px);
+    z-index: 10000;
+    background: rgba(11, 15, 25, 0.96);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 22px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.68), 0 0 0 1px rgba(99, 102, 241, 0.16);
+    padding: 18px 16px 14px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.2s;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    user-select: none;
+}
+
+.cs-waffle-popover.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+html.light-theme .cs-waffle-popover {
+    background: rgba(255, 255, 255, 0.97) !important;
+    border-color: rgba(15, 23, 42, 0.1) !important;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16), 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+.cs-waffle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px 12px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+html.light-theme .cs-waffle-header {
+    border-bottom-color: rgba(15, 23, 42, 0.07) !important;
+}
+
+.cs-waffle-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #f8fafc;
+}
+
+html.light-theme .cs-waffle-title {
+    color: #0f172a !important;
+}
+
+.cs-waffle-title img {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+}
+
+.cs-waffle-badge {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+html.light-theme .cs-waffle-badge {
+    background: rgba(79, 70, 229, 0.1) !important;
+    color: #4f46e5 !important;
+    border-color: rgba(79, 70, 229, 0.25) !important;
+}
+
+.cs-waffle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    max-height: calc(100vh - 170px);
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.cs-waffle-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.cs-waffle-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 6px 8px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: #f1f5f9;
+    border: 1px solid transparent;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+.cs-waffle-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.09);
+    transform: translateY(-2px);
+}
+
+.cs-waffle-item.current {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+html.light-theme .cs-waffle-item {
+    color: #0f172a !important;
+}
+
+html.light-theme .cs-waffle-item:hover {
+    background: #f1f5f9 !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light-theme .cs-waffle-item.current {
+    background: rgba(79, 70, 229, 0.08) !important;
+    border-color: rgba(79, 70, 229, 0.28) !important;
+}
+
+.cs-waffle-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 7px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html.light-theme .cs-waffle-icon-wrap {
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.cs-waffle-item:hover .cs-waffle-icon-wrap {
+    transform: scale(1.07);
+}
+
+.cs-waffle-icon-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.cs-waffle-label {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 92px;
+}
+
+.cs-waffle-sub {
+    font-size: 10px;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+html.light-theme .cs-waffle-sub {
+    color: #64748b !important;
+}
+
+.cs-waffle-footer {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+html.light-theme .cs-waffle-footer {
+    border-top-color: rgba(15, 23, 42, 0.07) !important;
+}
+
+.cs-waffle-footer-link {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 9px;
+    transition: all 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cs-waffle-footer-link:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.cs-waffle-footer-link.primary {
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.cs-waffle-footer-link.primary:hover {
+    color: #ffffff;
+    background: #6366f1;
+}
+
+html.light-theme .cs-waffle-footer-link {
+    color: #475569 !important;
+}
+
+html.light-theme .cs-waffle-footer-link:hover {
+    color: #0f172a !important;
+    background: #f1f5f9 !important;
+}
+
+html.light-theme .cs-waffle-footer-link.primary {
+    color: #4f46e5 !important;
+    background: rgba(79, 70, 229, 0.08) !important;
+}
+
+html.light-theme .cs-waffle-footer-link.primary:hover {
+    color: #ffffff !important;
+    background: #4f46e5 !important;
+}
