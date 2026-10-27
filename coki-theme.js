@@ -19,6 +19,7 @@
         { id: 'find', name: 'Shine Find', sub: 'Buscador', href: 'shine-find.html', icon: 'assets/shine-find-icon.svg', match: ['/shine-find', '/shine-find.html'] },
         { id: 'maps', name: 'Shine Maps', sub: 'Mapas GPS', href: 'shine-maps.html', icon: 'assets/shine-maps-icon.svg', match: ['/shine-maps', '/shine-maps.html'] },
         { id: 'dev', name: 'Developers', sub: 'Consola & SDK', href: 'developer.html', icon: 'assets/dev-icon.svg', match: ['/developer', '/developer.html'] },
+        { id: 'smiledev', name: 'smiledev', sub: 'Package Studio', href: 'smiledev.html', icon: 'assets/dev-icon.svg', match: ['/smiledev', '/smiledev.html'] },
         { id: 'products', name: 'Productos', sub: 'Catálogo CS', href: 'products.html', icon: 'assets/shine-loop-launcher-icon.svg', match: ['/products', '/products.html'] }
     ];
 

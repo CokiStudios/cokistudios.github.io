@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>smiledev Studio — Gestor y Registro de Módulos Looping | Coki Studios</title>
+    <meta name="description" content="Interfaz gráfica oficial de smiledev para Looping Engine. Explora paquetes comunitarios, crea módulos con o sin CLI y publica en LoopModules con tu CS ID.">
+    
+    <link rel="icon" type="image/svg+xml" href="assets/cs-logo.svg">
+    <script src="coki-theme.js"></script>
+    <link rel="stylesheet" href="assets/css/shine-ui.css">
+    <link rel="stylesheet" href="assets/css/xtraps.css">
+    <link rel="stylesheet" href="assets/css/toolbar.css">
+    <link rel="stylesheet" href="assets/css/web-enhancements.css">
+    <link rel="stylesheet" href="assets/css/cs-industrial.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --brand-primary: #6366f1;
+            --brand-cyan: #00d4ff;
+            --brand-gradient: linear-gradient(135deg, #0284c7 0%, #4f46e5 50%, #7c3aed 100%);
+            --glass-bg: rgba(6, 9, 15, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-glow: rgba(99, 102, 241, 0.15);
+            --cs-bg: #030712;
+            --cs-bg-card: rgba(15, 23, 42, 0.65);
+            --cs-bg-card-sub: rgba(30, 41, 59, 0.55);
+            --cs-text-bright: #f8fafc;
+            --cs-text-sub: #94a3b8;
+            --cs-text-muted: #64748b;
+            --cs-hairline: rgba(255, 255, 255, 0.08);
+            --cs-cyan: #38bdf8;
+            --cs-green: #10b981;
+            --cs-purple: #c084fc;
+            --cs-amber: #f59e0b;
+            --cs-red: #ef4444;
+            --cs-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --cs-font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, Monaco, monospace;
+        }
+
+        html.light-theme {
+            --glass-bg: rgba(248, 250, 252, 0.88);
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --card-glow: rgba(79, 70, 229, 0.1);
+            --cs-bg: #f8fafc;
+            --cs-bg-card: rgba(255, 255, 255, 0.95);
+            --cs-bg-card-sub: rgba(241, 245, 249, 0.9);
+            --cs-text-bright: #0f172a;
+            --cs-text-sub: #475569;
+            --cs-text-muted: #64748b;
+            --cs-hairline: rgba(0, 0, 0, 0.08);
+        }
+
+        body.cs-industrial-body {
+            position: relative;
+            overflow-x: hidden;
+            background-color: var(--cs-bg);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.18), transparent 70%),
+                radial-gradient(var(--cs-hairline) 1px, transparent 1px);
+            background-size: 100% 100%, 28px 28px;
+            font-family: var(--cs-font-sans);
+            color: var(--cs-text-bright);
+            min-height: 100vh;
+        }
+
+        .cs-nav {
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .cs-nav-content {
+            max-width: 1320px; margin: 0 auto;
+            padding: 14px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .cs-logo-lockup {
+            display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;
+        }
+
+        .cs-panel {
+            background: var(--cs-bg-card);
+            border: 1px solid var(--cs-hairline);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            transition: all 0.25s ease;
+        }
+
+        .cs-panel:hover {
+            border-color: rgba(99, 102, 241, 0.35);
+        }
+
+        .cs-panel-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .cs-panel-title {
+            font-size: 18px; font-weight: 800; color: var(--cs-text-bright);
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .cs-tag {
+            font-size: 10px; font-weight: 800; font-family: var(--cs-font-mono);
+            padding: 3px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .cs-tag-cyan { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .cs-tag-green { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .cs-tag-purple { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+        .cs-tag-amber { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .cs-tag-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        .cs-tabs-bar {
+            display: flex; gap: 6px; border-bottom: 1px solid var(--cs-hairline);
+            margin-bottom: 28px; overflow-x: auto; padding-bottom: 4px;
+        }
+
+        .cs-tab-btn {
+            background: transparent; border: none;
+            padding: 10px 18px; border-radius: 10px;
+            color: var(--cs-text-sub); font-size: 13px; font-weight: 700;
+            font-family: var(--cs-font-sans); cursor: pointer;
+            transition: all 0.2s ease; white-space: nowrap;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .cs-tab-btn:hover {
+            color: var(--cs-text-bright); background: rgba(255,255,255,0.04);
+        }
+
+        .cs-tab-btn.active {
+            color: #38bdf8; background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.28);
+        }
+
+        .cs-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 10px; font-weight: 700;
+            font-size: 13px; cursor: pointer; transition: all 0.2s ease;
+            text-decoration: none; border: none; font-family: var(--cs-font-sans);
+        }
+        .cs-btn-primary {
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            color: #ffffff; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+        }
+        .cs-btn-primary:hover {
+            transform: translateY(-1px); box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+        }
+        .cs-btn-secondary {
+            background: var(--cs-bg-card-sub); color: var(--cs-text-bright);
+            border: 1px solid var(--cs-hairline);
+        }
+        .cs-btn-secondary:hover {
+            background: rgba(255,255,255,0.08); border-color: rgba(99,102,241,0.4);
+        }
+        .cs-btn-success {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #ffffff; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        }
+        .cs-btn-success:hover {
+            transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .cs-input, .cs-textarea, .cs-select {
+            width: 100%; background: var(--cs-bg-card-sub);
+            border: 1px solid var(--cs-hairline); border-radius: 10px;
+            padding: 10px 14px; color: var(--cs-text-bright);
+            font-size: 13px; font-family: var(--cs-font-sans);
+            transition: all 0.2s ease; outline: none;
+        }
+        .cs-input:focus, .cs-textarea:focus, .cs-select:focus {
+            border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+        .cs-code-editor {
+            font-family: var(--cs-font-mono); font-size: 13px; line-height: 1.6;
+            resize: vertical; tab-size: 4;
+        }
+
+        .pkg-card {
+            background: var(--cs-bg-card);
+            border: 1px solid var(--cs-hairline);
+            border-radius: 14px; padding: 20px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative; overflow: hidden;
+        }
+        .pkg-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #38bdf8, #6366f1);
+            opacity: 0; transition: opacity 0.2s ease;
+        }
+        .pkg-card:hover {
+            transform: translateY(-3px); border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+        }
+        .pkg-card:hover::before { opacity: 1; }
+
+        .cs-code-box {
+            background: #06090f; border: 1px solid var(--cs-hairline);
+            border-radius: 10px; padding: 14px 18px;
+            font-family: var(--cs-font-mono); font-size: 12px;
+            color: #e2e8f0; position: relative; overflow-x: auto;
+        }
+
+        /* Modal Styles */
+        .cs-modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        .cs-modal {
+            background: var(--cs-bg-card); border: 1px solid var(--cs-hairline);
+            border-radius: 18px; max-width: 680px; width: 100%;
+            max-height: 90vh; overflow-y: auto; padding: 28px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6); position: relative;
+        }
+
+        .step-number {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(56, 189, 248, 0.15); color: #38bdf8;
+            font-weight: 800; font-size: 13px; font-family: var(--cs-font-mono);
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+    </style>
+</head>
+<body class="cs-industrial-body">
+
+    <!-- Global Top Navigation -->
+    <nav class="cs-nav">
+        <div class="cs-nav-content">
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <a href="index.html" class="cs-logo-lockup">
+                    <img src="assets/cs-logo.svg" alt="Coki Studios" width="28" height="28">
+                    <div>
+                        <div style="font-size: 15px; font-weight: 800; letter-spacing: -0.02em;">smiledev <span style="color:#38bdf8;">Studio</span></div>
+                        <div style="font-size: 9px; font-family: var(--cs-font-mono); color: var(--cs-text-muted);">Looping Package GUI &amp; Registry</div>
+                    </div>
+                </a>
+
+                <div style="display: none; gap: 16px; align-items: center;" class="nav-links-desktop">
+                    <a href="developer.html" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">Portal Developers</a>
+                    <a href="https://github.com/CokiStudios/engine" target="_blank" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">Repo Engine ⚡</a>
+                    <a href="hiop-ide.html" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">hiOP IDE</a>
+                </div>
+            </div>
+
+            <!-- User Auth & Quick Controls -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- CS ID User Section -->
+                <div id="csid-user-badge" style="display: none; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 99px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);">
+                    <div id="user-avatar-circle" style="width: 22px; height: 22px; border-radius: 50%; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">U</div>
+                    <span id="user-display-name" style="font-size: 12px; font-weight: 700; color: #38bdf8; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Developer</span>
+                    <button id="btn-user-logout" title="Cerrar sesión" style="background: none; border: none; color: var(--cs-text-muted); cursor: pointer; padding: 2px 4px; font-size: 11px;">✕</button>
+                </div>
+
+                <button id="btn-open-csid-login" class="cs-btn cs-btn-secondary" style="font-size: 12px; padding: 7px 14px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Conectar CS ID
+                </button>
+
+                <!-- Universal Waflera & Theme -->
+                <button id="cs-waffle-btn" class="theme-toggle-btn" title="Aplicaciones de Coki Studios" aria-label="Lanzador de Apps"></button>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main style="max-width: 1320px; margin: 0 auto; padding: 32px 24px;">
+
+        <!-- Hero Header -->
+        <div style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                    <span class="cs-tag cs-tag-cyan">Looping Commercial v1.0.0</span>
+                    <span class="cs-tag cs-tag-purple">Arch 2.8A</span>
+                    <span class="cs-tag cs-tag-green">PostgreSQL LoopModules</span>
+                    <span class="cs-tag cs-tag-amber">CS ID Verified</span>
+                </div>
+                <h1 style="font-size: 28px; font-weight: 800; letter-spacing: -0.02em;">smiledev Studio &amp; Cloud Registry</h1>
+                <p style="color: var(--cs-text-sub); font-size: 14px; margin-top: 6px; max-width: 680px; line-height: 1.6;">
+                    Explora el catálogo universal de paquetes comunitarios, diseña y prueba módulos de forma manual sin requerir la terminal, o publica tus creaciones directamente en la nube firmadas con tu cuenta <strong>CS ID</strong>.
+                </p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div class="cs-panel" style="padding: 12px 18px; text-align: center;">
+                    <div style="font-size: 10px; font-family: var(--cs-font-mono); color: var(--cs-text-muted); text-transform: uppercase;">Módulos en Nube</div>
+                    <div id="stat-modules-count" style="font-size: 22px; font-weight: 800; color: #38bdf8; margin-top: 2px;">--</div>
+                </div>
+                <div class="cs-panel" style="padding: 12px 18px; text-align: center;">
+                    <div style="font-size: 10px; font-family: var(--cs-font-mono); color: var(--cs-text-muted); text-transform: uppercase;">Descargas Globales</div>
+                    <div id="stat-downloads-count" style="font-size: 22px; font-weight: 800; color: #10b981; margin-top: 2px;">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="cs-tabs-bar">
+            <button class="cs-tab-btn active" data-tab="tab-explorer">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                01. Explorador de Módulos
+            </button>
+            <button class="cs-tab-btn" data-tab="tab-publisher">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                02. Publicar con CS ID (Visual)
+            </button>
+            <button class="cs-tab-btn" data-tab="tab-manual-guide">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                03. Guía: Crear Módulos SIN CLI
+            </button>
+            <button class="cs-tab-btn" data-tab="tab-manifest-tool">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                04. Generador &amp; Validador smile.json
+            </button>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════ -->
+        <!-- TAB 1: EXPLORADOR DE MÓDULOS (LOOPMODULES)            -->
+        <!-- ══════════════════════════════════════════════════════ -->
+        <section id="tab-explorer" class="dev-tab-content">
+            <div class="cs-panel" style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <!-- Search Input -->
+                    <div style="position: relative; flex: 1; min-width: 280px;">
+                        <input type="text" id="registry-search" class="cs-input" placeholder="Buscar módulo por nombre, autor, descripción..." style="padding-left: 36px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--cs-text-muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+
+                    <!-- Language Filter Pills -->
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button class="cs-tab-btn active lang-filter-btn" data-lang="all" style="padding: 6px 12px; font-size: 11px;">Todos</button>
+                        <button class="cs-tab-btn lang-filter-btn" data-lang="loop" style="padding: 6px 12px; font-size: 11px;">🟢 Loop Puro</button>
+                        <button class="cs-tab-btn lang-filter-btn" data-lang="cpp" style="padding: 6px 12px; font-size: 11px;">🔵 C++ Nativo</button>
+                        <button class="cs-tab-btn lang-filter-btn" data-lang="python" style="padding: 6px 12px; font-size: 11px;">🟡 Python</button>
+                        <button class="cs-tab-btn lang-filter-btn" data-lang="node" style="padding: 6px 12px; font-size: 11px;">🌐 Node/Web</button>
+                        <button class="cs-tab-btn lang-filter-btn" data-lang="c2" style="padding: 6px 12px; font-size: 11px;">🟣 C2 UI</button>
+                    </div>
+
+                    <!-- Refresh Button -->
+                    <button id="btn-refresh-registry" class="cs-btn cs-btn-secondary" style="font-size: 12px; padding: 8px 14px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modules Grid -->
+            <div id="registry-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px;">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--cs-text-muted);">
+                    <div class="cs-spinner" style="margin: 0 auto 16px;"></div>
+                    Conectando con el registro LoopModules PostgreSQL...
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════ -->
+        <!-- TAB 2: PUBLICADOR CON CS ID (VISUAL UPLOADER)         -->
+        <!-- ══════════════════════════════════════════════════════ -->
+        <section id="tab-publisher" class="dev-tab-content" style="display: none;">
+            <!-- Authentication Status Banner -->
+            <div id="publish-auth-banner" class="cs-panel" style="margin-bottom: 24px; border-color: rgba(56, 189, 248, 0.3); background: linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08));">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <div style="font-size: 12px; font-family: var(--cs-font-mono); color: #38bdf8; font-weight: 700; text-transform: uppercase;">Identidad de Desarrollador</div>
+                        <div id="publish-auth-text" style="font-size: 15px; font-weight: 800; color: var(--cs-text-bright); margin-top: 2px;">
+                            No has iniciado sesión con CS ID.
+                        </div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); margin-top: 2px;">
+                            Para que tu módulo sea publicado como verificado y firmado con tu identidad, conecta tu cuenta de Coki Studios.
+                        </div>
+                    </div>
+                    <button id="btn-banner-login" class="cs-btn cs-btn-primary" style="font-size: 12px;">
+                        Iniciar Sesión con CS ID
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px;" class="publisher-layout">
+                <!-- Left Column: Module Form & Code Editor -->
+                <div class="cs-panel">
+                    <div class="cs-panel-header">
+                        <div class="cs-panel-title">
+                            <span class="step-number">1</span>
+                            Metadatos del Módulo
+                        </div>
+                        <span class="cs-tag cs-tag-cyan">smile.json Generator</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Nombre del Módulo (slug):</label>
+                            <input type="text" id="pub-name" class="cs-input" placeholder="ej: mi-nuevo-modulo" value="mi-nuevo-modulo">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Versión (SemVer):</label>
+                            <input type="text" id="pub-version" class="cs-input" placeholder="1.0.0" value="1.0.0">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Lenguaje de Implementación:</label>
+                            <select id="pub-language" class="cs-select">
+                                <option value="loop" selected>🟢 Looping Puro (.loop)</option>
+                                <option value="cpp">🔵 C++ Nativo (.hpp)</option>
+                                <option value="python">🟡 Python / PyLoop (.py)</option>
+                                <option value="node">🌐 Node / Web (.js)</option>
+                                <option value="c2">🟣 Declarativo C2 (.c2)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Punto de Entrada (entry_point):</label>
+                            <input type="text" id="pub-entry" class="cs-input" placeholder="main.loop" value="main.loop">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Autor / Identidad:</label>
+                            <input type="text" id="pub-author" class="cs-input" placeholder="Tu Nombre o CS ID" value="Coki Developer">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Licencia:</label>
+                            <select id="pub-license" class="cs-select">
+                                <option value="MIT" selected>MIT (Permisiva)</option>
+                                <option value="Apache-2.0">Apache 2.0</option>
+                                <option value="Coki Commercial">Coki Studios Commercial</option>
+                                <option value="BSD-3-Clause">BSD 3-Clause</option>
+                                <option value="GPL-3.0">GPL v3</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Descripción del Módulo:</label>
+                        <textarea id="pub-desc" class="cs-input" rows="2" placeholder="Explica brevemente qué resuelve este módulo...">Módulo de alto rendimiento para el ecosistema Looping.</textarea>
+                    </div>
+
+                    <!-- Code / Source Payload -->
+                    <div class="cs-panel-header" style="margin-top: 24px;">
+                        <div class="cs-panel-title">
+                            <span class="step-number">2</span>
+                            Código Fuente del Punto de Entrada
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button id="btn-load-template" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 4px 10px;">Cargar Plantilla</button>
+                            <label class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 4px 10px; cursor: pointer;">
+                                Subir Archivo
+                                <input type="file" id="file-code-upload" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+
+                    <textarea id="pub-code" class="cs-input cs-code-editor" rows="12" placeholder="// Escribe o pega aquí el código fuente de tu punto de entrada..."></textarea>
+                </div>
+
+                <!-- Right Column: Live smile.json & Verification Inspector -->
+                <div>
+                    <div class="cs-panel" style="margin-bottom: 24px; position: sticky; top: 80px;">
+                        <div class="cs-panel-header">
+                            <div class="cs-panel-title">
+                                <span class="step-number">3</span>
+                                Inspección y Publicación
+                            </div>
+                            <span id="pub-status-badge" class="cs-tag cs-tag-green">LISTO PARA SUBIR</span>
+                        </div>
+
+                        <!-- Real-time Validation Checks -->
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; font-size: 12px;">
+                            <div id="check-name" style="display: flex; align-items: center; gap: 8px; color: #10b981;">
+                                <span>✔</span> <span>Nombre del módulo válido</span>
+                            </div>
+                            <div id="check-version" style="display: flex; align-items: center; gap: 8px; color: #10b981;">
+                                <span>✔</span> <span>Versión SemVer estándar</span>
+                            </div>
+                            <div id="check-entry" style="display: flex; align-items: center; gap: 8px; color: #10b981;">
+                                <span>✔</span> <span>Punto de entrada coincide con el lenguaje</span>
+                            </div>
+                            <div id="check-auth" style="display: flex; align-items: center; gap: 8px; color: #f59e0b;">
+                                <span>⚠</span> <span id="check-auth-label">Modo invitado (Inicia sesión para firma CS ID)</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Generated smile.json -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 11px; font-family: var(--cs-font-mono); color: var(--cs-text-sub);">smile.json (Generado en Vivo)</span>
+                            <div style="display: flex; gap: 6px;">
+                                <button id="btn-copy-manifest" class="cs-btn cs-btn-secondary" style="font-size: 10px; padding: 2px 8px;">Copiar</button>
+                                <button id="btn-download-manifest" class="cs-btn cs-btn-secondary" style="font-size: 10px; padding: 2px 8px;">Descargar</button>
+                            </div>
+                        </div>
+                        <pre id="live-manifest-preview" class="cs-code-box" style="font-size: 11px; max-height: 220px; overflow-y: auto; margin-bottom: 20px;"></pre>
+
+                        <!-- Action Button -->
+                        <button id="btn-publish-module" class="cs-btn cs-btn-success" style="width: 100%; justify-content: center; padding: 14px 20px; font-size: 14px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Publicar Módulo con CS ID
+                        </button>
+                        <div id="pub-result-msg" style="margin-top: 10px; font-size: 12px; font-family: var(--cs-font-mono); text-align: center; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════ -->
+        <!-- TAB 3: GUÍA VISUAL: CREAR MÓDULOS SIN EL CLI         -->
+        <!-- ══════════════════════════════════════════════════════ -->
+        <section id="tab-manual-guide" class="dev-tab-content" style="display: none;">
+            <div class="cs-panel" style="margin-bottom: 24px;">
+                <div class="cs-panel-header">
+                    <div>
+                        <div class="cs-panel-title">Guía Oficial: Cómo Crear Módulos SIN el CLI de smiledev</div>
+                        <div style="font-size: 13px; color: var(--cs-text-sub); margin-top: 4px;">
+                            El motor Looping en C++17 resuelve módulos directamente desde el sistema de archivos. No necesitas instalar ni ejecutar la terminal de `smiledev` para crear o consumir módulos locales.
+                        </div>
+                    </div>
+                    <span class="cs-tag cs-tag-cyan">100% C++ NATIVE RESOLVER</span>
+                </div>
+
+                <!-- Visual Step Diagram -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 20px 0;">
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span class="step-number">1</span>
+                            <span style="font-weight: 800; font-size: 14px;">Crea la Carpeta</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5;">
+                            En tu proyecto, crea la carpeta <code style="color:#38bdf8;">modules/&lt;nombre-modulo&gt;/</code> en minúsculas y sin espacios.
+                        </div>
+                    </div>
+
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span class="step-number">2</span>
+                            <span style="font-weight: 800; font-size: 14px;">Escribe smile.json</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5;">
+                            Crea el archivo de manifiesto indicando el nombre, versión, lenguaje y archivo de punto de entrada.
+                        </div>
+                    </div>
+
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span class="step-number">3</span>
+                            <span style="font-weight: 800; font-size: 14px;">Programa el Código</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5;">
+                            Escribe tus funciones o clases en <code style="color:#10b981;">.loop</code>, <code style="color:#38bdf8;">.hpp</code>, <code style="color:#f59e0b;">.py</code> o <code style="color:#c084fc;">.js</code>.
+                        </div>
+                    </div>
+
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span class="step-number">4</span>
+                            <span style="font-weight: 800; font-size: 14px;">Importa con `use`</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5;">
+                            En tu script escribe <code style="color:#38bdf8;">use module "mi-modulo"</code> y ejecuta con <code style="color:#10b981;">./bin/looping</code>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Language Boilerplates -->
+                <div style="margin-top: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div style="font-weight: 800; font-size: 16px;">Plantillas Listas para Copiar por Lenguaje</div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="cs-tab-btn active guide-tab-btn" data-lang-guide="loop" style="padding: 6px 12px; font-size: 11px;">🟢 Loop Puro</button>
+                            <button class="cs-tab-btn guide-tab-btn" data-lang-guide="cpp" style="padding: 6px 12px; font-size: 11px;">🔵 C++ Nativo</button>
+                            <button class="cs-tab-btn guide-tab-btn" data-lang-guide="python" style="padding: 6px 12px; font-size: 11px;">🟡 Python</button>
+                            <button class="cs-tab-btn guide-tab-btn" data-lang-guide="node" style="padding: 6px 12px; font-size: 11px;">🌐 Node / Web</button>
+                        </div>
+                    </div>
+
+                    <div id="guide-code-display" class="cs-code-box" style="font-size: 12px; line-height: 1.6; max-height: 380px; overflow-y: auto;">
+                        <!-- Contenido dinámico inyectado por JS -->
+                    </div>
+                </div>
+
+                <!-- Explanation of Module Resolution -->
+                <div style="margin-top: 30px; border-top: 1px solid var(--cs-hairline); padding-top: 24px;">
+                    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">¿Cómo busca Looping los módulos en el disco?</h3>
+                    <p style="font-size: 13px; color: var(--cs-text-sub); line-height: 1.6; margin-bottom: 16px;">
+                        El compilador e intérprete nativo C++ de Looping busca en este orden exacto sin requerir CLI ni red:
+                    </p>
+                    <ol style="font-size: 13px; color: var(--cs-text-sub); line-height: 1.8; margin-left: 20px;">
+                        <li><strong>Módulo interno del Stdlib:</strong> Funciones en C++ nativo (<code style="color:#38bdf8;">math</code>, <code style="color:#38bdf8;">crypto</code>, <code style="color:#38bdf8;">csv</code>, <code style="color:#38bdf8;">datetime</code>, <code style="color:#38bdf8;">regex</code>, <code style="color:#38bdf8;">sys</code>).</li>
+                        <li><strong>Manifiesto Local:</strong> Busca <code style="color:#10b981;">./modules/&lt;nombre&gt;/smile.json</code> y lee el campo <code style="color:#38bdf8;">entry_point</code>.</li>
+                        <li><strong>Fallback Local de Archivo:</strong> Si no hay smile.json, busca directamente <code style="color:#10b981;">./modules/&lt;nombre&gt;/&lt;nombre&gt;.loop</code> o <code style="color:#10b981;">./modules/&lt;nombre&gt;/main.loop</code>.</li>
+                        <li><strong>Caché Global de Usuario:</strong> Busca en <code style="color:#c084fc;">~/.smiledev/modules/&lt;nombre&gt;/smile.json</code>.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════ -->
+        <!-- TAB 4: VALIDADOR & GENERADOR SMILE.JSON              -->
+        <!-- ══════════════════════════════════════════════════════ -->
+        <section id="tab-manifest-tool" class="dev-tab-content" style="display: none;">
+            <div class="cs-panel">
+                <div class="cs-panel-header">
+                    <div>
+                        <div class="cs-panel-title">Validador de Manifiestos `smile.json` en Vivo</div>
+                        <div style="font-size: 13px; color: var(--cs-text-sub); margin-top: 4px;">
+                            Pega aquí cualquier archivo `smile.json` para verificar si cumple al 100% con la especificación oficial de Looping Engine.
+                        </div>
+                    </div>
+                    <button id="btn-run-manual-val" class="cs-btn cs-btn-primary" style="font-size: 12px;">Validar Manifiesto</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Pega tu smile.json:</label>
+                        <textarea id="val-input-json" class="cs-input cs-code-editor" rows="14">{
+  "name": "mi-modulo",
+  "version": "1.0.0",
+  "language": "loop",
+  "entry_point": "main.loop",
+  "author_name": "Coki Developer",
+  "description": "Utilidades cuánticas para Looping",
+  "license": "MIT"
+}</textarea>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Resultado del Diagnóstico:</label>
+                        <div id="val-output-box" class="cs-code-box" style="height: 310px; overflow-y: auto;">
+                            Pulsa "Validar Manifiesto" para inspeccionar la estructura.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Inspeccionar Módulo del Registro -->
+    <div id="modal-module-detail" class="cs-modal-backdrop">
+        <div class="cs-modal">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="modal-mod-name" style="font-size: 20px; font-weight: 800; font-family: var(--cs-font-mono);"></span>
+                        <span id="modal-mod-lang-tag" class="cs-tag cs-tag-cyan"></span>
+                        <span id="modal-mod-ver" class="cs-tag cs-tag-purple"></span>
+                    </div>
+                    <div id="modal-mod-author" style="font-size: 12px; color: var(--cs-text-sub); margin-top: 4px;"></div>
+                </div>
+                <button id="btn-close-mod-detail" style="background: none; border: none; font-size: 18px; color: var(--cs-text-muted); cursor: pointer;">✕</button>
+            </div>
+
+            <p id="modal-mod-desc" style="font-size: 13px; color: var(--cs-text-bright); line-height: 1.6; margin-bottom: 16px;"></p>
+
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 6px;">Comando de Instalación en Terminal:</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="modal-install-cmd" class="cs-input" readonly style="font-family: var(--cs-font-mono); font-size: 12px; color: #10b981;">
+                    <button id="btn-modal-copy-install" class="cs-btn cs-btn-secondary" style="font-size: 11px;">Copiar</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub);">Código del Punto de Entrada:</span>
+                    <span id="modal-mod-entry" style="font-size: 11px; font-family: var(--cs-font-mono); color: #38bdf8;"></span>
+                </div>
+                <pre id="modal-mod-code" class="cs-code-box" style="max-height: 240px; overflow-y: auto; font-size: 11px;"></pre>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-modal-close" class="cs-btn cs-btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: CS ID Login -->
+    <div id="modal-csid-login" class="cs-modal-backdrop">
+        <div class="cs-modal" style="max-width: 420px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <img src="assets/cs-logo.svg" alt="CS ID" width="48" height="48" style="margin-bottom: 10px;">
+                <h3 style="font-size: 20px; font-weight: 800;">Iniciar Sesión con CS ID</h3>
+                <p style="font-size: 12px; color: var(--cs-text-sub); margin-top: 4px;">Accede con tu cuenta única para firmar y publicar módulos en smiledev.</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; text-align: left; margin-bottom: 20px;">
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 4px;">Correo Electrónico:</label>
+                    <input type="email" id="csid-login-email" class="cs-input" placeholder="tu_correo@cokistudios.com">
+                </div>
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: var(--cs-text-sub); display: block; margin-bottom: 4px;">Contraseña:</label>
+                    <input type="password" id="csid-login-pass" class="cs-input" placeholder="••••••••••••">
+                </div>
+                <button id="btn-do-login" class="cs-btn cs-btn-primary" style="justify-content: center; width: 100%; margin-top: 4px;">
+                    Entrar con CS ID
+                </button>
+                <div id="csid-login-err" style="color: #ef4444; font-size: 11px; text-align: center; display: none;"></div>
+            </div>
+
+            <div style="border-top: 1px solid var(--cs-hairline); padding-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                <a href="register.html" target="_blank" style="color: #38bdf8; text-decoration: none;">Crear cuenta CS ID</a>
+                <button id="btn-close-csid-login" class="cs-btn cs-btn-secondary" style="font-size: 11px; padding: 4px 10px;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="cs-toast" style="position: fixed; bottom: 24px; right: 24px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 12px 18px; font-size: 12px; font-family: var(--cs-font-mono); color: white; display: none; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999;">
+        <span id="cs-toast-msg">Mensaje</span>
+    </div>
+
+    <!-- Script de Funcionalidad & Conexión Supabase / CS ID -->
+    <script type="module">
+        import { 
+            supabase, 
+            getCurrentCokiUser, 
+            loginCokiAccount, 
+            logoutCoki 
+        } from './coki-auth.js';
+
+        // Constantes del Registro LoopModules
+        const LOOPMODULES_SUPABASE_URL = 'https://ayxklxciqgqeyuzkziov.supabase.co';
+        const LOOPMODULES_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGtseGNpcWdxZXl1emt6aW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTY4MzIsImV4cCI6MjEwNjc5MjgzMn0.03wUc8blB-cNq9F8Nz5o88GShtMIXeHsNYqmeK_N-hI';
+
+        let currentUser = null;
+        let allModules = [];
+        let currentFilterLang = 'all';
+
+        // ── BOILERPLATES DE PLANTILLAS ──
+        const CODE_TEMPLATES = {
+            loop: `// Punto de entrada: main.loop
+define module "mi-modulo" version 1.0:
+
+fn saludar(nombre) => $"¡Hola {nombre} desde Looping Engine!"
+
+fn calcular_multiplicador(base, factor = 2.0) {
+    return base * factor;
+}
+`,
+            cpp: `// Punto de entrada: modulo.hpp
+#pragma once
+#include <iostream>
+#include <string>
+
+namespace mi_modulo {
+    inline std::string version() {
+        return "1.0.0";
+    }
+    inline double sumar(double a, double b) {
+        return a + b;
+    }
+}
+`,
+            python: `# Punto de entrada: plugin.py
+# Módulo Python para Looping (PyLoop)
+
+def init_module(vars_dict=None):
+    print("Módulo PyLoop inicializado con éxito.")
+    return True
+
+def procesar_datos(payload):
+    return {"status": "ok", "longitud": len(str(payload))}
+`,
+            node: `// Punto de entrada: index.js
+// Módulo interactivo Web / Micro-Tool para Looping
+
+module.exports = {
+    version: '1.0.0',
+    ejecutar: function(data) {
+        console.log('[SMILEDEV NODE MODULE] Ejecutando:', data);
+        return { success: true, timestamp: Date.now() };
+    }
+};
+`,
+            c2: `// Punto de entrada: component.c2
+component MiComponenteHUD {
+    theme "cyber_neon_xui"
+    pipeline "Direct-to-Vulkan"
+
+    view MainTelemetry {
+        title: "Monitor APU"
+        refresh_hz: 120
+    }
+}
+`
+        };
+
+        // ── INICIALIZACIÓN ──
+        async function init() {
+            setupTabs();
+            setupFormListeners();
+            setupGuideTabs();
+            await checkAuth();
+            await loadModulesFromRegistry();
+            updateLiveManifest();
+            loadGuideContent('loop');
+        }
+
+        // ── TABS ──
+        function setupTabs() {
+            document.querySelectorAll('.cs-tabs-bar .cs-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.getAttribute('data-tab');
+                    if (!tabId) return;
+                    document.querySelectorAll('.cs-tabs-bar .cs-tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.dev-tab-content').forEach(c => c.style.display = 'none');
+                    btn.classList.add('active');
+                    const target = document.getElementById(tabId);
+                    if (target) target.style.display = 'block';
+                });
+            });
+
+            // Language Filter Buttons
+            document.querySelectorAll('.lang-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.lang-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilterLang = btn.getAttribute('data-lang');
+                    filterAndRenderModules();
+                });
+            });
+
+            // Search input filter
+            document.getElementById('registry-search')?.addEventListener('input', () => {
+                filterAndRenderModules();
+            });
+
+            // Refresh
+            document.getElementById('btn-refresh-registry')?.addEventListener('click', () => {
+                loadModulesFromRegistry();
+            });
+        }
+
+        // ── AUTENTICACIÓN CON CS ID ──
+        async function checkAuth() {
+            try {
+                currentUser = await getCurrentCokiUser();
+            } catch (err) {
+                console.warn('CS ID check auth:', err);
+                currentUser = null;
+            }
+
+            const userBadge = document.getElementById('csid-user-badge');
+            const openLoginBtn = document.getElementById('btn-open-csid-login');
+            const publishText = document.getElementById('publish-auth-text');
+            const checkAuthDiv = document.getElementById('check-auth');
+            const checkAuthLabel = document.getElementById('check-auth-label');
+            const bannerLoginBtn = document.getElementById('btn-banner-login');
+            const authorInput = document.getElementById('pub-author');
+
+            if (currentUser) {
+                const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Developer';
+                if (userBadge) userBadge.style.display = 'flex';
+                if (openLoginBtn) openLoginBtn.style.display = 'none';
+                document.getElementById('user-display-name').textContent = name;
+                document.getElementById('user-avatar-circle').textContent = name[0].toUpperCase();
+
+                if (publishText) {
+                    publishText.innerHTML = `Conectado como <span style="color:#38bdf8;">${name}</span> (${currentUser.email}) · <span class="cs-tag cs-tag-green">CS ID VERIFICADO</span>`;
+                }
+                if (bannerLoginBtn) bannerLoginBtn.style.display = 'none';
+                if (checkAuthDiv) {
+                    checkAuthDiv.style.color = '#10b981';
+                    checkAuthDiv.querySelector('span').textContent = '✔';
+                    checkAuthLabel.textContent = `CS ID Autenticado: ${name}`;
+                }
+                if (authorInput && authorInput.value === 'Coki Developer') {
+                    authorInput.value = name;
+                    updateLiveManifest();
+                }
+            } else {
+                if (userBadge) userBadge.style.display = 'none';
+                if (openLoginBtn) openLoginBtn.style.display = 'inline-flex';
+                if (publishText) {
+                    publishText.textContent = 'No has iniciado sesión con CS ID.';
+                }
+                if (bannerLoginBtn) bannerLoginBtn.style.display = 'inline-flex';
+                if (checkAuthDiv) {
+                    checkAuthDiv.style.color = '#f59e0b';
+                    checkAuthDiv.querySelector('span').textContent = '⚠';
+                    checkAuthLabel.textContent = 'Modo invitado (Inicia sesión para firma oficial CS ID)';
+                }
+            }
+        }
+
+        // Login Modal Handlers
+        document.getElementById('btn-open-csid-login')?.addEventListener('click', () => {
+            document.getElementById('modal-csid-login').style.display = 'flex';
+        });
+        document.getElementById('btn-banner-login')?.addEventListener('click', () => {
+            document.getElementById('modal-csid-login').style.display = 'flex';
+        });
+        document.getElementById('btn-close-csid-login')?.addEventListener('click', () => {
+            document.getElementById('modal-csid-login').style.display = 'none';
+        });
+        document.getElementById('btn-user-logout')?.addEventListener('click', async () => {
+            await logoutCoki();
+            currentUser = null;
+            await checkAuth();
+            showToast('Sesión CS ID cerrada');
+        });
+
+        document.getElementById('btn-do-login')?.addEventListener('click', async () => {
+            const email = document.getElementById('csid-login-email').value.trim();
+            const pass = document.getElementById('csid-login-pass').value;
+            const errBox = document.getElementById('csid-login-err');
+
+            if (!email || !pass) {
+                errBox.textContent = 'Por favor ingresa tu correo y contraseña.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            errBox.style.display = 'none';
+            const btn = document.getElementById('btn-do-login');
+            btn.innerText = 'Autenticando...';
+            btn.disabled = true;
+
+            const res = await loginCokiAccount(email, pass);
+            btn.innerText = 'Entrar con CS ID';
+            btn.disabled = false;
+
+            if (res.success) {
+                document.getElementById('modal-csid-login').style.display = 'none';
+                await checkAuth();
+                showToast(`¡Bienvenido a smiledev Studio, ${currentUser?.email}!`);
+            } else {
+                errBox.textContent = res.error || 'Credenciales inválidas.';
+                errBox.style.display = 'block';
+            }
+        });
+
+        // ── REGISTRY: CARGA DE MÓDULOS EN VIVO ──
+        async function loadModulesFromRegistry() {
+            const grid = document.getElementById('registry-grid');
+            try {
+                const res = await fetch(`${LOOPMODULES_SUPABASE_URL}/rest/v1/loop_modules?select=*&order=updated_at.desc`, {
+                    headers: {
+                        'apikey': LOOPMODULES_ANON_KEY,
+                        'Authorization': `Bearer ${LOOPMODULES_ANON_KEY}`
+                    }
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                allModules = await res.json();
+                
+                // Update stats
+                document.getElementById('stat-modules-count').textContent = allModules.length;
+                const totalDownloads = allModules.reduce((acc, m) => acc + (m.download_count || 0), 0);
+                document.getElementById('stat-downloads-count').textContent = totalDownloads.toLocaleString();
+
+                filterAndRenderModules();
+            } catch (err) {
+                console.error('Error cargando módulos:', err);
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 40px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; text-align: center;">
+                        <div style="color: #ef4444; font-weight: 800; font-size: 15px; margin-bottom: 6px;">Error de conexión con LoopModules</div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub);">${err.message}</div>
+                        <button class="cs-btn cs-btn-secondary" style="margin-top: 14px; font-size: 11px;" onclick="window.location.reload()">Reintentar</button>
+                    </div>
+                `;
+            }
+        }
+
+        function filterAndRenderModules() {
+            const query = (document.getElementById('registry-search')?.value || '').toLowerCase().trim();
+            const grid = document.getElementById('registry-grid');
+
+            let filtered = allModules.filter(m => {
+                if (currentFilterLang !== 'all') {
+                    if ((m.language || '').toLowerCase() !== currentFilterLang) return false;
+                }
+                if (query) {
+                    const matchName = (m.name || '').toLowerCase().includes(query);
+                    const matchDesc = (m.description || '').toLowerCase().includes(query);
+                    const matchAuthor = (m.author_name || '').toLowerCase().includes(query);
+                    return matchName || matchDesc || matchAuthor;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--cs-text-muted);">
+                        No se encontraron módulos coincidentes con los filtros seleccionados.
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(m => {
+                const lang = (m.language || 'loop').toLowerCase();
+                const langTagClass = lang === 'cpp' ? 'cs-tag-cyan' : lang === 'python' ? 'cs-tag-amber' : lang === 'node' ? 'cs-tag-blue' : lang === 'c2' ? 'cs-tag-purple' : 'cs-tag-green';
+                const langLabel = lang === 'cpp' ? 'C++' : lang === 'python' ? 'PYTHON' : lang === 'node' ? 'NODE/WEB' : lang === 'c2' ? 'C2 UI' : 'LOOP';
+
+                return `
+                    <div class="pkg-card">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                <div>
+                                    <div style="font-size: 16px; font-weight: 800; font-family: var(--cs-font-mono); color: var(--cs-text-bright);">${escapeHtml(m.name)}</div>
+                                    <div style="font-size: 11px; color: var(--cs-text-muted); margin-top: 2px;">
+                                        Por <span style="color:var(--cs-cyan); font-weight:600;">${escapeHtml(m.author_name || 'Comunidad')}</span>
+                                        ${m.is_verified ? '<span title="Verificado por Coki Studios" style="color:#10b981; font-weight:bold;"> ✔</span>' : ''}
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:6px;">
+                                    <span class="cs-tag ${langTagClass}">${langLabel}</span>
+                                    <span class="cs-tag cs-tag-purple">v${escapeHtml(m.version || '1.0.0')}</span>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5; margin-bottom: 16px; min-height: 36px;">
+                                ${escapeHtml(m.description || 'Sin descripción.')}
+                            </p>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-muted); margin-bottom: 12px; border-top: 1px solid var(--cs-hairline); padding-top: 10px;">
+                                <span>📄 ${escapeHtml(m.entry_point || 'main.loop')}</span>
+                                <span>⬇️ ${(m.download_count || 0).toLocaleString()} descargas</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <button class="cs-btn cs-btn-secondary" style="font-size: 11px; justify-content: center; padding: 7px 10px;" onclick="copyInstallCmd('${escapeHtml(m.name)}')">
+                                    📋 Copiar CLI
+                                </button>
+                                <button class="cs-btn cs-btn-primary" style="font-size: 11px; justify-content: center; padding: 7px 10px;" onclick="inspectModule('${m.id}')">
+                                    👁️ Inspeccionar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.copyInstallCmd = function(name) {
+            const cmd = `smiledev install ${name}`;
+            navigator.clipboard.writeText(cmd).then(() => {
+                showToast(`Copiado: ${cmd}`);
+            });
+        };
+
+        window.inspectModule = function(id) {
+            const mod = allModules.find(m => m.id === id);
+            if (!mod) return;
+
+            document.getElementById('modal-mod-name').textContent = mod.name;
+            document.getElementById('modal-mod-lang-tag').textContent = (mod.language || 'loop').toUpperCase();
+            document.getElementById('modal-mod-ver').textContent = `v${mod.version || '1.0.0'}`;
+            document.getElementById('modal-mod-author').textContent = `Autor: ${mod.author_name || 'Comunidad'} · Licencia: ${mod.license || 'MIT'}`;
+            document.getElementById('modal-mod-desc').textContent = mod.description || 'Sin descripción.';
+            document.getElementById('modal-install-cmd').value = `smiledev install ${mod.name}`;
+            document.getElementById('modal-mod-entry').textContent = mod.entry_point || 'main.loop';
+            document.getElementById('modal-mod-code').textContent = mod.code_payload || `// El código de ${mod.name} está distribuido en el paquete empaquetado.`;
+
+            document.getElementById('modal-module-detail').style.display = 'flex';
+        };
+
+        document.getElementById('btn-close-mod-detail')?.addEventListener('click', () => {
+            document.getElementById('modal-module-detail').style.display = 'none';
+        });
+        document.getElementById('btn-modal-close')?.addEventListener('click', () => {
+            document.getElementById('modal-module-detail').style.display = 'none';
+        });
+        document.getElementById('btn-modal-copy-install')?.addEventListener('click', () => {
+            const val = document.getElementById('modal-install-cmd').value;
+            navigator.clipboard.writeText(val).then(() => {
+                showToast(`Copiado: ${val}`);
+            });
+        });
+
+        // ── FORMULARIO PUBLICADOR & LIVE VALIDATION ──
+        function setupFormListeners() {
+            const nameEl = document.getElementById('pub-name');
+            const verEl = document.getElementById('pub-version');
+            const langEl = document.getElementById('pub-language');
+            const entryEl = document.getElementById('pub-entry');
+            const authorEl = document.getElementById('pub-author');
+            const licenseEl = document.getElementById('pub-license');
+            const descEl = document.getElementById('pub-desc');
+            const codeEl = document.getElementById('pub-code');
+
+            // Default code template for initial language
+            codeEl.value = CODE_TEMPLATES['loop'];
+
+            [nameEl, verEl, authorEl, descEl].forEach(el => {
+                el.addEventListener('input', updateLiveManifest);
+            });
+            licenseEl.addEventListener('change', updateLiveManifest);
+
+            langEl.addEventListener('change', () => {
+                const lang = langEl.value;
+                if (lang === 'cpp') entryEl.value = 'main.hpp';
+                else if (lang === 'python') entryEl.value = 'main.py';
+                else if (lang === 'node') entryEl.value = 'index.js';
+                else if (lang === 'c2') entryEl.value = 'main.c2';
+                else entryEl.value = 'main.loop';
+
+                if (CODE_TEMPLATES[lang]) {
+                    codeEl.value = CODE_TEMPLATES[lang];
+                }
+                updateLiveManifest();
+            });
+
+            entryEl.addEventListener('input', updateLiveManifest);
+
+            document.getElementById('btn-load-template')?.addEventListener('click', () => {
+                const lang = langEl.value;
+                if (CODE_TEMPLATES[lang]) {
+                    codeEl.value = CODE_TEMPLATES[lang];
+                    showToast(`Plantilla cargada para ${lang.toUpperCase()}`);
+                }
+            });
+
+            // File upload listener
+            document.getElementById('file-code-upload')?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    codeEl.value = evt.target.result;
+                    entryEl.value = file.name;
+                    showToast(`Archivo ${file.name} cargado en el editor`);
+                    updateLiveManifest();
+                };
+                reader.readAsText(file);
+            });
+
+            // Copy & Download Manifest
+            document.getElementById('btn-copy-manifest')?.addEventListener('click', () => {
+                const txt = document.getElementById('live-manifest-preview').textContent;
+                navigator.clipboard.writeText(txt).then(() => showToast('smile.json copiado al portapapeles'));
+            });
+
+            document.getElementById('btn-download-manifest')?.addEventListener('click', () => {
+                const txt = document.getElementById('live-manifest-preview').textContent;
+                downloadFile('smile.json', txt, 'application/json');
+            });
+
+            // Publicar
+            document.getElementById('btn-publish-module')?.addEventListener('click', publishModuleToSupabase);
+        }
+
+        function updateLiveManifest() {
+            const name = (document.getElementById('pub-name')?.value || '').trim();
+            const ver = (document.getElementById('pub-version')?.value || '').trim();
+            const lang = document.getElementById('pub-language')?.value || 'loop';
+            const entry = (document.getElementById('pub-entry')?.value || '').trim();
+            const author = (document.getElementById('pub-author')?.value || '').trim();
+            const license = document.getElementById('pub-license')?.value || 'MIT';
+            const desc = (document.getElementById('pub-desc')?.value || '').trim();
+
+            const manifest = {
+                name: name,
+                version: ver,
+                language: lang,
+                entry_point: entry,
+                author_name: author,
+                description: desc,
+                license: license,
+                dependencies: {}
+            };
+
+            const jsonStr = JSON.stringify(manifest, null, 2);
+            document.getElementById('live-manifest-preview').textContent = jsonStr;
+
+            // Live checks
+            let allValid = true;
+
+            const nameCheck = document.getElementById('check-name');
+            if (/^[a-z0-9][a-z0-9\-_.]*$/.test(name)) {
+                nameCheck.style.color = '#10b981';
+                nameCheck.querySelector('span').textContent = '✔';
+            } else {
+                nameCheck.style.color = '#ef4444';
+                nameCheck.querySelector('span').textContent = '✘';
+                allValid = false;
+            }
+
+            const verCheck = document.getElementById('check-version');
+            if (/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/.test(ver)) {
+                verCheck.style.color = '#10b981';
+                verCheck.querySelector('span').textContent = '✔';
+            } else {
+                verCheck.style.color = '#ef4444';
+                verCheck.querySelector('span').textContent = '✘';
+                allValid = false;
+            }
+
+            const entryCheck = document.getElementById('check-entry');
+            if (entry.length > 2) {
+                entryCheck.style.color = '#10b981';
+                entryCheck.querySelector('span').textContent = '✔';
+            } else {
+                entryCheck.style.color = '#ef4444';
+                entryCheck.querySelector('span').textContent = '✘';
+                allValid = false;
+            }
+
+            const badge = document.getElementById('pub-status-badge');
+            if (allValid) {
+                badge.className = 'cs-tag cs-tag-green';
+                badge.textContent = 'LISTO PARA SUBIR';
+            } else {
+                badge.className = 'cs-tag cs-tag-amber';
+                badge.textContent = 'REVISAR METADATOS';
+            }
+        }
+
+        // ── PUBLICACIÓN EN SUPABASE (LOOPMODULES) ──
+        async function publishModuleToSupabase() {
+            const name = (document.getElementById('pub-name')?.value || '').trim();
+            const ver = (document.getElementById('pub-version')?.value || '').trim();
+            const lang = document.getElementById('pub-language')?.value || 'loop';
+            const entry = (document.getElementById('pub-entry')?.value || '').trim();
+            const author = (document.getElementById('pub-author')?.value || '').trim();
+            const license = document.getElementById('pub-license')?.value || 'MIT';
+            const desc = (document.getElementById('pub-desc')?.value || '').trim();
+            const code = document.getElementById('pub-code')?.value || '';
+            const msgBox = document.getElementById('pub-result-msg');
+
+            if (!name || !ver || !entry) {
+                alert('Por favor completa los campos obligatorios (nombre, versión, punto de entrada).');
+                return;
+            }
+
+            const btn = document.getElementById('btn-publish-module');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="cs-spinner" style="width:14px; height:14px;"></span> Publicando en LoopModules...`;
+            msgBox.style.display = 'none';
+
+            try {
+                const authorId = currentUser ? currentUser.id : null;
+                const authorName = currentUser ? (currentUser.user_metadata?.full_name || currentUser.email) : author;
+
+                const payload = {
+                    name: name,
+                    version: ver,
+                    language: lang,
+                    entry_point: entry,
+                    author_id: authorId,
+                    author_name: authorName,
+                    description: desc,
+                    license: license,
+                    code_payload: code,
+                    dependencies: [],
+                    is_verified: currentUser ? true : false,
+                    updated_at: new Date().toISOString()
+                };
+
+                const res = await fetch(`${LOOPMODULES_SUPABASE_URL}/rest/v1/loop_modules`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': LOOPMODULES_ANON_KEY,
+                        'Authorization': `Bearer ${LOOPMODULES_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${errText}`);
+                }
+
+                msgBox.style.color = '#10b981';
+                msgBox.innerHTML = `✔ ¡Módulo <strong>${escapeHtml(name)}</strong> v${escapeHtml(ver)} publicado con éxito!<br>Instálalo con: <code>smiledev install ${escapeHtml(name)}</code>`;
+                msgBox.style.display = 'block';
+                showToast(`✔ Módulo ${name} publicado en la nube.`);
+
+                // Recargar catálogo
+                await loadModulesFromRegistry();
+            } catch (err) {
+                console.error('Error publicando:', err);
+                msgBox.style.color = '#ef4444';
+                msgBox.innerHTML = `✘ Error al publicar: ${escapeHtml(err.message)}`;
+                msgBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Publicar Módulo con CS ID
+                `;
+            }
+        }
+
+        // ── GUÍA INTERACTIVA DE MÓDULOS SIN CLI ──
+        function setupGuideTabs() {
+            document.querySelectorAll('.guide-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.guide-tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const lang = btn.getAttribute('data-lang-guide');
+                    loadGuideContent(lang);
+                });
+            });
+
+            // Validador manual
+            document.getElementById('btn-run-manual-val')?.addEventListener('click', runManualValidation);
+        }
+
+        function loadGuideContent(lang) {
+            const display = document.getElementById('guide-code-display');
+            if (lang === 'cpp') {
+                display.innerHTML = `
+<span style="color:#38bdf8;">// 1. Manifiesto: modules/mi-modulo-cpp/smile.json</span>
+{
+  "name": "mi-modulo-cpp",
+  "version": "1.0.0",
+  "language": "cpp",
+  "entry_point": "vector_math.hpp",
+  "license": "MIT"
+}
+
+<span style="color:#38bdf8;">// 2. Cabecera C++: modules/mi-modulo-cpp/vector_math.hpp</span>
+#pragma once
+#include &lt;cmath&gt;
+
+namespace vector_math {
+    struct Vec2 {
+        double x, y;
+        inline double modulo() const { return std::sqrt(x*x + y*y); }
+    };
+}
+
+<span style="color:#10b981;">// 3. Ejecución directa sin CLI:</span>
+// En tu script .loop no requieres CLI. El compilador lo compila en C++17 nativo.
+`;
+            } else if (lang === 'python') {
+                display.innerHTML = `
+<span style="color:#38bdf8;">// 1. Manifiesto: modules/mi-modulo-py/smile.json</span>
+{
+  "name": "mi-modulo-py",
+  "version": "1.0.0",
+  "language": "python",
+  "entry_point": "ia_bridge.py",
+  "license": "MIT"
+}
+
+<span style="color:#38bdf8;">// 2. Script Python: modules/mi-modulo-py/ia_bridge.py</span>
+def init_module(vars_dict=None):
+    return True
+
+def predecir(valor):
+    return valor * 2.5 + 10
+
+<span style="color:#10b981;">// 3. Consumir en Looping (mi_script.loop):</span>
+use python "modules/mi-modulo-py/ia_bridge.py"
+val resultado = mi_modulo_py.predecir(40)
+print(resultado)
+`;
+            } else if (lang === 'node') {
+                display.innerHTML = `
+<span style="color:#38bdf8;">// 1. Manifiesto: modules/mi-modulo-node/smile.json</span>
+{
+  "name": "mi-modulo-node",
+  "version": "1.0.0",
+  "language": "node",
+  "entry_point": "index.js",
+  "license": "MIT"
+}
+
+<span style="color:#38bdf8;">// 2. Script Node: modules/mi-modulo-node/index.js</span>
+module.exports = {
+    procesar: function(entrada) {
+        return { ok: true, data: entrada };
+    }
+};
+`;
+            } else {
+                display.innerHTML = `
+<span style="color:#38bdf8;">// 1. Manifiesto: modules/mi-util/smile.json</span>
+{
+  "name": "mi-util",
+  "version": "1.0.0",
+  "language": "loop",
+  "entry_point": "main.loop",
+  "author_name": "Tu Nombre o CS ID",
+  "description": "Utilidades creadas a mano sin CLI",
+  "license": "MIT"
+}
+
+<span style="color:#38bdf8;">// 2. Código Fuente: modules/mi-util/main.loop</span>
+define module "mi-util" version 1.0:
+
+fn saludo(nombre) => $"¡Hola {nombre}! Bienvenido a Looping."
+
+fn duplicar(x) => x * 2
+
+<span style="color:#10b981;">// 3. Consumir en tu programa principal (main.loop):</span>
+use module "mi-util"
+
+val mensaje = saludo("Alex")
+print(mensaje)
+print(duplicar(21))
+
+<span style="color:#c084fc;">// 4. Ejecución instantánea:</span>
+// ./bin/looping main.loop
+`;
+            }
+        }
+
+        // ── VALIDADOR MANUAL DE SMILE.JSON ──
+        function runManualValidation() {
+            const valBox = document.getElementById('val-output-box');
+            const input = document.getElementById('val-input-json')?.value || '';
+
+            try {
+                const parsed = JSON.parse(input);
+                const errors = [];
+                const warnings = [];
+
+                if (!parsed.name) errors.push('Falta el campo obligatorio "name".');
+                else if (!/^[a-z0-9][a-z0-9\-_.]*$/.test(parsed.name)) errors.push(`Nombre "${parsed.name}" inválido. Solo minúsculas, números, guiones y puntos.`);
+
+                if (!parsed.version) errors.push('Falta el campo obligatorio "version".');
+                else if (!/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/.test(parsed.version)) warnings.push(`La versión "${parsed.version}" no sigue el estándar estricto SemVer (ej: 1.0.0).`);
+
+                const allowedLangs = ['loop', 'cpp', 'python', 'node', 'c2'];
+                if (!parsed.language) errors.push(`Falta el campo obligatorio "language" (${allowedLangs.join(', ')}).`);
+                else if (!allowedLangs.includes(parsed.language.toLowerCase())) errors.push(`Lenguaje "${parsed.language}" desconocido. Válidos: ${allowedLangs.join(', ')}`);
+
+                if (!parsed.entry_point) errors.push('Falta el campo obligatorio "entry_point".');
+
+                if (!parsed.description || parsed.description.length < 10) warnings.push('La descripción es muy breve o está vacía (recomendado > 10 caracteres).');
+                if (!parsed.license) warnings.push('No se especificó licencia (se asumirá MIT por defecto).');
+
+                if (errors.length > 0) {
+                    valBox.innerHTML = `
+<span style="color:#ef4444; font-weight:bold;">✘ Validación FALLIDA (${errors.length} error(es)):</span>
+${errors.map(e => `  • <span style="color:#ef4444;">${e}</span>`).join('\n')}
+${warnings.length > 0 ? '\n<span style="color:#f59e0b; font-weight:bold;">⚠ Advertencias:</span>\n' + warnings.map(w => `  • <span style="color:#f59e0b;">${w}</span>`).join('\n') : ''}
+`;
+                } else if (warnings.length > 0) {
+                    valBox.innerHTML = `
+<span style="color:#10b981; font-weight:bold;">✔ Validación PASADA con recomendaciones:</span>
+${warnings.map(w => `  • <span style="color:#f59e0b;">${w}</span>`).join('\n')}
+
+<span style="color:#38bdf8;">• Módulo:</span> ${parsed.name}
+<span style="color:#38bdf8;">• Versión:</span> ${parsed.version}
+<span style="color:#38bdf8;">• Lenguaje:</span> ${parsed.language}
+<span style="color:#38bdf8;">• Entrada:</span> ${parsed.entry_point}
+`;
+                } else {
+                    valBox.innerHTML = `
+<span style="color:#10b981; font-weight:bold;">✔ ¡smile.json 100% VÁLIDO Y LISTO PARA DISTRIBUCIÓN!</span>
+
+• Nombre       : ${parsed.name}
+• Versión      : ${parsed.version}
+• Lenguaje     : ${parsed.language}
+• Punto Entrada: ${parsed.entry_point}
+• Licencia     : ${parsed.license || 'MIT'}
+• Autor        : ${parsed.author_name || 'Comunidad'}
+`;
+                }
+            } catch (err) {
+                valBox.innerHTML = `<span style="color:#ef4444; font-weight:bold;">✘ Error de sintaxis JSON:</span>\n${err.message}`;
+            }
+        }
+
+        // Helpers
+        function showToast(msg) {
+            const toast = document.getElementById('cs-toast');
+            document.getElementById('cs-toast-msg').textContent = msg;
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        function downloadFile(filename, text, mimeType) {
+            const blob = new Blob([text], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Iniciar al cargar
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

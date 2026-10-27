@@ -74,11 +74,13 @@ cmd_help() {
     echo -e "  ${C_PINK}pack${C_RESET} [dir]             Bundle module into release tarball (.tar.gz)"
     echo -e "  ${C_PURPLE}link${C_RESET} [dir]             Symlink local module into global cache for local dev"
     echo -e "  ${C_RED}unlink${C_RESET} <name>          Remove global symlink"
+    echo -e "  ${C_GREEN}validate${C_RESET} [dir]         Verify module structure, smile.json compliance & files"
     echo -e "  ${C_AQUA}test${C_RESET} [module]          Execute module tests via Looping engine"
     echo -e "  ${C_AQUA}run${C_RESET} <module|script>    Execute an installed module or .loop script with Looping"
     echo ""
-    echo -e "${C_BOLD}CLOUD REGISTRY & PUBLISHING:${C_RESET}"
-    echo -e "  ${C_PINK}upload-module${C_RESET} <dir>    Publish a module to LoopModules registry (requires login)"
+    echo -e "${C_BOLD}CLOUD REGISTRY & PUBLISHING (CS ID):${C_RESET}"
+    echo -e "  ${C_PINK}publish${C_RESET} <dir>          Publish a module to LoopModules registry (requires CS ID)"
+    echo -e "  ${C_PINK}upload-module${C_RESET} <dir>    Alias for publish"
     echo -e "  ${C_PURPLE}add-repo${C_RESET} <url>         Add an external community repository mirror"
     echo ""
     echo -e "${C_BOLD}AUTHENTICATION (CS ID / SMILEDEV):${C_RESET}"
@@ -842,9 +844,152 @@ EOF
     echo -e "   To publish:      ${C_CYAN}smiledev upload-module $target_dir${C_RESET}"
 }
 
+# ── 10.5. COMMAND: VALIDATE (Verify module integrity & manifest) ──
+cmd_validate() {
+    local target_dir="."
+    local json_output=false
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --json)
+                json_output=true
+                shift
+                ;;
+            *)
+                target_dir="$1"
+                shift
+                ;;
+        esac
+    done
+
+    if [ ! -d "$target_dir" ]; then
+        if [ "$json_output" = true ]; then
+            echo "{\"valid\": false, \"errors\": [\"Directory not found: $target_dir\"]}"
+        else
+            echo -e "${C_RED}✘ Error:${C_RESET} Directory not found: $target_dir"
+        fi
+        exit 1
+    fi
+
+    local manifest="$target_dir/smile.json"
+    if [ ! -f "$manifest" ]; then
+        if [ "$json_output" = true ]; then
+            echo "{\"valid\": false, \"errors\": [\"Missing smile.json in $target_dir\"]}"
+        else
+            echo -e "${C_RED}✘ Invalid Module:${C_RESET} Missing ${C_BOLD}smile.json${C_RESET} in $target_dir"
+            echo -e "   Every module requires a manifest. See ${C_CYAN}https://cokistudios.github.io/smiledev.html#manual-guide${C_RESET}"
+        fi
+        exit 1
+    fi
+
+    if [ "$json_output" = false ]; then
+        echo -e "${C_CYAN}[SMILEDEV VALIDATOR]${C_RESET} Validating module at: ${C_BOLD}$target_dir${C_RESET}..."
+    fi
+
+    python3 -c "
+import json, sys, os, re
+
+try:
+    with open('$manifest', 'r', encoding='utf-8') as f:
+        mf = json.load(f)
+except Exception as e:
+    if '$json_output' == 'true':
+        print(json.dumps({'valid': False, 'errors': [f'JSON Parse Error: {str(e)}']}))
+    else:
+        print('${C_RED}✘ JSON Parse Error in smile.json:${C_RESET} ' + str(e))
+    sys.exit(1)
+
+errors = []
+warnings = []
+
+name = mf.get('name', '')
+if not name:
+    errors.append('Missing required field: \"name\"')
+elif not re.match(r'^[a-z0-9][a-z0-9\-_.]*$', name):
+    errors.append(f'Invalid module name \"{name}\". Must be lowercase alphanumeric, hyphens, underscores or dots.')
+
+ver = mf.get('version', '')
+if not ver:
+    errors.append('Missing required field: \"version\"')
+elif not re.match(r'^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$', ver):
+    warnings.append(f'Version \"{ver}\" is not strict SemVer (recommended format: 1.0.0).')
+
+lang = mf.get('language', '')
+allowed_langs = ['loop', 'cpp', 'python', 'node', 'c2']
+if not lang:
+    errors.append('Missing required field: \"language\" (must be one of: ' + ', '.join(allowed_langs) + ')')
+elif lang.lower() not in allowed_langs:
+    errors.append(f'Unknown language \"{lang}\". Allowed: {allowed_langs}')
+
+entry = mf.get('entry_point', '')
+if not entry:
+    errors.append('Missing required field: \"entry_point\"')
+else:
+    entry_path = os.path.join('$target_dir', entry)
+    if not os.path.isfile(entry_path):
+        errors.append(f'Entry point file \"{entry}\" not found at {entry_path}')
+    else:
+        ext = os.path.splitext(entry)[1].lower()
+        if lang.lower() == 'loop' and ext not in ['.loop', '.ruup']:
+            warnings.append(f'Entry point \"{entry}\" extension does not match language loop (.loop / .ruup expected).')
+        elif lang.lower() == 'cpp' and ext not in ['.hpp', '.h', '.cpp']:
+            warnings.append(f'Entry point \"{entry}\" extension does not match language cpp (.hpp / .h expected).')
+        elif lang.lower() == 'python' and ext not in ['.py']:
+            warnings.append(f'Entry point \"{entry}\" extension does not match language python (.py expected).')
+        elif lang.lower() == 'node' and ext not in ['.js', '.mjs', '.cjs']:
+            warnings.append(f'Entry point \"{entry}\" extension does not match language node (.js expected).')
+
+desc = mf.get('description', '')
+if not desc or len(desc.strip()) < 8:
+    warnings.append('Description is missing or very brief (recommended > 10 characters).')
+
+readme_path = os.path.join('$target_dir', 'README.md')
+if not os.path.isfile(readme_path):
+    warnings.append('No README.md found in module root. Recommended for developer documentation.')
+
+is_valid = len(errors) == 0
+
+if '$json_output' == 'true':
+    print(json.dumps({
+        'valid': is_valid,
+        'name': name,
+        'version': ver,
+        'language': lang,
+        'entry_point': entry,
+        'errors': errors,
+        'warnings': warnings
+    }))
+else:
+    if errors:
+        print('${C_RED}✘ Validation FAILED with ' + str(len(errors)) + ' error(s):${C_RESET}')
+        for err in errors:
+            print('  • ${C_RED}' + err + '${C_RESET}')
+        sys.exit(1)
+
+    if warnings:
+        print('${C_YELLOW}⚠ Validation PASSED with ' + str(len(warnings)) + ' recommendation(s):${C_RESET}')
+        for w in warnings:
+            print('  • ${C_YELLOW}' + w + '${C_RESET}')
+    else:
+        print('${C_GREEN}✔ Manifest and files verified!${C_RESET}')
+
+    print(f'   • Name        : {name}')
+    print(f'   • Version     : {ver}')
+    print(f'   • Language    : {lang}')
+    print(f'   • Entry Point : {entry}')
+    print(f'   • License     : {mf.get(\"license\", \"MIT\")}')
+    print(f'   • Author      : {mf.get(\"author_name\", \"Community\")}')
+    print('${C_GREEN}✔ Module is 100% compliant with Looping & smiledev standards!${C_RESET}')
+"
+}
+
 # ── 11. COMMAND: PACK (Bundle module into tarball) ──
 cmd_pack() {
     local target_dir="${1:-.}"
+    cmd_validate "$target_dir" || {
+        echo -e "${C_RED}✘ Packaging aborted due to validation errors.${C_RESET}"
+        exit 1
+    }
     if [ ! -d "$target_dir" ]; then
         echo -e "${C_RED}✘ Error:${C_RESET} Directory not found: $target_dir"
         exit 1
@@ -1358,6 +1503,10 @@ case "$1" in
     test)
         shift
         cmd_test "$@"
+        ;;
+    validate|check-module)
+        shift
+        cmd_validate "$@"
         ;;
     clean)
         cmd_clean
