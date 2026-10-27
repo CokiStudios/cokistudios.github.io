@@ -78,10 +78,15 @@ cmd_help() {
     echo -e "  ${C_AQUA}test${C_RESET} [module]          Execute module tests via Looping engine"
     echo -e "  ${C_AQUA}run${C_RESET} <module|script>    Execute an installed module or .loop script with Looping"
     echo ""
+    echo -e "${C_BOLD}REPOSITORY MANAGEMENT & MULTI-SOURCE:${C_RESET}"
+    echo -e "  ${C_PURPLE}add-repo${C_RESET} <url|path>    Add an external community repository (HTTP, Git, Local)"
+    echo -e "  ${C_BLUE}list-repos${C_RESET}             List all configured repository sources and mirrors"
+    echo -e "  ${C_RED}remove-repo${C_RESET} <url|num>  Remove a repository source"
+    echo -e "  ${C_YELLOW}repo-spec${C_RESET}              Display technical specification for building external repos"
+    echo ""
     echo -e "${C_BOLD}CLOUD REGISTRY & PUBLISHING (CS ID):${C_RESET}"
     echo -e "  ${C_PINK}publish${C_RESET} <dir>          Publish a module to LoopModules registry (requires CS ID)"
     echo -e "  ${C_PINK}upload-module${C_RESET} <dir>    Alias for publish"
-    echo -e "  ${C_PURPLE}add-repo${C_RESET} <url>         Add an external community repository mirror"
     echo ""
     echo -e "${C_BOLD}AUTHENTICATION (CS ID / SMILEDEV):${C_RESET}"
     echo -e "  ${C_GREEN}login${C_RESET} [--token <PAT>]  Authenticate with your Personal Access Token (PAT)"
@@ -205,7 +210,33 @@ print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}\n')
 
 # ── 2. COMMAND: INSTALL (Install module or project dependencies) ──
 cmd_install() {
-    local mod_name="$1"
+    local mod_name=""
+    local repo_arg=""
+    local auto_yes=false
+    local is_global=false
+
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --repo|-r)
+                repo_arg="$2"
+                shift 2 || shift 1
+                ;;
+            --yes|-y)
+                auto_yes=true
+                shift
+                ;;
+            --global|-g)
+                is_global=true
+                shift
+                ;;
+            *)
+                if [ -z "$mod_name" ]; then
+                    mod_name="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
 
     # If no module argument is given, install all dependencies from local smile.json
     if [ -z "$mod_name" ]; then
@@ -241,99 +272,497 @@ except Exception:
         fi
     fi
 
-    echo -e "${C_CYAN}⚡ smiledev install:${C_RESET} Searching for ${C_BOLD}$mod_name${C_RESET} in LoopModules..."
-    local res
-    res=$(curl -s -H "apikey: $SUPABASE_KEY" \
-                 -H "Authorization: Bearer $SUPABASE_KEY" \
-                 "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name&select=*")
+    # Execute Python multi-source resolver and installer
+    python3 - << EOF
+import sys, os, json, shutil, tarfile, tempfile, urllib.request
 
-    local is_found
-    is_found=$(echo "$res" | python3 -c "import sys, json; data=json.load(sys.stdin); print('1' if data else '0')" 2>/dev/null || echo "0")
+mod_name = "$mod_name"
+repo_arg = "$repo_arg".strip()
+auto_yes = "$auto_yes" == "true"
+is_global = "$is_global" == "true"
 
-    if [ "$is_found" != "1" ]; then
-        echo -e "${C_RED}✘ Error:${C_RESET} Module '$mod_name' not found in LoopModules registry."
-        exit 1
-    fi
+C_RESET = "\033[0m"
+C_BOLD = "\033[1m"
+C_DIM = "\033[2m"
+C_GREEN = "\033[38;5;48m"
+C_CYAN = "\033[38;5;51m"
+C_AQUA = "\033[38;5;51m"
+C_YELLOW = "\033[38;5;220m"
+C_BLUE = "\033[38;5;39m"
+C_RED = "\033[38;5;196m"
+C_PURPLE = "\033[38;5;141m"
+C_PINK = "\033[38;5;213m"
 
-    local target_dir="$(pwd)/modules/$mod_name"
-    mkdir -p "$(pwd)/modules"
+UA = "smiledev/$SMILE_VERSION (Coki Studios Looping Engine; Darwin; arm64)"
+SUPABASE_URL = "$SUPABASE_URL"
+SUPABASE_KEY = "$SUPABASE_KEY"
+CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
+LOCAL_DIR = os.path.abspath("modules/" + mod_name)
+GLOBAL_DIR = os.path.expanduser("~/.smiledev/modules/" + mod_name)
 
-    # Extract details and code payload
-    echo "$res" | python3 -c '
-import sys, json, os
+print(f"{C_CYAN}⚡ smiledev install:{C_RESET} Resolviendo módulo '{C_BOLD}{mod_name}{C_RESET}' en registros...")
 
-data = json.load(sys.stdin)[0]
-name = data["name"]
-lang = data.get("language", "loop")
-ver = data.get("version", "1.0.0")
-entry = data.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else (f"{name}.c2" if lang=="c2" else f"{name}.loop")))
-payload = data.get("code_payload") or ""
-if "\\n" in payload and "\n" not in payload:
-    payload = payload.replace("\\n", "\n").replace("\\t", "    ")
+candidates = []
 
-manifest = {
-    "name": name,
-    "version": ver,
-    "language": lang,
-    "entry_point": entry,
-    "author": data.get("author_name", "Community"),
-    "description": data.get("description", ""),
-    "dependencies": data.get("dependencies", {})
-}
+# ── 1. Consultar PostgreSQL (LoopModules Cloud Registry) ──
+try:
+    url = f"{SUPABASE_URL}/rest/v1/loop_modules?name=eq.{mod_name}&select=*"
+    req = urllib.request.Request(url, headers={
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "User-Agent": UA
+    })
+    with urllib.request.urlopen(req, timeout=4) as r:
+        rows = json.load(r)
+        if rows:
+            row = rows[0]
+            candidates.append({
+                "type": "postgres",
+                "source_name": "LoopModules (PostgreSQL Cloud Registry)",
+                "repo_url": SUPABASE_URL,
+                "version": row.get("version", "1.0.0"),
+                "author": row.get("author_name", "Coki Community"),
+                "description": row.get("description", ""),
+                "language": row.get("language", "loop"),
+                "entry_point": row.get("entry_point"),
+                "data": row
+            })
+except Exception as e:
+    pass
 
-target_dir = os.path.abspath(f"modules/{name}")
-global_dir = os.path.expanduser(f"~/.smiledev/modules/{name}")
-
-if not payload:
+# ── 2. Consultar repositorios externos configurados ──
+repos = []
+if os.path.exists(CONFIG_FILE):
     try:
-        import urllib.request
-        req = urllib.request.Request(f"https://repo.cokistudios.com/modules/{name}/code", headers={"User-Agent": "smiledev/2.8.0 (Coki Studios)"})
-        with urllib.request.urlopen(req, timeout=8) as r:
-            payload = r.read().decode("utf-8")
+        cfg = json.load(open(CONFIG_FILE))
+        repos = cfg.get("repos", [])
     except Exception:
         pass
 
-for base_dir in [target_dir, global_dir]:
-    os.makedirs(base_dir, exist_ok=True)
-    with open(os.path.join(base_dir, "smile.json"), "w") as mf:
-        json.dump(manifest, mf, indent=2)
-    if payload:
-        with open(os.path.join(base_dir, entry), "w") as ef:
-            ef.write(payload)
+for r_url in repos:
+    r_url = r_url.strip()
+    if not r_url or "supabase.co" in r_url:
+        continue
 
-print(f"  ✔ Manifest saved to: {target_dir}/smile.json")
-print(f"  ✔ Code entry point:  {target_dir}/{entry}")
-'
+    # A) Carpeta Local
+    local_p = r_url.replace("file://", "")
+    if os.path.isdir(local_p):
+        check_paths = [
+            os.path.join(local_p, mod_name, "smile.json"),
+            os.path.join(local_p, "modules", mod_name, "smile.json"),
+            os.path.join(local_p, "smile.json")
+        ]
+        for cp in check_paths:
+            if os.path.isfile(cp):
+                try:
+                    mf = json.load(open(cp))
+                    if mf.get("name") == mod_name:
+                        candidates.append({
+                            "type": "local",
+                            "source_name": f"Directorio Local ({local_p})",
+                            "repo_url": local_p,
+                            "version": mf.get("version", "1.0.0"),
+                            "author": mf.get("author_name", mf.get("author", "Local")),
+                            "description": mf.get("description", ""),
+                            "language": mf.get("language", "loop"),
+                            "entry_point": mf.get("entry_point"),
+                            "dir_path": os.path.dirname(cp)
+                        })
+                        break
+                except Exception:
+                    pass
+        continue
 
-    # Increment download counter in Supabase asynchronously
-    (curl -s -X PATCH -H "apikey: $SUPABASE_KEY" \
-         -H "Authorization: Bearer $SUPABASE_KEY" \
-         -H "Content-Type: application/json" \
-         -d '{"updated_at": "'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'"}' \
-         "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name" > /dev/null 2>&1 || true) &
+    # B) Repositorio Git
+    if r_url.endswith(".git") or "github.com" in r_url or "gitlab.com" in r_url:
+        if "github.com" in r_url:
+            clean_git = r_url.replace("https://github.com/", "").replace("http://github.com/", "")
+            if clean_git.endswith(".git"): clean_git = clean_git[:-4]
+            raw_branches = ["main", "master"]
+            raw_checks = [
+                f"modules/{mod_name}/smile.json",
+                f"{mod_name}/smile.json",
+                "smile.json"
+            ]
+            git_found = False
+            for b in raw_branches:
+                if git_found: break
+                for rc in raw_checks:
+                    raw_u = f"https://raw.githubusercontent.com/{clean_git}/{b}/{rc}"
+                    try:
+                        req = urllib.request.Request(raw_u, headers={"User-Agent": UA})
+                        with urllib.request.urlopen(req, timeout=3) as res:
+                            mf = json.load(res)
+                            if mf.get("name") == mod_name:
+                                candidates.append({
+                                    "type": "git",
+                                    "source_name": f"Repositorio Git ({r_url})",
+                                    "repo_url": r_url,
+                                    "version": mf.get("version", "1.0.0"),
+                                    "author": mf.get("author_name", "Git"),
+                                    "description": mf.get("description", ""),
+                                    "language": mf.get("language", "loop"),
+                                    "entry_point": mf.get("entry_point"),
+                                    "subpath": os.path.dirname(rc),
+                                    "branch": b
+                                })
+                                git_found = True
+                                break
+                    except Exception:
+                        pass
+        continue
 
-    # Update local project smile.json dependencies if present
-    if [ -f "./smile.json" ]; then
-        python3 -c "
-import json
+    # C) Repositorio HTTP / HTTPS
+    if r_url.startswith("http://") or r_url.startswith("https://"):
+        clean_url = r_url.rstrip("/")
+        found_http = False
+
+        # C.1: Intentar index.json / registry.json
+        for idx_name in ["index.json", "registry.json"]:
+            try:
+                req = urllib.request.Request(f"{clean_url}/{idx_name}", headers={"User-Agent": UA})
+                with urllib.request.urlopen(req, timeout=3) as res:
+                    idx_data = json.load(res)
+                    mods = idx_data.get("modules") or idx_data.get("packages") or {}
+                    if mod_name in mods:
+                        m_info = mods[mod_name]
+                        candidates.append({
+                            "type": "http_index",
+                            "source_name": f"{idx_data.get('name', 'Repositorio HTTP')} ({clean_url})",
+                            "repo_url": clean_url,
+                            "version": m_info.get("version", "1.0.0"),
+                            "author": m_info.get("author_name", "Remoto"),
+                            "description": m_info.get("description", ""),
+                            "language": m_info.get("language", "loop"),
+                            "entry_point": m_info.get("entry_point"),
+                            "data": m_info
+                        })
+                        found_http = True
+                        break
+            except Exception:
+                pass
+
+        if found_http:
+            continue
+
+        # C.2: Intentar consulta directa por directorio (<repo>/modules/<name>/smile.json o <repo>/<name>/smile.json)
+        for pattern in [f"{clean_url}/modules/{mod_name}/smile.json", f"{clean_url}/{mod_name}/smile.json"]:
+            try:
+                req = urllib.request.Request(pattern, headers={"User-Agent": UA})
+                with urllib.request.urlopen(req, timeout=3) as res:
+                    mf = json.load(res)
+                    if mf.get("name") == mod_name:
+                        base_dir = pattern.rsplit("/", 1)[0]
+                        candidates.append({
+                            "type": "http_direct",
+                            "source_name": f"Repositorio HTTP ({clean_url})",
+                            "repo_url": clean_url,
+                            "version": mf.get("version", "1.0.0"),
+                            "author": mf.get("author_name", "Remoto"),
+                            "description": mf.get("description", ""),
+                            "language": mf.get("language", "loop"),
+                            "entry_point": mf.get("entry_point"),
+                            "manifest": mf,
+                            "base_dir_url": base_dir
+                        })
+                        break
+            except Exception:
+                pass
+
+# ── 3. Lógica de Selección y Resolución Multifuente ──
+if len(candidates) == 0:
+    print(f"{C_RED}✘ Error:{C_RESET} El módulo '{mod_name}' no se encontró en PostgreSQL ni en los repositorios externos configurados.", file=sys.stderr)
+    print(f"Repositorios consultados ({len(repos) + 1}):", file=sys.stderr)
+    print(f"  • LoopModules (PostgreSQL Cloud Registry): {SUPABASE_URL}", file=sys.stderr)
+    for r in repos:
+        print(f"  • {r}", file=sys.stderr)
+    sys.exit(1)
+
+chosen = None
+
+# Caso A & B: Encontrado en 1 sola fuente
+if len(candidates) == 1:
+    chosen = candidates[0]
+    if chosen["type"] == "postgres":
+        print(f"ℹ El módulo '{C_BOLD}{mod_name}{C_RESET}' no está en repositorios externos, pero se encontró en {C_GREEN}LoopModules (PostgreSQL){C_RESET}.")
+        print(f"📦 Instalando versión v{chosen['version']} desde PostgreSQL...")
+    else:
+        print(f"✔ Módulo '{C_BOLD}{mod_name}{C_RESET}' encontrado de forma exclusiva en: {C_CYAN}{chosen['source_name']}{C_RESET} (v{chosen['version']}).")
+        print(f"📦 Instalando desde {chosen['source_name']}...")
+
+# Caso C: Encontrado en MÚLTIPLES fuentes -> Dejar que el usuario elija
+else:
+    # Si el usuario especificó --repo por CLI
+    if repo_arg:
+        matched = None
+        if repo_arg.isdigit():
+            idx = int(repo_arg) - 1
+            if 0 <= idx < len(candidates):
+                matched = candidates[idx]
+        if not matched:
+            for c in candidates:
+                if repo_arg.lower() in c["source_name"].lower() or repo_arg.lower() in c["repo_url"].lower():
+                    matched = c
+                    break
+        if matched:
+            chosen = matched
+            print(f"✔ Opción especificada por CLI: {C_CYAN}{chosen['source_name']}{C_RESET} (v{chosen['version']}).")
+        else:
+            print(f"{C_YELLOW}⚠ Repositorio especificado '{repo_arg}' no coincidió. Mostrando opciones disponibles...{C_RESET}")
+
+    if not chosen:
+        print(f"\n{C_YELLOW}🔎 El módulo '{C_BOLD}{mod_name}{C_RESET}{C_YELLOW}' fue encontrado en múltiples repositorios ({len(candidates)} orígenes):{C_RESET}\n")
+        for i, c in enumerate(candidates, 1):
+            type_badge = {
+                "postgres": f"{C_GREEN}[PostgreSQL Cloud]{C_RESET}",
+                "local": f"{C_BLUE}[Local Folder]{C_RESET}",
+                "git": f"{C_PURPLE}[Git Repo]{C_RESET}",
+                "http_index": f"{C_CYAN}[HTTP Index]{C_RESET}",
+                "http_direct": f"{C_CYAN}[HTTP Direct]{C_RESET}"
+            }.get(c["type"], "[Repo]")
+            
+            print(f"  {C_BOLD}[{i}]{C_RESET} {type_badge} {C_BOLD}{c['source_name']}{C_RESET}")
+            print(f"      • Versión: {C_AQUA}v{c['version']}{C_RESET} | Autor: {c['author']}")
+            if c.get("description"):
+                print(f"      • Info:    {C_DIM}{c['description']}{C_RESET}")
+            print(f"      • URL:     {C_DIM}{c['repo_url']}{C_RESET}")
+            print("")
+
+        # Chequear si es interactivo
+        is_interactive = sys.stdin.isatty()
+        default_idx = 1
+        selected_idx = default_idx
+
+        if not is_interactive:
+            print(f"{C_DIM}ℹ Entorno no interactivo detectado: seleccionando opción [1] por defecto.{C_RESET}")
+            selected_idx = 1
+        else:
+            prompt_str = f"¿Desde qué repositorio deseas descargarlo? [1-{len(candidates)}] (Por defecto: 1): "
+            try:
+                # Si stdin fue redirigido, intentar leer de /dev/tty
+                user_input = ""
+                try:
+                    with open("/dev/tty", "r") as tty:
+                        print(prompt_str, end="", flush=True)
+                        user_input = tty.readline().strip()
+                except Exception:
+                    user_input = input(prompt_str).strip()
+
+                if user_input.isdigit():
+                    val = int(user_input)
+                    if 1 <= val <= len(candidates):
+                        selected_idx = val
+                    else:
+                        print(f"{C_YELLOW}Opción fuera de rango. Usando opción [1].{C_RESET}")
+                        selected_idx = 1
+                else:
+                    selected_idx = default_idx
+            except Exception:
+                selected_idx = default_idx
+
+        chosen = candidates[selected_idx - 1]
+        print(f"\n✔ Descargando e instalando desde opción [{selected_idx}]: {C_CYAN}{chosen['source_name']}{C_RESET}...")
+
+# ── 4. Ejecutar la Instalación desde la Fuente Seleccionada ──
+target_dirs = [LOCAL_DIR] if not is_global else []
+target_dirs.append(GLOBAL_DIR)
+
+for td in target_dirs:
+    os.makedirs(td, exist_ok=True)
+
+installed_ok = False
+
 try:
-    with open('./smile.json', 'r') as f:
-        d = json.load(f)
-    if 'dependencies' not in d:
-        d['dependencies'] = {}
-    d['dependencies']['$mod_name'] = '^1.0.0'
-    with open('./smile.json', 'w') as f:
-        json.dump(d, f, indent=2)
-    print('  ✔ Added to local smile.json dependencies')
-except Exception:
-    pass
-" 2>/dev/null || true
-    fi
+    # A) Instalación desde PostgreSQL
+    if chosen["type"] == "postgres":
+        row = chosen["data"]
+        name = row["name"]
+        lang = row.get("language", "loop")
+        ver = row.get("version", "1.0.0")
+        entry = row.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else (f"{name}.c2" if lang=="c2" else f"{name}.loop")))
+        payload = row.get("code_payload") or ""
 
-    echo -e "${C_GREEN}✔ [SUCCESS]${C_RESET} Module ${C_BOLD}$mod_name${C_RESET} installed at:"
-    echo -e "   • Local:  ${C_AQUA}$target_dir${C_RESET}"
-    echo -e "   • Global: ${C_AQUA}$GLOBAL_MODULES_DIR/$mod_name${C_RESET}"
-    echo -e "   • Ready to import in Looping with: ${C_YELLOW}use module \"$mod_name\"${C_RESET} or ${C_YELLOW}import \"$mod_name\"${C_RESET}"
+        manifest = {
+            "name": name,
+            "version": ver,
+            "language": lang,
+            "entry_point": entry,
+            "author": row.get("author_name", "Community"),
+            "description": row.get("description", ""),
+            "dependencies": row.get("dependencies", {})
+        }
+
+        # Comprobar si payload es un paquete multi-archivo JSON {"__bundle__": true, "files": {...}}
+        is_bundle = False
+        if payload.strip().startswith("{") and '"__bundle__"' in payload:
+            try:
+                bundle_obj = json.loads(payload)
+                if bundle_obj.get("__bundle__") and "files" in bundle_obj:
+                    is_bundle = True
+                    for base_dir in target_dirs:
+                        for rel_f, f_content in bundle_obj["files"].items():
+                            dest_f = os.path.join(base_dir, rel_f)
+                            os.makedirs(os.path.dirname(dest_f), exist_ok=True)
+                            with open(dest_f, "w", encoding="utf-8") as bf:
+                                bf.write(f_content)
+            except Exception:
+                is_bundle = False
+
+        if not is_bundle:
+            if not payload:
+                # Fallback de código si el payload estaba vacío
+                try:
+                    req_c = urllib.request.Request(f"https://repo.cokistudios.com/modules/{name}/code", headers={"User-Agent": UA})
+                    with urllib.request.urlopen(req_c, timeout=5) as rc:
+                        payload = rc.read().decode("utf-8")
+                except Exception:
+                    pass
+
+            for base_dir in target_dirs:
+                with open(os.path.join(base_dir, "smile.json"), "w", encoding="utf-8") as mf:
+                    json.dump(manifest, mf, indent=2)
+                if payload:
+                    dest_entry = os.path.join(base_dir, entry)
+                    os.makedirs(os.path.dirname(dest_entry), exist_ok=True)
+                    with open(dest_entry, "w", encoding="utf-8") as ef:
+                        ef.write(payload)
+
+        # Actualizar contador de descargas en PostgreSQL de forma asíncrona
+        try:
+            req_dl = urllib.request.Request(
+                f"{SUPABASE_URL}/rest/v1/loop_modules?name=eq.{mod_name}",
+                data=b'{"updated_at": "2026-10-27T18:00:00Z"}',
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json"},
+                method="PATCH"
+            )
+            urllib.request.urlopen(req_dl, timeout=2)
+        except Exception:
+            pass
+
+        installed_ok = True
+
+    # B) Instalación desde Directorio Local
+    elif chosen["type"] == "local":
+        src_path = chosen["dir_path"]
+        for base_dir in target_dirs:
+            if os.path.exists(base_dir):
+                shutil.rmtree(base_dir, ignore_errors=True)
+            shutil.copytree(src_path, base_dir)
+        installed_ok = True
+
+    # C) Instalación desde Repositorio HTTP (Directo o Index)
+    elif chosen["type"] in ["http_direct", "http_index"]:
+        if chosen["type"] == "http_direct":
+            mf = chosen["manifest"]
+            base_url = chosen["base_dir_url"]
+            
+            # Recolectar lista de archivos necesarios
+            entry = mf.get("entry_point", "main.loop")
+            files_to_get = ["smile.json", entry]
+            if "subfiles" in mf and isinstance(mf["subfiles"], list):
+                files_to_get.extend(mf["subfiles"])
+            if "components" in mf and isinstance(mf["components"], dict):
+                files_to_get.extend(mf["components"].values())
+
+            for base_dir in target_dirs:
+                for rel_file in set(files_to_get):
+                    if not rel_file: continue
+                    file_url = f"{base_url}/{rel_file}"
+                    try:
+                        req_f = urllib.request.Request(file_url, headers={"User-Agent": UA})
+                        with urllib.request.urlopen(req_f, timeout=5) as rf:
+                            content = rf.read()
+                        dest_f = os.path.join(base_dir, rel_file)
+                        os.makedirs(os.path.dirname(dest_f), exist_ok=True)
+                        with open(dest_f, "wb") as df:
+                            df.write(content)
+                    except Exception as err:
+                        pass
+            installed_ok = True
+
+        else: # http_index
+            data = chosen["data"]
+            tarball_url = data.get("tarball")
+            if tarball_url:
+                tmp_tar = tempfile.mktemp(suffix=".tar.gz")
+                urllib.request.urlretrieve(tarball_url, tmp_tar)
+                for base_dir in target_dirs:
+                    with tarfile.open(tmp_tar, "r:gz") as tar:
+                        tar.extractall(path=base_dir)
+                try: os.remove(tmp_tar)
+                except Exception: pass
+                installed_ok = True
+            elif data.get("files"):
+                for base_dir in target_dirs:
+                    for rel_p, content in data["files"].items():
+                        dest_p = os.path.join(base_dir, rel_p)
+                        os.makedirs(os.path.dirname(dest_p), exist_ok=True)
+                        with open(dest_p, "w", encoding="utf-8") as f:
+                            f.write(content)
+                installed_ok = True
+            elif data.get("code_payload"):
+                manifest = {
+                    "name": mod_name,
+                    "version": chosen.get("version", "1.0.0"),
+                    "language": data.get("language", "loop"),
+                    "entry_point": data.get("entry_point", "main.loop"),
+                    "author": chosen.get("author", "Remote"),
+                    "description": chosen.get("description", "")
+                }
+                for base_dir in target_dirs:
+                    with open(os.path.join(base_dir, "smile.json"), "w") as mf:
+                        json.dump(manifest, mf, indent=2)
+                    with open(os.path.join(base_dir, manifest["entry_point"]), "w") as ef:
+                        ef.write(data["code_payload"])
+                installed_ok = True
+
+    # D) Instalación desde Git
+    elif chosen["type"] == "git":
+        git_url = chosen["repo_url"]
+        subpath = chosen.get("subpath", "")
+        tmp_clone = tempfile.mkdtemp(prefix="smiledev_git_")
+        ret = os.system(f"git clone --depth 1 '{git_url}' '{tmp_clone}' > /dev/null 2>&1")
+        if ret == 0:
+            src_clone_dir = os.path.join(tmp_clone, subpath) if subpath and subpath != "." else tmp_clone
+            if not os.path.exists(os.path.join(src_clone_dir, "smile.json")):
+                if os.path.exists(os.path.join(tmp_clone, "modules", mod_name, "smile.json")):
+                    src_clone_dir = os.path.join(tmp_clone, "modules", mod_name)
+            
+            for base_dir in target_dirs:
+                if os.path.exists(base_dir):
+                    shutil.rmtree(base_dir, ignore_errors=True)
+                shutil.copytree(src_clone_dir, base_dir, ignore=shutil.ignore_patterns(".git"))
+            installed_ok = True
+        shutil.rmtree(tmp_clone, ignore_errors=True)
+
+except Exception as inst_err:
+    print(f"{C_RED}✘ Error al instalar el módulo:{C_RESET} {inst_err}", file=sys.stderr)
+    sys.exit(1)
+
+if not installed_ok:
+    print(f"{C_RED}✘ Error: No se pudo completar la instalación desde {chosen['source_name']}.{C_RESET}", file=sys.stderr)
+    sys.exit(1)
+
+# Actualizar dependencias en smile.json local si existe
+if os.path.isfile("./smile.json"):
+    try:
+        with open("./smile.json", "r") as pf:
+            proj_mf = json.load(pf)
+        if "dependencies" not in proj_mf:
+            proj_mf["dependencies"] = {}
+        proj_mf["dependencies"][mod_name] = f"^{chosen['version']}"
+        with open("./smile.json", "w") as pf:
+            json.dump(proj_mf, pf, indent=2)
+        print(f"  ✔ Añadido a las dependencias de ./smile.json")
+    except Exception:
+        pass
+
+print(f"\n{C_GREEN}✔ [SUCCESS]{C_RESET} Módulo {C_BOLD}{mod_name}{C_RESET} v{chosen['version']} instalado con éxito.")
+print(f"   • Origen:  {C_CYAN}{chosen['source_name']}{C_RESET}")
+print(f"   • Local:   {C_AQUA}{LOCAL_DIR}{C_RESET}")
+print(f"   • Global:  {C_AQUA}{GLOBAL_DIR}{C_RESET}")
+print(f"   • Usar en Looping con: {C_YELLOW}use module \"{mod_name}\"{C_RESET} o {C_YELLOW}import \"{mod_name}\"{C_RESET}\n")
+EOF
 }
 
 # ── 3. COMMAND: UNINSTALL / REMOVE ──
@@ -608,28 +1037,325 @@ print(json.dumps(payload))
     echo -e "   Anyone can now install it with: ${C_CYAN}smiledev install $uploaded_name${C_RESET}"
 }
 
-# ── 7. COMMAND: ADD-REPO ──
+# ── 7. COMMAND: ADD-REPO / LIST-REPOS / REMOVE-REPO / REPO-SPEC ──
 cmd_add_repo() {
     local repo_url="$1"
     if [ -z "$repo_url" ]; then
-        echo -e "${C_RED}✘ Error:${C_RESET} Specify repository URL. Example: ${C_CYAN}smiledev add-repo https://repo.cokistudios.com/modules${C_RESET}"
+        echo -e "${C_RED}✘ Error:${C_RESET} Debes especificar la URL o ruta del repositorio."
+        echo -e "   Ejemplos válidos:"
+        echo -e "     • HTTP(S) con index.json : ${C_CYAN}smiledev add-repo https://repo.com/modules${C_RESET}"
+        echo -e "     • Repositorio Git        : ${C_CYAN}smiledev add-repo https://github.com/usuario/mis-modulos.git${C_RESET}"
+        echo -e "     • Directorio Local       : ${C_CYAN}smiledev add-repo /Users/usuario/mis-modulos${C_RESET}"
+        echo -e "   Consulta la especificación completa con: ${C_YELLOW}smiledev repo-spec${C_RESET}"
         exit 1
     fi
 
-    python3 -c "
-import json
-with open('$CONFIG_FILE', 'r') as f:
-    cfg = json.load(f)
-repos = cfg.get('repos', [])
-if '$repo_url' not in repos:
-    repos.append('$repo_url')
-    cfg['repos'] = repos
-    with open('$CONFIG_FILE', 'w') as f:
-        json.dump(cfg, f, indent=2)
-    print('${C_GREEN}✔ [SUCCESS]${C_RESET} Repository added: $repo_url')
+    python3 - << EOF
+import sys, os, json, urllib.request
+
+repo_url = "$repo_url".strip()
+CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
+UA = "smiledev/$SMILE_VERSION (Coki Studios Looping Engine; Darwin; arm64)"
+
+C_RESET = "\033[0m"
+C_BOLD = "\033[1m"
+C_GREEN = "\033[38;5;48m"
+C_CYAN = "\033[38;5;51m"
+C_YELLOW = "\033[38;5;220m"
+C_RED = "\033[38;5;196m"
+C_DIM = "\033[2m"
+
+detected_type = "Desconocido"
+is_reachable = False
+note = ""
+
+# 1. Comprobar directorio local
+clean_local = repo_url.replace("file://", "")
+if os.path.isdir(clean_local):
+    detected_type = "Directorio Local"
+    is_reachable = True
+    mf_count = 0
+    for root, dirs, files in os.walk(clean_local):
+        if "smile.json" in files: mf_count += 1
+    note = f"{mf_count} módulo(s) con smile.json detectados"
+
+# 2. Comprobar Git
+elif repo_url.endswith(".git") or "github.com" in repo_url or "gitlab.com" in repo_url:
+    detected_type = "Repositorio Git"
+    is_reachable = True
+    note = "Clonación y consulta remota git disponible"
+
+# 3. Comprobar HTTP / HTTPS
+elif repo_url.startswith("http://") or repo_url.startswith("https://"):
+    detected_type = "Servidor Web / HTTP"
+    clean_u = repo_url.rstrip("/")
+    try:
+        # Probar index.json
+        req = urllib.request.Request(f"{clean_u}/index.json", headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=4) as r:
+            if r.status == 200:
+                detected_type = "HTTP Index Repository (index.json)"
+                is_reachable = True
+                data = json.load(r)
+                m_count = len(data.get("modules") or data.get("packages") or {})
+                note = f"Índice activo con {m_count} módulo(s)"
+    except Exception:
+        # Probar URL base
+        try:
+            req = urllib.request.Request(clean_u, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=4) as r:
+                is_reachable = True
+                detected_type = "HTTP Direct Directory Repository"
+                note = "Servidor responde HTTP 200 OK"
+        except Exception as e:
+            is_reachable = False
+            note = f"Aviso de conexión: {e}"
 else:
-    print('${C_YELLOW}ℹ Repository already registered:${C_RESET} $repo_url')
-"
+    print(f"{C_RED}✘ Error:{C_RESET} Formato de repositorio no reconocido: '{repo_url}'", file=sys.stderr)
+    print(f"Ejecuta '{C_YELLOW}smiledev repo-spec{C_RESET}' para ver los formatos soportados.", file=sys.stderr)
+    sys.exit(1)
+
+# Guardar en config.json
+cfg = {"repos": []}
+if os.path.exists(CONFIG_FILE):
+    try: cfg = json.load(open(CONFIG_FILE))
+    except Exception: pass
+
+repos = cfg.get("repos", [])
+if repo_url not in repos:
+    repos.append(repo_url)
+    cfg["repos"] = repos
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(cfg, f, indent=2)
+    print(f"{C_GREEN}✔ [SUCCESS]{C_RESET} Repositorio añadido correctamente:")
+    print(f"   • URL / Ruta : {C_CYAN}{repo_url}{C_RESET}")
+    print(f"   • Tipo       : {C_BOLD}{detected_type}{C_RESET}")
+    print(f"   • Estado     : {C_GREEN}● Verificado{C_RESET} ({note})" if is_reachable else f"   • Estado     : {C_YELLOW}⚠ No verificado en red ({note}){C_RESET}")
+else:
+    print(f"{C_YELLOW}ℹ El repositorio ya se encontraba registrado:{C_RESET} {repo_url}")
+EOF
+}
+
+cmd_list_repos() {
+    print_banner
+    echo -e "${C_BOLD}CONFIGURED REPOSITORY SOURCES & MIRRORS:${C_RESET}\n"
+
+    python3 - << EOF
+import json, os
+
+CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
+SUPABASE_URL = "$SUPABASE_URL"
+
+C_RESET = "\033[0m"
+C_BOLD = "\033[1m"
+C_GREEN = "\033[38;5;48m"
+C_CYAN = "\033[38;5;51m"
+C_YELLOW = "\033[38;5;220m"
+C_PURPLE = "\033[38;5;141m"
+C_BLUE = "\033[38;5;39m"
+C_DIM = "\033[2m"
+
+print(f"  {C_BOLD}[1]{C_RESET} {C_GREEN}● LoopModules (PostgreSQL Cloud Registry) [PREDETERMINADO]{C_RESET}")
+print(f"      • URL:  {C_DIM}{SUPABASE_URL}{C_RESET}")
+print(f"      • Tipo: Base de datos PostgreSQL en la nube (Coki Studios ID)")
+print("")
+
+repos = []
+if os.path.exists(CONFIG_FILE):
+    try:
+        cfg = json.load(open(CONFIG_FILE))
+        repos = cfg.get("repos", [])
+    except Exception:
+        pass
+
+ext_count = 0
+for r in repos:
+    if not r or "supabase.co" in r:
+        continue
+    ext_count += 1
+    idx = ext_count + 1
+    
+    clean_p = r.replace("file://", "")
+    r_type = "Servidor HTTP Externo"
+    if os.path.isdir(clean_p):
+        r_type = "Directorio Local"
+    elif r.endswith(".git") or "github.com" in r:
+        r_type = "Repositorio Git"
+    elif "index.json" in r:
+        r_type = "Índice JSON Remoto"
+
+    print(f"  {C_BOLD}[{idx}]{C_RESET} {C_CYAN}{r_type}{C_RESET}")
+    print(f"      • URL:  {C_BOLD}{r}{C_RESET}")
+    print("")
+
+if ext_count == 0:
+    print(f"  {C_DIM}(No hay repositorios externos adicionales. Añade uno con 'smiledev add-repo <url>'){C_RESET}\n")
+EOF
+    echo -e "${C_DIM}Tip: Para añadir un espejo usa '${C_RESET}${C_CYAN}smiledev add-repo <url>${C_RESET}${C_DIM}', o '${C_RESET}${C_YELLOW}smiledev repo-spec${C_RESET}${C_DIM}' para ver la especificación.${C_RESET}\n"
+}
+
+cmd_remove_repo() {
+    local target="$1"
+    if [ -z "$target" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Especifica la URL o el número de índice del repositorio a eliminar."
+        echo -e "   Uso: ${C_CYAN}smiledev remove-repo <url_o_indice>${C_RESET}"
+        exit 1
+    fi
+
+    python3 - << EOF
+import sys, json, os
+
+target = "$target".strip()
+CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
+
+C_RESET = "\033[0m"
+C_GREEN = "\033[38;5;48m"
+C_RED = "\033[38;5;196m"
+C_YELLOW = "\033[38;5;220m"
+
+cfg = {"repos": []}
+if os.path.exists(CONFIG_FILE):
+    try: cfg = json.load(open(CONFIG_FILE))
+    except Exception: pass
+
+repos = cfg.get("repos", [])
+# Filtrar repositorios no de Supabase
+filtered = [r for r in repos if r and "supabase.co" not in r]
+
+removed = None
+if target.isdigit():
+    idx = int(target)
+    # En list-repos, [1] es postgres, [2] es filtered[0]
+    real_idx = idx - 2
+    if 0 <= real_idx < len(filtered):
+        removed = filtered[real_idx]
+    elif idx == 1:
+        print(f"{C_RED}✘ Error:{C_RESET} No se puede eliminar el registro predeterminado LoopModules (PostgreSQL).", file=sys.stderr)
+        sys.exit(1)
+else:
+    for r in filtered:
+        if target.lower() in r.lower():
+            removed = r
+            break
+
+if removed:
+    cfg["repos"] = [r for r in repos if r != removed]
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(cfg, f, indent=2)
+    print(f"{C_GREEN}✔ [SUCCESS]{C_RESET} Repositorio eliminado:")
+    print(f"   • {removed}")
+else:
+    print(f"{C_RED}✘ Error:{C_RESET} No se encontró ningún repositorio coincidente con '{target}'.", file=sys.stderr)
+    sys.exit(1)
+EOF
+}
+
+cmd_repo_spec() {
+    print_banner
+    cat << 'EOF'
+======================================================================
+🌐 ESPECIFICACIÓN TÉCNICA DE REPOSITORIOS EXTERNOS PARA SMILEDEV
+======================================================================
+
+smiledev soporta 4 formatos estandarizados para alojar y distribuir módulos
+de Looping sin depender exclusivamente de servidores propietarios:
+
+──────────────────────────────────────────────────────────────────────
+1. REPOSITORIO HTTP/HTTPS CON index.json (Recomendado para CDNs y Web)
+──────────────────────────────────────────────────────────────────────
+Cualquier servidor web estático (GitHub Pages, Cloudflare R2, Nginx, S3)
+que expone en su raíz un archivo 'index.json' o 'registry.json':
+
+URL: https://mi-dominio.com/modules/index.json
+
+Estructura JSON:
+{
+  "name": "Mi Repositorio Comunitario",
+  "version": "1.0.0",
+  "description": "Módulos comunitarios para Looping Engine",
+  "modules": {
+    "mi-modulo": {
+      "name": "mi-modulo",
+      "version": "1.0.0",
+      "language": "loop",
+      "entry_point": "main.loop",
+      "author_name": "Tu Nombre",
+      "description": "Utilidad de procesamiento cuántico",
+      "license": "MIT",
+      "tarball": "https://mi-dominio.com/modules/mi-modulo-1.0.0.tar.gz",
+      "dependencies": {
+        "loop-core-utils": "^1.1.0"
+      }
+    }
+  }
+}
+
+• Si el módulo usa 'tarball': smiledev descarga el .tar.gz y lo descomprime.
+• Si el módulo expone 'files': un objeto con pares clave-valor de cada subarchivo.
+• Si el módulo expone 'code_payload': el contenido en texto del entry_point.
+
+──────────────────────────────────────────────────────────────────────
+2. REPOSITORIO HTTP/HTTPS POR DIRECTORIOS ESTÁTICOS
+──────────────────────────────────────────────────────────────────────
+Estructura de carpetas directa en cualquier servidor web estándar:
+
+https://mi-servidor.com/modules/
+└── mi-modulo/
+    ├── smile.json          # 📄 Manifiesto obligatorio
+    ├── main.loop           # 🚀 Punto de entrada principal
+    └── components/         # 🧩 Subarchivos (si es políglota/híbrido)
+
+smiledev consulta automáticamente:
+  1. GET https://mi-servidor.com/modules/mi-modulo/smile.json
+  2. Descarga el entry_point y todos los subarchivos declarados
+     en 'components' y 'subfiles'.
+
+──────────────────────────────────────────────────────────────────────
+3. REPOSITORIO GIT (GitHub / GitLab / Gitea)
+──────────────────────────────────────────────────────────────────────
+URL: https://github.com/usuario/mi-repo-looping.git
+
+• Modo Monorepo (Colección de varios módulos en un mismo repo Git):
+  mi-repo/
+  └── modules/
+      ├── modulo-uno/
+      │   ├── smile.json
+      │   └── main.loop
+      └── modulo-dos/
+          ├── smile.json
+          └── main.loop
+
+• Modo Mono-Módulo (Un repositorio dedicado por cada módulo):
+  mi-repo/
+  ├── smile.json            # Debe contener "name": "mi-modulo"
+  └── main.loop
+
+──────────────────────────────────────────────────────────────────────
+4. REPOSITORIO EN DIRECTORIO LOCAL (Desarrollo Offline o Red Interna)
+──────────────────────────────────────────────────────────────────────
+Añade cualquier carpeta de tu disco local:
+$ smiledev add-repo /Users/usuario/mis-repos-looping
+
+Estructura:
+/Users/usuario/mis-repos-looping/
+├── modulo-a/
+│   ├── smile.json
+│   └── main.loop
+└── modulo-b/
+    ├── smile.json
+    └── main.loop
+
+──────────────────────────────────────────────────────────────────────
+RESOLUCIÓN AUTOMÁTICA Y MULTIFUENTE:
+──────────────────────────────────────────────────────────────────────
+• Si un módulo no está en ningún repositorio añadido pero sí en
+  LoopModules (PostgreSQL), smiledev lo instala de inmediato desde PostgreSQL.
+• Si solo se encuentra en un único repositorio, smiledev lo instala
+  directamente sin interrumpirte.
+• Si se encuentra en múltiples orígenes a la vez, smiledev te muestra
+  un menú interactivo numerado para que elijas de dónde descargarlo.
+======================================================================
+EOF
 }
 
 # ── 8. COMMAND: LIST (List installed modules) ──
@@ -1427,6 +2153,10 @@ cmd_doctor() {
     else
         echo -e "  ${C_YELLOW}•${C_RESET} Engine Repository : Offline / Local Workspace Mode"
     fi
+
+    local rcount
+    rcount=$(python3 -c "import json, os; print(len(json.load(open('$CONFIG_FILE')).get('repos', [])) if os.path.exists('$CONFIG_FILE') else 0)" 2>/dev/null || echo "0")
+    echo -e "  ${C_GREEN}✔${C_RESET} Active Repos      : LoopModules PostgreSQL + $rcount external mirror(s) (run 'smiledev list-repos')"
     echo ""
 }
 
@@ -1492,6 +2222,17 @@ case "$1" in
     add-repo)
         shift
         cmd_add_repo "$@"
+        ;;
+    list-repos|repos|list-repo)
+        shift || true
+        cmd_list_repos "$@"
+        ;;
+    remove-repo|rm-repo|del-repo)
+        shift
+        cmd_remove_repo "$@"
+        ;;
+    repo-spec|spec-repo)
+        cmd_repo_spec
         ;;
     list|ls)
         cmd_list

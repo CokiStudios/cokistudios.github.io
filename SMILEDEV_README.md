@@ -99,6 +99,108 @@ Al resolver un archivo `.loop`, el motor ejecuta automáticamente las definicion
 | `smiledev logout` | Cierra la sesión activa en la máquina local | `smiledev logout` |
 | `smiledev publish [dir]` | Publica el módulo en el registro LoopModules usando tu CS ID | `smiledev publish ./modules/mi-plugin` |
 | `smiledev upload-module [dir]` | Alias para `publish` | `smiledev upload-module ./modules/mi-plugin` |
+| `smiledev add-repo <url\|path>` | Añade un repositorio externo (HTTP, Git o Directorio Local) | `smiledev add-repo https://repo.com/modules` |
+| `smiledev list-repos` | Lista todos los repositorios y espejos configurados con su estado | `smiledev list-repos` |
+| `smiledev remove-repo <url\|id>`| Elimina un repositorio externo de la configuración local | `smiledev remove-repo 2` |
+| `smiledev repo-spec` | Muestra en terminal la especificación técnica de repositorios externos | `smiledev repo-spec` |
+
+---
+
+## 🌐 Resolución Multifuente y Especificación de Repositorios Externos
+
+`smiledev` no está acoplado de forma rígida a un solo servidor. Implementa un motor de **resolución multifuente inteligente** que consulta de forma simultánea el registro oficial en la nube (PostgreSQL / LoopModules) y cualquier repositorio externo añadido por el desarrollador (`~/.smiledev/config.json`).
+
+### 🎯 Lógica de Resolución Inteligente al Instalar:
+Al ejecutar `smiledev install <nombre-modulo>`:
+1. **Módulo exclusivo en PostgreSQL**: Si el módulo no se encuentra en ningún repositorio añadido pero sí existe en **LoopModules (PostgreSQL)**, `smiledev` lo instala automáticamente desde PostgreSQL sin requerir confirmación.
+2. **Módulo en un único repositorio**: Si el módulo está disponible en una sola fuente (sea un repositorio local, un servidor HTTP privado o un repo Git), `smiledev` lo descarga e instala directamente desde ese origen.
+3. **Módulo en múltiples repositorios**: Si el módulo se encuentra disponible en más de un repositorio (por ejemplo, en LoopModules PostgreSQL y en un espejo HTTP comunitario, o en un directorio local de desarrollo), `smiledev` presenta de forma automática un **menú interactivo numerado** para que el usuario seleccione desde qué origen desea instalarlo:
+   ```text
+   ⚡ smiledev install: Resolviendo módulo 'loop-core-utils'...
+
+   🔎 El módulo 'loop-core-utils' fue encontrado en múltiples repositorios (2 orígenes):
+
+     [1] [PostgreSQL Cloud] LoopModules (PostgreSQL Cloud Registry)
+         • Versión: v1.1.0 | Autor: Coki Studios Core Team
+         • URL:     https://ayxklxciqgqeyuzkziov.supabase.co
+
+     [2] [HTTP Direct] Repositorio HTTP (https://repo.cokistudios.com/modules)
+         • Versión: v1.1.0 | Autor: Remoto
+         • URL:     https://repo.cokistudios.com/modules
+
+   ¿Desde qué repositorio deseas descargarlo? [1-2] (Por defecto: 1): 
+   ```
+   *Nota: Puedes forzar la selección vía CLI usando la bandera `--repo <numero_o_url>`, por ejemplo: `smiledev install loop-core-utils --repo 2`.*
+
+---
+
+### 📦 ¿Cómo estructurar un Repositorio Externo para que smiledev lo reconozca?
+
+`smiledev` soporta 4 formatos oficiales para crear y alojar repositorios externos:
+
+#### 1. Repositorio Web Estático con `index.json` (Recomendado para CDNs y Servidores Web)
+Expón en la raíz de tu servidor web (GitHub Pages, Cloudflare R2, Nginx, Apache, S3) un archivo `index.json` o `registry.json`:
+* **URL:** `https://mi-dominio.com/modules/index.json`
+* **Estructura del archivo:**
+  ```json
+  {
+    "name": "Mi Repositorio Comunitario",
+    "version": "1.0.0",
+    "description": "Módulos de la comunidad para Looping Engine",
+    "homepage": "https://mi-dominio.com",
+    "modules": {
+      "mi-modulo": {
+        "name": "mi-modulo",
+        "version": "1.0.0",
+        "language": "loop",
+        "entry_point": "main.loop",
+        "author_name": "Tu Nombre",
+        "description": "Utilidad de procesamiento cuántico",
+        "license": "MIT",
+        "tarball": "https://mi-dominio.com/modules/mi-modulo-1.0.0.tar.gz",
+        "dependencies": {}
+      }
+    }
+  }
+  ```
+* Si el módulo define `"tarball"`, `smiledev` descarga el `.tar.gz` y lo descomprime.
+* Si el módulo define `"code_payload"`, `smiledev` escribe el archivo `main.loop` directamente.
+* Si el módulo define `"files"`, `smiledev` restaura todos los subarchivos declarados en el mapa JSON.
+
+#### 2. Repositorio Web por Directorios Estáticos
+Si no dispones de un archivo `index.json`, organiza los módulos por carpetas en tu servidor web:
+```text
+https://mi-servidor.com/modules/
+└── mi-modulo/
+    ├── smile.json          # Manifiesto obligatorio
+    ├── main.loop           # Punto de entrada
+    └── components/         # Subarchivos si es un módulo híbrido/políglota
+```
+Al ejecutar `smiledev add-repo https://mi-servidor.com/modules`, `smiledev` detectará automáticamente las rutas `<url>/<nombre-modulo>/smile.json` y descargará los archivos necesarios.
+
+#### 3. Repositorio Git (`.git` / GitHub / GitLab / Gitea)
+Añade un repositorio de código Git directamente:
+```bash
+smiledev add-repo https://github.com/usuario/mis-modulos-looping.git
+```
+* **Modo Monorepo**: Una carpeta `modules/<nombre-modulo>/smile.json` dentro del repositorio Git.
+* **Modo Mono-módulo**: Si el repositorio Git contiene en su raíz el archivo `smile.json` con `"name": "mi-modulo"`, `smiledev` clona y extrae el módulo de forma transparente.
+
+#### 4. Repositorio en Directorio Local (Desarrollo Offline y Redes Internas)
+Puedes añadir cualquier carpeta local en tu máquina o disco compartido:
+```bash
+smiledev add-repo /Users/usuario/mis-modulos-privados
+```
+Estructura de la carpeta:
+```text
+/Users/usuario/mis-modulos-privados/
+├── modulo-alfa/
+│   ├── smile.json
+│   └── main.loop
+└── modulo-beta/
+    ├── smile.json
+    └── main.loop
+```
 
 ---
 

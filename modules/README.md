@@ -243,6 +243,28 @@ out($"Usuario verificado: {user['name']} ({user['email']})")
 
 ---
 
+---
+
+### 5. Alojar y Distribuir Módulos en Repositorios Externos
+
+No dependes únicamente de la nube de Coki Studios. Puedes distribuir tus propios módulos alojándolos en:
+
+1. **Servidor HTTP con `index.json`**:
+   Crea un `index.json` en tu servidor web listando tus paquetes con sus enlaces `.tar.gz` o `code_payload`.
+2. **Directorios Web Estáticos**:
+   Sube la carpeta `mi-modulo/` con su `smile.json` a cualquier CDN o bucket S3/Cloudflare R2.
+3. **Repositorios Git**:
+   Sube tus módulos a GitHub o GitLab. `smiledev` los clona e instala con `smiledev install <nombre>`.
+4. **Directorios Locales**:
+   Comparte módulos localmente en tu red con `smiledev add-repo /ruta/a/mis-modulos`.
+
+#### Resolución Multifuente:
+* Si el módulo está en PostgreSQL y no en repositorios externos, se instala directo de PostgreSQL.
+* Si está en un solo repositorio, se instala de ese sin interrumpir.
+* Si está en varios repositorios, `smiledev` te presenta un menú interactivo para elegir el origen de descarga.
+
+---
+
 Si deseas publicar tu módulo manualmente sin la CLI, puedes hacer una petición HTTP POST directa con `curl` al registro de LoopModules:
 
 ```bash

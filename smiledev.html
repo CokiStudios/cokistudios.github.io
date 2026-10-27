@@ -323,6 +323,10 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                 04. Generador &amp; Validador smile.json
             </button>
+            <button class="cs-tab-btn" data-tab="tab-repos-spec">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                05. Repositorios Externos
+            </button>
         </div>
 
         <!-- ══════════════════════════════════════════════════════ -->
@@ -642,6 +646,67 @@
                             Pulsa "Validar Manifiesto" para inspeccionar la estructura.
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════ -->
+        <!-- TAB 5: ESPECIFICACIÓN DE REPOSITORIOS EXTERNOS       -->
+        <!-- ══════════════════════════════════════════════════════ -->
+        <section id="tab-repos-spec" class="dev-tab-content" style="display: none;">
+            <div class="cs-panel">
+                <div class="cs-panel-header">
+                    <div>
+                        <div class="cs-panel-title">🌐 Especificación Oficial de Repositorios Externos</div>
+                        <div style="font-size: 13px; color: var(--cs-text-sub); margin-top: 4px;">
+                            Descubre cómo alojar tus propios módulos en GitHub, servidores web estáticos o redes internas, y cómo smiledev resuelve e instala dependencias multifuente.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Cards: 4 Formatos -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0;">
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 18px;">
+                        <div style="font-weight: 800; font-size: 14px; color: #38bdf8; margin-bottom: 8px;">1. HTTP con index.json</div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5; margin-bottom: 12px;">
+                            Un CDN o bucket web (S3, Cloudflare R2, GitHub Pages) que expone un archivo <code>index.json</code> con la lista de módulos y enlaces <code>.tar.gz</code>.
+                        </div>
+                        <code style="font-size: 11px; color: #10b981;">smiledev add-repo https://cdn.ejemplo.com/modules</code>
+                    </div>
+
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 18px;">
+                        <div style="font-weight: 800; font-size: 14px; color: #a855f7; margin-bottom: 8px;">2. Servidor Web Estático</div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5; margin-bottom: 12px;">
+                            Carpetas directas en cualquier servidor web con la estructura <code>/modules/&lt;nombre&gt;/smile.json</code>. No requiere backend dinámico.
+                        </div>
+                        <code style="font-size: 11px; color: #10b981;">smiledev add-repo https://repo.com/modules</code>
+                    </div>
+
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 18px;">
+                        <div style="font-weight: 800; font-size: 14px; color: #f59e0b; margin-bottom: 8px;">3. Repositorios Git</div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5; margin-bottom: 12px;">
+                            Repositorios públicos o privados en GitHub, GitLab o Gitea con <code>smile.json</code> en la raíz o en una carpeta <code>modules/</code>.
+                        </div>
+                        <code style="font-size: 11px; color: #10b981;">smiledev add-repo https://github.com/user/repo.git</code>
+                    </div>
+
+                    <div style="background: var(--cs-bg-card-sub); border: 1px solid var(--cs-hairline); border-radius: 12px; padding: 18px;">
+                        <div style="font-weight: 800; font-size: 14px; color: #10b981; margin-bottom: 8px;">4. Directorios Locales</div>
+                        <div style="font-size: 12px; color: var(--cs-text-sub); line-height: 1.5; margin-bottom: 12px;">
+                            Carpetas de tu máquina o volúmenes montados en red sin conexión a internet.
+                        </div>
+                        <code style="font-size: 11px; color: #10b981;">smiledev add-repo /Users/dev/mis-modulos</code>
+                    </div>
+                </div>
+
+                <!-- Reglas de Resolución Multifuente -->
+                <div style="margin-top: 24px; border-top: 1px solid var(--cs-hairline); padding-top: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Reglas de Resolución Inteligente en `smiledev install`:</h3>
+                    <ul style="font-size: 13px; color: var(--cs-text-sub); line-height: 1.8; margin-left: 20px;">
+                        <li><strong>Caso 1 (Solo en PostgreSQL):</strong> Si el módulo no está en ningún repositorio añadido pero sí existe en LoopModules PostgreSQL, se instala inmediatamente desde PostgreSQL.</li>
+                        <li><strong>Caso 2 (Solo en un Repositorio):</strong> Si el módulo está disponible exclusivamente en un único origen (sea local, git o HTTP), se instala automáticamente sin interrumpir al desarrollador.</li>
+                        <li><strong>Caso 3 (En Múltiples Repositorios):</strong> Si el módulo existe simultáneamente en varias fuentes (ej: en PostgreSQL y en un repo HTTP local/externo), smiledev muestra un menú interactivo numerado en la terminal para que el usuario elija de dónde descargarlo (o usando <code>--repo &lt;id_o_url&gt;</code>).</li>
+                    </ul>
                 </div>
             </div>
         </section>
