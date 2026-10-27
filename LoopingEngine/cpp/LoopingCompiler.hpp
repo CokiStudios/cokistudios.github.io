@@ -1,6 +1,8 @@
 #pragma once
 
 #include "LoopingValue.hpp"
+#include "LoopingAST.hpp"
+#include "LoopingParser.hpp"
 #include <string>
 #include <vector>
 #include <memory>
@@ -72,6 +74,20 @@ inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
             120,
             "Fold-Aware Dynamic Multi-Window 120Hz",
             "Dual-Screen Deck / Floating Cards Responsive"
+        };
+    }
+
+    // 2b. SwiftUI (Apple Ecosystem: iOS, macOS, watchOS, visionOS)
+    if (s == "swiftui" || s == "swift" || s == "apple" || s == "ios" || s == "macos" || s == "watchos" || s == "visionos") {
+        return {
+            "SwiftUI",
+            "swiftui",
+            "apple_glassmorphism",
+            "#007AFF",
+            "#5856D6",
+            120,
+            "Apple Metal & SwiftUI ProMotion 120Hz",
+            "Apple Declarative Canvas & Dynamic Island Layout"
         };
     }
 
@@ -1567,6 +1583,366 @@ private:
     }
 };
 
+// ── SwiftUI Code Generator & Transpiler Subsystem (v2.9) ──
+class SwiftUIEmitter {
+public:
+    static std::string format_color(const std::string& c) {
+        if (c.empty()) return ".primary";
+        if (c[0] == '.') return c;
+        if (c == "blue" || c == "red" || c == "green" || c == "cyan" || c == "yellow" ||
+            c == "purple" || c == "orange" || c == "pink" || c == "gray" || c == "white" || c == "black" ||
+            c == "clear" || c == "mint" || c == "teal" || c == "indigo") {
+            return "." + c;
+        }
+        if (c == "ultraThinMaterial" || c == "thinMaterial" || c == "regularMaterial" || c == "thickMaterial") {
+            return "." + c;
+        }
+        return "Color(\"" + c + "\")";
+    }
+
+    static std::string emit_node(const std::shared_ptr<SwiftUIViewNode>& node, int indent_level) {
+        if (!node) return "";
+        std::string ind(indent_level * 4, ' ');
+        std::ostringstream ss;
+
+        switch (node->type) {
+            case SwiftUIViewType::VStack: {
+                ss << ind << "VStack";
+                std::vector<std::string> params;
+                if (node->attributes.count("alignment")) params.push_back("alignment: " + node->attributes.at("alignment"));
+                if (node->attributes.count("spacing")) params.push_back("spacing: " + node->attributes.at("spacing"));
+                if (!params.empty()) {
+                    ss << "(";
+                    for (size_t i = 0; i < params.size(); ++i) {
+                        if (i > 0) ss << ", ";
+                        ss << params[i];
+                    }
+                    ss << ")";
+                }
+                ss << " {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::HStack: {
+                ss << ind << "HStack";
+                std::vector<std::string> params;
+                if (node->attributes.count("alignment")) params.push_back("alignment: " + node->attributes.at("alignment"));
+                if (node->attributes.count("spacing")) params.push_back("spacing: " + node->attributes.at("spacing"));
+                if (!params.empty()) {
+                    ss << "(";
+                    for (size_t i = 0; i < params.size(); ++i) {
+                        if (i > 0) ss << ", ";
+                        ss << params[i];
+                    }
+                    ss << ")";
+                }
+                ss << " {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::ZStack: {
+                ss << ind << "ZStack";
+                if (node->attributes.count("alignment")) ss << "(alignment: " + node->attributes.at("alignment") + ")";
+                ss << " {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::List: {
+                ss << ind << "List {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::ScrollView: {
+                ss << ind << "ScrollView {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::Section: {
+                ss << ind << "Section";
+                if (!node->primary_arg.empty()) ss << "(header: Text(\"" << node->primary_arg << "\"))";
+                ss << " {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::Group: {
+                ss << ind << "Group {\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::ForEach: {
+                ss << ind << "ForEach(" << (node->foreach_collection.empty() ? "0..<5" : node->foreach_collection) << ") { "
+                   << (node->foreach_item_var.empty() ? "item" : node->foreach_item_var) << " in\n";
+                for (const auto& ch : node->children) {
+                    ss << emit_node(ch, indent_level + 1) << "\n";
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::Text: {
+                std::string res;
+                for (size_t i = 0; i < node->primary_arg.size(); ++i) {
+                    if (node->primary_arg[i] == '$' && i + 1 < node->primary_arg.size() && (std::isalnum(static_cast<unsigned char>(node->primary_arg[i+1])) || node->primary_arg[i+1] == '_')) {
+                        res += "\\(";
+                        i++;
+                        while (i < node->primary_arg.size() && (std::isalnum(static_cast<unsigned char>(node->primary_arg[i])) || node->primary_arg[i] == '_')) {
+                            res += node->primary_arg[i++];
+                        }
+                        res += ")";
+                        i--;
+                    } else {
+                        res += node->primary_arg[i];
+                    }
+                }
+                ss << ind << "Text(\"" << res << "\")";
+                break;
+            }
+            case SwiftUIViewType::Button: {
+                ss << ind << "Button(\"" << node->primary_arg << "\") {\n";
+                if (!node->action_code.empty()) {
+                    std::istringstream act_s(node->action_code);
+                    std::string al;
+                    while (std::getline(act_s, al)) {
+                        std::string tal = Parser::trim(al);
+                        if (!tal.empty()) ss << ind << "    " << tal << "\n";
+                    }
+                }
+                ss << ind << "}";
+                break;
+            }
+            case SwiftUIViewType::Image: {
+                if (node->attributes.count("systemName")) {
+                    std::string sys = Parser::trim_quotes(node->attributes.at("systemName"));
+                    ss << ind << "Image(systemName: \"" << sys << "\")";
+                } else if (!node->primary_arg.empty() && node->primary_arg.find('/') == std::string::npos && node->primary_arg.rfind(".png") == std::string::npos) {
+                    ss << ind << "Image(systemName: \"" << Parser::trim_quotes(node->primary_arg) << "\")";
+                } else {
+                    ss << ind << "Image(\"" << Parser::trim_quotes(node->primary_arg) << "\")";
+                }
+                break;
+            }
+            case SwiftUIViewType::TextField: {
+                std::string b = node->binding_var.empty() ? "text" : node->binding_var;
+                ss << ind << "TextField(\"" << node->primary_arg << "\", text: $" << b << ")";
+                break;
+            }
+            case SwiftUIViewType::Toggle: {
+                std::string b = node->binding_var.empty() ? "isOn" : node->binding_var;
+                ss << ind << "Toggle(\"" << node->primary_arg << "\", isOn: $" << b << ")";
+                break;
+            }
+            case SwiftUIViewType::Slider: {
+                std::string b = node->binding_var.empty() ? "value" : node->binding_var;
+                ss << ind << "Slider(value: $" << b << ")";
+                break;
+            }
+            case SwiftUIViewType::ProgressView: {
+                std::string pval = node->attributes.count("value") ? node->attributes.at("value") : node->primary_arg;
+                if (!pval.empty()) {
+                    ss << ind << "ProgressView(value: " << pval << ")";
+                } else {
+                    ss << ind << "ProgressView()";
+                }
+                break;
+            }
+            case SwiftUIViewType::Spacer: {
+                ss << ind << "Spacer()";
+                break;
+            }
+            case SwiftUIViewType::Divider: {
+                ss << ind << "Divider()";
+                break;
+            }
+            case SwiftUIViewType::Badge: {
+                ss << ind << "Text(\"" << node->primary_arg << "\")\n"
+                   << ind << "    .font(.caption2)\n"
+                   << ind << "    .fontWeight(.bold)\n"
+                   << ind << "    .padding(.horizontal, 6)\n"
+                   << ind << "    .padding(.vertical, 2)\n"
+                   << ind << "    .background(.blue)\n"
+                   << ind << "    .foregroundColor(.white)\n"
+                   << ind << "    .cornerRadius(6)";
+                break;
+            }
+            case SwiftUIViewType::Circle: {
+                ss << ind << "Circle()";
+                break;
+            }
+            case SwiftUIViewType::Rectangle: {
+                ss << ind << "Rectangle()";
+                break;
+            }
+            case SwiftUIViewType::RoundedRectangle: {
+                std::string r = node->attributes.count("cornerRadius") ? node->attributes.at("cornerRadius") : "10";
+                ss << ind << "RoundedRectangle(cornerRadius: " << r << ")";
+                break;
+            }
+            case SwiftUIViewType::Color: {
+                ss << ind << format_color(node->primary_arg);
+                break;
+            }
+            case SwiftUIViewType::Custom: {
+                ss << ind << (node->custom_name.empty() ? "CustomView" : node->custom_name) << "()";
+                break;
+            }
+        }
+
+        // Emit chained modifiers
+        for (const auto& mod : node->modifiers) {
+            ss << "\n" << ind << "    ." << mod.name;
+            if (!mod.args.empty() || !mod.named_args.empty()) {
+                ss << "(";
+                bool first = true;
+                for (const auto& a : mod.args) {
+                    if (!first) ss << ", ";
+                    if (mod.name == "foregroundColor" || mod.name == "foregroundStyle" || mod.name == "tint" || mod.name == "background") {
+                        ss << format_color(a);
+                    } else if (mod.name == "font" && !a.empty() && a[0] != '.') {
+                        ss << "." + a;
+                    } else if (mod.name == "fontWeight" && !a.empty() && a[0] != '.') {
+                        ss << "." + a;
+                    } else {
+                        ss << a;
+                    }
+                    first = false;
+                }
+                for (const auto& kv : mod.named_args) {
+                    if (!first) ss << ", ";
+                    ss << kv.first << ": " << kv.second;
+                    first = false;
+                }
+                ss << ")";
+            } else {
+                ss << "()";
+            }
+        }
+
+        return ss.str();
+    }
+
+    static std::string emit_component(const std::shared_ptr<SwiftUIComponentDeclStmt>& comp) {
+        if (!comp) return "";
+        std::ostringstream ss;
+        ss << "public struct " << comp->name << ": View {\n";
+
+        for (const auto& st : comp->states) {
+            std::string init_val = st.initial_expr_str.empty() ? "0" : st.initial_expr_str;
+            ss << "    @State private var " << st.name << " = " << init_val << "\n";
+        }
+        if (!comp->states.empty()) ss << "\n";
+
+        ss << "    public init() {}\n\n";
+        ss << "    public var body: some View {\n";
+        if (comp->root_view) {
+            ss << emit_node(comp->root_view, 2);
+        } else {
+            ss << "        Text(\"" << comp->name << "\")";
+        }
+
+        for (const auto& mod : comp->root_modifiers) {
+            ss << "\n        ." << mod.name;
+            if (!mod.args.empty() || !mod.named_args.empty()) {
+                ss << "(";
+                bool first = true;
+                for (const auto& a : mod.args) {
+                    if (!first) ss << ", ";
+                    ss << a;
+                    first = false;
+                }
+                for (const auto& kv : mod.named_args) {
+                    if (!first) ss << ", ";
+                    ss << kv.first << ": " << kv.second;
+                    first = false;
+                }
+                ss << ")";
+            } else {
+                ss << "()";
+            }
+        }
+
+        ss << "\n    }\n}\n";
+        return ss.str();
+    }
+
+    static std::string transpile_script(const std::string& source_code) {
+        Parser parser(source_code);
+        auto statements = parser.parse_script();
+
+        std::vector<std::shared_ptr<SwiftUIComponentDeclStmt>> comps;
+        std::vector<std::shared_ptr<SwiftUIViewRenderStmt>> renders;
+
+        for (const auto& st : statements) {
+            if (auto c = std::dynamic_pointer_cast<SwiftUIComponentDeclStmt>(st)) {
+                comps.push_back(c);
+            } else if (auto r = std::dynamic_pointer_cast<SwiftUIViewRenderStmt>(st)) {
+                renders.push_back(r);
+            }
+        }
+
+        std::ostringstream ss;
+        ss << "// ═══════════════════════════════════════════════════════════════\n";
+        ss << "// 🚀 COMPILED SWIFTUI SOURCE — Looping Engine v2.9\n";
+        ss << "// Coki Studios — Universal Apple Ecosystem Target (iOS & macOS)\n";
+        ss << "// ═══════════════════════════════════════════════════════════════\n\n";
+        ss << "import SwiftUI\n\n";
+
+        std::string primary_view_name = "ContentView";
+
+        if (!comps.empty()) {
+            primary_view_name = comps[0]->name;
+            for (const auto& c : comps) {
+                ss << emit_component(c) << "\n";
+            }
+        }
+
+        if (!renders.empty() && comps.empty()) {
+            ss << "public struct ContentView: View {\n";
+            ss << "    public init() {}\n\n";
+            ss << "    public var body: some View {\n";
+            ss << emit_node(renders[0]->root_view, 2);
+            for (const auto& mod : renders[0]->root_modifiers) {
+                ss << "\n        ." << mod.name << "()";
+            }
+            ss << "\n    }\n}\n\n";
+        }
+
+        ss << "#Preview {\n";
+        ss << "    " << primary_view_name << "()\n";
+        ss << "}\n\n";
+
+        ss << "@main\n";
+        ss << "struct LoopingApp: App {\n";
+        ss << "    var body: some Scene {\n";
+        ss << "        WindowGroup {\n";
+        ss << "            " << primary_view_name << "()\n";
+        ss << "        }\n";
+        ss << "    }\n";
+        ss << "}\n";
+
+        return ss.str();
+    }
+};
+
 // ── Looping Compiler Core ──
 // Provides static and dynamic compilation of Looping code to executable artifacts
 class Compiler {
@@ -1581,6 +1957,43 @@ public:
         std::string out_file = output_path;
         if (out_file.empty()) {
             out_file = "build/dynamic_program_" + specs.code;
+        }
+
+        // SwiftUI Native Swift Target Compilation
+        if (specs.code == "swiftui") {
+            bool wants_swift_file = (out_file.size() >= 6 && out_file.substr(out_file.size() - 6) == ".swift");
+            std::string swift_file = wants_swift_file ? out_file : (out_file + ".swift");
+
+            size_t slash = swift_file.find_last_of("/\\");
+            if (slash != std::string::npos) {
+                std::string dir = swift_file.substr(0, slash);
+                std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
+                system(mkdir_cmd.c_str());
+            }
+
+            std::string swift_code = SwiftUIEmitter::transpile_script(source_code);
+            std::ofstream swift_out(swift_file);
+            if (!swift_out.is_open()) {
+                std::cerr << "\033[31m❌ Error: Cannot write SwiftUI target to: " << swift_file << "\033[0m\n";
+                return false;
+            }
+            swift_out << swift_code;
+            swift_out.close();
+
+            if (!wants_swift_file) {
+                // Compile directly into native Mach-O executable using Apple swiftc
+                std::string swiftc_cmd = "swiftc -parse-as-library \"" + swift_file + "\" -o \"" + out_file + "\" 2>/dev/null";
+                int ret = system(swiftc_cmd.c_str());
+                if (ret == 0) {
+                    if (out_created_path) *out_created_path = out_file;
+                    std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Native SwiftUI binary compiled to: " << out_file << " [Apple Ecosystem / SwiftUI Metal 120Hz]\n";
+                    return true;
+                }
+            }
+
+            if (out_created_path) *out_created_path = swift_file;
+            std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Native SwiftUI artifact compiled to: " << swift_file << " [Apple Ecosystem / SwiftUI Metal 120Hz]\n";
+            return true;
         }
 
         // Create parent directories if needed

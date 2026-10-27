@@ -377,6 +377,50 @@ struct CryptoUtils {
         }
         return out;
     }
+
+    static uint32_t crc32_uint(const std::string& data) {
+        uint32_t crc = 0xFFFFFFFFu;
+        for (unsigned char b : data) {
+            crc ^= static_cast<uint32_t>(b);
+            for (int j = 0; j < 8; ++j) {
+                uint32_t mask = -(crc & 1u);
+                crc = (crc >> 1) ^ (0xEDB88320u & mask);
+            }
+        }
+        return ~crc;
+    }
+
+    static std::string crc32_hex(const std::string& data) {
+        uint32_t c = crc32_uint(data);
+        std::ostringstream ss;
+        ss << std::hex << std::setfill('0') << std::setw(8) << c;
+        return ss.str();
+    }
+
+    static bool constant_time_eq(const std::string& a, const std::string& b) {
+        if (a.size() != b.size()) return false;
+        unsigned char diff = 0;
+        for (size_t i = 0; i < a.size(); ++i) {
+            diff |= static_cast<unsigned char>(a[i]) ^ static_cast<unsigned char>(b[i]);
+        }
+        return diff == 0;
+    }
+
+    static std::string csms_payload(const std::string& room_id, const std::string& plaintext) {
+        std::string key_hex = sha256_hex(room_id + ":CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR");
+        std::string key_bytes = hex_to_bytes(key_hex);
+        std::string iv_hex = sha256_hex(room_id + ":" + plaintext).substr(0, 24);
+        std::string iv_bytes = hex_to_bytes(iv_hex);
+        std::string cipher;
+        cipher.resize(plaintext.size());
+        for (size_t i = 0; i < plaintext.size(); ++i) {
+            unsigned char k = static_cast<unsigned char>(key_bytes[i % key_bytes.size()]);
+            unsigned char v = static_cast<unsigned char>(iv_bytes[i % iv_bytes.size()]);
+            cipher[i] = static_cast<char>(static_cast<unsigned char>(plaintext[i]) ^ k ^ v);
+        }
+        std::string tag = hex_to_bytes(hmac_sha256(key_bytes, iv_bytes + cipher)).substr(0, 16);
+        return "🔒 enc:v1:" + base64_encode(iv_bytes) + ":" + base64_encode(cipher + tag);
+    }
 };
 
 class Interpreter {
@@ -384,11 +428,15 @@ public:
     std::unordered_map<std::string, Value> variables;
     std::unordered_map<std::string, std::shared_ptr<FunctionDefStmt>> functions;
     std::unordered_map<std::string, std::string> python_snippets;
+    std::unordered_map<std::string, std::string> snippet_types;
     std::unordered_map<std::string, DynamicProgram> dynamic_programs;
+    std::unordered_map<std::string, std::shared_ptr<SwiftUIComponentDeclStmt>> swiftui_components;
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
-    std::string app_version = "2.7.0";
+    std::string app_version = "1.0.0-commercial";
+    std::string arch_version = "2.8A";
+    std::string edition = "Commercial Edition";
     std::string target_platform = "Shine Loop Console (Holo Looping OoS)";
     std::string ui_profile = "xui";
     std::string theme = "frosted_aqua_a17";
@@ -411,6 +459,35 @@ public:
         variables["UI_NAME"] = Value(active_ui_specs.name);
         variables["UI_THEME"] = Value(active_ui_specs.theme);
         variables["UI_FPS"] = Value(static_cast<int64_t>(active_ui_specs.target_fps));
+    }
+
+    Value execute_snippet_code(const std::string& snippet_name, const std::string& code) {
+        std::string trimmed = code;
+        size_t p = trimmed.find_first_not_of(" \t\r\n");
+        std::string prefix = (p != std::string::npos) ? trimmed.substr(p) : "";
+
+        bool is_py = false;
+        auto it_t = snippet_types.find(snippet_name);
+        if (it_t != snippet_types.end() && it_t->second == "python") {
+            is_py = true;
+        } else if (prefix.rfind("#!python", 0) == 0 || prefix.rfind("import ", 0) == 0 ||
+                   prefix.rfind("def ", 0) == 0 || code.find("looping_set(") != std::string::npos ||
+                   code.find("looping_get(") != std::string::npos) {
+            is_py = true;
+        }
+
+        if (is_py) {
+            std::cout << color::CYAN << "[SNIPPET PYTHON]" << color::RESET << " Executing Python snippet " << snippet_name << "...\n";
+            std::string out = python_bridge.execute_block(code, variables);
+            if (!out.empty()) {
+                std::cout << out << "\n";
+            }
+            return Value(out);
+        } else {
+            std::cout << color::CYAN << "[SNIPPET LOOPING]" << color::RESET << " Executing native Looping snippet " << snippet_name << "...\n";
+            execute_code(code);
+            return Value(true);
+        }
     }
 
     Value execute_runpy(const std::vector<std::shared_ptr<Expr>>& args) {
@@ -468,8 +545,12 @@ public:
         // Builtin Math Constants
         variables["math.pi"] = Value(3.14159265358979323846);
         variables["math.e"] = Value(2.71828182845904523536);
+        variables["math.tau"] = Value(6.28318530717958647692);
+        variables["math.phi"] = Value(1.61803398874989484820);
         variables["PI"] = Value(3.14159265358979323846);
         variables["E"] = Value(2.71828182845904523536);
+        variables["TAU"] = Value(6.28318530717958647692);
+        variables["PHI"] = Value(1.61803398874989484820);
 
         // Initialize Dynamic Window subsystem
         current_window = DynamicWindow(app_name + " Window", 850, 540, ui_profile);
@@ -478,12 +559,12 @@ public:
 
     void print_banner() {
         std::cout << "\n" << color::BOLD << color::PURPLE << "----------------------------------------------------------------------" << color::RESET << "\n";
-        std::cout << color::BOLD << color::CYAN << "[LOOPING C++ NATIVE]" << color::RESET << " " 
-                  << color::GREEN << "Core High-Performance Engine v" << app_version << color::RESET << " " 
-                  << color::YELLOW << "(POSIX / Win32 Native)" << color::RESET << "\n";
-        std::cout << color::BOLD << "Target Platform: " << color::RESET << target_platform 
-                  << " | " << color::BOLD << "Kernel: " << color::RESET << "Holo Looping OoS 1.0 (C++ Subsystem)\n";
-        std::cout << color::CYAN << "By Holo Entertainment (Coki Studios)" << color::RESET << "\n";
+        std::cout << color::BOLD << color::CYAN << "[LOOPING COMMERCIAL]" << color::RESET << " " 
+                  << color::GREEN << "Core Production Engine v" << app_version << color::RESET << " " 
+                  << color::YELLOW << "(Arch " << arch_version << " / POSIX Native)" << color::RESET << "\n";
+        std::cout << color::BOLD << "Edition: " << color::RESET << edition 
+                  << " | " << color::BOLD << "Kernel: " << color::RESET << "Holo Looping OoS & Coki Studios Runtime\n";
+        std::cout << color::CYAN << "By Coki Studios & Holo Entertainment" << color::RESET << "\n";
         std::cout << color::BOLD << color::PURPLE << "----------------------------------------------------------------------" << color::RESET << "\n\n";
     }
 
@@ -505,6 +586,8 @@ public:
             if (n == "nil" || n == "null" || n == "none") return Value();
             if (n == "math.pi" || n == "PI" || n == "pi") return Value(3.14159265358979323846);
             if (n == "math.e" || n == "E" || n == "e") return Value(2.71828182845904523536);
+            if (n == "math.tau" || n == "TAU" || n == "tau") return Value(6.28318530717958647692);
+            if (n == "math.phi" || n == "PHI" || n == "phi") return Value(1.61803398874989484820);
             if (n == "sys.platform") {
 #if defined(__APPLE__)
                 return Value("darwin");
@@ -530,6 +613,12 @@ public:
             }
             if (n == "sys.version" || n == "looping.version") {
                 return Value(app_version);
+            }
+            if (n == "sys.edition" || n == "looping.edition") {
+                return Value(edition);
+            }
+            if (n == "sys.arch_version" || n == "looping.arch_version") {
+                return Value(arch_version);
             }
 
             auto it = variables.find(n);
@@ -748,6 +837,46 @@ public:
                     raw_arg_names.push_back("");
                 }
                 evaluated_args.push_back(eval(a));
+            }
+
+            // Method-style dot call on user variable: e.g. s.upper(), list.push(10), list.sort()
+            auto dot_p = name.find('.');
+            if (dot_p != std::string::npos) {
+                std::string obj_var = name.substr(0, dot_p);
+                std::string method_name = name.substr(dot_p + 1);
+                auto vit = variables.find(obj_var);
+                if (vit != variables.end() &&
+                    obj_var != "math" && obj_var != "crypto" && obj_var != "regex" &&
+                    obj_var != "json" && obj_var != "csv" && obj_var != "file" &&
+                    obj_var != "sys" && obj_var != "time" && obj_var != "datetime" &&
+                    obj_var != "url" && obj_var != "window" && obj_var != "compiler" &&
+                    obj_var != "swiftui" &&
+                    obj_var != "str" && obj_var != "base64" && obj_var != "env" && obj_var != "button") {
+                    if (method_name == "push" || method_name == "append") {
+                        if (!evaluated_args.empty()) vit->second.push(evaluated_args[0]);
+                        return vit->second;
+                    }
+                    if (method_name == "pop") {
+                        return vit->second.pop();
+                    }
+                    if (method_name == "sort" && vit->second.type == ValueType::List && vit->second.list_val) {
+                        std::sort(vit->second.list_val->begin(), vit->second.list_val->end());
+                        return vit->second;
+                    }
+                    if (method_name == "reverse" && vit->second.type == ValueType::List && vit->second.list_val) {
+                        std::reverse(vit->second.list_val->begin(), vit->second.list_val->end());
+                        return vit->second;
+                    }
+                    if (method_name == "first" && vit->second.type == ValueType::List && vit->second.list_val) {
+                        return vit->second.list_val->empty() ? Value() : vit->second.list_val->front();
+                    }
+                    if (method_name == "last" && vit->second.type == ValueType::List && vit->second.list_val) {
+                        return vit->second.list_val->empty() ? Value() : vit->second.list_val->back();
+                    }
+                    evaluated_args.insert(evaluated_args.begin(), vit->second);
+                    raw_arg_names.insert(raw_arg_names.begin(), obj_var);
+                    name = method_name;
+                }
             }
 
             // pyloop runpy
@@ -1038,6 +1167,55 @@ public:
                 }
                 return Value(false);
             }
+
+            // Snippet Subsystem Builtins: snippet.run, snippet.get, snippet.list, snippet.exists, snippet.set
+            if (name == "snippet.run" || name == "snippet.exec" || name == "run_snippet") {
+                if (!evaluated_args.empty()) {
+                    std::string target = evaluated_args[0].as_string();
+                    auto it = python_snippets.find(target);
+                    if (it != python_snippets.end()) {
+                        return execute_snippet_code(target, it->second);
+                    } else {
+                        return execute_snippet_code("inline", target);
+                    }
+                }
+                return Value(false);
+            }
+            if (name == "snippet.get") {
+                if (!evaluated_args.empty()) {
+                    std::string target = evaluated_args[0].as_string();
+                    auto it = python_snippets.find(target);
+                    if (it != python_snippets.end()) return Value(it->second);
+                }
+                return Value("");
+            }
+            if (name == "snippet.list" || name == "snippet.all") {
+                std::vector<Value> snip_list;
+                for (const auto& kv : python_snippets) {
+                    snip_list.push_back(Value(kv.first));
+                }
+                std::sort(snip_list.begin(), snip_list.end(), [](const Value& a, const Value& b) {
+                    return a.as_string() < b.as_string();
+                });
+                return Value(snip_list);
+            }
+            if (name == "snippet.exists" || name == "snippet.has") {
+                if (!evaluated_args.empty()) {
+                    std::string target = evaluated_args[0].as_string();
+                    return Value(python_snippets.find(target) != python_snippets.end());
+                }
+                return Value(false);
+            }
+            if (name == "snippet.set" || name == "snippet.register") {
+                if (evaluated_args.size() >= 2) {
+                    std::string s_name = evaluated_args[0].as_string();
+                    std::string s_code = evaluated_args[1].as_string();
+                    python_snippets[s_name] = s_code;
+                    variables[s_name] = Value(s_code);
+                    return Value(true);
+                }
+                return Value(false);
+            }
             if (name == "window.add_input") {
                 std::string placeholder = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "Texto...";
                 std::string binding = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "input_val";
@@ -1207,6 +1385,60 @@ public:
                 current_window = DynamicWindow(w_title, w, h, tgt);
                 current_window.set_theme(theme);
                 return Value(current_window.app_name);
+            }
+
+            // SwiftUI Declarative Ecosystem Subsystem (v2.9)
+            if (name == "swiftui.components" || name == "swiftui.views" || name == "swiftui.list") {
+                std::vector<Value> comp_names;
+                for (const auto& kv : swiftui_components) {
+                    comp_names.push_back(Value(kv.first));
+                }
+                return Value(comp_names);
+            }
+            if (name == "swiftui.has_component" || name == "swiftui.has_view") {
+                std::string target = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                return Value(swiftui_components.find(target) != swiftui_components.end());
+            }
+            if (name == "swiftui.preview" || name == "swiftui.render") {
+                std::string target = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                if (target.empty() && !swiftui_components.empty()) {
+                    target = swiftui_components.begin()->first;
+                }
+                auto it = swiftui_components.find(target);
+                if (it != swiftui_components.end()) {
+                    render_swiftui_tui(it->second->root_view, it->second->root_modifiers, it->second->name);
+                    return Value(true);
+                }
+                std::cerr << color::YELLOW << "[SWIFTUI] Component \"" << target << "\" not found." << color::RESET << "\n";
+                return Value(false);
+            }
+            if (name == "swiftui.transpile" || name == "swiftui.to_swift") {
+                std::string target = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                if (target.empty() && !swiftui_components.empty()) {
+                    target = swiftui_components.begin()->first;
+                }
+                auto it = swiftui_components.find(target);
+                if (it != swiftui_components.end()) {
+                    return Value(SwiftUIEmitter::emit_component(it->second));
+                }
+                return Value("");
+            }
+            if (name == "swiftui.export") {
+                std::string target = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                std::string out_path = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : (target + ".swift");
+                auto it = swiftui_components.find(target);
+                if (it != swiftui_components.end()) {
+                    std::string code = SwiftUIEmitter::emit_component(it->second);
+                    std::ofstream f(out_path);
+                    if (f.is_open()) {
+                        f << "// Generated by Looping Engine (v2.9 SwiftUI Target)\n";
+                        f << "import SwiftUI\n\n";
+                        f << code;
+                        f.close();
+                        return Value(out_path);
+                    }
+                }
+                return Value("");
             }
 
             // Interactive Console Input
@@ -1430,6 +1662,22 @@ public:
                     }
                 }
                 return evaluated_args.empty() ? Value() : evaluated_args[0];
+            }
+            if (name == "first") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    return evaluated_args[0].list_val->empty() ? Value() : evaluated_args[0].list_val->front();
+                } else if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::String) {
+                    return evaluated_args[0].str_val.empty() ? Value("") : Value(std::string(1, evaluated_args[0].str_val.front()));
+                }
+                return Value();
+            }
+            if (name == "last") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    return evaluated_args[0].list_val->empty() ? Value() : evaluated_args[0].list_val->back();
+                } else if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::String) {
+                    return evaluated_args[0].str_val.empty() ? Value("") : Value(std::string(1, evaluated_args[0].str_val.back()));
+                }
+                return Value();
             }
             if (name == "sort") {
                 if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
@@ -2040,8 +2288,363 @@ public:
                 auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
                 return Value(static_cast<int64_t>(ms));
             }
+            if (name == "time.micros") {
+                auto now = std::chrono::high_resolution_clock::now();
+                auto us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+                return Value(static_cast<int64_t>(us));
+            }
+            if (name == "time.nanos") {
+                auto now = std::chrono::high_resolution_clock::now();
+                auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+                return Value(static_cast<int64_t>(ns));
+            }
 
-            // User Defined Function Call with return value
+            // DateTime Subsystem (datetime.*)
+            if (name == "datetime.iso" || name == "time.iso") {
+                std::time_t t = evaluated_args.empty() ? std::time(nullptr) : static_cast<std::time_t>(evaluated_args[0].as_int());
+                std::tm gm_tm{};
+#if defined(_WIN32)
+                gmtime_s(&gm_tm, &t);
+#else
+                gmtime_r(&t, &gm_tm);
+#endif
+                std::ostringstream ss;
+                ss << std::put_time(&gm_tm, "%Y-%m-%dT%H:%M:%SZ");
+                return Value(ss.str());
+            }
+            if (name == "datetime.now" || name == "datetime.components") {
+                std::time_t t = evaluated_args.empty() ? std::time(nullptr) : static_cast<std::time_t>(evaluated_args[0].as_int());
+                std::tm gm_tm{};
+#if defined(_WIN32)
+                gmtime_s(&gm_tm, &t);
+#else
+                gmtime_r(&t, &gm_tm);
+#endif
+                std::ostringstream ss;
+                ss << std::put_time(&gm_tm, "%Y-%m-%dT%H:%M:%SZ");
+                std::unordered_map<std::string, Value> dt;
+                dt["year"] = Value(static_cast<int64_t>(gm_tm.tm_year + 1900));
+                dt["month"] = Value(static_cast<int64_t>(gm_tm.tm_mon + 1));
+                dt["day"] = Value(static_cast<int64_t>(gm_tm.tm_mday));
+                dt["hour"] = Value(static_cast<int64_t>(gm_tm.tm_hour));
+                dt["minute"] = Value(static_cast<int64_t>(gm_tm.tm_min));
+                dt["second"] = Value(static_cast<int64_t>(gm_tm.tm_sec));
+                dt["timestamp"] = Value(static_cast<int64_t>(t));
+                dt["iso"] = Value(ss.str());
+                return Value(dt);
+            }
+            if (name == "datetime.format") {
+                std::time_t t = evaluated_args.empty() ? std::time(nullptr) : static_cast<std::time_t>(evaluated_args[0].as_int());
+                std::string fmt = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "%Y-%m-%d %H:%M:%S";
+                std::tm gm_tm{};
+#if defined(_WIN32)
+                gmtime_s(&gm_tm, &t);
+#else
+                gmtime_r(&t, &gm_tm);
+#endif
+                std::ostringstream ss;
+                ss << std::put_time(&gm_tm, fmt.c_str());
+                return Value(ss.str());
+            }
+
+            // CSV Subsystem (csv.parse, csv.parse_maps, csv.stringify)
+            if (name == "csv.parse" || name == "csv.parse_maps") {
+                if (!evaluated_args.empty()) {
+                    std::string csv_text = evaluated_args[0].as_string();
+                    char delim = (evaluated_args.size() > 1 && !evaluated_args[1].as_string().empty()) ? evaluated_args[1].as_string()[0] : ',';
+                    std::vector<std::vector<Value>> parsed_rows;
+                    std::istringstream stream(csv_text);
+                    std::string line_str;
+                    while (std::getline(stream, line_str)) {
+                        if (!line_str.empty() && line_str.back() == '\r') line_str.pop_back();
+                        if (line_str.empty()) continue;
+                        std::vector<Value> row;
+                        std::string cell;
+                        bool in_q = false;
+                        for (size_t i = 0; i < line_str.size(); ++i) {
+                            char c = line_str[i];
+                            if (c == '"') {
+                                if (in_q && i + 1 < line_str.size() && line_str[i + 1] == '"') {
+                                    cell += '"';
+                                    i++;
+                                } else {
+                                    in_q = !in_q;
+                                }
+                            } else if (c == delim && !in_q) {
+                                row.push_back(Value(cell));
+                                cell.clear();
+                            } else {
+                                cell += c;
+                            }
+                        }
+                        row.push_back(Value(cell));
+                        parsed_rows.push_back(row);
+                    }
+                    if (name == "csv.parse_maps") {
+                        std::vector<Value> map_rows;
+                        if (parsed_rows.size() >= 2) {
+                            const auto& headers = parsed_rows[0];
+                            for (size_t r = 1; r < parsed_rows.size(); ++r) {
+                                std::unordered_map<std::string, Value> obj;
+                                for (size_t c = 0; c < headers.size() && c < parsed_rows[r].size(); ++c) {
+                                    obj[headers[c].as_string()] = parsed_rows[r][c];
+                                }
+                                map_rows.push_back(Value(obj));
+                            }
+                        }
+                        return Value(map_rows);
+                    }
+                    std::vector<Value> out_rows;
+                    for (const auto& r : parsed_rows) out_rows.push_back(Value(r));
+                    return Value(out_rows);
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "csv.stringify") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string delim = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : ",";
+                    std::ostringstream ss;
+                    const auto& rows = *evaluated_args[0].list_val;
+                    for (size_t r = 0; r < rows.size(); ++r) {
+                        if (r > 0) ss << "\n";
+                        if (rows[r].type == ValueType::List && rows[r].list_val) {
+                            const auto& cols = *rows[r].list_val;
+                            for (size_t c = 0; c < cols.size(); ++c) {
+                                if (c > 0) ss << delim;
+                                std::string val_s = cols[c].as_string();
+                                if (val_s.find(delim) != std::string::npos || val_s.find('"') != std::string::npos) {
+                                    std::string esc = "\"";
+                                    for (char ch : val_s) esc += (ch == '"') ? "\"\"" : std::string(1, ch);
+                                    esc += "\"";
+                                    ss << esc;
+                                } else {
+                                    ss << val_s;
+                                }
+                            }
+                        }
+                    }
+                    return Value(ss.str());
+                }
+                return Value("");
+            }
+
+            // Extended Crypto v2.8 (crc32, constant_time_eq, csms_payload)
+            if (name == "crypto.crc32" || name == "crc32") {
+                std::string data = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(CryptoUtils::crc32_hex(data));
+            }
+            if (name == "crypto.crc32_int") {
+                std::string data = evaluated_args.empty() ? "" : evaluated_args[0].as_string();
+                return Value(static_cast<int64_t>(CryptoUtils::crc32_uint(data)));
+            }
+            if (name == "crypto.constant_time_eq") {
+                std::string a = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string b = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                return Value(CryptoUtils::constant_time_eq(a, b));
+            }
+            if (name == "crypto.csms_payload") {
+                std::string room_id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "default";
+                std::string msg = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                return Value(CryptoUtils::csms_payload(room_id, msg));
+            }
+
+            // Extended Vector & Data Science Math v2.8 (dot, norm, distance, linspace, percentile)
+            if (name == "math.dot" || name == "dot") {
+                if (evaluated_args.size() >= 2 &&
+                    evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val &&
+                    evaluated_args[1].type == ValueType::List && evaluated_args[1].list_val) {
+                    const auto& v1 = *evaluated_args[0].list_val;
+                    const auto& v2 = *evaluated_args[1].list_val;
+                    size_t n = std::min(v1.size(), v2.size());
+                    double sum = 0.0;
+                    for (size_t i = 0; i < n; ++i) sum += v1[i].as_number() * v2[i].as_number();
+                    return Value(sum);
+                }
+                return Value(0.0);
+            }
+            if (name == "math.norm" || name == "norm") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    double sq_sum = 0.0;
+                    for (const auto& v : *evaluated_args[0].list_val) {
+                        double x = v.as_number();
+                        sq_sum += x * x;
+                    }
+                    return Value(std::sqrt(sq_sum));
+                }
+                return Value(0.0);
+            }
+            if (name == "math.distance" || name == "distance") {
+                if (evaluated_args.size() >= 2) {
+                    if (evaluated_args[0].type == ValueType::Tuple && evaluated_args[1].type == ValueType::Tuple) {
+                        double dx = evaluated_args[1].tuple_val.first - evaluated_args[0].tuple_val.first;
+                        double dy = evaluated_args[1].tuple_val.second - evaluated_args[0].tuple_val.second;
+                        return Value(std::hypot(dx, dy));
+                    }
+                    if (evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val &&
+                        evaluated_args[1].type == ValueType::List && evaluated_args[1].list_val) {
+                        const auto& v1 = *evaluated_args[0].list_val;
+                        const auto& v2 = *evaluated_args[1].list_val;
+                        size_t n = std::min(v1.size(), v2.size());
+                        double sq = 0.0;
+                        for (size_t i = 0; i < n; ++i) {
+                            double d = v2[i].as_number() - v1[i].as_number();
+                            sq += d * d;
+                        }
+                        return Value(std::sqrt(sq));
+                    }
+                }
+                return Value(0.0);
+            }
+            if (name == "math.linspace" || name == "linspace") {
+                double start_v = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.0;
+                double end_v = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 1.0;
+                int64_t count = evaluated_args.size() >= 3 ? std::max<int64_t>(1, evaluated_args[2].as_int()) : 5;
+                std::vector<Value> out;
+                if (count == 1) {
+                    out.push_back(Value(start_v));
+                } else {
+                    double step = (end_v - start_v) / static_cast<double>(count - 1);
+                    for (int64_t i = 0; i < count; ++i) {
+                        out.push_back(Value(start_v + step * static_cast<double>(i)));
+                    }
+                }
+                return Value(out);
+            }
+            if (name == "math.percentile" || name == "percentile") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val && !evaluated_args[0].list_val->empty()) {
+                    std::vector<double> nums;
+                    for (const auto& v : *evaluated_args[0].list_val) nums.push_back(v.as_number());
+                    std::sort(nums.begin(), nums.end());
+                    double p = std::max(0.0, std::min(100.0, evaluated_args[1].as_number()));
+                    double rank = (p / 100.0) * static_cast<double>(nums.size() - 1);
+                    size_t lower = static_cast<size_t>(std::floor(rank));
+                    size_t upper = static_cast<size_t>(std::ceil(rank));
+                    double weight = rank - static_cast<double>(lower);
+                    return Value(nums[lower] * (1.0 - weight) + nums[upper] * weight);
+                }
+                return Value(0.0);
+            }
+
+            // Extended Functional Collection Helpers v2.8 (take, drop, partition, group_by, sort_by, min_by, max_by, sum_by, frequencies)
+            if (name == "take") {
+                if (evaluated_args.size() >= 2) {
+                    int64_t n = std::max<int64_t>(0, evaluated_args[1].as_int());
+                    if (evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                        const auto& l = *evaluated_args[0].list_val;
+                        std::vector<Value> out;
+                        for (size_t i = 0; i < l.size() && static_cast<int64_t>(i) < n; ++i) out.push_back(l[i]);
+                        return Value(out);
+                    } else if (evaluated_args[0].type == ValueType::String) {
+                        std::string s = evaluated_args[0].str_val;
+                        return Value(s.substr(0, std::min<size_t>(s.size(), static_cast<size_t>(n))));
+                    }
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "drop") {
+                if (evaluated_args.size() >= 2) {
+                    int64_t n = std::max<int64_t>(0, evaluated_args[1].as_int());
+                    if (evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                        const auto& l = *evaluated_args[0].list_val;
+                        std::vector<Value> out;
+                        for (size_t i = static_cast<size_t>(n); i < l.size(); ++i) out.push_back(l[i]);
+                        return Value(out);
+                    } else if (evaluated_args[0].type == ValueType::String) {
+                        std::string s = evaluated_args[0].str_val;
+                        if (static_cast<size_t>(n) >= s.size()) return Value("");
+                        return Value(s.substr(static_cast<size_t>(n)));
+                    }
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "partition") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    std::vector<Value> pass_list, fail_list;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        if (invoke_callable(target_fn, { item }).is_truthy()) pass_list.push_back(item);
+                        else fail_list.push_back(item);
+                    }
+                    return Value(std::vector<Value>{ Value(pass_list), Value(fail_list) });
+                }
+                return Value(std::vector<Value>{});
+            }
+            if (name == "group_by") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    std::unordered_map<std::string, Value> groups;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        std::string k = invoke_callable(target_fn, { item }).as_string();
+                        if (groups.find(k) == groups.end()) {
+                            groups[k] = Value(std::vector<Value>{ item });
+                        } else {
+                            groups[k].push(item);
+                        }
+                    }
+                    return Value(groups);
+                }
+                return Value(std::unordered_map<std::string, Value>{});
+            }
+            if (name == "sort_by") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    std::vector<std::pair<Value, Value>> keyed;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        keyed.push_back({ invoke_callable(target_fn, { item }), item });
+                    }
+                    std::sort(keyed.begin(), keyed.end(), [](const auto& a, const auto& b) {
+                        return a.first < b.first;
+                    });
+                    std::vector<Value> sorted_items;
+                    for (const auto& kv : keyed) sorted_items.push_back(kv.second);
+                    return Value(sorted_items);
+                }
+                return evaluated_args.empty() ? Value() : evaluated_args[0];
+            }
+            if (name == "min_by" || name == "max_by") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val && !evaluated_args[0].list_val->empty()) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    const auto& l = *evaluated_args[0].list_val;
+                    Value best_item = l[0];
+                    Value best_key = invoke_callable(target_fn, { l[0] });
+                    for (size_t i = 1; i < l.size(); ++i) {
+                        Value k = invoke_callable(target_fn, { l[i] });
+                        if ((name == "min_by" && k < best_key) || (name == "max_by" && k > best_key)) {
+                            best_key = k;
+                            best_item = l[i];
+                        }
+                    }
+                    return best_item;
+                }
+                return Value();
+            }
+            if (name == "sum_by") {
+                if (evaluated_args.size() >= 2 && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::string target_fn = evaluated_args[1].type == ValueType::String ? evaluated_args[1].as_string() : (raw_arg_names.size() > 1 ? raw_arg_names[1] : "");
+                    double total = 0.0;
+                    bool has_float = false;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        Value v = invoke_callable(target_fn, { item });
+                        if (v.type == ValueType::Float) has_float = true;
+                        total += v.as_number();
+                    }
+                    return has_float ? Value(total) : Value(static_cast<int64_t>(total));
+                }
+                return Value(static_cast<int64_t>(0));
+            }
+            if (name == "frequencies" || name == "freq") {
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::List && evaluated_args[0].list_val) {
+                    std::unordered_map<std::string, Value> counts;
+                    for (const auto& item : *evaluated_args[0].list_val) {
+                        std::string k = item.as_string();
+                        counts[k] = Value(counts[k].as_int() + 1);
+                    }
+                    return Value(counts);
+                }
+                return Value(std::unordered_map<std::string, Value>{});
+            }
+
+            // User Defined Function Call with return value & default args
             auto fn_it = functions.find(name);
             if (fn_it != functions.end()) {
                 auto fn = fn_it->second;
@@ -2049,8 +2652,12 @@ public:
                 for (const auto& p : fn->params) {
                     if (variables.find(p) != variables.end()) saved_vars[p] = variables[p];
                 }
-                for (size_t i = 0; i < fn->params.size() && i < evaluated_args.size(); ++i) {
-                    variables[fn->params[i]] = evaluated_args[i];
+                for (size_t i = 0; i < fn->params.size(); ++i) {
+                    if (i < evaluated_args.size()) {
+                        variables[fn->params[i]] = evaluated_args[i];
+                    } else if (i < fn->default_values.size() && fn->default_values[i]) {
+                        variables[fn->params[i]] = eval(fn->default_values[i]);
+                    }
                 }
                 has_returned = false;
                 last_return_value = Value();
@@ -2087,6 +2694,169 @@ public:
             call_e->args.push_back(std::make_shared<LiteralExpr>(a));
         }
         return eval(call_e);
+    }
+
+    // ── SwiftUI Terminal TUI Preview Canvas Visualizer ──
+    void render_swiftui_tui(const std::shared_ptr<SwiftUIViewNode>& root,
+                            const std::vector<SwiftUIModifier>& root_mods = {},
+                            const std::string& comp_name = "") {
+        if (!root) return;
+
+        std::cout << "\n" << color::CYAN << "╭─────────────────────────────────────────────────────────────────╮" << color::RESET << "\n";
+        std::cout << color::CYAN << "│" << color::RESET << color::BOLD << " 🍎 SwiftUI Canvas Preview — Looping Engine v2.9 (Universal)     " << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+        std::cout << color::CYAN << "│" << color::RESET << " Target: Apple Ecosystem (iOS / macOS / visionOS)                " << color::CYAN << "│" << color::RESET << "\n";
+        if (!comp_name.empty()) {
+            std::string view_line = "│ View: " + comp_name;
+            while (view_line.size() < 66) view_line += " ";
+            view_line += "│";
+            std::cout << color::CYAN << view_line << color::RESET << "\n";
+        }
+        std::cout << color::CYAN << "├─────────────────────────────────────────────────────────────────┤" << color::RESET << "\n";
+        std::cout << color::CYAN << "│" << color::RESET << color::BOLD << "  [View Hierarchy Tree]:" << color::RESET << "                                         " << color::CYAN << "│" << color::RESET << "\n";
+
+        std::function<void(const std::shared_ptr<SwiftUIViewNode>&, const std::string&, bool)> print_tree_node;
+        print_tree_node = [&](const std::shared_ptr<SwiftUIViewNode>& node, const std::string& prefix, bool is_last) {
+            if (!node) return;
+            std::string branch = is_last ? "└── " : "├── ";
+            std::string icon = "📦 ";
+            std::string type_str = swiftui_view_type_name(node->type);
+            std::string color_code = color::CYAN;
+
+            if (node->type == SwiftUIViewType::Text) { icon = "🔤 "; color_code = color::WHITE; }
+            else if (node->type == SwiftUIViewType::Button) { icon = "🔘 "; color_code = color::GREEN; }
+            else if (node->type == SwiftUIViewType::Image) { icon = "🖼️ "; color_code = color::PURPLE; }
+            else if (node->type == SwiftUIViewType::TextField) { icon = "✎ "; color_code = color::YELLOW; }
+            else if (node->type == SwiftUIViewType::Toggle) { icon = "🎚️ "; color_code = color::CYAN; }
+            else if (node->type == SwiftUIViewType::Slider) { icon = "━●━ "; color_code = color::CYAN; }
+            else if (node->type == SwiftUIViewType::ProgressView) { icon = "⏳ "; color_code = color::YELLOW; }
+            else if (node->type == SwiftUIViewType::Badge) { icon = "🏷️ "; color_code = color::PURPLE; }
+            else if (node->type == SwiftUIViewType::Spacer) { icon = "⇕ "; color_code = color::RESET; }
+            else if (node->type == SwiftUIViewType::Divider) { icon = "── "; color_code = color::RESET; }
+
+            std::cout << color::CYAN << "│" << color::RESET << "  " << prefix << branch << icon << color::BOLD << color_code << type_str << color::RESET;
+            if (!node->primary_arg.empty()) {
+                std::string disp = node->primary_arg;
+                if (!disp.empty() && disp[0] == '$') {
+                    std::string var_name = disp.substr(1);
+                    if (variables.count(var_name)) disp = variables[var_name].as_string();
+                }
+                std::cout << " \"" << color::YELLOW << disp << color::RESET << "\"";
+            }
+            if (!node->binding_var.empty()) {
+                std::cout << " ($" << node->binding_var;
+                if (variables.count(node->binding_var)) {
+                    std::cout << " = " << variables[node->binding_var].as_string();
+                }
+                std::cout << ")";
+            }
+
+            if (!node->modifiers.empty()) {
+                std::cout << color::PURPLE << " [";
+                for (size_t mi = 0; mi < node->modifiers.size(); ++mi) {
+                    if (mi > 0) std::cout << ", ";
+                    std::cout << "." << node->modifiers[mi].name;
+                    if (!node->modifiers[mi].args.empty()) {
+                        std::cout << "(" << node->modifiers[mi].args[0] << ")";
+                    }
+                }
+                std::cout << "]" << color::RESET;
+            }
+            std::cout << "\n";
+
+            std::string child_prefix = prefix + (is_last ? "    " : "│   ");
+            for (size_t ci = 0; ci < node->children.size(); ++ci) {
+                print_tree_node(node->children[ci], child_prefix, ci + 1 == node->children.size());
+            }
+        };
+
+        print_tree_node(root, "", true);
+
+        if (!root_mods.empty()) {
+            std::cout << color::CYAN << "│" << color::RESET << "  Root Modifiers: ";
+            for (const auto& rm : root_mods) {
+                std::cout << color::PURPLE << "." << rm.name << "() " << color::RESET;
+            }
+            std::cout << "\n";
+        }
+
+        std::cout << color::CYAN << "├─────────────────────────────────────────────────────────────────┤" << color::RESET << "\n";
+        std::cout << color::CYAN << "│" << color::RESET << color::BOLD << "  [Simulated Device Display Frame]:" << color::RESET << "                              " << color::CYAN << "│" << color::RESET << "\n";
+        std::cout << color::CYAN << "│" << color::RESET << "   " << color::WHITE << "┌────────────────────────────────────────────────────────┐" << color::RESET << "   " << color::CYAN << "│" << color::RESET << "\n";
+
+        std::function<void(const std::shared_ptr<SwiftUIViewNode>&)> render_visual;
+        render_visual = [&](const std::shared_ptr<SwiftUIViewNode>& n) {
+            if (!n) return;
+            if (n->type == SwiftUIViewType::Text) {
+                std::string t = n->primary_arg;
+                for (const auto& kv : variables) {
+                    size_t pos = t.find("$" + kv.first);
+                    if (pos != std::string::npos) t.replace(pos, kv.first.size() + 1, kv.second.as_string());
+                }
+                std::string line_content = "   │  " + t;
+                while (line_content.size() < 58) line_content += " ";
+                line_content += "│   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::WHITE << line_content << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else if (n->type == SwiftUIViewType::Button) {
+                std::string btn = "   │  [ Button: " + n->primary_arg + " ]";
+                while (btn.size() < 58) btn += " ";
+                btn += "│   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::GREEN << btn << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else if (n->type == SwiftUIViewType::Toggle) {
+                std::string state_str = "OFF";
+                if (!n->binding_var.empty() && variables.count(n->binding_var) && variables[n->binding_var].is_truthy()) {
+                    state_str = "ON";
+                }
+                std::string tog = "   │  (●) " + n->primary_arg + " [" + state_str + "]";
+                while (tog.size() < 58) tog += " ";
+                tog += "│   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::CYAN << tog << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else if (n->type == SwiftUIViewType::Slider) {
+                std::string val_str = "50";
+                if (!n->binding_var.empty() && variables.count(n->binding_var)) {
+                    val_str = variables[n->binding_var].as_string();
+                }
+                std::string sld = "   │  ━━━●━━━━━ Slider (" + val_str + "%)";
+                while (sld.size() < 58) sld += " ";
+                sld += "│   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::CYAN << sld << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else if (n->type == SwiftUIViewType::ProgressView) {
+                std::string prg = "   │  [■■■■■■■□□□] Progress: " + (n->primary_arg.empty() ? "70%" : n->primary_arg);
+                while (prg.size() < 58) prg += " ";
+                prg += "│   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::YELLOW << prg << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else if (n->type == SwiftUIViewType::Divider) {
+                std::string div = "   │  ────────────────────────────────────────────────────  │   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::WHITE << div << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else if (n->type == SwiftUIViewType::HStack) {
+                std::string h_line = "   │  ";
+                for (const auto& ch : n->children) {
+                    if (ch->type == SwiftUIViewType::Button) {
+                        h_line += "[" + ch->primary_arg + "]  ";
+                    } else if (ch->type == SwiftUIViewType::Text) {
+                        std::string t = ch->primary_arg;
+                        for (const auto& kv : variables) {
+                            size_t pos = t.find("$" + kv.first);
+                            if (pos != std::string::npos) t.replace(pos, kv.first.size() + 1, kv.second.as_string());
+                        }
+                        h_line += t + "  ";
+                    } else if (ch->type == SwiftUIViewType::Badge) {
+                        h_line += "<" + ch->primary_arg + ">  ";
+                    }
+                }
+                while (h_line.size() < 58) h_line += " ";
+                h_line += "│   ";
+                std::cout << color::CYAN << "│" << color::RESET << color::WHITE << h_line << color::RESET << color::CYAN << "│" << color::RESET << "\n";
+            } else {
+                for (const auto& ch : n->children) {
+                    render_visual(ch);
+                }
+            }
+        };
+
+        render_visual(root);
+
+        std::cout << color::CYAN << "│" << color::RESET << "   " << color::WHITE << "└────────────────────────────────────────────────────────┘" << color::RESET << "   " << color::CYAN << "│" << color::RESET << "\n";
+        std::cout << color::CYAN << "╰─────────────────────────────────────────────────────────────────╯" << color::RESET << "\n\n";
     }
 
     // ── Statement Executor ──
@@ -2141,7 +2911,19 @@ public:
             Value target_v = eval(ms->target);
             for (const auto& arm : ms->arms) {
                 bool matched = false;
-                if (!arm.pattern) {
+                if (arm.is_range) {
+                    double tv = target_v.as_number();
+                    double sv = eval(arm.range_start).as_number();
+                    double ev = eval(arm.range_end).as_number();
+                    matched = arm.range_inclusive ? (tv >= sv && tv <= ev) : (tv >= sv && tv < ev);
+                } else if (!arm.patterns.empty()) {
+                    for (const auto& p_expr : arm.patterns) {
+                        if (target_v == eval(p_expr)) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                } else if (!arm.pattern) {
                     matched = true;
                 } else {
                     Value pat_v = eval(arm.pattern);
@@ -2213,6 +2995,7 @@ public:
                     else if (st->op == "-=") (*rit->second.map_val)[sub_key] = (*rit->second.map_val)[sub_key] - val;
                     else if (st->op == "*=") (*rit->second.map_val)[sub_key] = (*rit->second.map_val)[sub_key] * val;
                     else if (st->op == "/=") (*rit->second.map_val)[sub_key] = (*rit->second.map_val)[sub_key] / val;
+                    else if (st->op == "%=") (*rit->second.map_val)[sub_key] = (*rit->second.map_val)[sub_key] % val;
                     return;
                 }
             }
@@ -2226,6 +3009,8 @@ public:
                 variables[st->var_name] = variables[st->var_name] * val;
             } else if (st->op == "/=") {
                 variables[st->var_name] = variables[st->var_name] / val;
+            } else if (st->op == "%=") {
+                variables[st->var_name] = variables[st->var_name] % val;
             }
             return;
         }
@@ -2246,6 +3031,7 @@ public:
                         else if (si->op == "-=") (*it->second.list_val)[static_cast<size_t>(i)] = (*it->second.list_val)[static_cast<size_t>(i)] - val;
                         else if (si->op == "*=") (*it->second.list_val)[static_cast<size_t>(i)] = (*it->second.list_val)[static_cast<size_t>(i)] * val;
                         else if (si->op == "/=") (*it->second.list_val)[static_cast<size_t>(i)] = (*it->second.list_val)[static_cast<size_t>(i)] / val;
+                        else if (si->op == "%=") (*it->second.list_val)[static_cast<size_t>(i)] = (*it->second.list_val)[static_cast<size_t>(i)] % val;
                     } else if (i == sz && si->op == "=") {
                         it->second.list_val->push_back(val);
                     }
@@ -2257,6 +3043,7 @@ public:
                     else if (si->op == "-=") (*it->second.map_val)[k] = (*it->second.map_val)[k] - val;
                     else if (si->op == "*=") (*it->second.map_val)[k] = (*it->second.map_val)[k] * val;
                     else if (si->op == "/=") (*it->second.map_val)[k] = (*it->second.map_val)[k] / val;
+                    else if (si->op == "%=") (*it->second.map_val)[k] = (*it->second.map_val)[k] % val;
                 }
             }
             return;
@@ -2410,20 +3197,137 @@ public:
             return;
         }
 
+        // 10c. Module Definition: define module "Name" version 1.0:
+        if (auto mdef = std::dynamic_pointer_cast<ModuleDefineStmt>(stmt)) {
+            // Module definition registered
+            return;
+        }
+
         // 11. Import
         if (auto imp = std::dynamic_pointer_cast<ImportStmt>(stmt)) {
-            if (imp->module_name == "pyloop") {
+            std::string mod = imp->module_name;
+            while (!mod.empty() && (mod.front() == '"' || mod.front() == '\'')) mod.erase(mod.begin());
+            while (!mod.empty() && (mod.back() == '"' || mod.back() == '\'')) mod.pop_back();
+
+            if (mod == "pyloop") {
                 imported_modules.insert("pyloop");
                 imported_python_modules.insert("pyloop");
                 return;
             }
+
+            if (imported_modules.count(mod) > 0) {
+                return; // Already imported to avoid cyclic loops
+            }
+
+            // Check if built-in stdlib module
+            static const std::unordered_set<std::string> stdlib_modules = {
+                "math", "crypto", "sys", "system", "csv", "datetime", "regex", "ui", "swiftui", "json", "file"
+            };
+            if (stdlib_modules.count(mod) > 0) {
+                imported_modules.insert(mod);
+                return;
+            }
+
+            // Search resolution paths for the module file
+            std::string home_dir = getenv("HOME") ? getenv("HOME") : "";
+            std::vector<std::string> candidate_paths = {
+                mod,
+                mod + ".loop",
+                "./" + mod,
+                "./" + mod + ".loop",
+                "./loop_modules/" + mod + ".loop",
+                "./loop_modules/" + mod,
+                "./modules/" + mod + "/" + mod + ".loop",
+                "./modules/" + mod + "/main.loop",
+                "./modules/" + mod + "/core_utils.loop"
+            };
+
+            auto read_entry_from_smile = [](const std::string& manifest_path) -> std::string {
+                std::ifstream f(manifest_path);
+                if (!f.is_open()) return "";
+                std::string line, content;
+                while (std::getline(f, line)) content += line;
+                auto pos = content.find("\"entry_point\"");
+                if (pos != std::string::npos) {
+                    auto col = content.find(':', pos);
+                    if (col != std::string::npos) {
+                        auto q1 = content.find('"', col);
+                        if (q1 != std::string::npos) {
+                            auto q2 = content.find('"', q1 + 1);
+                            if (q2 != std::string::npos) {
+                                return content.substr(q1 + 1, q2 - q1 - 1);
+                            }
+                        }
+                    }
+                }
+                return "";
+            };
+
+            std::string local_manifest = "./modules/" + mod + "/smile.json";
+            std::string local_entry = read_entry_from_smile(local_manifest);
+            if (!local_entry.empty()) {
+                candidate_paths.insert(candidate_paths.begin(), "./modules/" + mod + "/" + local_entry);
+            }
+
+            if (!home_dir.empty()) {
+                std::string global_base = home_dir + "/.smiledev/modules/" + mod;
+                std::string global_manifest = global_base + "/smile.json";
+                std::string global_entry = read_entry_from_smile(global_manifest);
+                if (!global_entry.empty()) {
+                    candidate_paths.push_back(global_base + "/" + global_entry);
+                }
+                candidate_paths.push_back(global_base + "/" + mod + ".loop");
+                candidate_paths.push_back(global_base + "/main.loop");
+            }
+
             if (imp->is_python) {
-                imported_python_modules.insert(imp->module_name);
+                candidate_paths.push_back("./modules/" + mod + "/" + mod + ".py");
+                candidate_paths.push_back("./modules/" + mod + "/main.py");
+                if (!home_dir.empty()) {
+                    candidate_paths.push_back(home_dir + "/.smiledev/modules/" + mod + "/" + mod + ".py");
+                    candidate_paths.push_back(home_dir + "/.smiledev/modules/" + mod + "/main.py");
+                }
+            }
+
+            std::string resolved_path = "";
+            for (const auto& cp : candidate_paths) {
+                std::ifstream f(cp);
+                if (f.good()) {
+                    resolved_path = cp;
+                    break;
+                }
+            }
+
+            if (!resolved_path.empty()) {
+                imported_modules.insert(mod);
+                if (resolved_path.size() >= 3 && resolved_path.substr(resolved_path.size() - 3) == ".py") {
+                    imported_python_modules.insert(mod);
+                    if (python_bridge.is_available) {
+                        std::ifstream pf(resolved_path);
+                        std::string py_content((std::istreambuf_iterator<char>(pf)), std::istreambuf_iterator<char>());
+                        python_bridge.execute_block(py_content, variables);
+                        std::cout << color::GREEN << "[PYTHON BRIDGE]" << color::RESET << " Loaded module: " 
+                                  << color::BOLD << mod << color::RESET << " (" << resolved_path << ")\n";
+                    }
+                    return;
+                }
+
+                // Pure Looping module (.loop)
+                std::ifstream lf(resolved_path);
+                std::string loop_content((std::istreambuf_iterator<char>(lf)), std::istreambuf_iterator<char>());
+                execute_code(loop_content);
+                std::cout << color::BLUE << "[MODULE]" << color::RESET << " Loaded " << color::BOLD << mod 
+                          << color::RESET << " (" << resolved_path << ")\n";
+                return;
+            }
+
+            if (imp->is_python) {
+                imported_python_modules.insert(mod);
                 std::cout << color::GREEN << "[PYTHON BRIDGE]" << color::RESET << " Linked Python Module: " 
-                          << color::BOLD << imp->module_name << color::RESET << "\n";
+                          << color::BOLD << mod << color::RESET << "\n";
             } else {
-                imported_modules.insert(imp->module_name);
-                std::cout << color::BLUE << "[MODULE]" << color::RESET << " Loaded " << imp->module_name << "\n";
+                imported_modules.insert(mod);
+                std::cout << color::BLUE << "[MODULE]" << color::RESET << " Loaded " << mod << "\n";
             }
             return;
         }
@@ -2522,9 +3426,36 @@ public:
             } else if (sp->entity_type == "orb") {
                 std::cout << color::PURPLE << "[ORB]" << color::RESET << " Placed Jump Ring at (" 
                           << sp->x << ", " << sp->y << ")\n";
+            } else if (sp->entity_type == "moving_platform") {
+                std::cout << color::CYAN << "[MAGLEV]" << color::RESET << " Moving Platform at ("
+                          << sp->x << ", " << sp->y << ") [" << sp->axis << ": " << sp->min_pos << ".." << sp->max_pos << "]\n";
+            } else if (sp->entity_type == "enemy") {
+                std::cout << color::RED << "[ENEMY]" << color::RESET << " Deployed \"" << sp->name 
+                          << "\" (HP: " << sp->health << " | Patrol: " << sp->min_pos << ".." << sp->max_pos << ")\n";
+            } else if (sp->entity_type == "heart") {
+                std::cout << color::GREEN << "[ITEM]" << color::RESET << " Health Pack at (" 
+                          << sp->x << ", " << sp->y << ") [+" << sp->health << " HP]\n";
+            } else if (sp->entity_type == "portal") {
+                std::cout << color::PURPLE << "[PORTAL]" << color::RESET << " Stage Goal at (" 
+                          << sp->x << ", " << sp->y << ") [\"" << sp->text << "\"]\n";
             } else {
                 std::cout << color::CYAN << "[WORLD]" << color::RESET << " Placed " << sp->entity_type 
                           << " Stage Component\n";
+            }
+            return;
+        }
+
+        // Game Configuration Directives
+        if (auto gcfg = std::dynamic_pointer_cast<GameConfigStmt>(stmt)) {
+            if (gcfg->config_key == "world") {
+                std::cout << color::CYAN << "[GAME WORLD]" << color::RESET << " Stage Bounds: " 
+                          << gcfg->val1 << "x" << gcfg->val2 << " px\n";
+            } else if (gcfg->config_key == "camera") {
+                std::cout << color::CYAN << "[CAMERA]" << color::RESET << " Follow: " 
+                          << gcfg->str_val << " (smooth: " << gcfg->val1 << ")\n";
+            } else {
+                std::cout << color::CYAN << "[GAME CONFIG]" << color::RESET << " " 
+                          << gcfg->config_key << " = " << gcfg->val1 << "\n";
             }
             return;
         }
@@ -2647,6 +3578,27 @@ public:
                     Compiler::run_artifact(created_path);
                 }
             }
+            return;
+        }
+
+        // 22. SwiftUI Declarative Component Declaration: view <Name> { ... }
+        if (auto comp = std::dynamic_pointer_cast<SwiftUIComponentDeclStmt>(stmt)) {
+            swiftui_components[comp->name] = comp;
+            for (const auto& st : comp->states) {
+                if (st.initial_expr) {
+                    variables[st.name] = eval(st.initial_expr);
+                } else {
+                    variables[st.name] = Value();
+                }
+            }
+            std::cout << color::CYAN << "[SWIFTUI VIEW]" << color::RESET << " Registered declarative view \""
+                      << color::BOLD << comp->name << color::RESET << "\" (" << comp->states.size() << " @state vars)\n";
+            return;
+        }
+
+        // 23. Top-Level SwiftUI View Render Statement
+        if (auto v_render = std::dynamic_pointer_cast<SwiftUIViewRenderStmt>(stmt)) {
+            render_swiftui_tui(v_render->root_view, v_render->root_modifiers, "ContentView");
             return;
         }
     }

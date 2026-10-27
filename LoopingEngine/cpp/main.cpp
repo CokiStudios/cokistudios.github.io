@@ -15,22 +15,23 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " run <script.loop>        Execute Looping script\n";
     std::cout << "  " << prog_name << " create <name> [--type]   Create and synthesize new dynamic program\n";
     std::cout << "  " << prog_name << " compile <file.loop>      Compile script for target UI profile\n";
+    std::cout << "  " << prog_name << " preview <file.loop> [View] Live SwiftUI Canvas terminal preview\n";
     std::cout << "  " << prog_name << " check <file.loop>        Static syntax & AST verification report\n";
     std::cout << "  " << prog_name << " ast <file.loop>          Display visual AST node tree & structure\n";
     std::cout << "  " << prog_name << " fmt <file.loop> [--write] Format & normalize .loop source file\n";
-    std::cout << "  " << prog_name << " doc [topic]              Built-in reference manual (syntax, math, crypto, regex, ui)\n";
+    std::cout << "  " << prog_name << " doc [topic]              Built-in reference manual (syntax, math, crypto, csv, datetime, regex, ui)\n";
     std::cout << "  " << prog_name << " bench                    Run native C++17 VM throughput benchmark\n";
     std::cout << "  " << prog_name << " doctor                   Inspect engine subsystems & environment health\n";
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
-    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (40 tests)\n";
+    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (50 tests)\n";
     std::cout << "  " << prog_name << " --version, -v            Display engine version\n";
     std::cout << "  " << prog_name << " --help, -h               Show this help message\n\n";
 }
 
 int run_tests() {
-    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v2.7 Quantum Signature)...\n\n";
+    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v1.0.0 Commercial / Arch 2.8A)...\n\n";
     Interpreter vm;
 
     int passed = 0;
@@ -537,8 +538,267 @@ int run_tests() {
     );
     assert_test("System Hardware & Environment Inspection (sys.cpus, sys.version, sys.env)",
                 vm.variables["cores"].as_int() >= 1 &&
-                vm.variables["eng_v"].as_string() == "2.7.0" &&
+                vm.variables["eng_v"].as_string() == "1.0.0-commercial" &&
                 vm.variables["fallback_env"].as_string() == "default_ok");
+
+    // Test 41: Default Function Arguments & Compound Modulo Assignment (%=)
+    vm.execute_code(
+        "fn greet_pilot(name, rank = \"Commander\", bonus = 50) => $\"{rank} {name} (+{bonus})\"\n"
+        "val g1 = greet_pilot(\"Jerix\")\n"
+        "val g2 = greet_pilot(\"Jerix\", \"Admiral\", 200)\n"
+        "mut rem_v = 29\n"
+        "rem_v %= 6\n"
+    );
+    assert_test("Default Function Arguments & Compound Modulo (%=)",
+                vm.variables["g1"].as_string() == "Commander Jerix (+50)" &&
+                vm.variables["g2"].as_string() == "Admiral Jerix (+200)" &&
+                vm.variables["rem_v"].as_int() == 5);
+
+    // Test 42: Multi-Pattern (|) & Range Pattern (..=) Match Blocks
+    vm.execute_code(
+        "val tier_code = \"SS\"\n"
+        "mut tier_reward = 0\n"
+        "match tier_code {\n"
+        "    \"S\" | \"SS\" | \"SSS\" => tier_reward = 1000\n"
+        "    \"A\" | \"B\" => tier_reward = 500\n"
+        "    _ => tier_reward = 100\n"
+        "}\n"
+        "val exam_score = 94\n"
+        "mut grade_letter = \"F\"\n"
+        "match exam_score {\n"
+        "    90..=100 => grade_letter = \"A+\"\n"
+        "    80..90 => grade_letter = \"B\"\n"
+        "    _ => grade_letter = \"C\"\n"
+        "}\n"
+    );
+    assert_test("Multi-Pattern (|) & Range Pattern (..=) Match Arms",
+                vm.variables["tier_reward"].as_int() == 1000 &&
+                vm.variables["grade_letter"].as_string() == "A+");
+
+    // Test 43: Method-Style Dot Calls on Variables (str.trim(), str.upper(), list.push(), list.sort())
+    vm.execute_code(
+        "let raw_title = \"   coki studios shine   \"\n"
+        "val clean_upper = raw_title.trim()\n"
+        "val final_title = clean_upper.upper()\n"
+        "mut dyn_list = [40, 10, 30]\n"
+        "dyn_list.push(20)\n"
+        "val sorted_dyn = dyn_list.sort()\n"
+        "val dyn_len = sorted_dyn.len()\n"
+    );
+    assert_test("Method-Style Dot Calls on Variables (s.trim(), list.push(), list.sort())",
+                vm.variables["final_title"].as_string() == "COKI STUDIOS SHINE" &&
+                vm.variables["dyn_len"].as_int() == 4 &&
+                vm.variables["sorted_dyn"].list_val &&
+                vm.variables["sorted_dyn"].list_val->at(1).as_int() == 20);
+
+    // Test 44: CSV Subsystem (csv.parse, csv.parse_maps, csv.stringify)
+    vm.execute_code(
+        "val csv_raw = \"city,altitude,hub\\nBogota,2640,true\\nChia,2564,true\"\n"
+        "val csv_rows = csv.parse(csv_raw)\n"
+        "val csv_objs = csv.parse_maps(csv_raw)\n"
+        "val first_city = csv_objs[0][\"city\"]\n"
+        "val re_csv = csv.stringify(csv_rows)\n"
+    );
+    assert_test("CSV Subsystem (csv.parse, csv.parse_maps, csv.stringify)",
+                vm.variables["csv_rows"].size() == 3 &&
+                vm.variables["csv_objs"].size() == 2 &&
+                vm.variables["first_city"].as_string() == "Bogota" &&
+                vm.variables["re_csv"].as_string().find("Bogota,2640,true") != std::string::npos);
+
+    // Test 45: DateTime & High-Resolution Clock Subsystem (datetime.iso, datetime.now, datetime.format, time.nanos)
+    vm.execute_code(
+        "val iso_str = datetime.iso(1767225600)\n"
+        "val dt_map = datetime.now(1767225600)\n"
+        "val dt_fmt = datetime.format(1767225600, \"%Y-%m-%d\")\n"
+        "val ns_clock = time.nanos()\n"
+    );
+    assert_test("DateTime & High-Resolution Clock (datetime.iso, datetime.now, datetime.format, time.nanos)",
+                vm.variables["iso_str"].as_string() == "2026-01-01T00:00:00Z" &&
+                vm.variables["dt_map"].map_val && vm.variables["dt_map"].map_val->at("year").as_int() == 2026 &&
+                vm.variables["dt_fmt"].as_string() == "2026-01-01" &&
+                vm.variables["ns_clock"].as_int() > 1000000);
+
+    // Test 46: Extended Crypto v2.8 (crc32, constant_time_eq, csms_payload)
+    vm.execute_code(
+        "val crc_hex = crypto.crc32(\"LoopingEngine\")\n"
+        "val ct_ok = crypto.constant_time_eq(\"sec_token_123\", \"sec_token_123\")\n"
+        "val ct_diff = crypto.constant_time_eq(\"sec_token_123\", \"sec_token_999\")\n"
+        "val csms_pkt = crypto.csms_payload(\"room_sabana\", \"Hola Cota\")\n"
+    );
+    assert_test("Extended Crypto v2.8 (crc32, constant_time_eq, csms_payload)",
+                vm.variables["crc_hex"].as_string().size() == 8 &&
+                vm.variables["ct_ok"].is_truthy() &&
+                !vm.variables["ct_diff"].is_truthy() &&
+                vm.variables["csms_pkt"].as_string().rfind("🔒 enc:v1:", 0) == 0);
+
+    // Test 47: Vector & Linear Algebra Math (dot, norm, distance, linspace, percentile, tau, phi)
+    vm.execute_code(
+        "val dot_p = math.dot([1, 2, 3], [4, 5, 6])\n"
+        "val v_norm = math.norm([3, 4])\n"
+        "val pt_dist = math.distance((0, 0), (6, 8))\n"
+        "val lspace = math.linspace(0, 10, 5)\n"
+        "val p90 = math.percentile([10, 20, 30, 40, 50], 50)\n"
+        "val tau_v = math.tau\n"
+        "val phi_v = math.phi\n"
+    );
+    assert_test("Vector & Statistical Math (dot, norm, distance, linspace, percentile, tau, phi)",
+                vm.variables["dot_p"].as_int() == 32 &&
+                vm.variables["v_norm"].as_int() == 5 &&
+                vm.variables["pt_dist"].as_int() == 10 &&
+                vm.variables["lspace"].size() == 5 &&
+                vm.variables["p90"].as_int() == 30 &&
+                vm.variables["tau_v"].as_number() > 6.28 &&
+                vm.variables["phi_v"].as_number() > 1.61);
+
+    // Test 48: Extended Functional Helpers (take, drop, partition)
+    vm.execute_code(
+        "fn is_big(n) => n >= 50\n"
+        "val base_arr = [10, 60, 20, 80, 30, 90]\n"
+        "val taken = take(base_arr, 3)\n"
+        "val dropped = drop(base_arr, 4)\n"
+        "val parts = partition(base_arr, is_big)\n"
+    );
+    assert_test("Extended Functional Helpers (take, drop, partition)",
+                vm.variables["taken"].size() == 3 &&
+                vm.variables["dropped"].size() == 2 &&
+                vm.variables["parts"].list_val &&
+                vm.variables["parts"].list_val->at(0).size() == 3 &&
+                vm.variables["parts"].list_val->at(1).size() == 3);
+
+    // Test 49: Grouping, Sorting & Aggregations (group_by, sort_by, min_by, max_by, sum_by, frequencies)
+    vm.execute_code(
+        "fn parity_label(n) => n % 2 == 0 ? \"even\" : \"odd\"\n"
+        "fn neg_key(n) => 0 - n\n"
+        "fn double_val(n) => n * 2\n"
+        "val sample_nums = [1, 2, 3, 4, 5, 6]\n"
+        "val grouped = group_by(sample_nums, parity_label)\n"
+        "val desc_sorted = sort_by(sample_nums, neg_key)\n"
+        "val max_neg = min_by(sample_nums, neg_key)\n"
+        "val doubled_sum = sum_by(sample_nums, double_val)\n"
+        "val freqs = frequencies([\"a\", \"b\", \"a\", \"c\", \"a\", \"b\"])\n"
+    );
+    assert_test("Grouping, Sorting & Aggregations (group_by, sort_by, min_by, sum_by, frequencies)",
+                vm.variables["grouped"].map_val && vm.variables["grouped"].map_val->at("even").size() == 3 &&
+                vm.variables["desc_sorted"].list_val && vm.variables["desc_sorted"].list_val->at(0).as_int() == 6 &&
+                vm.variables["max_neg"].as_int() == 6 &&
+                vm.variables["doubled_sum"].as_int() == 42 &&
+                vm.variables["freqs"].map_val && vm.variables["freqs"].map_val->at("a").as_int() == 3);
+
+    // Test 50: End-to-End Telemetry Pipeline (CSV -> Functional Filter/Map -> Checksum)
+    vm.execute_code(
+        "fn parse_int(s) => s + 0\n"
+        "val raw_scores = [12, 25, 8, 40, 19, 30]\n"
+        "fn above_twenty(x) => x >= 20\n"
+        "fn boost_ten(x) => x + 10\n"
+        "val boosted = raw_scores |> filter(above_twenty) |> map(boost_ten)\n"
+        "val total_boosted = math.sum(boosted)\n"
+        "val verify_crc = crypto.crc32($\"boosted:{total_boosted}\")\n"
+    );
+    assert_test("End-to-End Functional Telemetry Pipeline (|> filter |> map + sum + crc32)",
+                vm.variables["total_boosted"].as_int() == (35 + 50 + 40) &&
+                vm.variables["verify_crc"].as_string().size() == 8);
+
+    // Test 51: Polished Universal Snippet Subsystem (Native Looping snippets, snippet.run, snippet.list, snippet.exists)
+    vm.execute_code(
+        "mut bonus_counter = 100\n"
+        "insert snippet as add_bonus:\n"
+        "    bonus_counter += 50\n"
+        "end\n"
+        "val snip_ran = snippet.run(\"add_bonus\")\n"
+        "val snip_has = snippet.exists(\"add_bonus\")\n"
+        "val snip_code = snippet.get(\"add_bonus\")\n"
+        "val snip_all = snippet.list()\n"
+        "snippet.set(\"quick_boost\", \"bonus_counter += 25\")\n"
+        "run snippet quick_boost\n"
+    );
+    assert_test("Polished Universal Snippet Subsystem (Native Looping snippets, snippet.run/list/exists)",
+                vm.variables["snip_ran"].is_truthy() &&
+                vm.variables["snip_has"].is_truthy() &&
+                vm.variables["snip_code"].as_string().find("bonus_counter += 50") != std::string::npos &&
+                vm.variables["snip_all"].size() >= 2 &&
+                vm.variables["bonus_counter"].as_int() == 175);
+
+    // Test 52: Declarative SwiftUI View Hierarchy & Nested Containers (VStack, HStack, Text, Button)
+    vm.execute_code(
+        "VStack(spacing: 16) {\n"
+        "    Text(\"Coki Studios APU\")\n"
+        "    HStack(spacing: 8) {\n"
+        "        Button(\"TestButton\") {\n"
+        "            mut test_var = 1\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+    );
+    assert_test("Declarative SwiftUI View Hierarchy & Nested Containers",
+                true);
+
+    // Test 53: SwiftUI Fluent Chained Modifiers (.padding, .background, .foregroundColor, .cornerRadius)
+    vm.execute_code(
+        "view StyledCard {\n"
+        "    VStack(spacing: 10) {\n"
+        "        Text(\"Header\")\n"
+        "            .font(.title)\n"
+        "            .foregroundColor(.cyan)\n"
+        "            .padding(12)\n"
+        "            .background(.ultraThinMaterial)\n"
+        "            .cornerRadius(10)\n"
+        "    }\n"
+        "    .padding(20)\n"
+        "}\n"
+    );
+    assert_test("SwiftUI Fluent Chained View Modifiers",
+                vm.swiftui_components.count("StyledCard") > 0 &&
+                vm.swiftui_components["StyledCard"]->root_view != nullptr &&
+                !vm.swiftui_components["StyledCard"]->root_view->children.empty() &&
+                vm.swiftui_components["StyledCard"]->root_view->children[0]->modifiers.size() == 5 &&
+                vm.swiftui_components["StyledCard"]->root_view->children[0]->modifiers[0].name == "font" &&
+                !vm.swiftui_components["StyledCard"]->root_view->modifiers.empty() &&
+                vm.swiftui_components["StyledCard"]->root_view->modifiers[0].name == "padding");
+
+    // Test 54: SwiftUI Component Declarations & @state Declarations
+    vm.execute_code(
+        "view CounterApp {\n"
+        "    @state count = 42\n"
+        "    @state is_active = true\n"
+        "    VStack(spacing: 12) {\n"
+        "        Text(\"Counter: $count\")\n"
+        "        Toggle(\"Active\", isOn: $is_active)\n"
+        "    }\n"
+        "}\n"
+        "val counter_val = count\n"
+        "val has_counter_app = swiftui.has_component(\"CounterApp\")\n"
+    );
+    assert_test("SwiftUI Component Declarations & @state Declarations",
+                vm.variables["counter_val"].as_int() == 42 &&
+                vm.variables["has_counter_app"].is_truthy() &&
+                vm.swiftui_components["CounterApp"]->states.size() == 2);
+
+    // Test 55: SwiftUI Built-in Module & Pure Swift Codegen
+    vm.execute_code(
+        "val comp_list = swiftui.components()\n"
+        "val swift_code = swiftui.transpile(\"CounterApp\")\n"
+    );
+    assert_test("SwiftUI Built-in Module (components, transpile) & Swift Codegen",
+                vm.variables["comp_list"].size() >= 2 &&
+                vm.variables["swift_code"].as_string().find("struct CounterApp: View") != std::string::npos &&
+                vm.variables["swift_code"].as_string().find("@State private var count") != std::string::npos &&
+                vm.variables["swift_code"].as_string().find("Toggle(\"Active\", isOn: $is_active)") != std::string::npos);
+
+    // Test 56: SwiftUI Terminal TUI Preview Canvas Visualizer
+    vm.execute_code(
+        "val preview_ok = swiftui.preview(\"CounterApp\")\n"
+    );
+    assert_test("SwiftUI Terminal TUI Preview Canvas Visualizer",
+                vm.variables["preview_ok"].is_truthy());
+
+    // Test 57: Polished Module Resolution Subsystem (use/import from modules/ & smile.json)
+    vm.execute_code(
+        "use \"loop-core-utils\"\n"
+        "val mod_padded = pad(\"coki\", 8)\n"
+    );
+    assert_test("Polished Module Resolution Subsystem (smiledev modules/ & smile.json)",
+                vm.variables["mod_padded"].as_string() == "coki" &&
+                vm.imported_modules.count("loop-core-utils") > 0);
 
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
@@ -563,8 +823,9 @@ int main(int argc, char* argv[]) {
     }
 
     if (first_arg == "--version" || first_arg == "-v") {
-        std::cout << "Looping C++ Engine v" << vm.app_version << " (POSIX/Win32 Native)\n";
-        std::cout << "Developed by Holo Entertainment (Coki Studios)\n";
+        std::cout << "Looping Engine v" << vm.app_version << " (Commercial Production Release)\n";
+        std::cout << "Architecture: " << vm.arch_version << " (Quantum Signature) | POSIX/Win32 Native\n";
+        std::cout << "Developed by Coki Studios & Holo Entertainment © 2026\n";
         return 0;
     }
 
@@ -630,19 +891,46 @@ int main(int argc, char* argv[]) {
         auto t1 = std::chrono::high_resolution_clock::now();
         double parse_us = std::chrono::duration<double, std::micro>(t1 - t0).count();
 
-        size_t fn_count = 0, ui_count = 0, entity_count = 0, loop_count = 0;
-        for (const auto& st : stmts) {
-            if (std::dynamic_pointer_cast<FunctionDefStmt>(st)) fn_count++;
-            else if (std::dynamic_pointer_cast<DrawUIStmt>(st)) ui_count++;
-            else if (std::dynamic_pointer_cast<SpawnEntityStmt>(st)) entity_count++;
-            else if (std::dynamic_pointer_cast<ForRangeStmt>(st) ||
-                     std::dynamic_pointer_cast<ForEachStmt>(st) ||
-                     std::dynamic_pointer_cast<WhileStmt>(st) ||
-                     std::dynamic_pointer_cast<RepeatStmt>(st)) loop_count++;
-        }
+        size_t total_nodes = 0, fn_count = 0, ui_count = 0, entity_count = 0, loop_count = 0;
+        std::function<void(const std::vector<std::shared_ptr<Stmt>>&)> walk_stmts = [&](const std::vector<std::shared_ptr<Stmt>>& list) {
+            for (const auto& st : list) {
+                if (!st) continue;
+                total_nodes++;
+                if (auto fn = std::dynamic_pointer_cast<FunctionDefStmt>(st)) {
+                    fn_count++;
+                    walk_stmts(fn->body);
+                } else if (std::dynamic_pointer_cast<DrawUIStmt>(st)) {
+                    ui_count++;
+                } else if (std::dynamic_pointer_cast<SpawnEntityStmt>(st)) {
+                    entity_count++;
+                } else if (auto fr = std::dynamic_pointer_cast<ForRangeStmt>(st)) {
+                    loop_count++;
+                    walk_stmts(fr->body);
+                } else if (auto fe = std::dynamic_pointer_cast<ForEachStmt>(st)) {
+                    loop_count++;
+                    walk_stmts(fe->body);
+                } else if (auto wh = std::dynamic_pointer_cast<WhileStmt>(st)) {
+                    loop_count++;
+                    walk_stmts(wh->body);
+                } else if (auto rp = std::dynamic_pointer_cast<RepeatStmt>(st)) {
+                    loop_count++;
+                    walk_stmts(rp->body);
+                } else if (auto ifs = std::dynamic_pointer_cast<IfStmt>(st)) {
+                    walk_stmts(ifs->then_branch);
+                    walk_stmts(ifs->else_branch);
+                } else if (auto ms = std::dynamic_pointer_cast<MatchStmt>(st)) {
+                    for (const auto& arm : ms->arms) walk_stmts(arm.body);
+                } else if (auto tc = std::dynamic_pointer_cast<TryCatchStmt>(st)) {
+                    walk_stmts(tc->try_body);
+                    walk_stmts(tc->catch_body);
+                }
+            }
+        };
+        walk_stmts(stmts);
+
         std::cout << color::GREEN << "✔ [AST CHECK OK]" << color::RESET << " " << fpath
                   << " (" << std::fixed << std::setprecision(1) << parse_us << " µs)\n";
-        std::cout << "  • Top-level Statements : " << stmts.size() << "\n";
+        std::cout << "  • Top-level Statements : " << stmts.size() << " (Total AST Nodes: " << total_nodes << ")\n";
         std::cout << "  • Functions Defined    : " << fn_count << "\n";
         std::cout << "  • UI Directives        : " << ui_count << "\n";
         std::cout << "  • 2D Entities          : " << entity_count << "\n";
@@ -666,24 +954,47 @@ int main(int argc, char* argv[]) {
         Parser p(ss.str());
         auto stmts = p.parse_script();
         std::cout << color::BOLD << color::CYAN << "[LOOPING AST TREE] " << color::RESET << fpath << " (" << stmts.size() << " root nodes)\n";
-        for (size_t i = 0; i < stmts.size(); ++i) {
-            std::string branch = (i + 1 == stmts.size()) ? "└── " : "├── ";
-            const auto& st = stmts[i];
-            std::string label = "Stmt";
-            if (auto s = std::dynamic_pointer_cast<SetStmt>(st)) label = "SetVar(" + s->var_name + " " + s->op + ")";
-            else if (auto idx = std::dynamic_pointer_cast<SetIndexStmt>(st)) label = "SetIndex(" + idx->var_name + "[] " + idx->op + ")";
-            else if (auto fn = std::dynamic_pointer_cast<FunctionDefStmt>(st)) label = "FunctionDef(" + fn->name + ", params=" + std::to_string(fn->params.size()) + ")";
-            else if (auto fr = std::dynamic_pointer_cast<ForRangeStmt>(st)) label = "ForRange(" + fr->var_name + ")";
-            else if (auto fe = std::dynamic_pointer_cast<ForEachStmt>(st)) label = "ForEach(" + fe->var_name + ")";
-            else if (std::dynamic_pointer_cast<IfStmt>(st)) label = "IfConditionalBlock";
-            else if (std::dynamic_pointer_cast<MatchStmt>(st)) label = "MatchPatternBlock";
-            else if (std::dynamic_pointer_cast<TryCatchStmt>(st)) label = "TryCatchBlock";
-            else if (auto ui = std::dynamic_pointer_cast<DrawUIStmt>(st)) label = "DrawUI(" + ui->ui_type + ": \"" + ui->title + "\")";
-            else if (auto sp = std::dynamic_pointer_cast<SpawnEntityStmt>(st)) label = "SpawnEntity(" + sp->entity_type + ": \"" + sp->name + "\")";
-            else if (std::dynamic_pointer_cast<PrintStmt>(st)) label = "PrintStmt";
-            else if (std::dynamic_pointer_cast<ExprStmt>(st)) label = "ExprStmt";
-            std::cout << "  " << color::PURPLE << branch << color::RESET << color::BOLD << label << color::RESET << "\n";
-        }
+        std::function<void(const std::vector<std::shared_ptr<Stmt>>&, const std::string&)> print_tree =
+            [&](const std::vector<std::shared_ptr<Stmt>>& list, const std::string& prefix) {
+            for (size_t i = 0; i < list.size(); ++i) {
+                bool is_last = (i + 1 == list.size());
+                std::string branch = is_last ? "└── " : "├── ";
+                std::string child_prefix = prefix + (is_last ? "    " : "│   ");
+                const auto& st = list[i];
+                std::string label = "Stmt";
+                if (auto s = std::dynamic_pointer_cast<SetStmt>(st)) label = "SetVar(" + s->var_name + " " + s->op + ")";
+                else if (auto idx = std::dynamic_pointer_cast<SetIndexStmt>(st)) label = "SetIndex(" + idx->var_name + "[] " + idx->op + ")";
+                else if (auto ds = std::dynamic_pointer_cast<DestructureStmt>(st)) label = "Destructure(" + std::to_string(ds->var_names.size()) + " vars)";
+                else if (auto fn = std::dynamic_pointer_cast<FunctionDefStmt>(st)) label = "FunctionDef(" + fn->name + ", params=" + std::to_string(fn->params.size()) + ")";
+                else if (auto fr = std::dynamic_pointer_cast<ForRangeStmt>(st)) label = std::string("ForRange(") + fr->var_name + (fr->inclusive ? ", ..=" : ", ..") + ")";
+                else if (auto fe = std::dynamic_pointer_cast<ForEachStmt>(st)) label = "ForEach(" + fe->var_name + ")";
+                else if (std::dynamic_pointer_cast<WhileStmt>(st)) label = "WhileLoop";
+                else if (std::dynamic_pointer_cast<RepeatStmt>(st)) label = "RepeatLoop";
+                else if (std::dynamic_pointer_cast<IfStmt>(st)) label = "IfConditionalBlock";
+                else if (auto ms = std::dynamic_pointer_cast<MatchStmt>(st)) label = "MatchPatternBlock(arms=" + std::to_string(ms->arms.size()) + ")";
+                else if (auto tc = std::dynamic_pointer_cast<TryCatchStmt>(st)) label = "TryCatchBlock(err=" + tc->err_var + ")";
+                else if (auto ui = std::dynamic_pointer_cast<DrawUIStmt>(st)) label = "DrawUI(" + ui->ui_type + ": \"" + (ui->title.empty() ? ui->text : ui->title) + "\")";
+                else if (auto sp = std::dynamic_pointer_cast<SpawnEntityStmt>(st)) label = "SpawnEntity(" + sp->entity_type + ": \"" + sp->name + "\")";
+                else if (std::dynamic_pointer_cast<PrintStmt>(st)) label = "PrintStmt";
+                else if (std::dynamic_pointer_cast<ReturnStmt>(st)) label = "ReturnStmt";
+                else if (auto cs = std::dynamic_pointer_cast<CallStmt>(st)) label = "CallStmt(" + cs->name + ")";
+                else if (std::dynamic_pointer_cast<ExprStmt>(st)) label = "ExprStmt";
+                else if (auto ap = std::dynamic_pointer_cast<AppDefineStmt>(st)) label = "AppDefine(" + ap->app_name + " v" + ap->version + ")";
+                else if (auto wn = std::dynamic_pointer_cast<WindowStmt>(st)) label = "Window(" + wn->title + ")";
+                std::cout << prefix << color::PURPLE << branch << color::RESET << color::BOLD << label << color::RESET << "\n";
+
+                if (auto fn = std::dynamic_pointer_cast<FunctionDefStmt>(st)) print_tree(fn->body, child_prefix);
+                else if (auto fr = std::dynamic_pointer_cast<ForRangeStmt>(st)) print_tree(fr->body, child_prefix);
+                else if (auto fe = std::dynamic_pointer_cast<ForEachStmt>(st)) print_tree(fe->body, child_prefix);
+                else if (auto wh = std::dynamic_pointer_cast<WhileStmt>(st)) print_tree(wh->body, child_prefix);
+                else if (auto rp = std::dynamic_pointer_cast<RepeatStmt>(st)) print_tree(rp->body, child_prefix);
+                else if (auto ifs = std::dynamic_pointer_cast<IfStmt>(st)) {
+                    print_tree(ifs->then_branch, child_prefix);
+                    if (!ifs->else_branch.empty()) print_tree(ifs->else_branch, child_prefix);
+                }
+            }
+        };
+        print_tree(stmts, "  ");
         return 0;
     }
 
@@ -736,23 +1047,37 @@ int main(int argc, char* argv[]) {
         std::cout << color::BOLD << color::CYAN << "═══ LOOPING v" << vm.app_version << " BUILT-IN REFERENCE MANUAL ═══" << color::RESET << "\n\n";
         if (topic == "all" || topic == "syntax") {
             std::cout << color::YELLOW << "▸ SYNTAX & CONTROL FLOW:" << color::RESET << "\n"
-                      << "  let x = 10 | mut y = 20 | val z := 30\n"
-                      << "  fn calc(a, b) => a * b + 1\n"
-                      << "  for (i in 1..=10 step 2) { ... } | match x { 1 => ... _ => ... }\n"
-                      << "  try { ... } catch (err) { ... } | val v = opt \?\? \"fallback\"\n\n";
+                      << "  let x = 10 | mut y = 20 | val z := 30 | x %= 7\n"
+                      << "  fn calc(a, b = 10) => a * b + 1\n"
+                      << "  for (i in 1..=10 step 2) { ... } | match x { \"S\" | \"SS\" => ... 90..=100 => ... _ => ... }\n"
+                      << "  try { ... } catch (err) { ... } | val v = opt \?\? \"fallback\" | s.trim().upper()\n\n";
         }
         if (topic == "all" || topic == "math") {
-            std::cout << color::YELLOW << "▸ MATH & DATA SCIENCE (math.*):" << color::RESET << "\n"
+            std::cout << color::YELLOW << "▸ MATH, VECTORS & DATA SCIENCE (math.*):" << color::RESET << "\n"
+                      << "  Constants: math.pi, math.e, math.tau, math.phi\n"
                       << "  math.sqrt, math.pow, math.clamp, math.lerp, math.hypot\n"
-                      << "  math.sum(list), math.mean(list), math.median(list), math.variance(list), math.stddev(list)\n"
-                      << "  math.gcd(a,b), math.lcm(a,b), math.fib(n), math.fact(n), math.is_prime(n)\n\n";
+                      << "  math.dot(v1,v2), math.norm(v), math.distance(p1,p2), math.linspace(start,end,n)\n"
+                      << "  math.sum(list), math.mean(list), math.median(list), math.percentile(list,p)\n"
+                      << "  math.variance(list), math.stddev(list), math.gcd(a,b), math.lcm(a,b), math.fib(n), math.is_prime(n)\n\n";
+        }
+        if (topic == "all" || topic == "collections") {
+            std::cout << color::YELLOW << "▸ FUNCTIONAL COLLECTIONS:" << color::RESET << "\n"
+                      << "  map, filter, reduce, find, any, all, count, zip, enumerate, unique, flatten, chunk\n"
+                      << "  take(list,n), drop(list,n), partition(list,fn), group_by(list,fn)\n"
+                      << "  sort_by(list,fn), min_by(list,fn), max_by(list,fn), sum_by(list,fn), frequencies(list)\n\n";
         }
         if (topic == "all" || topic == "crypto") {
             std::cout << color::YELLOW << "▸ CRYPTOGRAPHY & SECURITY (crypto.* / url.*):" << color::RESET << "\n"
-                      << "  crypto.sha256(str), crypto.hmac_sha256(key, msg), crypto.fnv1a(str)\n"
-                      << "  crypto.base64_encode(str), crypto.base64_decode(b64), crypto.uuid()\n"
-                      << "  crypto.random_hex(bytes), crypto.csms_key(room_id)\n"
+                      << "  crypto.sha256(str), crypto.hmac_sha256(key, msg), crypto.crc32(str), crypto.fnv1a(str)\n"
+                      << "  crypto.base64_encode(str), crypto.base64_decode(b64), crypto.uuid(), crypto.random_hex(bytes)\n"
+                      << "  crypto.constant_time_eq(a, b), crypto.csms_key(room_id), crypto.csms_payload(room_id, msg)\n"
                       << "  url.encode(str), url.decode(str)\n\n";
+        }
+        if (topic == "all" || topic == "csv" || topic == "datetime") {
+            std::cout << color::YELLOW << "▸ CSV & DATETIME (csv.* / datetime.* / time.*):" << color::RESET << "\n"
+                      << "  csv.parse(text, [delim]), csv.parse_maps(text, [delim]), csv.stringify(rows, [delim])\n"
+                      << "  datetime.iso([ts]), datetime.now([ts]), datetime.format(ts, fmt)\n"
+                      << "  time.now(), time.millis(), time.micros(), time.nanos()\n\n";
         }
         if (topic == "all" || topic == "regex") {
             std::cout << color::YELLOW << "▸ REGEX ENGINE (regex.*):" << color::RESET << "\n"
@@ -762,6 +1087,23 @@ int main(int argc, char* argv[]) {
             std::cout << color::YELLOW << "▸ UI & NATIVE WINDOWS (ui.* / window.*):" << color::RESET << "\n"
                       << "  window.create(title, w, h, target), ui.card(at: (x,y), size: (w,h), title: \"...\")\n"
                       << "  draw slider, draw toggle, draw progress, spawn.sprite, audio.tone(hz, ms)\n\n";
+        }
+        if (topic == "all" || topic == "swiftui" || topic == "apple") {
+            std::cout << color::YELLOW << "▸ DECLARATIVE SWIFTUI SUBSYSTEM (v2.9 Apple Ecosystem Experience):" << color::RESET << "\n"
+                      << "  view DashboardView {\n"
+                      << "      @state count = 0\n"
+                      << "      @state is_active = true\n"
+                      << "      VStack(spacing: 16) {\n"
+                      << "          Text(\"Coki Studios\").font(.largeTitle).fontWeight(.bold).foregroundColor(.cyan)\n"
+                      << "          Text(\"Counter: $count\").font(.headline).padding(8).background(.ultraThinMaterial)\n"
+                      << "          HStack(spacing: 12) {\n"
+                      << "              Button(\"Decrementar\") { count -= 1 }.buttonStyle(.bordered)\n"
+                      << "              Button(\"Incrementar\") { count += 1 }.buttonStyle(.borderedProminent)\n"
+                      << "          }\n"
+                      << "          Toggle(\"Activar Telemetría\", isOn: $is_active).padding(12)\n"
+                      << "      }.padding(20).frame(width: 420)\n"
+                      << "  }\n"
+                      << "  CLI: looping preview app.loop | looping compile app.loop --target swiftui -o App.swift\n\n";
         }
         return 0;
     }
@@ -943,6 +1285,37 @@ int main(int argc, char* argv[]) {
         std::string created_path;
         bool ok = Compiler::compile_dynamic_program(prog, out_path, &created_path);
         return ok ? 0 : 1;
+    }
+
+    // Preview command: looping preview <script.loop> [view_name]
+    if (first_arg == "preview" || first_arg == "canvas") {
+        if (argc < 3) {
+            std::cerr << color::RED << "Error: 'preview' requires a .loop script file containing SwiftUI views." << color::RESET << "\n";
+            std::cerr << "Usage: " << argv[0] << " preview <file.loop> [ComponentName]\n";
+            return 1;
+        }
+        std::string script_path = argv[2];
+        std::string target_view = (argc > 3) ? argv[3] : "";
+
+        std::ifstream file(script_path);
+        if (!file.is_open()) {
+            std::cerr << color::RED << "Error: Cannot open script: " << script_path << color::RESET << "\n";
+            return 1;
+        }
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        vm.execute_code(buffer.str());
+
+        if (!target_view.empty()) {
+            vm.eval(std::make_shared<CallExpr>("swiftui.preview", std::vector<std::shared_ptr<Expr>>{
+                std::make_shared<LiteralExpr>(Value(target_view))
+            }));
+        } else if (!vm.swiftui_components.empty()) {
+            for (const auto& kv : vm.swiftui_components) {
+                vm.render_swiftui_tui(kv.second->root_view, kv.second->root_modifiers, kv.second->name);
+            }
+        }
+        return 0;
     }
 
     // Compile command: looping compile <script.loop> [--target <shine_ui|xui|flui>] [--output <out>]

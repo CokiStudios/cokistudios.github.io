@@ -513,9 +513,9 @@
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
                     <div>
                         <div class="cs-tag cs-tag-cyan" style="margin-bottom: 8px;">MOTOR HÍBRIDO C++17 &amp; REGISTRY</div>
-                        <h2 style="font-size: 22px; font-weight: 800; color: var(--cs-text-bright);">Looping v2.7.0 Quantum &amp; Registry</h2>
+                        <h2 style="font-size: 22px; font-weight: 800; color: var(--cs-text-bright);">Looping v1.0 Commercial (Arch 2.8A) &amp; Registry</h2>
                         <p style="color: var(--cs-text-sub); font-size: 14px; line-height: 1.6; margin-top: 6px; max-width: 680px;">
-                            Desarrollado en C++17 nativo sin contenedores web pesados (40/40 pruebas verificadas). Latencia inferior a 0.2ms, pipelines funcionales (|&gt;), estadística científica, criptografía CSMS HMAC-SHA256, inspector AST y gestor de paquetes smiledev.
+                            Desarrollado en C++17 nativo sin contenedores web pesados (50/50 pruebas verificadas). Latencia inferior a 0.2ms, pipelines funcionales (|&gt;), álgebra vectorial, CSV/DateTime nativo, criptografía CSMS E2EE + CRC32 + HMAC-SHA256, inspector AST recursivo y gestor smiledev.
                         </p>
                     </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -546,12 +546,12 @@
             <div class="cs-panel" style="margin-bottom: 24px;">
                 <div class="cs-panel-header">
                     <div>
-                        <div class="cs-panel-title">Interactive Looping v2.7 Playground &amp; REPL</div>
+                        <div class="cs-panel-title">Interactive Looping v1.0 Commercial Playground &amp; REPL</div>
                         <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); margin-top: 2px;">
-                            Compilación e interpretación instantánea en el navegador con soporte para pipelines funcionales, regex y criptografía.
+                            Compilación e interpretación instantánea en el navegador con soporte para física 2D quantum, multi-pattern match, álgebra vectorial, regex y criptografía CSMS (Arch 2.8A).
                         </div>
                     </div>
-                    <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> RUNTIME READY</span>
+                    <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> COMMERCIAL READY</span>
                 </div>
 
                 <div class="cs-repl-container" style="margin-top: 16px;">
@@ -562,13 +562,15 @@
                                 <span style="width:10px; height:10px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
                                 <span style="width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block;"></span>
                             </div>
-                            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-sub);">looping_v2_7_repl.loop</span>
+                            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-sub);">looping_commercial_v1.loop</span>
                         </div>
                         <div class="cs-repl-presets">
-                            <button class="cs-repl-preset-btn active" data-preset="novedades">Novedades v2.7</button>
-                            <button class="cs-repl-preset-btn" data-preset="pipelines">Math &amp; |&gt;</button>
-                            <button class="cs-repl-preset-btn" data-preset="crypto">Cripto HMAC</button>
+                            <button class="cs-repl-preset-btn active" data-preset="novedades">Novedades v1.0</button>
+                            <button class="cs-repl-preset-btn" data-preset="pipelines">Vectores &amp; |&gt;</button>
+                            <button class="cs-repl-preset-btn" data-preset="crypto">Cripto CSMS</button>
                             <button class="cs-repl-preset-btn" data-preset="ui">Widgets UI</button>
+                            <button class="cs-repl-preset-btn" data-preset="swiftui">🍎 SwiftUI</button>
+                            <button class="cs-repl-preset-btn" data-preset="arcade2d">🎮 Arcade 2D</button>
                         </div>
                     </div>
 
@@ -582,6 +584,22 @@
                                 <span style="color:#10b981;">● VM Conectada</span>
                             </div>
                             <div id="repl-console-output" class="cs-repl-console-output"></div>
+                        </div>
+                    </div>
+
+                    <div id="repl-game-container" style="display:none; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.08); background: #04060b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 14px;">🎮</span>
+                                <span style="font-size: 12px; font-weight: 700; color: #38bdf8; font-family: var(--cs-font-mono);">SHINE LOOP 2D CANVAS RUNTIME</span>
+                                <span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 7px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3);">60 FPS DIRECT</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--cs-text-sub); font-family: var(--cs-font-mono);">
+                                [A / D] Mover • [W / Espacio] Doble Salto • [Z / J] Disparo • [X / K] Dash • [R] Reiniciar
+                            </div>
+                        </div>
+                        <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.3); background: #06090f; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+                            <canvas id="repl-game-canvas" width="720" height="420" style="width: 100%; height: auto; max-height: 420px; display: block; object-fit: contain;"></canvas>
                         </div>
                     </div>
 

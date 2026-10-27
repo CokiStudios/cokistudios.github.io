@@ -1,0 +1,69 @@
+# ==============================================================================
+# L∞ping v2.8.0 (Quantum Signature) — Comprehensive Ecosystem Showcase
+# Coki Studios Proprietary Language & Runtime
+# ==============================================================================
+@app "CS Quantum Telemetry v2.8" v"2.8.0"
+
+# 1. Functions with Default Arguments & Arrow Syntax
+fn format_agent(name, rank = "Commander", clearance = 5) => "{rank} {name} [L{clearance}]"
+fn is_prime_tier(x) => x >= 90
+
+let lead = format_agent("Jerix")
+let ops  = format_agent("Nova", "Architect", 9)
+out("Agents Initialized: {lead} | {ops}")
+
+# 2. Method-Style Dot Calls on Strings & Lists
+mut title = "   coki studios quantum engine v2.8   "
+let clean_title = title.trim().upper()
+out("Banner: {clean_title} (len={clean_title.len()})")
+
+mut scores = [88, 96, 74, 100, 92, 65]
+scores.push(99)
+scores.sort()
+out("Sorted Telemetry Scores: {scores}")
+
+# 3. Range (..= / ..) & Multi-Pattern (|) Match Arms
+let top_score = scores.last()
+let grade = match top_score {
+    100 => "SS+ Perfect Quantum Sync",
+    90..=99 => "S-Tier Optimal",
+    75..90 => "A-Tier Nominal",
+    _ => "Recalibration Required"
+}
+
+let status_mode = "READY"
+let badge = match status_mode {
+    "BOOT" | "INIT" => "Warming Up",
+    "READY" | "ACTIVE" | "SYNCED" => "Online & Locked",
+    _ => "Standby"
+}
+out("Top Score: {top_score} -> {grade} [{badge}]")
+
+# 4. Vector Linear Algebra & Statistical Percentiles
+let v1 = [3, 4, 0]
+let v2 = [6, 8, 0]
+let dot_prod = math.dot(v1, v2)
+let v1_norm  = math.norm(v1)
+let p90      = math.percentile(scores, 90)
+out("Vector Dot={dot_prod} | Norm={v1_norm} | P90={p90} | GoldenRatio={math.round(math.phi, 4)}")
+
+# 5. CSV Engine & Functional Collection Helpers
+let raw_csv = "module,latency,tier\nForkar,4,S\nCSMS,2,S\nShineMaps,7,A\nFelte,3,S"
+let records = csv.parse_maps(raw_csv)
+let tier_freq = frequencies(["S", "S", "A", "S", "B", "S"])
+let parts = partition(scores, "is_prime_tier")
+out("CSV Loaded: {len(records)} modules | S-Tier Count: {tier_freq.S} | Prime Scores: {parts[0]}")
+
+# 6. DateTime & CSMS E2EE Hardware-Styled Payload
+let now_iso = datetime.iso()
+let ts_fmt  = datetime.format(1700000000, "%Y-%m-%d")
+let crc     = crypto.crc32("CSMS_QUANTUM_SYNC_v2.8")
+let packet  = crypto.csms_payload("room-alpha-01", "Telemetry Verified OK")
+out("Clock: {now_iso} (Ref: {ts_fmt}) | CRC32: {crc}")
+out("CSMS Payload: {packet}")
+
+# 7. Declarative Shine UI & Audio Synthesis
+window("CS Quantum Telemetry v2.8", 1024, 640)
+ui.card("Quantum Core v2.8", 40, 80, 420, 220)
+ui.btn("Verify E2EE Packet", 60, 240, "#00F5D4")
+audio.tone(528, 80)

@@ -1,0 +1,99 @@
+from pyloop import runpy
+define app "Quantum2DArcadeNodeWindow" version 2.8:
+
+    print "[Looping] ═══════════════════════════════════════════════════════════════"
+    print "[Looping]  🎮 INICIANDO JUEGO 2D CUÁNTICO CON LOOP-NODE-WINDOW v2.0"
+    print "[Looping]  Motor Gráfico: Shine Loop 60 FPS Canvas Direct"
+    print "[Looping] ═══════════════════════════════════════════════════════════════"
+    
+    insert pysnippet as launch_arcade_game:
+        import subprocess, json, time, os, sys, threading
+
+        candidates = [
+            "modules/loop-node-window/index.js",
+            os.path.expanduser("~/.smiledev/modules/loop-node-window/index.js"),
+            os.path.expanduser("~/cokistudios.github.io/modules/loop-node-window/index.js")
+        ]
+        mod_path = next((p for p in candidates if os.path.exists(p)), "modules/loop-node-window/index.js")
+
+        print(f"  [Bridge] Desplegando loop-node-window: {mod_path}")
+        
+        # Iniciar loop-node-window en modo 2D Arcade Stage
+        p = subprocess.Popen(
+            ["node", mod_path, "--game", "--title", "Looping 2D Quantum Arcade", "--port", "7896"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+
+        # Hilo para escuchar eventos del juego en tiempo real (stdout)
+        def listen_events():
+            try:
+                for line in p.stdout:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line.startswith('{"event":'):
+                        try:
+                            evt = json.loads(line)
+                            action = evt.get("action", "")
+                            payload = evt.get("payload", {})
+                            if action == "game_score":
+                                print(f"  [🎮 Evento Juego] Puntaje Actualizado: {payload.get('score')} pts")
+                            elif action == "enemy_stomped":
+                                print(f"  [💥 Evento Combate] ¡Enemigo pisado! +250 Puntos de Bonificación")
+                            elif action == "stage_victory":
+                                print(f"  [🏆 Evento Victoria] ¡Nivel Completado! Puntaje Final: {payload.get('score')} pts")
+                            elif action == "game_over":
+                                print(f"  [💀 Evento Derrota] Fin de la partida.")
+                            elif action == "spawn_bonus_coin":
+                                print(f"  [⭐ Evento Ítem] Moneda bonus inyectada en ({payload.get('x')}, {payload.get('y')})")
+                        except Exception:
+                            pass
+                    elif "[loop-node-window]" in line:
+                        print(f"  {line}")
+            except Exception:
+                pass
+
+        t = threading.Thread(target=listen_events, daemon=True)
+        t.start()
+
+        time.sleep(1.2)
+
+        print("\n  [Bridge] 🌐 ¡Lienzo de juego 2D activo en tu navegador (http://localhost:7896)!")
+        print("  [Bridge] ✨ Controles: [A / D] Mover • [W / Espacio] Doble Salto • [Z / J] Disparar • [X / K] Dash")
+        print("  [Bridge] Transmitiendo telemetría e inyecciones de comandos en vivo...")
+        print("  [Bridge] 👉 Presiona Ctrl+C en la terminal cuando desees cerrar el juego.\n")
+
+        # Inyectar estado inicial al juego
+        p.stdin.write('LOG [Loop Engine v2.8] Nivel Cuántico 2D Vinculado exitosamente\n')
+        p.stdin.write('METRIC Status Running @ 60 FPS\n')
+        p.stdin.flush()
+
+        step = 0
+        try:
+            while True:
+                time.sleep(3.0)
+                step += 1
+                
+                # Inyección dinámica de eventos desde Looping hacia el juego activo
+                if step % 4 == 0:
+                    bonus_x = 300 + (step * 70) % 700
+                    p.stdin.write(f'GAME_CMD spawn {{"entity":"coin","x":{bonus_x},"y":220,"points":150}}\n')
+                    p.stdin.write(f'LOG [Loop Telemetría] Inyectando estrella bonus en ({bonus_x}, 220)\n')
+                    p.stdin.flush()
+                elif step % 7 == 0:
+                    p.stdin.write('GAME_CMD heal {"amount":25}\n')
+                    p.stdin.write('LOG [Loop Telemetría] Pulso de regeneración enviado (+25 HP)\n')
+                    p.stdin.flush()
+
+        except KeyboardInterrupt:
+            print("\n  [Bridge] Deteniendo servidor de juego y cerrando ventana...")
+        finally:
+            p.terminate()
+            print("  [Bridge] Juego 2D finalizado correctamente.")
+
+    runpy launch_arcade_game
+    print "[Looping] Partida 2D terminada con éxito!"

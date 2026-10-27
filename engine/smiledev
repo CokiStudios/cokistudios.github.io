@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
 # 🌟 SMILEDEV — THE OFFICIAL LOOPING PACKAGE MANAGER
-# Module Manager (C++, Python & Loop) with PostgreSQL Backend
+# Universal Package & Module Manager (C++, Python, Loop & C2)
+# With PostgreSQL LoopModules Cloud Registry & Local Toolchain
 # Coki Studios & Holo Entertainment © 2026
 # ═══════════════════════════════════════════════════════════════
 
 set -e
 
-SMILE_VERSION="2.7.0"
+SMILE_VERSION="1.0.0-commercial"
+SMILE_ARCH_VERSION="2.8A"
 CONFIG_DIR="$HOME/.smiledev"
 GLOBAL_MODULES_DIR="$CONFIG_DIR/modules"
 LOCAL_MODULES_DIR="$(pwd)/modules"
 CONFIG_FILE="$CONFIG_DIR/config.json"
+AUTH_FILE="$CONFIG_DIR/auth.json"
 
 SUPABASE_URL="https://ayxklxciqgqeyuzkziov.supabase.co"
 SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGtseGNpcWdxZXl1emt6aW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTY4MzIsImV4cCI6MjEwNjc5MjgzMn0.03wUc8blB-cNq9F8Nz5o88GShtMIXeHsNYqmeK_N-hI"
@@ -29,8 +32,6 @@ C_YELLOW="\033[38;5;220m"
 C_RED="\033[38;5;196m"
 C_BLUE="\033[38;5;39m"
 
-AUTH_FILE="$CONFIG_DIR/auth.json"
-
 mkdir -p "$CONFIG_DIR" "$GLOBAL_MODULES_DIR"
 
 # Initialize default configuration if it does not exist
@@ -41,7 +42,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   "default_repo": "https://repo.cokistudios.com/modules",
   "repos": [
     "https://repo.cokistudios.com/modules",
-    "https://cmkumxprmmhuinxfppxl.supabase.co/rest/v1/loop_modules"
+    "https://ayxklxciqgqeyuzkziov.supabase.co/rest/v1/loop_modules"
   ],
   "author": "Coki Studios Developer"
 }
@@ -50,11 +51,11 @@ fi
 
 print_banner() {
     echo -e "${C_CYAN}  _____           _ _      ${C_PURPLE}____${C_RESET}"
-    echo -e "${C_CYAN} / ____|         (_) |    ${C_PURPLE}|  _ \   ${C_BOLD}smiledev ${C_AQUA}v$SMILE_VERSION${C_RESET}"
+    echo -e "${C_CYAN} / ____|         (_) |    ${C_PURPLE}|  _ \   ${C_BOLD}smiledev ${C_AQUA}v$SMILE_VERSION${C_RESET} ${C_YELLOW}(Commercial Edition / Arch $SMILE_ARCH_VERSION)${C_RESET}"
     echo -e "${C_CYAN}| (___  _ __ ___  _| | ___${C_PURPLE}| | | | _____   __${C_RESET}"
     echo -e "${C_CYAN} \___ \| '_ \` _ \| | |/ _ \ ${C_PURPLE}| | |/ _ \ \ / /${C_RESET}"
     echo -e "${C_CYAN} ____) | | | | | | | |  __/${C_PURPLE} |_| |  __/\ V / ${C_RESET}"
-    echo -e "${C_CYAN}|_____/|_| |_| |_|_|_|\___${C_PURPLE}|____/ \___| \_/  ${C_DIM}(Looping Package Manager)${C_RESET}"
+    echo -e "${C_CYAN}|_____/|_| |_| |_|_|_|\___${C_PURPLE}|____/ \___| \_/  ${C_DIM}(Looping Universal Package Manager)${C_RESET}"
     echo ""
 }
 
@@ -62,43 +63,100 @@ cmd_help() {
     print_banner
     echo -e "${C_BOLD}USAGE:${C_RESET} smiledev <command> [arguments]"
     echo ""
-    echo -e "${C_BOLD}CORE COMMANDS:${C_RESET}"
-    echo -e "  ${C_GREEN}install${C_RESET} <module>       Download and install a community module (C++, Py, Loop)"
-    echo -e "  ${C_BLUE}view${C_RESET} <module>          Show details, version, and author of a module"
-    echo -e "  ${C_PINK}upload-module${C_RESET} <dir>    Publish a module to the PostgreSQL LoopModules repository (requires login)"
-    echo -e "  ${C_PURPLE}add-repo${C_RESET} <url>         Add a community module repository"
+    echo -e "${C_BOLD}PACKAGE & MODULE MANAGEMENT:${C_RESET}"
+    echo -e "  ${C_GREEN}install${C_RESET} [module]       Install a module (or all dependencies from smile.json)"
+    echo -e "  ${C_RED}uninstall${C_RESET} <module>     Remove a module from local or global environment (--global)"
+    echo -e "  ${C_BLUE}update${C_RESET} [module]        Update specified module, all local modules (--all), or self (--self)"
     echo -e "  ${C_YELLOW}list${C_RESET}                   List locally and globally installed modules"
-    echo -e "  ${C_AQUA}search${C_RESET} <term>          Search modules in LoopModules cloud"
-    echo -e "  ${C_CYAN}init${C_RESET} <name> [--lang]   Initialize a new module (cpp, python, loop)"
+    echo -e "  ${C_AQUA}search${C_RESET} <query>         Search modules in LoopModules cloud registry"
+    echo -e "  ${C_BLUE}view${C_RESET} <module>          Show details, version, and author (local or cloud)"
+    echo -e "  ${C_CYAN}init${C_RESET} <name> [--lang]   Initialize a new module or project (loop, python, cpp, c2)"
+    echo -e "  ${C_PINK}pack${C_RESET} [dir]             Bundle module into release tarball (.tar.gz)"
+    echo -e "  ${C_PURPLE}link${C_RESET} [dir]             Symlink local module into global cache for local dev"
+    echo -e "  ${C_RED}unlink${C_RESET} <name>          Remove global symlink"
+    echo -e "  ${C_AQUA}test${C_RESET} [module]          Execute module tests via Looping engine"
     echo -e "  ${C_AQUA}run${C_RESET} <module|script>    Execute an installed module or .loop script with Looping"
-    echo -e "  ${C_BLUE}doctor${C_RESET}                 Verify smiledev, Looping engine, and registry health"
-    echo -e "  ${C_PURPLE}upgrade${C_RESET} [--force]      Auto-update smiledev & Looping engine from repo.cokistudios.com/engine"
-    echo -e "  ${C_GREEN}update${C_RESET} [module]        Update module or run engine upgrade (--self)"
+    echo ""
+    echo -e "${C_BOLD}CLOUD REGISTRY & PUBLISHING:${C_RESET}"
+    echo -e "  ${C_PINK}upload-module${C_RESET} <dir>    Publish a module to LoopModules registry (requires login)"
+    echo -e "  ${C_PURPLE}add-repo${C_RESET} <url>         Add an external community repository mirror"
     echo ""
     echo -e "${C_BOLD}AUTHENTICATION (CS ID / SMILEDEV):${C_RESET}"
     echo -e "  ${C_GREEN}login${C_RESET} [--token <PAT>]  Authenticate with your Personal Access Token (PAT)"
     echo -e "  ${C_BLUE}whoami${C_RESET}                 Display your authenticated developer identity"
     echo -e "  ${C_RED}logout${C_RESET}                 Sign out and clear local credentials"
     echo ""
+    echo -e "${C_BOLD}MAINTENANCE & SYSTEM:${C_RESET}"
+    echo -e "  ${C_BLUE}doctor${C_RESET}                 Verify smiledev, Looping engine, compiler & registry health"
+    echo -e "  ${C_PURPLE}upgrade${C_RESET} [--force]      Auto-update smiledev & Looping engine from repo.cokistudios.com"
+    echo -e "  ${C_YELLOW}clean${C_RESET}                  Clean temporary files and smiledev caches"
+    echo -e "  ${C_AQUA}version${C_RESET}                Display current version"
+    echo ""
     echo -e "${C_BOLD}EXAMPLES:${C_RESET}"
-    echo -e "  smiledev install loop-gui-tk"
-    echo -e "  smiledev upgrade"
-    echo -e "  smiledev upgrade --force"
+    echo -e "  smiledev install loop-core-utils"
+    echo -e "  smiledev init my-engine-plugin --lang loop"
+    echo -e "  smiledev list"
     echo -e "  smiledev view loop-gui-tk"
-    echo -e "  smiledev upload-module ./my_module"
-    echo -e "  smiledev add-repo https://repo.cokistudios.com/modules"
+    echo -e "  smiledev link ./my-engine-plugin"
+    echo -e "  smiledev upgrade"
     echo ""
 }
 
-# ── 1. COMMAND: VIEW (View module info) ──
+# ── 1. COMMAND: VIEW / INFO (View module info) ──
 cmd_ver() {
     local mod_name="$1"
     if [ -z "$mod_name" ]; then
-        echo -e "${C_RED}✘ Error:${C_RESET} You must specify a module name. Example: ${C_CYAN}smiledev view loop-gui-tk${C_RESET}"
+        echo -e "${C_RED}✘ Error:${C_RESET} You must specify a module name. Example: ${C_CYAN}smiledev view loop-core-utils${C_RESET}"
         exit 1
     fi
 
-    echo -e "${C_DIM}Querying PostgreSQL LoopModules...${C_RESET}"
+    # Check local installation first (offline-friendly)
+    local local_manifest="$LOCAL_MODULES_DIR/$mod_name/smile.json"
+    local global_manifest="$GLOBAL_MODULES_DIR/$mod_name/smile.json"
+    local local_found=false
+
+    if [ -f "$local_manifest" ] || [ -f "$global_manifest" ]; then
+        local_found=true
+        local target_mf="$local_manifest"
+        local source_type="Local (./modules)"
+        if [ ! -f "$local_manifest" ]; then
+            target_mf="$global_manifest"
+            source_type="Global (~/.smiledev/modules)"
+        fi
+
+        echo -e "${C_DIM}Reading module manifest from $source_type...${C_RESET}"
+        python3 -c "
+import json
+with open('$target_mf', 'r') as f:
+    m = json.load(f)
+
+lang_badge = {
+    'cpp': '${C_BLUE}[C++ NATIVE]${C_RESET}',
+    'python': '${C_YELLOW}[PYTHON PYLOOP]${C_RESET}',
+    'node': '${C_GREEN}[NODE.JS HTML5]${C_RESET}',
+    'c2': '${C_PURPLE}[C2 DECLARATIVE]${C_RESET}',
+    'loop': '${C_GREEN}[PURE LOOP]${C_RESET}'
+}.get(m.get('language', 'loop').lower(), '[CUSTOM]')
+
+print('')
+print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}')
+print(f'📦 ${C_BOLD}{m.get(\"name\", \"$mod_name\")}${C_RESET}  v{m.get(\"version\", \"1.0.0\")}  {lang_badge}  ${C_GREEN}● Installed ($source_type)${C_RESET}')
+print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}')
+print(f'• ${C_BOLD}Author:${C_RESET}       {m.get(\"author_name\", m.get(\"author\", \"Unknown\"))}')
+print(f'• ${C_BOLD}Language:${C_RESET}     {m.get(\"language\", \"loop\").upper()}')
+print(f'• ${C_BOLD}License:${C_RESET}      {m.get(\"license\", \"MIT\")}')
+print(f'• ${C_BOLD}Entry Point:${C_RESET}  {m.get(\"entry_point\", \"N/A\")}')
+print(f'• ${C_BOLD}Description:${C_RESET}  {m.get(\"description\", \"No description\")}')
+deps = m.get('dependencies', {})
+if deps:
+    print(f'• ${C_BOLD}Dependencies:${C_RESET} {json.dumps(deps)}')
+print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}\n')
+"
+        return 0
+    fi
+
+    # If not local, query PostgreSQL LoopModules
+    echo -e "${C_DIM}Querying PostgreSQL LoopModules cloud registry...${C_RESET}"
     local res
     res=$(curl -s -H "apikey: $SUPABASE_KEY" \
                  -H "Authorization: Bearer $SUPABASE_KEY" \
@@ -121,32 +179,62 @@ lang_badge = {
     'cpp': '${C_BLUE}[C++ NATIVE]${C_RESET}',
     'python': '${C_YELLOW}[PYTHON PYLOOP]${C_RESET}',
     'node': '${C_GREEN}[NODE.JS HTML5]${C_RESET}',
+    'c2': '${C_PURPLE}[C2 DECLARATIVE]${C_RESET}',
     'loop': '${C_GREEN}[PURE LOOP]${C_RESET}'
 }.get(m.get('language'), '[UNKNOWN]')
 
 verified = '${C_AQUA}✔ Official Verified${C_RESET}' if m.get('is_verified') else '${C_DIM}Community${C_RESET}'
 
 print('')
-print('${C_BOLD}${C_CYAN}' + '='*56 + '${C_RESET}')
+print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}')
 print(f'📦 ${C_BOLD}{m.get(\"name\")}${C_RESET}  v{m.get(\"version\")}  {lang_badge}  {verified}')
-print('${C_BOLD}${C_CYAN}' + '='*56 + '${C_RESET}')
+print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}')
 print(f'• ${C_BOLD}Author:${C_RESET}       {m.get(\"author_name\", \"Unknown\")}')
 print(f'• ${C_BOLD}Language:${C_RESET}     {m.get(\"language\").upper()}')
 print(f'• ${C_BOLD}License:${C_RESET}      {m.get(\"license\", \"MIT\")}')
 print(f'• ${C_BOLD}Entry Point:${C_RESET}  {m.get(\"entry_point\", \"N/A\")}')
 print(f'• ${C_BOLD}Downloads:${C_RESET}    {m.get(\"downloads_count\", 0)}')
 print(f'• ${C_BOLD}Description:${C_RESET}  {m.get(\"description\", \"No description\")}')
-print('${C_BOLD}${C_CYAN}' + '='*56 + '${C_RESET}')
-print('')
+print('${C_BOLD}${C_CYAN}' + '='*58 + '${C_RESET}\n')
 "
 }
 
-# ── 2. COMMAND: INSTALL (Install module) ──
+# ── 2. COMMAND: INSTALL (Install module or project dependencies) ──
 cmd_install() {
     local mod_name="$1"
+
+    # If no module argument is given, install all dependencies from local smile.json
     if [ -z "$mod_name" ]; then
-        echo -e "${C_RED}✘ Error:${C_RESET} You must specify a module to install. Example: ${C_CYAN}smiledev install loop-gui-tk${C_RESET}"
-        exit 1
+        if [ -f "./smile.json" ]; then
+            echo -e "${C_CYAN}⚡ smiledev install:${C_RESET} Reading dependencies from ./smile.json..."
+            local deps_list
+            deps_list=$(python3 -c "
+import json
+try:
+    with open('./smile.json') as f:
+        d = json.load(f)
+    deps = list(d.get('dependencies', {}).keys())
+    print(' '.join(deps))
+except Exception:
+    print('')
+")
+            if [ -z "$deps_list" ]; then
+                echo -e "  ${C_YELLOW}No dependencies found in ./smile.json.${C_RESET}"
+                echo -e "  To install a module: ${C_CYAN}smiledev install <module-name>${C_RESET}"
+                return 0
+            fi
+
+            for dep in $deps_list; do
+                echo -e "\n• Installing dependency: ${C_BOLD}$dep${C_RESET}"
+                cmd_install "$dep"
+            done
+            echo -e "\n${C_GREEN}✔ [SUCCESS]${C_RESET} All dependencies installed successfully."
+            return 0
+        else
+            echo -e "${C_RED}✘ Error:${C_RESET} You must specify a module to install or run in a directory with smile.json."
+            echo -e "   Example: ${C_CYAN}smiledev install loop-core-utils${C_RESET}"
+            exit 1
+        fi
     fi
 
     echo -e "${C_CYAN}⚡ smiledev install:${C_RESET} Searching for ${C_BOLD}$mod_name${C_RESET} in LoopModules..."
@@ -156,12 +244,15 @@ cmd_install() {
                  "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name&select=*")
 
     local is_found
-    is_found=$(echo "$res" | python3 -c "import sys, json; data=json.load(sys.stdin); print('1' if data else '0')")
+    is_found=$(echo "$res" | python3 -c "import sys, json; data=json.load(sys.stdin); print('1' if data else '0')" 2>/dev/null || echo "0")
 
     if [ "$is_found" != "1" ]; then
         echo -e "${C_RED}✘ Error:${C_RESET} Module '$mod_name' not found in LoopModules registry."
         exit 1
     fi
+
+    local target_dir="$(pwd)/modules/$mod_name"
+    mkdir -p "$(pwd)/modules"
 
     # Extract details and code payload
     echo "$res" | python3 -c '
@@ -171,8 +262,8 @@ data = json.load(sys.stdin)[0]
 name = data["name"]
 lang = data.get("language", "loop")
 ver = data.get("version", "1.0.0")
-entry = data.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else ("index.js" if lang=="node" else f"{name}.loop")))
-payload = data.get("code_payload", "")
+entry = data.get("entry_point") or (f"{name}.py" if lang=="python" else (f"{name}.hpp" if lang=="cpp" else (f"{name}.c2" if lang=="c2" else f"{name}.loop")))
+payload = data.get("code_payload") or ""
 if "\\n" in payload and "\n" not in payload:
     payload = payload.replace("\\n", "\n").replace("\\t", "    ")
 
@@ -182,7 +273,8 @@ manifest = {
     "language": lang,
     "entry_point": entry,
     "author": data.get("author_name", "Community"),
-    "description": data.get("description", "")
+    "description": data.get("description", ""),
+    "dependencies": data.get("dependencies", {})
 }
 
 target_dir = os.path.abspath(f"modules/{name}")
@@ -191,7 +283,7 @@ global_dir = os.path.expanduser(f"~/.smiledev/modules/{name}")
 if not payload:
     try:
         import urllib.request
-        req = urllib.request.Request(f"https://repo.cokistudios.com/modules/{name}/code", headers={"User-Agent": "smiledev/2.6.0 (Coki Studios)"})
+        req = urllib.request.Request(f"https://repo.cokistudios.com/modules/{name}/code", headers={"User-Agent": "smiledev/2.8.0 (Coki Studios)"})
         with urllib.request.urlopen(req, timeout=8) as r:
             payload = r.read().decode("utf-8")
     except Exception:
@@ -209,20 +301,120 @@ print(f"  ✔ Manifest saved to: {target_dir}/smile.json")
 print(f"  ✔ Code entry point:  {target_dir}/{entry}")
 '
 
-    # Increment download counter in Supabase
-    curl -s -X PATCH -H "apikey: $SUPABASE_KEY" \
+    # Increment download counter in Supabase asynchronously
+    (curl -s -X PATCH -H "apikey: $SUPABASE_KEY" \
          -H "Authorization: Bearer $SUPABASE_KEY" \
          -H "Content-Type: application/json" \
          -d '{"updated_at": "'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'"}' \
-         "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name" > /dev/null || true
+         "$SUPABASE_URL/rest/v1/loop_modules?name=eq.$mod_name" > /dev/null 2>&1 || true) &
+
+    # Update local project smile.json dependencies if present
+    if [ -f "./smile.json" ]; then
+        python3 -c "
+import json
+try:
+    with open('./smile.json', 'r') as f:
+        d = json.load(f)
+    if 'dependencies' not in d:
+        d['dependencies'] = {}
+    d['dependencies']['$mod_name'] = '^1.0.0'
+    with open('./smile.json', 'w') as f:
+        json.dump(d, f, indent=2)
+    print('  ✔ Added to local smile.json dependencies')
+except Exception:
+    pass
+" 2>/dev/null || true
+    fi
 
     echo -e "${C_GREEN}✔ [SUCCESS]${C_RESET} Module ${C_BOLD}$mod_name${C_RESET} installed at:"
     echo -e "   • Local:  ${C_AQUA}$target_dir${C_RESET}"
     echo -e "   • Global: ${C_AQUA}$GLOBAL_MODULES_DIR/$mod_name${C_RESET}"
-    echo -e "   • Ready to import in Looping with: ${C_YELLOW}use module \"$mod_name\"${C_RESET}"
+    echo -e "   • Ready to import in Looping with: ${C_YELLOW}use module \"$mod_name\"${C_RESET} or ${C_YELLOW}import \"$mod_name\"${C_RESET}"
 }
 
-# ── AUTHENTICATION COMMANDS (SMILEDEV CLI) ──
+# ── 3. COMMAND: UNINSTALL / REMOVE ──
+cmd_uninstall() {
+    local mod_name="$1"
+    local global_flag=false
+    shift || true
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --global|-g) global_flag=true ;;
+        esac
+        shift || true
+    done
+
+    if [ -z "$mod_name" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Specify module name to remove. Example: ${C_CYAN}smiledev remove loop-core-utils${C_RESET}"
+        exit 1
+    fi
+
+    local removed=0
+    if [ -d "$LOCAL_MODULES_DIR/$mod_name" ]; then
+        rm -rf "$LOCAL_MODULES_DIR/$mod_name"
+        echo -e "  ${C_GREEN}✔${C_RESET} Removed local module: ${C_AQUA}$LOCAL_MODULES_DIR/$mod_name${C_RESET}"
+        removed=1
+    fi
+
+    if [ "$global_flag" = true ] && [ -d "$GLOBAL_MODULES_DIR/$mod_name" ]; then
+        rm -rf "$GLOBAL_MODULES_DIR/$mod_name"
+        echo -e "  ${C_GREEN}✔${C_RESET} Removed global module: ${C_AQUA}$GLOBAL_MODULES_DIR/$mod_name${C_RESET}"
+        removed=1
+    fi
+
+    if [ -f "./smile.json" ]; then
+        python3 -c "
+import json
+try:
+    with open('./smile.json', 'r') as f:
+        d = json.load(f)
+    if 'dependencies' in d and '$mod_name' in d['dependencies']:
+        del d['dependencies']['$mod_name']
+        with open('./smile.json', 'w') as f:
+            json.dump(d, f, indent=2)
+        print('  ✔ Removed from local smile.json dependencies')
+except Exception:
+    pass
+" 2>/dev/null || true
+    fi
+
+    if [ "$removed" -eq 1 ]; then
+        echo -e "${C_GREEN}✔ [UNINSTALLED]${C_RESET} Module ${C_BOLD}$mod_name${C_RESET} successfully removed."
+    else
+        echo -e "${C_YELLOW}⚠ Module '$mod_name' was not found in ./modules.${C_RESET} (Pass --global to remove from global cache)"
+    fi
+}
+
+# ── 4. COMMAND: UPDATE ──
+cmd_update() {
+    local target="$1"
+    if [ "$target" == "--self" ]; then
+        cmd_upgrade "$@"
+        return 0
+    fi
+
+    if [ -n "$target" ] && [ "$target" != "--all" ]; then
+        echo -e "${C_CYAN}⚡ Updating module:${C_RESET} ${C_BOLD}$target${C_RESET}..."
+        cmd_install "$target"
+        return 0
+    fi
+
+    if [ -d "$LOCAL_MODULES_DIR" ] && [ "$(ls -A "$LOCAL_MODULES_DIR" 2>/dev/null)" ]; then
+        echo -e "${C_CYAN}⚡ smiledev update:${C_RESET} Refreshing all local modules..."
+        for d in "$LOCAL_MODULES_DIR"/*; do
+            if [ -d "$d" ]; then
+                local bname=$(basename "$d")
+                echo -e "\n• Checking update for: ${C_BOLD}$bname${C_RESET}"
+                cmd_install "$bname" || true
+            fi
+        done
+        echo -e "\n${C_GREEN}✔ [SUCCESS]${C_RESET} All local modules updated."
+    else
+        echo -e "${C_YELLOW}No local modules found in ./modules to update.${C_RESET}"
+    fi
+}
+
+# ── 5. AUTHENTICATION COMMANDS ──
 cmd_login() {
     local token=""
     while [[ $# -gt 0 ]]; do
@@ -316,9 +508,8 @@ cmd_logout() {
     fi
 }
 
-# ── 3. COMMAND: UPLOAD-MODULE (Publish module to LoopModules) ──
+# ── 6. COMMAND: UPLOAD-MODULE (Publish module) ──
 cmd_upload() {
-    # Strict authentication validation
     if [ ! -f "$AUTH_FILE" ]; then
         echo -e "${C_RED}✘ Authentication error:${C_RESET} You must log in before publishing modules to LoopModules."
         echo -e "   Run: ${C_CYAN}smiledev login --token <your_pat_token>${C_RESET}"
@@ -326,11 +517,7 @@ cmd_upload() {
         exit 1
     fi
 
-    local target_path="$1"
-    if [ -z "$target_path" ]; then
-        target_path="."
-    fi
-
+    local target_path="${1:-.}"
     if [ ! -d "$target_path" ] && [ ! -f "$target_path" ]; then
         echo -e "${C_RED}✘ Error:${C_RESET} Path not found: $target_path"
         exit 1
@@ -347,11 +534,11 @@ cmd_upload() {
 {
   "name": "my-custom-module",
   "version": "1.0.0",
-  "language": "python",
+  "language": "loop",
   "author_name": "Coki Developer",
   "description": "Interactive module for Looping created with smiledev.",
   "license": "MIT",
-  "entry_point": "main.py"
+  "entry_point": "main.loop"
 }
 EOF
         echo -e "${C_GREEN}✔ Generated:${C_RESET} $manifest_file. Review the details and run upload-module again."
@@ -360,7 +547,6 @@ EOF
 
     echo -e "${C_PINK}🚀 smiledev upload-module:${C_RESET} Reading $manifest_file..."
     
-    # Prepare JSON payload via Python
     local json_payload
     json_payload=$(python3 -c "
 import json, os, sys
@@ -370,8 +556,8 @@ with open('$manifest_file', 'r') as f:
 
 name = mf.get('name')
 lang = mf.get('language', 'loop').lower()
-if lang not in ['cpp', 'python', 'loop']:
-    print(f'Error: Invalid language {lang}. Must be cpp, python or loop.', file=sys.stderr)
+if lang not in ['cpp', 'python', 'loop', 'c2', 'node']:
+    print(f'Error: Invalid language {lang}. Must be loop, python, cpp, c2 or node.', file=sys.stderr)
     sys.exit(1)
 
 entry = mf.get('entry_point', '')
@@ -397,8 +583,8 @@ print(json.dumps(payload))
 ")
 
     echo -e "${C_DIM}Uploading module to Supabase PostgreSQL LoopModules...${C_RESET}"
-    local response
-    response=$(curl -s -X POST \
+    local http_code
+    http_code=$(curl -s -o /tmp/smiledev_res.json -w "%{http_code}" -X POST \
          -H "apikey: $SUPABASE_KEY" \
          -H "Authorization: Bearer $SUPABASE_KEY" \
          -H "Content-Type: application/json" \
@@ -406,16 +592,23 @@ print(json.dumps(payload))
          -d "$json_payload" \
          "$SUPABASE_URL/rest/v1/loop_modules")
 
+    if [[ "$http_code" -ne 200 && "$http_code" -ne 201 ]]; then
+        echo -e "${C_RED}✘ Error uploading to LoopModules (HTTP $http_code):${C_RESET}"
+        cat /tmp/smiledev_res.json 2>/dev/null || true
+        echo ""
+        exit 1
+    fi
+
     local uploaded_name=$(python3 -c "import json; print(json.load(open('$manifest_file')).get('name'))" 2>/dev/null || echo "module")
     echo -e "${C_GREEN}✔ [PUBLISHED]${C_RESET} Module ${C_BOLD}$uploaded_name${C_RESET} published successfully to LoopModules registry."
     echo -e "   Anyone can now install it with: ${C_CYAN}smiledev install $uploaded_name${C_RESET}"
 }
 
-# ── 4. COMMAND: ADD-REPO (Add repository) ──
+# ── 7. COMMAND: ADD-REPO ──
 cmd_add_repo() {
     local repo_url="$1"
     if [ -z "$repo_url" ]; then
-        echo -e "${C_RED}✘ Error:${C_RESET} You must specify the repository URL. Example: ${C_CYAN}smiledev add-repo https://repo.cokistudios.com/modules${C_RESET}"
+        echo -e "${C_RED}✘ Error:${C_RESET} Specify repository URL. Example: ${C_CYAN}smiledev add-repo https://repo.cokistudios.com/modules${C_RESET}"
         exit 1
     fi
 
@@ -435,7 +628,7 @@ else:
 "
 }
 
-# ── 5. COMMAND: LIST (List installed modules) ──
+# ── 8. COMMAND: LIST (List installed modules) ──
 cmd_list() {
     print_banner
     echo -e "${C_BOLD}LOCALLY INSTALLED MODULES (./modules):${C_RESET}"
@@ -444,16 +637,24 @@ cmd_list() {
             if [ -d "$d" ]; then
                 local bname=$(basename "$d")
                 local ver="1.0.0"
+                local lang="loop"
+                local desc=""
                 if [ -f "$d/smile.json" ]; then
                     ver=$(python3 -c "import json; print(json.load(open('$d/smile.json')).get('version','1.0.0'))" 2>/dev/null || echo "1.0.0")
                     lang=$(python3 -c "import json; print(json.load(open('$d/smile.json')).get('language','loop'))" 2>/dev/null || echo "loop")
+                    desc=$(python3 -c "import json; print(json.load(open('$d/smile.json')).get('description',''))" 2>/dev/null || echo "")
                 fi
                 local lang_upper=$(echo "$lang" | tr '[:lower:]' '[:upper:]')
-                echo -e "  • ${C_CYAN}$bname${C_RESET} (v$ver) [${lang_upper}]"
+                local is_symlink=""
+                if [ -L "$d" ]; then is_symlink=" ${C_DIM}(symlink)${C_RESET}"; fi
+                echo -e "  • ${C_CYAN}$bname${C_RESET} ${C_DIM}v$ver${C_RESET} [${C_AQUA}$lang_upper${C_RESET}]$is_symlink"
+                if [ -n "$desc" ]; then
+                    echo -e "    ${C_DIM}$desc${C_RESET}"
+                fi
             fi
         done
     else
-        echo -e "  ${C_DIM}(No local modules yet. Use smiledev install <name>)${C_RESET}"
+        echo -e "  ${C_DIM}(No local modules installed in ./modules. Use smiledev install <name>)${C_RESET}"
     fi
 
     echo ""
@@ -462,7 +663,13 @@ cmd_list() {
         for d in "$GLOBAL_MODULES_DIR"/*; do
             if [ -d "$d" ]; then
                 local bname=$(basename "$d")
-                echo -e "  • ${C_PURPLE}$bname${C_RESET}"
+                local ver="1.0.0"
+                local is_symlink=""
+                if [ -L "$d" ]; then is_symlink=" ${C_DIM}(linked)${C_RESET}"; fi
+                if [ -f "$d/smile.json" ]; then
+                    ver=$(python3 -c "import json; print(json.load(open('$d/smile.json')).get('version','1.0.0'))" 2>/dev/null || echo "1.0.0")
+                fi
+                echo -e "  • ${C_PURPLE}$bname${C_RESET} ${C_DIM}v$ver${C_RESET}$is_symlink"
             fi
         done
     else
@@ -471,15 +678,15 @@ cmd_list() {
     echo ""
 }
 
-# ── 6. COMMAND: SEARCH (Search LoopModules) ──
+# ── 9. COMMAND: SEARCH (Search LoopModules) ──
 cmd_search() {
     local term="$1"
-    echo -e "${C_AQUA}🔎 Searching in PostgreSQL LoopModules:${C_RESET} '$term'..."
+    echo -e "${C_AQUA}🔎 Searching in PostgreSQL LoopModules:${C_RESET} '${term:-all}'..."
     local res
     if [ -z "$term" ]; then
         res=$(curl -s -H "apikey: $SUPABASE_KEY" \
                      -H "Authorization: Bearer $SUPABASE_KEY" \
-                     "$SUPABASE_URL/rest/v1/loop_modules?select=name,version,language,author_name,description&limit=20")
+                     "$SUPABASE_URL/rest/v1/loop_modules?select=name,version,language,author_name,description&limit=25")
     else
         res=$(curl -s -H "apikey: $SUPABASE_KEY" \
                      -H "Authorization: Bearer $SUPABASE_KEY" \
@@ -488,44 +695,55 @@ cmd_search() {
 
     python3 -c "
 import json
-data = json.loads('''$res''')
+try:
+    data = json.loads('''$res''')
+except Exception:
+    data = []
+
 if not data:
     print('  ${C_YELLOW}No matching modules found.${C_RESET}')
 else:
     print('')
     for m in data:
         lang = (m.get('language') or 'loop').upper()
-        print(f\"  • ${C_BOLD}${C_CYAN}{m['name']}${C_RESET} v{m['version']} [{lang}] by {m.get('author_name')}\")
-        print(f\"    ${C_DIM}{m.get('description', '')}${C_RESET}\")
+        print(f\"  • ${C_BOLD}${C_CYAN}{m['name']}${C_RESET} v{m['version']} [${C_AQUA}{lang}${C_RESET}] by {m.get('author_name', 'Community')}\")
+        if m.get('description'):
+            print(f\"    ${C_DIM}{m['description']}${C_RESET}\")
         print('')
 "
 }
 
-# ── 7. COMMAND: INIT (Create new package) ──
+# ── 10. COMMAND: INIT (Create new module / package) ──
 cmd_init() {
     local name="$1"
-    local lang="python"
+    local lang="loop"
+    local is_root=false
     shift || true
 
     while [[ "$#" -gt 0 ]]; do
         case $1 in
             --lang|-l) lang="$2"; shift ;;
+            --root) is_root=true ;;
         esac
         shift || true
     done
 
     if [ -z "$name" ]; then
-        echo -e "${C_RED}✘ Error:${C_RESET} Specify module name. Example: ${C_CYAN}smiledev init my-gui --lang python${C_RESET}"
+        echo -e "${C_RED}✘ Error:${C_RESET} Specify module name. Example: ${C_CYAN}smiledev init my-engine-plugin --lang loop${C_RESET}"
         exit 1
     fi
 
     local target_dir="./modules/$name"
+    if [ "$is_root" = true ]; then
+        target_dir="./$name"
+    fi
     mkdir -p "$target_dir"
 
     local entry=""
     if [ "$lang" == "cpp" ]; then entry="main.hpp"; fi
     if [ "$lang" == "python" ]; then entry="main.py"; fi
     if [ "$lang" == "loop" ]; then entry="main.loop"; fi
+    if [ "$lang" == "c2" ]; then entry="main.c2"; fi
 
     cat <<EOF > "$target_dir/smile.json"
 {
@@ -535,7 +753,8 @@ cmd_init() {
   "entry_point": "$entry",
   "author_name": "Coki Developer",
   "description": "Module $name created with smiledev.",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {}
 }
 EOF
 
@@ -547,7 +766,7 @@ EOF
 
 namespace $name {
     inline void hello() {
-        std::cout << "Hello from C++ module: $name" << std::endl;
+        std::cout << "Hello from C++ native module: $name" << std::endl;
     }
 }
 EOF
@@ -557,6 +776,22 @@ EOF
 def init_module(vars_dict=None):
     print("Module $name initialized successfully in PyLoop.")
     return True
+
+def hello():
+    return "Hello from Python PyLoop module $name"
+EOF
+    elif [ "$lang" == "c2" ]; then
+        cat <<EOF > "$target_dir/$entry"
+// Declarative C2 Component Module: $name
+component $name {
+    theme "frosted_aqua_a17"
+    pipeline "Direct-to-Vulkan"
+    
+    view MainCard {
+        title: "$name Module"
+        description: "Declarative UI component powered by Looping Engine"
+    }
+}
 EOF
     else
         cat <<EOF > "$target_dir/$entry"
@@ -565,11 +800,152 @@ define module "$name" version 1.0:
 EOF
     fi
 
+    # Generate README.md
+    cat <<EOF > "$target_dir/README.md"
+# $name
+
+> Official $lang module for Looping Engine and Loop OS ecosystem.
+
+## Installation
+
+\`\`\`bash
+smiledev install $name
+\`\`\`
+
+## Usage in Looping
+
+\`\`\`looping
+use module "$name"
+
+val message = hello()
+print(message)
+\`\`\`
+
+---
+*© 2026 Coki Studios & Holo Entertainment*
+EOF
+
+    # Generate .gitignore
+    cat <<EOF > "$target_dir/.gitignore"
+.DS_Store
+*.tmp
+*.log
+build/
+dist/
+EOF
+
     echo -e "${C_GREEN}✔ [CREATED]${C_RESET} Module ${C_BOLD}$name${C_RESET} [$lang] initialized at: ${C_AQUA}$target_dir${C_RESET}"
-    echo -e "   To publish to the cloud: ${C_CYAN}smiledev upload-module $target_dir${C_RESET}"
+    echo -e "   • Manifest:    ${C_DIM}$target_dir/smile.json${C_RESET}"
+    echo -e "   • Entry point: ${C_DIM}$target_dir/$entry${C_RESET}"
+    echo -e "   • Docs:        ${C_DIM}$target_dir/README.md${C_RESET}"
+    echo -e "   To test locally: ${C_CYAN}smiledev run $target_dir/$entry${C_RESET}"
+    echo -e "   To publish:      ${C_CYAN}smiledev upload-module $target_dir${C_RESET}"
 }
 
-# ── 8. AUTO-UPDATER SUB-SYSTEM ──
+# ── 11. COMMAND: PACK (Bundle module into tarball) ──
+cmd_pack() {
+    local target_dir="${1:-.}"
+    if [ ! -d "$target_dir" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Directory not found: $target_dir"
+        exit 1
+    fi
+    local manifest="$target_dir/smile.json"
+    if [ ! -f "$manifest" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} No smile.json found in $target_dir"
+        exit 1
+    fi
+    local mod_name mod_ver
+    mod_name=$(python3 -c "import json; print(json.load(open('$manifest')).get('name','module'))" 2>/dev/null || echo "module")
+    mod_ver=$(python3 -c "import json; print(json.load(open('$manifest')).get('version','1.0.0'))" 2>/dev/null || echo "1.0.0")
+    local out_tar="${mod_name}-v${mod_ver}.tar.gz"
+    tar -czf "$out_tar" -C "$target_dir" .
+    local sha=$(shasum -a 256 "$out_tar" | awk '{print $1}')
+    echo -e "${C_GREEN}✔ [PACKAGED]${C_RESET} Created module release bundle: ${C_BOLD}$out_tar${C_RESET}"
+    echo -e "   • SHA256: ${C_DIM}$sha${C_RESET}"
+    echo -e "   • Size:   $(ls -lh "$out_tar" | awk '{print $5}')"
+}
+
+# ── 12. COMMAND: LINK & UNLINK ──
+cmd_link() {
+    local target_dir="${1:-.}"
+    local manifest="$target_dir/smile.json"
+    if [ ! -f "$manifest" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} No smile.json found in $target_dir"
+        exit 1
+    fi
+    local mod_name
+    mod_name=$(python3 -c "import json; print(json.load(open('$manifest')).get('name',''))" 2>/dev/null || echo "")
+    if [ -z "$mod_name" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Module name missing in smile.json"
+        exit 1
+    fi
+    local abs_path
+    abs_path="$(cd "$target_dir" && pwd)"
+    mkdir -p "$GLOBAL_MODULES_DIR"
+    ln -sfn "$abs_path" "$GLOBAL_MODULES_DIR/$mod_name"
+    echo -e "${C_GREEN}✔ [LINKED]${C_RESET} Symlinked ${C_BOLD}$mod_name${C_RESET} -> ${C_AQUA}$GLOBAL_MODULES_DIR/$mod_name${C_RESET}"
+}
+
+cmd_unlink() {
+    local mod_name="$1"
+    if [ -z "$mod_name" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Specify module name to unlink."
+        exit 1
+    fi
+    if [ -L "$GLOBAL_MODULES_DIR/$mod_name" ]; then
+        rm "$GLOBAL_MODULES_DIR/$mod_name"
+        echo -e "${C_GREEN}✔ [UNLINKED]${C_RESET} Removed symlink for ${C_BOLD}$mod_name${C_RESET} from global cache."
+    else
+        echo -e "${C_YELLOW}⚠ Module '$mod_name' is not a linked symlink in global cache.${C_RESET}"
+    fi
+}
+
+# ── 13. COMMAND: TEST ──
+cmd_test() {
+    local target="$1"
+    local looping_bin="$(command -v looping 2>/dev/null || echo "")"
+    if [ -z "$looping_bin" ] && [ -x "./bin/looping" ]; then
+        looping_bin="./bin/looping"
+    fi
+    if [ -z "$looping_bin" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Looping engine binary not found."
+        exit 1
+    fi
+
+    if [ -z "$target" ]; then
+        if [ -f "test.loop" ]; then
+            exec "$looping_bin" "test.loop"
+        elif [ -f "smile.json" ]; then
+            local entry=$(python3 -c "import json; print(json.load(open('smile.json')).get('entry_point',''))" 2>/dev/null || echo "")
+            if [ -n "$entry" ] && [ -f "$entry" ]; then
+                echo -e "${C_CYAN}Running module entry test:${C_RESET} $entry"
+                exec "$looping_bin" "$entry"
+            fi
+        fi
+        echo -e "${C_RED}✘ Error:${C_RESET} No test.loop or module entry found in current directory."
+        exit 1
+    else
+        if [ -f "$LOCAL_MODULES_DIR/$target/test.loop" ]; then
+            exec "$looping_bin" "$LOCAL_MODULES_DIR/$target/test.loop"
+        elif [ -f "$LOCAL_MODULES_DIR/$target/smile.json" ]; then
+            local entry=$(python3 -c "import json; print(json.load(open('$LOCAL_MODULES_DIR/$target/smile.json')).get('entry_point',''))" 2>/dev/null || echo "")
+            exec "$looping_bin" "$LOCAL_MODULES_DIR/$target/$entry"
+        else
+            echo -e "${C_RED}✘ Error:${C_RESET} Module '$target' not found in ./modules."
+            exit 1
+        fi
+    fi
+}
+
+# ── 14. COMMAND: CLEAN ──
+cmd_clean() {
+    echo -e "${C_CYAN}🧹 Cleaning smiledev caches and temporary files...${C_RESET}"
+    rm -rf /tmp/smiledev* 2>/dev/null || true
+    rm -rf "$CONFIG_DIR/cache" 2>/dev/null || true
+    echo -e "${C_GREEN}✔ Cache cleaned.${C_RESET}"
+}
+
+# ── 15. AUTO-UPDATER SUB-SYSTEM ──
 check_for_updates() {
     local now
     now=$(date +%s 2>/dev/null || echo 0)
@@ -578,7 +954,6 @@ check_for_updates() {
         last_check=$(cat "$CONFIG_DIR/last_update_check" 2>/dev/null || echo 0)
     fi
 
-    # Non-blocking periodic check every 24 hours
     if [ $((now - last_check)) -gt 86400 ]; then
         mkdir -p "$CONFIG_DIR" 2>/dev/null || true
         echo "$now" > "$CONFIG_DIR/last_update_check" 2>/dev/null || true
@@ -687,7 +1062,6 @@ except Exception as e:
     expected_sha=$(echo "$parsed_info" | awk -F'\t' '{print $3}')
     release_notes=$(echo "$parsed_info" | awk -F'\t' '{print $4}')
 
-    # Check local installed looping
     local looping_bin
     looping_bin="$(command -v looping 2>/dev/null || true)"
     if [ -z "$looping_bin" ] && [ -x "/usr/local/bin/looping" ]; then
@@ -727,7 +1101,6 @@ except Exception as e:
     local tmp_tar="$tmp_dir/engine.tar.gz"
 
     if ! curl -fsSL "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
-        # Try local cache if in repository
         if [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
             echo -e "${C_DIM}Network tarball unavailable. Using workspace package...${C_RESET}"
             cp "$repo_root/public/engine/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
@@ -765,7 +1138,6 @@ except Exception as e:
 
     chmod 755 "$tmp_dir/looping" "$tmp_dir/smiledev"
 
-    # Identify target installation directory
     local target_dir="/usr/local/bin"
     if [ -n "$looping_bin" ]; then
         target_dir="$(dirname "$looping_bin")"
@@ -794,7 +1166,6 @@ except Exception as e:
         chmod 755 "$target_dir/smiledev"
     fi
 
-    # Also update current script location if it's different from target_dir
     local self_bin
     self_bin="$(realpath "$0" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo "$0")"
     if [ -f "$self_bin" ] && [ "$self_bin" != "$target_dir/smiledev" ] && [ -w "$self_bin" ]; then
@@ -808,7 +1179,6 @@ except Exception as e:
         fi
     fi
 
-    # Also sync ~/.local/bin and /opt/homebrew/bin if they exist and are writable
     for extra_dir in "$HOME/.local/bin" "/opt/homebrew/bin"; do
         if [ -d "$extra_dir" ] && [ -w "$extra_dir" ] && [ "$extra_dir" != "$target_dir" ]; then
             if [ -f "$extra_dir/smiledev" ] || [ -f "$extra_dir/looping" ]; then
@@ -840,12 +1210,16 @@ except Exception as e:
     echo ""
 }
 
+# ── 16. COMMAND: DOCTOR ──
 cmd_doctor() {
     print_banner
     echo -e "${C_BOLD}${C_CYAN}[SMILEDEV DOCTOR]${C_RESET} Running diagnostics on Looping & Package Manager...\n"
     echo -e "  ${C_GREEN}✔${C_RESET} smiledev CLI      : v$SMILE_VERSION ($0)"
     local lbin
     lbin=$(command -v looping 2>/dev/null || echo "")
+    if [ -z "$lbin" ] && [ -x "./bin/looping" ]; then
+        lbin="./bin/looping"
+    fi
     if [ -n "$lbin" ]; then
         local lver
         lver=$("$lbin" --version 2>/dev/null | head -n1)
@@ -853,12 +1227,40 @@ cmd_doctor() {
     else
         echo -e "  ${C_RED}✘${C_RESET} Looping Binary    : Not found in PATH"
     fi
+
+    if command -v python3 >/dev/null 2>&1; then
+        local pyver
+        pyver=$(python3 --version 2>&1)
+        echo -e "  ${C_GREEN}✔${C_RESET} Python Interop    : $pyver"
+    else
+        echo -e "  ${C_YELLOW}⚠${C_RESET} Python Interop    : python3 not found"
+    fi
+
+    if command -v clang++ >/dev/null 2>&1; then
+        local cxxver
+        cxxver=$(clang++ --version 2>/dev/null | head -n1)
+        echo -e "  ${C_GREEN}✔${C_RESET} C++ Toolchain     : $cxxver"
+    else
+        echo -e "  ${C_YELLOW}⚠${C_RESET} C++ Toolchain     : clang++ not found"
+    fi
+
+    if command -v brew >/dev/null 2>&1; then
+        if brew tap 2>/dev/null | grep -q "cokistudios/tap"; then
+            echo -e "  ${C_GREEN}✔${C_RESET} Homebrew Tap      : cokistudios/tap (Configured)"
+        else
+            echo -e "  ${C_YELLOW}•${C_RESET} Homebrew Tap      : Run 'brew tap cokistudios/tap' to install via brew"
+        fi
+    fi
+
     echo -e "  ${C_GREEN}✔${C_RESET} Global Modules    : $GLOBAL_MODULES_DIR"
+    echo -e "  ${C_GREEN}✔${C_RESET} Local Modules     : $LOCAL_MODULES_DIR"
+
     if [ -f "$AUTH_FILE" ]; then
         echo -e "  ${C_GREEN}✔${C_RESET} CS ID Auth        : Authenticated ($AUTH_FILE)"
     else
         echo -e "  ${C_YELLOW}•${C_RESET} CS ID Auth        : Anonymous (run 'smiledev login' to publish)"
     fi
+
     if curl -fsSL --max-time 4 "https://repo.cokistudios.com/engine/latest.json" >/dev/null 2>&1; then
         echo -e "  ${C_GREEN}✔${C_RESET} Engine Repository : Online (https://repo.cokistudios.com/engine)"
     else
@@ -867,6 +1269,7 @@ cmd_doctor() {
     echo ""
 }
 
+# ── 17. COMMAND: RUN ──
 cmd_run() {
     local target="$1"
     if [ -z "$target" ]; then
@@ -874,12 +1277,25 @@ cmd_run() {
         exit 1
     fi
     shift
+    local lbin="$(command -v looping 2>/dev/null || echo "")"
+    if [ -z "$lbin" ] && [ -x "./bin/looping" ]; then
+        lbin="./bin/looping"
+    fi
+    if [ -z "$lbin" ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Looping binary not found."
+        exit 1
+    fi
+
     if [ -f "$target" ]; then
-        exec looping "$target" "$@"
+        exec "$lbin" "$target" "$@"
     elif [ -f "$LOCAL_MODULES_DIR/$target/$target.loop" ]; then
-        exec looping "$LOCAL_MODULES_DIR/$target/$target.loop" "$@"
+        exec "$lbin" "$LOCAL_MODULES_DIR/$target/$target.loop" "$@"
+    elif [ -f "$LOCAL_MODULES_DIR/$target/main.loop" ]; then
+        exec "$lbin" "$LOCAL_MODULES_DIR/$target/main.loop" "$@"
     elif [ -f "$GLOBAL_MODULES_DIR/$target/$target.loop" ]; then
-        exec looping "$GLOBAL_MODULES_DIR/$target/$target.loop" "$@"
+        exec "$lbin" "$GLOBAL_MODULES_DIR/$target/$target.loop" "$@"
+    elif [ -f "$GLOBAL_MODULES_DIR/$target/main.loop" ]; then
+        exec "$lbin" "$GLOBAL_MODULES_DIR/$target/main.loop" "$@"
     else
         echo -e "${C_RED}✘ Error:${C_RESET} Could not find script or module '$target'."
         exit 1
@@ -897,26 +1313,54 @@ esac
 
 case "$1" in
     install|add|i)
-        cmd_install "$2"
+        shift
+        cmd_install "$@"
+        ;;
+    uninstall|remove|rm)
+        shift
+        cmd_uninstall "$@"
         ;;
     view|ver|info)
-        cmd_ver "$2"
+        shift
+        cmd_ver "$@"
         ;;
     upload-module|upload|publish)
-        cmd_upload "$2"
+        shift
+        cmd_upload "$@"
         ;;
     add-repo)
-        cmd_add_repo "$2"
+        shift
+        cmd_add_repo "$@"
         ;;
     list|ls)
         cmd_list
         ;;
     search|find)
-        cmd_search "$2"
+        shift
+        cmd_search "$@"
         ;;
     init|new)
         shift
         cmd_init "$@"
+        ;;
+    pack|bundle)
+        shift
+        cmd_pack "$@"
+        ;;
+    link)
+        shift
+        cmd_link "$@"
+        ;;
+    unlink)
+        shift
+        cmd_unlink "$@"
+        ;;
+    test)
+        shift
+        cmd_test "$@"
+        ;;
+    clean)
+        cmd_clean
         ;;
     run|exec)
         shift
@@ -931,11 +1375,7 @@ case "$1" in
         ;;
     update)
         shift
-        if [ "$1" == "--self" ] || [ -z "$1" ]; then
-            cmd_upgrade "$@"
-        else
-            cmd_install "$1"
-        fi
+        cmd_update "$@"
         ;;
     login|auth)
         shift
@@ -948,7 +1388,7 @@ case "$1" in
         cmd_logout
         ;;
     version|-v|--version)
-        echo "smiledev v$SMILE_VERSION (Looping Package Manager)"
+        echo "smiledev v$SMILE_VERSION (Commercial Edition / Arch $SMILE_ARCH_VERSION / Looping Universal Package Manager)"
         ;;
     help|-h|--help|"")
         cmd_help

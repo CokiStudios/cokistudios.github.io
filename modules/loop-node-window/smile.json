@@ -1,8 +1,8 @@
 {
   "name": "loop-node-window",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "language": "node",
   "entry_point": "index.js",
   "author": "Coki Studios Web & Loop Lab",
-  "description": "Dynamic HTML5 Window Creator for Node.js and Loop. Launches high-performance glassmorphic UI, Web Audio synthesis, interactive controls, and real-time REST/SSE bridge."
+  "description": "Dynamic HTML5 Window & 2D Arcade Game Creator for Node.js and Loop. Launches high-performance 60 FPS 2D stage, Web Audio synthesis, interactive controls, and real-time REST/SSE bridge."
 }

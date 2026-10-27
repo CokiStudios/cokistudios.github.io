@@ -1,8 +1,8 @@
 {
   "name": "loop-gui-tk",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "language": "python",
   "entry_point": "loop_gui_tk.py",
   "author": "Coki Studios Core Team",
-  "description": "Interoperabilidad nativa con Tkinter para Looping (.loop). Soporta ventanas, canvas 3D, botones TTK, di\u00e1logos y eventos."
+  "description": "Interoperabilidad nativa con Tkinter para Looping (.loop). Soporta componentes UI complejos: Notebooks/Tabs, paned splitters, tablas de datos ordenables, arboles jerarquicos, editor de codigo monospaced, KPI cards, canvas vectorial con graficos 2D, controles de formulario y schema declarativo JSON."
 }

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace looping {
 
@@ -217,6 +218,11 @@ public:
 // Pattern Match Statement: match <expr> { pattern => stmt ... }
 struct MatchArm {
     std::shared_ptr<Expr> pattern; // nullptr for wildcard _ / default
+    std::vector<std::shared_ptr<Expr>> patterns; // multi-pattern: "S" | "SS" => ...
+    bool is_range = false;
+    bool range_inclusive = false;
+    std::shared_ptr<Expr> range_start;
+    std::shared_ptr<Expr> range_end;
     std::vector<std::shared_ptr<Stmt>> body;
 };
 
@@ -270,14 +276,16 @@ public:
     ExprStmt(std::shared_ptr<Expr> e) : expr(e) {}
 };
 
-// Function Definition: function name(p1, p2) { ... }
+// Function Definition: function name(p1, p2 = default) { ... }
 class FunctionDefStmt : public Stmt {
 public:
     std::string name;
     std::vector<std::string> params;
+    std::vector<std::shared_ptr<Expr>> default_values;
     std::vector<std::shared_ptr<Stmt>> body;
-    FunctionDefStmt(const std::string& n, const std::vector<std::string>& p, const std::vector<std::shared_ptr<Stmt>>& b)
-        : name(n), params(p), body(b) {}
+    FunctionDefStmt(const std::string& n, const std::vector<std::string>& p, const std::vector<std::shared_ptr<Stmt>>& b,
+                    const std::vector<std::shared_ptr<Expr>>& defs = {})
+        : name(n), params(p), default_values(defs), body(b) {}
 };
 
 // Function Call Statement: call name(args)
@@ -314,6 +322,15 @@ public:
     std::vector<std::string> symbols;
     ImportStmt(const std::string& mod, const std::string& al = "", bool py = false, const std::vector<std::string>& syms = {})
         : module_name(mod), alias(al), is_python(py), symbols(syms) {}
+};
+
+// Module Definition: define module "Name" version 1.0
+class ModuleDefineStmt : public Stmt {
+public:
+    std::string module_name;
+    std::string version;
+    ModuleDefineStmt(const std::string& name, const std::string& ver = "1.0")
+        : module_name(name), version(ver) {}
 };
 
 // App Definition: define app "Name" version 1.0
@@ -367,16 +384,33 @@ public:
     std::vector<std::string> actions_list;
 };
 
-// Spawn Entity: spawn sprite / platform / coin / bubbly_dot
+// Spawn Entity: spawn sprite / platform / coin / bubbly_dot / spike / jump_pad / orb / moving_platform / enemy / heart / portal
 class SpawnEntityStmt : public Stmt {
 public:
-    std::string entity_type; // "sprite", "platform", "coin", "bubbly_dot"
+    std::string entity_type; // "sprite", "platform", "coin", "bubbly_dot", "spike", "jump_pad", "orb", "moving_platform", "enemy", "heart", "portal"
     std::string name;
     double x = 0, y = 0, w = 0, h = 0;
     std::string color;
     double points = 0;
     std::string text;
     std::string state;
+    // Enhanced 2D game capabilities
+    std::string axis = "x";
+    double min_pos = 0, max_pos = 0;
+    double speed = 80;
+    double power = 650;
+    double health = 100;
+    std::string dest = "";
+};
+
+// Game World & Physics Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...)
+class GameConfigStmt : public Stmt {
+public:
+    std::string config_key; // "gravity", "world", "camera", "lives", "friction"
+    double val1 = 0, val2 = 0;
+    std::string str_val = "";
+    GameConfigStmt(const std::string& key, double v1 = 0, double v2 = 0, const std::string& sv = "")
+        : config_key(key), val1(v1), val2(v2), str_val(sv) {}
 };
 
 // Emit Particles
@@ -427,6 +461,111 @@ public:
 
     DynamicProgramCompileStmt(const std::string& name, const std::string& target = "shine_ui", const std::string& out = "", const std::string& ver = "1.0")
         : program_name(name), target_ui(target), output_path(out), version(ver) {}
+};
+
+// ── SwiftUI View Hierarchy Declarative Nodes (v2.9 Experience) ──
+
+enum class SwiftUIViewType {
+    VStack,
+    HStack,
+    ZStack,
+    List,
+    ScrollView,
+    Section,
+    Group,
+    ForEach,
+    Text,
+    Button,
+    Image,
+    TextField,
+    Toggle,
+    Slider,
+    ProgressView,
+    Spacer,
+    Divider,
+    Badge,
+    Circle,
+    Rectangle,
+    RoundedRectangle,
+    Color,
+    Custom
+};
+
+inline std::string swiftui_view_type_name(SwiftUIViewType t) {
+    switch (t) {
+        case SwiftUIViewType::VStack: return "VStack";
+        case SwiftUIViewType::HStack: return "HStack";
+        case SwiftUIViewType::ZStack: return "ZStack";
+        case SwiftUIViewType::List: return "List";
+        case SwiftUIViewType::ScrollView: return "ScrollView";
+        case SwiftUIViewType::Section: return "Section";
+        case SwiftUIViewType::Group: return "Group";
+        case SwiftUIViewType::ForEach: return "ForEach";
+        case SwiftUIViewType::Text: return "Text";
+        case SwiftUIViewType::Button: return "Button";
+        case SwiftUIViewType::Image: return "Image";
+        case SwiftUIViewType::TextField: return "TextField";
+        case SwiftUIViewType::Toggle: return "Toggle";
+        case SwiftUIViewType::Slider: return "Slider";
+        case SwiftUIViewType::ProgressView: return "ProgressView";
+        case SwiftUIViewType::Spacer: return "Spacer";
+        case SwiftUIViewType::Divider: return "Divider";
+        case SwiftUIViewType::Badge: return "Badge";
+        case SwiftUIViewType::Circle: return "Circle";
+        case SwiftUIViewType::Rectangle: return "Rectangle";
+        case SwiftUIViewType::RoundedRectangle: return "RoundedRectangle";
+        case SwiftUIViewType::Color: return "Color";
+        case SwiftUIViewType::Custom: return "CustomView";
+    }
+    return "UnknownView";
+}
+
+struct SwiftUIModifier {
+    std::string name; // "padding", "background", "foregroundColor", "foregroundStyle", "tint", "cornerRadius", "frame", "font", "fontWeight", "shadow", "opacity", "border", "buttonStyle", "onTapGesture"
+    std::vector<std::string> args;
+    std::map<std::string, std::string> named_args;
+};
+
+class SwiftUIViewNode {
+public:
+    SwiftUIViewType type = SwiftUIViewType::VStack;
+    std::string custom_name = "";
+    std::string primary_arg = ""; // Text label, Button title, Image name
+    std::map<std::string, std::string> attributes; // spacing, alignment, role, etc.
+    std::vector<SwiftUIModifier> modifiers;
+    std::vector<std::shared_ptr<SwiftUIViewNode>> children;
+    std::string action_code = ""; // Button action code or trailing closure
+    std::string binding_var = ""; // For $state binding in TextField, Toggle, Slider
+    std::string foreach_collection = ""; // Collection for ForEach
+    std::string foreach_item_var = "";   // Iteration item variable name
+
+    SwiftUIViewNode(SwiftUIViewType t = SwiftUIViewType::VStack) : type(t) {}
+};
+
+class SwiftUIStateDecl {
+public:
+    std::string name;
+    std::string type_hint; // "Int", "String", "Double", "Bool", "Any"
+    std::string initial_expr_str;
+    std::shared_ptr<Expr> initial_expr = nullptr;
+};
+
+class SwiftUIComponentDeclStmt : public Stmt {
+public:
+    std::string name; // "DashboardView"
+    std::vector<std::string> params;
+    std::vector<SwiftUIStateDecl> states; // @state variables
+    std::shared_ptr<SwiftUIViewNode> root_view;
+    std::vector<SwiftUIModifier> root_modifiers;
+
+    SwiftUIComponentDeclStmt(const std::string& n) : name(n) {}
+};
+
+class SwiftUIViewRenderStmt : public Stmt {
+public:
+    std::shared_ptr<SwiftUIViewNode> root_view;
+    std::vector<SwiftUIModifier> root_modifiers;
+    SwiftUIViewRenderStmt(std::shared_ptr<SwiftUIViewNode> r) : root_view(r) {}
 };
 
 } // namespace looping

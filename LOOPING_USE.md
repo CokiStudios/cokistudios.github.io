@@ -1,21 +1,24 @@
 # Looping Programming Language — Official Syntax & Reference Guide
-> **Language Specification v2.6 (Signature Syntax & C++ Native Engine)**  
-> *Developed by Holo Entertainment (Sub-division of Coki Studios)*  
-> *Target Hardware & OS: Shine Loop Console • Holo Looping OoS (Linux Gaming Subsystem)*
+> **Looping Commercial Production Edition v1.0.0 (Architecture 2.8A Quantum Signature & C++17 Native Engine)**  
+> *Developed by Coki Studios & Holo Entertainment*  
+> *Target Hardware & OS: Shine Loop Console • Holo Looping OoS (POSIX / macOS Universal / Linux Gaming Subsystem)*  
+> *Historical Architecture Series: 2.8A, 2.7A, 2.6A, 2.5A, 2.0A, 1.0A*
 
 ---
 
 ## 1. Introducción & Filosofía de Diseño
-**Looping** (extensiones de archivo `.loop` y `.ruup`) es un lenguaje de programación moderno, expresivo y de alto rendimiento diseñado para la creación ágil de videojuegos 2D, aplicaciones gráficas interactivas, síntesis de audio en tiempo real y lógica multimedia.
+**Looping** (extensiones de archivo `.loop` y `.ruup`) es un lenguaje de programación moderno, expresivo y de alto rendimiento diseñado para la creación ágil de videojuegos 2D, aplicaciones gráficas interactivas, ciencia de datos, criptografía segura, síntesis de audio en tiempo real y lógica multimedia.
 
-En la versión **v2.6**, Looping consolida su **sintaxis propia, concisa y distintiva** (`let`, `mut`, `val`, `:=`, `fn`, `match`, `? :`, `??`, `try / catch`, destructuring `[a, b]`, `loop (N)`, `for..in` con `..=` y `step`, `|>`, `ui.*`, `spawn.*`, `audio.*`, `crypto.*`, `py!`), manteniendo un rendimiento de ejecución nativo en C++17 de **< 1.0 ms** y cero dependencias de Node.js.
+Con el lanzamiento de **Looping v1.0.0 Comercial** (impulsado por la arquitectura **2.8A Quantum Signature**), Looping consolida su **sintaxis propia, concisa y distintiva** (`let`, `mut`, `val`, `:=`, `fn` con argumentos por defecto, `match` multi-patrón `|` y por rangos `..=`, `? :`, `??`, `try / catch`, destructuring `[a, b]`, llamadas de método sobre variables `s.trim().upper()`, `loop (N)`, `for..in` con `..=` y `step`, `|>`, `ui.*`, `spawn.*`, `audio.*`, `crypto.*`, `csv.*`, `datetime.*`, `regex.*`, `py!`), manteniendo un rendimiento de ejecución nativo en C++17 de **< 0.5 ms** y cero dependencias de Node.js.
+
+Las versiones anteriores de desarrollo han sido oficialmente consolidadas bajo la serie de arquitectura (**2.8A**, **2.7A**, **2.6A**, **2.5A**, **2.0A**, **1.0A**), dando paso a la primera línea comercial de producción oficial.
 
 ---
 
 ## 2. Compilación y Ejecución del Motor C++
 
-### Binario Precompilado
-El ejecutable nativo compilado reside directamente en el repositorio:
+### Binario Precompilado Universal
+El ejecutable nativo compilado reside directamente en el repositorio (`arm64` + `x86_64`):
 ```bash
 ./bin/looping [opciones] [archivo.loop]
 ```
@@ -27,13 +30,16 @@ El ejecutable nativo compilado reside directamente en el repositorio:
 | `looping --gui <archivo.loop>` | Ejecuta el script abriendo la ventana gráfica interactiva |
 | `looping --native <archivo.loop>` | Ejecuta el script sintetizando una ventana nativa del SO (sin HTML5) |
 | `looping compile <archivo.loop> --target <shine_ui\|xui\|flui\|c2> [-o out]` | Compila el script para una arquitectura de interfaz nativa |
-| `looping check <archivo.loop>` | Analizador estático de sintaxis y reporte de métricas AST en microsegundos |
+| `looping check <archivo.loop>` | Analizador estático recursivo de sintaxis y reporte de métricas AST en microsegundos |
+| `looping ast <archivo.loop>` | Visualiza el árbol sintáctico abstracto (AST) jerárquico completo del script |
+| `looping fmt <archivo.loop> [--write]` | Formatea y normaliza la indentación de un archivo `.loop` |
+| `looping doc [topic]` | Manual de referencia integrado (`syntax`, `math`, `collections`, `crypto`, `csv`, `datetime`, `regex`, `ui`) |
 | `looping bench` | Ejecuta el benchmark de rendimiento de la máquina virtual nativa C++17 |
 | `looping doctor` | Verifica el estado del motor C++, perfiles de UI, criptografía e interoperabilidad Python |
-| `looping repl` | Inicia la consola interactiva (REPL) con memoria de variables en vivo |
+| `looping repl` | Inicia la consola interactiva (REPL) con comandos `vars`, `funcs`, `bench`, `reset` |
 | `looping eval "<code>"` | Evalúa una instrucción o bloque de código en línea |
-| `looping test` | Ejecuta la suite de verificación unitaria (36/36 pruebas) |
-| `looping --version` | Muestra la versión del motor nativo (`v2.6.0`) |
+| `looping test` | Ejecuta la suite de verificación unitaria (**50/50 pruebas**) |
+| `looping --version` | Muestra la versión del motor nativo (`v2.8.0`) |
 | `looping --help` | Despliega el menú de ayuda |
 
 ---
@@ -474,6 +480,275 @@ insert button "Incrementar" with snippet:
     counter += 1
 end
 ```
+
+---
+
+## 17. Novedades de Looping v2.8 Quantum Signature
+
+### 17.1 Argumentos de Función por Defecto y Operador `%=`
+```loop
+fn greet_pilot(name, rank = "Commander", bonus = 50) => $"{rank} {name} (+{bonus})"
+val p1 = greet_pilot("Jerix")                     // "Commander Jerix (+50)"
+val p2 = greet_pilot("Jerix", "Admiral", 200)     // "Admiral Jerix (+200)"
+
+mut rem = 29
+rem %= 6                                          // 5
+```
+
+### 17.2 Pattern Matching Multi-Patrón (`|`) y por Rangos (`..=` / `..`)
+```loop
+match tier_code {
+    "S" | "SS" | "SSS" => out("🏆 Rango Maestro Cuántico")
+    "A" | "B"          => out("⭐ Rango Comandante")
+    _                  => out("🎮 Rango Estándar")
+}
+
+match score {
+    90..=100 => out("Calificación: A+")
+    80..90   => out("Calificación: B")
+    _        => out("Calificación: C")
+}
+```
+
+### 17.3 Llamadas de Método sobre Variables (`var.method()`)
+Cualquier función de cadenas o colecciones puede invocarse directamente con notación de punto sobre la variable:
+```loop
+let raw_title = "   coki studios shine   "
+val clean_title = raw_title.trim()
+val final_title = clean_title.upper()             // "COKI STUDIOS SHINE"
+
+mut dyn_list = [40, 10, 30]
+dyn_list.push(20)
+val sorted_list = dyn_list.sort()                 // [10, 20, 30, 40]
+val total_items = sorted_list.len()               // 4
+```
+
+### 17.4 Subsistema Nativo CSV (`csv.*`) y DateTime (`datetime.*` / `time.*`)
+```loop
+val csv_raw = "city,altitude,hub\nBogota,2640,true\nChia,2564,true"
+val rows    = csv.parse(csv_raw)                  // Lista 2D de filas
+val records = csv.parse_maps(csv_raw)             // Lista de Maps indexados por cabecera
+val out_csv = csv.stringify(rows)
+
+val now_iso = datetime.iso()                      // "2026-10-23T02:35:00Z"
+val dt_info = datetime.now()                      // Map {year, month, day, hour, minute, second, iso}
+val fmt_str = datetime.format(1767225600, "%Y-%m-%d")
+val ns_tick = time.nanos()
+```
+
+### 17.5 Álgebra Vectorial, Estadística Avanzada y Colecciones Funcionales
+```loop
+// Álgebra lineal y estadística (math.*)
+val dot_prod = math.dot([1, 2, 3], [4, 5, 6])     // 32
+val l2_norm  = math.norm([3, 4])                  // 5
+val dist_2d  = math.distance((0, 0), (6, 8))      // 10
+val grid     = math.linspace(0, 10, 5)            // [0, 2.5, 5, 7.5, 10]
+val p90      = math.percentile([10, 20, 30, 40, 50], 90)
+
+// Colecciones de orden superior
+fn parity(n) => n % 2 == 0 ? "even" : "odd"
+val grouped = group_by([1, 2, 3, 4, 5, 6], parity)
+val parts   = partition([10, 60, 20, 80], is_big)
+val first_3 = take([1, 2, 3, 4, 5], 3)
+val rest_2  = drop([1, 2, 3, 4, 5], 3)
+val freqs   = frequencies(["a", "b", "a", "c", "a"])
+```
+
+### 17.6 Criptografía Extendida v2.8 (`crc32`, `constant_time_eq`, `csms_payload`)
+```loop
+val crc_hex  = crypto.crc32("LoopingEngine")
+val hmac_hex = crypto.hmac_sha256("secret_key", "message_payload")
+val safe_cmp = crypto.constant_time_eq(hmac_hex, expected_hmac)
+val csms_pkt = crypto.csms_payload("room_sabana", "Hola Cota") // 🔒 enc:v1:<iv>:<ciphertext>
+```
+
+---
+
+## 18. Experiencia Declarativa SwiftUI en Looping (v2.9 Apple Ecosystem Bridge)
+
+Looping incorpora una experiencia de desarrollo de interfaces declarativas inspirada directamente en **SwiftUI** de Apple. Permite diseñar componentes reactivos, jerárquicos y encadenados con modificadores fluidos (`.padding()`, `.background()`, `.foregroundColor()`), visualizar vistas en vivo en la terminal mediante un Canvas TUI de alta fidelidad, y transpilar o compilar directamente a código **Swift 6** nativo listo para Xcode (`Forkar.iOS`, macOS, watchOS o visionOS).
+
+### 18.1 Sintaxis de Vistas y Componentes Declarativos
+```loop
+view DashboardView {
+    @state count = 100
+    @state is_active = true
+    @state username = "Jerix"
+
+    VStack(spacing: 16) {
+        HStack(spacing: 10) {
+            Image(systemName: "sparkles")
+                .foregroundColor(.cyan)
+            Text("Coki Studios Quantum")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.cyan)
+            Spacer()
+            Badge("Live 120Hz")
+        }
+
+        Divider()
+
+        VStack(spacing: 8) {
+            Text("Telemetría de Sistema")
+                .font(.headline)
+            Text("Operaciones procesadas: $count")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .cornerRadius(10)
+
+        HStack(spacing: 12) {
+            Button("Disminuir") {
+                count -= 10
+            }
+            .buttonStyle(.bordered)
+
+            Button("Incrementar") {
+                count += 25
+            }
+            .buttonStyle(.borderedProminent)
+        }
+
+        Toggle("Activar ProMotion E2EE", isOn: $is_active)
+            .padding(10)
+
+        ProgressView(value: 0.85)
+            .tint(.cyan)
+    }
+    .padding(20)
+    .frame(width: 440)
+}
+```
+
+### 18.2 Catálogo de Contenedores y Controles
+| Categoría | Constructores en Looping |
+|---|---|
+| **Contenedores de Disposición** | `VStack(spacing: N, alignment: .leading)`, `HStack(spacing: N)`, `ZStack`, `List`, `ScrollView`, `Section`, `Group`, `ForEach` |
+| **Controles de Texto e Imagen** | `Text("...")`, `Image(systemName: "...")`, `Image("asset.png")`, `Badge("...")` |
+| **Interactividad y Entrada** | `Button("Label") { action }`, `TextField("Placeholder", text: $var)`, `Toggle("Label", isOn: $var)`, `Slider(value: $var)` |
+| **Indicadores y Separadores** | `ProgressView(value: N)`, `Spacer()`, `Divider()`, `Circle()`, `Rectangle()`, `RoundedRectangle(cornerRadius: N)` |
+
+### 18.3 Modificadores Fluidos Encadenados (Dot Modifiers)
+- `.font(.largeTitle | .title | .headline | .subheadline | .body | .caption)`
+- `.fontWeight(.bold | .semibold | .medium | .regular | .light)`
+- `.foregroundColor(color)` / `.foregroundStyle(color)` / `.tint(color)`
+- `.padding([amount])` / `.padding(.horizontal, N)`
+- `.background(.ultraThinMaterial | .blue | Color("..."))`
+- `.cornerRadius(radius)`
+- `.frame(width: W, height: H)`
+- `.shadow(radius: R, y: Y)`
+- `.opacity(alpha)`
+- `.buttonStyle(.bordered | .borderedProminent | .plain)`
+
+### 18.4 Previsualización en Vivo en la Terminal (Canvas TUI)
+Puedes inspeccionar cualquier componente SwiftUI directamente en la terminal con renderizado visual en caja simulada de dispositivo:
+```bash
+# Vista previa en vivo del Canvas SwiftUI
+looping preview app.loop [NombreComponente]
+```
+
+### 18.5 Transpilación y Compilación Nativa a Swift / Mach-O
+```bash
+# Transpilar a código fuente Swift puro (.swift)
+looping compile app.loop --target swiftui -o MyApp.swift
+
+# Compilar directamente a binario Mach-O ejecutable para macOS (vía swiftc)
+looping compile app.loop --target swiftui -o build/MyApp
+```
+
+### 18.6 Funciones del Módulo Stdlib `swiftui.*`
+- `swiftui.components()`: Lista de nombres de vistas registradas.
+- `swiftui.has_component("Name")`: Verifica existencia de una vista.
+- `swiftui.preview("Name")`: Imprime el Canvas TUI en la terminal.
+- `swiftui.transpile("Name")`: Genera y retorna el código fuente Swift como string.
+- `swiftui.export("Name", "out.swift")`: Exporta el archivo `.swift` al disco.
+
+---
+
+## 19. Motor de Videojuegos 2D Quantum en Looping (60 FPS Native Graphics)
+
+Looping v2.8+ incorpora un motor completo de videojuegos 2D diseñado para ejecutarse a **60 FPS** nativos con aceleración por hardware tanto en la web (`LoopingInterpreter`), en la consola POSIX/Win32 (`looping eval`), en el IDE hiOP y en **Holo Looping OoS**.
+
+### 19.1 Ejemplo Completo de Nivel 2D
+```loop
+import loop.engine as game
+
+define game "QuantumRunner2D" version 2.8:
+    create window with title "Holo Quantum Arcade" and size (720, 420)
+    set theme to "dark_neon"
+    
+    # ── Configuración de Mundo y Físicas ──
+    game.world(width: 1400, height: 420)
+    game.gravity(980)
+    game.friction(0.82)
+    game.lives(3)
+
+    # ── Héroe Protagonista (Doble Salto, Dash, Disparo e Inercia) ──
+    spawn.player(name: "Angel Helium", at: (100, 310), speed: 280, jump: 440, health: 100)
+
+    # ── Maglev Plataforma Móvil & Plataformas Neón ──
+    spawn.platform(at: (60, 330), size: (180, 18), color: "#6366f1")
+    spawn.moving_platform(at: (280, 250), size: (140, 18), range: (220, 500), speed: 85, color: "#06b6d4")
+    spawn.platform(at: (560, 190), size: (160, 18), color: "#8b5cf6")
+    spawn.platform(at: (780, 260), size: (150, 18), color: "#6366f1")
+
+    # ── Trampas Neón, Impulsores y Anillos de Salto ──
+    spawn.spike(at: (430, 376), size: (44, 20), damage: 35)
+    spawn.pad(at: (250, 376), power: 670)
+    spawn.orb(at: (720, 170), power: 560, color: "#f59e0b")
+
+    # ── Coleccionables & Kits de Salud ──
+    spawn.coin(at: (340, 200), points: 100)
+    spawn.coin(at: (620, 140), points: 150)
+    spawn.coin(at: (840, 210), points: 200)
+    spawn.heart(at: (590, 140), heal: 35)
+
+    # ── Enemigo Autónomo (Derrotable por pisada o disparando) ──
+    spawn.enemy(name: "CorruptedForkbot", at: (800, 216), range: (780, 930), speed: 70, health: 30)
+
+    # ── Portal de Victoria ──
+    spawn.portal(at: (1180, 308), label: "NEON HUB")
+
+    print("✔ Nivel cargado exitosamente a 60 FPS")
+```
+
+### 19.2 Catálogo de Entidades 2D y Directivas
+| Entidad / Directiva | Sintaxis Declarativa | Descripción |
+|---|---|---|
+| **Jugador / Héroe** | `spawn.player(name, at, speed, jump, health)` | Protagonista con i-frames, doble salto, coyote time y dash. |
+| **Plataforma Estática** | `spawn.platform(at, size, color)` | Superficie sólida con reborde neón y brillo volumétrico. |
+| **Plataforma Móvil** | `spawn.moving_platform(at, size, range, speed)` | Maglev oscilante con arrastre inercial automático del jugador. |
+| **Picos / Trampas** | `spawn.spike(at, size, damage)` | Dientes triangulares neón que infligen daño y rebote de impacto. |
+| **Impulsor (Jump Pad)** | `spawn.pad(at, power, color)` | Base con resorte energético que impulsa al jugador hacia arriba. |
+| **Anillo de Salto (Orb)** | `spawn.orb(at, power, color)` | Anillo gravitatorio que permite un impulso aéreo al presionarlo. |
+| **Moneda / Estrella** | `spawn.coin(at, points)` | Coleccionable con animación de levitación y sonido de cristal. |
+| **Kit de Salud (Heart)** | `spawn.heart(at, heal)` | Restaura vida con aura de chispas verdes y chime ascendente. |
+| **Enemigo Autónomo** | `spawn.enemy(name, at, range, speed, health)` | Patrullero con IA de límites; derrotado al pisarlo o dispararle. |
+| **Portal de Victoria** | `spawn.portal(at, label)` | Vórtice de meta con rotación neón y jingle de victoria. |
+| **Gravedad y Fricción** | `game.gravity(val)` / `game.friction(val)` | Control de aceleración y desaceleración del mundo 2D. |
+| **Cámara Suave** | `game.camera(follow: "player", smooth: 0.12)` | Seguimiento cinemático con sacudida (*screen shake*) en golpes. |
+
+### 19.3 Mecánicas de Juego Pulidas
+1. **Físicas y Plataformeo**:
+   - **Coyote Time**: Ventana de 120 ms para saltar justo después de abandonar una plataforma.
+   - **Jump Buffering**: Detección de salto previa al aterrizaje para una respuesta inmediata.
+   - **Doble Salto Cuántico**: Salto secundario en el aire con partículas violeta.
+   - **Dash**: Impulso horizontal de alta velocidad con rastro de movimiento.
+   - **Squash & Stretch**: Deformación procedural del personaje en saltos y caídas.
+2. **Combate y Enemigos**:
+   - **Mecánica de Pisada**: Si el héroe cae sobre un enemigo desde arriba, lo neutraliza instantáneamente con rebote y +250 pts.
+   - **Disparo Láser**: Disparo de proyectiles con trazas neón (`[Z]` o `[J]`).
+   - **Invulnerabilidad Temporal**: Parpadeo defensivo de 1 segundo tras recibir impacto.
+3. **Audio Sintetizado Retro-Futurista**:
+   - Generación en tiempo real con Web Audio API (seno, triángulo, diente de sierra y ruido).
+   - Efectos para salto, doble salto, dash, moneda, propulsor, pisada, daño, disparo, curación y victoria.
+4. **Controles Universales**:
+   - **Teclado**: `[A/D]` o Flechas para mover, `[W / Espacio]` saltar, `[Z / J]` disparar, `[X / K / Shift]` dash, `[R]` reiniciar.
+   - **Gamepad**: Compatible directamente con mandos Bluetooth/USB (Xbox, PlayStation, Switch).
+   - **Táctil**: Cruceta virtual D-Pad y botones [A] y [B] automáticos en dispositivos móviles y tabletas.
 
 ---
 

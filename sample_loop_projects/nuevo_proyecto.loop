@@ -15,5 +15,3 @@ define app "nuevo_proyecto" version 1.0:
     # Tono de inicio oficial de la Shine Loop
     play tone at 587 Hz for 80 ms
     play tone at 880 Hz for 100 ms
-    let hi = “Hola”
-    print(hi)

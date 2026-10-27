@@ -355,15 +355,81 @@ public:
             }
 
             // 1d. Pattern Matching Block: match <expr> { pattern => stmt ... }
-            if ((line.rfind("match ", 0) == 0 || line.rfind("match(", 0) == 0) && line.find('{') != std::string::npos) {
-                size_t brace_pos = line.find('{');
-                std::string target_str = trim(line.substr(5, brace_pos - 5));
+            //     OR let/mut/val <var> = match <expr> { pattern => expr ... }
+            std::string match_assign_lhs = "";
+            std::string match_header_line = line;
+            if (line.find("match ") != std::string::npos && line.find('{') != std::string::npos &&
+                line.rfind("match ", 0) != 0 && line.rfind("match(", 0) != 0) {
+                std::regex m_assign_r(R"(^(?:(?:let|mut|val|var)\s+)?([A-Za-z0-9_]+)\s*(?::=|=)\s*(match\b.*\{.*)$)");
+                std::smatch mam;
+                if (std::regex_search(line, mam, m_assign_r)) {
+                    match_assign_lhs = trim(mam[1]);
+                    match_header_line = trim(mam[2]);
+                }
+            }
+            if ((match_header_line.rfind("match ", 0) == 0 || match_header_line.rfind("match(", 0) == 0) && match_header_line.find('{') != std::string::npos) {
+                size_t brace_pos = match_header_line.find('{');
+                std::string target_str = trim(match_header_line.substr(5, brace_pos - 5));
                 if (is_enclosed_in_matching_parens(target_str)) {
                     target_str = trim(target_str.substr(1, target_str.size() - 2));
                 }
                 auto target_expr = parse_single_expr(target_str);
 
                 std::vector<MatchArm> arms;
+                size_t close_brace = match_header_line.rfind('}');
+                if (close_brace != std::string::npos && close_brace > brace_pos) {
+                    std::string arms_str = match_header_line.substr(brace_pos + 1, close_brace - brace_pos - 1);
+                    auto arm_items = split_level_0(arms_str, ',');
+                    for (const auto& raw_arm : arm_items) {
+                        std::string next_t = trim(raw_arm);
+                        if (next_t.empty()) continue;
+                        size_t arrow_p = next_t.find("=>");
+                        if (arrow_p == std::string::npos) arrow_p = next_t.find("->");
+                        if (arrow_p != std::string::npos) {
+                            std::string pat_str = trim(next_t.substr(0, arrow_p));
+                            std::string arm_body_str = trim(next_t.substr(arrow_p + 2));
+
+                            MatchArm arm;
+                            if (pat_str == "_" || pat_str == "default" || pat_str == "else") {
+                                arm.pattern = nullptr;
+                            } else if (find_operator_outside_quotes(pat_str, "..=") != std::string::npos) {
+                                size_t rp = find_operator_outside_quotes(pat_str, "..=");
+                                arm.is_range = true;
+                                arm.range_inclusive = true;
+                                arm.range_start = parse_single_expr(trim(pat_str.substr(0, rp)));
+                                arm.range_end = parse_single_expr(trim(pat_str.substr(rp + 3)));
+                            } else if (find_operator_outside_quotes(pat_str, "..") != std::string::npos) {
+                                size_t rp = find_operator_outside_quotes(pat_str, "..");
+                                arm.is_range = true;
+                                arm.range_inclusive = false;
+                                arm.range_start = parse_single_expr(trim(pat_str.substr(0, rp)));
+                                arm.range_end = parse_single_expr(trim(pat_str.substr(rp + 2)));
+                            } else if (find_operator_outside_quotes(pat_str, "|") != std::string::npos) {
+                                auto sub_pats = split_level_0(pat_str, '|');
+                                for (const auto& sp : sub_pats) {
+                                    std::string tsp = trim(sp);
+                                    if (!tsp.empty()) arm.patterns.push_back(parse_single_expr(tsp));
+                                }
+                                if (!arm.patterns.empty()) arm.pattern = arm.patterns[0];
+                            } else {
+                                arm.pattern = parse_single_expr(pat_str);
+                            }
+
+                            if (!arm_body_str.empty() && arm_body_str.front() == '{' && arm_body_str.back() == '}') {
+                                arm_body_str = trim(arm_body_str.substr(1, arm_body_str.size() - 2));
+                            }
+                            if (!match_assign_lhs.empty()) {
+                                arm_body_str = match_assign_lhs + " = " + arm_body_str;
+                            }
+                            Parser sub_p(arm_body_str);
+                            arm.body = sub_p.parse_script();
+                            arms.push_back(arm);
+                        }
+                    }
+                    statements.push_back(std::make_shared<MatchStmt>(target_expr, arms));
+                    continue;
+                }
+
                 while (line_idx < lines.size()) {
                     std::string next_raw = lines[line_idx++];
                     std::string next_t = trim(next_raw);
@@ -383,12 +449,34 @@ public:
                         MatchArm arm;
                         if (pat_str == "_" || pat_str == "default" || pat_str == "else") {
                             arm.pattern = nullptr;
+                        } else if (find_operator_outside_quotes(pat_str, "..=") != std::string::npos) {
+                            size_t rp = find_operator_outside_quotes(pat_str, "..=");
+                            arm.is_range = true;
+                            arm.range_inclusive = true;
+                            arm.range_start = parse_single_expr(trim(pat_str.substr(0, rp)));
+                            arm.range_end = parse_single_expr(trim(pat_str.substr(rp + 3)));
+                        } else if (find_operator_outside_quotes(pat_str, "..") != std::string::npos) {
+                            size_t rp = find_operator_outside_quotes(pat_str, "..");
+                            arm.is_range = true;
+                            arm.range_inclusive = false;
+                            arm.range_start = parse_single_expr(trim(pat_str.substr(0, rp)));
+                            arm.range_end = parse_single_expr(trim(pat_str.substr(rp + 2)));
+                        } else if (find_operator_outside_quotes(pat_str, "|") != std::string::npos) {
+                            auto sub_pats = split_level_0(pat_str, '|');
+                            for (const auto& sp : sub_pats) {
+                                std::string tsp = trim(sp);
+                                if (!tsp.empty()) arm.patterns.push_back(parse_single_expr(tsp));
+                            }
+                            if (!arm.patterns.empty()) arm.pattern = arm.patterns[0];
                         } else {
                             arm.pattern = parse_single_expr(pat_str);
                         }
 
                         if (!arm_body_str.empty() && arm_body_str.front() == '{' && arm_body_str.back() == '}') {
                             arm_body_str = trim(arm_body_str.substr(1, arm_body_str.size() - 2));
+                        }
+                        if (!match_assign_lhs.empty()) {
+                            arm_body_str = match_assign_lhs + " = " + arm_body_str;
                         }
                         Parser sub_p(arm_body_str);
                         arm.body = sub_p.parse_script();
@@ -447,7 +535,7 @@ public:
             if (line.rfind("fn ", 0) == 0 || line.rfind("fun ", 0) == 0 || 
                 line.rfind("function ", 0) == 0 || line.rfind("def ", 0) == 0) {
                 
-                // One-line arrow body: fn add(a, b) => a + b
+                // One-line arrow body: fn add(a, b = 10) => a + b
                 if (line.find("=>") != std::string::npos) {
                     auto arrow = line.find("=>");
                     std::string head = trim(line.substr(0, arrow));
@@ -456,10 +544,22 @@ public:
                     std::smatch m;
                     if (std::regex_search(head, m, f_r)) {
                         std::string fn_name = m[1];
-                        std::vector<std::string> params = split_params(m[2]);
+                        std::vector<std::string> raw_params = split_arguments(m[2]);
+                        std::vector<std::string> params;
+                        std::vector<std::shared_ptr<Expr>> defs;
+                        for (const auto& rp : raw_params) {
+                            size_t eq_p = find_operator_outside_quotes(rp, "=");
+                            if (eq_p != std::string::npos) {
+                                params.push_back(trim(rp.substr(0, eq_p)));
+                                defs.push_back(parse_single_expr(trim(rp.substr(eq_p + 1))));
+                            } else {
+                                params.push_back(trim(rp));
+                                defs.push_back(nullptr);
+                            }
+                        }
                         std::vector<std::shared_ptr<Stmt>> body;
                         body.push_back(std::make_shared<ReturnStmt>(parse_single_expr(body_expr)));
-                        statements.push_back(std::make_shared<FunctionDefStmt>(fn_name, params, body));
+                        statements.push_back(std::make_shared<FunctionDefStmt>(fn_name, params, body, defs));
                         continue;
                     }
                 }
@@ -468,7 +568,19 @@ public:
                 std::smatch m;
                 if (std::regex_search(line, m, fn_regex)) {
                     std::string fn_name = m[1];
-                    std::vector<std::string> params = split_params(m[2]);
+                    std::vector<std::string> raw_params = split_arguments(m[2]);
+                    std::vector<std::string> params;
+                    std::vector<std::shared_ptr<Expr>> defs;
+                    for (const auto& rp : raw_params) {
+                        size_t eq_p = find_operator_outside_quotes(rp, "=");
+                        if (eq_p != std::string::npos) {
+                            params.push_back(trim(rp.substr(0, eq_p)));
+                            defs.push_back(parse_single_expr(trim(rp.substr(eq_p + 1))));
+                        } else {
+                            params.push_back(trim(rp));
+                            defs.push_back(nullptr);
+                        }
+                    }
                     std::vector<std::string> body_lines;
                     int brace_depth = (line.find('{') != std::string::npos) ? 1 : 0;
                     while (line_idx < lines.size()) {
@@ -490,7 +602,7 @@ public:
                     }
 
                     Parser sub_p(join_lines(body_lines));
-                    statements.push_back(std::make_shared<FunctionDefStmt>(fn_name, params, sub_p.parse_script()));
+                    statements.push_back(std::make_shared<FunctionDefStmt>(fn_name, params, sub_p.parse_script(), defs));
                     continue;
                 }
             }
@@ -744,7 +856,7 @@ public:
                 continue;
             }
 
-            // 7. App declaration block: @app(...) { ... } or define app ...:
+            // 7. App declaration block: @app(...) { ... } or @app "Name" v"2.8" or define app ...:
             if (line.rfind("@app", 0) == 0 || line.rfind("app(", 0) == 0 || line.rfind("define app", 0) == 0) {
                 std::string app_name = "HoloApp", ver = "2.0";
                 if (line.find('(') != std::string::npos) {
@@ -752,15 +864,100 @@ public:
                     if (!args.positional.empty()) app_name = args.positional[0];
                     if (args.positional.size() > 1) ver = args.positional[1];
                 } else {
-                    std::regex r(R"(define app\s*(?:as)?\s*["'](.*?)["'](?:\s*version\s*([0-9\.]+))?)");
+                    std::regex r(R"((?:define app\s*(?:as)?|@app)\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
                     std::smatch m;
                     if (std::regex_search(line, m, r)) {
                         app_name = m[1];
-                        if (m[2].matched) ver = m[2].str();
+                        if (m[2].matched && !m[2].str().empty()) ver = m[2].str();
                     }
                 }
                 statements.push_back(std::make_shared<AppDefineStmt>(app_name, ver));
                 continue;
+            }
+
+            // 7b. Module declaration header: define module "Name" [version 1.0]: or @module(...)
+            if (line.rfind("define module", 0) == 0 || line.rfind("@module", 0) == 0) {
+                std::string mod_name = "custom_module", ver = "1.0";
+                std::regex r(R"((?:define module\s*(?:as)?|@module)\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
+                std::smatch m;
+                if (std::regex_search(line, m, r)) {
+                    mod_name = m[1];
+                    if (m[2].matched && !m[2].str().empty()) ver = m[2].str();
+                }
+                statements.push_back(std::make_shared<ModuleDefineStmt>(mod_name, ver));
+                continue;
+            }
+
+            // 8. SwiftUI Declarative View Component Declaration: view <Name> { ... } or component <Name> { ... }
+            std::regex view_decl_r(R"(^(?:view|component)\s+([A-Za-z0-9_]+)(?:\s*\((.*?)\))?\s*\{?$)");
+            std::smatch vm_match;
+            if (std::regex_search(line, vm_match, view_decl_r)) {
+                std::string comp_name = vm_match[1];
+                auto comp_stmt = std::make_shared<SwiftUIComponentDeclStmt>(comp_name);
+                if (vm_match[2].matched && !vm_match[2].str().empty()) {
+                    comp_stmt->params = split_arguments(vm_match[2].str());
+                }
+
+                std::vector<std::string> comp_lines;
+                int depth = 1;
+                while (line_idx < lines.size()) {
+                    std::string nl = lines[line_idx++];
+                    std::string t = trim(nl);
+                    if (t.empty()) continue;
+                    for (char ch : t) {
+                        if (ch == '{') depth++;
+                        else if (ch == '}') {
+                            depth--;
+                            if (depth == 0) break;
+                        }
+                    }
+                    if (depth == 0) break;
+                    comp_lines.push_back(nl);
+                }
+
+                std::vector<std::string> view_body_lines;
+                for (const auto& bl : comp_lines) {
+                    std::string tb = trim(bl);
+                    if (tb.empty()) continue;
+                    if (tb.rfind("@state ", 0) == 0 || tb.rfind("@State ", 0) == 0 ||
+                        tb.rfind("@binding ", 0) == 0 || tb.rfind("@Binding ", 0) == 0) {
+                        SwiftUIStateDecl st_decl;
+                        size_t sp = tb.find(' ');
+                        std::string rem = trim(tb.substr(sp + 1));
+                        if (rem.rfind("var ", 0) == 0) rem = trim(rem.substr(4));
+                        size_t eq_p = rem.find('=');
+                        if (eq_p != std::string::npos) {
+                            st_decl.name = trim(rem.substr(0, eq_p));
+                            st_decl.initial_expr_str = trim(rem.substr(eq_p + 1));
+                            st_decl.initial_expr = parse_single_expr(st_decl.initial_expr_str);
+                        } else {
+                            st_decl.name = rem;
+                            st_decl.initial_expr_str = "nil";
+                        }
+                        comp_stmt->states.push_back(st_decl);
+                    } else {
+                        view_body_lines.push_back(bl);
+                    }
+                }
+
+                size_t v_idx = 0;
+                comp_stmt->root_view = parse_swiftui_view(view_body_lines, v_idx);
+                collect_following_modifiers(lines, line_idx, comp_stmt->root_modifiers);
+
+                statements.push_back(comp_stmt);
+                continue;
+            }
+
+            // 9. Top-Level SwiftUI View Render Statement (e.g. VStack { ... } at script level)
+            if (is_swiftui_view_starter(line)) {
+                line_idx--; // Rewind to current line
+                auto view_node = parse_swiftui_view(lines, line_idx);
+                if (view_node) {
+                    statements.push_back(std::make_shared<SwiftUIViewRenderStmt>(view_node));
+                    continue;
+                } else {
+                    line_idx++;
+                }
             }
 
             // Parse single line statement (handling potential semicolons outside quotes)
@@ -880,6 +1077,16 @@ public:
                 return std::make_shared<AppDefineStmt>(m[1], m[2].matched ? m[2].str() : "1.0");
             }
             return std::make_shared<AppDefineStmt>("HoloApp", "1.0");
+        }
+
+        // 5b. Module declaration single-line: define module "name" version 1.0
+        if (s.rfind("define module", 0) == 0 || s.rfind("@module", 0) == 0) {
+            std::regex r(R"((?:define module\s*(?:as)?|@module)\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
+            std::smatch m;
+            if (std::regex_search(s, m, r)) {
+                return std::make_shared<ModuleDefineStmt>(m[1], m[2].matched ? m[2].str() : "1.0");
+            }
+            return std::make_shared<ModuleDefineStmt>("module", "1.0");
         }
 
         // 6. Target UI Compilation & Profile: target("shine_ui") / compile target "xui" / profile("flui")
@@ -1065,8 +1272,14 @@ public:
                 auto sz = args.get_pair("size", {0, 0});
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
-                d->title = args.get("title");
+                d->title = args.has("title") ? args.get("title") : (!args.positional.empty() ? args.positional[0] : "");
                 d->text = args.get("text");
+                if (args.positional.size() >= 3 && !args.has("at")) {
+                    try { d->x = std::stod(args.positional[1]); d->y = std::stod(args.positional[2]); } catch (...) {}
+                }
+                if (args.positional.size() >= 5 && !args.has("size")) {
+                    try { d->w = std::stod(args.positional[3]); d->h = std::stod(args.positional[4]); } catch (...) {}
+                }
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
@@ -1238,9 +1451,10 @@ public:
             return d;
         }
 
-        // 17. Spawn Sprite Directives: spawn.sprite(...) / @spawn::sprite(...) / entity.sprite(...) / spawn sprite ...
+        // 17. Spawn Sprite Directives: spawn.sprite(...) / @spawn::sprite(...) / entity.sprite(...) / spawn sprite ... / spawn.player(...) / spawn player ...
         if (s.rfind("spawn.sprite(", 0) == 0 || s.rfind("@spawn::sprite(", 0) == 0 || 
-            s.rfind("entity.sprite(", 0) == 0 || s.rfind("spawn sprite", 0) == 0) {
+            s.rfind("entity.sprite(", 0) == 0 || s.rfind("spawn sprite", 0) == 0 ||
+            s.rfind("spawn.player(", 0) == 0 || s.rfind("spawn player", 0) == 0) {
             auto sp = std::make_shared<SpawnEntityStmt>();
             sp->entity_type = "sprite";
             if (s.find('(') != std::string::npos && s.rfind("spawn sprite", 0) != 0) {
@@ -1395,6 +1609,136 @@ public:
             return sp;
         }
 
+        // 23b. Spawn Moving Platform: spawn.moving_platform(...) / spawn moving_platform ...
+        if (s.rfind("spawn.moving_platform(", 0) == 0 || s.rfind("spawn moving_platform", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "moving_platform";
+            if (s.find('(') != std::string::npos && s.rfind("spawn moving_platform", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {250, 280});
+                auto sz = args.get_pair("size", {130, 18});
+                auto rng = args.get_pair("range", {at.first, at.first + 180});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->axis = args.get("axis", "x");
+                sp->min_pos = rng.first; sp->max_pos = rng.second;
+                sp->speed = args.get_num("speed", 75);
+                sp->color = args.get("color", "#06b6d4");
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex rng_r(R"(range\s*\((\d+),\s*(\d+)\))");
+                std::regex ax_r(R"(axis\s*["'](.*?)["'])");
+                std::regex spd_r(R"(speed\s*(\d+))");
+                std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 130; sp->h = 18; }
+                if (std::regex_search(s, m, rng_r)) { sp->min_pos = std::stod(m[1]); sp->max_pos = std::stod(m[2]); }
+                if (std::regex_search(s, m, ax_r)) sp->axis = m[1];
+                if (std::regex_search(s, m, spd_r)) sp->speed = std::stod(m[1]);
+                if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#06b6d4";
+            }
+            return sp;
+        }
+
+        // 23c. Spawn Enemy NPC: spawn.enemy(...) / spawn enemy ...
+        if (s.rfind("spawn.enemy(", 0) == 0 || s.rfind("spawn enemy", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "enemy";
+            if (s.find('(') != std::string::npos && s.rfind("spawn enemy", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", "EnemyBot");
+                auto at = args.get_pair("at", {450, 300});
+                auto sz = args.get_pair("size", {34, 44});
+                auto rng = args.get_pair("range", {at.first - 120, at.first + 120});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->min_pos = rng.first; sp->max_pos = rng.second;
+                sp->speed = args.get_num("speed", 75);
+                sp->health = args.get_num("health", 30);
+                sp->color = args.get("color", "#ef4444");
+            } else {
+                std::regex nm_r(R"(spawn\s+enemy\s*["']?(.*?)["']?(?:\s+at|\s+with|$))");
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex rng_r(R"(range\s*\((\d+),\s*(\d+)\))");
+                std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, nm_r) && m[1].matched) sp->name = m[1];
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 34; sp->h = 44; }
+                if (std::regex_search(s, m, rng_r)) { sp->min_pos = std::stod(m[1]); sp->max_pos = std::stod(m[2]); }
+                if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#ef4444";
+            }
+            return sp;
+        }
+
+        // 23d. Spawn Heart / Health Pack: spawn.heart(...) / spawn heart ...
+        if (s.rfind("spawn.heart(", 0) == 0 || s.rfind("spawn heart", 0) == 0 || s.rfind("spawn potion", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "heart";
+            if (s.find('(') != std::string::npos && s.rfind("spawn heart", 0) != 0 && s.rfind("spawn potion", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {400, 260});
+                sp->x = at.first; sp->y = at.second;
+                sp->health = args.get_num("heal", args.get_num("health", 30));
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex hl_r(R"((?:health|heal)\s*(\d+))");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, hl_r)) sp->health = std::stod(m[1]); else sp->health = 30;
+            }
+            return sp;
+        }
+
+        // 23e. Spawn Portal / Goal: spawn.portal(...) / spawn portal ... / spawn goal ...
+        if (s.rfind("spawn.portal(", 0) == 0 || s.rfind("spawn portal", 0) == 0 || s.rfind("spawn goal", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "portal";
+            if (s.find('(') != std::string::npos && s.rfind("spawn portal", 0) != 0 && s.rfind("spawn goal", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {700, 350});
+                auto sz = args.get_pair("size", {44, 68});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->text = args.get("label", args.get("destination", "STAGE GOAL"));
+            } else {
+                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
+                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex lb_r(R"((?:label|destination)\s*["'](.*?)["'])");
+                std::smatch m;
+                if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
+                if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 44; sp->h = 68; }
+                if (std::regex_search(s, m, lb_r)) sp->text = m[1]; else sp->text = "STAGE GOAL";
+            }
+            return sp;
+        }
+
+        // 23f. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...) / game.friction(...)
+        if (s.rfind("game.gravity(", 0) == 0 || s.rfind("game.friction(", 0) == 0 || 
+            s.rfind("game.world(", 0) == 0 || s.rfind("game.lives(", 0) == 0 || s.rfind("game.camera(", 0) == 0) {
+            std::string key = s.substr(5, s.find('(') - 5);
+            auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+            double v1 = 0, v2 = 0;
+            std::string sv = "";
+            if (key == "gravity") {
+                v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 980);
+            } else if (key == "friction") {
+                v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 0.82);
+            } else if (key == "lives") {
+                v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 3);
+            } else if (key == "world") {
+                auto sz = args.get_pair("size", {args.get_num("width", 1200), args.get_num("height", 480)});
+                v1 = sz.first; v2 = sz.second;
+            } else if (key == "camera") {
+                sv = args.get("follow", "player");
+                v1 = args.get_num("smooth", 0.12);
+            }
+            return std::make_shared<GameConfigStmt>(key, v1, v2, sv);
+        }
+
         // 24. Audio Tone Directives: audio.tone(...) / @audio::tone(...) / sound.tone(...) / play tone ...
         if (s.rfind("audio.tone(", 0) == 0 || s.rfind("@audio::tone(", 0) == 0 || 
             s.rfind("sound.tone(", 0) == 0 || s.rfind("play tone", 0) == 0) {
@@ -1435,7 +1779,7 @@ public:
         }
 
         // 26a. Indexed Assignment: arr[idx] = val, map["key"] = val
-        std::regex assign_idx_regex(R"(^([A-Za-z0-9_]+)\s*\[\s*(.*?)\s*\]\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
+        std::regex assign_idx_regex(R"(^([A-Za-z0-9_]+)\s*\[\s*(.*?)\s*\]\s*(\+=|-=|\*=|\/=|%=|=)\s*(.*)$)");
         std::smatch aim;
         if (std::regex_search(s, aim, assign_idx_regex)) {
             std::string name = aim[1];
@@ -1445,8 +1789,8 @@ public:
             return std::make_shared<SetIndexStmt>(name, parse_single_expr(idx_str), op, parse_single_expr(expr_str));
         }
 
-        // 26b. Shorthand Assignment: x = 10, x += 5, x -= 2, user.name = "Alice"
-        std::regex assign_regex(R"(^([A-Za-z0-9_\.]+)\s*(\+=|-=|\*=|\/=|=)\s*(.*)$)");
+        // 26b. Shorthand Assignment: x = 10, x += 5, x -= 2, x %= 3, user.name = "Alice"
+        std::regex assign_regex(R"(^([A-Za-z0-9_\.]+)\s*(\+=|-=|\*=|\/=|%=|=)\s*(.*)$)");
         std::smatch am;
         if (std::regex_search(s, am, assign_regex)) {
             std::string name = am[1];
@@ -1486,7 +1830,12 @@ public:
             return std::make_shared<CallStmt>(fn_name, args);
         }
 
-        // 27b. runpy shorthand statement: runpy sn1 OR runpy "sn1"
+        // 27b. run snippet / runpy shorthand statement: run snippet sn1 / runpy sn1 / execute snippet sn1
+        if (s.rfind("run snippet ", 0) == 0 || s.rfind("run_snippet ", 0) == 0 || s.rfind("execute snippet ", 0) == 0) {
+            size_t pos = s.find("snippet ");
+            std::string arg = trim(s.substr(pos + 8));
+            return std::make_shared<CallStmt>("snippet.run", std::vector<std::shared_ptr<Expr>>{parse_single_expr(arg)});
+        }
         if (s.rfind("runpy ", 0) == 0) {
             std::string arg = trim(s.substr(6));
             return std::make_shared<CallStmt>("runpy", std::vector<std::shared_ptr<Expr>>{parse_single_expr(arg)});
@@ -1674,18 +2023,32 @@ public:
             }
         }
 
-        // 6. Interpolated String: $"Hello {name}" OR f"..."
+        // 6. Interpolated String: $"Hello {name}" OR f"..." OR double-quoted "Hello {name}"
         if ((s.front() == '$' || s.front() == 'f') && s.size() >= 3) {
             std::string inner = s.substr(1);
             if ((inner.front() == '"' && inner.back() == '"') || (inner.front() == '\'' && inner.back() == '\'')) {
-                std::string content = inner.substr(1, inner.size() - 2);
+                std::string content = unescape_string_literal(inner.substr(1, inner.size() - 2));
                 return std::make_shared<InterpolatedStringExpr>(content);
             }
         }
         if ((s.front() == '"' && s.back() == '"' && s.size() >= 2) ||
             (s.front() == '\'' && s.back() == '\'' && s.size() >= 2)) {
-            std::string content = s.substr(1, s.size() - 2);
-            return std::make_shared<LiteralExpr>(Value(unescape_string_literal(content)));
+            std::string content = unescape_string_literal(s.substr(1, s.size() - 2));
+            if (s.front() == '"') {
+                size_t b_open = content.find('{');
+                while (b_open != std::string::npos && b_open + 1 < content.size()) {
+                    char first_c = content[b_open + 1];
+                    size_t b_close = content.find('}', b_open + 1);
+                    if ((std::isalpha(static_cast<unsigned char>(first_c)) || first_c == '_') && b_close != std::string::npos) {
+                        std::string inside = content.substr(b_open + 1, b_close - b_open - 1);
+                        if (inside.find(':') == std::string::npos && inside.find('"') == std::string::npos) {
+                            return std::make_shared<InterpolatedStringExpr>(content);
+                        }
+                    }
+                    b_open = content.find('{', b_open + 1);
+                }
+            }
+            return std::make_shared<LiteralExpr>(Value(content));
         }
 
         // 7. Logical OR (or, ||)
@@ -1771,7 +2134,7 @@ public:
         if (s == "false") return std::make_shared<LiteralExpr>(Value(false));
         if (s == "nil" || s == "null" || s == "none") return std::make_shared<LiteralExpr>(Value());
 
-        // 16. Function calls: callee(args) or namespace::func(args) or namespace.func(args)
+        // 16. Function calls & Chained Method Calls: callee(args) or expr.method(args)
         std::regex fn_call_r(R"(^([A-Za-z0-9_\.:]+)\s*\((.*?)\)$)");
         std::smatch fcm;
         if (std::regex_search(s, fcm, fn_call_r)) {
@@ -1788,6 +2151,42 @@ public:
                 }
             }
             return std::make_shared<CallExpr>(callee, args);
+        }
+        if (!s.empty() && s.back() == ')') {
+            int p_depth = 0;
+            long long open_p = -1;
+            bool in_sq = false, in_dq = false;
+            for (long long i = static_cast<long long>(s.size()) - 1; i >= 0; --i) {
+                char c = s[i];
+                if (c == '\'' && !in_dq && (i == 0 || s[i - 1] != '\\')) in_sq = !in_sq;
+                else if (c == '"' && !in_sq && (i == 0 || s[i - 1] != '\\')) in_dq = !in_dq;
+                else if (!in_sq && !in_dq) {
+                    if (c == ')') p_depth++;
+                    else if (c == '(') {
+                        p_depth--;
+                        if (p_depth == 0) { open_p = i; break; }
+                    }
+                }
+            }
+            if (open_p > 0) {
+                std::string prefix = trim(s.substr(0, static_cast<size_t>(open_p)));
+                std::string raw_args = s.substr(static_cast<size_t>(open_p) + 1, s.size() - static_cast<size_t>(open_p) - 2);
+                size_t last_dot = find_level_0_op_rightmost(prefix, ".");
+                if (last_dot != std::string::npos) {
+                    std::string receiver_str = trim(prefix.substr(0, last_dot));
+                    std::string method_str = trim(prefix.substr(last_dot + 1));
+                    if (!receiver_str.empty() && !method_str.empty()) {
+                        std::vector<std::shared_ptr<Expr>> args;
+                        args.push_back(parse_single_expr(receiver_str));
+                        if (!raw_args.empty()) {
+                            for (const auto& a : split_arguments(raw_args)) {
+                                args.push_back(parse_single_expr(a));
+                            }
+                        }
+                        return std::make_shared<CallExpr>(method_str, args);
+                    }
+                }
+            }
         }
 
         // Default: Variable Identifier
@@ -1811,7 +2210,7 @@ public:
         return res;
     }
 
-private:
+public:
     static std::string trim(const std::string& s) {
         size_t start = s.find_first_not_of(" \t\r\n");
         if (start == std::string::npos) return "";
@@ -2135,6 +2534,269 @@ private:
             return trim(s.substr(pos + word.size() + 2));
         }
         return "";
+    }
+
+    // ── SwiftUI View Hierarchy Declarative Parser Subsystem (v2.9) ──
+
+    static bool match_swiftui_view_type(const std::string& word, SwiftUIViewType& out_type) {
+        if (word == "VStack") { out_type = SwiftUIViewType::VStack; return true; }
+        if (word == "HStack") { out_type = SwiftUIViewType::HStack; return true; }
+        if (word == "ZStack") { out_type = SwiftUIViewType::ZStack; return true; }
+        if (word == "List") { out_type = SwiftUIViewType::List; return true; }
+        if (word == "ScrollView") { out_type = SwiftUIViewType::ScrollView; return true; }
+        if (word == "Section") { out_type = SwiftUIViewType::Section; return true; }
+        if (word == "Group") { out_type = SwiftUIViewType::Group; return true; }
+        if (word == "ForEach") { out_type = SwiftUIViewType::ForEach; return true; }
+        if (word == "Text") { out_type = SwiftUIViewType::Text; return true; }
+        if (word == "Button") { out_type = SwiftUIViewType::Button; return true; }
+        if (word == "Image") { out_type = SwiftUIViewType::Image; return true; }
+        if (word == "TextField") { out_type = SwiftUIViewType::TextField; return true; }
+        if (word == "Toggle") { out_type = SwiftUIViewType::Toggle; return true; }
+        if (word == "Slider") { out_type = SwiftUIViewType::Slider; return true; }
+        if (word == "ProgressView") { out_type = SwiftUIViewType::ProgressView; return true; }
+        if (word == "Spacer") { out_type = SwiftUIViewType::Spacer; return true; }
+        if (word == "Divider") { out_type = SwiftUIViewType::Divider; return true; }
+        if (word == "Badge") { out_type = SwiftUIViewType::Badge; return true; }
+        if (word == "Circle") { out_type = SwiftUIViewType::Circle; return true; }
+        if (word == "Rectangle") { out_type = SwiftUIViewType::Rectangle; return true; }
+        if (word == "RoundedRectangle") { out_type = SwiftUIViewType::RoundedRectangle; return true; }
+        if (word == "Color") { out_type = SwiftUIViewType::Color; return true; }
+        return false;
+    }
+
+    static bool is_swiftui_view_starter(const std::string& line) {
+        std::string s = trim(line);
+        if (s.empty()) return false;
+        std::string word;
+        size_t i = 0;
+        while (i < s.size() && (std::isalnum(static_cast<unsigned char>(s[i])) || s[i] == '_')) {
+            word += s[i++];
+        }
+        SwiftUIViewType vt;
+        if (match_swiftui_view_type(word, vt)) {
+            while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) i++;
+            if (i >= s.size() || s[i] == '(' || s[i] == '{' || s[i] == '.' || s[i] == '"' || s[i] == '\'') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void extract_chained_modifiers(std::string& remaining_line, std::vector<SwiftUIModifier>& out_modifiers) {
+        size_t p = 0;
+        while (p < remaining_line.size()) {
+            while (p < remaining_line.size() && std::isspace(static_cast<unsigned char>(remaining_line[p]))) p++;
+            if (p < remaining_line.size() && remaining_line[p] == '.') {
+                p++;
+                std::string mod_name;
+                while (p < remaining_line.size() && (std::isalnum(static_cast<unsigned char>(remaining_line[p])) || remaining_line[p] == '_')) {
+                    mod_name += remaining_line[p++];
+                }
+                if (mod_name.empty()) break;
+                SwiftUIModifier mod;
+                mod.name = mod_name;
+                while (p < remaining_line.size() && std::isspace(static_cast<unsigned char>(remaining_line[p]))) p++;
+                if (p < remaining_line.size() && remaining_line[p] == '(') {
+                    size_t open_p = p;
+                    int depth = 0;
+                    size_t close_p = std::string::npos;
+                    for (size_t k = open_p; k < remaining_line.size(); ++k) {
+                        if (remaining_line[k] == '(') depth++;
+                        else if (remaining_line[k] == ')') {
+                            depth--;
+                            if (depth == 0) { close_p = k; break; }
+                        }
+                    }
+                    if (close_p != std::string::npos) {
+                        std::string inside = remaining_line.substr(open_p + 1, close_p - open_p - 1);
+                        auto raw_args = split_arguments(inside);
+                        for (const auto& a : raw_args) {
+                            size_t col = find_operator_outside_quotes(a, ":");
+                            if (col != std::string::npos) {
+                                mod.named_args[trim(a.substr(0, col))] = trim(a.substr(col + 1));
+                            } else {
+                                mod.args.push_back(trim(a));
+                            }
+                        }
+                        p = close_p + 1;
+                    }
+                }
+                out_modifiers.push_back(mod);
+            } else {
+                break;
+            }
+        }
+    }
+
+    static void collect_following_modifiers(const std::vector<std::string>& lines, size_t& idx, std::vector<SwiftUIModifier>& out_modifiers) {
+        while (idx < lines.size()) {
+            std::string t = trim(lines[idx]);
+            if (t.empty()) { idx++; continue; }
+            if (t[0] == '.') {
+                extract_chained_modifiers(t, out_modifiers);
+                idx++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    static std::shared_ptr<SwiftUIViewNode> parse_swiftui_view(const std::vector<std::string>& lines, size_t& idx) {
+        if (idx >= lines.size()) return nullptr;
+        std::string raw = trim(lines[idx]);
+        if (raw.empty()) return nullptr;
+
+        size_t p = 0;
+        std::string view_type_str;
+        while (p < raw.size() && (std::isalnum(static_cast<unsigned char>(raw[p])) || raw[p] == '_')) {
+            view_type_str += raw[p++];
+        }
+
+        SwiftUIViewType vtype = SwiftUIViewType::Custom;
+        if (!match_swiftui_view_type(view_type_str, vtype)) {
+            vtype = SwiftUIViewType::Custom;
+        }
+
+        auto node = std::make_shared<SwiftUIViewNode>(vtype);
+        if (vtype == SwiftUIViewType::Custom) {
+            node->custom_name = view_type_str;
+        }
+
+        while (p < raw.size() && std::isspace(static_cast<unsigned char>(raw[p]))) p++;
+
+        // Parse arguments in parentheses or quotes
+        if (p < raw.size() && raw[p] == '(') {
+            size_t open_p = p;
+            int depth = 0;
+            size_t close_p = std::string::npos;
+            for (size_t k = open_p; k < raw.size(); ++k) {
+                if (raw[k] == '(') depth++;
+                else if (raw[k] == ')') {
+                    depth--;
+                    if (depth == 0) { close_p = k; break; }
+                }
+            }
+            if (close_p != std::string::npos) {
+                std::string arg_content = raw.substr(open_p + 1, close_p - open_p - 1);
+                p = close_p + 1;
+                auto args = split_arguments(arg_content);
+                for (size_t ai = 0; ai < args.size(); ++ai) {
+                    std::string a = trim(args[ai]);
+                    size_t col = find_operator_outside_quotes(a, ":");
+                    if (col != std::string::npos) {
+                        std::string k = trim(a.substr(0, col));
+                        std::string v = trim(a.substr(col + 1));
+                        node->attributes[k] = v;
+                        if (k == "text" || k == "isOn" || k == "value") {
+                            if (!v.empty() && v[0] == '$') {
+                                node->binding_var = v.substr(1);
+                            }
+                        }
+                    } else {
+                        // Positional arg
+                        if (ai == 0) {
+                            std::string val = a;
+                            if (val.size() >= 2 && ((val.front() == '"' && val.back() == '"') || (val.front() == '\'' && val.back() == '\''))) {
+                                val = val.substr(1, val.size() - 2);
+                            }
+                            node->primary_arg = val;
+                        } else {
+                            node->attributes["arg" + std::to_string(ai)] = a;
+                        }
+                    }
+                }
+            }
+        } else if (p < raw.size() && (raw[p] == '"' || raw[p] == '\'')) {
+            // Positional string without parens, e.g. Text "Hello"
+            char q = raw[p++];
+            std::string s_lit;
+            while (p < raw.size() && raw[p] != q) {
+                s_lit += raw[p++];
+            }
+            if (p < raw.size() && raw[p] == q) p++;
+            node->primary_arg = s_lit;
+        }
+
+        idx++; // Advance past view declaration line
+
+        while (p < raw.size() && std::isspace(static_cast<unsigned char>(raw[p]))) p++;
+
+        // Check for trailing block { ... }
+        bool has_block = false;
+        std::string rest = (p < raw.size()) ? trim(raw.substr(p)) : "";
+        if (!rest.empty() && rest[0] == '{') {
+            has_block = true;
+            rest = trim(rest.substr(1));
+        } else if (idx < lines.size() && trim(lines[idx]) == "{") {
+            has_block = true;
+            idx++;
+            rest = "";
+        }
+
+        if (has_block) {
+            if (vtype == SwiftUIViewType::Button) {
+                // Button trailing closure / action
+                std::vector<std::string> act_lines;
+                if (!rest.empty()) {
+                    if (rest.back() == '}') {
+                        act_lines.push_back(trim(rest.substr(0, rest.size() - 1)));
+                        rest = "";
+                    } else {
+                        act_lines.push_back(rest);
+                    }
+                }
+                int b_depth = (act_lines.empty() || rest.empty()) ? 1 : 0;
+                while (idx < lines.size() && b_depth > 0) {
+                    std::string l = trim(lines[idx++]);
+                    if (l == "}") { b_depth--; break; }
+                    for (char c : l) {
+                        if (c == '{') b_depth++;
+                        else if (c == '}') { b_depth--; if (b_depth == 0) break; }
+                    }
+                    if (b_depth > 0) act_lines.push_back(l);
+                }
+                node->action_code = join_lines(act_lines);
+            } else {
+                // Container children
+                int b_depth = 1;
+                while (idx < lines.size() && b_depth > 0) {
+                    std::string next_line = trim(lines[idx]);
+                    if (next_line.empty()) { idx++; continue; }
+                    if (next_line == "}") {
+                        idx++;
+                        break;
+                    }
+                    if (next_line.rfind("}", 0) == 0) {
+                        idx++;
+                        std::string after = trim(next_line.substr(1));
+                        if (!after.empty() && after[0] == '.') {
+                            extract_chained_modifiers(after, node->modifiers);
+                        }
+                        break;
+                    }
+
+                    // Check if it's another view
+                    if (is_swiftui_view_starter(next_line)) {
+                        auto child = parse_swiftui_view(lines, idx);
+                        if (child) {
+                            node->children.push_back(child);
+                        }
+                    } else {
+                        idx++;
+                    }
+                }
+            }
+        }
+
+        // Chained modifiers on remainder of current line
+        if (!rest.empty() && rest[0] == '.') {
+            extract_chained_modifiers(rest, node->modifiers);
+        }
+
+        // Chained modifiers on subsequent lines
+        collect_following_modifiers(lines, idx, node->modifiers);
+
+        return node;
     }
 };
 

@@ -426,32 +426,54 @@
 
         const sampleCodes = {
             "arcade.loop": `# ═══════════════════════════════════════════════════════════════
-#  Holo Arcade — Built with Looping Compile (.loop)
-# Powered by hiOP IDE & CS Looping Graphics Engine
+#  Holo Quantum Arcade 2D — Built with Looping Compile (.loop)
+# Powered by hiOP IDE & CS Looping Graphics Engine v2.8
 # ═══════════════════════════════════════════════════════════════
 
 import loop.ui as ui
 import loop.engine as game
 
-define app "HoloArcade2D" version 1.0:
-    create window with title "Holo Arcade Adventure" and size (720, 480)
+define app "HoloArcade2D" version 2.8:
+    create window with title "Holo Arcade Quantum Stage" and size (720, 480)
     set theme to "dark_neon"
     
-    set player_name to "Angel Helium"
-    set engine_status to "Looping Compile v2.0 Active"
+    game.world(width: 1400, height: 480)
+    game.gravity(980)
+    game.lives(3)
     
-    print " Initializing Looping Core Engine..."
-    print "Player spawned:", player_name
+    print " Initializing Looping Core 2D Engine..."
     
     # ── UI HUD Elements ──
-    draw card at (30, 30) with size (260, 110) and title "Holo Arcade Live" and text "Engine: Looping Runtime\\nStatus: 60 FPS Stable"
-    draw button at (30, 160) with text "Pulse Core Energy" and action "pulse_boost"
+    draw card at (30, 30) with size (260, 100) and title "Holo Arcade Live" and text "Engine: Looping 2D Quantum\\nStatus: 60 FPS V-Sync Active"
+    draw button at (30, 145) with text "Pulse Core Energy" and action "pulse_boost"
 
-    # ── 2D Sprite Entities ──
-    spawn sprite "AngelHelium" at (120, 380) with color "#38bdf8" and size (32, 44)
-    spawn sprite "CorruptedForkbot" at (480, 380) with color "#ef4444" and size (32, 44)
+    # ── Héroe Protagonista (Doble Salto, Dash, Disparo & Inercia) ──
+    spawn.player(name: "Angel Helium", at: (100, 370), speed: 280, jump: 440, health: 100)
+
+    # ── Maglev Plataforma Móvil & Plataformas Neón ──
+    spawn.platform(at: (60, 390), size: (180, 18), color: "#6366f1")
+    spawn.moving_platform(at: (280, 310), size: (140, 18), range: (220, 520), speed: 85, color: "#06b6d4")
+    spawn.platform(at: (560, 240), size: (160, 18), color: "#8b5cf6")
+    spawn.platform(at: (780, 320), size: (150, 18), color: "#6366f1")
+
+    # ── Trampas, Impulsores y Anillos de Salto ──
+    spawn.spike(at: (440, 436), size: (44, 20), damage: 35)
+    spawn.pad(at: (260, 436), power: 670)
+    spawn.orb(at: (720, 220), power: 560, color: "#f59e0b")
+
+    # ── Coleccionables & Kits de Salud ──
+    spawn.coin(at: (340, 260), points: 100)
+    spawn.coin(at: (620, 190), points: 150)
+    spawn.coin(at: (840, 270), points: 200)
+    spawn.heart(at: (590, 190), heal: 35)
+
+    # ── Enemigo Autónomo (Derrotable por pisada o disparando) ──
+    spawn.enemy(name: "CorruptedForkbot", at: (800, 276), range: (780, 930), speed: 70, health: 30)
+
+    # ── Portal de Victoria ──
+    spawn.portal(at: (1200, 368), label: "NEON HUB")
     
-    print " Press [A/D or Arrow Keys] to Move & [Space/W] to Float Jump!"`,
+    print " Press [A/D o Flechas] Mover • [W / Espacio] Doble Salto • [Z / J] Disparar • [X / K] Dash"`,
 
             "dashboard.loop": `# ═══════════════════════════════════════════════════════════════
 #  Neon Dashboard — Built with Looping Compile (.loop)
