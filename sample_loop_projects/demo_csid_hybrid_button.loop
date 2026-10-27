@@ -1,0 +1,51 @@
+// ═══════════════════════════════════════════════════════════════
+// 🌟 DEMO: BOTÓN DE LOGIN CON CS ID — MÓDULO HÍBRIDO POLÍGLOTA
+// Demuestra la interoperabilidad simultánea en Looping:
+//   • UI Loop (Máquina de estados de botón y audio reactivo)
+//   • C++17 (PKCE S256 y hashing de alta velocidad)
+//   • Python (Claims y verificación OAuth)
+//   • Node.js (Estructura de ventana y callback)
+// Coki Studios Identity & Holo Entertainment © 2026
+// ═══════════════════════════════════════════════════════════════
+
+out("\n==================================================================");
+out("🔐 DEMO: CS ID LOGIN BUTTON — ARQUITECTURA HÍBRIDA 4-LENGUAJES");
+out("==================================================================\n");
+
+// 1. Cargar el módulo híbrido csid-login-button
+use "csid-login-button"
+
+// 2. Inicializar el módulo
+csid_login_init();
+
+// 3. Renderizar el botón en estado inicial
+out("\n--- 1. Renderizando Botón Declarativo (Estado: IDLE) ---");
+val btn_text_idle = csid_login_render(80, 120, "Iniciar Sesión con CS ID");
+out($"Etiqueta inicial renderizada: {btn_text_idle}");
+
+// 4. Ejecutar el flujo de autenticación al pulsar el botón
+out("\n--- 2. Disparando Evento de Clic de Autenticación con CS ID ---");
+val active_user = csid_login_trigger_auth("Jerix Ortiz", "jerix@cokistudios.com");
+
+// 5. Renderizar el botón en estado autenticado
+out("\n--- 3. Renderizando Botón en Estado Conectado ---");
+val btn_text_auth = csid_login_render(80, 120, "Iniciar Sesión con CS ID");
+out($"Etiqueta conectada: {btn_text_auth}");
+
+// 6. Consultar la identidad del usuario autenticado
+val user_data = csid_login_get_user();
+out("\n--- 4. Perfil de Usuario Verificado por CS ID ---");
+out($"• Nombre Completo : {user_data[\"name\"]}");
+out($"• Correo CS ID    : {user_data[\"email\"]}");
+out($"• UUID de Sesión  : {user_data[\"user_id\"]}");
+out($"• Verificado      : {user_data[\"verified\"]}");
+
+// 7. Test de Cierre de Sesión (Logout)
+out("\n--- 5. Probando Cierre de Sesión ---");
+csid_login_logout();
+val btn_text_after_logout = csid_login_render(80, 120, "Iniciar Sesión con CS ID");
+out($"Estado tras logout: {btn_text_after_logout}");
+
+out("\n==================================================================");
+out("✔ [SUCCESS] Demostración del botón híbrido CS ID completada al 100%");
+out("==================================================================\n");

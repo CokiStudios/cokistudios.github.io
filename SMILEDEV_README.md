@@ -13,6 +13,7 @@ Diseñado bajo la filosofía **Universal Multiplatform**, `smiledev` permite a d
 * 🟡 **Python / PyLoop (`.py`)**: Interoperabilidad bidireccional con librerías de IA, requests HTTP y machine learning.
 * 🔵 **C++ Nativo (`.hpp`)**: Cabeceras de alto rendimiento compiladas directamente para el subsistema APU y gráficos nativos.
 * 🟣 **C2 Declarativo (`.c2`)**: Componentes de interfaz gráfica reactiva para perfiles Shine UI, XUI (240Hz Direct-to-Vulkan) y flUI (pantallas plegables).
+* 🌐 **Híbrido Políglota (`hybrid`)**: Módulos multi-componente que coordinan subarchivos en Looping, C++17, Python y Node.js simultáneamente (ejemplo: `csid-login-button`).
 
 Respaldado por el registro en la nube **LoopModules** (PostgreSQL / Supabase) con autenticación universal mediante **CS ID** (Coki Studios Identity).
 

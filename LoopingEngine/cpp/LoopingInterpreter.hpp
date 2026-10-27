@@ -3263,10 +3263,73 @@ public:
                 return "";
             };
 
+            // Polyglot Hybrid Multi-Component Loader
+            auto check_and_link_hybrid_components = [&](const std::string& manifest_path, const std::string& base_dir) {
+                std::ifstream f(manifest_path);
+                if (!f.is_open()) return;
+                std::string line, content;
+                while (std::getline(f, line)) content += line;
+                if (content.find("\"hybrid\"") != std::string::npos ||
+                    content.find("\"components\"") != std::string::npos) {
+                    
+                    std::cout << color::PURPLE << "[HYBRID MODULE]" << color::RESET << " Linking polyglot architecture for: " 
+                              << color::BOLD << mod << color::RESET << "\n";
+
+                    auto extract_comp = [&](const std::string& key) -> std::string {
+                        auto pos = content.find("\"" + key + "\"");
+                        if (pos == std::string::npos) return "";
+                        auto col = content.find(':', pos);
+                        if (col == std::string::npos) return "";
+                        auto q1 = content.find('"', col);
+                        if (q1 != std::string::npos) return "";
+                        auto q2 = content.find('"', q1 + 1);
+                        if (q2 != std::string::npos) return "";
+                        return content.substr(q1 + 1, q2 - q1 - 1);
+                    };
+
+                    std::string py_comp = extract_comp("py");
+                    if (py_comp.empty()) py_comp = extract_comp("python");
+                    if (!py_comp.empty()) {
+                        std::string py_path = base_dir + "/" + py_comp;
+                        std::ifstream pf(py_path);
+                        if (pf.good() && python_bridge.is_available) {
+                            std::string py_content((std::istreambuf_iterator<char>(pf)), std::istreambuf_iterator<char>());
+                            python_bridge.execute_block(py_content, variables);
+                            std::cout << "  " << color::GREEN << "✔" << color::RESET << " Python Component linked: " << py_comp << "\n";
+                        }
+                    }
+
+                    std::string cpp_comp = extract_comp("cpp");
+                    if (!cpp_comp.empty()) {
+                        variables[mod + ".cpp_header"] = Value(base_dir + "/" + cpp_comp);
+                        std::cout << "  " << color::CYAN << "✔" << color::RESET << " C++ Native Header verified: " << cpp_comp << "\n";
+                    }
+
+                    std::string node_comp = extract_comp("node");
+                    if (!node_comp.empty()) {
+                        variables[mod + ".node_script"] = Value(base_dir + "/" + node_comp);
+                        std::cout << "  " << color::YELLOW << "✔" << color::RESET << " Node Web/Window Component linked: " << node_comp << "\n";
+                    }
+
+                    std::string loop_comp = extract_comp("loop");
+                    if (!loop_comp.empty()) {
+                        std::string loop_path = base_dir + "/" + loop_comp;
+                        std::ifstream lf(loop_path);
+                        if (lf.good()) {
+                            std::string loop_content((std::istreambuf_iterator<char>(lf)), std::istreambuf_iterator<char>());
+                            execute_code(loop_content);
+                            std::cout << "  " << color::BLUE << "✔" << color::RESET << " Looping UI Component loaded: " << loop_comp << "\n";
+                        }
+                    }
+                    variables[mod + ".is_hybrid"] = Value(true);
+                }
+            };
+
             std::string local_manifest = "./modules/" + mod + "/smile.json";
             std::string local_entry = read_entry_from_smile(local_manifest);
             if (!local_entry.empty()) {
                 candidate_paths.insert(candidate_paths.begin(), "./modules/" + mod + "/" + local_entry);
+                check_and_link_hybrid_components(local_manifest, "./modules/" + mod);
             }
 
             if (!home_dir.empty()) {

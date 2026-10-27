@@ -1,0 +1,54 @@
+// ═══════════════════════════════════════════════════════════════
+// 🌟 CS ID LOGIN BUTTON — COMPONENTE DECLARATIVO DE UI (LOOP)
+// Arquitectura Híbrida Políglota de smiledev (Sub-archivo Looping)
+// Coki Studios Identity & Holo Entertainment © 2026
+// ═══════════════════════════════════════════════════════════════
+
+mut csid_btn_state = "IDLE"
+mut csid_active_user = {"is_logged_in": false, "user_id": "", "name": "", "email": "", "verified": false}
+
+// ── Renderizado Declarativo del Botón ──
+fn csid_render_button(x = 100, y = 100, label = "Iniciar Sesión con CS ID") {
+    mut display_text = $"🔐 {label}"
+    if csid_btn_state == "AUTHENTICATED" {
+        val uname = csid_active_user["name"]
+        display_text = $"✔ Conectado como {uname}"
+    } else if csid_btn_state == "AUTHENTICATING" {
+        display_text = "⏳ Verificando credenciales CS ID..."
+    } else if csid_btn_state == "ERROR" {
+        display_text = "✘ Error en autenticación CS ID"
+    }
+
+    ui.card(at: (x, y), size: (340, 90), title: "CS ID CONNECT", text: display_text)
+    ui.btn(at: (x + 20, y + 40), text: display_text, action: "csid_auth_click")
+    return display_text
+}
+
+// ── Manejador de Clic y Transición de Estados ──
+fn csid_on_click(mock_name = "Jerix Ortiz", mock_email = "jerix@cokistudios.com") {
+    csid_btn_state = "AUTHENTICATING"
+    audio.tone(440, 50)
+
+    val new_user_id = crypto.uuid()
+    csid_active_user["is_logged_in"] = true
+    csid_active_user["user_id"] = new_user_id
+    csid_active_user["name"] = mock_name
+    csid_active_user["email"] = mock_email
+    csid_active_user["verified"] = true
+
+    csid_btn_state = "AUTHENTICATED"
+    audio.tone(880, 80)
+    return csid_active_user
+}
+
+// ── Reset / Cierre de Sesión ──
+fn csid_logout() {
+    csid_btn_state = "IDLE"
+    csid_active_user["is_logged_in"] = false
+    csid_active_user["user_id"] = ""
+    csid_active_user["name"] = ""
+    csid_active_user["email"] = ""
+    csid_active_user["verified"] = false
+    audio.tone(330, 40)
+    return true
+}

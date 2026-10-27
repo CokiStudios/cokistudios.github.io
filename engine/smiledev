@@ -137,6 +137,7 @@ lang_badge = {
     'python': '${C_YELLOW}[PYTHON PYLOOP]${C_RESET}',
     'node': '${C_GREEN}[NODE.JS HTML5]${C_RESET}',
     'c2': '${C_PURPLE}[C2 DECLARATIVE]${C_RESET}',
+    'hybrid': '${C_CYAN}[POLYGLOT HYBRID]${C_RESET}',
     'loop': '${C_GREEN}[PURE LOOP]${C_RESET}'
 }.get(m.get('language', 'loop').lower(), '[CUSTOM]')
 
@@ -182,6 +183,7 @@ lang_badge = {
     'python': '${C_YELLOW}[PYTHON PYLOOP]${C_RESET}',
     'node': '${C_GREEN}[NODE.JS HTML5]${C_RESET}',
     'c2': '${C_PURPLE}[C2 DECLARATIVE]${C_RESET}',
+    'hybrid': '${C_CYAN}[POLYGLOT HYBRID]${C_RESET}',
     'loop': '${C_GREEN}[PURE LOOP]${C_RESET}'
 }.get(m.get('language'), '[UNKNOWN]')
 
@@ -558,8 +560,8 @@ with open('$manifest_file', 'r') as f:
 
 name = mf.get('name')
 lang = mf.get('language', 'loop').lower()
-if lang not in ['cpp', 'python', 'loop', 'c2', 'node']:
-    print(f'Error: Invalid language {lang}. Must be loop, python, cpp, c2 or node.', file=sys.stderr)
+if lang not in ['cpp', 'python', 'loop', 'c2', 'node', 'hybrid']:
+    print(f'Error: Invalid language {lang}. Must be loop, python, cpp, c2, node, or hybrid.', file=sys.stderr)
     sys.exit(1)
 
 entry = mf.get('entry_point', '')
@@ -915,29 +917,43 @@ elif not re.match(r'^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$', ver):
     warnings.append(f'Version \"{ver}\" is not strict SemVer (recommended format: 1.0.0).')
 
 lang = mf.get('language', '')
-allowed_langs = ['loop', 'cpp', 'python', 'node', 'c2']
+allowed_langs = ['loop', 'cpp', 'python', 'node', 'c2', 'hybrid']
 if not lang:
-    errors.append('Missing required field: \"language\" (must be one of: ' + ', '.join(allowed_langs) + ')')
+    errors.append('Missing required field: "language" (must be one of: ' + ', '.join(allowed_langs) + ')')
 elif lang.lower() not in allowed_langs:
-    errors.append(f'Unknown language \"{lang}\". Allowed: {allowed_langs}')
+    errors.append(f'Unknown language "{lang}". Allowed: {allowed_langs}')
 
 entry = mf.get('entry_point', '')
 if not entry:
-    errors.append('Missing required field: \"entry_point\"')
+    errors.append('Missing required field: "entry_point"')
 else:
     entry_path = os.path.join('$target_dir', entry)
     if not os.path.isfile(entry_path):
-        errors.append(f'Entry point file \"{entry}\" not found at {entry_path}')
+        errors.append(f'Entry point file "{entry}" not found at {entry_path}')
     else:
         ext = os.path.splitext(entry)[1].lower()
         if lang.lower() == 'loop' and ext not in ['.loop', '.ruup']:
-            warnings.append(f'Entry point \"{entry}\" extension does not match language loop (.loop / .ruup expected).')
+            warnings.append(f'Entry point "{entry}" extension does not match language loop (.loop / .ruup expected).')
         elif lang.lower() == 'cpp' and ext not in ['.hpp', '.h', '.cpp']:
-            warnings.append(f'Entry point \"{entry}\" extension does not match language cpp (.hpp / .h expected).')
+            warnings.append(f'Entry point "{entry}" extension does not match language cpp (.hpp / .h expected).')
         elif lang.lower() == 'python' and ext not in ['.py']:
-            warnings.append(f'Entry point \"{entry}\" extension does not match language python (.py expected).')
+            warnings.append(f'Entry point "{entry}" extension does not match language python (.py expected).')
         elif lang.lower() == 'node' and ext not in ['.js', '.mjs', '.cjs']:
-            warnings.append(f'Entry point \"{entry}\" extension does not match language node (.js expected).')
+            warnings.append(f'Entry point "{entry}" extension does not match language node (.js expected).')
+
+if lang.lower() == 'hybrid':
+    components = mf.get('components', {})
+    subfiles = mf.get('subfiles', [])
+    if not components and not subfiles:
+        warnings.append('Hybrid module should declare "components" or "subfiles" in smile.json.')
+    for comp_key, comp_file in components.items():
+        comp_path = os.path.join('$target_dir', comp_file)
+        if not os.path.isfile(comp_path):
+            errors.append(f'Hybrid component "{comp_key}" file "{comp_file}" not found.')
+    for sf in subfiles:
+        sf_path = os.path.join('$target_dir', sf)
+        if not os.path.isfile(sf_path):
+            errors.append(f'Declared subfile "{sf}" not found.')
 
 desc = mf.get('description', '')
 if not desc or len(desc.strip()) < 8:

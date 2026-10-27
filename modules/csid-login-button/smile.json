@@ -1,0 +1,24 @@
+{
+  "name": "csid-login-button",
+  "version": "1.0.0",
+  "language": "hybrid",
+  "entry_point": "main.loop",
+  "author_name": "Coki Studios Security & Identity",
+  "description": "Componente híbrido políglota para inicio de sesión con CS ID. Coordina UI reactiva en Looping, criptografía PKCE en C++17, verificación de claims en Python e interfaz/callback en Node.js.",
+  "license": "MIT",
+  "components": {
+    "loop": "components/csid_button.loop",
+    "cpp": "components/csid_crypto.hpp",
+    "py": "components/csid_oauth.py",
+    "node": "components/csid_window.js"
+  },
+  "subfiles": [
+    "components/csid_button.loop",
+    "components/csid_crypto.hpp",
+    "components/csid_oauth.py",
+    "components/csid_window.js"
+  ],
+  "dependencies": {
+    "loop-core-utils": "^1.1.0"
+  }
+}

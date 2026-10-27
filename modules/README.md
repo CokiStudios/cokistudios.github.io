@@ -187,6 +187,62 @@ smiledev validate ./modules/mi-super-modulo
 
 ### 7. Publicación Manual vía API REST (con CS ID)
 
+### 4. Módulos Híbridos Políglotas (Multi-Componente en 4 Lenguajes a la Vez)
+
+Looping Engine y smiledev soportan la arquitectura **Híbrida Políglota** (`"language": "hybrid"`). Un solo módulo puede declarar y coordinar sub-archivos implementados en **Looping**, **C++17**, **Python** y **Node.js** simultáneamente.
+
+#### Ejemplo de Estructura de Carpetas (`csid-login-button`):
+```text
+modules/csid-login-button/
+├── smile.json                   # Manifiesto con "language": "hybrid"
+├── main.loop                    # Orquestador principal
+├── README.md
+└── components/
+    ├── csid_button.loop         # 1. UI Reactiva y máquina de estados (Loop)
+    ├── csid_crypto.hpp          # 2. Criptografía PKCE y SHA-256 nativa (C++17)
+    ├── csid_oauth.py            # 3. Verificación de claims y JWT (Python)
+    └── csid_window.js           # 4. Callback bridge y runtime interactivo (Node.js)
+```
+
+#### Manifiesto `smile.json`:
+```json
+{
+  "name": "csid-login-button",
+  "version": "1.0.0",
+  "language": "hybrid",
+  "entry_point": "main.loop",
+  "author_name": "Coki Studios Security & Identity",
+  "description": "Componente híbrido políglota para inicio de sesión con CS ID (Loop + C++ + Py + Node).",
+  "license": "MIT",
+  "components": {
+    "loop": "components/csid_button.loop",
+    "cpp": "components/csid_crypto.hpp",
+    "python": "components/csid_oauth.py",
+    "node": "components/csid_window.js"
+  },
+  "subfiles": [
+    "components/csid_button.loop",
+    "components/csid_crypto.hpp",
+    "components/csid_oauth.py",
+    "components/csid_window.js"
+  ]
+}
+```
+
+#### Cómo consumirlo en cualquier script `.loop`:
+```looping
+use "csid-login-button"
+
+// 1. Renderiza el botón visualmente
+csid_login_render(100, 100, "Conectar con CS ID")
+
+// 2. Dispara el flujo de autenticación híbrido (C++ PKCE + Py OAuth + Node Bridge + Looping UI)
+val user = csid_login_trigger_auth("Jerix Ortiz", "jerix@cokistudios.com")
+out($"Usuario verificado: {user['name']} ({user['email']})")
+```
+
+---
+
 Si deseas publicar tu módulo manualmente sin la CLI, puedes hacer una petición HTTP POST directa con `curl` al registro de LoopModules:
 
 ```bash

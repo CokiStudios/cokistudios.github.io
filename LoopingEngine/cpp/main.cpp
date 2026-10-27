@@ -800,6 +800,17 @@ int run_tests() {
                 vm.variables["mod_padded"].as_string() == "coki" &&
                 vm.imported_modules.count("loop-core-utils") > 0);
 
+    // Test 58: Polyglot Hybrid Multi-Component Subsystem (Loop, C++, Python, Node with Sub-files)
+    vm.execute_code(
+        "use \"csid-login-button\"\n"
+        "val h_btn = csid_login_render(50, 50, \"Test CS ID\")\n"
+        "val h_user = csid_login_trigger_auth(\"Test Pilot\", \"pilot@cokistudios.com\")\n"
+        "val is_h_ok = h_user[\"verified\"] == true && h_user[\"name\"] == \"Test Pilot\"\n"
+    );
+    assert_test("Polyglot Hybrid Multi-Component Subsystem (csid-login-button 4-lang architecture)",
+                vm.variables["is_h_ok"].is_truthy() &&
+                vm.imported_modules.count("csid-login-button") > 0);
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 
