@@ -1,0 +1,9 @@
+{
+  "name": "loop-game-plus",
+  "version": "1.0.0",
+  "language": "loop",
+  "entry_point": "loop-game-plus.loop",
+  "author": "Argon",
+  "description": "Subruntime extendido para Looping: renderizado 3D acelerado, puente de gamepads nativo (macOS 27 GameController, Windows XInput, Linux evdev) y popups in-game con evaluaci\u00f3n condicional.",
+  "dependencies": []
+}

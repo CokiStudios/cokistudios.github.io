@@ -1,0 +1,127 @@
+// ═══════════════════════════════════════════════════════════════
+// 🎮 MODULE: loop-game-plus v1.0.0
+// Universal 3D, Multi-OS Gamepad & In-Game Popup Subsystem
+// ═══════════════════════════════════════════════════════════════
+
+define module "loop-game-plus" version 1.0:
+
+    mut pad_connected = false;
+    mut pad_x = 0.0;
+    mut pad_y = 0.0;
+    mut pad_a = false;
+    mut pad_b = false;
+
+    mut popup_active = false;
+    mut popup_title = "";
+    mut popup_code_payload = "";
+    mut popup_progress = 0;
+
+    // ── 1. SONDEO DE MANDOS ──
+    fn poll_gamepad(deadzone) {
+        py! {
+            import sys, os
+            sys.path.append(os.path.abspath("modules/loop-game-plus"))
+            import bridge_runtime
+            st = bridge_runtime.poll_gamepad(looping_vars.get("deadzone", 0.15))
+
+            looping_set("pad_connected", st.get("connected", False))
+            looping_set("pad_x", st.get("axis_x", 0.0))
+            looping_set("pad_y", st.get("axis_y", 0.0))
+            looping_set("pad_a", st.get("btn_a", False))
+            looping_set("pad_b", st.get("btn_b", False))
+        }
+
+        return {
+            connected: pad_connected,
+            x: pad_x,
+            y: pad_y,
+            btn_a: pad_a,
+            btn_b: pad_b
+        };
+    }
+
+    // ── 2. PROYECCIÓN Y RENDERIZADO 3D ──
+    fn render_cube(cx, cy, cz, size, rot_x, rot_y, fov, w, h) {
+        val s = size / 2.0;
+        val verts = [
+            [-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s],
+            [-s, -s,  s], [s, -s,  s], [s, s,  s], [-s, s,  s]
+        ];
+
+        mut screen_coords = [];
+
+        for (idx in 0..8) {
+            val [vx, vy, vz] = verts[idx];
+            py! {
+                import math
+                rx = math.radians(looping_vars.get("rot_x", 0))
+                ry = math.radians(looping_vars.get("rot_y", 0))
+                x, y, z = looping_vars.get("vx"), looping_vars.get("vy"), looping_vars.get("vz")
+
+                x1 = x * math.cos(ry) + z * math.sin(ry)
+                z1 = -x * math.sin(ry) + z * math.cos(ry)
+
+                y2 = y * math.cos(rx) - z1 * math.sin(rx)
+                z2 = y * math.sin(rx) + z1 * math.cos(rx)
+
+                d = max(0.1, z2 + looping_vars.get("cz", 100))
+                factor = looping_vars.get("fov", 300) / d
+                looping_set("out_x", (x1 + looping_vars.get("cx", 0)) * factor + (looping_vars.get("w", 800) / 2))
+                looping_set("out_y", (-y2 + looping_vars.get("cy", 0)) * factor + (looping_vars.get("h", 600) / 2))
+            }
+            screen_coords = screen_coords |> append([out_x, out_y]);
+        }
+
+        val edges = [
+            [0, 1], [1, 2], [2, 3], [3, 0],
+            [4, 5], [5, 6], [6, 7], [7, 4],
+            [0, 4], [1, 5], [2, 6], [3, 7]
+        ];
+
+        for (e in 0..12) {
+            val p1 = screen_coords[edges[e][0]];
+            val p2 = screen_coords[edges[e][1]];
+            fx.line(from: (p1[0], p1[1]), to: (p2[0], p2[1]), color: "#38bdf8", stroke: 1.5);
+        }
+    }
+
+    // ── 3. POPUPS Y EVALUACIÓN CONDICIONAL ──
+    fn show_popup(title, payload_code) {
+        popup_title := title;
+        popup_code_payload := payload_code;
+        popup_progress := 0;
+        popup_active := true;
+        audio.tone(880, 50);
+    }
+
+    fn update_popup(action_input) {
+        if (!popup_active) -> return false;
+
+        ui.card(at: (160, 100), size: (480, 320), title: $"MODAL // {popup_title}", text: "Desafío de Núcleo: Sincroniza al 100% para ejecutar.");
+        draw progress at (190, 180) with label "Sincronía" and val popup_progress and bind "p_bar";
+        ui.btn(at: (190, 240), text: "[A] PULSO DE POTENCIA", action: "pulse");
+        ui.btn(at: (360, 240), text: "[B] CERRAR", action: "cancel");
+
+        match action_input {
+            "pulse" => {
+                popup_progress += 25;
+                audio.tone(550 + (popup_progress * 5), 40);
+                if (popup_progress >= 100) {
+                    out("[GAME-PLUS] ¡Minijuego completado! Evaluando sub-código condicional...");
+                    try {
+                        looping.eval(popup_code_payload);
+                    } catch (err) {
+                        out($"[POPUP EVAL ERROR] {err}");
+                    }
+                    popup_active := false;
+                    return true;
+                }
+            }
+            "cancel" => {
+                popup_active := false;
+                return false;
+            }
+            _ => {}
+        }
+        return false;
+    }
