@@ -13,6 +13,9 @@ Con el lanzamiento de **Looping v1.0.0 Comercial** (impulsado por la arquitectur
 
 Las versiones anteriores de desarrollo han sido oficialmente consolidadas bajo la serie de arquitectura (**2.8A**, **2.7A**, **2.6A**, **2.5A**, **2.0A**, **1.0A**), dando paso a la primera línea comercial de producción oficial.
 
+### Transición de Node.js a C++17 Nativo (Hito del 3 de Octubre de 2026)
+Looping comenzó como un prototipo experimental interpretado en JavaScript / Node.js (`bin/looping.js` en la serie 1.0A). El **3 de octubre de 2026** (Commit `67a72391`), el motor fue completamente reescrito en **C++17 nativo**, eliminando el entorno V8, reduciendo los tiempos de arranque de ~120 ms a **< 0.5 ms**, la memoria de 45 MB a **< 2.8 MB RSS**, y produciendo binarios universales sin dependencias de Node.js para macOS (`arm64`/`x86_64`) y Linux.
+
 ---
 
 ## 2. Compilación y Ejecución del Motor C++

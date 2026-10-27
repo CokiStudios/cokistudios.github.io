@@ -41,6 +41,8 @@ cokistudios.github.io/
 
 **Looping** (`.loop` / `.ruup`) es un lenguaje de programación comercial moderno, de alto rendimiento y tipado dinámico optimizado para desarrollo ágil, videojuegos 2D con física cuántica, síntesis de audio procedural, ciencia de datos e interfaces reactivas. Las versiones previas han sido consolidadas bajo la serie de arquitectura (`2.8A`, `2.7A`, `2.6A`, etc.).
 
+> **Hito Histórico (3 de Octubre de 2026)**: Looping nació como un prototipo en Node.js (`bin/looping.js` en la serie 1.0A). El 3 de octubre de 2026 fue completamente reescrito en **C++17 nativo** (`LoopingEngine/cpp`), reduciendo el tiempo de arranque de ~120 ms a **< 0.5 ms** y eliminando toda dependencia de Node.js o contenedores web. El repositorio oficial del motor independiente se encuentra en [**CokiStudios/engine**](https://github.com/CokiStudios/engine).
+
 * **Motor C++17 Nativo Ultra-Rápido**: Tiempo de arranque de **< 0.5 ms**, ejecución directa sin dependencias de Node.js ni contenedores web.
 * **Universal Binary macOS**: Compilado nativamente para Apple Silicon (`arm64`) e Intel (`x86_64`).
 * **Sintaxis Expresiva**: Declaraciones `let`, `mut`, `val`, operador morsa `:=`, funciones de flecha `fn() => ...`, destructuring `[a, b]`, condicional ternario `? :`, null-coalescing `??` y pattern matching `match`.
