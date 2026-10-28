@@ -61,17 +61,50 @@ public final class CSIMSEncryption: @unchecked Sendable {
         initializeInternalSecurityKey()
     }
     
-    // MARK: - Hardware Key Management
+    // MARK: - Hardware Key Management & Keychain Protection
+    
+    private static func saveToKeychain(account: String, data: Data) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        SecItemDelete(query as CFDictionary)
+        SecItemAdd(query as CFDictionary, nil)
+    }
+    
+    private static func loadFromKeychain(account: String) -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: kCFBooleanTrue as Any,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        if status == errSecSuccess, let data = item as? Data {
+            return data
+        }
+        return nil
+    }
     
     private func initializeInternalSecurityKey() {
         guard SecureEnclave.isAvailable else { return }
         
         let tag = "com.cokistudios.csims.internal_sep_key"
-        if let existingKeyData = UserDefaults.standard.data(forKey: tag) {
+        
+        // Migrate from legacy unencrypted UserDefaults to secure Apple Keychain if present
+        if let legacyData = UserDefaults.standard.data(forKey: tag) {
+            Self.saveToKeychain(account: tag, data: legacyData)
+            UserDefaults.standard.removeObject(forKey: tag)
+        }
+        
+        if let existingKeyData = Self.loadFromKeychain(account: tag) {
             _ = try? SecureEnclave.P256.KeyAgreement.PrivateKey(dataRepresentation: existingKeyData)
         } else {
             if let newSepKey = try? SecureEnclave.P256.KeyAgreement.PrivateKey() {
-                UserDefaults.standard.set(newSepKey.dataRepresentation, forKey: tag)
+                Self.saveToKeychain(account: tag, data: newSepKey.dataRepresentation)
             }
         }
     }

@@ -142,6 +142,16 @@ final class AppleContentModerator: ObservableObject {
             return result
         }
         
+        // Fast-path: Questions or commands directed to Coki assistant with no profanities are completely safe
+        let lower = trimmedContent.lowercased()
+        if lower.hasPrefix("/coki") || lower.hasPrefix("@coki") {
+            let tokens = lower.components(separatedBy: .whitespacesAndNewlines)
+            let hasProfanity = tokens.contains { commonProfanities.contains($0) }
+            if !hasProfanity {
+                return .safe
+            }
+        }
+        
         // Step 2: Apple Foundation Models deep contextual analysis on iOS 27 / iPadOS 27 / macOS 27 Neural Engine
         #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
         if #available(iOS 27.0, macOS 27.0, *) {
@@ -188,12 +198,16 @@ final class AppleContentModerator: ObservableObject {
                 You are Coki with Apple Intelligence, the on-device safety moderator and community copilot running locally on Apple Silicon (\(platformName)).
                 Your job is to analyze posts, comments, and messages in the Forkar community (Spanish and English).
                 You evaluate both the TITLE and the BODY/MESSAGE for:
-                1. Toxicity, insults, harassment, hate speech, and threats.
-                2. Sexual innuendos, vulgar double entendres ("chistes de doble sentido", albures, juegos de palabras vulgares de connotación sexual).
+                1. Severe toxicity, genuine insults, harassment, hate speech, and threats.
+                2. Deliberate vulgar double entendres ("chistes de doble sentido", albures) intended to harass or make vulgar sexual jokes.
                 3. Evasion attempts: letter stretching (e.g. 'maricooon'), spaced-out characters (e.g. 'P U T A'), leetspeak (e.g. 'p3nd3jo'), and split context across title and message.
-                CRITICAL:
-                - Detect double entendres ("chistes de doble sentido", albures) where words with dual meanings or sexual puns are used to make vulgar, sexually suggestive, or harassing jokes.
-                - You MUST recognize evasion attempts and detect the underlying offensive words or innuendos.
+                
+                CRITICAL GUARDRAILS TO PREVENT FALSE POSITIVES:
+                - NEVER flag legitimate technical, computing, vehicular, automotive, transit, or educational words.
+                - Words such as 'terminal' (computer terminal or bus/transport terminal), 'consola', 'servidor', 'socket', 'puerto', 'batería', 'freno', 'motor', 'carro', 'kill' (as in kill process), 'execute', 'ruta', 'parada', 'estación', etc., are COMPLETELY SAFE AND HARMLESS.
+                - Questions, commands to Coki (e.g., starting with '/Coki' or '@Coki', 'qué es...', 'cómo funciona...'), programming topics, and everyday conversational language are ALWAYS SAFE (isSafe: true).
+                - Do NOT assume a benign word is an ambiguous insult or evasion. Only flag content when there is CLEAR, OBVIOUS, AND UNMISTAKABLE malice, offensive vulgarity, or toxic intent. If in doubt, mark as safe.
+                
                 Respond ONLY with a JSON object in this exact format:
                 {"isSafe": false, "flaggedWords": ["word1", "word2"], "reason": "Breve explicación en español de por qué se detuvo la publicación"}
                 or if completely safe:
@@ -352,7 +366,7 @@ final class AppleContentModerator: ObservableObject {
     func askCokiAI(query: String, context: String? = nil) async -> String {
         let clean = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else {
-            return "¡Hola! Soy Coki with Apple Intelligence 🤖. Escribe tu consulta después de /Coki (por ejemplo: /Coki ¿cómo optimizar mi autonomía eléctrica?)."
+            return "¡Hola! Soy Coki with Apple Intelligence 🤖. Puedes preguntarme sobre cualquier cosa: programación, terminales, ciencia, ideas o dudas generales. Escribe tu consulta después de /Coki."
         }
         
         #if canImport(FoundationModels) && !os(watchOS) && !os(tvOS)
@@ -371,44 +385,108 @@ final class AppleContentModerator: ObservableObject {
                     let session = LanguageModelSession(
                         model: model,
                         instructions: """
-                        You are Coki with Apple Intelligence, the official smart vehicular copilot and community assistant running on \(platform) Neural Engine.
-                        You help Forkar community members with:
-                        - Vehicular diagnostics, warnings, and maintenance advice
-                        - Eco-driving strategies, regenerative braking, and saving CO₂
-                        - Trip planning, carpooling etiquette, and route optimization
-                        - Charging stations, battery health, and tire pressure
-                        Be concise, friendly, and practical.
-                        Always respond in Spanish in 2 to 3 sentences with relevant emojis.
+                        You are Coki with Apple Intelligence, the official versatile AI assistant of Coki Studios running on \(platform) Neural Engine.
+                        You assist users with any topic:
+                        - Software engineering, terminals, command-line tools (Zsh, Bash), Swift, web development, debugging, and system design
+                        - Science, general knowledge, philosophy, everyday reasoning, and productivity
+                        - Creative ideas, explanations, and advice
+                        - Mobility and sustainability if the user asks about it
+                        Never restrict yourself to only cars or vehicles.
+                        Be insightful, friendly, concise, and practical.
+                        Always respond in Spanish in 2 to 4 clear sentences with relevant emojis.
                         """
                     )
-                    let prompt = context != nil ? "Pregunta de un miembro en la sala '\(context!)': \(clean)" : clean
+                    let prompt = context != nil ? "Pregunta de un usuario en el chat '\(context!)': \(clean)" : clean
                     let response = try await session.respond(to: prompt)
                     return response.content
                 } catch {
-                    print("Coki AI query error: \(error.localizedDescription)")
+                    print("Coki AI FoundationModels error: \(error.localizedDescription)")
                 }
             }
         }
         #endif
         
+        // Edge Fallback via Cloudflare Workers AI (/api/coki)
+        if let edgeResponse = await askWorkersAICoki(query: clean, context: context) {
+            return edgeResponse
+        }
+        
         return smartCokiResponse(for: clean)
+    }
+    
+    private func askWorkersAICoki(query: String, context: String? = nil) async -> String? {
+        guard let url = URL(string: "https://cokistudios.com/api/coki") else { return nil }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 6.0
+        
+        let payload: [String: Any] = [
+            "query": query,
+            "context": context ?? "general"
+        ]
+        
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else { return nil }
+        request.httpBody = httpBody
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return nil }
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let answer = json["answer"] as? String, !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return answer.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        } catch {
+            return nil
+        }
+        return nil
     }
     
     private func smartCokiResponse(for query: String) -> String {
         let lower = query.lowercased()
-        if lower.contains("bateria") || lower.contains("batería") || lower.contains("carga") {
-            return "🔋 Consejo de Coki with Apple Intelligence: Para maximizar la vida útil de tu batería, mantén la carga habitual entre el 20% y el 80%. En viajes largos por carretera, preacondiciona la batería antes de conectar en un punto de carga rápida."
-        } else if lower.contains("freno") || lower.contains("pastilla") {
-            return "🛑 Consejo de Coki with Apple Intelligence: Usa el frenado regenerativo con anticipación para recuperar hasta un 30% de energía cinética y reducir drásticamente el desgaste de las pastillas mecánicas."
-        } else if lower.contains("llanta") || lower.contains("neumatico") || lower.contains("presion") || lower.contains("presión") {
-            return "🛞 Consejo de Coki with Apple Intelligence: Revisa la presión de los neumáticos en frío. Mantener la presión recomendada reduce la resistencia a la rodadura y ahorra hasta 0.5L/100km o un 4% de kWh."
-        } else if lower.contains("ruta") || lower.contains("trafico") || lower.contains("tráfico") || lower.contains("viaje") {
-            return "🗺️ Consejo de Coki with Apple Intelligence: Planifica tu ruta evitando horas pico y pendientes excesivas. En caravanas Forkar puedes sincronizar tu trayecto para compartir puntos de recarga y reducir huella de carbono."
-        } else if lower.contains("carpool") || lower.contains("compartir") {
-            return "🚗 Consejo de Coki with Apple Intelligence: Compartir vehículo con un miembro de la comunidad ahorra en promedio 3.2 kg de CO₂ por viaje diario y acumulas el doble de Puntos Eco en tu cuenta."
-        } else {
-            return "✨ Coki with Apple Intelligence: Consulta recibida: \"\(query)\". Como copiloto inteligente de Forkar, te recomiendo conducir con suavidad, mantener velocidades constantes y registrar tus check-ins ecológicos para seguir sumando Puntos Eco 🌱."
+        
+        // 1. Terminales, CLI y Sistemas
+        if lower.contains("terminal") || lower.contains("consola") || lower.contains("bash") || lower.contains("zsh") || lower.contains("cli") || lower.contains("command line") {
+            return "🖥️ Coki AI: Una terminal es una interfaz de línea de comandos (CLI) que te permite interactuar directamente con el sistema operativo ejecutando instrucciones de texto. En macOS y Linux se suele usar Zsh o Bash para automatizar tareas, compilar código y gestionar procesos de forma rápida y potente."
         }
+        
+        // 2. Programación, Swift, código y bugs
+        if lower.contains("swift") || lower.contains("swiftui") {
+            return "💻 Coki AI: Swift es un lenguaje moderno, tipado y de alto rendimiento diseñado por Apple para crear apps en iOS, macOS, watchOS y visionOS. Con SwiftUI puedes armar interfaces completamente reactivas y declarativas con excelente rendimiento nativo."
+        }
+        if lower.contains("python") || lower.contains("javascript") || lower.contains("typescript") || lower.contains("codigo") || lower.contains("código") || lower.contains("programar") || lower.contains("bug") || lower.contains("git") {
+            return "⚡ Coki AI: En desarrollo de software, la clave está en mantener funciones puras, código modular y un manejo defensivo de errores. Si tienes un bug o quieres diseñar una arquitectura, dime qué estás implementando y lo resolvemos juntos."
+        }
+        
+        // 3. Coki Studios / Quién eres / Saludos
+        if lower.contains("quien eres") || lower.contains("quién eres") || lower.contains("que eres") || lower.contains("qué eres") || lower.contains("que haces") || lower.contains("qué haces") {
+            return "🤖 ¡Hola! Soy Coki with Apple Intelligence, el asistente inteligente universal de Coki Studios. Puedo ayudarte con programación, terminales, dudas científicas, ideas creativas, tecnología y temas generales. ¡Pregúntame lo que necesites!"
+        }
+        if lower.contains("hola") || lower.contains("buenos dias") || lower.contains("buenos días") || lower.contains("buenas tardes") || lower.contains("hey") {
+            return "👋 ¡Hola! ¿Cómo estás hoy? Estoy aquí para ayudarte con lo que necesites: resolver dudas técnicas, explorar ideas o charlar sobre cualquier tema. ¿De qué te gustaría hablar?"
+        }
+        if lower.contains("gracias") || lower.contains("genial") || lower.contains("crack") {
+            return "🚀 ¡Con gusto! Me alegra poder ayudarte. Si tienes cualquier otra pregunta o necesitas una mano con otro proyecto, aquí me tienes."
+        }
+        
+        // 4. Qué es... / Conceptos generales
+        if lower.hasPrefix("que es") || lower.hasPrefix("qué es") || lower.contains("significa") || lower.contains("concepto") {
+            return "💡 Coki AI: Para entender \"\(query)\", es útil analizar su principio fundamental. Es un concepto clave con aplicaciones teóricas y prácticas; cuéntame en qué contexto lo estás utilizando y te daré una explicación precisa paso a paso."
+        }
+        
+        // 5. Automoción y Movilidad (SÓLO si el usuario pregunta explícitamente por vehículos o baterías)
+        if lower.contains("bateria") || lower.contains("batería") || lower.contains("carga") {
+            return "🔋 Coki AI: Para cuidar la vida útil de baterías (de tus dispositivos o autos eléctricos), procura mantenerlas entre el 20% y el 80% y evitar temperaturas extremas prolongadas."
+        }
+        if lower.contains("freno") || lower.contains("llanta") || lower.contains("neumatico") || lower.contains("carro") || lower.contains("auto") || lower.contains("vehiculo") || lower.contains("vehículo") {
+            return "🚗 Coki AI: Mantener una adecuada presión de neumáticos y una conducción progresiva reduce desgastes mecánicos, optimiza el consumo de energía y mejora la seguridad en el camino."
+        }
+        if lower.contains("ruta") || lower.contains("viaje") || lower.contains("mapa") {
+            return "🗺️ Coki AI: Para una buena ruta, planifica paradas estratégicas, verifica el tráfico en tiempo real y optimiza tus trayectos para un viaje cómodo y eficiente."
+        }
+        
+        // 6. Respuesta universal inteligente por defecto
+        return "✨ Coki with Apple Intelligence: \"\(query)\" es una consulta muy interesante. Como asistente de Coki Studios, estoy preparado para responderte sobre programación, sistemas, ciencia o cualquier tema general. Puedes formularme preguntas directas con /Coki y te ayudaré con gusto 💡."
     }
     
     private func extractJSON(from raw: String) -> String {

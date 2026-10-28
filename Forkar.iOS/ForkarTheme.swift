@@ -150,12 +150,13 @@ struct SecondaryButtonStyle: ButtonStyle {
 // MARK: - Circle Avatar Placeholder
 struct CircleAvatarPlaceholder: View {
     let initials: String
+    var size: CGFloat = 36
     
     var body: some View {
         Text(initials)
-            .font(.system(size: 13, weight: .bold))
+            .font(.system(size: max(11, size * 0.4), weight: .bold))
             .foregroundColor(ForkarTheme.accent)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: size, height: size)
             .background(ForkarTheme.accent.opacity(0.15))
             .clipShape(Circle())
             .overlay(Circle().stroke(ForkarTheme.accent.opacity(0.3), lineWidth: 1))

@@ -17,6 +17,8 @@ struct ChatRoomDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var isDeletingRoom = false
     
+    @State private var isViewActive = false
+    
     // Timer to pull new messages every 3 seconds
     let timer = Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()
     
@@ -29,7 +31,7 @@ struct ChatRoomDetailView: View {
     
     // Coki with Apple Intelligence & Apple Playground
     @State private var showImagePlayground = false
-    @State private var playgroundConcept = "auto deportivo eléctrico y sostenible"
+    @State private var playgroundConcept = "diseño conceptual futurista e innovador"
     @State private var isProcessingCokiAI = false
     
     @State private var activeChatRoom: ChatRoom? = nil
@@ -66,6 +68,8 @@ struct ChatRoomDetailView: View {
                         }
                         .font(.caption2)
                         .foregroundColor(ForkarTheme.textSub)
+                    }
+                    
                     Spacer()
                     
                     if !messages.isEmpty {
@@ -294,7 +298,6 @@ struct ChatRoomDetailView: View {
                     }
                 )
             }
-        }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -421,11 +424,16 @@ struct ChatRoomDetailView: View {
             }
         }
         .onAppear {
+            isViewActive = true
             Task {
                 await loadInitialData()
             }
         }
+        .onDisappear {
+            isViewActive = false
+        }
         .onReceive(timer) { _ in
+            guard isViewActive else { return }
             Task {
                 await loadMessagesSilently()
             }

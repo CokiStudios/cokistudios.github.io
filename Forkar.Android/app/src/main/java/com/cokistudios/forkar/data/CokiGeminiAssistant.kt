@@ -286,23 +286,39 @@ object CokiGeminiAssistant {
     suspend fun askCokiAI(query: String, context: String? = null): String = withContext(Dispatchers.Default) {
         val clean = query.trim()
         if (clean.isEmpty()) {
-            return@withContext "¡Hola! Soy Coki with Gemini Intelligence 🤖. Escribe tu consulta después de /Coki (por ejemplo: /Coki ¿cómo optimizar mi autonomía eléctrica?)."
+            return@withContext "¡Hola! Soy Coki with Gemini Intelligence 🤖. Puedes consultarme sobre programación, terminales, ciencia, ideas o dudas generales. Escribe tu pregunta después de /Coki."
         }
 
         val lower = clean.lowercase()
         when {
+            // Terminales, CLI y Sistemas
+            lower.contains("terminal") || lower.contains("consola") || lower.contains("bash") || lower.contains("zsh") || lower.contains("cli") ->
+                "🖥️ Coki AI: Una terminal es una interfaz de comandos que te permite comunicarte directamente con el kernel del sistema operativo. Puedes compilar código, automatizar procesos y ejecutar scripts sin intermediarios gráficos."
+            
+            // Programación, Kotlin, Android, Swift
+            lower.contains("kotlin") || lower.contains("android") || lower.contains("compose") ->
+                "🤖 Coki AI: Con Kotlin y Jetpack Compose puedes crear interfaces reactivas modernas y declarativas para Android, optimizadas para el rendimiento nativo del dispositivo."
+            lower.contains("codigo") || lower.contains("código") || lower.contains("programar") || lower.contains("bug") || lower.contains("git") ->
+                "⚡ Coki AI: Para resolver bugs o diseñar una buena arquitectura de software, enfócate en la separación de responsabilidades y el manejo seguro de estados. Cuéntame qué problema tienes y lo solucionamos juntos."
+            
+            // Coki Studios / Saludos / Quién eres
+            lower.contains("quien eres") || lower.contains("quién eres") || lower.contains("que eres") || lower.contains("qué eres") ->
+                "🤖 ¡Hola! Soy Coki with Gemini Intelligence, el asistente universal de Coki Studios. Estoy listo para ayudarte con código, dudas técnicas, razonamiento diario, creatividad y cualquier tema que necesites."
+            lower.contains("hola") || lower.contains("buenos dias") || lower.contains("buenos días") || lower.contains("buenas tardes") || lower.contains("hey") ->
+                "👋 ¡Hola! ¿Cómo estás hoy? Estoy a tu disposición para ayudarte con cualquier consulta técnica, cotidiana o de desarrollo. ¿De qué te gustaría hablar?"
+            
+            // Conceptos generales
+            lower.startsWith("que es") || lower.startsWith("qué es") || lower.contains("significa") ->
+                "💡 Coki AI: Para entender \"$clean\", analizamos su fundamento principal en su área técnica o conceptual. Dime qué contexto específico te interesa y te daré una explicación detallada."
+            
+            // Vehículos / Baterías (sólo si se pregunta explícitamente)
             lower.contains("bateria") || lower.contains("batería") || lower.contains("carga") ->
-                "🔋 Consejo de Coki with Gemini Intelligence: Para maximizar la vida útil de tu batería, mantén la carga habitual entre el 20% y el 80%. En viajes largos por carretera, preacondiciona la batería antes de conectar en un punto de carga rápida."
-            lower.contains("freno") || lower.contains("pastilla") ->
-                "🛑 Consejo de Coki with Gemini Intelligence: Usa el frenado regenerativo con anticipación para recuperar hasta un 30% de energía cinética y reducir drásticamente el desgaste de las pastillas mecánicas."
-            lower.contains("llanta") || lower.contains("neumatico") || lower.contains("presion") || lower.contains("presión") ->
-                "🛞 Consejo de Coki with Gemini Intelligence: Revisa la presión de los neumáticos en frío. Mantener la presión recomendada reduce la resistencia a la rodadura y ahorra hasta 0.5L/100km o un 4% de kWh."
-            lower.contains("ruta") || lower.contains("trafico") || lower.contains("tráfico") || lower.contains("viaje") ->
-                "🗺️ Consejo de Coki with Gemini Intelligence: Planifica tu ruta evitando horas pico y pendientes excesivas. En caravanas Forkar puedes sincronizar tu trayecto para compartir puntos de recarga y reducir huella de carbono."
-            lower.contains("carpool") || lower.contains("compartir") ->
-                "🚗 Consejo de Coki with Gemini Intelligence: Compartir vehículo con un miembro de la comunidad ahorra en promedio 3.2 kg de CO₂ por viaje diario y acumulas el doble de Puntos Eco en tu cuenta."
+                "🔋 Coki AI: Para prolongar la salud de las baterías de tus equipos o vehículos eléctricos, mantenlas entre el 20% y el 80% y evita calentamientos excesivos durante la carga."
+            lower.contains("freno") || lower.contains("llanta") || lower.contains("neumatico") || lower.contains("carro") || lower.contains("auto") ->
+                "🚗 Coki AI: Mantener los componentes en buen estado y una conducción suave optimiza la seguridad, ahorra energía y reduce el desgaste mecánico."
+            
             else ->
-                "✨ Coki with Gemini Intelligence: Consulta recibida: \"$clean\". Como copiloto inteligente en Android 17, te recomiendo conducir con suavidad, mantener velocidades constantes y registrar tus check-ins ecológicos para seguir sumando Puntos Eco 🌱."
+                "✨ Coki with Gemini Intelligence: \"$clean\" es una excelente consulta. Como asistente inteligente de Coki Studios, puedo ayudarte en programación, ciencia, sistemas y temas generales. ¡Escribe /Coki con cualquier duda!"
         }
     }
 }

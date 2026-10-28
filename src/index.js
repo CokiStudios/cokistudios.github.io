@@ -4,6 +4,7 @@
 //
 
 import { connect } from 'cloudflare:sockets';
+import { handleMDMRequest } from './mdm.js';
 
 const commonProfanities = new Set([
   "idiota", "idiotas", "estupido", "estupidos", "estúpido", "estúpida", "estupida", "estupidas",
@@ -736,18 +737,18 @@ private:
   },
   {
     name: "loop-node-window",
-    version: "1.0.0",
+    version: "2.0.0",
     language: "node",
     author_name: "Coki Studios Web & Loop Lab",
-    description: "Dynamic HTML5 Window Creator for Node.js and Loop. Launches high-performance glassmorphic UI, Web Audio synthesis, interactive controls, and real-time REST/SSE bridge.",
+    description: "Dynamic HTML5 Window & 2D Arcade Game Creator for Node.js and Loop. Launches high-performance 60 FPS 2D stage, Web Audio synthesis, interactive controls, and real-time REST/SSE bridge.",
     license: "MIT",
     entry_point: "index.js",
     downloads_count: 1120,
     is_verified: true,
     code_payload: `/**
- * loop-node-window: Dynamic HTML5 Window Creator for Node.js & Looping Engine
+ * loop-node-window: Dynamic HTML5 Window & 2D Arcade Game Creator for Node.js & Looping Engine
  * Author: Coki Studios Web & Loop Lab
- * Version: 1.0.0
+ * Version: 2.0.0 (Quantum 2D Edition)
  * 
  * Zero external dependencies. Uses standard Node.js libraries (http, child_process, os, events, readline).
  * Provides an interactive glassmorphic HTML5 window with Web Audio synthesis, real-time SSE metrics,
@@ -1499,6 +1500,25 @@ function renderRepoHTML(modules, host) {
   const loopCount = modules.filter(m => m.language === 'loop').length;
   const nodeCount = modules.filter(m => m.language === 'node' || m.language === 'javascript').length;
 
+  const escapeHtml = (str) => String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  // Prepare lightweight sanitized modules data for client search & modal metadata (omit code_payload to prevent HTML parser breakage)
+  const clientModules = modules.map(m => ({
+    name: m.name,
+    version: m.version,
+    language: m.language,
+    author_name: m.author_name || 'Community',
+    description: m.description || '',
+    entry_point: m.entry_point || '',
+    is_verified: !!m.is_verified,
+    downloads_count: m.downloads_count || m.download_count || 0
+  }));
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1952,35 +1972,42 @@ function renderRepoHTML(modules, host) {
         </section>
 
         <section class="modules-grid" id="modules-container">
-            ${modules.map(m => `
-                <div class="module-card" data-lang="${m.language}" data-name="${m.name}" data-desc="${(m.description || '').toLowerCase()}">
+            ${modules.map(m => {
+                const sName = escapeHtml(m.name);
+                const sLang = escapeHtml(m.language || 'loop');
+                const sVer = escapeHtml(m.version || '1.0.0');
+                const sAuthor = escapeHtml(m.author_name || 'Community');
+                const sDesc = escapeHtml(m.description || 'No description provided.');
+                const sSearchDesc = escapeHtml((m.description || '').toLowerCase());
+                return `
+                <div class="module-card" data-lang="${sLang}" data-name="${sName}" data-desc="${sSearchDesc}">
                     <div>
                         <div class="card-top">
                             <div>
-                                <span class="mod-name">${m.name}</span>
-                                <span class="mod-ver">v${m.version}</span>
+                                <span class="mod-name">${sName}</span>
+                                <span class="mod-ver">v${sVer}</span>
                             </div>
                             <div class="badges-row">
-                                <span class="badge badge-${m.language}">${m.language.toUpperCase()}</span>
+                                <span class="badge badge-${sLang}">${sLang.toUpperCase()}</span>
                                 ${m.is_verified ? '<span class="badge badge-verified">✔ VERIFIED</span>' : ''}
                             </div>
                         </div>
-                        <div class="mod-desc">${m.description || 'No description provided.'}</div>
+                        <div class="mod-desc">${sDesc}</div>
                     </div>
                     <div>
                         <div class="mod-meta">
-                            <span>Author: <strong>${m.author_name || 'Community'}</strong></span>
+                            <span>Author: <strong>${sAuthor}</strong></span>
                             <span>Downloads: <strong>${m.downloads_count || m.download_count || 0}</strong></span>
                         </div>
                         <div class="card-actions">
-                            <button class="btn-install" onclick="copyText('smiledev install ${m.name}')">
+                            <button class="btn-install" onclick="copyText('smiledev install ${sName}')">
                                 <span>📥</span> smiledev install
                             </button>
-                            <button class="btn-code" onclick="openCodeModal('${m.name}')">Code</button>
+                            <button class="btn-code" onclick="openCodeModal('${sName}')">Code</button>
                         </div>
                     </div>
                 </div>
-            `).join('')}
+            `}).join('')}
         </section>
     </main>
 
@@ -1999,18 +2026,25 @@ function renderRepoHTML(modules, host) {
     </footer>
 
     <script>
-        const modulesData = ${JSON.stringify(modules)};
+        const modulesData = ${JSON.stringify(clientModules).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')};
 
         function copyText(txt) {
-            navigator.clipboard.writeText(txt);
-            alert('Copied to clipboard: ' + txt);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(txt).then(() => {
+                    alert('Copied to clipboard: ' + txt);
+                }).catch(() => {
+                    prompt('Copy to clipboard:', txt);
+                });
+            } else {
+                prompt('Copy to clipboard:', txt);
+            }
         }
 
         let currentLang = 'all';
         function filterLanguage(lang) {
             currentLang = lang;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
             applyFilters();
         }
 
@@ -2019,12 +2053,13 @@ function renderRepoHTML(modules, host) {
         }
 
         function applyFilters() {
-            const q = document.getElementById('search-input').value.toLowerCase().trim();
+            const searchInput = document.getElementById('search-input');
+            const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const cards = document.querySelectorAll('.module-card');
             cards.forEach(card => {
                 const lang = card.getAttribute('data-lang');
-                const name = card.getAttribute('data-name').toLowerCase();
-                const desc = card.getAttribute('data-desc').toLowerCase();
+                const name = (card.getAttribute('data-name') || '').toLowerCase();
+                const desc = (card.getAttribute('data-desc') || '').toLowerCase();
 
                 const matchLang = (currentLang === 'all' || lang === currentLang);
                 const matchSearch = (!q || name.includes(q) || desc.includes(q));
@@ -2037,12 +2072,23 @@ function renderRepoHTML(modules, host) {
             });
         }
 
-        function openCodeModal(modName) {
+        async function openCodeModal(modName) {
             const m = modulesData.find(x => x.name === modName);
-            if (!m) return;
-            document.getElementById('modal-title').textContent = m.name + ' (' + m.entry_point + ')';
-            document.getElementById('modal-code').textContent = m.code_payload || '# Code not available';
+            const entry = (m && m.entry_point) ? m.entry_point : 'main';
+            document.getElementById('modal-title').textContent = modName + ' (' + entry + ')';
+            document.getElementById('modal-code').textContent = '// Loading code from LoopModules...';
             document.getElementById('code-modal').classList.add('active');
+            try {
+                const res = await fetch('/modules/' + encodeURIComponent(modName) + '/code');
+                if (res.ok) {
+                    const code = await res.text();
+                    document.getElementById('modal-code').textContent = code || '# Empty file';
+                } else {
+                    document.getElementById('modal-code').textContent = '# Code payload not available online';
+                }
+            } catch (err) {
+                document.getElementById('modal-code').textContent = '# Error loading code: ' + err.message;
+            }
         }
 
         function closeModal() {
@@ -2441,6 +2487,17 @@ export default {
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    // ── MDM & SHSH BLOBS SERVER (Apple Device Management & ECID Preservation) ──
+    if (
+      host === 'mdm.cokistudios.com' ||
+      url.pathname.startsWith('/api/mdm/') ||
+      url.pathname.startsWith('/mdm/') ||
+      url.pathname === '/enroll.mobileconfig' ||
+      url.pathname === '/.well-known/com.apple.remotemanagement'
+    ) {
+      return handleMDMRequest(request, env, ctx);
     }
 
     // ── SUBDOMINIO: developer.cokistudios.com ──

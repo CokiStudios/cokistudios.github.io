@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadDescription</key>
+  <string>Perfil de Gestión y Supervisión Oficial de Coki Studios</string>
+  <key>PayloadDisplayName</key>
+  <string>Coki Studios MDM &amp; Device Supervisor</string>
+  <key>PayloadIdentifier</key>
+  <string>com.cokistudios.mdm.enrollment</string>
+  <key>PayloadOrganization</key>
+  <string>Coki Studios</string>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadUUID</key>
+  <string>C0C10000-E2EE-4MDM-A001-COKISTUDIOS01</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadRemovalDisallowed</key>
+  <false/>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key>
+      <string>com.apple.security.pkcs12</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadIdentifier</key>
+      <string>com.cokistudios.mdm.identity</string>
+      <key>PayloadUUID</key>
+      <string>C0C10000-CERT-4MDM-A001-IDENTITYCERT01</string>
+      <key>PayloadDisplayName</key>
+      <string>Coki Studios Device Identity Certificate</string>
+      <key>PayloadCertificateFileName</key>
+      <string>CokiStudios-DeviceIdentity.p12</string>
+      <key>PayloadContent</key>
+      <data>
+      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
+      </data>
+      <key>Password</key>
+      <string>cokistudios</string>
+    </dict>
+    <dict>
+      <key>PayloadType</key>
+      <string>com.apple.mdm</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadIdentifier</key>
+      <string>com.cokistudios.mdm.payload</string>
+      <key>PayloadUUID</key>
+      <string>C0C10000-E2EE-4MDM-B002-COKISTUDIOS02</string>
+      <key>PayloadDisplayName</key>
+      <string>Coki Studios MDM Service</string>
+      <key>PayloadOrganization</key>
+      <string>Coki Studios</string>
+      <key>IdentityCertificateUUID</key>
+      <string>C0C10000-CERT-4MDM-A001-IDENTITYCERT01</string>
+      <key>ServerURL</key>
+      <string>https://cokistudios.com/api/mdm/connect</string>
+      <key>CheckInURL</key>
+      <string>https://cokistudios.com/api/mdm/checkin</string>
+      <key>Topic</key>
+      <string>com.apple.mgmt.External.coki-studios-mdm</string>
+      <key>AccessRights</key>
+      <integer>8191</integer>
+      <key>UseDevelopmentAPNS</key>
+      <false/>
+      <key>SignMessage</key>
+      <false/>
+      <key>CheckOutWhenRemoved</key>
+      <true/>
+    </dict>
+  </array>
+</dict>
+</plist>

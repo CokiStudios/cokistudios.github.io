@@ -10,7 +10,10 @@ struct ChatsView: View {
     @State private var isCreatingGroup = false
     @State private var showLogin = false
     @StateObject private var securityManager = SecurityAndNotificationManager.shared
-    @State private var isFaceIDUnlocked = false
+    
+    private var isUnlocked: Bool {
+        securityManager.isUnlocked
+    }
     
     var body: some View {
         MultiplatformNavigationStack {
@@ -21,7 +24,7 @@ struct ChatsView: View {
                     .ignoresSafeArea()
                 
                 if authManager.isLoggedIn {
-                    if isFaceIDUnlocked {
+                    if isUnlocked {
                         ScrollView {
                             VStack(spacing: 16) {
                                 if isLoading && rooms.isEmpty {
@@ -49,7 +52,7 @@ struct ChatsView: View {
                                     .padding(.vertical, 80)
                                 } else {
                                     ForEach(rooms) { room in
-                                        NavigationLink(destination: ChatRoomDetailView(room: room).environmentObject(authManager)) {
+                                        NavigationLink(destination: NavigationLazyView(ChatRoomDetailView(room: room).environmentObject(authManager))) {
                                             ChatRoomRowView(room: room)
                                                 .environmentObject(authManager)
                                         }
@@ -119,7 +122,9 @@ struct ChatsView: View {
                         .liquidGlass(cornerRadius: 20, glowColor: ForkarTheme.accent)
                         .padding(.horizontal, 20)
                         .onAppear {
-                            unlockChats()
+                            if !securityManager.isUnlocked {
+                                unlockChats()
+                            }
                         }
                     }
                 } else {
@@ -169,7 +174,7 @@ struct ChatsView: View {
             }
             .navigationTitle("Chats")
             .toolbar {
-                if authManager.isLoggedIn && isFaceIDUnlocked {
+                if authManager.isLoggedIn && isUnlocked {
                     #if os(iOS)
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(action: {
@@ -202,7 +207,7 @@ struct ChatsView: View {
                 )
             }
             .onAppear {
-                if authManager.isLoggedIn && isFaceIDUnlocked {
+                if authManager.isLoggedIn && isUnlocked {
                     Task {
                         await loadRooms()
                     }
@@ -212,8 +217,13 @@ struct ChatsView: View {
     }
     
     private func unlockChats() {
+        if securityManager.isUnlocked {
+            Task {
+                await loadRooms()
+            }
+            return
+        }
         securityManager.authenticateBiometrics { success in
-            self.isFaceIDUnlocked = success
             if success {
                 Task {
                     await loadRooms()
@@ -464,5 +474,16 @@ struct CreateGroupSheetView: View {
         #if os(macOS)
         .frame(minWidth: 460, idealWidth: 500, minHeight: 340, idealHeight: 380)
         #endif
+    }
+}
+
+// MARK: - NavigationLazyView for On-Demand Detail Loading
+struct NavigationLazyView<Content: View>: View {
+    let build: () -> Content
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+    var body: Content {
+        build()
     }
 }

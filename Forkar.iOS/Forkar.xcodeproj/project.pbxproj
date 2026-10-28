@@ -87,9 +87,14 @@
 		B80595BF2FFF0CBA0045B9C8 /* Exceptions for "Forkar" folder in "Forkar" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Forkar.xcodeproj,
+				ForkarEcoWidgetExtension,
 				Info.plist,
 				README.md,
+				SUPABASE_SCHEMA.md,
+				ShineMaps,
 				Watch,
+				project.yml,
 			);
 			target = B80595992FFF02310045B9C8 /* Forkar */;
 		};

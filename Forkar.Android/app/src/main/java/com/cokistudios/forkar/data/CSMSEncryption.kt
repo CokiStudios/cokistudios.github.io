@@ -38,18 +38,37 @@ object CSMSEncryption {
         return try {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
             if (keyStore.containsAlias(MASTER_ALIAS)) {
-                keyStore.getKey(MASTER_ALIAS, null) as? SecretKey
-            } else {
-                val keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
-                val spec = KeyGenParameterSpec.Builder(
-                    MASTER_ALIAS,
-                    KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-                )
-                    .setKeySize(256)
-                    .build()
-                keyGen.init(spec)
-                keyGen.generateKey()
+                return keyStore.getKey(MASTER_ALIAS, null) as? SecretKey
             }
+
+            val keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
+
+            // Intento 1: Solicitar respaldo por StrongBox Keymaster si está disponible (Android P+)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                try {
+                    val strongBoxSpec = KeyGenParameterSpec.Builder(
+                        MASTER_ALIAS,
+                        KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+                    )
+                        .setKeySize(256)
+                        .setIsStrongBoxBacked(true)
+                        .build()
+                    keyGen.init(strongBoxSpec)
+                    return keyGen.generateKey()
+                } catch (e: Exception) {
+                    Log.i(TAG, "StrongBox unavailable on device, falling back to TEE: ${e.message}")
+                }
+            }
+
+            // Intento 2: Respaldo por hardware TEE estándar
+            val teeSpec = KeyGenParameterSpec.Builder(
+                MASTER_ALIAS,
+                KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+            )
+                .setKeySize(256)
+                .build()
+            keyGen.init(teeSpec)
+            keyGen.generateKey()
         } catch (e: Exception) {
             Log.w(TAG, "AndroidKeyStore hardware unavailable, fallback to deterministic derivation", e)
             null
@@ -61,8 +80,9 @@ object CSMSEncryption {
         // Inicializa el hardware keystore para asegurar presencia del enclave
         getOrCreateHardwareKey()
 
+        val cleanRoomId = roomId.trim().lowercase()
         val salt = "CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"
-        val input = "$roomId:$salt".toByteArray(StandardCharsets.UTF_8)
+        val input = "$cleanRoomId:$salt".toByteArray(StandardCharsets.UTF_8)
         val sha256 = MessageDigest.getInstance("SHA-256")
         val keyBytes = sha256.digest(input)
         return SecretKeySpec(keyBytes, "AES")

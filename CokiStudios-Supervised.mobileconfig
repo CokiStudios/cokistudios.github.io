@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadDescription</key>
+  <string>Políticas de Supervisión y Seguridad de Coki Studios</string>
+  <key>PayloadDisplayName</key>
+  <string>Coki Studios Supervised Fleet Policy</string>
+  <key>PayloadIdentifier</key>
+  <string>com.cokistudios.supervised.policy</string>
+  <key>PayloadOrganization</key>
+  <string>Coki Studios</string>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadUUID</key>
+  <string>C0C10000-LOCK-4MDM-C003-RESTRICTIONS01</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadRemovalDisallowed</key>
+  <true/>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key>
+      <string>com.apple.applicationaccess</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadIdentifier</key>
+      <string>com.cokistudios.restrictions</string>
+      <key>PayloadUUID</key>
+      <string>C0C10000-LOCK-4MDM-C003-APPACCESS001</string>
+      <key>PayloadDisplayName</key>
+      <string>Coki Studios Security Restrictions</string>
+      <key>allowEraseContentAndSettings</key>
+      <false/>
+      <key>allowAppRemoval</key>
+      <false/>
+      <key>allowUntrustedTLSPrompts</key>
+      <false/>
+      <key>allowPairing</key>
+      <true/>
+    </dict>
+  </array>
+</dict>
+</plist>

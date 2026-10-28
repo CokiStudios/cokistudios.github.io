@@ -148,6 +148,44 @@ A partir de la documentación oficial de Apple Developer para Apple Intelligence
   - `CSMSMediaImageView` compatible universalmente con Base64 data URIs, archivos locales y URLs remotas de CDN.
   - En Android: Despliega guía explicativa indicando la exclusividad de ImagePlayground en Apple OSes y permitiendo adjuntos directos con `📎`.
 
+### 8. Servidor MDM Nativo en Cloudflare Worker & Bóveda SHSH/ECID
+- **Arquitectura Serverless Apple MDM**:
+  - Módulo [`src/mdm.js`](file:///Users/jerix/cokistudios.github.io/src/mdm.js) en Cloudflare Worker (`cokistudios.com/api/mdm/*` y subdominio `mdm.cokistudios.com`).
+  - Parser y serializador de XML Plist de Apple en JavaScript puro en el Edge.
+  - Endpoints `/api/mdm/checkin` (Authenticate, TokenUpdate, CheckOut) y `/api/mdm/connect` (despacho de comandos MDM y acuses de recibo).
+  - Generador dinámico de perfiles `.mobileconfig` de enrolamiento y supervisión con Single App Mode (Kiosk) para Forkar.
+- **Bóveda de ECID & SHSH2 Blobs**:
+  - Tablas en Supabase: `public.managed_devices`, `public.device_shsh_blobs`, `public.mdm_commands`.
+  - Captura y normalización del **ECID** (Exclusive Chip ID) a nivel de hardware.
+  - Solicitud y preservación en vivo de firmas TSS directamente con Apple (`gs.apple.com/TSS/controller?action=2`).
+  - Script nativo zsh [`scripts/cs_device_provision.sh`](file:///Users/jerix/cokistudios.github.io/scripts/cs_device_provision.sh) para detección USB, extracción de ECID/UDID y provisión con 1 click vía Apple Configurator.
+
+### 9. HiOP para iOS 9.3.6 (Objective-C + Theos + iCloud)
+- **App Nativa 32-bit ARMv7 ([`HiOP.iOS9/`](file:///Users/jerix/cokistudios.github.io/HiOP.iOS9/))**:
+  - Compilación cruzada con Theos (`ARCHS = armv7`, `TARGET = iphone:clang:11.4:9.0` con SDK `iPhoneOS11.4.sdk`).
+  - Diseñada para la pantalla Retina del iPad 3 (`iPad3,3` / Apple A5X).
+  - Editor de código nativo para Looping Script con consola de eventos en tiempo real.
+- **Sincronización con iCloud**:
+  - [`HiOPCloudSyncManager.m`](file:///Users/jerix/cokistudios.github.io/HiOP.iOS9/HiOPCloudSyncManager.m) con `NSUbiquitousKeyValueStore` para propagación inmediata entre el iPad y la nube.
+  - Detección de cuenta con `ubiquityIdentityToken` y fallback a almacenamiento local persistente.
+  - Empaquetado automático en [`HiOP-iOS9.ipa`](file:///Users/jerix/cokistudios.github.io/HiOP-iOS9.ipa) y paquete Debian `.deb` para distribución por Apple Configurator o Cydia.
+
+### 10. Motor Looping v2.9: Experiencia Declarativa SwiftUI & Transpilador Swift 6
+- **Sintaxis Declarativa Tipo SwiftUI**:
+  - Definición de componentes con `view Name { ... }` o `component Name { ... }`.
+  - Gestión de estado reactivo nativo con `@state var = val` y enlace bidireccional `$binding`.
+  - Contenedores de disposición jerárquica: `VStack`, `HStack`, `ZStack`, `List`, `ScrollView`, `Section`, `Group`, `ForEach`.
+  - Controles e indicadores: `Text`, `Button`, `Image(systemName:)`, `TextField`, `Toggle`, `Slider`, `ProgressView`, `Spacer`, `Divider`, `Badge`.
+  - Modificadores fluidos encadenados con notación de punto (`.padding()`, `.background()`, `.foregroundColor()`, `.tint()`, `.cornerRadius()`, `.frame()`, `.font()`, `.fontWeight()`, `.buttonStyle()`).
+- **Canvas TUI en Vivo en Terminal**:
+  - Comando `looping preview <archivo.loop> [Componente]` que renderiza el árbol jerárquico visual y un marco de dispositivo interactivo en ASCII/ANSI de alta fidelidad.
+- **Transpilador y Compilador Nativo Swift 6 / Mach-O**:
+  - `looping compile app.loop --target swiftui -o MyApp.swift`: genera código Swift 6 idiomático con `@main`, `#Preview` y `struct ...: View`.
+  - `looping compile app.loop --target swiftui -o build/MyApp`: compila directamente a binario ejecutable Mach-O arm64 mediante `swiftc`.
+- **Suite de Pruebas y Playground Web**:
+  - 56/56 pruebas unitarias pasando al 100% en `./bin/looping test`.
+  - Preset interactivo SwiftUI en [`developer.html`](file:///Users/jerix/cokistudios.github.io/developer.html) y [`assets/js/looping-repl.js`](file:///Users/jerix/cokistudios.github.io/assets/js/looping-repl.js).
+
 ---
 
 ## 4. RUTAS Y ARCHIVOS CLAVE

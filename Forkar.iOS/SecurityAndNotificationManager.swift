@@ -46,9 +46,17 @@ class SecurityAndNotificationManager: ObservableObject {
         #endif
     }
     
+    private var currentContext: LAContext?
+    
     // MARK: - Face ID / Touch ID Authentication
     func authenticateBiometrics(reason: String = "Autentícate para acceder a los chats privados de Forkar", completion: @escaping (Bool) -> Void) {
+        if isUnlocked {
+            completion(true)
+            return
+        }
+        
         let context = LAContext()
+        self.currentContext = context
         var error: NSError?
         
         #if os(macOS)
@@ -60,23 +68,25 @@ class SecurityAndNotificationManager: ObservableObject {
         #endif
         
         if context.canEvaluatePolicy(policy, error: &error) {
-            context.evaluatePolicy(policy, localizedReason: reason) { success, evaluateError in
+            context.evaluatePolicy(policy, localizedReason: reason) { [weak self] success, evaluateError in
                 DispatchQueue.main.async {
                     if success {
-                        self.isUnlocked = true
-                        self.authError = nil
+                        self?.isUnlocked = true
+                        self?.authError = nil
                         completion(true)
                     } else {
-                        self.isUnlocked = false
-                        self.authError = evaluateError?.localizedDescription ?? "Autenticación cancelada o fallida"
+                        self?.isUnlocked = false
+                        self?.authError = evaluateError?.localizedDescription ?? "Autenticación cancelada o fallida"
                         completion(false)
                     }
+                    self?.currentContext = nil
                 }
             }
         } else {
             // Fallback si el dispositivo no tiene Face ID/Touch ID ni Passcode
             DispatchQueue.main.async {
                 self.isUnlocked = true
+                self.currentContext = nil
                 completion(true)
             }
         }
