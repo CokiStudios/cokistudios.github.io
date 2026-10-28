@@ -185,7 +185,7 @@ Añade un repositorio de código Git directamente:
 smiledev add-repo https://github.com/usuario/mis-modulos-looping.git
 
 # Enlace directo a subárbol/carpeta de GitHub (URL directa del navegador)
-smiledev add-repo https://github.com/anonymus-devop/forkbot-story-sandbox/tree/main/addons
+smiledev add-repo https://github.com/usuario/mi-coleccion-addons/tree/main/addons
 ```
 * **Soporte de Subárboles de GitHub (`tree/<rama>/<carpeta>`)**: Puedes pegar directamente la URL copiada de tu navegador web apuntando a una carpeta (`addons/`, `modules/`, etc.); `smiledev` analizará de forma autónoma el repositorio base `.git`, la rama especificada y la subcarpeta, verificando los módulos existentes vía GitHub Raw y Git.
 * **Modo Monorepo**: Una carpeta `modules/<nombre-modulo>/smile.json` o `addons/<nombre-modulo>/smile.json` dentro del repositorio Git.

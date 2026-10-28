@@ -710,7 +710,7 @@ define game "QuantumRunner2D" version 2.8:
     spawn.heart(at: (590, 140), heal: 35)
 
     # ── Enemigo Autónomo (Derrotable por pisada o disparando) ──
-    spawn.enemy(name: "CorruptedForkbot", at: (800, 216), range: (780, 930), speed: 70, health: 30)
+    spawn.enemy(name: "CorruptedDrone", at: (800, 216), range: (780, 930), speed: 70, health: 30)
 
     # ── Portal de Victoria ──
     spawn.portal(at: (1180, 308), label: "NEON HUB")

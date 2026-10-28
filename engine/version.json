@@ -10,7 +10,7 @@
   "min_macos": "11.0",
   "release_notes": "Looping Engine v1.0.0 Commercial Edition (First Production Release): Full 2D Game Quantum Physics (Coyote time, Jump buffering, Dash trails, Squash & stretch, Web Audio synth, touch & gamepad controls), loop-node-window v2.0.0 dynamic window & IPC architecture, Universal Module Resolution System, SwiftUI Terminal TUI Preview Canvas & Swift Transpiler, Extended Crypto (CRC-32, constant_time_eq, csms_payload), and comprehensive verification suite (57/57 tests passed). Legacy developer builds consolidated into Architecture series (2.8A, 2.7A, 2.6A).",
   "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.0.0-commercial-darwin-universal.tar.gz",
-  "tarball_sha256": "37e14364be1a013fe28ac2c92986519476136bb62249063fd5d4a688d9651138",
+  "tarball_sha256": "efb7aa54c07c9e3446590985435b6f3653df82c26a6ae0ebc92cb8828c4af25c",
   "installer_script_url": "https://repo.cokistudios.com/engine/install.sh",
   "pkg_url": "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
   "pkg_sha256": "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
@@ -19,7 +19,7 @@
   "binaries": {
     "looping": {
       "url": "https://repo.cokistudios.com/engine/looping",
-      "sha256": "8b73e5ac1d2256da19152d1bac817fa7ae91517db4e3c147596702b211495f83"
+      "sha256": "12def1f59b2668015435c562d0ff6c0bf92beb7c83716a3c5a79919ccfdb9ba8"
     },
     "smiledev": {
       "url": "https://repo.cokistudios.com/engine/smiledev",

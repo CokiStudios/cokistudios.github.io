@@ -1046,9 +1046,10 @@ public:
             return std::make_shared<ImportStmt>(mod, "", true);
         }
 
-        // 4. Module import: import loop.ui as ui OR use loop::ui
+        // 4. Module import: import loop.ui as ui OR use loop::ui OR use module "name"
         if (s.rfind("import ", 0) == 0) {
             std::string rem = trim(s.substr(7));
+            if (rem.rfind("module ", 0) == 0) rem = trim(rem.substr(7));
             std::string mod = rem;
             std::string alias = "";
             auto as_pos = rem.find(" as ");
@@ -1056,10 +1057,13 @@ public:
                 mod = trim(rem.substr(0, as_pos));
                 alias = trim(rem.substr(as_pos + 4));
             }
+            mod = trim_quotes(mod);
             return std::make_shared<ImportStmt>(mod, alias, false);
         }
         if (s.rfind("use ", 0) == 0 && s.find("python") == std::string::npos) {
             std::string mod = trim(s.substr(4));
+            if (mod.rfind("module ", 0) == 0) mod = trim(mod.substr(7));
+            mod = trim_quotes(mod);
             return std::make_shared<ImportStmt>(mod, "", false);
         }
 
@@ -1716,13 +1720,136 @@ public:
             return sp;
         }
 
-        // 23f. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...) / game.friction(...)
+        // 23f. Spawn Boss Entity: spawn.boss(...) / spawn boss ...
+        if (s.rfind("spawn.boss(", 0) == 0 || s.rfind("spawn boss", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "boss";
+            if (s.find('(') != std::string::npos && s.rfind("spawn boss", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", "TitanBoss");
+                auto at = args.get_pair("at", {900, 310});
+                auto sz = args.get_pair("size", {58, 76});
+                auto rng = args.get_pair("range", {at.first - 180, at.first + 180});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->min_pos = rng.first; sp->max_pos = rng.second;
+                sp->speed = args.get_num("speed", 95);
+                sp->health = args.get_num("health", 450);
+                sp->fire_rate = args.get_num("fire_rate", 1.7);
+                sp->color = args.get("color", "#ef4444");
+            } else {
+                sp->name = "TitanBoss";
+                sp->x = 900; sp->y = 310; sp->w = 58; sp->h = 76;
+                sp->min_pos = 720; sp->max_pos = 1080;
+                sp->speed = 95; sp->health = 450; sp->fire_rate = 1.7; sp->color = "#ef4444";
+            }
+            return sp;
+        }
+
+        // 23g. Spawn Checkpoint: spawn.checkpoint(...) / spawn checkpoint ...
+        if (s.rfind("spawn.checkpoint(", 0) == 0 || s.rfind("spawn checkpoint", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "checkpoint";
+            if (s.find('(') != std::string::npos && s.rfind("spawn checkpoint", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {500, 310});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = 28; sp->h = 56;
+                sp->text = args.get("label", !args.positional.empty() ? args.positional[0] : "CHECKPOINT");
+                sp->color = args.get("color", "#38bdf8");
+            } else {
+                sp->x = 500; sp->y = 310; sp->w = 28; sp->h = 56; sp->text = "CHECKPOINT"; sp->color = "#38bdf8";
+            }
+            return sp;
+        }
+
+        // 23h. Spawn Gravity / Physics Zone: spawn.gravity_zone(...) / spawn.zone(...) / spawn gravity_zone ...
+        if (s.rfind("spawn.gravity_zone(", 0) == 0 || s.rfind("spawn.zone(", 0) == 0 || s.rfind("spawn gravity_zone", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "gravity_zone";
+            if (s.find('(') != std::string::npos && s.rfind("spawn gravity_zone", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {400, 100});
+                auto sz = args.get_pair("size", {300, 300});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->scale = args.get_num("scale", args.get_num("gravity_scale", 0.35));
+                sp->wind_x = args.get_num("wind_x", 0);
+                sp->wind_y = args.get_num("wind_y", 0);
+                sp->text = args.get("label", "LOW-G ZONE");
+                sp->color = args.get("color", "#c084fc");
+            } else {
+                sp->x = 400; sp->y = 100; sp->w = 300; sp->h = 300; sp->scale = 0.35; sp->text = "LOW-G ZONE"; sp->color = "#c084fc";
+            }
+            return sp;
+        }
+
+        // 23i. Spawn Teleporter: spawn.teleporter(...) / spawn teleporter ...
+        if (s.rfind("spawn.teleporter(", 0) == 0 || s.rfind("spawn teleporter", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "teleporter";
+            if (s.find('(') != std::string::npos && s.rfind("spawn teleporter", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {400, 300});
+                auto to = args.get_pair("to", {800, 200});
+                sp->x = at.first; sp->y = at.second;
+                sp->to_x = to.first; sp->to_y = to.second;
+                sp->w = 38; sp->h = 58;
+                sp->text = args.get("label", "WARP");
+                sp->color = args.get("color", "#00f5d4");
+            } else {
+                sp->x = 400; sp->y = 300; sp->to_x = 800; sp->to_y = 200; sp->w = 38; sp->h = 58; sp->text = "WARP"; sp->color = "#00f5d4";
+            }
+            return sp;
+        }
+
+        // 23j. Spawn Breakable Block: spawn.breakable(...) / spawn breakable ...
+        if (s.rfind("spawn.breakable(", 0) == 0 || s.rfind("spawn breakable", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "breakable";
+            if (s.find('(') != std::string::npos && s.rfind("spawn breakable", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {300, 260});
+                auto sz = args.get_pair("size", {36, 72});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->health = args.get_num("health", 40);
+                sp->points = args.get_num("points", 120);
+                sp->color = args.get("color", "#f59e0b");
+            } else {
+                sp->x = 300; sp->y = 260; sp->w = 36; sp->h = 72; sp->health = 40; sp->points = 120; sp->color = "#f59e0b";
+            }
+            return sp;
+        }
+
+        // 23k. Spawn Laser Hazard: spawn.laser_hazard(...) / spawn laser_hazard ...
+        if (s.rfind("spawn.laser_hazard(", 0) == 0 || s.rfind("spawn laser_hazard", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "laser_hazard";
+            if (s.find('(') != std::string::npos && s.rfind("spawn laser_hazard", 0) != 0) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {350, 240});
+                auto sz = args.get_pair("size", {12, 110});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = sz.first; sp->h = sz.second;
+                sp->interval = args.get_num("interval", 2.0);
+                sp->damage = args.get_num("damage", 30);
+                sp->color = args.get("color", "#f43f5e");
+            } else {
+                sp->x = 350; sp->y = 240; sp->w = 12; sp->h = 110; sp->interval = 2.0; sp->damage = 30; sp->color = "#f43f5e";
+            }
+            return sp;
+        }
+
+        // 23l. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...) / game.friction(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)
         if (s.rfind("game.gravity(", 0) == 0 || s.rfind("game.friction(", 0) == 0 || 
-            s.rfind("game.world(", 0) == 0 || s.rfind("game.lives(", 0) == 0 || s.rfind("game.camera(", 0) == 0) {
+            s.rfind("game.world(", 0) == 0 || s.rfind("game.lives(", 0) == 0 || s.rfind("game.camera(", 0) == 0 ||
+            s.rfind("game.scenario(", 0) == 0 || s.rfind("game.background(", 0) == 0 ||
+            s.rfind("game.physics(", 0) == 0 || s.rfind("game.time_scale(", 0) == 0) {
             std::string key = s.substr(5, s.find('(') - 5);
             auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-            double v1 = 0, v2 = 0;
-            std::string sv = "";
+            double v1 = 0, v2 = 0, v3 = 0;
+            std::string sv = "", sv2 = "", sv3 = "";
             if (key == "gravity") {
                 v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 980);
             } else if (key == "friction") {
@@ -1735,8 +1862,18 @@ public:
             } else if (key == "camera") {
                 sv = args.get("follow", "player");
                 v1 = args.get_num("smooth", 0.12);
+            } else if (key == "scenario" || key == "background") {
+                sv = !args.positional.empty() ? args.positional[0] : args.get("name", "CyberStage");
+                sv2 = args.get("weather", args.get("theme", "stars"));
+                sv3 = args.get("accent", args.get("bg", "#38bdf8"));
+            } else if (key == "physics") {
+                v1 = args.get_num("gravity", 980);
+                v2 = args.get_num("friction", 0.82);
+                v3 = args.get_num("time_scale", 1.0);
+            } else if (key == "time_scale") {
+                v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 1.0);
             }
-            return std::make_shared<GameConfigStmt>(key, v1, v2, sv);
+            return std::make_shared<GameConfigStmt>(key, v1, v2, sv, sv2, sv3, v3);
         }
 
         // 24. Audio Tone Directives: audio.tone(...) / @audio::tone(...) / sound.tone(...) / play tone ...

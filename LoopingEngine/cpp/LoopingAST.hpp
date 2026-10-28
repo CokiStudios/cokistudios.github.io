@@ -384,10 +384,10 @@ public:
     std::vector<std::string> actions_list;
 };
 
-// Spawn Entity: spawn sprite / platform / coin / bubbly_dot / spike / jump_pad / orb / moving_platform / enemy / heart / portal
+// Spawn Entity: spawn sprite / platform / coin / bubbly_dot / spike / jump_pad / orb / moving_platform / enemy / boss / heart / portal / checkpoint / gravity_zone / teleporter / breakable / laser_hazard
 class SpawnEntityStmt : public Stmt {
 public:
-    std::string entity_type; // "sprite", "platform", "coin", "bubbly_dot", "spike", "jump_pad", "orb", "moving_platform", "enemy", "heart", "portal"
+    std::string entity_type; // "sprite", "platform", "coin", "bubbly_dot", "spike", "jump_pad", "orb", "moving_platform", "enemy", "boss", "heart", "portal", "checkpoint", "gravity_zone", "teleporter", "breakable", "laser_hazard"
     std::string name;
     double x = 0, y = 0, w = 0, h = 0;
     std::string color;
@@ -400,17 +400,26 @@ public:
     double speed = 80;
     double power = 650;
     double health = 100;
+    double damage = 25;
+    double to_x = 0, to_y = 0;
+    double scale = 0.35;
+    double wind_x = 0, wind_y = 0;
+    double fire_rate = 1.8;
+    double interval = 2.0;
     std::string dest = "";
 };
 
-// Game World & Physics Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...)
+// Game World & Physics Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)
 class GameConfigStmt : public Stmt {
 public:
-    std::string config_key; // "gravity", "world", "camera", "lives", "friction"
-    double val1 = 0, val2 = 0;
+    std::string config_key; // "gravity", "world", "camera", "lives", "friction", "scenario", "physics", "time_scale"
+    double val1 = 0, val2 = 0, val3 = 0;
     std::string str_val = "";
-    GameConfigStmt(const std::string& key, double v1 = 0, double v2 = 0, const std::string& sv = "")
-        : config_key(key), val1(v1), val2(v2), str_val(sv) {}
+    std::string str_val2 = "";
+    std::string str_val3 = "";
+    GameConfigStmt(const std::string& key, double v1 = 0, double v2 = 0, const std::string& sv = "",
+                   const std::string& sv2 = "", const std::string& sv3 = "", double v3 = 0)
+        : config_key(key), val1(v1), val2(v2), val3(v3), str_val(sv), str_val2(sv2), str_val3(sv3) {}
 };
 
 // Emit Particles

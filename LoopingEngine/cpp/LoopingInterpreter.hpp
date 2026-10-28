@@ -3281,9 +3281,9 @@ public:
                         auto col = content.find(':', pos);
                         if (col == std::string::npos) return "";
                         auto q1 = content.find('"', col);
-                        if (q1 != std::string::npos) return "";
+                        if (q1 == std::string::npos) return "";
                         auto q2 = content.find('"', q1 + 1);
-                        if (q2 != std::string::npos) return "";
+                        if (q2 == std::string::npos) return "";
                         return content.substr(q1 + 1, q2 - q1 - 1);
                     };
 
@@ -3372,6 +3372,12 @@ public:
                         std::cout << color::GREEN << "[PYTHON BRIDGE]" << color::RESET << " Loaded module: " 
                                   << color::BOLD << mod << color::RESET << " (" << resolved_path << ")\n";
                     }
+                    return;
+                }
+                if (resolved_path.size() >= 3 && resolved_path.substr(resolved_path.size() - 3) == ".js") {
+                    variables[mod + ".node_script"] = Value(resolved_path);
+                    std::cout << color::YELLOW << "[NODE BRIDGE]" << color::RESET << " Linked Web/2D Stage Module: " 
+                              << color::BOLD << mod << color::RESET << " (" << resolved_path << ")\n";
                     return;
                 }
 
@@ -3498,6 +3504,24 @@ public:
             } else if (sp->entity_type == "heart") {
                 std::cout << color::GREEN << "[ITEM]" << color::RESET << " Health Pack at (" 
                           << sp->x << ", " << sp->y << ") [+" << sp->health << " HP]\n";
+            } else if (sp->entity_type == "boss") {
+                std::cout << color::RED << color::BOLD << "[BOSS]" << color::RESET << " Unleashed Boss \"" << sp->name 
+                          << "\" (HP: " << sp->health << " | FireRate: " << sp->fire_rate << "s | Patrol: " << sp->min_pos << ".." << sp->max_pos << ")\n";
+            } else if (sp->entity_type == "checkpoint") {
+                std::cout << color::GREEN << "[CHECKPOINT]" << color::RESET << " Respawn Beacon at (" 
+                          << sp->x << ", " << sp->y << ") [\"" << sp->text << "\"]\n";
+            } else if (sp->entity_type == "gravity_zone") {
+                std::cout << color::PURPLE << "[GRAVITY ZONE]" << color::RESET << " Anomaly Field at (" 
+                          << sp->x << ", " << sp->y << ") [" << sp->w << "x" << sp->h << " | Scale: " << sp->scale << "G | " << sp->text << "]\n";
+            } else if (sp->entity_type == "teleporter") {
+                std::cout << color::CYAN << "[TELEPORTER]" << color::RESET << " Quantum Warp (" 
+                          << sp->x << ", " << sp->y << ") -> (" << sp->to_x << ", " << sp->to_y << ") [\"" << sp->text << "\"]\n";
+            } else if (sp->entity_type == "breakable") {
+                std::cout << color::YELLOW << "[BREAKABLE]" << color::RESET << " Destructible Barrier at (" 
+                          << sp->x << ", " << sp->y << ") [HP: " << sp->health << "]\n";
+            } else if (sp->entity_type == "laser_hazard") {
+                std::cout << color::RED << "[LASER]" << color::RESET << " Rhythmic Laser Gate at (" 
+                          << sp->x << ", " << sp->y << ") [Interval: " << sp->interval << "s]\n";
             } else if (sp->entity_type == "portal") {
                 std::cout << color::PURPLE << "[PORTAL]" << color::RESET << " Stage Goal at (" 
                           << sp->x << ", " << sp->y << ") [\"" << sp->text << "\"]\n";
@@ -3516,6 +3540,12 @@ public:
             } else if (gcfg->config_key == "camera") {
                 std::cout << color::CYAN << "[CAMERA]" << color::RESET << " Follow: " 
                           << gcfg->str_val << " (smooth: " << gcfg->val1 << ")\n";
+            } else if (gcfg->config_key == "scenario" || gcfg->config_key == "background") {
+                std::cout << color::PURPLE << "[SCENARIO]" << color::RESET << " Loaded Stage Environment: \"" 
+                          << gcfg->str_val << "\" [Weather/FX: " << gcfg->str_val2 << " | Accent: " << gcfg->str_val3 << "]\n";
+            } else if (gcfg->config_key == "physics") {
+                std::cout << color::CYAN << "[PHYSICS ENGINE]" << color::RESET << " Gravity: " << gcfg->val1 
+                          << " | Friction: " << gcfg->val2 << " | TimeScale: " << gcfg->val3 << "x\n";
             } else {
                 std::cout << color::CYAN << "[GAME CONFIG]" << color::RESET << " " 
                           << gcfg->config_key << " = " << gcfg->val1 << "\n";

@@ -89,9 +89,9 @@ int run_tests() {
         std::cout << "  " << color::YELLOW << "⚠ [SKIP]" << color::RESET << " Python Bridge (No python executable in PATH)\n";
     }
 
-    // Test 10: Modern UI & Entity Directives
-    vm.execute_code("ui.card(at: (10, 20), size: (200, 100), title: \"Test Card\")\nspawn.sprite(\"Hero\", at: (50, 50), color: \"#38bdf8\")\naudio.tone(587, 80)");
-    assert_test("Modern Directives (ui.card, spawn.sprite, audio.tone)", true);
+    // Test 10: Modern UI, Scenario & Advanced 2D Game Directives
+    vm.execute_code("ui.card(at: (10, 20), size: (200, 100), title: \"Test Card\")\ngame.scenario(name: \"VoidStage\", weather: \"void\", accent: \"#c084fc\")\nspawn.sprite(\"Hero\", at: (50, 50), color: \"#38bdf8\")\nspawn.checkpoint(at: (200, 300), label: \"CP-1\")\nspawn.gravity_zone(at: (300, 100), size: (200, 200), scale: 0.35)\nspawn.teleporter(at: (500, 300), to: (700, 200), label: \"WARP\")\nspawn.breakable(at: (600, 260), size: (36, 72), health: 40)\nspawn.laser_hazard(at: (650, 240), size: (12, 110), interval: 2.0)\nspawn.boss(name: \"Blueline\", at: (900, 310), health: 450)\naudio.tone(587, 80)");
+    assert_test("Modern 2D Game Directives (scenario, checkpoint, gravity_zone, teleporter, breakable, laser, boss)", true);
 
     // Test 11: PyLoop Snippets & runpy
     if (vm.python_bridge.is_available) {
@@ -1402,15 +1402,34 @@ int main(int argc, char* argv[]) {
                 vm.current_window.show(true, "native");
             }
         } else {
-#ifdef __APPLE__
-            std::cout << color::GREEN << "[GUI LAUNCH]" << color::RESET 
-                      << " Opening native Loop OS Graphical Window...\n";
-            if (script_path.find("hiop") != std::string::npos) {
-                system("open -g \"hiOP.macOS/build/Build/Products/Release/hiOP.app\" 2>/dev/null || open \"hiOP.macOS/build/Build/Products/Release/hiOP.app\" 2>/dev/null");
+            // Check if script directory has story_window.js or if loop-node-window is available for 2D Stage GUI
+            std::string script_dir = ".";
+            size_t slash_pos = script_path.find_last_of("/\\");
+            if (slash_pos != std::string::npos) script_dir = script_path.substr(0, slash_pos);
+            std::string custom_win = script_dir + "/story_window.js";
+            std::ifstream cw_f(custom_win);
+            std::ifstream nw_f("modules/loop-node-window/index.js");
+            if (cw_f.good()) {
+                std::cout << color::GREEN << "[2D STAGE LAUNCH]" << color::RESET 
+                          << " Launching custom 2D Interactive Sandbox Window (" << custom_win << ")...\n";
+                std::string cmd = "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" node \"" + custom_win + "\"";
+                system(cmd.c_str());
+            } else if (nw_f.good()) {
+                std::cout << color::GREEN << "[2D STAGE LAUNCH]" << color::RESET 
+                          << " Launching loop-node-window 2D Quantum Stage for " << script_path << "...\n";
+                std::string cmd = "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" node \"modules/loop-node-window/index.js\" --game --script \"" + script_path + "\"";
+                system(cmd.c_str());
             } else {
-                system("open \"ShineLoopLauncher.macOS/build/Build/Products/Release/ShineLoopLauncher.app\" 2>/dev/null || open -g \"ShineLoopLauncher.macOS/build/Build/Products/Release/ShineLoopLauncher.app\" 2>/dev/null");
-            }
+#ifdef __APPLE__
+                std::cout << color::GREEN << "[GUI LAUNCH]" << color::RESET 
+                          << " Opening native Loop OS Graphical Window...\n";
+                if (script_path.find("hiop") != std::string::npos) {
+                    system("open -g \"hiOP.macOS/build/Build/Products/Release/hiOP.app\" 2>/dev/null || open \"hiOP.macOS/build/Build/Products/Release/hiOP.app\" 2>/dev/null");
+                } else {
+                    system("open \"ShineLoopLauncher.macOS/build/Build/Products/Release/ShineLoopLauncher.app\" 2>/dev/null || open -g \"ShineLoopLauncher.macOS/build/Build/Products/Release/ShineLoopLauncher.app\" 2>/dev/null");
+                }
 #endif
+            }
         }
     }
 
