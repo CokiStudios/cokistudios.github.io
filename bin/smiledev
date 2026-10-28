@@ -2106,24 +2106,29 @@ cmd_upgrade() {
     echo -e "${C_DIM}Checking for engine updates on repo.cokistudios.com/engine...${C_RESET}"
 
     local manifest=""
-    local manifest_url="https://repo.cokistudios.com/engine/latest.json"
-    manifest=$(curl -fsSL --connect-timeout 6 "$manifest_url" 2>/dev/null || true)
+    local manifest_url="https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/engine/latest.json"
+    manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "$manifest_url" 2>/dev/null || true)
 
     if [ -z "$manifest" ]; then
-        echo -e "${C_DIM}Primary repo mirror unreachable. Trying fallback CDN...${C_RESET}"
-        manifest=$(curl -fsSL --connect-timeout 6 "https://cokistudios.github.io/engine/latest.json" 2>/dev/null || true)
+        manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "https://repo.cokistudios.com/engine/latest.json" 2>/dev/null || true)
     fi
 
     if [ -z "$manifest" ]; then
-        manifest=$(curl -fsSL --connect-timeout 6 "https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/public/engine/latest.json" 2>/dev/null || true)
+        echo -e "${C_DIM}Primary repo mirror unreachable. Trying fallback CDN...${C_RESET}"
+        manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "https://cokistudios.github.io/engine/latest.json" 2>/dev/null || true)
     fi
 
     local self_bin
     self_bin="$(realpath "$0" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo "$0")"
     local repo_root="$(cd "$(dirname "$self_bin")/.." 2>/dev/null && pwd || true)"
 
-    if [ -z "$manifest" ] && [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/latest.json" ]; then
+    if [ -z "$manifest" ] && [ -n "$repo_root" ] && [ -f "$repo_root/engine/latest.json" ]; then
         echo -e "${C_DIM}Network mirrors unreachable. Using local workspace manifest...${C_RESET}"
+        manifest=$(cat "$repo_root/engine/latest.json")
+    fi
+
+    if [ -z "$manifest" ] && [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/latest.json" ]; then
+        echo -e "${C_DIM}Network mirrors unreachable. Using local public manifest...${C_RESET}"
         manifest=$(cat "$repo_root/public/engine/latest.json")
     fi
 
@@ -2199,23 +2204,46 @@ except Exception as e:
     tmp_dir=$(mktemp -d /tmp/smiledev-upgrade-XXXXXX)
     local tmp_tar="$tmp_dir/engine.tar.gz"
 
-    if ! curl -fsSL "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
-        if [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
-            echo -e "${C_DIM}Network tarball unavailable. Using workspace package...${C_RESET}"
-            cp "$repo_root/public/engine/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
-        elif [ -n "$repo_root" ] && [ -f "$repo_root/dist/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
-            echo -e "${C_DIM}Network tarball unavailable. Using dist package...${C_RESET}"
-            cp "$repo_root/dist/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
-        else
-            echo -e "${C_RED}✘ Error:${C_RESET} Failed to download release tarball from $tarball_url."
-            rm -rf "$tmp_dir"
-            exit 1
+    local download_success=false
+    # 1. Try local workspace package first if available
+    if [ -n "$repo_root" ] && [ -f "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
+        cp "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/dist/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
+        cp "$repo_root/dist/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
+        cp "$repo_root/public/engine/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
+        download_success=true
+    fi
+
+    # 2. Try direct GitHub raw stream (bypasses stale edge CDN caches)
+    if [ "$download_success" != true ]; then
+        local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/looping-v${remote_ver}-darwin-universal.tar.gz"
+        if curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null; then
+            download_success=true
+        elif curl -fsSL -H "Cache-Control: no-cache" "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
+            download_success=true
         fi
+    fi
+
+    if [ "$download_success" != true ]; then
+        echo -e "${C_RED}✘ Error:${C_RESET} Failed to download release tarball from $tarball_url."
+        rm -rf "$tmp_dir"
+        exit 1
     fi
 
     if [ -n "$expected_sha" ]; then
         local actual_sha
         actual_sha=$(shasum -a 256 "$tmp_tar" | awk '{print $1}')
+        if [ "$actual_sha" != "$expected_sha" ]; then
+            # Direct GitHub raw fallback in case CDN returned stale cached object
+            local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/looping-v${remote_ver}-darwin-universal.tar.gz"
+            echo -e "   ${C_DIM}CDN cache mismatch. Fetching direct stream from GitHub release...${C_RESET}"
+            curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null || true
+            actual_sha=$(shasum -a 256 "$tmp_tar" | awk '{print $1}')
+        fi
+
         if [ "$actual_sha" != "$expected_sha" ]; then
             echo -e "${C_RED}✘ Security Verification Failed:${C_RESET} SHA256 mismatch!"
             echo -e "   Expected: $expected_sha"
