@@ -300,6 +300,40 @@ CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
 LOCAL_DIR = os.path.abspath("modules/" + mod_name)
 GLOBAL_DIR = os.path.expanduser("~/.smiledev/modules/" + mod_name)
 
+def parse_git_url(u):
+    u = u.strip()
+    res = {
+        "is_git": False,
+        "clone_url": u,
+        "owner": "",
+        "repo": "",
+        "branch": "main",
+        "subpath": "",
+        "raw_base": ""
+    }
+    if not (u.endswith(".git") or "github.com" in u or "gitlab.com" in u):
+        return res
+    res["is_git"] = True
+    if "github.com" in u:
+        clean = u.split("://")[-1]
+        parts = clean.split("/")
+        if len(parts) >= 3:
+            owner = parts[1]
+            repo = parts[2].replace(".git", "")
+            res["owner"] = owner
+            res["repo"] = repo
+            res["clone_url"] = f"https://github.com/{owner}/{repo}.git"
+            branch = "main"
+            subpath = ""
+            if len(parts) >= 5 and parts[3] in ["tree", "blob"]:
+                branch = parts[4]
+                if len(parts) > 5:
+                    subpath = "/".join(parts[5:]).rstrip("/")
+            res["branch"] = branch
+            res["subpath"] = subpath
+            res["raw_base"] = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/"
+    return res
+
 print(f"{C_CYAN}⚡ smiledev install:{C_RESET} Resolviendo módulo '{C_BOLD}{mod_name}{C_RESET}' en registros...")
 
 candidates = []
@@ -375,36 +409,58 @@ for r_url in repos:
 
     # B) Repositorio Git
     if r_url.endswith(".git") or "github.com" in r_url or "gitlab.com" in r_url:
-        if "github.com" in r_url:
-            clean_git = r_url.replace("https://github.com/", "").replace("http://github.com/", "")
-            if clean_git.endswith(".git"): clean_git = clean_git[:-4]
-            raw_branches = ["main", "master"]
-            raw_checks = [
+        ginfo = parse_git_url(r_url)
+        if ginfo["is_git"] and ginfo.get("raw_base"):
+            branches_to_try = [ginfo["branch"]]
+            for fb in ["main", "master"]:
+                if fb not in branches_to_try:
+                    branches_to_try.append(fb)
+            
+            raw_checks = []
+            sub = ginfo["subpath"]
+            if sub:
+                raw_checks.extend([
+                    f"{sub}/smile.json",
+                    f"{sub}/{mod_name}/smile.json",
+                    f"{sub}/modules/{mod_name}/smile.json",
+                ])
+            raw_checks.extend([
                 f"modules/{mod_name}/smile.json",
+                f"addons/{mod_name}/smile.json",
+                f"addons/smile.json",
+                f"packages/{mod_name}/smile.json",
                 f"{mod_name}/smile.json",
                 "smile.json"
-            ]
+            ])
+            
             git_found = False
-            for b in raw_branches:
+            for b in branches_to_try:
                 if git_found: break
                 for rc in raw_checks:
-                    raw_u = f"https://raw.githubusercontent.com/{clean_git}/{b}/{rc}"
+                    raw_u = f"https://raw.githubusercontent.com/{ginfo['owner']}/{ginfo['repo']}/{b}/{rc}"
                     try:
                         req = urllib.request.Request(raw_u, headers={"User-Agent": UA})
                         with urllib.request.urlopen(req, timeout=3) as res:
                             mf = json.load(res)
                             if mf.get("name") == mod_name:
+                                matched_sub = os.path.dirname(rc)
+                                source_label = f"Repositorio Git ({ginfo['owner']}/{ginfo['repo']}"
+                                if matched_sub:
+                                    source_label += f":{matched_sub}"
+                                source_label += ")"
                                 candidates.append({
                                     "type": "git",
-                                    "source_name": f"Repositorio Git ({r_url})",
+                                    "source_name": source_label,
                                     "repo_url": r_url,
+                                    "clone_url": ginfo["clone_url"],
                                     "version": mf.get("version", "1.0.0"),
-                                    "author": mf.get("author_name", "Git"),
+                                    "author": mf.get("author_name", mf.get("author", "Git")),
                                     "description": mf.get("description", ""),
                                     "language": mf.get("language", "loop"),
                                     "entry_point": mf.get("entry_point"),
-                                    "subpath": os.path.dirname(rc),
-                                    "branch": b
+                                    "subpath": matched_sub,
+                                    "branch": b,
+                                    "manifest": mf
                                 })
                                 git_found = True
                                 break
@@ -718,21 +774,60 @@ try:
 
     # D) Instalación desde Git
     elif chosen["type"] == "git":
-        git_url = chosen["repo_url"]
+        git_url = chosen.get("clone_url") or chosen["repo_url"]
+        branch = chosen.get("branch") or "main"
         subpath = chosen.get("subpath", "")
         tmp_clone = tempfile.mkdtemp(prefix="smiledev_git_")
-        ret = os.system(f"git clone --depth 1 '{git_url}' '{tmp_clone}' > /dev/null 2>&1")
-        if ret == 0:
-            src_clone_dir = os.path.join(tmp_clone, subpath) if subpath and subpath != "." else tmp_clone
-            if not os.path.exists(os.path.join(src_clone_dir, "smile.json")):
-                if os.path.exists(os.path.join(tmp_clone, "modules", mod_name, "smile.json")):
-                    src_clone_dir = os.path.join(tmp_clone, "modules", mod_name)
+        
+        # Clonación superficial con rama específica
+        ret = os.system(f"git clone --depth 1 -b '{branch}' '{git_url}' '{tmp_clone}' > /dev/null 2>&1")
+        if ret != 0:
+            ret = os.system(f"git clone --depth 1 '{git_url}' '{tmp_clone}' > /dev/null 2>&1")
             
-            for base_dir in target_dirs:
-                if os.path.exists(base_dir):
-                    shutil.rmtree(base_dir, ignore_errors=True)
-                shutil.copytree(src_clone_dir, base_dir, ignore=shutil.ignore_patterns(".git"))
-            installed_ok = True
+        if ret == 0:
+            src_clone_dir = None
+            if subpath:
+                cand_p = os.path.join(tmp_clone, subpath)
+                if os.path.isfile(os.path.join(cand_p, "smile.json")):
+                    try:
+                        if json.load(open(os.path.join(cand_p, "smile.json"))).get("name") == mod_name:
+                            src_clone_dir = cand_p
+                    except Exception: pass
+                if not src_clone_dir and os.path.isfile(os.path.join(cand_p, mod_name, "smile.json")):
+                    src_clone_dir = os.path.join(cand_p, mod_name)
+
+            if not src_clone_dir:
+                for c_dir in [
+                    os.path.join(tmp_clone, "modules", mod_name),
+                    os.path.join(tmp_clone, "addons", mod_name),
+                    os.path.join(tmp_clone, "addons"),
+                    os.path.join(tmp_clone, mod_name),
+                    tmp_clone
+                ]:
+                    if os.path.isfile(os.path.join(c_dir, "smile.json")):
+                        try:
+                            if json.load(open(os.path.join(c_dir, "smile.json"))).get("name") == mod_name:
+                                src_clone_dir = c_dir
+                                break
+                        except Exception: pass
+
+            if not src_clone_dir:
+                for root, dirs, files in os.walk(tmp_clone):
+                    if "smile.json" in files:
+                        try:
+                            if json.load(open(os.path.join(root, "smile.json"))).get("name") == mod_name:
+                                src_clone_dir = root
+                                break
+                        except Exception: pass
+
+            if src_clone_dir and os.path.isdir(src_clone_dir):
+                for base_dir in target_dirs:
+                    if os.path.exists(base_dir):
+                        shutil.rmtree(base_dir, ignore_errors=True)
+                    shutil.copytree(src_clone_dir, base_dir, ignore=shutil.ignore_patterns(".git", ".github", "__pycache__"))
+                installed_ok = True
+            else:
+                print(f"{C_RED}✘ Error:{C_RESET} No se encontró la carpeta del módulo '{mod_name}' dentro del repositorio clonado.", file=sys.stderr)
         shutil.rmtree(tmp_clone, ignore_errors=True)
 
 except Exception as inst_err:
@@ -756,6 +851,26 @@ if os.path.isfile("./smile.json"):
         print(f"  ✔ Añadido a las dependencias de ./smile.json")
     except Exception:
         pass
+
+# Verificar e informar dependencias del módulo recién instalado
+check_dirs = [LOCAL_DIR, GLOBAL_DIR]
+for cd in check_dirs:
+    sm_p = os.path.join(cd, "smile.json")
+    if os.path.isfile(sm_p):
+        try:
+            m_installed = json.load(open(sm_p))
+            req_deps = m_installed.get("dependencies") or {}
+            if isinstance(req_deps, dict) and req_deps:
+                print(f"\n{C_BOLD}📦 Dependencias requeridas por '{mod_name}':{C_RESET}")
+                for dep_k, dep_v in req_deps.items():
+                    is_dep_present = os.path.isdir(f"modules/{dep_k}") or os.path.isdir(os.path.expanduser(f"~/.smiledev/modules/{dep_k}"))
+                    if is_dep_present:
+                        print(f"  ✔ {C_AQUA}{dep_k}{C_RESET} ({dep_v}): {C_GREEN}instalada{C_RESET}")
+                    else:
+                        print(f"  ⚡ {C_YELLOW}{dep_k}{C_RESET} ({dep_v}): no instalada (usa: {C_CYAN}smiledev install {dep_k}{C_RESET})")
+            break
+        except Exception:
+            pass
 
 print(f"\n{C_GREEN}✔ [SUCCESS]{C_RESET} Módulo {C_BOLD}{mod_name}{C_RESET} v{chosen['version']} instalado con éxito.")
 print(f"   • Origen:  {C_CYAN}{chosen['source_name']}{C_RESET}")
@@ -1057,6 +1172,32 @@ repo_url = "$repo_url".strip()
 CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
 UA = "smiledev/$SMILE_VERSION (Coki Studios Looping Engine; Darwin; arm64)"
 
+def parse_git_url(u):
+    u = u.strip()
+    res = {"is_git": False, "clone_url": u, "owner": "", "repo": "", "branch": "main", "subpath": "", "raw_base": ""}
+    if not (u.endswith(".git") or "github.com" in u or "gitlab.com" in u):
+        return res
+    res["is_git"] = True
+    if "github.com" in u:
+        clean = u.split("://")[-1]
+        parts = clean.split("/")
+        if len(parts) >= 3:
+            owner = parts[1]
+            repo = parts[2].replace(".git", "")
+            res["owner"] = owner
+            res["repo"] = repo
+            res["clone_url"] = f"https://github.com/{owner}/{repo}.git"
+            branch = "main"
+            subpath = ""
+            if len(parts) >= 5 and parts[3] in ["tree", "blob"]:
+                branch = parts[4]
+                if len(parts) > 5:
+                    subpath = "/".join(parts[5:]).rstrip("/")
+            res["branch"] = branch
+            res["subpath"] = subpath
+            res["raw_base"] = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/"
+    return res
+
 C_RESET = "\033[0m"
 C_BOLD = "\033[1m"
 C_GREEN = "\033[38;5;48m"
@@ -1081,9 +1222,40 @@ if os.path.isdir(clean_local):
 
 # 2. Comprobar Git
 elif repo_url.endswith(".git") or "github.com" in repo_url or "gitlab.com" in repo_url:
+    ginfo = parse_git_url(repo_url)
     detected_type = "Repositorio Git"
-    is_reachable = True
-    note = "Clonación y consulta remota git disponible"
+    if ginfo.get("owner") and ginfo.get("repo"):
+        sub_info = f", Subárbol: '{ginfo['subpath']}'" if ginfo.get("subpath") else ""
+        detected_type = f"Repositorio Git (GitHub: {ginfo['owner']}/{ginfo['repo']}{sub_info})"
+    is_reachable = False
+    
+    # Probar si el subpath o raíz tiene smile.json directamente
+    if ginfo.get("raw_base"):
+        test_paths = []
+        if ginfo.get("subpath"):
+            test_paths.append(f"{ginfo['raw_base']}{ginfo['subpath']}/smile.json")
+        test_paths.append(f"{ginfo['raw_base']}smile.json")
+        for tp in test_paths:
+            try:
+                req_t = urllib.request.Request(tp, headers={"User-Agent": UA})
+                with urllib.request.urlopen(req_t, timeout=4) as tr:
+                    if tr.status == 200:
+                        m_data = json.load(tr)
+                        is_reachable = True
+                        note = f"Módulo '{m_data.get('name')}' v{m_data.get('version', '1.0.0')} verificado vía GitHub Raw"
+                        break
+            except Exception:
+                pass
+                
+    if not is_reachable:
+        # Fallback a git ls-remote
+        clone_u = ginfo.get("clone_url") or repo_url
+        ret = os.system(f"git ls-remote --exit-code '{clone_u}' HEAD > /dev/null 2>&1")
+        if ret == 0:
+            is_reachable = True
+            note = f"Conexión remota verificada con éxito ({clone_u})"
+        else:
+            note = f"No se pudo contactar el remoto git ({clone_u})"
 
 # 3. Comprobar HTTP / HTTPS
 elif repo_url.startswith("http://") or repo_url.startswith("https://"):
@@ -1146,6 +1318,32 @@ import json, os
 CONFIG_FILE = os.path.expanduser("$CONFIG_FILE")
 SUPABASE_URL = "$SUPABASE_URL"
 
+def parse_git_url(u):
+    u = u.strip()
+    res = {"is_git": False, "clone_url": u, "owner": "", "repo": "", "branch": "main", "subpath": "", "raw_base": ""}
+    if not (u.endswith(".git") or "github.com" in u or "gitlab.com" in u):
+        return res
+    res["is_git"] = True
+    if "github.com" in u:
+        clean = u.split("://")[-1]
+        parts = clean.split("/")
+        if len(parts) >= 3:
+            owner = parts[1]
+            repo = parts[2].replace(".git", "")
+            res["owner"] = owner
+            res["repo"] = repo
+            res["clone_url"] = f"https://github.com/{owner}/{repo}.git"
+            branch = "main"
+            subpath = ""
+            if len(parts) >= 5 and parts[3] in ["tree", "blob"]:
+                branch = parts[4]
+                if len(parts) > 5:
+                    subpath = "/".join(parts[5:]).rstrip("/")
+            res["branch"] = branch
+            res["subpath"] = subpath
+            res["raw_base"] = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/"
+    return res
+
 C_RESET = "\033[0m"
 C_BOLD = "\033[1m"
 C_GREEN = "\033[38;5;48m"
@@ -1179,8 +1377,16 @@ for r in repos:
     r_type = "Servidor HTTP Externo"
     if os.path.isdir(clean_p):
         r_type = "Directorio Local"
-    elif r.endswith(".git") or "github.com" in r:
-        r_type = "Repositorio Git"
+    elif r.endswith(".git") or "github.com" in r or "gitlab.com" in r:
+        ginfo = parse_git_url(r)
+        if ginfo.get("owner") and ginfo.get("repo"):
+            sub_info = f" (GitHub: {ginfo['owner']}/{ginfo['repo']}"
+            if ginfo.get("subpath"):
+                sub_info += f", Subárbol: '{ginfo['subpath']}'"
+            sub_info += f", Rama: '{ginfo['branch']}')"
+            r_type = f"Repositorio Git{sub_info}"
+        else:
+            r_type = "Repositorio Git"
     elif "index.json" in r:
         r_type = "Índice JSON Remoto"
 
@@ -1314,10 +1520,16 @@ smiledev consulta automáticamente:
 3. REPOSITORIO GIT (GitHub / GitLab / Gitea)
 ──────────────────────────────────────────────────────────────────────
 URL: https://github.com/usuario/mi-repo-looping.git
+O directo a una subcarpeta: https://github.com/usuario/repo/tree/main/addons
 
-• Modo Monorepo (Colección de varios módulos en un mismo repo Git):
+• Modo Subárbol / Rama de GitHub:
+  $ smiledev add-repo https://github.com/usuario/repo/tree/main/addons
+  smiledev detecta automáticamente el repositorio git, la rama objetivo ('main')
+  y la subcarpeta especificada ('addons/'), buscando módulos en su interior.
+
+• Modo Monorepo (Colección de varios módulos en carpetas 'modules/' o 'addons/'):
   mi-repo/
-  └── modules/
+  └── addons/ (o modules/)
       ├── modulo-uno/
       │   ├── smile.json
       │   └── main.loop
@@ -1325,8 +1537,8 @@ URL: https://github.com/usuario/mi-repo-looping.git
           ├── smile.json
           └── main.loop
 
-• Modo Mono-Módulo (Un repositorio dedicado por cada módulo):
-  mi-repo/
+• Modo Mono-Módulo (Un repositorio o subcarpeta dedicada por módulo):
+  mi-repo/ (o subcarpeta addons/)
   ├── smile.json            # Debe contener "name": "mi-modulo"
   └── main.loop
 

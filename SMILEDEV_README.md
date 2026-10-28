@@ -181,10 +181,15 @@ Al ejecutar `smiledev add-repo https://mi-servidor.com/modules`, `smiledev` dete
 #### 3. Repositorio Git (`.git` / GitHub / GitLab / Gitea)
 Añade un repositorio de código Git directamente:
 ```bash
+# Repositorio Git estándar
 smiledev add-repo https://github.com/usuario/mis-modulos-looping.git
+
+# Enlace directo a subárbol/carpeta de GitHub (URL directa del navegador)
+smiledev add-repo https://github.com/anonymus-devop/forkbot-story-sandbox/tree/main/addons
 ```
-* **Modo Monorepo**: Una carpeta `modules/<nombre-modulo>/smile.json` dentro del repositorio Git.
-* **Modo Mono-módulo**: Si el repositorio Git contiene en su raíz el archivo `smile.json` con `"name": "mi-modulo"`, `smiledev` clona y extrae el módulo de forma transparente.
+* **Soporte de Subárboles de GitHub (`tree/<rama>/<carpeta>`)**: Puedes pegar directamente la URL copiada de tu navegador web apuntando a una carpeta (`addons/`, `modules/`, etc.); `smiledev` analizará de forma autónoma el repositorio base `.git`, la rama especificada y la subcarpeta, verificando los módulos existentes vía GitHub Raw y Git.
+* **Modo Monorepo**: Una carpeta `modules/<nombre-modulo>/smile.json` o `addons/<nombre-modulo>/smile.json` dentro del repositorio Git.
+* **Modo Mono-módulo**: Si la subcarpeta o la raíz del repositorio Git contiene `smile.json` con `"name": "mi-modulo"`, `smiledev` clona y extrae el módulo de forma transparente.
 
 #### 4. Repositorio en Directorio Local (Desarrollo Offline y Redes Internas)
 Puedes añadir cualquier carpeta local en tu máquina o disco compartido:
