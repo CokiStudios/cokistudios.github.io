@@ -1,0 +1,12 @@
+{
+  "name": "forkbot-story-sandbox",
+  "version": "1.0.0",
+  "language": "loop",
+  "entry_point": "main.loop",
+  "author_name": "jerixortixdev",
+  "description": "Historia interactiva de Forkbot con Sandbox 2D, medidor de fuerza simple y tabla algebraica sobre loop-node-window.",
+  "license": "MIT",
+  "dependencies": {
+    "loop-node-window": "^2.0.0"
+  }
+}
