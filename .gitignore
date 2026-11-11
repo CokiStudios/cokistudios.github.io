@@ -3,6 +3,7 @@ azure-branding/
 dist-dmg/
 
 # Android Build Outputs & Local configs
+build/
 **/.gradle/
 **/build/
 **/local.properties

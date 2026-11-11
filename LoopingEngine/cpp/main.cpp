@@ -1103,11 +1103,47 @@ int run_tests() {
         "val m4_api = m4_pipe[\"api\"]\n"
         "val m4_fps = m4_pipe[\"target_fps\"]\n"
     );
+#if defined(__APPLE__)
+    bool m4_support_expected = vm_metal4.variables["m4_sup"].is_truthy();
+#else
+    bool m4_support_expected = !vm_metal4.variables["m4_sup"].is_truthy();
+#endif
     assert_test("Apple Metal 4 Subsystem & Unified Memory Architecture (metal4, sys.metal_version, 240Hz ProMotion)",
-                vm_metal4.variables["m4_sup"].is_truthy() &&
+                m4_support_expected &&
                 vm_metal4.variables["m4_ver"].as_string() == "Metal 4" &&
                 vm_metal4.variables["m4_api"].as_string() == "Metal 4 (MSL 4.0)" &&
                 vm_metal4.variables["m4_fps"].as_int() == 240);
+
+    // Test 60: zbash-utils Library & !exec Terminal Command Execution
+    Interpreter vm_zbash;
+    vm_zbash.execute_code(
+        "mut blocked_without_import = false\n"
+        "try {\n"
+        "    !exec printf 'SHOULD_NOT_RUN'\n"
+        "} catch (err) {\n"
+        "    blocked_without_import = true\n"
+        "}\n"
+        "import zbash-utils\n"
+        "!exec printf 'ADB_TEST_OK'\n"
+        "val code1 = zbash_last_code\n"
+        "val out1 = zbash_last_output\n"
+        "val tag = \"RIVA_OK\"\n"
+        "!exec printf '{tag}'; printf '_DONE'\n"
+        "val out2 = zbash_last_output\n"
+        "!exec (exit 42)\n"
+        "val code_nz = zbash_last_code\n"
+        "val cap_out = zbash.exec(\"printf 'CAP_OK'\")\n"
+        "val has_sh = zbash.has(\"sh\")\n"
+    );
+    assert_test("zbash-utils Library & !exec One-Line Terminal Execution",
+                vm_zbash.variables["blocked_without_import"].is_truthy() &&
+                vm_zbash.imported_modules.count("zbash-utils") > 0 &&
+                vm_zbash.variables["code1"].as_int() == 0 &&
+                vm_zbash.variables["out1"].as_string() == "ADB_TEST_OK" &&
+                vm_zbash.variables["out2"].as_string() == "RIVA_OK_DONE" &&
+                vm_zbash.variables["code_nz"].as_int() == 42 &&
+                vm_zbash.variables["cap_out"].as_string() == "CAP_OK" &&
+                vm_zbash.variables["has_sh"].is_truthy());
 
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";

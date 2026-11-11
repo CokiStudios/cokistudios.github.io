@@ -8,7 +8,7 @@ class Looping < Formula
   url "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz"
   mirror "https://github.com/CokiStudios/engine/releases/download/v1.1/looping-v1.1-darwin-universal.tar.gz"
   mirror "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v1.1/looping-v1.1-darwin-universal.tar.gz"
-  sha256 "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+  sha256 "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d"
 
   def install
     bin.install "looping"
