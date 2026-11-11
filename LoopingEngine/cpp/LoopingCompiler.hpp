@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LoopingValue.hpp"
+#include "Looping3D.hpp"
 #include "LoopingAST.hpp"
 #include "LoopingParser.hpp"
 #include <string>
@@ -14,8 +15,16 @@
 #include <iomanip>
 #include <map>
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <signal.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
 namespace looping {
 
@@ -30,6 +39,303 @@ namespace color {
     inline const char* BLUE    = "\033[34m";
     inline const char* WHITE   = "\033[37m";
 }
+
+struct CryptoUtils {
+    static std::string fnv1a_hex(const std::string& data) {
+        uint64_t hash = 14695981039346656037ULL;
+        for (unsigned char c : data) {
+            hash ^= static_cast<uint64_t>(c);
+            hash *= 1099511628211ULL;
+        }
+        std::ostringstream ss;
+        ss << std::hex << std::setfill('0') << std::setw(16) << hash;
+        return ss.str();
+    }
+
+    static inline uint32_t rotr(uint32_t x, uint32_t n) {
+        return (x >> n) | (x << (32 - n));
+    }
+
+    static std::string sha256_hex(const std::string& input) {
+        static const uint32_t K[64] = {
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        };
+
+        uint32_t h[8] = {
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        };
+
+        std::vector<uint8_t> msg(input.begin(), input.end());
+        uint64_t bit_len = static_cast<uint64_t>(msg.size()) * 8ULL;
+        msg.push_back(0x80);
+        while ((msg.size() % 64) != 56) msg.push_back(0x00);
+        for (int i = 7; i >= 0; --i) {
+            msg.push_back(static_cast<uint8_t>((bit_len >> (i * 8)) & 0xFF));
+        }
+
+        for (size_t offset = 0; offset < msg.size(); offset += 64) {
+            uint32_t w[64];
+            for (int i = 0; i < 16; ++i) {
+                w[i] = (static_cast<uint32_t>(msg[offset + i * 4]) << 24) |
+                       (static_cast<uint32_t>(msg[offset + i * 4 + 1]) << 16) |
+                       (static_cast<uint32_t>(msg[offset + i * 4 + 2]) << 8) |
+                       (static_cast<uint32_t>(msg[offset + i * 4 + 3]));
+            }
+            for (int i = 16; i < 64; ++i) {
+                uint32_t s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >> 3);
+                uint32_t s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >> 10);
+                w[i] = w[i - 16] + s0 + w[i - 7] + s1;
+            }
+
+            uint32_t a = h[0], b = h[1], c = h[2], d = h[3];
+            uint32_t e = h[4], f = h[5], g = h[6], hh = h[7];
+
+            for (int i = 0; i < 64; ++i) {
+                uint32_t S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+                uint32_t ch = (e & f) ^ ((~e) & g);
+                uint32_t temp1 = hh + S1 + ch + K[i] + w[i];
+                uint32_t S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+                uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+                uint32_t temp2 = S0 + maj;
+
+                hh = g; g = f; f = e; e = d + temp1;
+                d = c; c = b; b = a; a = temp1 + temp2;
+            }
+
+            h[0] += a; h[1] += b; h[2] += c; h[3] += d;
+            h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+        }
+
+        std::ostringstream ss;
+        for (int i = 0; i < 8; ++i) {
+            ss << std::hex << std::setfill('0') << std::setw(8) << h[i];
+        }
+        return ss.str();
+    }
+
+    static std::string base64_encode(const std::string& in) {
+        static const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        std::string out;
+        int val = 0, valb = -6;
+        for (unsigned char c : in) {
+            val = (val << 8) + c;
+            valb += 8;
+            while (valb >= 0) {
+                out.push_back(b64[(val >> valb) & 0x3F]);
+                valb -= 6;
+            }
+        }
+        if (valb > -6) out.push_back(b64[((val << 8) >> (valb + 8)) & 0x3F]);
+        while (out.size() % 4) out.push_back('=');
+        return out;
+    }
+
+    static std::string base64_decode(const std::string& in) {
+        static const std::string b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        std::vector<int> T(256, -1);
+        for (int i = 0; i < 64; i++) T[static_cast<unsigned char>(b64[i])] = i;
+        std::string out;
+        int val = 0, valb = -8;
+        for (unsigned char c : in) {
+            if (T[c] == -1) break;
+            val = (val << 6) + T[c];
+            valb += 6;
+            if (valb >= 0) {
+                out.push_back(char((val >> valb) & 0xFF));
+                valb -= 8;
+            }
+        }
+        return out;
+    }
+
+    static std::string uuid_v4() {
+        static const char* hex = "0123456789abcdef";
+        auto now_ns = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        static uint64_t seed = 0x5bd1e995ULL;
+        seed ^= static_cast<uint64_t>(now_ns) + 0x9e3779b97f4a7c15ULL;
+        auto next_nibble = [&]() -> int {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            return static_cast<int>(seed & 0xF);
+        };
+        std::string res = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+        for (char& c : res) {
+            if (c == 'x') c = hex[next_nibble()];
+            else if (c == 'y') c = hex[(next_nibble() & 0x3) | 0x8];
+        }
+        return res;
+    }
+
+    static std::string hex_to_bytes(const std::string& hex) {
+        std::string bytes;
+        bytes.reserve(hex.size() / 2);
+        for (size_t i = 0; i + 1 < hex.size(); i += 2) {
+            unsigned int byte = 0;
+            std::stringstream ss;
+            ss << std::hex << hex.substr(i, 2);
+            ss >> byte;
+            bytes.push_back(static_cast<char>(byte));
+        }
+        return bytes;
+    }
+
+    static std::string hmac_sha256(std::string key, const std::string& message) {
+        const size_t block_size = 64;
+        if (key.size() > block_size) {
+            key = hex_to_bytes(sha256_hex(key));
+        }
+        if (key.size() < block_size) {
+            key.append(block_size - key.size(), '\0');
+        }
+        std::string o_key_pad(block_size, '\0');
+        std::string i_key_pad(block_size, '\0');
+        for (size_t i = 0; i < block_size; ++i) {
+            o_key_pad[i] = static_cast<char>(static_cast<unsigned char>(key[i]) ^ 0x5c);
+            i_key_pad[i] = static_cast<char>(static_cast<unsigned char>(key[i]) ^ 0x36);
+        }
+        std::string inner_hex = sha256_hex(i_key_pad + message);
+        return sha256_hex(o_key_pad + hex_to_bytes(inner_hex));
+    }
+
+    static std::string random_hex(size_t num_bytes) {
+        static const char* hex = "0123456789abcdef";
+        auto now_ns = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        static uint64_t seed = 0x9e3779b97f4a7c15ULL;
+        seed ^= static_cast<uint64_t>(now_ns);
+        std::string out;
+        out.reserve(num_bytes * 2);
+        for (size_t i = 0; i < num_bytes * 2; ++i) {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            out.push_back(hex[seed & 0xF]);
+        }
+        return out;
+    }
+
+    static std::string url_encode(const std::string& value) {
+        std::ostringstream escaped;
+        escaped.fill('0');
+        escaped << std::hex << std::uppercase;
+        for (unsigned char c : value) {
+            if (std::isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+                escaped << c;
+            } else {
+                escaped << '%' << std::setw(2) << int(c);
+            }
+        }
+        return escaped.str();
+    }
+
+    static std::string url_decode(const std::string& value) {
+        std::string out;
+        for (size_t i = 0; i < value.size(); ++i) {
+            if (value[i] == '%' && i + 2 < value.size()) {
+                unsigned int code = 0;
+                std::istringstream iss(value.substr(i + 1, 2));
+                if (iss >> std::hex >> code) {
+                    out.push_back(static_cast<char>(code));
+                    i += 2;
+                    continue;
+                }
+            } else if (value[i] == '+') {
+                out.push_back(' ');
+                continue;
+            }
+            out.push_back(value[i]);
+        }
+        return out;
+    }
+
+    static uint32_t crc32_uint(const std::string& data) {
+        uint32_t crc = 0xFFFFFFFFu;
+        for (unsigned char b : data) {
+            crc ^= static_cast<uint32_t>(b);
+            for (int j = 0; j < 8; ++j) {
+                uint32_t mask = -(crc & 1u);
+                crc = (crc >> 1) ^ (0xEDB88320u & mask);
+            }
+        }
+        return ~crc;
+    }
+
+    static std::string crc32_hex(const std::string& data) {
+        uint32_t c = crc32_uint(data);
+        std::ostringstream ss;
+        ss << std::hex << std::setfill('0') << std::setw(8) << c;
+        return ss.str();
+    }
+
+    static bool constant_time_eq(const std::string& a, const std::string& b) {
+        if (a.size() != b.size()) return false;
+        unsigned char diff = 0;
+        for (size_t i = 0; i < a.size(); ++i) {
+            diff |= static_cast<unsigned char>(a[i]) ^ static_cast<unsigned char>(b[i]);
+        }
+        return diff == 0;
+    }
+
+    static std::string csms_payload(const std::string& room_id, const std::string& plaintext) {
+        std::string key_hex = sha256_hex(room_id + ":CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR");
+        std::string key_bytes = hex_to_bytes(key_hex);
+        std::string iv_hex = sha256_hex(room_id + ":" + plaintext).substr(0, 24);
+        std::string iv_bytes = hex_to_bytes(iv_hex);
+        std::string cipher;
+        cipher.resize(plaintext.size());
+        for (size_t i = 0; i < plaintext.size(); ++i) {
+            unsigned char k = static_cast<unsigned char>(key_bytes[i % key_bytes.size()]);
+            unsigned char v = static_cast<unsigned char>(iv_bytes[i % iv_bytes.size()]);
+            cipher[i] = static_cast<char>(static_cast<unsigned char>(plaintext[i]) ^ k ^ v);
+        }
+        std::string tag = hex_to_bytes(hmac_sha256(key_bytes, iv_bytes + cipher)).substr(0, 16);
+        return "🔒 enc:v1:" + base64_encode(iv_bytes) + ":" + base64_encode(cipher + tag);
+    }
+
+    static std::string base64url_encode(const std::string& in) {
+        std::string b64 = base64_encode(in);
+        while (!b64.empty() && b64.back() == '=') b64.pop_back();
+        for (char& c : b64) {
+            if (c == '+') c = '-';
+            else if (c == '/') c = '_';
+        }
+        return b64;
+    }
+
+    static std::string csms_decrypt(const std::string& room_id, const std::string& payload) {
+        std::string body = payload;
+        if (body.rfind("🔒 enc:v1:", 0) == 0) body = body.substr(12);
+        else if (body.rfind("enc:v1:", 0) == 0) body = body.substr(7);
+        else return payload;
+
+        auto col = body.find(':');
+        if (col == std::string::npos) return "";
+        std::string iv_b64 = body.substr(0, col);
+        std::string cipher_b64 = body.substr(col + 1);
+        std::string iv_bytes = base64_decode(iv_b64);
+        std::string cipher_tag = base64_decode(cipher_b64);
+        if (cipher_tag.size() < 16) return "";
+        std::string cipher = cipher_tag.substr(0, cipher_tag.size() - 16);
+        std::string key_hex = sha256_hex(room_id + ":CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR");
+        std::string key_bytes = hex_to_bytes(key_hex);
+        std::string plain;
+        plain.resize(cipher.size());
+        for (size_t i = 0; i < cipher.size(); ++i) {
+            unsigned char k = static_cast<unsigned char>(key_bytes[i % key_bytes.size()]);
+            unsigned char v = static_cast<unsigned char>(iv_bytes[i % iv_bytes.size()]);
+            plain[i] = static_cast<char>(static_cast<unsigned char>(cipher[i]) ^ k ^ v);
+        }
+        return plain;
+    }
+};
 
 // ── UI Profile Specifications for Looping Target Compilation ──
 struct UIProfileSpecs {
@@ -49,6 +355,20 @@ inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
     while (!s.empty() && (s.front() == ' ' || s.front() == '-' || s.front() == '_')) s.erase(0, 1);
     while (!s.empty() && (s.back() == ' ' || s.back() == '-' || s.back() == '_')) s.pop_back();
 
+    // 0. Invis. Compile Binary Architecture (Arch 3.0A Native Binary Pipeline)
+    if (s == "invis" || s == "invis.compile" || s == "invis_compile" || s == "inviscompile" || s == "invis. compile" || s == "binary" || s == "bin" || s == "lpbn") {
+        return {
+            "Invis. Compile Binary",
+            "invis",
+            "frosted_aqua_a17",
+            "#00f5d4",
+            "#38bdf8",
+            240,
+            "Invis. Compile LPBN v3.0A Native Binary Pipeline (SHA-256 CTR)",
+            "Standalone Native Binary & Zero-Source Exposure"
+        };
+    }
+
     // 1. XUI (Gama X / 240Hz Gaming)
     if (s == "xui" || s == "x_ui" || s == "x-ui" || s == "gama_x" || s == "gama-x" || s == "gamax") {
         return {
@@ -60,6 +380,20 @@ inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
             240,
             "Direct-to-Vulkan Ultra-Low Latency 240Hz (<0.2ms)",
             "Pro Gamer Esports HUD (High-Refresh APU)"
+        };
+    }
+
+    // 1b. Metal 4 (Apple Silicon APU Unified Memory & Hardware Raytracing 240Hz)
+    if (s == "metal4" || s == "metal_4" || s == "metal-4" || s == "m4" || s == "apple_metal4" || s == "metal") {
+        return {
+            "Metal 4",
+            "metal4",
+            "metal4_quantum_cyan",
+            "#00f5d4",
+            "#0284c7",
+            240,
+            "Apple Metal 4 Unified Memory Pipeline 240Hz (<0.1ms)",
+            "Apple Silicon APU Unified Memory & Hardware Raytracing"
         };
     }
 
@@ -86,8 +420,8 @@ inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
             "#007AFF",
             "#5856D6",
             120,
-            "Apple Metal & SwiftUI ProMotion 120Hz",
-            "Apple Declarative Canvas & Dynamic Island Layout"
+            "Apple Metal 4 & SwiftUI ProMotion 120Hz/240Hz",
+            "Apple Declarative Canvas & Dynamic Island Layout (Metal 4 Engine)"
         };
     }
 
@@ -158,6 +492,12 @@ public:
     double window_width = 800;
     double window_height = 520;
 
+    struct SnippetItem {
+        std::string name;
+        std::string code;
+        std::string type = "looping";
+    };
+
     std::vector<std::pair<std::string, std::string>> imports;
     std::vector<std::string> python_modules;
     std::vector<std::string> declarations;
@@ -165,6 +505,7 @@ public:
     std::vector<std::string> ui_buttons;
     std::vector<std::string> ui_inputs;
     std::vector<std::string> custom_functions;
+    std::vector<SnippetItem> snippets;
     std::vector<std::string> body_statements;
 
     DynamicProgram(const std::string& name = "DynamicApp", 
@@ -220,6 +561,11 @@ public:
         return *this;
     }
 
+    DynamicProgram& add_snippet(const std::string& name, const std::string& code, const std::string& type = "looping") {
+        snippets.push_back({name, code, type});
+        return *this;
+    }
+
     DynamicProgram& add_card(double x, double y, double w, double h, const std::string& title, const std::string& text) {
         std::ostringstream ss;
         ss << "    draw card at (" << x << ", " << y << ") with size (" << w << ", " << h << ") and title \"" 
@@ -228,10 +574,20 @@ public:
         return *this;
     }
 
-    DynamicProgram& add_button(double x, double y, const std::string& text, const std::string& action) {
+    DynamicProgram& add_button(double x, double y, const std::string& text, const std::string& action, const std::string& snippet = "") {
         std::ostringstream ss;
-        ss << "    draw button at (" << x << ", " << y << ") with text \"" << escape_str(text) 
-           << "\" and action \"" << escape_str(action) << "\"";
+        if (!snippet.empty()) {
+            ss << "    draw button at (" << x << ", " << y << ") with text \"" << escape_str(text) 
+               << "\" and action \"" << escape_str(action) << "\" with snippet:\n";
+            std::stringstream snip_ss(snippet);
+            std::string line;
+            while (std::getline(snip_ss, line)) {
+                ss << "        " << line << "\n";
+            }
+        } else {
+            ss << "    draw button at (" << x << ", " << y << ") with text \"" << escape_str(text) 
+               << "\" and action \"" << escape_str(action) << "\"";
+        }
         ui_buttons.push_back(ss.str());
         return *this;
     }
@@ -299,6 +655,21 @@ public:
             out << fn << "\n";
         }
 
+        // Snippets (Arch 3.0A Embedded Reactive Snippets)
+        for (const auto& snip : snippets) {
+            if (snip.type == "python") {
+                out << "insert pysnippet as " << snip.name << ":\n";
+            } else {
+                out << "insert snippet as " << snip.name << ":\n";
+            }
+            std::stringstream ss(snip.code);
+            std::string line;
+            while (std::getline(ss, line)) {
+                out << "    " << line << "\n";
+            }
+            out << "\n";
+        }
+
         // App Block
         out << "define app \"" << app_name << "\" version " << version << ":\n";
         out << "    create window with title \"" << escape_str(window_title) << "\" and size (" 
@@ -341,6 +712,28 @@ private:
         return out;
     }
 };
+
+// Helper: cleanly spawn native window without blocking or cluttering the persistent shell
+inline pid_t launch_native_window_process(const std::string& script_path) {
+#ifdef _WIN32
+    std::string cmd = "start pythonw \"" + script_path + "\"";
+    system(cmd.c_str());
+    return 1;
+#else
+    pid_t pid = fork();
+    if (pid == 0) {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
+        execlp("python3", "python3", script_path.c_str(), (char*)NULL);
+        _exit(127);
+    }
+    return pid;
+#endif
+}
 
 // ── Dynamic Window Creator Subsystem ──
 // High-level programmatic and declarative dynamic graphical window builder for Loop OS
@@ -447,6 +840,14 @@ public:
     std::vector<ToolbarItem> toolbar_items;
     std::vector<ToneItem> tones;
     std::vector<std::string> custom_statements;
+    bool is_3d_mode = false;
+    std::vector<loop_math::Entity3D> entities_3d;
+
+    DynamicWindow& add_entity_3d(const loop_math::Entity3D& e) {
+        is_3d_mode = true;
+        entities_3d.push_back(e);
+        return *this;
+    }
 
     DynamicWindow(const std::string& win_title = "Looping Dynamic Window",
                   double w = 850, double h = 540,
@@ -1209,6 +1610,7 @@ public:
         std::string btn_bg = "#0284c7";
         std::string btn_fg = "#ffffff";
         std::string primary_color = specs.primary_color.empty() ? "#38bdf8" : specs.primary_color;
+        std::string accent_color = (specs.accent_color.empty() || specs.accent_color == "#082f49") ? "#00f5d4" : specs.accent_color;
 
         if (specs.theme.find("aqua") != std::string::npos) {
             bg_color = "#04161f";
@@ -1222,9 +1624,14 @@ public:
             card_border = "#352466";
             btn_bg = "#7c3aed";
             primary_color = "#c084fc";
+        } else if (specs.theme.find("metal4") != std::string::npos || specs.code == "metal4") {
+            bg_color = "#070c18";
+            card_bg = "#0e182a";
+            card_border = "#1a3254";
+            btn_bg = "#0284c7";
+            primary_color = "#00f5d4";
+            accent_color = "#38bdf8";
         }
-
-        std::string accent_color = (specs.accent_color.empty() || specs.accent_color == "#082f49") ? "#00f5d4" : specs.accent_color;
 
         py << "THEME = {\n";
         py << "    'bg': '" << bg_color << "',\n";
@@ -1257,13 +1664,14 @@ public:
         py << "        self.setup_ui()\n";
         py << "        self.log(\"[Loop OS Native] Ventana '" << escape_py(title) << "' inicializada (" << specs.name << " " << specs.pipeline << ").\", 'success')\n\n";
 
+        std::string badge_label = (specs.code == "metal4") ? "Metal 4 • 240 FPS Hardware Direct" : (specs.name + " • " + std::to_string(specs.target_fps) + " FPS Direct");
         py << "    def setup_ui(self):\n";
         py << "        self.c_hdr = tk.Canvas(self, height=52, bg=THEME['card_bg'], highlightthickness=0)\n";
         py << "        self.c_hdr.pack(fill='x', side='top')\n";
         std::string t_prefix = (title.rfind("✦", 0) == 0) ? "" : "✦ ";
         py << "        self.c_hdr.create_text(20, 26, text=\"" << t_prefix << escape_py(title) << "\", anchor='w', fill=THEME['primary'], font=('Helvetica', 13, 'bold'))\n";
         py << "        self.c_hdr.create_rectangle(740, 13, 960, 39, fill=THEME['accent'], outline='', tags='hdr_badge_bg')\n";
-        py << "        self.c_hdr.create_text(850, 26, text=\"" << specs.name << " • " << specs.target_fps << " FPS Direct\", fill='#0b0f19', font=('Helvetica', 9, 'bold'), tags='hdr_badge_txt')\n";
+        py << "        self.c_hdr.create_text(850, 26, text=\"" << badge_label << "\", fill='#0b0f19', font=('Helvetica', 9, 'bold'), tags='hdr_badge_txt')\n";
         py << "        def _on_hdr_resize(e):\n";
         py << "            w = e.width\n";
         py << "            self.c_hdr.coords('hdr_badge_bg', w - 210, 13, w - 16, 39)\n";
@@ -1272,6 +1680,96 @@ public:
 
         py << "        main_frame = tk.Frame(self, bg=THEME['bg'], padx=14, pady=10)\n";
         py << "        main_frame.pack(fill='both', expand=True)\n\n";
+
+        if (is_3d_mode || !entities_3d.empty()) {
+            py << "        import math\n";
+            py << "        self.entities_3d = [\n";
+            for (const auto& e : entities_3d) {
+                py << "            {'type': \"" << escape_py(e.type) << "\", 'name': \"" << escape_py(e.name)
+                   << "\", 'x': " << e.pos.x << ", 'y': " << e.pos.y << ", 'z': " << e.pos.z
+                   << ", 'sx': " << e.size.x << ", 'sy': " << e.size.y << ", 'sz': " << e.size.z
+                   << ", 'r': " << e.radius << ", 'color': \"" << escape_py(e.color)
+                   << "\", 'speed': " << e.speed << ", 'axis': \"" << escape_py(e.axis)
+                   << "\", 'min_p': " << e.min_pos << ", 'max_p': " << e.max_pos
+                   << ", 'dir': 1.0, 'collected': False, 'alive': True, 'rot': " << e.rot_deg.y << "},\n";
+            }
+            py << "        ]\n";
+            py << "        self.c_3d = tk.Canvas(main_frame, height=310, bg='#050811', highlightthickness=1, highlightbackground=THEME['primary'])\n";
+            py << "        self.c_3d.pack(fill='both', expand=True, pady=(0, 10))\n";
+            py << "        self.keys_3d = set()\n";
+            py << "        self.cam_yaw = 0.0\n";
+            py << "        self.cam_pitch = 0.28\n";
+            py << "        self.p_vel = [0.0, 0.0, 0.0]\n";
+            py << "        self.p_jumps = 0\n";
+            py << "        self.score_3d = 0\n";
+            py << "        self.bind_all('<KeyPress>', lambda e: self.keys_3d.add(e.keysym.lower()))\n";
+            py << "        self.bind_all('<KeyRelease>', lambda e: self.keys_3d.discard(e.keysym.lower()))\n";
+            py << "        def _proj3d(px, py, pz, eye, yaw, pitch, w, h):\n";
+            py << "            dx, dy, dz = px - eye[0], py - eye[1], pz - eye[2]\n";
+            py << "            cy, sy = math.cos(-yaw), math.sin(-yaw)\n";
+            py << "            rx = dx * cy + dz * sy\n";
+            py << "            rz = -dx * sy + dz * cy\n";
+            py << "            cp, sp = math.cos(-pitch), math.sin(-pitch)\n";
+            py << "            ry = dy * cp - rz * sp\n";
+            py << "            vz = dy * sp + rz * cp\n";
+            py << "            if vz <= 0.4: return None\n";
+            py << "            f = (h * 0.92) / vz\n";
+            py << "            return (w * 0.5 + rx * f, h * 0.5 - ry * f, vz)\n";
+            py << "        def _tick3d():\n";
+            py << "            dt = 0.016\n";
+            py << "            if 'q' in self.keys_3d: self.cam_yaw -= 1.8 * dt\n";
+            py << "            if 'e' in self.keys_3d: self.cam_yaw += 1.8 * dt\n";
+            py << "            player = next((o for o in self.entities_3d if o['type'] == 'player'), None)\n";
+            py << "            if player:\n";
+            py << "                spd = player['speed'] * (1.75 if 'shift_l' in self.keys_3d or 'x' in self.keys_3d else 1.0)\n";
+            py << "                fx, fz = math.sin(self.cam_yaw), math.cos(self.cam_yaw)\n";
+            py << "                rx, rz = math.cos(self.cam_yaw), -math.sin(self.cam_yaw)\n";
+            py << "                mx = ('d' in self.keys_3d or 'right' in self.keys_3d) - ('a' in self.keys_3d or 'left' in self.keys_3d)\n";
+            py << "                mz = ('w' in self.keys_3d or 'up' in self.keys_3d) - ('s' in self.keys_3d or 'down' in self.keys_3d)\n";
+            py << "                self.p_vel[0] = (fx * mz + rx * mx) * spd\n";
+            py << "                self.p_vel[2] = (fz * mz + rz * mx) * spd\n";
+            py << "                if ('space' in self.keys_3d) and self.p_jumps < 2:\n";
+            py << "                    self.p_vel[1] = 15.0; self.p_jumps += 1; self.keys_3d.discard('space')\n";
+            py << "                for _ in range(4):\n";
+            py << "                    sdt = dt * 0.25\n";
+            py << "                    self.p_vel[1] -= 26.0 * sdt\n";
+            py << "                    player['x'] += self.p_vel[0] * sdt\n";
+            py << "                    player['y'] += self.p_vel[1] * sdt\n";
+            py << "                    player['z'] += self.p_vel[2] * sdt\n";
+            py << "                    if player['y'] <= 0.6:\n";
+            py << "                        player['y'] = 0.6; self.p_vel[1] = 0.0; self.p_jumps = 0\n";
+            py << "            for o in self.entities_3d:\n";
+            py << "                o['rot'] = (o['rot'] + 90.0 * dt) % 360.0\n";
+            py << "                if o['type'] in ('moving_platform', 'enemy', 'boss') and o['alive']:\n";
+            py << "                    ax = o['axis'] if o['axis'] in ('x','y','z') else 'x'\n";
+            py << "                    o[ax] += o['dir'] * o['speed'] * dt\n";
+            py << "                    if o[ax] >= o['max_p']: o[ax] = o['max_p']; o['dir'] = -1.0\n";
+            py << "                    if o[ax] <= o['min_p']: o[ax] = o['min_p']; o['dir'] = 1.0\n";
+            py << "                if player and o['type'] in ('crystal', 'ring') and not o['collected']:\n";
+            py << "                    if (player['x']-o['x'])**2 + (player['y']-o['y'])**2 + (player['z']-o['z'])**2 < (o['r']+1.4)**2:\n";
+            py << "                        o['collected'] = True; self.score_3d += 150\n";
+            py << "            w = max(320, self.c_3d.winfo_width())\n";
+            py << "            h = max(200, self.c_3d.winfo_height())\n";
+            py << "            self.c_3d.delete('all')\n";
+            py << "            px, py_p, pz = (player['x'], player['y'], player['z']) if player else (0.0, 2.0, 0.0)\n";
+            py << "            eye = [px - math.sin(self.cam_yaw)*15.0, py_p + 6.5, pz - math.cos(self.cam_yaw)*15.0]\n";
+            py << "            for gz in range(-20, 90, 8):\n";
+            py << "                a = _proj3d(-40, 0, gz, eye, self.cam_yaw, self.cam_pitch, w, h)\n";
+            py << "                b = _proj3d( 40, 0, gz, eye, self.cam_yaw, self.cam_pitch, w, h)\n";
+            py << "                if a and b: self.c_3d.create_line(a[0], a[1], b[0], b[1], fill='#123154')\n";
+            py << "            draw_list = []\n";
+            py << "            for o in self.entities_3d:\n";
+            py << "                if o.get('collected') or not o.get('alive', True) or o['type'] == 'terrain': continue\n";
+            py << "                pt = _proj3d(o['x'], o['y'], o['z'], eye, self.cam_yaw, self.cam_pitch, w, h)\n";
+            py << "                if pt: draw_list.append((pt[2], o, pt))\n";
+            py << "            draw_list.sort(key=lambda it: -it[0])\n";
+            py << "            for vz, o, pt in draw_list:\n";
+            py << "                rad = max(4, (max(o['sx'], o['sy']) * h * 0.45) / vz)\n";
+            py << "                self.c_3d.create_oval(pt[0]-rad, pt[1]-rad*0.7, pt[0]+rad, pt[1]+rad*0.7, fill=o['color'], outline='#ffffff')\n";
+            py << "            self.c_3d.create_text(14, 18, anchor='w', fill='#38bdf8', font=('Courier', 10, 'bold'), text=f'SHINE LOOP 3D NATIVE • SCORE: {self.score_3d} • [WASD] Move [SPACE] Jump [Q/E] Orbit')\n";
+            py << "            self.after(16, _tick3d)\n";
+            py << "        self.after(40, _tick3d)\n\n";
+        }
 
         if (!cards.empty()) {
             py << "        cards_data = [\n";
@@ -1445,13 +1943,8 @@ public:
         std::cout << "  • Native GUI App: " << color::CYAN << py_path << color::RESET << " (Direct OS / Tkinter Native Engine)\n";
 
         if (launch_interactive) {
-#ifdef _WIN32
-            std::string open_cmd = "start pythonw \"" + py_path + "\"";
-#else
-            std::string open_cmd = "python3 \"" + py_path + "\" >/dev/null 2>&1 &";
-#endif
-            std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Launching native desktop OS window...\n";
-            system(open_cmd.c_str());
+            pid_t pid = launch_native_window_process(py_path);
+            std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Launching native desktop OS window (PID: " << pid << ")...\n";
         }
         return true;
     }
@@ -1943,15 +2436,416 @@ public:
     }
 };
 
+// ── Invis. Compile Binary Architecture (LPBN v3.0A) ──
+// Converts .loop scripts into cryptographically verified binary files & standalone native Mach-O/ELF executables
+static constexpr size_t kInvisSlotTotalSize = 131072; // 128 KB embedded binary slot in __DATA,__data
+static constexpr size_t kInvisSlotAnchorSize = 16;
+
+alignas(16) inline volatile unsigned char g_invis_binary_slot[kInvisSlotTotalSize] = {
+    0x89, 'L', 'P', 'S', 'L', 'O', 'T', 0x1A,
+    'C', 'O', 'K', 'I', '3', '0', 'A', 0x00,
+    0x00
+};
+
+struct InvisBinaryInfo {
+    bool valid = false;
+    bool is_standalone_exe = false;
+    uint16_t version = 0x0300;
+    uint16_t flags = 0;
+    uint32_t target_fps = 60;
+    std::string target_ui = "shine_ui";
+    std::string theme = "frosted_aqua_a17";
+    std::string salt;
+    std::string sha256_hex;
+    uint64_t payload_size = 0;
+    uint64_t file_size = 0;
+};
+
+class InvisBinaryCompiler {
+public:
+    static constexpr size_t kLpbnHeaderSize = 152;
+
+    static inline bool match_slot_anchor(const uint8_t* p) {
+        return (p[0]  == 0x89) && (p[1]  == 0x4C) && (p[2]  == 0x50) && (p[3]  == 0x53) &&
+               (p[4]  == 0x4C) && (p[5]  == 0x4F) && (p[6]  == 0x54) && (p[7]  == 0x1A) &&
+               (p[8]  == 0x43) && (p[9]  == 0x4F) && (p[10] == 0x4B) && (p[11] == 0x49) &&
+               (p[12] == 0x33) && (p[13] == 0x30) && (p[14] == 0x41) && (p[15] == 0x00);
+    }
+
+    static inline bool match_lpbn_magic(const uint8_t* p) {
+        return (p[0] == 0x89) && (p[1] == 0x4C) && (p[2] == 0x50) && (p[3] == 0x42) &&
+               (p[4] == 0x4E) && (p[5] == 0x0D) && (p[6] == 0x0A) && (p[7] == 0x1A);
+    }
+
+    static std::string build_canonical_source(const std::string& source_code, const UIProfileSpecs& specs) {
+        std::ostringstream out;
+        out << "compile target \"" << specs.code << "\"\n";
+        out << "set ui_profile to \"" << specs.code << "\"\n";
+        out << "set theme to \"" << specs.theme << "\"\n\n";
+
+        std::stringstream in_stream(source_code);
+        std::string cur_line;
+        while (std::getline(in_stream, cur_line)) {
+            std::string trimmed = cur_line;
+            while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) trimmed.erase(0, 1);
+            if (trimmed.rfind("#!/usr/bin/env looping", 0) == 0) continue;
+            if (trimmed.rfind("compile target ", 0) == 0 || trimmed.rfind("compile for ", 0) == 0 ||
+                trimmed.rfind("target(", 0) == 0 || trimmed.rfind("@target(", 0) == 0 ||
+                trimmed.rfind("profile(", 0) == 0 || trimmed.rfind("@profile(", 0) == 0 ||
+                trimmed.rfind("set ui_profile to", 0) == 0 || trimmed.rfind("set ui to", 0) == 0 ||
+                trimmed.rfind("set theme to", 0) == 0) {
+                out << "# [Invis. Compile Target Override]: " << trimmed << "\n";
+            } else {
+                out << cur_line << "\n";
+            }
+        }
+        return out.str();
+    }
+
+    static std::vector<uint8_t> encode_lpbn(const std::string& plain_source, const UIProfileSpecs& specs, uint16_t flags = 0x0001) {
+        std::string salt = CryptoUtils::sha256_hex("INVIS_SALT_3_0A:" + specs.code + ":" + plain_source).substr(0, 16);
+        std::string digest_hex = CryptoUtils::sha256_hex(plain_source);
+        uint64_t psize = static_cast<uint64_t>(plain_source.size());
+
+        std::vector<uint8_t> out(kLpbnHeaderSize + plain_source.size(), 0);
+        // 0..7: LPBN Magic
+        out[0] = 0x89; out[1] = 0x4C; out[2] = 0x50; out[3] = 0x42;
+        out[4] = 0x4E; out[5] = 0x0D; out[6] = 0x0A; out[7] = 0x1A;
+        // 8..9: Version 3.0A (0x0300)
+        out[8] = 0x03; out[9] = 0x00;
+        // 10..11: Flags
+        out[10] = static_cast<uint8_t>(flags & 0xFF);
+        out[11] = static_cast<uint8_t>((flags >> 8) & 0xFF);
+        // 12..15: Target FPS (uint32 LE)
+        uint32_t fps = static_cast<uint32_t>(specs.target_fps);
+        out[12] = static_cast<uint8_t>(fps & 0xFF);
+        out[13] = static_cast<uint8_t>((fps >> 8) & 0xFF);
+        out[14] = static_cast<uint8_t>((fps >> 16) & 0xFF);
+        out[15] = static_cast<uint8_t>((fps >> 24) & 0xFF);
+        // 16..31: Target UI code (16 bytes)
+        std::strncpy(reinterpret_cast<char*>(&out[16]), specs.code.c_str(), 15);
+        // 32..63: Theme code (32 bytes)
+        std::strncpy(reinterpret_cast<char*>(&out[32]), specs.theme.c_str(), 31);
+        // 64..79: Salt (16 bytes)
+        std::memcpy(&out[64], salt.data(), std::min<size_t>(16, salt.size()));
+        // 80..143: SHA-256 hex digest (64 bytes)
+        std::memcpy(&out[80], digest_hex.data(), std::min<size_t>(64, digest_hex.size()));
+        // 144..151: Payload size (uint64 LE)
+        for (int b = 0; b < 8; ++b) {
+            out[144 + b] = static_cast<uint8_t>((psize >> (b * 8)) & 0xFF);
+        }
+
+        // Encrypt payload with 256-bit SHA-256 CTR Keystream (Zero plain-text source exposure)
+        std::string key_block;
+        for (size_t i = 0; i < plain_source.size(); ++i) {
+            if (i % 32 == 0) {
+                std::string block_hash = CryptoUtils::sha256_hex(salt + ":CS_INVIS_ARCH_3_0A_KEY:" + std::to_string(i / 32));
+                key_block = CryptoUtils::hex_to_bytes(block_hash);
+            }
+            uint8_t k = static_cast<uint8_t>(key_block[i % 32]);
+            out[kLpbnHeaderSize + i] = static_cast<uint8_t>(plain_source[i]) ^ k;
+        }
+        return out;
+    }
+
+    static bool decode_lpbn(const uint8_t* data, size_t len, std::string* out_source, InvisBinaryInfo* out_info = nullptr) {
+        if (!data || len < kLpbnHeaderSize || !match_lpbn_magic(data)) return false;
+
+        InvisBinaryInfo info;
+        info.version = static_cast<uint16_t>((data[8] << 8) | data[9]);
+        info.flags = static_cast<uint16_t>(data[10] | (data[11] << 8));
+        info.target_fps = static_cast<uint32_t>(data[12]) |
+                          (static_cast<uint32_t>(data[13]) << 8) |
+                          (static_cast<uint32_t>(data[14]) << 16) |
+                          (static_cast<uint32_t>(data[15]) << 24);
+
+        char t_buf[17] = {0};
+        std::memcpy(t_buf, &data[16], 16);
+        info.target_ui = std::string(t_buf);
+
+        char th_buf[33] = {0};
+        std::memcpy(th_buf, &data[32], 32);
+        info.theme = std::string(th_buf);
+
+        info.salt = std::string(reinterpret_cast<const char*>(&data[64]), 16);
+        info.sha256_hex = std::string(reinterpret_cast<const char*>(&data[80]), 64);
+
+        uint64_t psize = 0;
+        for (int b = 0; b < 8; ++b) {
+            psize |= (static_cast<uint64_t>(data[144 + b]) << (b * 8));
+        }
+        info.payload_size = psize;
+
+        if (psize > len - kLpbnHeaderSize) return false;
+
+        std::string decrypted;
+        decrypted.resize(static_cast<size_t>(psize));
+        std::string key_block;
+        for (size_t i = 0; i < static_cast<size_t>(psize); ++i) {
+            if (i % 32 == 0) {
+                std::string block_hash = CryptoUtils::sha256_hex(info.salt + ":CS_INVIS_ARCH_3_0A_KEY:" + std::to_string(i / 32));
+                key_block = CryptoUtils::hex_to_bytes(block_hash);
+            }
+            uint8_t k = static_cast<uint8_t>(key_block[i % 32]);
+            decrypted[i] = static_cast<char>(data[kLpbnHeaderSize + i] ^ k);
+        }
+
+        std::string computed_hash = CryptoUtils::sha256_hex(decrypted);
+        if (!CryptoUtils::constant_time_eq(computed_hash, info.sha256_hex)) {
+            return false;
+        }
+
+        info.valid = true;
+        if (out_source) *out_source = decrypted;
+        if (out_info) *out_info = info;
+        return true;
+    }
+
+    static bool has_embedded_slot_payload() {
+        uint8_t hdr[8];
+        for (int i = 0; i < 8; ++i) {
+            hdr[i] = g_invis_binary_slot[kInvisSlotAnchorSize + i];
+        }
+        return match_lpbn_magic(hdr);
+    }
+
+    static bool extract_from_embedded_slot(std::string* out_source, InvisBinaryInfo* out_info = nullptr) {
+        if (!has_embedded_slot_payload()) return false;
+        size_t max_payload = kInvisSlotTotalSize - kInvisSlotAnchorSize;
+        std::vector<uint8_t> local_buf(max_payload);
+        for (size_t i = 0; i < max_payload; ++i) {
+            local_buf[i] = g_invis_binary_slot[kInvisSlotAnchorSize + i];
+        }
+        InvisBinaryInfo info;
+        bool ok = decode_lpbn(local_buf.data(), local_buf.size(), out_source, &info);
+        if (ok) {
+            info.is_standalone_exe = true;
+            if (out_info) *out_info = info;
+        }
+        return ok;
+    }
+
+    static bool extract_from_file(const std::string& path, std::string* out_source, InvisBinaryInfo* out_info = nullptr) {
+        std::ifstream f(path, std::ios::binary | std::ios::ate);
+        if (!f.is_open()) return false;
+        std::streamsize fsize = f.tellg();
+        if (fsize < static_cast<std::streamsize>(kLpbnHeaderSize)) return false;
+        f.seekg(0, std::ios::beg);
+
+        // 1. Fast check for compact LPBN binary at offset 0
+        uint8_t head8[8] = {0};
+        f.read(reinterpret_cast<char*>(head8), 8);
+        f.seekg(0, std::ios::beg);
+
+        if (match_lpbn_magic(head8)) {
+            std::vector<uint8_t> bytes(static_cast<size_t>(fsize));
+            if (!f.read(reinterpret_cast<char*>(bytes.data()), fsize)) return false;
+            InvisBinaryInfo info;
+            bool ok = decode_lpbn(bytes.data(), bytes.size(), out_source, &info);
+            if (ok) {
+                info.is_standalone_exe = false;
+                info.file_size = static_cast<uint64_t>(fsize);
+                if (out_info) *out_info = info;
+            }
+            return ok;
+        }
+
+        // 2. Check if Mach-O / ELF / PE binary containing populated g_invis_binary_slot
+        uint8_t exe_mag[4] = {0};
+        std::memcpy(exe_mag, head8, 4);
+        bool looks_like_exe =
+            (exe_mag[0] == 0xCA && exe_mag[1] == 0xFE && exe_mag[2] == 0xBA && exe_mag[3] == 0xBE) || // Fat Mach-O BE
+            (exe_mag[0] == 0xCF && exe_mag[1] == 0xFA && exe_mag[2] == 0xED && exe_mag[3] == 0xFE) || // Mach-O 64 LE
+            (exe_mag[0] == 0xFE && exe_mag[1] == 0xED && exe_mag[2] == 0xFA && exe_mag[3] == 0xCF) || // Mach-O 64 BE
+            (exe_mag[0] == 0x7F && exe_mag[1] == 'E'  && exe_mag[2] == 'L'  && exe_mag[3] == 'F')  || // ELF
+            (exe_mag[0] == 'M'  && exe_mag[1] == 'Z');                                                // PE
+        if (!looks_like_exe) return false;
+
+        std::vector<uint8_t> bytes(static_cast<size_t>(fsize));
+        if (!f.read(reinterpret_cast<char*>(bytes.data()), fsize)) return false;
+
+        for (size_t i = 0; i + kInvisSlotAnchorSize + kLpbnHeaderSize <= bytes.size(); ++i) {
+            if (bytes[i] == 0x89 && match_slot_anchor(&bytes[i])) {
+                const uint8_t* slot_payload = &bytes[i + kInvisSlotAnchorSize];
+                size_t rem = bytes.size() - (i + kInvisSlotAnchorSize);
+                if (match_lpbn_magic(slot_payload)) {
+                    InvisBinaryInfo info;
+                    if (decode_lpbn(slot_payload, rem, out_source, &info)) {
+                        info.is_standalone_exe = true;
+                        info.file_size = static_cast<uint64_t>(fsize);
+                        if (out_info) *out_info = info;
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    static bool is_binary_artifact(const std::string& path) {
+        InvisBinaryInfo info;
+        return extract_from_file(path, nullptr, &info) && info.valid;
+    }
+
+    static std::string resolve_host_executable() {
+#ifdef __APPLE__
+        char exe_buf[4096];
+        uint32_t sz = sizeof(exe_buf);
+        if (_NSGetExecutablePath(exe_buf, &sz) == 0) {
+            std::ifstream f(exe_buf, std::ios::binary);
+            if (f.good()) return std::string(exe_buf);
+        }
+#elif defined(__linux__)
+        char exe_buf[4096];
+        ssize_t len = readlink("/proc/self/exe", exe_buf, sizeof(exe_buf) - 1);
+        if (len > 0) {
+            exe_buf[len] = '\0';
+            std::ifstream f(exe_buf, std::ios::binary);
+            if (f.good()) return std::string(exe_buf);
+        }
+#endif
+        std::vector<std::string> candidates = {
+            "bin/looping",
+            "../bin/looping",
+            "../../bin/looping",
+            "/Users/jerix/cokistudios.github.io/bin/looping",
+            "/Users/jerix/engine/bin/looping",
+            "/usr/local/bin/looping"
+        };
+        for (const auto& c : candidates) {
+            std::ifstream f(c, std::ios::binary);
+            if (f.good()) return c;
+        }
+        return "";
+    }
+
+    static bool compile_to_binary(const std::string& canonical_source,
+                                  const UIProfileSpecs& specs,
+                                  const std::string& out_file,
+                                  bool force_compact = false,
+                                  bool silent = false,
+                                  InvisBinaryInfo* out_info = nullptr) {
+        size_t slash = out_file.find_last_of("/\\");
+        if (slash != std::string::npos) {
+            std::string dir = out_file.substr(0, slash);
+            if (!dir.empty()) {
+                system(("mkdir -p \"" + dir + "\"").c_str());
+            }
+        }
+
+        auto ends_with = [](const std::string& str, const std::string& suf) {
+            return str.size() >= suf.size() && str.compare(str.size() - suf.size(), suf.size(), suf) == 0;
+        };
+
+        bool wants_compact = force_compact ||
+                             ends_with(out_file, ".loopb") ||
+                             ends_with(out_file, ".lbin") ||
+                             ends_with(out_file, ".loopc");
+
+        uint16_t flags = wants_compact ? 0x0001 : 0x0003;
+        std::vector<uint8_t> lpbn_img = encode_lpbn(canonical_source, specs, flags);
+
+        bool wrote_standalone = false;
+        if (!wants_compact && (lpbn_img.size() + kInvisSlotAnchorSize <= kInvisSlotTotalSize)) {
+            std::string host_exe = resolve_host_executable();
+            if (!host_exe.empty()) {
+                std::ifstream hf(host_exe, std::ios::binary | std::ios::ate);
+                if (hf.is_open()) {
+                    std::streamsize h_sz = hf.tellg();
+                    hf.seekg(0, std::ios::beg);
+                    if (h_sz > static_cast<std::streamsize>(kInvisSlotTotalSize)) {
+                        std::vector<uint8_t> exe_bytes(static_cast<size_t>(h_sz));
+                        if (hf.read(reinterpret_cast<char*>(exe_bytes.data()), h_sz)) {
+                            size_t slots_patched = 0;
+                            for (size_t i = 0; i + kInvisSlotTotalSize <= exe_bytes.size(); ++i) {
+                                if (exe_bytes[i] == 0x89 && match_slot_anchor(&exe_bytes[i])) {
+                                    std::memset(&exe_bytes[i + kInvisSlotAnchorSize], 0, kInvisSlotTotalSize - kInvisSlotAnchorSize);
+                                    std::memcpy(&exe_bytes[i + kInvisSlotAnchorSize], lpbn_img.data(), lpbn_img.size());
+                                    slots_patched++;
+                                    i += kInvisSlotTotalSize - 1;
+                                }
+                            }
+                            if (slots_patched > 0) {
+                                // Remove existing file first to invalidate macOS kernel vnode code-signing cache
+                                std::remove(out_file.c_str());
+                                std::ofstream out(out_file, std::ios::binary);
+                                if (out.is_open()) {
+                                    out.write(reinterpret_cast<const char*>(exe_bytes.data()), static_cast<std::streamsize>(exe_bytes.size()));
+                                    out.close();
+                                    chmod(out_file.c_str(), 0755);
+#ifdef __APPLE__
+                                    std::string sign_cmd = "codesign --force --sign - \"" + out_file + "\" >/dev/null 2>&1";
+                                    system(sign_cmd.c_str());
+#endif
+                                    wrote_standalone = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!wrote_standalone) {
+            std::remove(out_file.c_str());
+            std::ofstream out(out_file, std::ios::binary);
+            if (!out.is_open()) {
+                if (!silent) {
+                    std::cerr << "\033[31m❌ Error: Cannot write binary target to: " << out_file << "\033[0m\n";
+                }
+                return false;
+            }
+            out.write(reinterpret_cast<const char*>(lpbn_img.data()), static_cast<std::streamsize>(lpbn_img.size()));
+            out.close();
+            chmod(out_file.c_str(), 0755);
+        }
+
+        if (out_info) {
+            decode_lpbn(lpbn_img.data(), lpbn_img.size(), nullptr, out_info);
+            out_info->is_standalone_exe = wrote_standalone;
+        }
+        return true;
+    }
+
+    static std::string ensure_invis_cache(const std::string& script_path, const std::string& raw_source, const UIProfileSpecs& specs) {
+        std::string base = script_path;
+        size_t sl = base.find_last_of("/\\");
+        if (sl != std::string::npos) base = base.substr(sl + 1);
+        size_t dot = base.find_last_of('.');
+        if (dot != std::string::npos) base = base.substr(0, dot);
+        if (base.empty()) base = "script";
+
+        std::string clean_name;
+        for (char c : base) {
+            if (std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '-') clean_name += c;
+            else clean_name += '_';
+        }
+
+        std::string cache_path = "build/.invis/" + clean_name + ".loopb";
+        std::string canonical = build_canonical_source(raw_source, specs);
+        std::string expected_sha = CryptoUtils::sha256_hex(canonical);
+
+        InvisBinaryInfo existing_info;
+        if (extract_from_file(cache_path, nullptr, &existing_info) && existing_info.valid &&
+            existing_info.sha256_hex == expected_sha) {
+            return cache_path;
+        }
+
+        compile_to_binary(canonical, specs, cache_path, /*force_compact=*/true, /*silent=*/true, nullptr);
+        return cache_path;
+    }
+};
+
 // ── Looping Compiler Core ──
-// Provides static and dynamic compilation of Looping code to executable artifacts
+// Provides static and dynamic compilation of Looping code to executable binary artifacts
 class Compiler {
 public:
-    // Compiles raw source code string into target UI profile artifact
+    // Compiles raw source code string into target UI profile binary artifact (via Invis. Compile LPBN v3.0A)
     static bool compile_source(const std::string& source_code, 
                                const std::string& target_name, 
                                const std::string& output_path,
-                               std::string* out_created_path = nullptr) {
+                               std::string* out_created_path = nullptr,
+                               bool force_compact = false) {
         UIProfileSpecs specs = resolve_ui_profile(target_name);
 
         std::string out_file = output_path;
@@ -2004,46 +2898,28 @@ public:
             system(mkdir_cmd.c_str());
         }
 
-        std::ofstream out(out_file);
-        if (!out.is_open()) {
-            std::cerr << "\033[31m❌ Error: Cannot write compiled target to: " << out_file << "\033[0m\n";
-            return false;
-        }
+        std::string canonical_source = InvisBinaryCompiler::build_canonical_source(source_code, specs);
 
-        out << "#!/usr/bin/env looping\n";
-        out << "# ═══════════════════════════════════════════════════════════════\n";
-        out << "# 🚀 COMPILED DYNAMIC LOOPING ARTIFACT — " << specs.name << "\n";
-        out << "# System UI: " << specs.name << " [" << specs.code << "]\n";
-        out << "# Hardware Refresh: " << specs.pipeline << " (" << specs.target_fps << " FPS)\n";
-        out << "# Layout Mode: " << specs.layout_mode << "\n";
-        out << "# Shader Palette: " << specs.theme << " (" << specs.primary_color << ")\n";
-        out << "# Dynamic Looping Engine v2.5.0 (Coki Studios / Holo Entertainment)\n";
-        out << "# ═══════════════════════════════════════════════════════════════\n\n";
-        out << "compile target \"" << specs.code << "\"\n";
-        out << "set ui_profile to \"" << specs.code << "\"\n";
-        out << "set theme to \"" << specs.theme << "\"\n\n";
+        // Check if caller explicitly requested a plain-text .loop script (and NOT invis target)
+        bool wants_plain_loop = (specs.code != "invis") &&
+                                ((out_file.size() >= 5 && out_file.substr(out_file.size() - 5) == ".loop") ||
+                                 (out_file.size() >= 5 && out_file.substr(out_file.size() - 5) == ".ruup"));
 
-        // Filter source code to avoid duplicate target declarations
-        std::stringstream in_stream(source_code);
-        std::string cur_line;
-        while (std::getline(in_stream, cur_line)) {
-            std::string trimmed = cur_line;
-            while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) trimmed.erase(0, 1);
-            if (trimmed.rfind("compile target ", 0) == 0 || trimmed.rfind("compile for ", 0) == 0 ||
-                trimmed.rfind("target(", 0) == 0 || trimmed.rfind("@target(", 0) == 0 ||
-                trimmed.rfind("profile(", 0) == 0 || trimmed.rfind("@profile(", 0) == 0 ||
-                trimmed.rfind("set ui_profile to", 0) == 0 || trimmed.rfind("set ui to", 0) == 0 ||
-                trimmed.rfind("set theme to", 0) == 0) {
-                out << "    # [Compiled Target Override]: " << trimmed << "\n";
-            } else {
-                out << cur_line << "\n";
+        InvisBinaryInfo bin_info;
+        if (wants_plain_loop) {
+            std::ofstream out(out_file);
+            if (!out.is_open()) {
+                std::cerr << "\033[31m❌ Error: Cannot write compiled target to: " << out_file << "\033[0m\n";
+                return false;
+            }
+            out << "#!/usr/bin/env looping\n" << canonical_source;
+            out.close();
+            chmod(out_file.c_str(), 0755);
+        } else {
+            if (!InvisBinaryCompiler::compile_to_binary(canonical_source, specs, out_file, force_compact, /*silent=*/false, &bin_info)) {
+                return false;
             }
         }
-        out.close();
-
-        // Make executable
-        std::string chmod_cmd = "chmod +x \"" + out_file + "\"";
-        system(chmod_cmd.c_str());
 
         // Packaging for Component 2 (.c2) bundles
         if (specs.code == "c2" || (out_file.size() >= 3 && out_file.substr(out_file.size() - 3) == ".c2")) {
@@ -2075,7 +2951,8 @@ public:
                << "  \"target_fps\": " << specs.target_fps << ",\n"
                << "  \"theme\": \"" << specs.theme << "\",\n"
                << "  \"primary_color\": \"" << specs.primary_color << "\",\n"
-               << "  \"entrypoint\": \"source.loop\"\n"
+               << "  \"entrypoint\": \"source.loop\",\n"
+               << "  \"binary_entrypoint\": \"binary.loopb\"\n"
                << "}\n";
             mf.close();
 
@@ -2099,11 +2976,15 @@ public:
                << "}\n";
             ly.close();
 
-            // 4. Source
-            system(("cp \"" + abs_out_file + "\" \"" + tmp_dir + "/source.loop\"").c_str());
+            // 4. Source & Invis. Binary
+            {
+                std::ofstream sf(tmp_dir + "/source.loop");
+                sf << canonical_source;
+            }
+            InvisBinaryCompiler::compile_to_binary(canonical_source, specs, tmp_dir + "/binary.loopb", /*force_compact=*/true, /*silent=*/true);
 
             // 5. Signature
-            std::string sig_cmd = "(cd \"" + tmp_dir + "\" && shasum -a 256 manifest.json tokens.json layout.json source.loop > signature.sha256)";
+            std::string sig_cmd = "(cd \"" + tmp_dir + "\" && shasum -a 256 manifest.json tokens.json layout.json source.loop binary.loopb > signature.sha256)";
             system(sig_cmd.c_str());
 
             // 6. Zip into .c2 (Remove pre-existing file so zip creates a clean new archive)
@@ -2116,26 +2997,40 @@ public:
             *out_created_path = out_file;
         }
 
-        std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Dynamic target artifact compiled to: " 
-                  << "\033[1m" << out_file << "\033[0m [" << specs.name << " / " << specs.pipeline << "]\n";
+        if (!wants_plain_loop) {
+            std::cout << "\033[32m✔ [INVIS. COMPILE SUCCESS]\033[0m Binary artifact compiled to: "
+                      << "\033[1m" << out_file << "\033[0m ["
+                      << (bin_info.is_standalone_exe ? "Standalone Native Binary / LPBN v3.0A" : "LPBN v3.0A Compact Binary")
+                      << " | SHA-256: " << (bin_info.sha256_hex.size() >= 12 ? bin_info.sha256_hex.substr(0, 12) : bin_info.sha256_hex)
+                      << "... | " << specs.name << "]\n";
+        } else {
+            std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Dynamic target artifact compiled to: " 
+                      << "\033[1m" << out_file << "\033[0m [" << specs.name << " / " << specs.pipeline << "]\n";
+        }
 
         return true;
     }
 
-    // Compiles a file to a target artifact
+    // Compiles a file to a target binary artifact
     static bool compile_file(const std::string& input_path, 
                              const std::string& target_name, 
                              const std::string& output_path,
-                             std::string* out_created_path = nullptr) {
-        std::ifstream file(input_path);
-        if (!file.is_open()) {
-            std::cerr << "\033[31m❌ Error: Cannot open input file: " << input_path << "\033[0m\n";
-            return false;
+                             std::string* out_created_path = nullptr,
+                             bool force_compact = false) {
+        std::string source_code;
+        InvisBinaryInfo existing_bin;
+        if (InvisBinaryCompiler::extract_from_file(input_path, &source_code, &existing_bin) && existing_bin.valid) {
+            // Input is already a binary file; re-target or re-emit
+        } else {
+            std::ifstream file(input_path);
+            if (!file.is_open()) {
+                std::cerr << "\033[31m❌ Error: Cannot open input file: " << input_path << "\033[0m\n";
+                return false;
+            }
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            source_code = buffer.str();
         }
-
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string source_code = buffer.str();
 
         std::string out_file = output_path;
         if (out_file.empty()) {
@@ -2145,10 +3040,14 @@ public:
             size_t dot = base_name.find_last_of('.');
             if (dot != std::string::npos) base_name = base_name.substr(0, dot);
             UIProfileSpecs specs = resolve_ui_profile(target_name);
-            out_file = "build/" + base_name + "_" + specs.code;
+            if (specs.code == "invis") {
+                out_file = "build/" + base_name + (force_compact ? ".loopb" : ".bin");
+            } else {
+                out_file = "build/" + base_name + "_" + specs.code;
+            }
         }
 
-        return compile_source(source_code, target_name, out_file, out_created_path);
+        return compile_source(source_code, target_name, out_file, out_created_path, force_compact);
     }
 
     // Compiles a DynamicProgram object
@@ -2173,56 +3072,308 @@ public:
         return DynamicProgram(name, target, ver);
     }
 
-    // Factory: Creates pre-configured template programs
+    // Factory: Creates pre-configured template programs with Arch 3.0A CS modules & snippets
     static DynamicProgram create_template(const std::string& type, const std::string& name, const std::string& target = "shine_ui") {
-        DynamicProgram prog(name, target, "1.0");
+        DynamicProgram prog(name, target, "1.1");
 
-        if (type == "window" || type == "win" || type == "gui") {
+        if (type == "arcade" || type == "game" || type == "platformer") {
+            UIProfileSpecs specs = resolve_ui_profile(target);
+            prog.set_window(name + " 2D Game", 800, 600)
+                .set_theme(specs.theme)
+                .add_import("loop.ui", "ui")
+                .add_import("loop.engine", "game")
+                .add_import("csid", "csid")
+                .add_import("game_plus", "game_plus")
+                .add_import("audio", "sound")
+                .add_var("player_x", "100")
+                .add_var("player_y", "350")
+                .add_var("player_vx", "0.0")
+                .add_var("player_vy", "0.0")
+                .add_var("player_score", "0")
+                .add_var("player_lives", "3")
+                .add_var("coins_collected", "0")
+                .add_var("is_jumping", "false")
+                .add_snippet("on_player_jump",
+                    "if (!is_jumping) {\n"
+                    "    player_vy := -12.5;\n"
+                    "    is_jumping := true;\n"
+                    "    game.play_sfx(\"jump\");\n"
+                    "    out(\"[GAME SNIPPET] Player jumped! Impulse vy = -12.5\");\n"
+                    "}")
+                .add_snippet("on_collect_coin",
+                    "val coin_box = [340, 330, 24, 24];\n"
+                    "val player_box = [player_x, player_y, 32, 32];\n"
+                    "val hit = game.collide_box(player_box, coin_box);\n"
+                    "if (hit) {\n"
+                    "    player_score += 150;\n"
+                    "    coins_collected += 1;\n"
+                    "    game.play_sfx(\"coin\");\n"
+                    "    game.spawn_particle(\"sparkle\", 340, 330, 0.0, -2.0, \"#facc15\");\n"
+                    "    out($\"[GAME SNIPPET] Coin collected! Score: {player_score} (Coins: {coins_collected})\");\n"
+                    "} else {\n"
+                    "    player_score += 50;\n"
+                    "    game.play_sfx(\"coin\");\n"
+                    "    out($\"[GAME SNIPPET] Bonus coin! Score: {player_score}\");\n"
+                    "}")
+                .add_snippet("on_laser_fire",
+                    "val laser_x = player_x + 36;\n"
+                    "val laser_y = player_y + 12;\n"
+                    "game.play_sfx(\"laser\");\n"
+                    "game.spawn_particle(\"laser_bolt\", laser_x, laser_y, 14.0, 0.0, \"#38bdf8\");\n"
+                    "out($\"[GAME SNIPPET] Laser beam discharged from ({laser_x}, {laser_y})\");")
+                .add_snippet("on_enemy_hit",
+                    "player_score += 500;\n"
+                    "game.play_sfx(\"hit\");\n"
+                    "game.spawn_particle(\"explosion\", 550, 300, 0.0, 0.0, \"#ef4444\");\n"
+                    "out($\"[GAME SNIPPET] Enemy eliminated! Score: {player_score}\");")
+                .add_snippet("on_game_loop",
+                    "player_vy += 0.85; // Gravity\n"
+                    "player_y += player_vy;\n"
+                    "if (player_y >= 350) {\n"
+                    "    player_y := 350;\n"
+                    "    player_vy := 0.0;\n"
+                    "    is_jumping := false;\n"
+                    "}\n"
+                    "player_x := game.clamp(player_x + player_vx, 20, 760);\n"
+                    "out($\"[PHYSICS 60Hz] Player pos: ({player_x}, {player_y}) | vy: {player_vy}\");")
+                .add_card(20, 20, 760, 85, "🎮 " + name + " (Quantum 2D Arena)", "State-of-the-art 2D Canvas Engine (Arch 3.0A)\nTarget: " + target + " | V-Sync Direct 60/120 FPS")
+                .add_card(20, 115, 370, 160, "⚡ Estado del Héroe", "Vidas: 3 • Puntos: 0 • Monedas: 0\nFísica: Gravedad 0.85G • Salto: Activo")
+                .add_card(410, 115, 370, 160, "👾 Anomalía & Enemigos", "Escenario: VoidStage Neon\nHaz Láser: Activo a 550px\nPortal: GATE-1 Sincronizado")
+                .add_button(35, 290, "SALTO [SPACE]", "on_player_jump")
+                .add_button(220, 290, "DISPARAR LÁSER [F]", "on_laser_fire")
+                .add_button(430, 290, "RECOGER MONEDA", "on_collect_coin")
+                .add_button(610, 290, "FRAME DE FÍSICA", "on_game_loop")
+                .add_code("game.scenario(name: \"VoidStage\", weather: \"void\", accent: \"#38bdf8\")\n"
+                          "spawn.sprite(\"PlayerHero\", at: (100, 350), color: \"#38bdf8\")\n"
+                          "spawn.checkpoint(at: (300, 350), label: \"GATE-1\")\n"
+                          "spawn.laser_hazard(at: (550, 300), size: (14, 100), interval: 1.8)\n"
+                          "game.play_sfx(\"powerup\")\n"
+                          "print \"[GAME ENGINE] Initialized 2D canvas with embedded reactive snippets.\"");
+        } else if (type == "game3d" || type == "3d" || type == "racing3d") {
+            UIProfileSpecs specs = resolve_ui_profile(target);
+            prog.set_window(name + " 3D Quantum Arena", 900, 620)
+                .set_theme(specs.theme)
+                .add_import("loop.ui", "ui")
+                .add_import("loop.engine", "game")
+                .add_import("csid", "csid")
+                .add_import("game_plus", "game_plus")
+                .add_import("audio", "sound")
+                .add_var("pilot_pos", "[0.0, 2.0, 0.0]")
+                .add_var("pilot_vel", "[0.0, 0.0, 0.0]")
+                .add_var("score_3d", "0")
+                .add_var("kers_boost", "100")
+                .add_snippet("on_boost_3d",
+                    "val fwd = math3d.normalize([0.0, 0.15, 1.0]);\n"
+                    "pilot_vel := math3d.scale(fwd, 28.0);\n"
+                    "kers_boost := game.clamp(kers_boost - 20, 0, 100);\n"
+                    "game.play_sfx(\"powerup\");\n"
+                    "out($\"[3D HYPER-DASH] Vector impulso: {pilot_vel} | KERS: {kers_boost}%\");")
+                .add_snippet("on_raycast_scan",
+                    "val hit = physics3d.raycast_sphere([0, 2, 0], [0, 0, 1], [0, 2, 18], 2.5);\n"
+                    "if (hit[\"hit\"]) {\n"
+                    "    score_3d += 250;\n"
+                    "    game.play_sfx(\"laser\");\n"
+                    "    out($\"[3D RAYCAST] Impacto confirmado a {hit.distance}m! Score: {score_3d}\");\n"
+                    "}")
+                .add_card(20, 20, 860, 80, "🕹️ " + name + " (Quantum 3D Engine)", "Motor 3D con Sub-Stepping 120Hz, Z-Buffer y Proyección en Perspectiva\nTarget: " + target + " | Iluminación Blinn-Phong & Sombras Dinámicas")
+                .add_button(35, 120, "HYPER-DASH 3D [SHIFT]", "on_boost_3d")
+                .add_button(260, 120, "ESCANEO RAYCAST 3D [Z]", "on_raycast_scan")
+                .add_code("game.mode(\"3d\")\n"
+                          "scene3d.world(name: \"" + name + "\", size: (180, 80, 180), sky: \"cyber_night\", fog: 0.010, grid: true)\n"
+                          "camera3d.set(mode: \"chase\", pos: (0, 8, -16), target: (0, 2, 10), fov: 64, smooth: 0.14)\n"
+                          "light3d.directional(dir: (-0.4, -1.0, -0.35), color: \"#f8fafc\", intensity: 1.1)\n"
+                          "physics3d.config(gravity: -26.0, substeps: 4, friction: 0.86, bounce: 0.15)\n"
+                          "spawn3d.player(\"" + name + "Pilot\", at: (0, 2, 0), mesh: \"hovercraft\", speed: 24, jump: 16, color: \"#38bdf8\")\n"
+                          "spawn3d.box(at: (0, -0.5, 14), size: (14, 1, 28), color: \"#6366f1\")\n"
+                          "spawn3d.ring(at: (0, 4, 18), radius: 3.2, points: 250, boost: 22, color: \"#00f5d4\")\n"
+                          "spawn3d.crystal(at: (3, 3, 24), points: 150, color: \"#fbbf24\")\n"
+                          "spawn3d.enemy(\"Sentinel3D\", at: (0, 2.5, 32), range: (-8, 8), axis: \"x\", speed: 9, health: 60)\n"
+                          "spawn3d.portal(at: (0, 3.5, 48), radius: 3.8, label: \"QUANTUM GATE\")\n"
+                          "print \"[3D ENGINE] Initialized 3D scene graph with 120Hz physics sub-stepping.\"");
+        } else if (type == "rpg" || type == "adventure") {
+            UIProfileSpecs specs = resolve_ui_profile(target);
+            prog.set_window(name + " RPG Adventure", 840, 580)
+                .set_theme(specs.theme)
+                .add_import("loop.ui", "ui")
+                .add_import("loop.engine", "game")
+                .add_import("core_utils", "utils")
+                .add_import("audio", "sound")
+                .add_var("hero_name", "\"Kael\"")
+                .add_var("hero_hp", "120")
+                .add_var("hero_max_hp", "120")
+                .add_var("hero_mana", "60")
+                .add_var("hero_gold", "250")
+                .add_var("hero_inventory", "[\"Poción Curativa\", \"Cristal de Maná\", \"Daga de Cristal\"]")
+                .add_snippet("on_dialogue_step",
+                    "val dialogues = [\n"
+                    "    \"Guardián CS: Bienvenido al núcleo del Arch 3.0A, valiente aventurero.\",\n"
+                    "    \"Guardián CS: El portal cuántico requiere sincronizar la clave de sala CSMS.\",\n"
+                    "    \"Guardián CS: Toma esta gema y avanza sin vacilar hacia el siguiente nivel.\"\n"
+                    "];\n"
+                    "sound.play_note(\"E4\", 80);\n"
+                    "out($\"[RPG DIALOGUE] {dialogues[0]}\");")
+                .add_snippet("on_combat_attack",
+                    "val base_dmg = math.random(18, 32);\n"
+                    "val is_crit = (math.random(1, 100) <= 25);\n"
+                    "val final_dmg = is_crit ? (base_dmg * 2) : base_dmg;\n"
+                    "if (is_crit) {\n"
+                    "    game.play_sfx(\"powerup\");\n"
+                    "    out($\"[RPG COMBAT] ¡GOLPE CRÍTICO! Infliges {final_dmg} de daño elemental.\");\n"
+                    "} else {\n"
+                    "    game.play_sfx(\"hit\");\n"
+                    "    out($\"[RPG COMBAT] Ataque exitoso: infliges {final_dmg} de daño.\");\n"
+                    "}")
+                .add_snippet("on_use_potion",
+                    "if (contains(hero_inventory, \"Poción Curativa\")) {\n"
+                    "    hero_hp := math.min(hero_max_hp, hero_hp + 45);\n"
+                    "    sound.play_note(\"G4\", 120);\n"
+                    "    out($\"[RPG ITEM] Usaste Poción Curativa. Vida restaurada: {hero_hp}/{hero_max_hp}\");\n"
+                    "} else {\n"
+                    "    out(\"[RPG ITEM] No tienes más pociones curativas en el inventario.\");\n"
+                    "}")
+                .add_card(20, 20, 800, 80, "🗡️ " + name + " (RPG & Quest System)", "Aventura Reactiva • Coki Studios Story Engine (Arch 3.0A)")
+                .add_card(20, 110, 390, 170, "🧙‍♂️ Estado del Héroe", "Nombre: Kael • Nivel: 5 • HP: 120/120\nManá: 60/60 • Oro: 250 • Equipo: Daga de Cristal")
+                .add_card(430, 110, 390, 170, "📜 Misión Principal", "Objetivo: Explorar las Ruinas Cuánticas\nClave CSMS Requerida: S256 Hardware Enclave")
+                .add_button(35, 300, "HABLAR CON NPC", "on_dialogue_step")
+                .add_button(240, 300, "ATACAR ENEMIGO", "on_combat_attack")
+                .add_button(450, 300, "USAR POCIÓN", "on_use_potion")
+                .add_code("sound.play_note(\"C4\", 100)\nsound.play_note(\"G4\", 150)\nprint \"[RPG] Adventure realm loaded successfully.\"");
+        } else if (type == "dashboard" || type == "app" || type == "launcher") {
+            UIProfileSpecs specs = resolve_ui_profile(target);
+            prog.set_window(name + " Dashboard Pro", 860, 560)
+                .set_theme(specs.theme)
+                .add_import("loop.ui", "ui")
+                .add_import("csid", "csid")
+                .add_import("core_utils", "utils")
+                .add_import("csms", "csms")
+                .add_import("json", "json")
+                .add_var("telemetry_status", "\"OPERATIONAL\"")
+                .add_var("active_users", "1420")
+                .add_var("latency_ms", "0.16")
+                .add_var("session_id", "utils.uuid()")
+                .add_snippet("on_csid_login",
+                    "val user = csid.trigger_auth(\"Jerix Ortiz\", \"jerix@cokistudios.com\");\n"
+                    "out($\"[CSID AUTH] Sesión iniciada para: {user.name} ({user.email})\");\n"
+                    "out($\"[CSID CLAIMS] Identidad: {user.provider} | Scope: {user.scope}\");")
+                .add_snippet("on_refresh_telemetry",
+                    "latency_ms := (math.random(12, 28) / 100.0);\n"
+                    "active_users += math.random(-5, 12);\n"
+                    "val ts = datetime.iso();\n"
+                    "out($\"[TELEMETRY REFRESH] Sincronizado a las {ts} | Latencia: {latency_ms} ms | Usuarios: {active_users}\");")
+                .add_snippet("on_csms_encrypt_payload",
+                    "val room = \"room_cs_ops_99\";\n"
+                    "val raw_data = $\"status={telemetry_status};latency={latency_ms};users={active_users}\";\n"
+                    "val encrypted = csms.encrypt(room, raw_data);\n"
+                    "out($\"[CSMS E2EE] Payload cifrado para sala '{room}':\");\n"
+                    "out($\"  {encrypted}\");")
+                .add_snippet("on_export_json_report",
+                    "val report = {\n"
+                    "    \"app\": \"" + name + "\",\n"
+                    "    \"session_id\": session_id,\n"
+                    "    \"status\": telemetry_status,\n"
+                    "    \"active_users\": active_users,\n"
+                    "    \"latency_ms\": latency_ms,\n"
+                    "    \"timestamp\": datetime.iso()\n"
+                    "};\n"
+                    "val json_out = json.stringify(report);\n"
+                    "out(\"[DATA EXPORT] Reporte JSON generado exitosamente:\");\n"
+                    "out(json_out);")
+                .add_card(20, 20, 820, 75, "🌟 " + name + " (Coki Studios Enterprise Dashboard)", "Arch 3.0A Quantum Synthesis • Target: " + target + " • V-Sync 60/120/240Hz Direct")
+                .add_card(20, 105, 395, 175, "🔐 CS ID Connect Identity", "Estado: Single Sign-On PKCE S256\nEndpoint: cokistudios.com/authorize\nHardware Enclave: Activo (SEP/T2)")
+                .add_card(445, 105, 395, 175, "🔒 CSMS Mensajería E2EE", "Cifrado: Hardware-Backed SEP / T2 / StrongBox\nCanal: SHA-256 KDF con Salt Canónico\nFormato: enc:v1:<iv>:<ciphertext>")
+                .add_button(35, 300, "CONECTAR CS ID", "on_csid_login")
+                .add_button(235, 300, "REFRESCAR TELEMETRÍA", "on_refresh_telemetry")
+                .add_button(450, 300, "CIFRAR PAYLOAD CSMS", "on_csms_encrypt_payload")
+                .add_button(665, 300, "EXPORTAR JSON", "on_export_json_report")
+                .add_code("play tone at 587 Hz for 80 ms\nplay tone at 880 Hz for 120 ms\nprint \"[DASHBOARD] Enterprise telemetry initialized with default CS modules.\"");
+        } else if (type == "tool" || type == "counter" || type == "cli") {
+            UIProfileSpecs specs = resolve_ui_profile(target);
+            prog.set_window(name + " Tool", 640, 440)
+                .set_theme(specs.theme)
+                .add_import("loop.ui", "ui")
+                .add_import("core_utils", "utils")
+                .add_import("csms", "csms")
+                .add_import("json", "json")
+                .add_var("counter", "0")
+                .add_var("raw_payload", "\"CS_QUANTUM_DATA_PACKET\"")
+                .add_snippet("on_process_data",
+                    "counter += 1;\n"
+                    "val hash = crypto.sha256($\"task_{counter}\");\n"
+                    "out($\"[TOOL SNIPPET] Tarea #{counter} procesada. Hash: {hash}\");")
+                .add_snippet("on_format_utility",
+                    "val sample_bytes = 10485760;\n"
+                    "val formatted = utils.format_bytes(sample_bytes);\n"
+                    "val slug = utils.slugify(\"Coki Studios Looping Engine 1.1\");\n"
+                    "out($\"[TOOL SNIPPET] Format: {formatted} | Slug: {slug}\");")
+                .add_snippet("on_secure_encrypt",
+                    "val enc = csms.encrypt(\"tool_sandbox\", raw_payload);\n"
+                    "out($\"[TOOL SNIPPET] Encrypted payload: {enc}\");")
+                .add_card(20, 20, 600, 80, "⚡ " + name + " (Productivity Tool)", "Universal Task & Data Transformer (Arch 3.0A)")
+                .add_card(20, 110, 600, 150, "📦 Panel de Operaciones", "Contador Activo: Tareas bajo demanda\nAlgoritmos: SHA-256, CSMS KDF, Formato Kebab")
+                .add_button(35, 280, "PROCESAR TAREA", "on_process_data")
+                .add_button(235, 280, "UTILIDADES DE FORMATO", "on_format_utility")
+                .add_button(450, 280, "CIFRADO SEGURO", "on_secure_encrypt")
+                .add_code("print \"[TOOL] Utility initialized and ready.\"");
+        } else if (type == "swiftui" || type == "apple") {
+            prog.set_window(name + " SwiftUI", 700, 500)
+                .set_target("swiftui")
+                .add_code(
+                    "component " + name + "View {\n"
+                    "    @state count = 0\n"
+                    "    @state is_active = true\n"
+                    "    VStack {\n"
+                    "        Text(\"🍎 " + name + " (SwiftUI)\")\n"
+                    "            .font(.title)\n"
+                    "            .foregroundColor(.primary)\n"
+                    "        Text(\"Contador reactivo: $count\")\n"
+                    "            .foregroundColor(.secondary)\n"
+                    "        HStack {\n"
+                    "            Button(\"Incrementar\")\n"
+                    "            Button(\"Resetear\")\n"
+                    "        }\n"
+                    "        Toggle(\"Servicio Activo\", isOn: $is_active)\n"
+                    "    }\n"
+                    "    .padding(20)\n"
+                    "}\n"
+                    "print \"[SWIFTUI] Component registered. Preview with: looping preview\"\n"
+                );
+        } else {
             UIProfileSpecs specs = resolve_ui_profile(target);
             prog.set_window(name + " Window", 850, 540)
                 .set_theme(specs.theme)
-                .add_card(24, 20, 390, 160, "🌟 " + name, "Ventana dinámica generada por Looping Engine 2.5\nDiseño Loop OS & Glassmorphism Reactivo")
+                .add_card(24, 20, 390, 160, "🌟 " + name, "Ventana dinámica generada por Looping v1.1 (Arch 3.0A)\nDiseño Loop OS & Glassmorphism Reactivo")
                 .add_card(434, 20, 390, 160, "⚡ Métricas & Hardware", "Perfil UI: " + specs.name + " (" + specs.pipeline + ")\nRefresco: " + std::to_string(specs.target_fps) + " FPS Direct")
-                .add_card(24, 200, 390, 180, "📦 Servicios Activos", "• Xtraps Engine v2.0\n• Looping JIT & Runtime v2.5\n• Audio Synthesizer Subsystem")
-                .add_card(434, 200, 390, 180, "🎯 Panel de Control", "Control directo del subsistema gráfico y ejecución de tareas reactivas.")
+                .add_card(24, 200, 390, 180, "📦 Módulos Integrados", "• CS ID Connect PKCE S256\n• CSMS E2EE Hardware Encryption\n• Looping AST & Runtime v1.1 (Arch 3.0A)")
+                .add_card(434, 200, 390, 180, "🎯 Panel de Control", "Control directo del subsistema gráfico y ejecución de snippets reactivos.")
                 .add_button(36, 420, "INICIAR PROCESO", "start_process")
                 .add_button(240, 420, "REINICIAR SERVICIOS", "restart_services")
                 .add_button(440, 420, "EXPORTAR REGISTRO", "export_log")
                 .add_code("play tone at 587 Hz for 80 ms\nplay tone at 880 Hz for 120 ms\nprint \"[DYNAMIC WINDOW] '" + name + "' inicializada con éxito.\"");
-        } else if (type == "arcade" || type == "game") {
-            prog.set_window(name + " 2D Game", 800, 600)
-                .add_import("loop.ui", "ui")
-                .add_import("loop.engine", "game")
-                .add_card(20, 20, 760, 80, "🎮 " + name, "State-of-the-art 2D Canvas Engine\nTarget: " + target)
-                .add_button(35, 120, "PLAY GAME", "start_game")
-                .add_code("play tone at 587 Hz for 80 ms\nplay tone at 880 Hz for 120 ms\nprint \"[GAME] Engine initialized at 60 FPS.\"");
-        } else if (type == "dashboard" || type == "launcher") {
-            prog.set_window(name + " Dashboard", 840, 560)
-                .add_card(20, 20, 800, 70, "🌟 " + name, "System Dashboard & Telemetry Monitor")
-                .add_card(20, 110, 380, 180, "CPU & MEMORY", "Usage: 14% • Temperature: 42°C\nStatus: Optimal")
-                .add_card(420, 110, 400, 180, "NETWORK & DISPLAY", "Pipeline: Direct V-Sync\nLatency: 0.18ms")
-                .add_button(35, 310, "REFRESH METRICS", "refresh_stats")
-                .add_code("print \"[DASHBOARD] Loaded telemetry metrics successfully.\"");
-        } else if (type == "tool" || type == "counter") {
-            prog.set_window(name + " Tool", 600, 400)
-                .add_card(20, 20, 560, 90, "⚡ " + name, "Dynamic Productivity Tool")
-                .add_button(35, 130, "EJECUTAR TAREA", "run_task")
-                .add_code("mut counter = 0\nfn run_task() {\n    counter += 1\n    print $\"Task executed. Counter: {counter}\"\n}\nprint \"Tool initialized and ready.\"");
-        } else {
-            prog.set_window(name, 700, 450)
-                .add_card(20, 20, 660, 90, name, "Dynamic Application generated dynamically")
-                .add_code("print $\"Dynamic application '{name}' running perfectly!\"");
         }
 
         return prog;
     }
 
-    // Runs an executable artifact or script
+    // Runs an executable artifact or script (supports Standalone Native Binary, LPBN Compact Binary, and .loop scripts)
     static bool run_artifact(const std::string& path) {
         std::cout << "\033[36m[LAUNCHER]\033[0m Executing artifact: \033[1m" << path << "\033[0m\n";
+        std::string host_exe = InvisBinaryCompiler::resolve_host_executable();
+        if (host_exe.empty()) host_exe = "looping";
+
+        InvisBinaryInfo info;
+        if (InvisBinaryCompiler::extract_from_file(path, nullptr, &info) && info.valid) {
+            if (info.is_standalone_exe) {
+                std::string cmd = (path.rfind("./", 0) == 0 || path.front() == '/') ? ("\"" + path + "\"") : ("./\"" + path + "\"");
+                return (system(cmd.c_str()) == 0);
+            } else {
+                std::string cmd = "\"" + host_exe + "\" \"" + path + "\"";
+                return (system(cmd.c_str()) == 0);
+            }
+        }
+
         std::string cmd;
         if (path.find(".loop") != std::string::npos || path.find(".ruup") != std::string::npos) {
-            cmd = "looping \"" + path + "\"";
+            cmd = "\"" + host_exe + "\" \"" + path + "\"";
         } else if (path.rfind("./", 0) == 0 || path.front() == '/') {
             cmd = "\"" + path + "\"";
         } else {

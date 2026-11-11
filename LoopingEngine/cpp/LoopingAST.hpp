@@ -333,12 +333,14 @@ public:
         : module_name(name), version(ver) {}
 };
 
-// App Definition: define app "Name" version 1.0
+// App / Game / Game3D Definition: define app|game|game3d "Name" version 1.0
 class AppDefineStmt : public Stmt {
 public:
     std::string app_name;
     std::string version;
-    AppDefineStmt(const std::string& name, const std::string& ver) : app_name(name), version(ver) {}
+    std::string kind; // "app", "game", "game3d"
+    AppDefineStmt(const std::string& name, const std::string& ver, const std::string& k = "app")
+        : app_name(name), version(ver), kind(k) {}
 };
 
 // Window: create window with title "..." and size (w, h)
@@ -384,17 +386,17 @@ public:
     std::vector<std::string> actions_list;
 };
 
-// Spawn Entity: spawn sprite / platform / coin / bubbly_dot / spike / jump_pad / orb / moving_platform / enemy / boss / heart / portal / checkpoint / gravity_zone / teleporter / breakable / laser_hazard
+// Spawn Entity: 2D & Hybrid Game Entities
 class SpawnEntityStmt : public Stmt {
 public:
-    std::string entity_type; // "sprite", "platform", "coin", "bubbly_dot", "spike", "jump_pad", "orb", "moving_platform", "enemy", "boss", "heart", "portal", "checkpoint", "gravity_zone", "teleporter", "breakable", "laser_hazard"
+    std::string entity_type; // "sprite", "platform", "coin", "bubbly_dot", "spike", "jump_pad", "orb", "moving_platform", "enemy", "boss", "heart", "portal", "checkpoint", "gravity_zone", "teleporter", "breakable", "laser_hazard", "saw", "turret", "powerup", "cube3d", "pyramid3d", "sphere3d", "grid3d"
     std::string name;
-    double x = 0, y = 0, w = 0, h = 0;
+    double x = 0, y = 0, z = 0, w = 0, h = 0;
     std::string color;
     double points = 0;
     std::string text;
     std::string state;
-    // Enhanced 2D game capabilities
+    // Enhanced 2D & hybrid game capabilities
     std::string axis = "x";
     double min_pos = 0, max_pos = 0;
     double speed = 80;
@@ -406,20 +408,60 @@ public:
     double wind_x = 0, wind_y = 0;
     double fire_rate = 1.8;
     double interval = 2.0;
+    double radius = 36;
+    double rx = 1.0, ry = 1.5, rz = 0.5;
+    int rings = 7;
+    bool wireframe = false;
     std::string dest = "";
 };
 
-// Game World & Physics Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)
+// Game World, Hybrid Camera, Stage Presets & Algebraic Table Directives
 class GameConfigStmt : public Stmt {
 public:
-    std::string config_key; // "gravity", "world", "camera", "lives", "friction", "scenario", "physics", "time_scale"
-    double val1 = 0, val2 = 0, val3 = 0;
+    std::string config_key; // "gravity", "world", "camera", "camera3d", "lives", "friction", "scenario", "physics", "time_scale", "stage_preset", "algebra_table", "algebra_row"
+    double val1 = 0, val2 = 0, val3 = 0, val4 = 0;
     std::string str_val = "";
     std::string str_val2 = "";
     std::string str_val3 = "";
     GameConfigStmt(const std::string& key, double v1 = 0, double v2 = 0, const std::string& sv = "",
-                   const std::string& sv2 = "", const std::string& sv3 = "", double v3 = 0)
-        : config_key(key), val1(v1), val2(v2), val3(v3), str_val(sv), str_val2(sv2), str_val3(sv3) {}
+                   const std::string& sv2 = "", const std::string& sv3 = "", double v3 = 0, double v4 = 0)
+        : config_key(key), val1(v1), val2(v2), val3(v3), val4(v4), str_val(sv), str_val2(sv2), str_val3(sv3) {}
+};
+
+// 3D Scene, Camera, Lighting & Physics Configuration:
+// scene3d.world(...) / camera3d.set(...) / light3d.directional(...) / light3d.point(...) / light3d.ambient(...) / physics3d.config(...) / game.mode("3d")
+class Scene3DConfigStmt : public Stmt {
+public:
+    std::string category; // "mode", "world", "camera", "dir_light", "point_light", "ambient_light", "physics"
+    double x = 0, y = 0, z = 0;
+    double tx = 0, ty = 0, tz = 0;
+    double val1 = 0, val2 = 0, val3 = 0, val4 = 0;
+    bool flag = true;
+    std::string str1 = "";
+    std::string str2 = "";
+};
+
+// 3D Entity Spawner: spawn3d.player / box / cube / platform / moving_platform / sphere / cylinder / pyramid / torus / ring / crystal / enemy / boss / pad / hazard / checkpoint / portal / terrain
+class SpawnEntity3DStmt : public Stmt {
+public:
+    std::string entity_type = "box";
+    std::string name = "Entity3D";
+    std::string mesh = "box";
+    double x = 0, y = 0, z = 0;
+    double sx = 4, sy = 1, sz = 4;
+    double rx = 0, ry = 0, rz = 0;
+    double radius = 1.5;
+    std::string axis = "x";
+    double min_pos = -10, max_pos = 10;
+    double speed = 8.0;
+    double power = 22.0;
+    double health = 100.0;
+    double damage = 25.0;
+    double points = 150.0;
+    double metallic = 0.5;
+    double fire_rate = 1.6;
+    std::string color = "#38bdf8";
+    std::string label = "";
 };
 
 // Emit Particles
@@ -575,6 +617,17 @@ public:
     std::shared_ptr<SwiftUIViewNode> root_view;
     std::vector<SwiftUIModifier> root_modifiers;
     SwiftUIViewRenderStmt(std::shared_ptr<SwiftUIViewNode> r) : root_view(r) {}
+};
+
+// Invis. Compile Architecture Statement: invis. compile [src] [to dst] / compile invis [src] [to dst] / @invis_compile
+class InvisCompileStmt : public Stmt {
+public:
+    std::string input_path;
+    std::string output_path;
+    std::string target_ui = "shine_ui";
+    bool compact_mode = false;
+    InvisCompileStmt(const std::string& in_p = "", const std::string& out_p = "", const std::string& tgt = "shine_ui", bool compact = false)
+        : input_path(in_p), output_path(out_p), target_ui(tgt), compact_mode(compact) {}
 };
 
 } // namespace looping

@@ -1,23 +1,23 @@
 class Looping < Formula
-  desc "High-performance programming language and native UI engine (v2.8 Quantum Signature)"
-  homepage "https://cokistudios.com/engine"
-  url "https://github.com/cokistudios/looping/archive/refs/tags/v2.8.0.tar.gz"
-  version "2.8.0"
+  desc "Dual hybrid high-performance 2D/3D engine and programming language (Production Release / Arch 3.0A)"
+  homepage "https://cokistudios.github.io"
+  version "1.1"
+  version_scheme 1
   license "MIT"
 
-  # Para instalaciones desde tap de Coki Studios o Homebrew Core
-  depends_on :macos
-  depends_on "python@3" => :optional
+  url "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz"
+  mirror "https://github.com/CokiStudios/engine/releases/download/v1.1/looping-v1.1-darwin-universal.tar.gz"
+  mirror "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v1.1/looping-v1.1-darwin-universal.tar.gz"
+  sha256 "b64ef06c95a2e58d659aa177db8fe735210efe2bea07a55c68535fb9461a350e"
 
   def install
-    # Compilación nativa universal (Apple Silicon arm64 + Intel x86_64)
-    system "make", "looping"
     bin.install "looping"
+    bin.install_symlink "looping" => "ruuping"
+    bin.install "smiledev"
   end
 
   test do
-    # Verificación de versión y evaluación básica de Looping
-    assert_match "v2.8.0", shell_output("#{bin}/looping --version")
-    assert_match "42", shell_output("#{bin}/looping eval 'print 42'")
+    system "#{bin}/looping", "test"
+    system "#{bin}/smiledev", "version"
   end
 end

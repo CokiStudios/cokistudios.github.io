@@ -1,0 +1,127 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ UIC (UI CONNECT) — PRELIMINARY INTERACTIVE SKETCH (.loop) ✦
+# Basado en el cuaderno original de arquitectura CS (10 Nov 2026):
+# • CS NAND (QLC Mem): NS (Normal Storage) vs PS (Protected Storage)
+# • MRM (Multi Recovery Mode): Disconnect | Uic idle | Working (NO Disconnect)
+# • Acciones PS: Restore SUI, Repair SUI, Inject .c2 on PS (Dangerous), Change OS
+# • Rice & Bowls -> .c2 (Uic.transfork + Kernel Shinerien + Malicious Day AI)
+# • Chips CS: ESC X1 (Lookit), NEX1 / NFC.E 286 (brightsmile 1 + Rotate 1), XR1, XRo G1
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import loop.ui as ui
+import loop.system as sys
+
+# 1. Vista Declarativa SwiftUI del Boceto UIC + MRM (Arch 3.0A)
+view UICSketchPrototype {
+    @state phone_mode = "MRM -> Uic idle (Conectado)"
+    @state target_nand = "PS (Protected Storage: OS, Rice, .c2, NEC pair)"
+    @state mrm_protect = true
+    @state sign_c2_uic = true
+
+    VStack(spacing: 14) {
+        HStack(spacing: 10) {
+            Image(systemName: "cpu.fill")
+                .foregroundColor(.cyan)
+            Text("✦ UIC Sketch — MRM & Protected Storage (PS)")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.cyan)
+            Spacer()
+            Badge("SKETCH • NO BACKEND")
+        }
+
+        Divider()
+
+        VStack(spacing: 6) {
+            Text("Estado del Celular: $phone_mode")
+                .font(.headline)
+            Text("Partición QLC Destino: $target_nand")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+
+        HStack(spacing: 10) {
+            Button("[Mock] Restore / Repair SUI") {
+                phone_mode = "MRM -> Working (NO Disconnect!)"
+            }
+            .buttonStyle(.bordered)
+
+            Button("[Mock] Inject .c2 on PS") {
+                phone_mode = "MRM -> Injecting .c2 Layer on PS"
+            }
+            .buttonStyle(.borderedProminent)
+        }
+
+        Toggle("Be Careful: Enable MRM Protect + Trust PC + Sign .c2 on UIC", isOn: $mrm_protect)
+            .padding(8)
+
+        ProgressView(value: 0.85)
+            .tint(.cyan)
+    }
+    .padding(20)
+    .frame(width: 560)
+}
+
+swiftui.preview("UICSketchPrototype")
+
+# 2. Inicialización de la Ventana Nativa Preliminar de UIC
+window.create("✦ UIC [SKETCH INTERACTIVO] — MRM, PS NAND, Rice/Bowls & .c2 Suite ✦", 1060, 760, "xui")
+window.set_theme("cyber_neon_xui")
+
+# 3. Tarjetas de Arquitectura del Cuaderno (Páginas 1 a 10)
+window.add_card("💾 [Pág. 7] CS NAND: NS vs PS", "QLC Mem dividida en NS (Normal Storage: Userdata) y PS (Protected Storage: OS, Rice layer, .c2 layer, NEC pair, Felte/CSMS). Solo accesible con UIC + MRM.", 20, 80, 310, 145, "QLC NAND", "💾")
+window.add_card("🔌 [Pág. 8] MRM (Multi Recovery Mode)", "3 pantallas en celular: Disconnect ([PC] !), Uic idle (• • •) y Working (NO Disconnect / Not power off). Permite Restore SUI, Repair SUI, Inject .c2 on PS y Change OS.", 350, 80, 310, 145, "MRM MODE", "🔌")
+window.add_card("🍚 [Pág. 3-4] Rice, Bowls & Shinerien", "Rice es la base; los 'Bowls' son los módulos creados en hiOP y subidos a Felte vía smiledev. Uic.transfork convierte Rice/Bowls a .c2 con el kernel Shinerien.", 680, 80, 310, 145, "RICE -> .C2", "🍚")
+window.add_card("🔬 [Pág. 1-2, 6] Chips ESC, NEX1 & XR1", "ESC X1 (minii OS + Rotate 1 + Keystores R1m con Lookit), NEX1 / NFC.E 286 (W1 WiFi + NFC + BT + brightsmile 1 + Battery Coil), XR1 (8L+2P) y XRo G1 (6P+6S).", 20, 240, 310, 145, "CS SILICON", "🔬")
+window.add_card("⚡ [Metal 4] Aceleración Apple Silicon", "Renderizado a 240Hz ProMotion en Apple M4 / APU Unified Memory. Pipeline MSL 4.0 con hardware mesh shaders y trazado por hardware.", 350, 240, 310, 145, "METAL 4", "⚡")
+
+# 4. Controles de Seguridad ("Be careful" — Página 8) y Simulación
+window.add_slider("[Mock] Ángulo Sensor Rotate 1 / Bisagra (°)", 45, 180, 180, "rotate1_angle")
+window.add_slider("[Mock] Partición QLC Mem Protegida PS (%)", 10, 40, 22, "ps_slice_pct")
+window.add_toggle("[Be Careful] Enable MRM Protect on Settings + Add Trust PC", true, "mrm_protect_ok")
+window.add_toggle("[Be Careful] Sign .c2 on UIC & Escaneo IA Malicious Day", true, "sign_c2_ok")
+window.add_progress("Estado de Simulación Visual MRM / Loopize <eNAND>", 100, "mrm_progress")
+
+# 5. Botones de Simulación Interactiva (Sin tocar hardware real)
+insert button "🔌 [Sketch] Estados MRM (Pág. 8)" with snippet:
+    val states = ["1. Disconnect ([PC] ! Cable suelto)", "2. Uic idle (Conectado • • •)", "3. Working (Engranaje — NO Disconnect / Not power off)"]
+    print $"[UIC SKETCH] Pantallas de MRM (Multi Recovery Mode) simuladas:\n  -> {states}"
+end
+
+insert button "⚠️ [Sketch] Inject .c2 on PS" with snippet:
+    print "[UIC SKETCH] Simulando operación crítica en PS (Protected Storage):"
+    print "  • Verificando: Enable MRM Protect + Trust PC + Sign .c2 on UIC... OK"
+    print "  • Kernel destino: Shinerien Krnl (Rice layer + .c2 layer)"
+    print "  • Estado en celular: WORKING (NO Disconnect / Not power off) [SIMULADO]"
+end
+
+insert button "🍚 [Sketch] Uic.transfork (Bowl -> .c2)" with snippet:
+    print "[UIC SKETCH] Simulando conversión [app] + [sys] => .c2:"
+    print "  • Bowl origen (hiOP / smiledev) validado por Malicious Day AI (0 exploits)."
+    print "  • Empaquetado preliminar para C2loader en Felte."
+end
+
+insert button "🔬 [Sketch] Telemetría NEX1 & ESC X1" with snippet:
+    val chips = {"ESC_X1": "minii OS + Rotate 1 + Keystores R1m (Lookit)", "NEX1_NFC_E286": "W1 WiFi + NFC RW + BT + brightsmile 1 (brs1)", "XR1": "8 Lightcores + 2 PowerCores", "XRo_G1": "6 Power + 6 Staticker Cores"}
+    print $"[UIC SKETCH] Mapa de silicio CS en el boceto:\n  -> {chips}"
+end
+
+insert button "🎮 [Sketch] Loop OoS ARM & Loopize" with snippet:
+    print "[UIC SKETCH] Simulación de Loop OoS ARM (Advanced Recovery Mode — Pág. 9-10):"
+    print "  1. Descargar paquete desde cokistudios.com/oosrestore al mando Loopize <eNAND>."
+    print "  2. Conectar Loopize a la consola Loop en ARM (Do NOT unplug your Loopize)."
+    print "  3. Soporte para paquetes .cg (Component Game), Proton, Port Kit y COK1 IA."
+end
+
+insert button "⚡ [Sketch] Metal 4 Pipeline Telemetría" with snippet:
+    val m4 = metal4.pipeline_info()
+    print $"[UIC SKETCH] Pipeline gráfico activo Metal 4:\n  • API: {m4[\"api\"]} | Target: {m4[\"target_fps\"]} FPS | GPU: {m4[\"gpu\"]}\n  • Latencia: {m4[\"render_latency\"]} | Status: {m4[\"status\"]}"
+end
+
+# 6. Exportar Ventana Nativa y Compilar Binario LPBN v3.0A
+val sketch_win = window.export_native("UIConnect/uic_sketch_generated.py")
+print $"✔ [UIC SKETCH] Script de ventana nativa actualizado en: {sketch_win}"
+invis. compile "UIConnect/uic_sketch.loop" to "build/uic_sketch.bin"

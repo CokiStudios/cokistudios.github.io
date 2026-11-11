@@ -3,6 +3,7 @@
 #include "LoopingAST.hpp"
 #include <string>
 #include <vector>
+#include <array>
 #include <memory>
 #include <sstream>
 #include <cctype>
@@ -47,6 +48,31 @@ struct ParsedArgs {
         }
         return def;
     }
+
+    std::array<double, 3> get_triple(const std::string& key, std::array<double, 3> def = {0, 0, 0}) const {
+        auto it = named.find(key);
+        if (it != named.end()) {
+            std::string s = it->second;
+            std::regex r3(R"(\(?\s*([0-9\.\-]+)\s*,\s*([0-9\.\-]+)\s*,\s*([0-9\.\-]+)\s*\)?)");
+            std::smatch m;
+            if (std::regex_search(s, m, r3)) {
+                try {
+                    return { std::stod(m[1]), std::stod(m[2]), std::stod(m[3]) };
+                } catch (...) {}
+            }
+        }
+        return def;
+    }
+
+    bool get_bool(const std::string& key, bool def = true) const {
+        auto it = named.find(key);
+        if (it != named.end()) {
+            std::string s = it->second;
+            if (s == "false" || s == "0" || s == "no") return false;
+            if (s == "true" || s == "1" || s == "yes") return true;
+        }
+        return def;
+    }
 };
 
 class Parser {
@@ -75,8 +101,12 @@ public:
         std::vector<std::string> lines;
         for (const auto& rl : raw_lines) {
             if (rl.find(';') != std::string::npos) {
+                size_t p = rl.find_first_not_of(" \t");
+                std::string indent = (p != std::string::npos) ? rl.substr(0, p) : "";
                 auto sub = split_semicolons(rl);
-                for (const auto& sl : sub) lines.push_back(sl);
+                for (size_t i = 0; i < sub.size(); ++i) {
+                    lines.push_back(indent + sub[i]);
+                }
             } else {
                 lines.push_back(rl);
             }
@@ -856,22 +886,27 @@ public:
                 continue;
             }
 
-            // 7. App declaration block: @app(...) { ... } or @app "Name" v"2.8" or define app ...:
-            if (line.rfind("@app", 0) == 0 || line.rfind("app(", 0) == 0 || line.rfind("define app", 0) == 0) {
+            // 7. App / Game / Game3D declaration block: @app(...) { ... } or define app|game|game3d ...:
+            if (line.rfind("@app", 0) == 0 || line.rfind("app(", 0) == 0 || line.rfind("define app", 0) == 0 ||
+                line.rfind("@game", 0) == 0 || line.rfind("define game", 0) == 0) {
                 std::string app_name = "HoloApp", ver = "2.0";
-                if (line.find('(') != std::string::npos) {
+                std::string kind = "app";
+                if (line.rfind("@game3d", 0) == 0 || line.rfind("define game3d", 0) == 0) kind = "game3d";
+                else if (line.rfind("@game", 0) == 0 || line.rfind("define game", 0) == 0) kind = "game";
+
+                if (line.find('(') != std::string::npos && line.rfind("define ", 0) != 0) {
                     auto args = parse_call_args(line.substr(line.find('(') + 1, line.find_last_of(')') - line.find('(') - 1));
                     if (!args.positional.empty()) app_name = args.positional[0];
                     if (args.positional.size() > 1) ver = args.positional[1];
                 } else {
-                    std::regex r(R"((?:define app\s*(?:as)?|@app)\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
+                    std::regex r(R"((?:define (?:app|game3d|game)\s*(?:as)?|@(?:app|game3d|game))\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
                     std::smatch m;
                     if (std::regex_search(line, m, r)) {
                         app_name = m[1];
                         if (m[2].matched && !m[2].str().empty()) ver = m[2].str();
                     }
                 }
-                statements.push_back(std::make_shared<AppDefineStmt>(app_name, ver));
+                statements.push_back(std::make_shared<AppDefineStmt>(app_name, ver, kind));
                 continue;
             }
 
@@ -1067,20 +1102,24 @@ public:
             return std::make_shared<ImportStmt>(mod, "", false);
         }
 
-        // 5. App declaration single-line
-        if (s.rfind("define app", 0) == 0 || s.rfind("@app(", 0) == 0 || s.rfind("app(", 0) == 0) {
-            if (s.find('(') != std::string::npos) {
+        // 5. App / Game / Game3D declaration single-line
+        if (s.rfind("define app", 0) == 0 || s.rfind("@app(", 0) == 0 || s.rfind("app(", 0) == 0 ||
+            s.rfind("define game", 0) == 0 || s.rfind("@game(", 0) == 0 || s.rfind("@game3d(", 0) == 0) {
+            std::string kind = "app";
+            if (s.rfind("define game3d", 0) == 0 || s.rfind("@game3d(", 0) == 0) kind = "game3d";
+            else if (s.rfind("define game", 0) == 0 || s.rfind("@game(", 0) == 0) kind = "game";
+            if (s.find('(') != std::string::npos && s.rfind("define ", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
                 std::string aname = args.positional.empty() ? "HoloApp" : args.positional[0];
                 std::string aver = args.positional.size() > 1 ? args.positional[1] : "1.0";
-                return std::make_shared<AppDefineStmt>(aname, aver);
+                return std::make_shared<AppDefineStmt>(aname, aver, kind);
             }
-            std::regex r(R"(define app\s*(?:as)?\s*["'](.*?)["'](?:\s*version\s*([0-9\.]+))?)");
+            std::regex r(R"(define (?:app|game3d|game)\s*(?:as)?\s*["'](.*?)["'](?:\s*version\s*([0-9\.]+))?)");
             std::smatch m;
             if (std::regex_search(s, m, r)) {
-                return std::make_shared<AppDefineStmt>(m[1], m[2].matched ? m[2].str() : "1.0");
+                return std::make_shared<AppDefineStmt>(m[1], m[2].matched ? m[2].str() : "1.0", kind);
             }
-            return std::make_shared<AppDefineStmt>("HoloApp", "1.0");
+            return std::make_shared<AppDefineStmt>("HoloApp", "1.0", kind);
         }
 
         // 5b. Module declaration single-line: define module "name" version 1.0
@@ -1091,6 +1130,38 @@ public:
                 return std::make_shared<ModuleDefineStmt>(m[1], m[2].matched ? m[2].str() : "1.0");
             }
             return std::make_shared<ModuleDefineStmt>("module", "1.0");
+        }
+
+        // 5b. Invis. Compile Binary Architecture Directive:
+        //     invis. compile ["file.loop"] [to "out.bin"] | compile invis ["file.loop"] [to "out.bin"] | @invis_compile
+        if (s == "invis. compile" || s == "invis.compile" || s == "invis compile" ||
+            s == "compile invis" || s == "@invis_compile" || s == "@invis" ||
+            s.rfind("invis. compile ", 0) == 0 || s.rfind("invis compile ", 0) == 0 ||
+            s.rfind("compile invis ", 0) == 0 || s.rfind("@invis_compile(", 0) == 0) {
+            std::string in_p = "";
+            std::string out_p = "";
+            std::string tgt = "shine_ui";
+            if (s.rfind("@invis_compile(", 0) == 0 && s.find(')') != std::string::npos) {
+                auto args = parse_call_args(s.substr(15, s.find_last_of(')') - 15));
+                if (args.positional.size() > 0) in_p = args.positional[0];
+                if (args.positional.size() > 1) out_p = args.positional[1];
+                if (args.positional.size() > 2) tgt = args.positional[2];
+            } else {
+                std::string rest = "";
+                if (s.rfind("invis. compile ", 0) == 0) rest = trim(s.substr(15));
+                else if (s.rfind("invis compile ", 0) == 0) rest = trim(s.substr(14));
+                else if (s.rfind("compile invis ", 0) == 0) rest = trim(s.substr(14));
+                if (!rest.empty()) {
+                    size_t to_pos = rest.find(" to ");
+                    if (to_pos != std::string::npos) {
+                        in_p = trim_quotes(trim(rest.substr(0, to_pos)));
+                        out_p = trim_quotes(trim(rest.substr(to_pos + 4)));
+                    } else {
+                        in_p = trim_quotes(rest);
+                    }
+                }
+            }
+            return std::make_shared<InvisCompileStmt>(in_p, out_p, tgt, false);
         }
 
         // 6. Target UI Compilation & Profile: target("shine_ui") / compile target "xui" / profile("flui")
@@ -1453,6 +1524,122 @@ public:
                 if (std::regex_search(s, m, bd_r)) d->var_name = m[1];
             }
             return d;
+        }
+
+        // 16x. 3D Scene, Camera, Lighting & Physics Configuration Directives
+        if (s.rfind("game.mode(", 0) == 0 || s.rfind("scene3d.world(", 0) == 0 || s.rfind("scene3d.sky(", 0) == 0 ||
+            s.rfind("camera3d.set(", 0) == 0 || s.rfind("light3d.directional(", 0) == 0 ||
+            s.rfind("light3d.point(", 0) == 0 || s.rfind("light3d.ambient(", 0) == 0 ||
+            s.rfind("physics3d.config(", 0) == 0) {
+            auto cfg = std::make_shared<Scene3DConfigStmt>();
+            auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+
+            if (s.rfind("game.mode(", 0) == 0) {
+                cfg->category = "mode";
+                cfg->str1 = !args.positional.empty() ? args.positional[0] : args.get("mode", "3d");
+            } else if (s.rfind("scene3d.world(", 0) == 0 || s.rfind("scene3d.sky(", 0) == 0) {
+                cfg->category = "world";
+                auto sz = args.get_triple("size", {160, 80, 160});
+                cfg->x = sz[0]; cfg->y = sz[1]; cfg->z = sz[2];
+                cfg->str1 = args.get("name", !args.positional.empty() ? args.positional[0] : "Quantum Cyber Arena 3D");
+                cfg->str2 = args.get("sky", args.get("weather", "cyber_night"));
+                cfg->val1 = args.get_num("fog", 0.010);
+                cfg->flag = args.get_bool("grid", true);
+            } else if (s.rfind("camera3d.set(", 0) == 0) {
+                cfg->category = "camera";
+                cfg->str1 = args.get("mode", !args.positional.empty() ? args.positional[0] : "chase");
+                auto p = args.get_triple("pos", {0, 9.5, -18.0});
+                auto t = args.get_triple("target", {0, 2.5, 8.0});
+                cfg->x = p[0]; cfg->y = p[1]; cfg->z = p[2];
+                cfg->tx = t[0]; cfg->ty = t[1]; cfg->tz = t[2];
+                cfg->val1 = args.get_num("fov", 62.0);
+                cfg->val2 = args.get_num("smooth", 0.14);
+            } else if (s.rfind("light3d.directional(", 0) == 0) {
+                cfg->category = "dir_light";
+                auto d = args.get_triple("dir", {-0.45, -1.0, -0.35});
+                cfg->x = d[0]; cfg->y = d[1]; cfg->z = d[2];
+                cfg->str1 = args.get("color", "#f8fafc");
+                cfg->val1 = args.get_num("intensity", 1.05);
+            } else if (s.rfind("light3d.point(", 0) == 0) {
+                cfg->category = "point_light";
+                auto p = args.get_triple("at", args.get_triple("pos", {0, 12, 10}));
+                cfg->x = p[0]; cfg->y = p[1]; cfg->z = p[2];
+                cfg->str1 = args.get("color", "#38bdf8");
+                cfg->val1 = args.get_num("intensity", 1.2);
+                cfg->val2 = args.get_num("range", 60.0);
+            } else if (s.rfind("light3d.ambient(", 0) == 0) {
+                cfg->category = "ambient_light";
+                cfg->str1 = args.get("color", "#1e293b");
+                cfg->val1 = args.get_num("intensity", 0.42);
+            } else if (s.rfind("physics3d.config(", 0) == 0) {
+                cfg->category = "physics";
+                cfg->val1 = args.get_num("gravity", -26.0);
+                cfg->val2 = args.get_num("substeps", 4.0);
+                cfg->val3 = args.get_num("friction", 0.86);
+                cfg->val4 = args.get_num("bounce", 0.12);
+            }
+            return cfg;
+        }
+
+        // 16y. 3D Entity Spawners: spawn3d.*(...) and 3D spawn.* aliases
+        if ((s.rfind("spawn3d.", 0) == 0 ||
+             s.rfind("spawn.player3d(", 0) == 0 || s.rfind("spawn.cube(", 0) == 0 ||
+             s.rfind("spawn.sphere(", 0) == 0 || s.rfind("spawn.pyramid(", 0) == 0 ||
+             s.rfind("spawn.cylinder(", 0) == 0 || s.rfind("spawn.torus(", 0) == 0 ||
+             s.rfind("spawn.ring3d(", 0) == 0 || s.rfind("spawn.crystal(", 0) == 0 ||
+             s.rfind("spawn.portal3d(", 0) == 0) && s.find('(') != std::string::npos) {
+            auto sp = std::make_shared<SpawnEntity3DStmt>();
+            size_t dot_p = s.find('.');
+            size_t par_p = s.find('(');
+            std::string raw_type = s.substr(dot_p + 1, par_p - dot_p - 1);
+            if (raw_type == "player3d") raw_type = "player";
+            else if (raw_type == "cube" || raw_type == "platform") raw_type = "box";
+            else if (raw_type == "ring3d") raw_type = "ring";
+            else if (raw_type == "portal3d") raw_type = "portal";
+
+            sp->entity_type = raw_type;
+            auto args = parse_call_args(s.substr(par_p + 1, s.find_last_of(')') - par_p - 1));
+            sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", raw_type);
+            sp->mesh = args.get("mesh", (raw_type == "player") ? "hovercraft" : raw_type);
+            auto at = args.get_triple("at", {0, 1, 0});
+            auto sz = args.get_triple("size", (raw_type == "player") ? std::array<double,3>{1.8, 1.2, 2.4} : std::array<double,3>{6, 1, 6});
+            auto rt = args.get_triple("rot", {0, 0, 0});
+            sp->x = at[0]; sp->y = at[1]; sp->z = at[2];
+            sp->sx = sz[0]; sp->sy = sz[1]; sp->sz = sz[2];
+            sp->rx = rt[0]; sp->ry = rt[1]; sp->rz = rt[2];
+            sp->radius = args.get_num("radius", (raw_type == "ring" || raw_type == "portal") ? 3.2 : 1.4);
+            sp->axis = args.get("axis", "x");
+            auto rng = args.get_pair("range", {(sp->axis == "z" ? sp->z : sp->x) - 10.0, (sp->axis == "z" ? sp->z : sp->x) + 10.0});
+            sp->min_pos = rng.first;
+            sp->max_pos = rng.second;
+            sp->speed = args.get_num("speed", (raw_type == "player") ? 22.0 : 8.0);
+            sp->power = args.get_num("jump", args.get_num("power", args.get_num("boost", 16.5)));
+            sp->health = args.get_num("health", args.get_num("heal", (raw_type == "boss") ? 300.0 : 100.0));
+            sp->damage = args.get_num("damage", 25.0);
+            sp->points = args.get_num("points", 150.0);
+            sp->metallic = args.get_num("metallic", 0.5);
+            sp->fire_rate = args.get_num("fire_rate", 1.6);
+            std::string def_col = "#38bdf8";
+            if (raw_type == "box") def_col = "#6366f1";
+            else if (raw_type == "moving_platform") def_col = "#06b6d4";
+            else if (raw_type == "crystal" || raw_type == "pad") def_col = "#fbbf24";
+            else if (raw_type == "ring") def_col = "#00f5d4";
+            else if (raw_type == "enemy" || raw_type == "boss" || raw_type == "hazard") def_col = "#ef4444";
+            else if (raw_type == "portal" || raw_type == "sphere") def_col = "#c084fc";
+            sp->color = args.get("color", def_col);
+            sp->label = args.get("label", sp->name);
+            if (raw_type == "cylinder" && args.has("height")) {
+                sp->sy = args.get_num("height", 5.0);
+                sp->sx = sp->radius * 2.0;
+                sp->sz = sp->radius * 2.0;
+            }
+            if (raw_type == "terrain" && args.has("size") && !args.has("at")) {
+                auto tsz = args.get_pair("size", {140, 140});
+                sp->sx = tsz.first;
+                sp->sy = args.get_num("hills", 2.5);
+                sp->sz = tsz.second;
+            }
+            return sp;
         }
 
         // 17. Spawn Sprite Directives: spawn.sprite(...) / @spawn::sprite(...) / entity.sprite(...) / spawn sprite ... / spawn.player(...) / spawn player ...
@@ -1841,14 +2028,96 @@ public:
             return sp;
         }
 
-        // 23l. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.lives(...) / game.friction(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)
+        // 23l-ext. Advanced 2D & Hybrid Entities: spawn.saw / spawn.turret / spawn.powerup / spawn.cube3d / pyramid3d / sphere3d / grid3d
+        if (s.rfind("spawn.saw(", 0) == 0 || s.rfind("spawn saw", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "saw";
+            if (s.find('(') != std::string::npos) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {400, 320});
+                auto rng = args.get_pair("range", {at.first - 100, at.first + 100});
+                sp->x = at.first; sp->y = at.second;
+                sp->radius = args.get_num("radius", 20);
+                sp->axis = args.get("axis", "x");
+                sp->min_pos = rng.first; sp->max_pos = rng.second;
+                sp->speed = args.get_num("speed", 120);
+                sp->damage = args.get_num("damage", 30);
+                sp->color = args.get("color", "#f43f5e");
+            }
+            return sp;
+        }
+        if (s.rfind("spawn.turret(", 0) == 0 || s.rfind("spawn turret", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "turret";
+            if (s.find('(') != std::string::npos) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", "PlasmaTurret");
+                auto at = args.get_pair("at", {600, 220});
+                sp->x = at.first; sp->y = at.second;
+                sp->w = 32; sp->h = 32;
+                sp->fire_rate = args.get_num("fire_rate", 1.9);
+                sp->max_pos = args.get_num("range", 500);
+                sp->color = args.get("color", "#f59e0b");
+            }
+            return sp;
+        }
+        if (s.rfind("spawn.powerup(", 0) == 0 || s.rfind("spawn powerup", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = "powerup";
+            if (s.find('(') != std::string::npos) {
+                auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+                auto at = args.get_pair("at", {400, 260});
+                sp->x = at.first; sp->y = at.second;
+                sp->state = args.get("type", !args.positional.empty() ? args.positional[0] : "shield");
+                sp->text = args.get("label", sp->state);
+                sp->color = args.get("color", "#00f5d4");
+            }
+            return sp;
+        }
+        if (s.rfind("spawn.cube3d(", 0) == 0 || s.rfind("spawn.pyramid3d(", 0) == 0 ||
+            s.rfind("spawn.sphere3d(", 0) == 0 || s.rfind("spawn.grid3d(", 0) == 0) {
+            auto sp = std::make_shared<SpawnEntityStmt>();
+            sp->entity_type = s.substr(6, s.find('(') - 6);
+            auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+            sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", sp->entity_type);
+            auto at = args.get_pair("at", {400, 200});
+            sp->x = at.first; sp->y = at.second;
+            sp->z = args.get_num("z", 120);
+            sp->radius = args.get_num("size", args.get_num("radius", 48));
+            sp->rings = static_cast<int>(args.get_num("rings", 7));
+            sp->speed = args.get_num("speed", 1.2);
+            sp->color = args.get("color", "#38bdf8");
+            sp->wireframe = (args.get("wireframe", "false") == "true");
+            return sp;
+        }
+        if (s.rfind("ui.algebra_table(", 0) == 0 || s.rfind("game.algebra_table(", 0) == 0) {
+            auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+            return std::make_shared<GameConfigStmt>("algebra_table", args.get_num("monster_hits", 760), 0,
+                args.get("title", "Modelo Algebraico"), args.get("formula", "0.5*m*v^2 + 9.8*m*h"), "");
+        }
+        if (s.rfind("ui.algebra_row(", 0) == 0 || s.rfind("game.algebra_row(", 0) == 0) {
+            auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+            return std::make_shared<GameConfigStmt>("algebra_row",
+                args.get_num("m", 10), args.get_num("v", 8),
+                args.get("label", "Escena"), "", "", args.get_num("h", 1.2), args.get_num("hits", 0));
+        }
+        if (s.rfind("game.stage_preset(", 0) == 0 || s.rfind("scenario.preset(", 0) == 0) {
+            auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
+            auto at = args.get_pair("at", {args.get_num("x", 70), args.get_num("y", 300)});
+            return std::make_shared<GameConfigStmt>("stage_preset", at.first, at.second,
+                args.get("id", "stage"), args.get("label", "Escenario"), args.get("weather", "stars"),
+                args.get_num("gravity", 980));
+        }
+
+        // 23l. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.camera3d(...) / game.lives(...) / game.friction(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)
         if (s.rfind("game.gravity(", 0) == 0 || s.rfind("game.friction(", 0) == 0 || 
             s.rfind("game.world(", 0) == 0 || s.rfind("game.lives(", 0) == 0 || s.rfind("game.camera(", 0) == 0 ||
+            s.rfind("game.camera3d(", 0) == 0 ||
             s.rfind("game.scenario(", 0) == 0 || s.rfind("game.background(", 0) == 0 ||
             s.rfind("game.physics(", 0) == 0 || s.rfind("game.time_scale(", 0) == 0) {
             std::string key = s.substr(5, s.find('(') - 5);
             auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-            double v1 = 0, v2 = 0, v3 = 0;
+            double v1 = 0, v2 = 0, v3 = 0, v4 = 0;
             std::string sv = "", sv2 = "", sv3 = "";
             if (key == "gravity") {
                 v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 980);
@@ -1862,6 +2131,12 @@ public:
             } else if (key == "camera") {
                 sv = args.get("follow", "player");
                 v1 = args.get_num("smooth", 0.12);
+            } else if (key == "camera3d") {
+                v1 = args.get_num("fov", 320);
+                v2 = args.get_num("distance", 180);
+                v3 = args.get_num("pitch", 15);
+                v4 = args.get_num("yaw", 0);
+                sv = args.get("mode", "hybrid");
             } else if (key == "scenario" || key == "background") {
                 sv = !args.positional.empty() ? args.positional[0] : args.get("name", "CyberStage");
                 sv2 = args.get("weather", args.get("theme", "stars"));
@@ -1873,7 +2148,7 @@ public:
             } else if (key == "time_scale") {
                 v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 1.0);
             }
-            return std::make_shared<GameConfigStmt>(key, v1, v2, sv, sv2, sv3, v3);
+            return std::make_shared<GameConfigStmt>(key, v1, v2, sv, sv2, sv3, v3, v4);
         }
 
         // 24. Audio Tone Directives: audio.tone(...) / @audio::tone(...) / sound.tone(...) / play tone ...
