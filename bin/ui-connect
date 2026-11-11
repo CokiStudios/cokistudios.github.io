@@ -1,0 +1,54 @@
+#!/usr/bin/env zsh
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ UI CONNECT — CLI & DESKTOP TOOL (ZSH RUNNER) ✦
+# Coki Studios Component 2 (.c2) Management Suite for Shine OS & PC
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Determine directory of script
+0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
+0="${${(M)0:#/*}:-$PWD/$0}"
+DIR="${0:A:h}"
+REPO_ROOT="${DIR:h}"
+
+# Ensure Python 3 is available
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "❌ Error: Python 3 is required to run UI Connect."
+    exit 1
+fi
+
+export PYTHONPATH="$REPO_ROOT:$PYTHONPATH"
+cd "$REPO_ROOT" || exit 1
+
+# Live MRM (Multi Recovery Mode) Interactive Lab & CLI
+if [[ "$1" == "--mrm" || "$1" == "-m" || "$1" == "mrm" ]]; then
+    echo "\033[1;36m⚡ [MRM LAB]\033[0m Launching Multi Recovery Mode Real Experiment Lab..."
+    exec python3 "$REPO_ROOT/UIConnect/mrm_lab.py" "${@:2}"
+fi
+
+# Preliminary Interactive Sketch Mode (UI-Only Prototype without backend functionality)
+if [[ "$1" == "--sketch" || "$1" == "-s" || "$1" == "sketch" ]]; then
+    echo "\033[1;35m📐 [UIC SKETCH]\033[0m Launching Preliminary Interactive Sketch (UI-Only / No Backend)..."
+    if [[ "$2" == "--loop" && -x "$REPO_ROOT/bin/looping" ]]; then
+        exec "$REPO_ROOT/bin/looping" "$REPO_ROOT/UIConnect/uic_sketch.loop"
+    fi
+    exec python3 "$REPO_ROOT/UIConnect/uic_sketch_interactive.py" "${@:2}"
+fi
+
+# If no arguments provided, or GUI flag specified, launch the Native macOS Swift App (or Looping Native)
+if [[ $# -eq 0 || "$1" == "--gui" || "$1" == "-g" || "$1" == "--native" || "$1" == "--swift" || "$1" == "--loop" ]]; then
+    # 1. Native macOS Swift App (SwiftUI / AppKit Direct-to-Metal)
+    if [[ "$OSTYPE" == darwin* && -d "$REPO_ROOT/UIConnect.macOS/build/UIConnect.app" ]]; then
+        echo "\033[1;36m✦ [UI CONNECT]\033[0m Launching Native Swift macOS App (SwiftUI / Aqua)..."
+        open "$REPO_ROOT/UIConnect.macOS/build/UIConnect.app"
+        exit 0
+    elif [[ -x "$REPO_ROOT/bin/ui-connect-swift" ]]; then
+        echo "\033[1;36m✦ [UI CONNECT]\033[0m Launching Native Swift CLI/App..."
+        exec "$REPO_ROOT/bin/ui-connect-swift"
+    elif [[ -x "$REPO_ROOT/bin/looping" && -f "$REPO_ROOT/UIConnect/ui_connect.loop" ]]; then
+        echo "\033[1;36m✦ [UI CONNECT]\033[0m Launching Loop OS Native Desktop Window (Cero HTML5)..."
+        exec "$REPO_ROOT/bin/looping" --native "$REPO_ROOT/UIConnect/ui_connect.loop"
+    fi
+fi
+
+# Fallback or CLI command routing to python backend
+exec python3 "$REPO_ROOT/UIConnect/ui_connect.py" "$@"
