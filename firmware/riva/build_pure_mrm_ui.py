@@ -144,3 +144,4 @@ def build_pure_mrm_ui(out_dir: Path = DEFAULT_OUT_DIR) -> Path:
 
 if __name__ == "__main__":
     build_pure_mrm_ui()
+
