@@ -1,5 +1,5 @@
 # Coki Studios LLC — Engineering & Platform Monorepo
-> **Universal Platform Ecosystem, Looping Engine v2.8.0 & smiledev Package Manager**  
+> **Universal Platform Ecosystem, Looping Engine v1.1 (Arch 3.0A) & smiledev Package Manager**  
 > *Developed by Coki Studios LLC & Holo Entertainment © 2026*
 
 Welcome to the official monorepo of **Coki Studios LLC**, containing the core programming language engines, package managers, native Apple and Android applications, web infrastructure, and identity services.
@@ -37,27 +37,35 @@ cokistudios.github.io/
 
 ---
 
-## ⚡ Looping Engine v1.0.0 Commercial (Architecture 2.8A)
+## ⚡ Looping Engine v1.1 (Architecture 3.0A)
 
-**Looping** (`.loop` / `.ruup`) es un lenguaje de programación comercial moderno, de alto rendimiento y tipado dinámico optimizado para desarrollo ágil, videojuegos 2D con física cuántica, síntesis de audio procedural, ciencia de datos e interfaces reactivas. Las versiones previas han sido consolidadas bajo la serie de arquitectura (`2.8A`, `2.7A`, `2.6A`, etc.).
+**Looping** (`.loop` / `.ruup`) es un lenguaje de programación moderno, de alto rendimiento y tipado dinámico optimizado para desarrollo ágil, videojuegos 2D/3D con física cuántica, síntesis de audio procedural, ciencia de datos e interfaces reactivas.
+
+### 🏷️ Nomenclatura Oficial de Canales (v1.1 • Alpha! 1.1A • Arch 3.0A)
+* **`Looping`** (`--channel=prod` / `v1.1`): Canal oficial de producción estable (`looping` v1.1 y `smiledev` v1.1).
+* **`Omega Looping`** (`--channel=omega` / `v1.1-omega`): Release Candidate (RC) para validación previa a producción.
+* **`Alpha! 1.1A`** (`--channel=alpha` / `v1.1A`): Canal Super Experimental para **`smiledev`** (`Alpha! SmileDev v1.1A`) y **`Alpha! Looping`** (`--alpha`) con Metal 4, terminal persistente (`-i`) y características de vanguardia de Arch 3.0A.
 
 > **Hito Histórico (3 de Octubre de 2026)**: Looping nació como un prototipo en Node.js (`bin/looping.js` en la serie 1.0A). El 3 de octubre de 2026 fue completamente reescrito en **C++17 nativo** (`LoopingEngine/cpp`), reduciendo el tiempo de arranque de ~120 ms a **< 0.5 ms** y eliminando toda dependencia de Node.js o contenedores web. El repositorio oficial del motor independiente se encuentra en [**CokiStudios/engine**](https://github.com/CokiStudios/engine).
 
 * **Motor C++17 Nativo Ultra-Rápido**: Tiempo de arranque de **< 0.5 ms**, ejecución directa sin dependencias de Node.js ni contenedores web.
+* **Motor 3D Quantum (`Looping3D.hpp`)**: Renderizado 3D nativo con Z-Buffer, iluminación Blinn-Phong, cámaras orbitales/persecución y física a 240Hz (`scene3d`, `camera3d`, `spawn3d`).
 * **Universal Binary macOS**: Compilado nativamente para Apple Silicon (`arm64`) e Intel (`x86_64`).
 * **Sintaxis Expresiva**: Declaraciones `let`, `mut`, `val`, operador morsa `:=`, funciones de flecha `fn() => ...`, destructuring `[a, b]`, condicional ternario `? :`, null-coalescing `??` y pattern matching `match`.
 * **Pipelines Funcionales**: Operador `|>` combinado con `map`, `filter`, `reduce`, `group_by`, `sort_by`, `take`, `drop` y `partition`.
-* **Criptografía Segura**: SHA-256, HMAC-SHA256, UUID v4, CRC-32, comparación en tiempo constante `constant_time_eq` y derivación de sala CSMS.
+* **Criptografía Segura & CS Modules**: SHA-256, HMAC-SHA256, UUID v4, CRC-32, `constant_time_eq`, `csid.*` (Passkeys) y `csms.*` (AES-256-GCM con derivación de sala CSMS).
 * **Manipulación de Datos**: Módulos stdlib nativos para `csv.*`, `json.*`, `datetime.*`, `regex.*` y alta resolución `time.nanos`.
 * **Visualizador TUI de SwiftUI**: Previsualización en caja simulada de terminal para jerarquías de componentes declarativos Apple (`view`, `VStack`, `HStack`, `Text`, `Button`, `Toggle`, `@state`).
 * **Transpilador Nativo a Swift**: Generación automática de código fuente Swift 5.9+ y compilación a binarios Mach-O vía `swiftc`.
 * **Puente Python / PyLoop**: Interoperabilidad fluida con Python para inferencia de IA y librerías externas mediante `py!(...)` y `use python`.
-* **Batería de Pruebas**: Suite de verificación exhaustiva con **57/57 tests nativos pasando al 100%**.
+* **Batería de Pruebas**: Suite de verificación exhaustiva con **71/71 tests nativos pasando al 100%** (incluyendo Apple Metal 4, `metal4.*` e Invis. Compile).
 
 ### Comandos Principales de Looping
 ```bash
-# Ejecutar un script
+# Ejecutar un script (en canal Producción, Omega RC o Alpha! Super Experimental)
 looping mi_app.loop
+looping --omega mi_app.loop
+looping --alpha mi_app.loop
 
 # Previsualizar componentes SwiftUI en la terminal
 looping preview mi_app.loop [NombreVista]
@@ -74,13 +82,13 @@ looping check mi_app.loop
 # Benchmark de throughput nativo C++17
 looping bench
 
-# Ejecutar suite de pruebas del motor
+# Ejecutar suite de pruebas del motor (71/71)
 looping test
 ```
 
 ---
 
-## 🌟 smiledev v1.0.0 Commercial (Universal Package Manager / Arch 2.8A)
+## 🌟 smiledev v1.1 & Alpha! 1.1A (Universal Package Manager / Arch 3.0A)
 
 **`smiledev`** es el gestor oficial de módulos y paquetes para el ecosistema Looping y Loop OS.
 
@@ -135,12 +143,14 @@ El tap oficial de Coki Studios permite instalar y mantener actualizados tanto `l
 # 1. Agregar el tap
 brew tap cokistudios/tap
 
-# 2. Instalar el ecosistema
+# 2. Instalar el ecosistema (v1.1 Prod) y/o Alpha! 1.1A para smiledev
 brew install looping smiledev
+brew install cokistudios/tap/smiledev-alpha   # Canal Alpha! 1.1A (Super Experimental)
 
 # 3. Actualizar a las versiones más recientes
 brew update
 brew upgrade smiledev looping
+smiledev upgrade --alpha   # Cambiar canal de smiledev a Alpha! 1.1A
 ```
 
 ---

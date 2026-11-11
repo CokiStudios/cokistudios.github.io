@@ -8,13 +8,16 @@
 
 set -e
 
-SMILE_VERSION="1.0.0-commercial"
-SMILE_ARCH_VERSION="2.8A"
+SMILE_VERSION="1.1"
+SMILE_ALPHA_VERSION="1.1A"
+SMILE_ARCH_VERSION="3.0A"
 CONFIG_DIR="$HOME/.smiledev"
 GLOBAL_MODULES_DIR="$CONFIG_DIR/modules"
 LOCAL_MODULES_DIR="$(pwd)/modules"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 AUTH_FILE="$CONFIG_DIR/auth.json"
+CHANNEL_FILE="$CONFIG_DIR/channel"
+SMILE_CHANNEL="${LOOPING_CHANNEL:-$(cat "$CHANNEL_FILE" 2>/dev/null || echo prod)}"
 
 SUPABASE_URL="https://ayxklxciqgqeyuzkziov.supabase.co"
 SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGtseGNpcWdxZXl1emt6aW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTY4MzIsImV4cCI6MjEwNjc5MjgzMn0.03wUc8blB-cNq9F8Nz5o88GShtMIXeHsNYqmeK_N-hI"
@@ -49,9 +52,29 @@ if [ ! -f "$CONFIG_FILE" ]; then
 EOF
 fi
 
+resolve_channel_brand() {
+    local ch="$(echo "${1:-$SMILE_CHANNEL}" | tr '[:upper:]' '[:lower:]')"
+    case "$ch" in
+        alpha|alpha!|1.1a|alpha-1.1a|experimental|super-experimental)
+            echo "Alpha! SmileDev|Super Experimental|${SMILE_ALPHA_VERSION}|alpha"
+            ;;
+        omega|rc|release-candidate)
+            echo "Omega Looping|Release Candidate (RC)|${SMILE_VERSION}-omega|omega"
+            ;;
+        *)
+            echo "Looping|Production Release|${SMILE_VERSION}|prod"
+            ;;
+    esac
+}
+
 print_banner() {
+    local ch_info
+    ch_info="$(resolve_channel_brand "$SMILE_CHANNEL")"
+    local ch_title="$(echo "$ch_info" | cut -d'|' -f1)"
+    local ch_tier="$(echo "$ch_info" | cut -d'|' -f2)"
+    local ch_ver="$(echo "$ch_info" | cut -d'|' -f3)"
     echo -e "${C_CYAN}  _____           _ _      ${C_PURPLE}____${C_RESET}"
-    echo -e "${C_CYAN} / ____|         (_) |    ${C_PURPLE}|  _ \   ${C_BOLD}smiledev ${C_AQUA}v$SMILE_VERSION${C_RESET} ${C_YELLOW}(Commercial Edition / Arch $SMILE_ARCH_VERSION)${C_RESET}"
+    echo -e "${C_CYAN} / ____|         (_) |    ${C_PURPLE}|  _ \   ${C_BOLD}smiledev ${C_AQUA}v$ch_ver${C_RESET} ${C_YELLOW}($ch_title — $ch_tier / Arch $SMILE_ARCH_VERSION)${C_RESET}"
     echo -e "${C_CYAN}| (___  _ __ ___  _| | ___${C_PURPLE}| | | | _____   __${C_RESET}"
     echo -e "${C_CYAN} \___ \| '_ \` _ \| | |/ _ \ ${C_PURPLE}| | |/ _ \ \ / /${C_RESET}"
     echo -e "${C_CYAN} ____) | | | | | | | |  __/${C_PURPLE} |_| |  __/\ V / ${C_RESET}"
@@ -95,9 +118,14 @@ cmd_help() {
     echo ""
     echo -e "${C_BOLD}MAINTENANCE & SYSTEM:${C_RESET}"
     echo -e "  ${C_BLUE}doctor${C_RESET}                 Verify smiledev, Looping engine, compiler & registry health"
-    echo -e "  ${C_PURPLE}upgrade${C_RESET} [--force]      Auto-update smiledev & Looping engine from repo.cokistudios.com"
+    echo -e "  ${C_PURPLE}upgrade${C_RESET} [--channel]    Auto-update smiledev & Looping (prod | omega [RC] | alpha [Super Exp])"
     echo -e "  ${C_YELLOW}clean${C_RESET}                  Clean temporary files and smiledev caches"
-    echo -e "  ${C_AQUA}version${C_RESET}                Display current version"
+    echo -e "  ${C_AQUA}version${C_RESET}                Display current version & release channel nomenclature"
+    echo ""
+    echo -e "${C_BOLD}RELEASE CHANNELS:${C_RESET}"
+    echo -e "  • ${C_GREEN}Looping${C_RESET}        (prod / stable) : Official Production Release (v1.1 / Arch 3.0A)"
+    echo -e "  • ${C_YELLOW}Omega Looping${C_RESET}  (omega / rc)    : Release Candidate (RC) builds (v1.1-omega)"
+    echo -e "  • ${C_PINK}Alpha! 1.1A${C_RESET}    (alpha)         : Super Experimental builds (Alpha! SmileDev & Looping)"
     echo ""
     echo -e "${C_BOLD}EXAMPLES:${C_RESET}"
     echo -e "  smiledev install loop-core-utils"
@@ -2073,11 +2101,14 @@ check_for_updates() {
         if [ -n "$avail_ver" ] && [ "$avail_ver" != "$SMILE_VERSION" ]; then
             local is_newer
             is_newer=$(python3 -c "
-import sys
+import sys, re
+def norm(v):
+    base = v.split('-')[0]
+    nums = [int(x) for x in re.findall(r'\d+', base)]
+    while len(nums) < 3: nums.append(0)
+    return nums
 try:
-    v_avail = [int(x) for x in '$avail_ver'.split('.')]
-    v_curr = [int(x) for x in '$SMILE_VERSION'.split('.')]
-    print('1' if v_avail > v_curr else '0')
+    print('1' if norm('$avail_ver') > norm('$SMILE_VERSION') else '0')
 except Exception:
     print('0')
 " 2>/dev/null || echo 0)
@@ -2093,17 +2124,29 @@ except Exception:
 
 cmd_upgrade() {
     local force_flag=false
+    local req_channel="$SMILE_CHANNEL"
     while [[ "$#" -gt 0 ]]; do
         case $1 in
             --force|-f) force_flag=true ;;
+            --channel=*) req_channel="${1#*=}" ;;
+            --channel|-c) shift || true; req_channel="${1:-prod}" ;;
+            --alpha|--alpha!|--1.1a|--1.1A) req_channel="alpha" ;;
+            --omega|--rc) req_channel="omega" ;;
+            --prod|--stable) req_channel="prod" ;;
         esac
         shift || true
     done
 
+    local ch_info
+    ch_info="$(resolve_channel_brand "$req_channel")"
+    local ch_title="$(echo "$ch_info" | cut -d'|' -f1)"
+    local ch_tier="$(echo "$ch_info" | cut -d'|' -f2)"
+    local ch_key="$(echo "$ch_info" | cut -d'|' -f4)"
+
     echo -e "${C_CYAN}═══════════════════════════════════════════════════════════════${C_RESET}"
-    echo -e "${C_BOLD}🚀 COKI STUDIOS ENGINE & SMILEDEV AUTO-UPDATER${C_RESET}"
+    echo -e "${C_BOLD}🚀 COKI STUDIOS ENGINE & SMILEDEV AUTO-UPDATER [$ch_title — $ch_tier]${C_RESET}"
     echo -e "${C_CYAN}═══════════════════════════════════════════════════════════════${C_RESET}"
-    echo -e "${C_DIM}Checking for engine updates on repo.cokistudios.com/engine...${C_RESET}"
+    echo -e "${C_DIM}Checking for $ch_title ($ch_key) updates on repo.cokistudios.com/engine...${C_RESET}"
 
     local manifest=""
     local manifest_url="https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/engine/latest.json"
@@ -2143,11 +2186,13 @@ cmd_upgrade() {
 import sys, json
 try:
     data = json.loads('''$manifest''')
-    v = data.get('version', '')
-    url = data.get('tarball_url', '')
-    sha = data.get('tarball_sha256', '')
-    notes = data.get('release_notes', 'Performance and stability improvements.')
-    print(f'{v}\t{url}\t{sha}\t{notes}')
+    ch_data = data.get('channels', {}).get('$ch_key', {})
+    v = ch_data.get('version') or data.get('version', '')
+    ev = ch_data.get('engine_version') or data.get('version', '')
+    url = ch_data.get('tarball_url') or data.get('tarball_url', '')
+    sha = ch_data.get('tarball_sha256') or data.get('tarball_sha256', '')
+    notes = ch_data.get('release_notes') or data.get('release_notes', 'Performance and stability improvements.')
+    print(f'{v}\t{ev}\t{url}\t{sha}\t{notes}')
 except Exception as e:
     sys.exit(1)
 " 2>/dev/null || echo "")
@@ -2158,13 +2203,15 @@ except Exception as e:
     fi
 
     local remote_ver
+    local remote_engine_ver
     local tarball_url
     local expected_sha
     local release_notes
     remote_ver=$(echo "$parsed_info" | awk -F'\t' '{print $1}')
-    tarball_url=$(echo "$parsed_info" | awk -F'\t' '{print $2}')
-    expected_sha=$(echo "$parsed_info" | awk -F'\t' '{print $3}')
-    release_notes=$(echo "$parsed_info" | awk -F'\t' '{print $4}')
+    remote_engine_ver=$(echo "$parsed_info" | awk -F'\t' '{print $2}')
+    tarball_url=$(echo "$parsed_info" | awk -F'\t' '{print $3}')
+    expected_sha=$(echo "$parsed_info" | awk -F'\t' '{print $4}')
+    release_notes=$(echo "$parsed_info" | awk -F'\t' '{print $5}')
 
     local looping_bin
     looping_bin="$(command -v looping 2>/dev/null || true)"
@@ -2176,22 +2223,27 @@ except Exception as e:
 
     local current_loop_ver="not-installed"
     if [ -n "$looping_bin" ] && [ -x "$looping_bin" ]; then
-        current_loop_ver=$("$looping_bin" --version 2>/dev/null | grep -o 'v[0-9.]*' | tr -d 'v' || echo "unknown")
+        current_loop_ver=$("$looping_bin" --version 2>/dev/null | grep -oE 'v[0-9]+(\.[0-9]+)*([A-Za-z0-9.-]*)?' | head -n1 | sed 's/^v//' || echo "unknown")
     fi
 
-    echo -e "• Installed smiledev version: ${C_AQUA}v$SMILE_VERSION${C_RESET}"
+    local curr_ch_info
+    curr_ch_info="$(resolve_channel_brand "$SMILE_CHANNEL")"
+    local curr_ch_ver="$(echo "$curr_ch_info" | cut -d'|' -f3)"
+    local curr_ch_key="$(echo "$curr_ch_info" | cut -d'|' -f4)"
+
+    echo -e "• Active smiledev channel:    ${C_AQUA}$curr_ch_key (v$curr_ch_ver)${C_RESET}"
     echo -e "• Installed looping version:  ${C_AQUA}v$current_loop_ver${C_RESET}"
-    echo -e "• Latest available version:   ${C_GREEN}v$remote_ver${C_RESET}"
+    echo -e "• Target $ch_title version:   ${C_GREEN}v$remote_ver${C_RESET}"
 
     local needs_update=0
     if [ "$force_flag" = true ]; then
         needs_update=1
-    elif [ "$SMILE_VERSION" != "$remote_ver" ] || [ "$current_loop_ver" != "$remote_ver" ]; then
+    elif [ "$curr_ch_key" != "$ch_key" ] || [ "$curr_ch_ver" != "$remote_ver" ] || [ "$current_loop_ver" != "$remote_engine_ver" ]; then
         needs_update=1
     fi
 
     if [ "$needs_update" -eq 0 ]; then
-        echo -e "\n${C_GREEN}✔ Looping and smiledev are already at the latest version (v$SMILE_VERSION)!${C_RESET}"
+        echo -e "\n${C_GREEN}✔ Looping and smiledev are already at the latest version ($ch_title v$remote_ver)!${C_RESET}"
         echo -e "${C_DIM}Tip: Pass --force to reinstall anyway: 'smiledev upgrade --force'${C_RESET}"
         return 0
     fi
@@ -2217,12 +2269,17 @@ except Exception as e:
         download_success=true
     fi
 
-    # 2. Try direct GitHub raw stream (bypasses stale edge CDN caches)
+    # 2. Try direct GitHub raw / CDN / Engine release stream
     if [ "$download_success" != true ]; then
-        local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/looping-v${remote_ver}-darwin-universal.tar.gz"
+        local tar_basename
+        tar_basename=$(basename "$tarball_url")
+        local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/${tar_basename}"
+        local gh_engine_rel_url="https://github.com/CokiStudios/engine/releases/download/v1.1/${tar_basename}"
         if curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
         elif curl -fsSL -H "Cache-Control: no-cache" "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
+            download_success=true
+        elif curl -fsSL -L -H "Cache-Control: no-cache" "$gh_engine_rel_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
         fi
     fi
@@ -2238,7 +2295,9 @@ except Exception as e:
         actual_sha=$(shasum -a 256 "$tmp_tar" | awk '{print $1}')
         if [ "$actual_sha" != "$expected_sha" ]; then
             # Direct GitHub raw fallback in case CDN returned stale cached object
-            local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/looping-v${remote_ver}-darwin-universal.tar.gz"
+            local tar_basename
+            tar_basename=$(basename "$tarball_url")
+            local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/${tar_basename}"
             echo -e "   ${C_DIM}CDN cache mismatch. Fetching direct stream from GitHub release...${C_RESET}"
             curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null || true
             actual_sha=$(shasum -a 256 "$tmp_tar" | awk '{print $1}')
@@ -2309,39 +2368,59 @@ except Exception as e:
     for extra_dir in "$HOME/.local/bin" "/opt/homebrew/bin"; do
         if [ -d "$extra_dir" ] && [ -w "$extra_dir" ] && [ "$extra_dir" != "$target_dir" ]; then
             if [ -f "$extra_dir/smiledev" ] || [ -f "$extra_dir/looping" ]; then
-                cp "$tmp_dir/looping" "$extra_dir/looping"
-                chmod 755 "$extra_dir/looping"
-                ln -sf "$extra_dir/looping" "$extra_dir/ruuping" 2>/dev/null || true
-                cp "$tmp_dir/smiledev" "$extra_dir/smiledev"
-                chmod 755 "$extra_dir/smiledev"
-                echo -e "   ${C_GREEN}✔ Synchronized binaries in:${C_RESET} $extra_dir"
+                if [ ! -L "$extra_dir/looping" ] && [ ! -L "$extra_dir/smiledev" ]; then
+                    cp -f "$tmp_dir/looping" "$extra_dir/looping" 2>/dev/null || true
+                    chmod 755 "$extra_dir/looping" 2>/dev/null || true
+                    ln -sf "$extra_dir/looping" "$extra_dir/ruuping" 2>/dev/null || true
+                    cp -f "$tmp_dir/smiledev" "$extra_dir/smiledev" 2>/dev/null || true
+                    chmod 755 "$extra_dir/smiledev" 2>/dev/null || true
+                    echo -e "   ${C_GREEN}✔ Synchronized binaries in:${C_RESET} $extra_dir"
+                fi
             fi
         fi
     done
 
     rm -rf "$tmp_dir"
+    mkdir -p "$CONFIG_DIR" 2>/dev/null || true
+    echo "$ch_key" > "$CHANNEL_FILE" 2>/dev/null || true
     rm -f "$CONFIG_DIR/latest_available_version" 2>/dev/null || true
     date +%s > "$CONFIG_DIR/last_update_check" 2>/dev/null || true
 
     echo -e "\n${C_GREEN}═══════════════════════════════════════════════════════════════${C_RESET}"
-    echo -e "${C_BOLD}✨ UPGRADE SUCCESSFUL! Looping & smiledev are now v$remote_ver${C_RESET}"
+    echo -e "${C_BOLD}✨ UPGRADE SUCCESSFUL! Looping & smiledev [$ch_title v$remote_ver]${C_RESET}"
     echo -e "${C_GREEN}═══════════════════════════════════════════════════════════════${C_RESET}"
     if [ -x "$target_dir/looping" ]; then
         echo -n "• Looping:  "
-        "$target_dir/looping" --version | head -n1
+        LOOPING_CHANNEL="$ch_key" "$target_dir/looping" --version | head -n1
     fi
     if [ -x "$target_dir/smiledev" ]; then
         echo -n "• smiledev: "
-        "$target_dir/smiledev" version
+        "$target_dir/smiledev" version --channel="$ch_key"
     fi
     echo ""
 }
 
 # ── 16. COMMAND: DOCTOR ──
 cmd_doctor() {
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --channel=*) SMILE_CHANNEL="${1#*=}" ;;
+            --channel|-c) shift || true; SMILE_CHANNEL="${1:-prod}" ;;
+            --alpha|--alpha!|--1.1a|--1.1A) SMILE_CHANNEL="alpha" ;;
+            --omega|--rc) SMILE_CHANNEL="omega" ;;
+            --prod|--stable) SMILE_CHANNEL="prod" ;;
+        esac
+        shift || true
+    done
+    local ch_info
+    ch_info="$(resolve_channel_brand "$SMILE_CHANNEL")"
+    local ch_title="$(echo "$ch_info" | cut -d'|' -f1)"
+    local ch_tier="$(echo "$ch_info" | cut -d'|' -f2)"
+    local ch_ver="$(echo "$ch_info" | cut -d'|' -f3)"
+    local ch_key="$(echo "$ch_info" | cut -d'|' -f4)"
     print_banner
     echo -e "${C_BOLD}${C_CYAN}[SMILEDEV DOCTOR]${C_RESET} Running diagnostics on Looping & Package Manager...\n"
-    echo -e "  ${C_GREEN}✔${C_RESET} smiledev CLI      : v$SMILE_VERSION ($0)"
+    echo -e "  ${C_GREEN}✔${C_RESET} smiledev CLI      : v$ch_ver ($ch_title — $ch_tier | $0)"
     local lbin
     lbin=$(command -v looping 2>/dev/null || echo "")
     if [ -z "$lbin" ] && [ -x "./bin/looping" ]; then
@@ -2372,7 +2451,7 @@ cmd_doctor() {
     fi
 
     if command -v brew >/dev/null 2>&1; then
-        if brew tap 2>/dev/null | grep -q "cokistudios/tap"; then
+        if brew tap 2>/dev/null | grep -qi "cokistudios/tap"; then
             echo -e "  ${C_GREEN}✔${C_RESET} Homebrew Tap      : cokistudios/tap (Configured)"
         else
             echo -e "  ${C_YELLOW}•${C_RESET} Homebrew Tap      : Run 'brew tap cokistudios/tap' to install via brew"
@@ -2513,7 +2592,8 @@ case "$1" in
         cmd_run "$@"
         ;;
     doctor|check)
-        cmd_doctor
+        shift || true
+        cmd_doctor "$@"
         ;;
     upgrade|self-update|upgrade-engine)
         shift
@@ -2534,7 +2614,22 @@ case "$1" in
         cmd_logout
         ;;
     version|-v|--version)
-        echo "smiledev v$SMILE_VERSION (Commercial Edition / Arch $SMILE_ARCH_VERSION / Looping Universal Package Manager)"
+        shift || true
+        while [[ "$#" -gt 0 ]]; do
+            case "$1" in
+                --channel=*) SMILE_CHANNEL="${1#*=}" ;;
+                --channel|-c) shift || true; SMILE_CHANNEL="${1:-prod}" ;;
+                --alpha|--alpha!|--1.1a|--1.1A) SMILE_CHANNEL="alpha" ;;
+                --omega|--rc) SMILE_CHANNEL="omega" ;;
+                --prod|--stable) SMILE_CHANNEL="prod" ;;
+            esac
+            shift || true
+        done
+        ch_info="$(resolve_channel_brand "$SMILE_CHANNEL")"
+        ch_title="$(echo "$ch_info" | cut -d'|' -f1)"
+        ch_tier="$(echo "$ch_info" | cut -d'|' -f2)"
+        ch_ver="$(echo "$ch_info" | cut -d'|' -f3)"
+        echo "smiledev v$ch_ver ($ch_title — $ch_tier / Arch $SMILE_ARCH_VERSION / Looping Universal Package Manager)"
         ;;
     help|-h|--help|"")
         cmd_help

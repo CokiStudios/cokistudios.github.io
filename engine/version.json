@@ -1,16 +1,84 @@
 {
-  "version": "1.0.0-commercial",
+  "version": "1.1",
+  "semver": "1.1.0",
+  "alpha_version": "1.1A",
+  "smiledev_alpha_version": "1.1A",
   "engine": "Looping",
-  "edition": "Commercial Production Release",
-  "arch_version": "2.8A",
+  "edition": "Production Release",
+  "arch_version": "3.0A",
   "package_manager": "smiledev",
-  "release_name": "Looping Engine & smiledev v1.0.0 Commercial (First Production Release / Arch 2.8A)",
-  "release_date": "2026-10-27",
+  "release_name": "Looping Engine & smiledev v1.1 (Prod v1.1 / Alpha! 1.1A / Arch 3.0A)",
+  "release_date": "2026-11-11",
   "architectures": ["arm64", "x86_64"],
   "min_macos": "11.0",
-  "release_notes": "Looping Engine v1.0.0 Commercial Edition (First Production Release): Full 2D Game Quantum Physics (Coyote time, Jump buffering, Dash trails, Squash & stretch, Web Audio synth, touch & gamepad controls), loop-node-window v2.0.0 dynamic window & IPC architecture, Universal Module Resolution System, SwiftUI Terminal TUI Preview Canvas & Swift Transpiler, Extended Crypto (CRC-32, constant_time_eq, csms_payload), and comprehensive verification suite (57/57 tests passed). Legacy developer builds consolidated into Architecture series (2.8A, 2.7A, 2.6A).",
-  "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.0.0-commercial-darwin-universal.tar.gz",
-  "tarball_sha256": "efb7aa54c07c9e3446590985435b6f3653df82c26a6ae0ebc92cb8828c4af25c",
+  "channel_nomenclature": {
+    "alpha": {
+      "name": "Alpha! 1.1A",
+      "engine_name": "Alpha! Looping",
+      "smiledev_name": "Alpha! SmileDev",
+      "role": "Super Experimental",
+      "version": "1.1A",
+      "description": "Builds súper experimentales Alpha! 1.1A para smiledev & Looping, laboratorios en vivo y características bleeding-edge previas a estabilización."
+    },
+    "omega": {
+      "name": "Omega Looping",
+      "role": "Release Candidate (RC)",
+      "version": "1.1-omega",
+      "description": "Candidatas a lanzamiento (RC) con congelación de APIs y validación QA previa a producción."
+    },
+    "prod": {
+      "name": "Looping",
+      "role": "Production Release",
+      "version": "1.1",
+      "description": "Versión oficial estable de producción para todo el ecosistema Coki Studios & Loop OS."
+    }
+  },
+  "channels": {
+    "prod": {
+      "name": "Looping",
+      "tier": "Production Release",
+      "version": "1.1",
+      "engine_version": "1.1",
+      "smiledev_version": "1.1",
+      "arch_version": "3.0A",
+      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+    },
+    "stable": {
+      "name": "Looping",
+      "tier": "Production Release",
+      "version": "1.1",
+      "engine_version": "1.1",
+      "smiledev_version": "1.1",
+      "arch_version": "3.0A",
+      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+    },
+    "omega": {
+      "name": "Omega Looping",
+      "tier": "Release Candidate (RC)",
+      "version": "1.1-omega",
+      "engine_version": "1.1",
+      "smiledev_version": "1.1-omega",
+      "arch_version": "3.0A",
+      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+    },
+    "alpha": {
+      "name": "Alpha! 1.1A",
+      "smiledev_name": "Alpha! SmileDev",
+      "tier": "Super Experimental",
+      "version": "1.1A",
+      "engine_version": "1.1",
+      "smiledev_version": "1.1A",
+      "arch_version": "3.0A",
+      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz",
+      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+    }
+  },
+  "release_notes": "Looping v1.1 & smiledev (Prod v1.1 / Alpha! 1.1A / Arch 3.0A): Persistent terminal mode (-i / --persistent like py -i), Apple Metal 4 subsystem (metal4.*, sys.metal_version, 240Hz ProMotion), Quantum 3D Engine (Looping3D.hpp Z-Buffer software rasterizer, Blinn-Phong shading, raycasting & 120Hz/240Hz sub-stepping), Alpha! 1.1A Super Experimental channel for smiledev, integrated CS Ecosystem modules (csid PKCE S256, csms E2EE, game_plus 2D/3D, core_utils), and 71/71 native C++17 tests passing.",
+  "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
+  "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
   "installer_script_url": "https://repo.cokistudios.com/engine/install.sh",
   "pkg_url": "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
   "pkg_sha256": "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
@@ -19,18 +87,30 @@
   "binaries": {
     "looping": {
       "url": "https://repo.cokistudios.com/engine/looping",
-      "sha256": "12def1f59b2668015435c562d0ff6c0bf92beb7c83716a3c5a79919ccfdb9ba8"
+      "sha256": "c27607297dd78c5258d3e404af0596f155ed8dc3cd3bcf19103ffe97cca8293e"
     },
     "smiledev": {
       "url": "https://repo.cokistudios.com/engine/smiledev",
-      "sha256": "9cc28718b64b27ff96b6792e38af59788db48e9f30c707f08e42fe6dbd25d809"
+      "sha256": "bc735380b9f5cc3cdaf663b5c3056b7dcb4254b4e25cabd6182bd8dbef16aa68"
     }
   },
   "history": {
     "architecture_versions": [
       {
+        "version": "1.1A",
+        "name": "Alpha! 1.1A (SmileDev Super Experimental, Metal 4 & Persistent REPL)",
+        "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz",
+        "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+      },
+      {
+        "version": "3.0A",
+        "name": "Looping Architecture v3.0A (Quantum 3D Perspective, Metal 4, Persistent Terminal & CS Modules)",
+        "tarball_url": "https://repo.cokistudios.com/engine/looping-v3.0A-darwin-universal.tar.gz",
+        "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+      },
+      {
         "version": "2.8A",
-        "name": "Looping Architecture v2.8A (Quantum Signature Preview)",
+        "name": "Looping Architecture v2.8A (Quantum Signature & First Production Base)",
         "tarball_url": "https://repo.cokistudios.com/engine/looping-v2.8A-darwin-universal.tar.gz",
         "tarball_sha256": "393b85726e193cedbfd9d63e30627de38b21a77bd2b5c5044471e37aee074d4f"
       },
@@ -50,6 +130,7 @@
   },
   "homebrew": {
     "tap_command": "brew tap cokistudios/tap",
-    "install_command": "brew install looping smiledev"
+    "install_command": "brew install looping smiledev",
+    "alpha_install_command": "brew install cokistudios/tap/smiledev-alpha"
   }
 }

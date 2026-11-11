@@ -515,11 +515,16 @@
             <div class="cs-panel" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(99, 102, 241, 0.07)); border-color: rgba(6, 182, 212, 0.25);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
                     <div>
-                        <div class="cs-tag cs-tag-cyan" style="margin-bottom: 8px;">MOTOR HÍBRIDO C++17 &amp; REGISTRY</div>
-                        <h2 style="font-size: 22px; font-weight: 800; color: var(--cs-text-bright);">Looping v1.0 Commercial (Arch 2.8A) &amp; Registry</h2>
+                        <div class="cs-tag cs-tag-cyan" style="margin-bottom: 8px;">MOTOR HÍBRIDO C++17 2D/3D &amp; REGISTRY</div>
+                        <h2 style="font-size: 22px; font-weight: 800; color: var(--cs-text-bright);">Looping v1.1 (Arch 3.0A) &amp; Registry</h2>
                         <p style="color: var(--cs-text-sub); font-size: 14px; line-height: 1.6; margin-top: 6px; max-width: 680px;">
-                            Desarrollado en C++17 nativo sin contenedores web pesados (transición histórica desde el prototipo Node.js el 3 de octubre de 2026). Latencia inferior a 0.2ms, física 2D cuántica, 57/57 pruebas verificadas, pipelines funcionales (|&gt;), álgebra vectorial, CSV/DateTime nativo, criptografía CSMS E2EE + CRC32 + HMAC-SHA256 y gestor smiledev.
+                            Desarrollado en C++17 nativo sin contenedores web pesados (transición histórica desde el prototipo Node.js el 3 de octubre de 2026). Latencia inferior a 0.2ms, motor 3D Quantum (Z-Buffer + Blinn-Phong + física 240Hz), Apple Metal 4, terminal persistente (<code>-i</code>), 71/71 pruebas verificadas, pipelines funcionales (|&gt;), criptografía CSMS E2EE + HMAC-SHA256 y gestor <code>smiledev</code> v1.1 / Alpha! 1.1A.
                         </p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                            <span class="cs-tag cs-tag-green" title="Producción Estable (--channel=prod)">● Looping v1.1 (Prod)</span>
+                            <span class="cs-tag cs-tag-purple" title="Release Candidate (--channel=omega)">◆ Omega Looping (RC)</span>
+                            <span class="cs-tag cs-tag-amber" title="Super Experimental (--alpha)">⚡ Alpha! 1.1A (smiledev &amp; Looping)</span>
+                        </div>
                     </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <a href="https://github.com/CokiStudios/engine" target="_blank" class="cs-btn cs-btn-primary" style="font-size: 12px; padding: 8px 16px; background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 700;">
@@ -539,10 +544,12 @@
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button id="btn-tab-brew" onclick="setEngineTab('brew')" class="cs-tab-btn active" style="padding: 6px 12px; font-size: 12px;">🍺 Homebrew</button>
                         <button id="btn-tab-curl" onclick="setEngineTab('curl')" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">⚡ 1-Line Curl</button>
-                        <button id="btn-tab-upgrade" onclick="setEngineTab('upgrade')" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">🔄 Auto-Updater</button>
+                        <button id="btn-tab-upgrade" onclick="setEngineTab('upgrade')" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">🔄 Looping Prod</button>
+                        <button id="btn-tab-omega" onclick="setEngineTab('omega')" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">◆ Omega RC</button>
+                        <button id="btn-tab-alpha" onclick="setEngineTab('alpha')" class="cs-tab-btn" style="padding: 6px 12px; font-size: 12px;">⚡ Alpha! 1.1A</button>
                     </div>
                     <div class="cs-code-box" style="display: flex; align-items: center; justify-content: space-between; overflow-x: auto; padding: 12px 16px;">
-                        <span id="engine-cmd-text" style="font-family: var(--cs-font-mono); font-size: 13px; color: var(--cs-cyan); white-space: nowrap;">brew tap CokiStudios/cokistudios.github.io && brew install looping smiledev</span>
+                        <span id="engine-cmd-text" style="font-family: var(--cs-font-mono); font-size: 13px; color: var(--cs-cyan); white-space: nowrap;">brew tap cokistudios/tap && brew install looping smiledev</span>
                         <button onclick="copyEngineCmd(this)" class="cs-btn cs-btn-secondary" style="margin-left: 12px; padding: 4px 10px; font-size: 11px; white-space: nowrap;">Copiar</button>
                     </div>
                 </div>
@@ -552,12 +559,12 @@
             <div class="cs-panel" style="margin-bottom: 24px;">
                 <div class="cs-panel-header">
                     <div>
-                        <div class="cs-panel-title">Interactive Looping v1.0 Commercial Playground &amp; REPL</div>
+                        <div class="cs-panel-title">Interactive Looping v1.1 Playground &amp; 2D/3D Engine (Arch 3.0A)</div>
                         <div style="font-family: var(--cs-font-mono); font-size: 11px; color: var(--cs-text-sub); margin-top: 2px;">
-                            Compilación e interpretación instantánea en el navegador con soporte para física 2D quantum, multi-pattern match, álgebra vectorial, regex y criptografía CSMS (Arch 2.8A).
+                            Compilación e interpretación instantánea en el navegador con soporte para Motor 3D Quantum (perspectiva, iluminación Blinn-Phong y física 240Hz), Metal 4, Arcade 2D, SwiftUI y criptografía CSMS (Arch 3.0A • 71/71 Tests).
                         </div>
                     </div>
-                    <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> COMMERCIAL READY</span>
+                    <span class="cs-tag cs-tag-green"><span class="cs-led cs-led-green"></span> LOOPING v1.1 • ARCH 3.0A</span>
                 </div>
 
                 <div class="cs-repl-container" style="margin-top: 16px;">
@@ -568,15 +575,16 @@
                                 <span style="width:10px; height:10px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
                                 <span style="width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block;"></span>
                             </div>
-                            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-sub);">looping_commercial_v1.loop</span>
+                            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-sub);">looping_v1_1_arch3_0a.loop</span>
                         </div>
                         <div class="cs-repl-presets">
-                            <button class="cs-repl-preset-btn active" data-preset="novedades">Novedades v1.0</button>
+                            <button class="cs-repl-preset-btn active" data-preset="novedades">Novedades v1.1</button>
                             <button class="cs-repl-preset-btn" data-preset="pipelines">Vectores &amp; |&gt;</button>
                             <button class="cs-repl-preset-btn" data-preset="crypto">Cripto CSMS</button>
                             <button class="cs-repl-preset-btn" data-preset="ui">Widgets UI</button>
                             <button class="cs-repl-preset-btn" data-preset="swiftui">🍎 SwiftUI</button>
                             <button class="cs-repl-preset-btn" data-preset="arcade2d">🎮 Arcade 2D</button>
+                            <button class="cs-repl-preset-btn" data-preset="arcade3d">🕹️ Motor 3D</button>
                         </div>
                     </div>
 
@@ -593,19 +601,19 @@
                         </div>
                     </div>
 
-                    <div id="repl-game-container" style="display:none; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.08); background: #04060b;">
+                    <div id="repl-game-container" style="display:none; padding: 14px 18px; border-top: 1px solid rgba(56, 189, 248, 0.18); background: #050811;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 14px;">🎮</span>
-                                <span style="font-size: 12px; font-weight: 700; color: #38bdf8; font-family: var(--cs-font-mono);">SHINE LOOP 2D CANVAS RUNTIME</span>
-                                <span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 7px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3);">60 FPS DIRECT</span>
+                                <span id="repl-game-icon" style="font-size: 14px;">🕹️</span>
+                                <span id="repl-game-title" style="font-size: 12px; font-weight: 700; color: #38bdf8; font-family: var(--cs-font-mono);">SHINE LOOP 3D QUANTUM ENGINE</span>
+                                <span id="repl-game-badge" style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 7px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3);">60 FPS • 240Hz PHYSICS</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--cs-text-sub); font-family: var(--cs-font-mono);">
-                                [A / D] Mover • [W / Espacio] Doble Salto • [Z / J] Disparo • [X / K] Dash • [R] Reiniciar
+                            <div id="repl-game-controls" style="font-size: 11px; color: #cbd5e1; font-family: var(--cs-font-mono);">
+                                [WASD] Mover 3D • [Espacio] Doble Salto • [Shift/X] Hyper-Dash • [Z/Clic] Plasma • [Q/E/Mouse] Órbita • [C] Cámara
                             </div>
                         </div>
-                        <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.3); background: #06090f; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
-                            <canvas id="repl-game-canvas" width="720" height="420" style="width: 100%; height: auto; max-height: 420px; display: block; object-fit: contain;"></canvas>
+                        <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.35); background: #06090f; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+                            <canvas id="repl-game-canvas" width="760" height="440" style="width: 100%; height: auto; max-height: 440px; display: block; object-fit: contain;"></canvas>
                         </div>
                     </div>
 
@@ -923,22 +931,30 @@
             const btnBrew = document.getElementById('btn-tab-brew');
             const btnCurl = document.getElementById('btn-tab-curl');
             const btnUpgrade = document.getElementById('btn-tab-upgrade');
+            const btnOmega = document.getElementById('btn-tab-omega');
+            const btnAlpha = document.getElementById('btn-tab-alpha');
             const text = document.getElementById('engine-cmd-text');
             if (!text) return;
 
-            [btnBrew, btnCurl, btnUpgrade].forEach(b => {
+            [btnBrew, btnCurl, btnUpgrade, btnOmega, btnAlpha].forEach(b => {
                 if (b) b.classList.remove('active');
             });
 
             if (type === 'brew') {
                 if (btnBrew) btnBrew.classList.add('active');
-                text.innerText = 'brew tap CokiStudios/cokistudios.github.io && brew install looping smiledev';
+                text.innerText = 'brew tap cokistudios/tap && brew install looping smiledev';
             } else if (type === 'curl') {
                 if (btnCurl) btnCurl.classList.add('active');
                 text.innerText = 'curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash';
             } else if (type === 'upgrade') {
                 if (btnUpgrade) btnUpgrade.classList.add('active');
-                text.innerText = 'smiledev upgrade --channel=stable && looping --version';
+                text.innerText = 'smiledev upgrade --channel=prod && looping --version';
+            } else if (type === 'omega') {
+                if (btnOmega) btnOmega.classList.add('active');
+                text.innerText = 'smiledev upgrade --omega && looping --omega --version';
+            } else if (type === 'alpha') {
+                if (btnAlpha) btnAlpha.classList.add('active');
+                text.innerText = 'smiledev upgrade --alpha && smiledev version --alpha';
             }
         }
         window.setEngineTab = setEngineTab;

@@ -30,7 +30,7 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
-    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (70 tests)\n";
+    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (71 tests)\n";
     std::cout << "  " << prog_name << " --channel <alpha|omega|prod> Select tier (Alpha! Looping | Omega Looping RC | Prod)\n";
     std::cout << "  " << prog_name << " --version, -v            Display engine version & channel nomenclature\n";
     std::cout << "  " << prog_name << " --help, -h               Show this help message\n\n";

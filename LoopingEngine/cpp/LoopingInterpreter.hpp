@@ -387,7 +387,7 @@ public:
     void set_channel(const std::string& ch_raw) {
         std::string ch = ch_raw;
         for (char& c : ch) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        if (ch == "alpha" || ch == "alpha!" || ch == "experimental" || ch == "super-experimental") {
+        if (ch == "alpha" || ch == "alpha!" || ch == "1.1a" || ch == "alpha-1.1a" || ch == "experimental" || ch == "super-experimental") {
             channel = "alpha";
             channel_name = "Alpha! Looping";
             engine_version = base_version + "-alpha";

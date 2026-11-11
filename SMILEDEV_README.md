@@ -1,5 +1,6 @@
 # 🌟 smiledev — The Official Looping Universal Package Manager
-> **Looping Commercial Production Edition v1.0.0 (Architecture 2.8A)** • *Coki Studios & Holo Entertainment © 2026*  
+> **Looping v1.1 Production Release & Alpha! 1.1A for smiledev (Architecture 3.0A)** • *Coki Studios & Holo Entertainment © 2026*  
+> *Release Channels: **Looping** (Prod v1.1) • **Omega Looping** (RC v1.1-omega) • **Alpha! 1.1A** (Super Experimental)*  
 > *Target Ecosystem: Looping Engine • Loop OS • Shine Console • macOS / Linux / POSIX*
 
 ---
@@ -26,17 +27,21 @@ Respaldado por el registro en la nube **LoopModules** (PostgreSQL / Supabase) co
 # Agregar el tap oficial de Coki Studios
 brew tap cokistudios/tap
 
-# Instalar el motor Looping y el gestor smiledev
+# Instalar el motor Looping y el gestor smiledev (Prod v1.1 / Alpha! 1.1A)
 brew install looping smiledev
+brew install cokistudios/tap/smiledev-alpha   # Canal Alpha! 1.1A
 
-# Actualizar a la versión más reciente (v2.8.0)
+# Actualizar a la versión más reciente (v1.1 / Alpha! 1.1A / Arch 3.0A)
 brew update
 brew upgrade smiledev looping
+smiledev upgrade --alpha
 ```
 
 ### 2. Vía Script de Instalación Directo (macOS / Linux)
 ```bash
 curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash
+# Para instalar el canal Super Experimental Alpha! 1.1A:
+curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash -s -- --alpha
 ```
 
 ### 3. Verificación de Salud con Doctor
@@ -185,7 +190,7 @@ Añade un repositorio de código Git directamente:
 smiledev add-repo https://github.com/usuario/mis-modulos-looping.git
 
 # Enlace directo a subárbol/carpeta de GitHub (URL directa del navegador)
-smiledev add-repo https://github.com/usuario/mi-coleccion-addons/tree/main/addons
+smiledev add-repo https://github.com/anonymus-devop/forkbot-story-sandbox/tree/main/addons
 ```
 * **Soporte de Subárboles de GitHub (`tree/<rama>/<carpeta>`)**: Puedes pegar directamente la URL copiada de tu navegador web apuntando a una carpeta (`addons/`, `modules/`, etc.); `smiledev` analizará de forma autónoma el repositorio base `.git`, la rama especificada y la subcarpeta, verificando los módulos existentes vía GitHub Raw y Git.
 * **Modo Monorepo**: Una carpeta `modules/<nombre-modulo>/smile.json` o `addons/<nombre-modulo>/smile.json` dentro del repositorio Git.

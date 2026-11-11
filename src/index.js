@@ -2713,19 +2713,58 @@ export default {
 
     // ── REPO.COKISTUDIOS.COM/engine & /engine ENDPOINTS (LOOPING & SMILEDEV RELEASES) ──
     if (url.pathname === '/engine' || url.pathname.startsWith('/engine/')) {
-      // 1. JSON Manifest: /engine/latest.json or /engine/version.json
+      // 1. JSON Manifest: /engine/latest.json or /engine/version.json (serve live asset first, fallback to embedded 1.1 / Alpha! 1.1A)
       if (url.pathname === '/engine/latest.json' || url.pathname === '/engine/version.json') {
+        try {
+          const staticManifest = await env.ASSETS.fetch(request);
+          if (staticManifest && staticManifest.ok) {
+            return new Response(staticManifest.body, {
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json; charset=utf-8",
+                "Cache-Control": "public, max-age=60, s-maxage=300"
+              }
+            });
+          }
+        } catch {}
         const engineMetadata = {
-          version: "2.6.0",
+          version: "1.1",
+          semver: "1.1.0",
+          alpha_version: "1.1A",
+          smiledev_alpha_version: "1.1A",
+          arch_version: "3.0A",
           engine: "Looping",
           package_manager: "smiledev",
-          release_name: "Looping Dual Hybrid Engine & smiledev v2.6.0 (Universal Native)",
-          release_date: "2026-10-19",
+          release_name: "Looping Engine & smiledev v1.1 (Prod v1.1 / Alpha! 1.1A / Arch 3.0A)",
+          release_date: "2026-11-11",
           architectures: ["arm64", "x86_64"],
           min_macos: "11.0",
-          release_notes: "Looping Engine v2.6.0: Native support for ternary (? :), null-coalescing (??), pattern matching blocks (match), inclusive/step ranges (..=, step), continue, destructuring assignment, try/catch/throw, and extended stdlib (crypto.sha256, crypto.base64, crypto.uuid, crypto.csms_key, and functional collection methods: map, filter, reduce, unique, zip, chunk, find, any, all). Automatic engine self-updater in smiledev upgrade.",
-          tarball_url: "https://repo.cokistudios.com/engine/looping-v2.6.0-darwin-universal.tar.gz",
-          tarball_sha256: "c028b5e0e78545d038b5cb18877514f835deba49ae00dae7d3ee30c5b9eca4bd",
+          channels: {
+            prod: {
+              name: "Looping",
+              tier: "Production Release",
+              version: "1.1",
+              engine_version: "1.1",
+              smiledev_version: "1.1",
+              arch_version: "3.0A",
+              tarball_url: "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
+              tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+            },
+            alpha: {
+              name: "Alpha! 1.1A",
+              smiledev_name: "Alpha! SmileDev",
+              tier: "Super Experimental",
+              version: "1.1A",
+              engine_version: "1.1",
+              smiledev_version: "1.1A",
+              arch_version: "3.0A",
+              tarball_url: "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz",
+              tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+            }
+          },
+          release_notes: "Looping v1.1 & smiledev (Prod v1.1 / Alpha! 1.1A / Arch 3.0A): Persistent terminal mode (-i / --persistent), Apple Metal 4 subsystem, Quantum 3D Engine, Alpha! 1.1A channel for smiledev, and 71/71 native tests passing.",
+          tarball_url: "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
+          tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
           installer_script_url: "https://repo.cokistudios.com/engine/install.sh",
           pkg_url: "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
           pkg_sha256: "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
@@ -2734,16 +2773,17 @@ export default {
           binaries: {
             looping: {
               url: "https://repo.cokistudios.com/engine/looping",
-              sha256: "4a1e9391d7b78e4bcb51ddd53c694e9e659cdbce188a716f80519c81bcc4a894"
+              sha256: "c27607297dd78c5258d3e404af0596f155ed8dc3cd3bcf19103ffe97cca8293e"
             },
             smiledev: {
               url: "https://repo.cokistudios.com/engine/smiledev",
-              sha256: "79d33f01d8a56ab045c0d8deedcf47d3fc4de44802a036ee33ccef6e9babf036"
+              sha256: "bc735380b9f5cc3cdaf663b5c3056b7dcb4254b4e25cabd6182bd8dbef16aa68"
             }
           },
           homebrew: {
-            tap_command: "brew tap CokiStudios/cokistudios.github.io",
-            install_command: "brew install looping smiledev"
+            tap_command: "brew tap cokistudios/tap",
+            install_command: "brew install looping smiledev",
+            alpha_install_command: "brew install cokistudios/tap/smiledev-alpha"
           }
         };
         return Response.json(engineMetadata, {
