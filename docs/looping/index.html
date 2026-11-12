@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Looping Engine Documentation — Coki Studios</title>
     <meta name="description" content="Documentación oficial de Looping Engine v1.1. Motor de videojuegos 2D y Quantum 3D de alta velocidad, sintaxis nativa y arquitectura multiplataforma.">
+    <link rel="icon" type="image/svg+xml" href="/assets/loop-file-icon.svg">
+    <script src="/coki-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -25,6 +27,7 @@
             --shadow-glow: 0 0 30px rgba(56, 189, 248, 0.15);
         }
 
+        html.light-theme,
         :root[data-theme="light"] {
             --bg-primary: #f8fafc;
             --bg-secondary: #ffffff;
@@ -112,18 +115,24 @@
             color: var(--accent-cyan);
         }
 
-        .theme-toggle {
+        .theme-toggle,
+        .theme-toggle-btn {
             background: none;
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 0.5rem 0.75rem;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 0.9rem;
             font-weight: 600;
         }
 
-        .theme-toggle:hover {
+        .theme-toggle:hover,
+        .theme-toggle-btn:hover {
             border-color: var(--border-hover);
         }
 
@@ -300,6 +309,35 @@
             color: inherit;
         }
 
+        .docs-pre-wrap {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .docs-pre-wrap pre {
+            margin: 0;
+        }
+
+        .docs-copy-btn {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            background: rgba(15, 23, 42, 0.85);
+            color: #e2e8f0;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 7px;
+            padding: 0.25rem 0.65rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+        }
+
+        .docs-copy-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
         .grid-features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -352,16 +390,19 @@
 </head>
 <body>
     <header>
-        <a href="/" class="logo-area">
+        <a href="../" class="logo-area">
             <div class="logo-icon">CS</div>
-            <span>Coki Studios / Looping</span>
+            <span>Coki Studios Docs</span>
         </a>
         <nav>
-            <a href="/developer.html">Developers</a>
-            <a href="/loopize-kit.html">Web Loopize Kit</a>
-            <a href="/shine-find.html">Shine Find</a>
-            <a href="/dashboard.html">Dashboard</a>
-            <button class="theme-toggle" onclick="toggleTheme()">☀️ / 🌙</button>
+            <a href="../">Inicio Docs</a>
+            <a href="./" class="active">Looping</a>
+            <a href="../loopize/">loopize++ &amp; 3D</a>
+            <a href="../smiledev/">smiledev</a>
+            <a href="../csid/">CS ID</a>
+            <a href="/developer.html" data-web-path="developer.html">Developers</a>
+            <button id="cs-waffle-toggle" class="cs-waffle-btn" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+            <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
         </nav>
     </header>
 
@@ -399,7 +440,7 @@
                     <span class="badge">Zero Dependencies</span>
                     <span class="badge">Web Audio API</span>
                 </div>
-                <a href="/developer.html" class="btn-action">Abrir Laboratorio REPL ➔</a>
+                <a href="/developer.html" data-web-path="developer.html" class="btn-action">Abrir Laboratorio REPL ➔</a>
             </section>
 
             <section id="architecture">
@@ -471,7 +512,7 @@ lz_report()</code></pre>
                 <pre><code>&lt;script type="module" src="/web-loopize-kit.js"&gt;&lt;/script&gt;
 &lt;loopize-obj-viewer model="starfighter" color="#38bdf8" autorotate="true"&gt;&lt;/loopize-obj-viewer&gt;
 &lt;loopize-stage preset="orbital_arena" title="Orbit Sector 7"&gt;&lt;/loopize-stage&gt;</code></pre>
-                <a href="/loopize-kit.html" class="btn-action" style="margin-top: 10px;">Abrir Web Loopize Kit Studio ➔</a>
+                <a href="/loopize-kit.html" data-web-path="loopize-kit.html" class="btn-action" style="margin-top: 10px;">Abrir Web Loopize Kit Studio ➔</a>
             </section>
 
             <section id="sfx">
@@ -506,19 +547,6 @@ print($"Rango Actual: {tier} ({score} pts)")</code></pre>
         </main>
     </div>
 
-    <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('docs_theme', next);
-        }
-
-        const savedTheme = localStorage.getItem('docs_theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        }
-    </script>
+    <script src="/docs/docs-ui.js"></script>
 </body>
 </html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>smiledev &amp; LoopModules CLI — Coki Studios Docs</title>
+    <meta name="description" content="Documentación oficial de smiledev: el gestor universal de paquetes y módulos políglotas para Looping Engine y Loop OS.">
+    <link rel="icon" type="image/svg+xml" href="/assets/dev-icon.svg">
+    <script src="/coki-theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/docs/docs-ui.css">
+</head>
+<body>
+    <header class="docs-header">
+        <div class="docs-header-inner">
+            <a href="../" class="docs-brand">
+                <div class="docs-brand-mark">CS</div>
+                <span>Coki Studios Docs</span>
+                <span class="docs-brand-sub">smiledev CLI</span>
+            </a>
+
+            <nav class="docs-nav" aria-label="Secciones de documentación">
+                <a href="../">Inicio</a>
+                <a href="../looping/">Looping</a>
+                <a href="../loopize/">loopize++ &amp; 3D</a>
+                <a href="./" class="active">smiledev</a>
+                <a href="../csid/">CS ID &amp; SDK</a>
+            </nav>
+
+            <div class="docs-actions">
+                <button type="button" id="docs-mobile-menu" class="docs-mobile-menu-btn" aria-label="Menú">☰</button>
+                <button type="button" class="docs-search-btn" data-docs-search-open aria-label="Buscar">
+                    <span>Buscar</span>
+                    <span class="docs-kbd">⌘K</span>
+                </button>
+                <button id="cs-waffle-toggle" class="cs-waffle-btn" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="docs-shell">
+        <aside class="docs-sidebar" aria-label="Índice de smiledev">
+            <div class="docs-sidebar-group">
+                <div class="docs-sidebar-title">Primeros Pasos</div>
+                <ul class="docs-sidebar-links">
+                    <li><a href="#overview" class="active">Visión General</a></li>
+                    <li><a href="#install">Instalación &amp; Canales</a></li>
+                    <li><a href="#resolution">Orden de Resolución</a></li>
+                </ul>
+            </div>
+            <div class="docs-sidebar-group">
+                <div class="docs-sidebar-title">CLI &amp; Manifiestos</div>
+                <ul class="docs-sidebar-links">
+                    <li><a href="#commands">Comandos CLI</a></li>
+                    <li><a href="#manifest">Manifiesto smile.json</a></li>
+                    <li><a href="#repos">Repositorios Externos</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-main">
+            <section id="overview" class="docs-hero">
+                <div class="docs-badges" style="margin-bottom: 12px;">
+                    <span class="docs-badge">smiledev v1.1</span>
+                    <span class="docs-badge amber">Alpha! 1.1A</span>
+                    <span class="docs-badge emerald">LoopModules Registry</span>
+                </div>
+                <h1>smiledev Package Manager</h1>
+                <p class="docs-lead">
+                    Gestor oficial de paquetes, módulos y dependencias políglotas para <strong>Looping</strong> y <strong>Loop OS</strong>. Soporta módulos en <code>.loop</code>, Python/PyLoop (<code>.py</code>), C++17 (<code>.hpp</code>), C2 declarativo (<code>.c2</code>) y paquetes híbridos multi-archivo.
+                </p>
+                <a href="/smiledev.html" data-web-path="smiledev.html" class="docs-btn">Abrir smiledev Studio Web →</a>
+            </section>
+
+            <section id="install" class="docs-section">
+                <h2>Instalación y Canales</h2>
+                <p>Instala los canales oficiales (<code>Looping</code> Producción, <code>Omega Looping</code> RC o <code>Alpha! 1.1A</code> experimental) vía Homebrew o script directo:</p>
+                <pre><code># 1. Homebrew (macOS)
+brew tap cokistudios/tap
+brew install looping smiledev
+brew install cokistudios/tap/smiledev-alpha   # Canal Alpha! 1.1A
+
+# 2. Script directo (macOS / Linux)
+curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash
+curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash -s -- --alpha
+
+# 3. Diagnóstico de entorno y compiladores
+smiledev doctor</code></pre>
+            </section>
+
+            <section id="resolution" class="docs-section">
+                <h2>Arquitectura de Resolución de Módulos</h2>
+                <p>Cuando ejecutas <code>use "nombre"</code> o <code>import "nombre"</code>, el motor resuelve las dependencias siguiendo esta jerarquía:</p>
+                <ol>
+                    <li><strong>Stdlib interna C++17</strong> (<code>math</code>, <code>crypto</code>, <code>sys</code>, <code>csv</code>, <code>datetime</code>, <code>regex</code>, <code>ui</code>, <code>swiftui</code>, <code>json</code>, <code>file</code>, <code>csharp</code>).</li>
+                    <li><strong>Ruta relativa directa</strong> en el directorio de trabajo (<code>./modulo</code>, <code>./modulo.loop</code>).</li>
+                    <li><strong>Manifiesto local</strong> <code>./modules/&lt;nombre&gt;/smile.json</code> usando su campo <code>entry_point</code>.</li>
+                    <li><strong>Fallback local</strong>: <code>./modules/&lt;nombre&gt;/&lt;nombre&gt;.loop</code> o <code>main.loop</code>, y <code>./loop_modules/&lt;nombre&gt;.loop</code>.</li>
+                    <li><strong>Caché global</strong> en <code>~/.smiledev/modules/&lt;nombre&gt;/</code>.</li>
+                    <li><strong>Python Bridge</strong> fallback: <code>&lt;nombre&gt;.py</code> / <code>main.py</code>.</li>
+                </ol>
+            </section>
+
+            <section id="commands" class="docs-section">
+                <h2>Referencia de Comandos CLI</h2>
+                <div class="docs-table-wrap">
+                    <table class="docs-table">
+                        <thead>
+                            <tr>
+                                <th>Comando</th>
+                                <th>Descripción</th>
+                                <th>Ejemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>smiledev install [mod]</code></td>
+                                <td>Instala un paquete o todas las dependencias de <code>smile.json</code>.</td>
+                                <td><code>smiledev install loopize++</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev uninstall &lt;mod&gt;</code></td>
+                                <td>Elimina un módulo local o global (<code>--global</code>).</td>
+                                <td><code>smiledev uninstall loop-gui-tk</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev search &lt;q&gt;</code></td>
+                                <td>Busca paquetes en LoopModules Registry.</td>
+                                <td><code>smiledev search 3d</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev init &lt;name&gt;</code></td>
+                                <td>Genera plantilla con <code>smile.json</code>, código base y README.</td>
+                                <td><code>smiledev init mi-plugin --lang loop</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev link / unlink</code></td>
+                                <td>Enlaza simbólicamente un módulo local para pruebas globales.</td>
+                                <td><code>smiledev link ./modules/loopize++</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev pack / validate</code></td>
+                                <td>Valida integridad y empaqueta en <code>.tar.gz</code> con SHA-256.</td>
+                                <td><code>smiledev pack ./modules/loopize++</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev login / publish</code></td>
+                                <td>Autentica con token PAT de CS ID y publica en LoopModules.</td>
+                                <td><code>smiledev publish ./modules/mi-plugin</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>smiledev add-repo / list-repos</code></td>
+                                <td>Configura espejos o repositorios externos en JSON.</td>
+                                <td><code>smiledev add-repo https://repo.cokistudios.com/modules</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="manifest" class="docs-section">
+                <h2>Manifiesto <code>smile.json</code> (Estándar e Híbrido)</h2>
+                <p>Un paquete híbrido puede coordinar código en Looping, headers nativos C++17, componentes C# y utilidades Web:</p>
+                <pre><code>{
+  "name": "loopize++",
+  "version": "1.0.0",
+  "language": "hybrid",
+  "entry_point": "loopize.loop",
+  "description": "High-performance 3D/2D game additions library for Looping",
+  "dependencies": {
+    "loop-math-3d": "^1.0.0"
+  },
+  "components": {
+    "loop": "loopize.loop",
+    "cpp": "components/loopize_core.hpp",
+    "csharp": "components/LoopizeGame.cs",
+    "js": "components/web-loopize-kit.js"
+  }
+}</code></pre>
+            </section>
+
+            <section id="repos" class="docs-section">
+                <h2>Resolución Multifuente &amp; Registro Oficial</h2>
+                <p>El registro principal opera en <code>https://repo.cokistudios.com/modules</code> y expone el catálogo JSON para instalación automática desde CLI:</p>
+                <pre><code>smiledev add-repo https://repo.cokistudios.com/modules
+smiledev list-repos
+smiledev repo-spec</code></pre>
+                <div class="docs-callout">
+                    <strong>Manual completo disponible</strong>
+                    Consulta todas las especificaciones detalladas en <a href="/SMILEDEV_README.md" style="color:var(--docs-accent);font-weight:700;">SMILEDEV_README.md</a>.
+                </div>
+            </section>
+
+            <div class="docs-pager">
+                <a href="../loopize/" class="docs-btn secondary">← loopize++ &amp; 3D</a>
+                <a href="../csid/" class="docs-btn">Siguiente: CS ID &amp; SDK →</a>
+            </div>
+        </main>
+    </div>
+
+    <footer class="docs-footer">
+        <span>Coki Studios &amp; Holo Entertainment © 2026</span>
+        <a href="../">Volver al Índice Docs</a>
+    </footer>
+
+    <script src="/docs/docs-ui.js"></script>
+</body>
+</html>

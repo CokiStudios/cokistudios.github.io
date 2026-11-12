@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS ID Connect, CSMS &amp; Edge API — Coki Studios Docs</title>
+    <meta name="description" content="Guía de integración para CS ID Connect (OAuth 2.1 + PKCE S256), SDKs Web/Swift/Kotlin, especificación CSMS E2EE y servicios Edge de cokistudios.com.">
+    <link rel="icon" type="image/svg+xml" href="/assets/csid-icon.svg">
+    <script src="/coki-theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/docs/docs-ui.css">
+</head>
+<body>
+    <header class="docs-header">
+        <div class="docs-header-inner">
+            <a href="../" class="docs-brand">
+                <div class="docs-brand-mark">CS</div>
+                <span>Coki Studios Docs</span>
+                <span class="docs-brand-sub">CS ID &amp; Edge</span>
+            </a>
+
+            <nav class="docs-nav" aria-label="Secciones de documentación">
+                <a href="../">Inicio</a>
+                <a href="../looping/">Looping</a>
+                <a href="../loopize/">loopize++ &amp; 3D</a>
+                <a href="../smiledev/">smiledev</a>
+                <a href="./" class="active">CS ID &amp; SDK</a>
+            </nav>
+
+            <div class="docs-actions">
+                <button type="button" id="docs-mobile-menu" class="docs-mobile-menu-btn" aria-label="Menú">☰</button>
+                <button type="button" class="docs-search-btn" data-docs-search-open aria-label="Buscar">
+                    <span>Buscar</span>
+                    <span class="docs-kbd">⌘K</span>
+                </button>
+                <button id="cs-waffle-toggle" class="cs-waffle-btn" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="docs-shell">
+        <aside class="docs-sidebar" aria-label="Índice CS ID">
+            <div class="docs-sidebar-group">
+                <div class="docs-sidebar-title">Identidad &amp; Auth</div>
+                <ul class="docs-sidebar-links">
+                    <li><a href="#oauth" class="active">CS ID Connect OAuth 2.1</a></li>
+                    <li><a href="#web-sdk">Web SDK &amp; One-Tap</a></li>
+                    <li><a href="#native-sdk">Swift &amp; Kotlin SDKs</a></li>
+                </ul>
+            </div>
+            <div class="docs-sidebar-group">
+                <div class="docs-sidebar-title">Seguridad &amp; Red</div>
+                <ul class="docs-sidebar-links">
+                    <li><a href="#csms">CSMS E2EE (AES-256-GCM)</a></li>
+                    <li><a href="#edge">Subdominios &amp; Edge API</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-main">
+            <section id="oauth" class="docs-hero">
+                <div class="docs-badges" style="margin-bottom: 12px;">
+                    <span class="docs-badge">RFC 6749</span>
+                    <span class="docs-badge emerald">PKCE S256</span>
+                    <span class="docs-badge amber">Hardware-Backed Keys</span>
+                </div>
+                <h1>CS ID Connect &amp; Servicios Edge</h1>
+                <p class="docs-lead">
+                    Autenticación universal para aplicaciones web y nativas mediante OAuth 2.1, Passkeys WebAuthn y protección criptográfica respaldada por hardware.
+                </p>
+                <a href="/developer.html" data-web-path="developer.html" class="docs-btn">Gestionar Client IDs en Developers →</a>
+            </section>
+
+            <section id="web-sdk" class="docs-section">
+                <h2>Web Component &amp; SDK JavaScript</h2>
+                <p>Integra inicio de sesión federado con <code>&lt;csid-connect-button&gt;</code> o el módulo ESM desde el CDN oficial:</p>
+                <pre><code>&lt;script type="module" src="https://cdn.cokistudios.com/csid-connect.js"&gt;&lt;/script&gt;
+&lt;csid-connect-button client-id="tu_client_id" theme="glass" shape="pill" mode="popup"&gt;&lt;/csid-connect-button&gt;
+
+&lt;script&gt;
+  document.querySelector('csid-connect-button').addEventListener('success', (e) =&gt; {
+    console.log('Usuario:', e.detail.user);
+    console.log('Access Token:', e.detail.accessToken);
+  });
+&lt;/script&gt;</code></pre>
+
+                <h3>One-Tap &amp; Flujo Programático</h3>
+                <pre><code>import { CSIDConnect } from 'https://cdn.cokistudios.com/csid-connect.js';
+
+CSIDConnect.init({ clientId: 'tu_client_id', mode: 'popup' });
+
+CSIDConnect.promptOneTap({
+  onAuth: (res) =&gt; console.log('One-Tap exitoso:', res.user),
+  onDismiss: () =&gt; console.log('Descartado por usuario')
+});
+
+const auth = await CSIDConnect.signIn({ mode: 'popup' });</code></pre>
+            </section>
+
+            <section id="native-sdk" class="docs-section">
+                <h2>SDKs Nativos (Swift / Kotlin)</h2>
+                <h3>SwiftUI &amp; ASWebAuthenticationSession</h3>
+                <p>Usa Universal Links (<code>https://cokistudios.com/authorize</code>) o esquemas propios junto a <code>CryptoKit</code>:</p>
+                <pre><code>import SwiftUI
+import AuthenticationServices
+import CryptoKit
+
+Task {
+    let user = try await CSIDManager.shared.loginWithOAuthPKCE(
+        clientId: "tu_client_id",
+        redirectUri: "miapp://auth"
+    )
+    print("Conectado: \(user.email)")
+}</code></pre>
+
+                <h3>Kotlin con CSIDKit</h3>
+                <p>Flujo PKCE sobre Custom Tabs respaldado por <code>AndroidKeyStore</code> (TEE / StrongBox):</p>
+                <pre><code>val csid = CSIDClient.Builder(context)
+    .setClientId("tu_client_id")
+    .setRedirectUri("miapp://auth")
+    .build()
+
+csid.launchAuth(activity) { result -&gt;
+    when (result) {
+        is CSIDResult.Success -&gt; Log.d("CSID", "Conectado: ${result.user.email}")
+        is CSIDResult.Error -&gt; Log.e("CSID", result.message)
+    }
+}</code></pre>
+            </section>
+
+            <section id="csms" class="docs-section">
+                <h2>Especificación Criptográfica CSMS E2EE</h2>
+                <p>El servicio de mensajería CSMS protege las salas punto a punto con cifrado autenticado <strong>AES-256-GCM</strong> y llaves protegidas por hardware en cada plataforma (Secure Enclave / T2 / AndroidKeyStore).</p>
+                <div class="docs-table-wrap">
+                    <table class="docs-table">
+                        <thead>
+                            <tr>
+                                <th>Parámetro</th>
+                                <th>Especificación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Algoritmo</td>
+                                <td><code>AES-256-GCM</code> (Apple <code>CryptoKit.AES.GCM</code> / Android <code>AES/GCM/NoPadding</code>)</td>
+                            </tr>
+                            <tr>
+                                <td>Formato Payload</td>
+                                <td><code>🔒 enc:v1:&lt;base64-iv&gt;:&lt;base64-ciphertext&gt;</code></td>
+                            </tr>
+                            <tr>
+                                <td>Derivación de Sala</td>
+                                <td><code>SHA-256(roomId + ":CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR")</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="edge" class="docs-section">
+                <h2>Mapa de Subdominios y Endpoints Edge</h2>
+                <div class="docs-table-wrap">
+                    <table class="docs-table">
+                        <thead>
+                            <tr>
+                                <th>Dominio / Ruta</th>
+                                <th>Servicio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>https://cokistudios.com</code></td>
+                                <td>Portal principal, CS ID, OAuth <code>/authorize</code> y Worker Edge.</td>
+                            </tr>
+                            <tr>
+                                <td><code>https://docs.cokistudios.com</code></td>
+                                <td>Centro oficial de documentación técnica y manuales.</td>
+                            </tr>
+                            <tr>
+                                <td><code>https://developer.cokistudios.com</code></td>
+                                <td>Consola de desarrolladores, OAuth Client Apps y Looping Web REPL.</td>
+                            </tr>
+                            <tr>
+                                <td><code>https://repo.cokistudios.com</code></td>
+                                <td>Registro LoopModules (<code>/modules</code>) e instaladores <code>/engine/*</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>https://cdn.cokistudios.com</code></td>
+                                <td>Distribución edge de SDKs (<code>csid-connect.js</code>) y módulos CAC.</td>
+                            </tr>
+                            <tr>
+                                <td><code>POST /api/moderate</code> &amp; <code>/api/notify/*</code></td>
+                                <td>Moderación anti-evasión + Workers AI y notificaciones OTP/SES.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="docs-pager">
+                <a href="../smiledev/" class="docs-btn secondary">← smiledev CLI</a>
+                <a href="../" class="docs-btn">Volver al Inicio Docs →</a>
+            </div>
+        </main>
+    </div>
+
+    <footer class="docs-footer">
+        <span>Coki Studios &amp; Holo Entertainment © 2026</span>
+        <a href="../">Volver al Índice Docs</a>
+    </footer>
+
+    <script src="/docs/docs-ui.js"></script>
+</body>
+</html>

@@ -2507,9 +2507,13 @@ function generateFamilyInviteEmail({ email, inviterName, familyName, role, joinL
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const host = url.hostname;
+    const hostHeader = (request.headers.get('host') || '').split(':')[0].toLowerCase();
+    const host = (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && hostHeader
+      ? hostHeader
+      : url.hostname;
     const isRepoHost = host === 'repo.cokistudios.com';
     const isDevHost = host === 'developer.cokistudios.com';
+    const isDocsHost = host === 'docs.cokistudios.com';
     const isCdnHost = host === 'cdn.cokistudios.com';
     const isModulesPath = url.pathname.startsWith('/modules');
 
@@ -2538,11 +2542,56 @@ export default {
 
     // ── SUBDOMINIO: developer.cokistudios.com ──
     if (isDevHost) {
-      if (url.pathname === '/' || url.pathname === '/developer' || url.pathname === '') {
+      if (url.pathname === '/' || url.pathname === '') {
         const devUrl = new URL(request.url);
-        devUrl.pathname = '/developer.html';
+        devUrl.pathname = '/developer';
         return env.ASSETS.fetch(new Request(devUrl.toString(), request));
       }
+      return env.ASSETS.fetch(request);
+    }
+
+    // Canonical trailing slash for docs sections
+    const DOCS_SECTIONS = new Set(['/looping', '/loopize', '/smiledev', '/csid']);
+    if (!isDocsHost && url.pathname === '/docs') {
+      const redir = new URL(request.url);
+      redir.pathname = '/docs/';
+      return Response.redirect(redir.toString(), 308);
+    }
+    if (!isDocsHost && url.pathname.startsWith('/docs/') && DOCS_SECTIONS.has(url.pathname.slice(5))) {
+      const redir = new URL(request.url);
+      redir.pathname = `${url.pathname}/`;
+      return Response.redirect(redir.toString(), 308);
+    }
+
+    // ── SUBDOMINIO: docs.cokistudios.com ──
+    if (isDocsHost) {
+      if (DOCS_SECTIONS.has(url.pathname)) {
+        const redir = new URL(request.url);
+        redir.pathname = `${url.pathname}/`;
+        return Response.redirect(redir.toString(), 308);
+      }
+
+      if (url.pathname === '/docs' || url.pathname === '/docs/') {
+        const redir = new URL(request.url);
+        redir.pathname = '/';
+        return Response.redirect(redir.toString(), 308);
+      }
+
+      if (url.pathname === '/' || url.pathname === '' || url.pathname === '/index.html') {
+        const docsRootUrl = new URL(request.url);
+        docsRootUrl.pathname = '/docs/';
+        return env.ASSETS.fetch(new Request(docsRootUrl.toString(), request));
+      }
+
+      if (!url.pathname.startsWith('/docs/')) {
+        const docsCandidateUrl = new URL(request.url);
+        docsCandidateUrl.pathname = `/docs${url.pathname}`;
+        const docsRes = await env.ASSETS.fetch(new Request(docsCandidateUrl.toString(), request));
+        if (docsRes.status !== 404) {
+          return docsRes;
+        }
+      }
+
       return env.ASSETS.fetch(request);
     }
 

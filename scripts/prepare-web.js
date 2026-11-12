@@ -31,6 +31,12 @@ fs.mkdirSync(publicDir, { recursive: true });
 const largeFileRedirects = [];
 
 // 1. Copy web-facing root files
+const publicMarkdownDocs = new Set([
+  'LOOPING_USE.md',
+  'SMILEDEV_README.md',
+  'LOOPING_LEARNING_GUIDE.md'
+]);
+
 const rootFiles = fs.readdirSync(rootDir).filter(file => {
   if (file === 'package.json' || file === 'package-lock.json') return false;
   return (
@@ -39,6 +45,7 @@ const rootFiles = fs.readdirSync(rootDir).filter(file => {
     file.endsWith('.json') ||
     file.endsWith('.xml') ||
     file.endsWith('.apk') ||
+    publicMarkdownDocs.has(file) ||
     file === 'CNAME' ||
     file === 'robots.txt' ||
     file === '_headers' ||

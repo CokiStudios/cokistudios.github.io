@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coki Studios Docs — Documentación Oficial del Ecosistema</title>
+    <meta name="description" content="Centro oficial de documentación técnica de Coki Studios: Looping Engine v1.1 (2D & Quantum 3D), loopize++, Wavefront .OBJ, C# Bridge, smiledev CLI, Web Loopize Kit y CS ID Connect.">
+    <link rel="icon" type="image/svg+xml" href="/assets/dev-icon.svg">
+    <script src="/coki-theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/docs/docs-ui.css">
+</head>
+<body>
+    <header class="docs-header">
+        <div class="docs-header-inner">
+            <a href="./" class="docs-brand">
+                <div class="docs-brand-mark">CS</div>
+                <span>Coki Studios Docs</span>
+                <span class="docs-brand-sub">docs.cokistudios.com</span>
+            </a>
+
+            <nav class="docs-nav" aria-label="Secciones de documentación">
+                <a href="./" class="active">Inicio</a>
+                <a href="./looping/">Looping</a>
+                <a href="./loopize/">loopize++ &amp; 3D</a>
+                <a href="./smiledev/">smiledev</a>
+                <a href="./csid/">CS ID &amp; SDK</a>
+            </nav>
+
+            <div class="docs-actions">
+                <button type="button" class="docs-search-btn" data-docs-search-open aria-label="Buscar en documentación">
+                    <span>Buscar</span>
+                    <span class="docs-kbd">⌘K</span>
+                </button>
+                <button id="cs-waffle-toggle" class="cs-waffle-btn" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="docs-hub-wrap">
+        <section class="docs-hero" style="margin-bottom: 30px;">
+            <div class="docs-badges" style="margin-bottom: 14px;">
+                <span class="docs-badge">Looping v1.1 • Arch 3.0A</span>
+                <span class="docs-badge emerald">C++17 + Web JS + C#</span>
+                <span class="docs-badge amber">Zero Dependencies</span>
+            </div>
+            <h1>Documentación Oficial de Coki Studios</h1>
+            <p class="docs-lead">
+                Guías técnicas, referencias de API y ejemplos ejecutables para construir juegos y aplicaciones en todos tus dispositivos con <strong>Looping Engine</strong>, <strong>loopize++</strong>, <strong>smiledev</strong>, <strong>Web Loopize Kit</strong> y <strong>CS ID Connect</strong>.
+            </p>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top: 10px;">
+                <a href="./looping/" class="docs-btn">Explorar Looping Engine →</a>
+                <a href="./loopize/" class="docs-btn secondary">3D (.OBJ + C# + loopize++)</a>
+                <a href="/developer.html" data-web-path="developer.html" class="docs-btn secondary">Abrir Web REPL</a>
+            </div>
+        </section>
+
+        <section style="margin-bottom: 34px;">
+            <div class="docs-grid">
+                <a href="./looping/" class="docs-card">
+                    <span class="docs-card-kicker">01 // Motor &amp; Lenguaje</span>
+                    <h3>Looping Engine v1.1</h3>
+                    <p>Sintaxis moderna (<code>:=</code>, <code>|></code>, <code>match</code>), modo plataformas 2D, perspectiva Quantum 3D a 240Hz físicos, síntesis Web Audio y REPL.</p>
+                    <span class="docs-card-cta">Ver guía de Looping →</span>
+                </a>
+
+                <a href="./loopize/" class="docs-card">
+                    <span class="docs-card-kicker">02 // 3D .OBJ, C# &amp; Juego</span>
+                    <h3>loopize++ &amp; 3D Studio</h3>
+                    <p>Mallas Wavefront <code>.obj</code>, raycasting Möller–Trumbore, scripting <code>cs! MonoBehaviour</code>, ECS, oleadas, combos x8, cámara spring-arm y Web Loopize Kit.</p>
+                    <span class="docs-card-cta">Ver referencia 3D &amp; loopize++ →</span>
+                </a>
+
+                <a href="./smiledev/" class="docs-card">
+                    <span class="docs-card-kicker">03 // Package Manager</span>
+                    <h3>smiledev &amp; LoopModules</h3>
+                    <p>Gestión de dependencias políglotas (<code>.loop</code>, <code>.py</code>, <code>.hpp</code>, <code>.cs</code>), manifiestos <code>smile.json</code> y repositorios remotos.</p>
+                    <span class="docs-card-cta">Ver CLI de smiledev →</span>
+                </a>
+
+                <a href="./csid/" class="docs-card">
+                    <span class="docs-card-kicker">04 // Identidad &amp; Edge</span>
+                    <h3>CS ID Connect &amp; SDKs</h3>
+                    <p>OAuth 2.1 con PKCE S256, <code>&lt;csid-connect-button&gt;</code>, Passkeys WebAuthn, CSMS E2EE (AES-256-GCM) y subdominios Edge.</p>
+                    <span class="docs-card-cta">Ver integración CS ID →</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="docs-section" style="margin-bottom: 34px;">
+            <h2>Inicio Rápido en Terminal</h2>
+            <p>Instala las herramientas CLI oficiales (<code>looping</code> y <code>smiledev</code>) y valida el motor con la suite nativa incluida:</p>
+            <pre><code># macOS vía Homebrew
+brew tap cokistudios/tap
+brew install looping smiledev
+
+# macOS / Linux vía instalador directo
+curl -fsSL https://repo.cokistudios.com/engine/install.sh | bash
+
+# Verificar entorno y ejecutar suite de pruebas C++17 (75/75)
+smiledev doctor
+looping test</code></pre>
+        </section>
+
+        <section class="docs-section" style="margin-bottom: 34px;">
+            <h2>Primer Juego 3D con <code>.OBJ</code>, C# y <code>loopize++</code></h2>
+            <p>Ejecuta escenas tridimensionales completas desde un archivo <code>.loop</code> o directamente en el <a href="/developer.html" data-web-path="developer.html" style="color:var(--docs-accent);">REPL Web</a>:</p>
+            <pre><code>use "loopize++"
+use "csharp"
+
+define game3d "Starfleet Orbit" version 1.0:
+    scene3d.world(name: "Orbit Sector 7", size: (220, 100, 220), sky: "nebula_void", fog: 0.007)
+    camera3d.set(mode: "chase", pos: (0, 8.5, -16), target: (0, 2, 14), fov: 65, smooth: 0.14)
+
+    cs! {
+        public class PilotController : MonoBehaviour {
+            public float Shield = 100.0f;
+            public void Start() => LoopingBridge.Set("pilot_ready", true);
+            public void Update(float dt) => Scene3D.Rotate("Starfighter01", 0.0f, dt * 40.0f, 0.0f);
+        }
+    }
+
+    spawn3d.player("Starfighter01", at: (0, 2.2, 4), obj: "starfighter.obj", scale: 1.6, cs: "PilotController")
+    spawn3d.obj("WarpGate", obj: "star_gate.obj", at: (0, 4.5, 42), scale: 2.0, color: "#c084fc")
+    lz_wave_rush(1, "valkyrie", 4, 90, "valkyrie_drone.obj")
+    lz_report()</code></pre>
+        </section>
+
+        <section class="docs-section">
+            <h2>Manuales Técnicos &amp; Herramientas Interactivas</h2>
+            <div class="docs-table-wrap">
+                <table class="docs-table">
+                    <thead>
+                        <tr>
+                            <th>Recurso</th>
+                            <th>Descripción</th>
+                            <th>Enlace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>LOOPING_USE.md</code></td>
+                            <td>Manual completo de sintaxis, stdlib, 3D Quantum, <code>.obj</code>, C# y <code>loopize++</code>.</td>
+                            <td><a href="/LOOPING_USE.md" style="color:var(--docs-accent);font-weight:700;">Leer archivo →</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>SMILEDEV_README.md</code></td>
+                            <td>Especificación de <code>smiledev</code> CLI, manifiestos y resolución multifuente.</td>
+                            <td><a href="/SMILEDEV_README.md" style="color:var(--docs-accent);font-weight:700;">Leer archivo →</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>LOOPING_LEARNING_GUIDE.md</code></td>
+                            <td>Guía progresiva de aprendizaje de Looping desde cero.</td>
+                            <td><a href="/LOOPING_LEARNING_GUIDE.md" style="color:var(--docs-accent);font-weight:700;">Leer archivo →</a></td>
+                        </tr>
+                        <tr>
+                            <td>Web Loopize Kit Studio</td>
+                            <td>Visor interactivo <code>&lt;loopize-obj-viewer&gt;</code> y escenario 3D en vivo en navegador.</td>
+                            <td><a href="/loopize-kit.html" data-web-path="loopize-kit.html" style="color:var(--docs-accent);font-weight:700;">Abrir Studio →</a></td>
+                        </tr>
+                        <tr>
+                            <td>LoopModules Registry</td>
+                            <td>Directorio de paquetes y CLI <code>smiledev add-repo</code>.</td>
+                            <td><a href="https://repo.cokistudios.com/modules" style="color:var(--docs-accent);font-weight:700;">repo.cokistudios.com →</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="docs-footer">
+        <span>Coki Studios &amp; Holo Entertainment © 2026 • Documentación Técnica Oficial</span>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <a href="./looping/">Looping</a>
+            <a href="./loopize/">loopize++</a>
+            <a href="./smiledev/">smiledev</a>
+            <a href="./csid/">CS ID</a>
+            <a href="https://cokistudios.com" data-web-path="index.html">cokistudios.com</a>
+        </div>
+    </footer>
+
+    <script src="/docs/docs-ui.js"></script>
+</body>
+</html>

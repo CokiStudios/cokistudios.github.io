@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loopize++, .OBJ 3D &amp; C# Interop — Coki Studios Docs</title>
+    <meta name="description" content="Documentación completa de loopize++, mallas Wavefront .OBJ, raycasting Möller-Trumbore, scripting C# MonoBehaviour y Web Loopize Kit.">
+    <link rel="icon" type="image/svg+xml" href="/assets/loop-file-icon.svg">
+    <script src="/coki-theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/docs/docs-ui.css">
+</head>
+<body>
+    <header class="docs-header">
+        <div class="docs-header-inner">
+            <a href="../" class="docs-brand">
+                <div class="docs-brand-mark">CS</div>
+                <span>Coki Studios Docs</span>
+                <span class="docs-brand-sub">loopize++ &amp; 3D</span>
+            </a>
+
+            <nav class="docs-nav" aria-label="Secciones de documentación">
+                <a href="../">Inicio</a>
+                <a href="../looping/">Looping</a>
+                <a href="./" class="active">loopize++ &amp; 3D</a>
+                <a href="../smiledev/">smiledev</a>
+                <a href="../csid/">CS ID &amp; SDK</a>
+            </nav>
+
+            <div class="docs-actions">
+                <button type="button" id="docs-mobile-menu" class="docs-mobile-menu-btn" aria-label="Menú">☰</button>
+                <button type="button" class="docs-search-btn" data-docs-search-open aria-label="Buscar">
+                    <span>Buscar</span>
+                    <span class="docs-kbd">⌘K</span>
+                </button>
+                <button id="cs-waffle-toggle" class="cs-waffle-btn" title="Aplicaciones de Coki Studios" aria-label="Aplicaciones de Coki Studios"></button>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="docs-shell">
+        <aside class="docs-sidebar" aria-label="Índice loopize++">
+            <div class="docs-sidebar-group">
+                <div class="docs-sidebar-title">Gráficos 3D &amp; .OBJ</div>
+                <ul class="docs-sidebar-links">
+                    <li><a href="#overview" class="active">Visión General</a></li>
+                    <li><a href="#obj">Modelos Wavefront .OBJ</a></li>
+                    <li><a href="#models">Modelos Incluidos</a></li>
+                </ul>
+            </div>
+            <div class="docs-sidebar-group">
+                <div class="docs-sidebar-title">C# &amp; loopize++</div>
+                <ul class="docs-sidebar-links">
+                    <li><a href="#csharp">C# MonoBehaviour Bridge</a></li>
+                    <li><a href="#ecs-waves">ECS, Oleadas &amp; FSM</a></li>
+                    <li><a href="#gameplay">Combos, Shake, Tweens &amp; Quests</a></li>
+                    <li><a href="#web-kit">Web Loopize Kit</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-main">
+            <section id="overview" class="docs-hero">
+                <div class="docs-badges" style="margin-bottom: 12px;">
+                    <span class="docs-badge">loopize++ v1.0.0</span>
+                    <span class="docs-badge emerald">Wavefront .OBJ</span>
+                    <span class="docs-badge amber">C# MonoBehaviour</span>
+                </div>
+                <h1>loopize++, Wavefront .OBJ &amp; C#</h1>
+                <p class="docs-lead">
+                    Suite oficial de adiciones para juegos 3D y 2D sobre Looping Engine: carga de mallas <code>.obj</code>, raycasting por triángulo (Möller–Trumbore), scripts C# con <code>MonoBehaviour</code> y sistemas de juego integrados en C++17, C# SDK y Web.
+                </p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <a href="/loopize-kit.html" data-web-path="loopize-kit.html" class="docs-btn">Abrir Web Loopize Kit Studio →</a>
+                    <a href="/developer.html" data-web-path="developer.html" class="docs-btn secondary">Probar Preset en REPL</a>
+                </div>
+            </section>
+
+            <section id="obj" class="docs-section">
+                <h2>Pipeline Wavefront <code>.OBJ</code></h2>
+                <p>Carga archivos externos o modelos embebidos con soporte para vértices (<code>v</code>), normales (<code>vn</code>), coordenadas UV (<code>vt</code>), caras triangulares y n-gonales (<code>f</code>), normalización de escala, subdivisión catmull-style y exportación a <code>.obj</code>.</p>
+                <pre><code>val mesh := obj3d.load("assets/models/starfighter.obj", "starfighter")
+obj3d.normalize("starfighter", 2.4)
+val subdiv_faces := obj3d.subdivide("starfighter")
+
+spawn3d.obj(
+    "AngelHero",
+    obj: "starfighter.obj",
+    at: (0, 2.2, 6),
+    scale: 1.6,
+    color: "#38bdf8",
+    cs: "StarfighterPilot"
+)</code></pre>
+
+                <div class="docs-table-wrap">
+                    <table class="docs-table">
+                        <thead>
+                            <tr>
+                                <th>Función</th>
+                                <th>Uso principal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>obj3d.load(path, alias?)</code></td>
+                                <td>Carga y parsea un <code>.obj</code> local o incorporado; retorna conteo de vértices, triángulos y radio envolvente.</td>
+                            </tr>
+                            <tr>
+                                <td><code>obj3d.parse(raw_text, alias)</code></td>
+                                <td>Compila geometría <code>.obj</code> generada dinámicamente en memoria.</td>
+                            </tr>
+                            <tr>
+                                <td><code>obj3d.subdivide(key)</code> / <code>obj3d.normalize(key, radius)</code></td>
+                                <td>Duplica detalle poligonal o normaliza escala al radio indicado.</td>
+                            </tr>
+                            <tr>
+                                <td><code>obj3d.spawn(...)</code> / <code>spawn3d.obj(...)</code></td>
+                                <td>Instancia una entidad 3D con la malla y script C# opcional en la escena.</td>
+                            </tr>
+                            <tr>
+                                <td><code>physics3d.raycast_scene(origin, dir)</code></td>
+                                <td>Disparo exacto por triángulo (<strong>Möller–Trumbore</strong>) contra las mallas activas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="models" class="docs-section">
+                <h2>Modelos 3D Incorporados (<code>assets/models/</code>)</h2>
+                <p>El runtime nativo y el intérprete web incluyen 5 mallas <code>.obj</code> listas para usarse sin configuración adicional:</p>
+                <ul>
+                    <li><code>starfighter.obj</code> — Caza interceptor principal con cabina, alas en flecha y propulsores.</li>
+                    <li><code>valkyrie_drone.obj</code> — Dron centinela para escuadrones y oleadas.</li>
+                    <li><code>omega_titan.obj</code> — Crucero jefe multipolígono de alta presencia.</li>
+                    <li><code>cyber_crystal.obj</code> — Cristal energético flotante para coleccionables y objetivos.</li>
+                    <li><code>star_gate.obj</code> — Portal dimensional orbital de doble cara.</li>
+                </ul>
+            </section>
+
+            <section id="csharp" class="docs-section">
+                <h2>C# <code>MonoBehaviour</code> Bridge &amp; Exportación</h2>
+                <p>Escribe clases C# directamente dentro de archivos <code>.loop</code> con <code>cs! { ... }</code>. La VM C# embebida funciona sin dependencias externas y detecta automáticamente <code>dotnet</code> / <code>mcs</code>+<code>mono</code> cuando están presentes en el sistema.</p>
+                <pre><code>use "csharp"
+
+cs! {
+    public class StarfighterPilot : MonoBehaviour {
+        public float Shield = 100.0f;
+
+        public void Start() {
+            LoopingBridge.Set("cs_pilot_ready", true);
+        }
+
+        public void Update(float dt) {
+            Scene3D.Rotate("Starfighter01", 0.0f, dt * 42.0f, 0.0f);
+            Shield = Mathf.Clamp(Shield + dt * 4.0f, 0.0f, 100.0f);
+        }
+    }
+}
+
+val cs_code := csharp.export("StarfighterPilot")</code></pre>
+                <p>También puedes transpilar un proyecto Looping 3D a código fuente C# independiente mediante CLI:</p>
+                <pre><code>looping compile mi_juego.loop --target csharp -o GameExport.cs</code></pre>
+            </section>
+
+            <section id="ecs-waves" class="docs-section">
+                <h2>ECS, Wave Director y FSM (<code>loopize++</code>)</h2>
+                <p>Importa la librería híbrida con <code>use "loopize++"</code> para acceder a las utilidades <code>lz_*</code> y las primitivas de núcleo <code>loopize.*</code>:</p>
+                <pre><code>use "loopize++"
+
+lz_banner("Orbit Sector 7")
+lz_spawn_obj("TitanBoss", "omega_titan.obj", 0, 5, 36, 1.8, "#f43f5e", "StarfighterPilot")
+
+// Director de oleadas con enemigos .obj
+val spawned := lz_wave_rush(1, "valkyrie", 4, 90, "valkyrie_drone.obj")
+
+// Máquinas de estado finitas &amp; ECS
+lz_fsm("boss_ai", "patrol")
+val eid := loopize.ecs_spawn("Escort", "ally", [4, 2, 10], 120, "starfighter.obj", "")
+val nearby := loopize.spatial_radius([0, 2, 10], 15.0, "ally")</code></pre>
+            </section>
+
+            <section id="gameplay" class="docs-section">
+                <h2>Combos, Camera Shake, Tweens, Misiones &amp; Reporte</h2>
+                <ul>
+                    <li><strong>Combos &amp; Sacudida de Cámara</strong>: <code>lz_hit_combo(puntos, trauma)</code> acumula multiplicadores hasta x8 y aplica <em>trauma shake</em> a la cámara spring-arm.</li>
+                    <li><strong>Curvas &amp; Tweens</strong>: <code>lz_ease("out_cubic", t)</code> y <code>lz_tween(key, from, to, dur, curve)</code> con curvas <code>linear</code>, <code>in_quad</code>, <code>out_quad</code>, <code>in_out_quad</code>, <code>out_cubic</code>, <code>in_out_cubic</code> y <code>out_back</code>.</li>
+                    <li><strong>Misiones XP &amp; Inventario</strong>: <code>lz_mission(id, titulo, meta, xp)</code>, <code>loopize.quest_progress(id, delta)</code>, <code>loopize.inventory_add</code> y <code>loopize.inventory_has</code>.</li>
+                    <li><strong>Paso Físico y Telemetría</strong>: <code>lz_step(dt)</code>, <code>lz_collide(a, b)</code> y <code>lz_report()</code>.</li>
+                </ul>
+            </section>
+
+            <section id="web-kit" class="docs-section">
+                <h2>Web Loopize Kit (Web Components)</h2>
+                <p>Embeds 3D de cero dependencias usando <code>/web-loopize-kit.js</code> directamente en cualquier página web:</p>
+                <pre><code>&lt;script type="module" src="https://cokistudios.com/web-loopize-kit.js"&gt;&lt;/script&gt;
+
+&lt;loopize-obj-viewer model="starfighter" color="#38bdf8" autorotate="true"&gt;&lt;/loopize-obj-viewer&gt;
+&lt;loopize-stage preset="orbital_arena" title="Orbit Sector 7"&gt;&lt;/loopize-stage&gt;</code></pre>
+                <div style="margin-top: 14px;">
+                    <a href="/loopize-kit.html" data-web-path="loopize-kit.html" class="docs-btn">Abrir Sandbox Web Loopize Kit →</a>
+                </div>
+            </section>
+
+            <div class="docs-pager">
+                <a href="../looping/" class="docs-btn secondary">← Looping Engine</a>
+                <a href="../smiledev/" class="docs-btn">Siguiente: smiledev CLI →</a>
+            </div>
+        </main>
+    </div>
+
+    <footer class="docs-footer">
+        <span>Coki Studios &amp; Holo Entertainment © 2026</span>
+        <a href="../">Volver al Índice Docs</a>
+    </footer>
+
+    <script src="/docs/docs-ui.js"></script>
+</body>
+</html>

@@ -8,24 +8,34 @@
     const MOON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
     const WAFFLE_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="2.1"></circle><circle cx="12" cy="5" r="2.1"></circle><circle cx="19" cy="5" r="2.1"></circle><circle cx="5" cy="12" r="2.1"></circle><circle cx="12" cy="12" r="2.1"></circle><circle cx="19" cy="12" r="2.1"></circle><circle cx="5" cy="19" r="2.1"></circle><circle cx="12" cy="19" r="2.1"></circle><circle cx="19" cy="19" r="2.1"></circle></svg>`;
 
+    const IS_DOCS_HOST = typeof window !== 'undefined' && window.location.hostname === 'docs.cokistudios.com';
+    const WEB_ORIGIN = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === 'cokistudios.com' ||
+        window.location.hostname === 'www.cokistudios.com'
+    ) ? '' : 'https://cokistudios.com';
+
+    const appHref = (path) => `${WEB_ORIGIN}/${String(path).replace(/^\/+/, '')}`;
+
     const CS_APPS = [
-        { id: 'home', name: 'Inicio', sub: 'Portal CS', href: 'index.html', icon: 'assets/cs-logo.svg', match: ['/', '/index', '/index.html'] },
-        { id: 'csid', name: 'CS ID', sub: 'Mi Cuenta', href: 'dashboard.html', icon: 'assets/csid-icon.svg', match: ['/dashboard', '/dashboard.html', '/register', '/register.html'] },
-        { id: 'forkar', name: 'Forkar', sub: 'Comunidad', href: 'forkar.html', icon: 'assets/forkar-icon.svg', match: ['/forkar', '/forkar.html', '/forkar-post', '/forkar-post.html'] },
-        { id: 'ecohub', name: 'Eco Hub', sub: 'Impacto Verde', href: 'eco-hub.html', icon: 'assets/ecohub-icon.svg', match: ['/eco-hub', '/eco-hub.html'] },
-        { id: 'csms', name: 'CSMS', sub: 'Chat E2EE', href: 'messenger.html', icon: 'assets/csms-icon.svg', match: ['/messenger', '/messenger.html', '/csims', '/csims.html'] },
-        { id: 'felte', name: 'Felte', sub: 'App Store', href: 'felte.html', icon: 'assets/felte-icon.svg', match: ['/felte', '/felte.html'] },
-        { id: 'hiop', name: 'hiOP IDE', sub: 'Looping IDE', href: 'hiop-ide.html', icon: 'assets/hiop-icon.svg', match: ['/hiop-ide', '/hiop-ide.html'] },
-        { id: 'find', name: 'Shine Find', sub: 'Buscador', href: 'shine-find.html', icon: 'assets/shine-find-icon.svg', match: ['/shine-find', '/shine-find.html'] },
-        { id: 'maps', name: 'Shine Maps', sub: 'Mapas GPS', href: 'shine-maps.html', icon: 'assets/shine-maps-icon.svg', match: ['/shine-maps', '/shine-maps.html'] },
-        { id: 'dev', name: 'Developers', sub: 'Consola & SDK', href: 'developer.html', icon: 'assets/dev-icon.svg', match: ['/developer', '/developer.html'] },
-        { id: 'smiledev', name: 'smiledev', sub: 'Package Studio', href: 'smiledev.html', icon: 'assets/dev-icon.svg', match: ['/smiledev', '/smiledev.html'] },
-        { id: 'products', name: 'Productos', sub: 'Catálogo CS', href: 'products.html', icon: 'assets/shine-loop-launcher-icon.svg', match: ['/products', '/products.html'] }
+        { id: 'home', name: 'Inicio', sub: 'Portal CS', href: appHref('index.html'), icon: '/assets/cs-logo.svg', match: ['/', '/index', '/index.html'] },
+        { id: 'csid', name: 'CS ID', sub: 'Mi Cuenta', href: appHref('dashboard.html'), icon: '/assets/csid-icon.svg', match: ['/dashboard', '/dashboard.html', '/register', '/register.html'] },
+        { id: 'forkar', name: 'Forkar', sub: 'Comunidad', href: appHref('forkar.html'), icon: '/assets/forkar-icon.svg', match: ['/forkar', '/forkar.html', '/forkar-post', '/forkar-post.html'] },
+        { id: 'ecohub', name: 'Eco Hub', sub: 'Impacto Verde', href: appHref('eco-hub.html'), icon: '/assets/ecohub-icon.svg', match: ['/eco-hub', '/eco-hub.html'] },
+        { id: 'csms', name: 'CSMS', sub: 'Chat E2EE', href: appHref('messenger.html'), icon: '/assets/csms-icon.svg', match: ['/messenger', '/messenger.html', '/csims', '/csims.html'] },
+        { id: 'felte', name: 'Felte', sub: 'App Store', href: appHref('felte.html'), icon: '/assets/felte-icon.svg', match: ['/felte', '/felte.html'] },
+        { id: 'hiop', name: 'hiOP IDE', sub: 'Looping IDE', href: appHref('hiop-ide.html'), icon: '/assets/hiop-icon.svg', match: ['/hiop-ide', '/hiop-ide.html'] },
+        { id: 'find', name: 'Shine Find', sub: 'Buscador', href: appHref('shine-find.html'), icon: '/assets/shine-find-icon.svg', match: ['/shine-find', '/shine-find.html'] },
+        { id: 'maps', name: 'Shine Maps', sub: 'Mapas GPS', href: appHref('shine-maps.html'), icon: '/assets/shine-maps-icon.svg', match: ['/shine-maps', '/shine-maps.html'] },
+        { id: 'dev', name: 'Developers', sub: 'Consola & SDK', href: appHref('developer.html'), icon: '/assets/dev-icon.svg', match: ['/developer', '/developer.html'] },
+        { id: 'smiledev', name: 'smiledev', sub: 'Package Studio', href: appHref('smiledev.html'), icon: '/assets/dev-icon.svg', match: ['/smiledev', '/smiledev.html'] },
+        { id: 'products', name: 'Productos', sub: 'Catálogo CS', href: appHref('products.html'), icon: '/assets/shine-loop-launcher-icon.svg', match: ['/products', '/products.html'] }
     ];
 
     function getPreferredTheme() {
         try {
-            const saved = localStorage.getItem('coki-theme') || localStorage.getItem('coki_theme');
+            const saved = localStorage.getItem('coki-theme') || localStorage.getItem('coki_theme') || localStorage.getItem('docs_theme');
             if (saved === 'light' || saved === 'dark') return saved;
         } catch (e) {}
         return 'dark';
@@ -34,6 +44,7 @@
     function applyTheme(theme) {
         const isLight = theme === 'light';
         const root = document.documentElement;
+        root.setAttribute('data-theme', theme);
         if (isLight) {
             root.classList.add('light-theme');
             root.classList.remove('dark-theme');
@@ -44,6 +55,7 @@
         try {
             localStorage.setItem('coki-theme', theme);
             localStorage.setItem('coki_theme', theme);
+            localStorage.setItem('docs_theme', theme);
         } catch (e) {}
         updateButtons(isLight);
     }
@@ -207,6 +219,7 @@
     }
 
     function isCurrentApp(app) {
+        if (IS_DOCS_HOST) return false;
         const path = (window.location.pathname || '/').toLowerCase();
         return app.match.some(m => path === m || path.endsWith(m));
     }
@@ -237,7 +250,7 @@
         popover.innerHTML = `
             <div class="cs-waffle-header">
                 <div class="cs-waffle-title">
-                    <img src="assets/cs-logo.svg" alt="CS">
+                    <img src="/assets/cs-logo.svg" alt="CS">
                     <span>Coki Studios Apps</span>
                 </div>
                 <span class="cs-waffle-badge">CS OS</span>
@@ -246,8 +259,9 @@
                 ${itemsHtml}
             </div>
             <div class="cs-waffle-footer">
-                <a href="dashboard.html" class="cs-waffle-footer-link">Cuenta CS ID</a>
-                <a href="products.html" class="cs-waffle-footer-link primary">Ver todo el ecosistema →</a>
+                <a href="${appHref('dashboard.html')}" class="cs-waffle-footer-link">CS ID</a>
+                <a href="https://docs.cokistudios.com" class="cs-waffle-footer-link">Docs</a>
+                <a href="${appHref('products.html')}" class="cs-waffle-footer-link primary">Ecosistema →</a>
             </div>
         `;
 
