@@ -1332,6 +1332,24 @@ public:
         h << "      max-height: 200px;\n";
         h << "      overflow-y: auto;\n";
         h << "    }\n";
+        if (is_3d_mode || !entities_3d.empty()) {
+            h << "    .viewport3d-wrap {\n";
+            h << "      position: relative;\n";
+            h << "      border-radius: 14px;\n";
+            h << "      overflow: hidden;\n";
+            h << "      border: 1px solid var(--border);\n";
+            h << "      background: radial-gradient(circle at 50% 25%, #0e1b3d, #040714);\n";
+            h << "      box-shadow: 0 12px 32px rgba(0,0,0,0.55), inset 0 0 28px rgba(56,189,248,0.12);\n";
+            h << "    }\n";
+            h << "    #canvas3d { width: 100%; height: 310px; display: block; cursor: grab; }\n";
+            h << "    #canvas3d:active { cursor: grabbing; }\n";
+            h << "    .hud3d {\n";
+            h << "      position: absolute; top: 10px; left: 12px; right: 12px;\n";
+            h << "      display: flex; justify-content: space-between; align-items: center;\n";
+            h << "      pointer-events: none; font-family: monospace; font-size: 11px; color: #7dd3fc;\n";
+            h << "      text-shadow: 0 1px 6px rgba(0,0,0,0.85);\n";
+            h << "    }\n";
+        }
         h << "  </style>\n";
         h << "</head>\n";
         h << "<body>\n";
@@ -1353,6 +1371,12 @@ public:
         h << "      </div>\n";
         h << "    </div>\n";
         h << "    <div class=\"content-area\">\n";
+        if (is_3d_mode || !entities_3d.empty()) {
+            h << "      <div class=\"viewport3d-wrap\">\n";
+            h << "        <canvas id=\"canvas3d\" width=\"920\" height=\"320\"></canvas>\n";
+            h << "        <div class=\"hud3d\"><span>🕹️ SHINE LOOP 3D QUANTUM (.OBJ + C# BRIDGE)</span><span id=\"hud3d-stats\">Entities: " << entities_3d.size() << " | Drag: Orbit • Scroll: Zoom</span></div>\n";
+            h << "      </div>\n";
+        }
         h << "      <div class=\"cards-grid\">\n";
         for (const auto& c : cards) {
             h << "        <div class=\"card\">\n";
@@ -1508,6 +1532,107 @@ public:
             h << "        setTimeout(() => playTone(t[0], t[1]), idx * 120);\n";
             h << "      });\n";
             h << "    }, { once: true });\n";
+        }
+        if (is_3d_mode || !entities_3d.empty()) {
+            h << "    const entities3D = [\n";
+            for (size_t ei = 0; ei < entities_3d.size(); ++ei) {
+                const auto& e = entities_3d[ei];
+                h << "      { type: \"" << escape_js(e.type) << "\", name: \"" << escape_js(e.name)
+                  << "\", obj: \"" << escape_js(e.obj_file) << "\", cs: \"" << escape_js(e.cs_class)
+                  << "\", x: " << e.pos.x << ", y: " << e.pos.y << ", z: " << e.pos.z
+                  << ", sx: " << e.size.x << ", sy: " << e.size.y << ", sz: " << e.size.z
+                  << ", scx: " << e.scale.x << ", scy: " << e.scale.y << ", scz: " << e.scale.z
+                  << ", r: " << e.radius << ", color: \"" << escape_js(e.color) << "\", rot: " << e.rot_deg.y;
+                if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 450) {
+                    h << ", verts: [";
+                    for (size_t vi = 0; vi < e.custom_mesh.vertices.size(); ++vi) {
+                        if (vi > 0) h << ",";
+                        const auto& v = e.custom_mesh.vertices[vi];
+                        h << "[" << v.x << "," << v.y << "," << v.z << "]";
+                    }
+                    h << "], faces: [";
+                    for (size_t fi = 0; fi < e.custom_mesh.faces.size(); ++fi) {
+                        if (fi > 0) h << ",";
+                        h << "[";
+                        const auto& idx = e.custom_mesh.faces[fi].indices;
+                        for (size_t k = 0; k < idx.size(); ++k) {
+                            if (k > 0) h << ",";
+                            h << idx[k];
+                        }
+                        h << "]";
+                    }
+                    h << "]";
+                }
+                h << " }" << (ei + 1 < entities_3d.size() ? "," : "") << "\n";
+            }
+            h << "    ];\n";
+            h << "    (function init3DViewport(){\n";
+            h << "      const c = document.getElementById('canvas3d'); if (!c) return;\n";
+            h << "      const ctx = c.getContext('2d');\n";
+            h << "      let yaw = 0.25, pitch = 0.34, dist = 28, drag = false, lx = 0, ly = 0;\n";
+            h << "      c.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });\n";
+            h << "      window.addEventListener('mouseup', () => { drag = false; });\n";
+            h << "      window.addEventListener('mousemove', e => { if (!drag) return; yaw += (e.clientX - lx) * 0.008; pitch = Math.max(-0.2, Math.min(1.3, pitch + (e.clientY - ly) * 0.006)); lx = e.clientX; ly = e.clientY; });\n";
+            h << "      c.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(8, Math.min(90, dist + e.deltaY * 0.03)); }, { passive: false });\n";
+            h << "      function hexRgb(hex) { const m = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex || '#38bdf8'); return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [56,189,248]; }\n";
+            h << "      function cubeVerts(sx, sy, sz) { const hx=sx*0.5, hy=sy*0.5, hz=sz*0.5; return [[-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],[-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]]; }\n";
+            h << "      const cubeFaces = [[0,1,2,3],[5,4,7,6],[4,0,3,7],[1,5,6,2],[3,2,6,7],[4,5,1,0]];\n";
+            h << "      function render3DFrame(t) {\n";
+            h << "        const w = c.width, h = c.height; ctx.clearRect(0,0,w,h);\n";
+            h << "        const target = entities3D.find(e => e.type === 'player') || { x:0, y:2, z:12 };\n";
+            h << "        const ex = target.x - Math.sin(yaw) * Math.cos(pitch) * dist;\n";
+            h << "        const ey = target.y + Math.sin(pitch) * dist + 2;\n";
+            h << "        const ez = target.z - Math.cos(yaw) * Math.cos(pitch) * dist;\n";
+            h << "        let fx = target.x - ex, fy = target.y - ey, fz = target.z - ez; const fl = Math.hypot(fx,fy,fz)||1; fx/=fl; fy/=fl; fz/=fl;\n";
+            h << "        let rx = fz, ry = 0, rz = -fx; const rl = Math.hypot(rx,ry,rz)||1; rx/=rl; rz/=rl;\n";
+            h << "        const ux = fy*rz - fz*ry, uy = fz*rx - fx*rz, uz = fx*ry - fy*rx, focal = h * 0.95;\n";
+            h << "        function proj(wx, wy, wz) {\n";
+            h << "          const dx = wx-ex, dy = wy-ey, dz = wz-ez;\n";
+            h << "          const vx = dx*rx + dy*ry + dz*rz, vy = dx*ux + dy*uy + dz*uz, vz = dx*fx + dy*fy + dz*fz;\n";
+            h << "          if (vz <= 0.35) return null;\n";
+            h << "          const inv = focal / vz; return [w*0.5 + vx*inv, h*0.5 - vy*inv, vz];\n";
+            h << "        }\n";
+            h << "        ctx.strokeStyle = 'rgba(56,189,248,0.18)'; ctx.lineWidth = 1; ctx.beginPath();\n";
+            h << "        for (let g = -48; g <= 48; g += 8) {\n";
+            h << "          const a = proj(target.x+g, 0, target.z-48), b = proj(target.x+g, 0, target.z+48);\n";
+            h << "          if (a && b) { ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); }\n";
+            h << "          const c1 = proj(target.x-48, 0, target.z+g), d1 = proj(target.x+48, 0, target.z+g);\n";
+            h << "          if (c1 && d1) { ctx.moveTo(c1[0],c1[1]); ctx.lineTo(d1[0],d1[1]); }\n";
+            h << "        }\n";
+            h << "        ctx.stroke();\n";
+            h << "        const q = [];\n";
+            h << "        for (const e of entities3D) {\n";
+            h << "          const vs = e.verts || cubeVerts(e.sx||1.6, e.sy||1.6, e.sz||1.6);\n";
+            h << "          const fs = e.faces || cubeFaces;\n";
+            h << "          const ang = (e.rot * Math.PI / 180) + (e.obj ? t*0.0005 : 0);\n";
+            h << "          const ca = Math.cos(ang), sa = Math.sin(ang), rgb = hexRgb(e.color);\n";
+            h << "          const scx = e.scx || 1, scy = e.scy || 1, scz = e.scz || 1;\n";
+            h << "          const wvs = vs.map(v => { const lx = v[0]*scx, ly = v[1]*scy, lz = v[2]*scz; return [e.x + lx*ca + lz*sa, e.y + ly, e.z - lx*sa + lz*ca]; });\n";
+            h << "          const pvs = wvs.map(wv => proj(wv[0], wv[1], wv[2]));\n";
+            h << "          for (const f of fs) {\n";
+            h << "            if (f.length < 3) continue;\n";
+            h << "            const pts = f.map(i => pvs[i]); if (pts.some(p => !p)) continue;\n";
+            h << "            const w0 = wvs[f[0]], w1 = wvs[f[1]], w2 = wvs[f[2]];\n";
+            h << "            const ax = w1[0]-w0[0], ay = w1[1]-w0[1], az = w1[2]-w0[2];\n";
+            h << "            const bx = w2[0]-w0[0], by = w2[1]-w0[1], bz = w2[2]-w0[2];\n";
+            h << "            let nx = ay*bz - az*by, ny = az*bx - ax*bz, nz = ax*by - ay*bx;\n";
+            h << "            const nl = Math.hypot(nx,ny,nz)||1; nx/=nl; ny/=nl; nz/=nl;\n";
+            h << "            const lit = 0.42 + Math.max(0, nx*0.35 + ny*0.82 - nz*0.45) * 0.58;\n";
+            h << "            const dz = pts.reduce((s,p)=>s+p[2],0)/pts.length;\n";
+            h << "            q.push({ dz, pts, fill: `rgb(${(rgb[0]*lit)|0},${(rgb[1]*lit)|0},${(rgb[2]*lit)|0})` });\n";
+            h << "          }\n";
+            h << "        }\n";
+            h << "        q.sort((a,b) => b.dz - a.dz);\n";
+            h << "        for (const poly of q) {\n";
+            h << "          ctx.beginPath(); ctx.moveTo(poly.pts[0][0], poly.pts[0][1]);\n";
+            h << "          for (let k=1;k<poly.pts.length;k++) ctx.lineTo(poly.pts[k][0], poly.pts[k][1]);\n";
+            h << "          ctx.closePath(); ctx.fillStyle = poly.fill; ctx.fill();\n";
+            h << "          ctx.strokeStyle = 'rgba(226,232,240,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();\n";
+            h << "        }\n";
+            h << "        requestAnimationFrame(render3DFrame);\n";
+            h << "      }\n";
+            h << "      requestAnimationFrame(render3DFrame);\n";
+            h << "    })();\n";
         }
         h << "  </script>\n";
         h << "</body>\n";
@@ -1686,12 +1811,35 @@ public:
             py << "        self.entities_3d = [\n";
             for (const auto& e : entities_3d) {
                 py << "            {'type': \"" << escape_py(e.type) << "\", 'name': \"" << escape_py(e.name)
+                   << "\", 'obj': \"" << escape_py(e.obj_file) << "\", 'cs': \"" << escape_py(e.cs_class)
                    << "\", 'x': " << e.pos.x << ", 'y': " << e.pos.y << ", 'z': " << e.pos.z
                    << ", 'sx': " << e.size.x << ", 'sy': " << e.size.y << ", 'sz': " << e.size.z
+                   << ", 'scx': " << e.scale.x << ", 'scy': " << e.scale.y << ", 'scz': " << e.scale.z
                    << ", 'r': " << e.radius << ", 'color': \"" << escape_py(e.color)
                    << "\", 'speed': " << e.speed << ", 'axis': \"" << escape_py(e.axis)
                    << "\", 'min_p': " << e.min_pos << ", 'max_p': " << e.max_pos
-                   << ", 'dir': 1.0, 'collected': False, 'alive': True, 'rot': " << e.rot_deg.y << "},\n";
+                   << ", 'dir': 1.0, 'collected': False, 'alive': True, 'rot': " << e.rot_deg.y;
+                if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 450) {
+                    py << ", 'verts': [";
+                    for (size_t vi = 0; vi < e.custom_mesh.vertices.size(); ++vi) {
+                        if (vi > 0) py << ",";
+                        const auto& v = e.custom_mesh.vertices[vi];
+                        py << "[" << v.x << "," << v.y << "," << v.z << "]";
+                    }
+                    py << "], 'faces': [";
+                    for (size_t fi = 0; fi < e.custom_mesh.faces.size(); ++fi) {
+                        if (fi > 0) py << ",";
+                        py << "[";
+                        const auto& idx = e.custom_mesh.faces[fi].indices;
+                        for (size_t k = 0; k < idx.size(); ++k) {
+                            if (k > 0) py << ",";
+                            py << idx[k];
+                        }
+                        py << "]";
+                    }
+                    py << "]";
+                }
+                py << "},\n";
             }
             py << "        ]\n";
             py << "        self.c_3d = tk.Canvas(main_frame, height=310, bg='#050811', highlightthickness=1, highlightbackground=THEME['primary'])\n";
@@ -1764,8 +1912,32 @@ public:
             py << "                if pt: draw_list.append((pt[2], o, pt))\n";
             py << "            draw_list.sort(key=lambda it: -it[0])\n";
             py << "            for vz, o, pt in draw_list:\n";
-            py << "                rad = max(4, (max(o['sx'], o['sy']) * h * 0.45) / vz)\n";
-            py << "                self.c_3d.create_oval(pt[0]-rad, pt[1]-rad*0.7, pt[0]+rad, pt[1]+rad*0.7, fill=o['color'], outline='#ffffff')\n";
+            py << "                if o.get('verts') and o.get('faces'):\n";
+            py << "                    ry_rad = math.radians(o.get('rot', 0.0))\n";
+            py << "                    cy_o, sy_o = math.cos(ry_rad), math.sin(ry_rad)\n";
+            py << "                    scx, scy, scz = o.get('scx', 1.0), o.get('scy', 1.0), o.get('scz', 1.0)\n";
+            py << "                    proj_v = []\n";
+            py << "                    for vx, vy, vz_loc in o['verts']:\n";
+            py << "                        lvx, lvy, lvz = vx * scx, vy * scy, vz_loc * scz\n";
+            py << "                        wx = o['x'] + lvx * cy_o + lvz * sy_o\n";
+            py << "                        wy = o['y'] + lvy\n";
+            py << "                        wz = o['z'] - lvx * sy_o + lvz * cy_o\n";
+            py << "                        proj_v.append(_proj3d(wx, wy, wz, eye, self.cam_yaw, self.cam_pitch, w, h))\n";
+            py << "                    poly_q = []\n";
+            py << "                    for fc in o['faces']:\n";
+            py << "                        if len(fc) < 3: continue\n";
+            py << "                        pts = [proj_v[i] for i in fc if i < len(proj_v)]\n";
+            py << "                        if len(pts) == len(fc) and all(p is not None for p in pts):\n";
+            py << "                            avg_d = sum(p[2] for p in pts) / len(pts)\n";
+            py << "                            flat = []\n";
+            py << "                            for p in pts: flat.extend([p[0], p[1]])\n";
+            py << "                            poly_q.append((avg_d, flat))\n";
+            py << "                    poly_q.sort(key=lambda it: -it[0])\n";
+            py << "                    for _, flat in poly_q:\n";
+            py << "                        self.c_3d.create_polygon(*flat, fill=o['color'], outline='#e2e8f0')\n";
+            py << "                else:\n";
+            py << "                    rad = max(4, (max(o['sx'], o['sy']) * h * 0.45) / vz)\n";
+            py << "                    self.c_3d.create_oval(pt[0]-rad, pt[1]-rad*0.7, pt[0]+rad, pt[1]+rad*0.7, fill=o['color'], outline='#ffffff')\n";
             py << "            self.c_3d.create_text(14, 18, anchor='w', fill='#38bdf8', font=('Courier', 10, 'bold'), text=f'SHINE LOOP 3D NATIVE • SCORE: {self.score_3d} • [WASD] Move [SPACE] Jump [Q/E] Orbit')\n";
             py << "            self.after(16, _tick3d)\n";
             py << "        self.after(40, _tick3d)\n\n";
@@ -2890,6 +3062,61 @@ public:
             return true;
         }
 
+        // C# / Unity / loopize++ Managed C# Target Compilation
+        if (target_name == "csharp" || target_name == "cs" || target_name == "unity" ||
+            (out_file.size() >= 3 && out_file.substr(out_file.size() - 3) == ".cs")) {
+            bool wants_cs_file = (out_file.size() >= 3 && out_file.substr(out_file.size() - 3) == ".cs");
+            std::string cs_file = wants_cs_file ? out_file : (out_file + ".cs");
+            size_t slash = cs_file.find_last_of("/\\");
+            if (slash != std::string::npos) {
+                system(("mkdir -p \"" + cs_file.substr(0, slash) + "\"").c_str());
+            }
+
+            std::ostringstream cs;
+            cs << "// Generated by Looping Engine v1.1 (Arch 3.0A) — C# & loopize++ Exporter\n";
+            cs << "using System;\nusing System.Collections.Generic;\n\n";
+            cs << "namespace CokiStudios.Loopize {\n";
+            cs << "    public struct Vec3 { public float X, Y, Z; public Vec3(float x, float y, float z) { X = x; Y = y; Z = z; } }\n";
+            cs << "    public class ObjMeshSpec { public string Name, ObjPath; public Vec3 Position; public float Scale; public string CsClass; }\n\n";
+            cs << "    public class LoopizeExportedGame {\n";
+            cs << "        public List<ObjMeshSpec> Entities = new List<ObjMeshSpec> {\n";
+            std::istringstream iss(source_code);
+            std::string src_line;
+            while (std::getline(iss, src_line)) {
+                if (src_line.find("spawn3d.obj") != std::string::npos) {
+                    cs << "            // Source: " << src_line << "\n";
+                }
+            }
+            cs << "        };\n\n";
+            cs << "        public static void Main(string[] args) {\n";
+            cs << "            var game = new LoopizeExportedGame();\n";
+            cs << "            Console.WriteLine($\"[loopize++ C#] Ready with {game.Entities.Count} 3D specs.\");\n";
+            cs << "        }\n";
+            cs << "    }\n";
+            cs << "}\n";
+
+            std::ofstream cs_out(cs_file);
+            if (!cs_out.is_open()) {
+                std::cerr << "\033[31m❌ Error: Cannot write C# target to: " << cs_file << "\033[0m\n";
+                return false;
+            }
+            cs_out << cs.str();
+            cs_out.close();
+
+            if (!wants_cs_file) {
+                std::string mcs_cmd = "(command -v mcs >/dev/null 2>&1 && mcs -out:\"" + out_file + "\" \"" + cs_file + "\" 2>/dev/null) || "
+                                      "(command -v csc >/dev/null 2>&1 && csc -out:\"" + out_file + "\" \"" + cs_file + "\" 2>/dev/null)";
+                if (system(mcs_cmd.c_str()) == 0) {
+                    if (out_created_path) *out_created_path = out_file;
+                    std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Managed C# assembly compiled to: " << out_file << " [C# / loopize++]\n";
+                    return true;
+                }
+            }
+            if (out_created_path) *out_created_path = cs_file;
+            std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m C# loopize++ source artifact exported to: " << cs_file << " [C# / .OBJ 3D]\n";
+            return true;
+        }
+
         // Create parent directories if needed
         size_t slash = out_file.find_last_of("/\\");
         if (slash != std::string::npos) {
@@ -3337,6 +3564,21 @@ public:
                     "}\n"
                     "print \"[SWIFTUI] Component registered. Preview with: looping preview\"\n"
                 );
+        } else if (type == "loopize3d" || type == "csharp3d" || type == "obj3d") {
+            UIProfileSpecs specs = resolve_ui_profile(target);
+            prog.set_window(name + " Loopize++ 3D", 920, 640)
+                .set_theme(specs.theme)
+                .add_import("loop.ui", "ui")
+                .add_import("loopize++", "loopize++")
+                .add_import("csharp", "csharp")
+                .add_var("hero_speed", "28.0")
+                .add_card(20, 20, 880, 85, "⚡ " + name + " (loopize++ .OBJ + C# 3D)", "ECS + Wave Director + Spring-Arm Camera + Wavefront .OBJ + C# MonoBehaviour")
+                .add_button(36, 120, "SPAWN WAVE", "lz_wave_rush")
+                .add_code("lz_banner(\"" + name + "\")\n"
+                          "scene3d.world(name: \"" + name + "\", size: (220, 100, 220), sky: \"cyber_night\", fog: 0.008, grid: true)\n"
+                          "spawn3d.obj(\"Starfighter\", obj: \"assets/models/starfighter.obj\", at: (0, 2, 10), scale: 1.5, color: \"#38bdf8\")\n"
+                          "val w1 = lz_wave_rush(1, \"valkyrie\", 3, 90, \"valkyrie_drone.obj\")\n"
+                          "lz_report()");
         } else {
             UIProfileSpecs specs = resolve_ui_profile(target);
             prog.set_window(name + " Window", 850, 540)

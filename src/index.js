@@ -1458,6 +1458,42 @@ if (isMain) {
 export { DynamicHTMLWindow, createWindow };
 export default DynamicHTMLWindow;
 `
+  },
+  {
+    name: "loopize++",
+    version: "1.0.0",
+    language: "cpp",
+    author_name: "Coki Studios & Holo Entertainment",
+    description: "High-performance 2D/3D Game Additions Kit for Looping: Wavefront .obj mesh pipeline, C# MonoBehaviour game scripts, ECS registry, Wave Director, Spring-Arm Camera + Shake, FSM, Combos, Tweening, Quests & Web Loopize Kit.",
+    license: "MIT",
+    entry_point: "loopize.loop",
+    downloads_count: 1680,
+    is_verified: true,
+    code_payload: `// modules/loopize++/loopize.loop — Hybrid 3D .obj + C# + Game Additions
+use "loop-math-3d"
+use "loop-game-plus"
+
+let LOOPIZE_VERSION := "1.0.0"
+
+fn lz_banner(title) {
+    print("⚡ [loopize++ v" + LOOPIZE_VERSION + "] Game Additions Engine Ready -> " + title)
+}
+`
+  },
+  {
+    name: "web-loopize-kit",
+    version: "1.0.0",
+    language: "javascript",
+    author_name: "Coki Studios Web & Engine Team",
+    description: "Zero-dependency browser SDK & Web Components (<loopize-stage>, <loopize-obj-viewer>) for interactive Wavefront .obj models, C# MonoBehaviour scripts and loopize++ 3D arenas.",
+    license: "MIT",
+    entry_point: "web-loopize-kit.js",
+    downloads_count: 1120,
+    is_verified: true,
+    code_payload: `// @cokistudios/web-loopize-kit (v1.0.0)
+// Usage: <script type="module" src="https://cokistudios.com/web-loopize-kit.js"></script>
+export { createStage, PRESETS, BUILTIN_OBJ_MODELS, parseWavefrontOBJ } from "https://cokistudios.com/web-loopize-kit.js";
+`
   }
 ];
 

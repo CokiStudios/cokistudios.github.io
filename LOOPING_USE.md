@@ -821,4 +821,63 @@ define game3d "Cyber Odyssey 3D" version 3.0:
 
 ---
 
+## 21. Modelos Wavefront `.obj`, Interoperabilidad C# y Librería `loopize++`
+
+A partir de **Looping v1.1 (Arch 3.0A + loopize++ 1.0)**, el motor 3D añade carga nativa de mallas `.obj`, scripting C# embebido sin dependencias (`CSharpBridge`) y el paquete híbrido de adiciones de juego **`loopize++`**.
+
+### 21.1 Pipeline 3D Wavefront `.obj` (`obj3d.*` & `spawn3d.obj`)
+- **Carga y Geometría**: `obj3d.load(path, alias)` / `obj3d.parse(raw_obj, alias)` / `obj3d.stats(alias)` / `obj3d.normalize(alias, target_extent)` / `obj3d.subdivide(alias)` / `obj3d.export(alias)`.
+- **Spawn de Entidades `.obj`**:
+  ```looping
+  spawn3d.obj("Starfighter01", obj: "assets/models/starfighter.obj", at: (0, 2.2, 6), scale: 1.5, color: "#38bdf8", cs: "StarfighterPilot")
+  ```
+- **Modelos Incluidos en `assets/models/`**: `starfighter.obj`, `valkyrie_drone.obj`, `omega_titan.obj`, `cyber_crystal.obj`, `star_gate.obj`.
+- **Raycasting y Colisión 3D Exacta**: `physics3d.raycast_scene(origin, dir)` ejecuta intersección triángulo por triángulo (Möller–Trumbore) sobre mallas `.obj`, y `physics3d.collide_entities(a, b)` valida AABB en espacio mundial.
+
+### 21.2 Scripting C# Embebido (`use "csharp"`, `cs!`, `cssnippet`, `runcs`)
+- **Bloques y Expresiones C#**:
+  ```looping
+  use "csharp"
+  cs! {
+      public class StarfighterPilot : MonoBehaviour {
+          public float Shield = 100.0f;
+          public void Start() => LoopingBridge.Set("cs_pilot_ready", true);
+          public void Update(float dt) {
+              Scene3D.Rotate("Starfighter01", 0.0f, dt * 45.0f, 0.0f);
+              LoopingBridge.Set("cs_shield", Shield);
+          }
+      }
+  }
+  ```
+- **API de Bridge y Exportación**:
+  - `cs!(expr)` — Evalúa expresiones C# inline (`Mathf.Clamp`, `Vector3.Distance`, etc.).
+  - `insert cssnippet as <nombre>: ... end` + `runcs(<nombre>)` — Define y ejecuta fragmentos C#.
+  - `csharp.new(clase, id, entity)`, `csharp.call(id, method, ...)`, `csharp.step(dt)`, `csharp.get(id, field)`, `csharp.set(id, field, val)`.
+  - `csharp.export("MiArena", "out.cs")` o compilación directa hacia `.cs` (`--target csharp`).
+  - Detección automática de compilador externo `dotnet` / `mcs` + `mono` si está presente en el sistema.
+
+### 21.3 Librería Híbrida `loopize++` (`use "loopize++"`)
+Paquete híbrido (Loop + C++17 `LoopizeCore.hpp` + C# `LoopizeGame.cs` + Web Kit) con sistemas listos para videojuegos:
+- **ECS y Consultas Espaciales**: `loopize.ecs_spawn(id, tag, pos, hp, obj, cs_class)`, `loopize.ecs_query_tag(tag)`, `loopize.spatial_radius(center, r, tag)`, `loopize.ecs_set/get/destroy`.
+- **Wave Director & FSM**: `lz_wave_rush(wave, kind, count, hp, obj_model)`, `loopize.wave_add/wave_next`, `lz_fsm(key, state)`, `loopize.fsm_get(key)`.
+- **Game Feel & Progresión**: `lz_hit_combo(pts, trauma)`, `lz_ease(curve, t)`, `lz_tween(...)`, `loopize.shake(trauma)`, `loopize.camera_update(target, dt, yaw)`, `loopize.inventory_add/has/use`, `lz_mission(...)`, `loopize.quest_progress(...)`, `lz_step(dt)` y `lz_report()`.
+- **Demo Oficial**: `./bin/looping sample_loop_projects/loopize_3d_obj_csharp_demo.loop` (o `preview3d`).
+
+---
+
+## 22. Web Loopize Kit (`@cokistudios/web-loopize-kit`)
+
+SDK Web de cero dependencias (`web-loopize-kit.js`, studio interactivo en `loopize-kit.html`) para ejecutar escenarios Looping 3D, mallas `.obj`, scripts C# y sistemas `loopize++` en cualquier navegador moderno:
+
+```html
+<script type="module" src="https://cokistudios.com/web-loopize-kit.js"></script>
+<loopize-obj-viewer model="starfighter" color="#38bdf8" autorotate="true"></loopize-obj-viewer>
+<loopize-stage preset="orbital_arena" title="Orbital Arena 3D"></loopize-stage>
+```
+
+- **API JS**: `import { createStage, parseWavefrontOBJ, normalizeOBJMesh, subdivideOBJMesh, exportWavefrontOBJ, PRESETS } from './web-loopize-kit.js'`.
+- **Submódulo del Paquete**: `modules/loopize++/components/web-loopize-kit.js` (`smile.json` -> `components.web`).
+
+---
+
 *© 2026 Holo Entertainment • Coki Studios. Making the world Shine, together.*

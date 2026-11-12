@@ -13,6 +13,7 @@
 | **`loop-core-utils`** | `1.1.0` | 🟢 Loop | `core_utils.loop` | Utilidades fundamentales de colecciones, parsers JSON y helpers reactivos. |
 | **`loop-math-3d`** | `2.0.0` | 🔵 C++ | `loop_math_3d.hpp` | Motor matemático y físico 3D C++17: Vec3, Quaternions, Matrices 4x4, Raycasting 3D, colisiones (Esfera/AABB/Cápsula), física Rigidbody 120Hz+ y Z-Buffer TUI. |
 | **`loop-game-plus`** | `2.0.0` | 🟢 Loop | `loop-game-plus.loop` | Cámara orbital/chase 3D nativa (`math3d.*`), renderizado 3D sin overhead Python, sub-stepping físico `physics3d.step_body` y mandos multi-OS con deadzone radial. |
+| **`loopize++`** | `1.0.0` | ⚡ Hybrid | `loopize.loop` | Kit avanzado de videojuegos: pipeline `.obj` (`obj3d.*`), scripts C# `MonoBehaviour` (`cs!` / `csharp.*`), ECS, Wave Director, Cámara Spring-Arm + Shake, FSM, Combo x8 y Web Loopize Kit (`components/web-loopize-kit.js`). |
 | **`loop-cpp-snippets`**| `1.0.0` | 🔵 C++ | `cpp_snippets.hpp` | Benchmarking RAII, RingBuffers, hash FNV-1a y colisiones AABB. |
 | **`loop-gui-tk`** | `2.0.0` | 🟡 Python | `loop_gui_tk.py` | UI compleja con Tkinter: pestañas, tablas ordenables, árboles, editor monospaced, KPI cards, canvas vectorial 2D y schema declarativo. |
 | **`loop-gui-qt`** | `2.0.0` | 🟡 Python | `loop_gui_qt.py` | UI compleja con PyQt6 / PySide6 (con fallback Tkinter): temas QSS oscuros, QTabWidget, tablas ordenables, QTreeWidget, editor y sliders. |
@@ -242,6 +243,20 @@ csid_login_render(100, 100, "Conectar con CS ID")
 val user = csid_login_trigger_auth("Jerix Ortiz", "jerix@cokistudios.com")
 out($"Usuario verificado: {user['name']} ({user['email']})")
 ```
+
+#### Librería Híbrida Oficial `loopize++` (Loop + C++17 + C# SDK + Web Kit):
+Incluye **ECS**, **Wave Director `.obj`**, **Spring-Arm Camera Shake**, **FSM**, **Tweens**, **Combo Multiplier**, **Inventario** y **Quests con XP/Niveles**:
+```looping
+use "loopize++"
+use "csharp"
+
+lz_banner("Orbit Sector 7")
+spawn3d.obj("Starfighter01", obj: "assets/models/starfighter.obj", at: (0, 2, 6), scale: 1.5, color: "#38bdf8")
+val spawned = lz_wave_rush(1, "valkyrie", 3, 90, "valkyrie_drone.obj")
+lz_hit_combo(250, 0.35)
+lz_report()
+```
+Consulta [`modules/loopize++/README.md`](loopize++/README.md) para el catálogo completo de funciones `loopize.*` / `lz_*`.
 
 ---
 

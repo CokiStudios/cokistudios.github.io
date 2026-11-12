@@ -103,7 +103,54 @@ public:
             std::string t = trim(raw_s);
             return t == "!exec" || t.rfind("!exec ", 0) == 0 || t.rfind("!exec\t", 0) == 0;
         };
+        bool in_raw_brace_block = false;
+        int raw_brace_depth = 0;
+        bool in_raw_indent_block = false;
+        size_t raw_indent_base = 0;
         for (const auto& rl : raw_lines) {
+            std::string trl = trim(rl);
+            if (in_raw_brace_block) {
+                lines.push_back(rl);
+                for (char ch : rl) {
+                    if (ch == '{') raw_brace_depth++;
+                    else if (ch == '}') raw_brace_depth--;
+                }
+                if (raw_brace_depth <= 0 || trl == "cs:end" || trl == "py:end") {
+                    in_raw_brace_block = false;
+                    raw_brace_depth = 0;
+                }
+                continue;
+            }
+            if (in_raw_indent_block) {
+                lines.push_back(rl);
+                size_t ind = rl.find_first_not_of(" \t");
+                if (trl == "end" || trl == "cs:end" || trl == "py:end" ||
+                    (!trl.empty() && ind != std::string::npos && ind <= raw_indent_base)) {
+                    in_raw_indent_block = false;
+                }
+                continue;
+            }
+            bool starts_raw = (trl.rfind("cs! {", 0) == 0 || trl.rfind("csharp! {", 0) == 0 ||
+                               trl.rfind("cs {", 0) == 0 || trl.rfind("csharp {", 0) == 0 ||
+                               trl == "csharp:" || trl == "cs:" || trl == "cs:begin" ||
+                               trl.rfind("py! {", 0) == 0 || trl.rfind("py {", 0) == 0 ||
+                               trl.rfind("python {", 0) == 0 || trl == "python:" || trl == "py:" || trl == "py:begin" ||
+                               trl.rfind("insert cssnippet", 0) == 0 || trl.rfind("cssnippet ", 0) == 0 ||
+                               trl.rfind("insert csharpsnippet", 0) == 0 || trl.rfind("csharpsnippet ", 0) == 0 ||
+                               trl.rfind("insert pysnippet", 0) == 0 || trl.rfind("pysnippet ", 0) == 0);
+            if (starts_raw) {
+                lines.push_back(rl);
+                if (trl.find('{') != std::string::npos) {
+                    int d = 0;
+                    for (char ch : rl) { if (ch == '{') d++; else if (ch == '}') d--; }
+                    if (d > 0) { in_raw_brace_block = true; raw_brace_depth = d; }
+                } else if (trl.back() == ':' || trl == "cs:begin" || trl == "py:begin") {
+                    size_t p = rl.find_first_not_of(" \t");
+                    raw_indent_base = (p != std::string::npos) ? p : 0;
+                    in_raw_indent_block = true;
+                }
+                continue;
+            }
             if (rl.find(';') != std::string::npos && !is_zbash_exec_line(rl)) {
                 size_t p = rl.find_first_not_of(" \t");
                 std::string indent = (p != std::string::npos) ? rl.substr(0, p) : "";
@@ -128,6 +175,97 @@ public:
             line_idx++;
 
             if (line.empty() || line.rfind("#", 0) == 0 || line.rfind("//", 0) == 0 || line == "}" || line == "end") {
+                continue;
+            }
+
+            // 1. C# multiline block: cs! { ... } OR csharp! { ... } OR cs { ... } OR csharp { ... } OR cs:begin ... cs:end
+            if (line.rfind("cs! {", 0) == 0 || line.rfind("csharp! {", 0) == 0 ||
+                line.rfind("cs {", 0) == 0 || line.rfind("csharp {", 0) == 0 ||
+                line == "csharp:" || line == "cs:" || line == "cs:begin") {
+                bool colon_mode = (line == "csharp:" || line == "cs:" || line == "cs:begin");
+                std::vector<std::string> cs_lines;
+                size_t brace_p = line.find('{');
+                int depth = 0;
+                if (!colon_mode && brace_p != std::string::npos) {
+                    std::string first_rest = line.substr(brace_p + 1);
+                    depth = 1;
+                    for (char c : first_rest) {
+                        if (c == '{') depth++;
+                        else if (c == '}') depth--;
+                    }
+                    if (depth <= 0 && !first_rest.empty()) {
+                        size_t rb = first_rest.rfind('}');
+                        cs_lines.push_back(rb == std::string::npos ? first_rest : first_rest.substr(0, rb));
+                    } else {
+                        if (!trim(first_rest).empty()) cs_lines.push_back(first_rest);
+                        while (line_idx < lines.size() && depth > 0) {
+                            std::string next = lines[line_idx++];
+                            std::string tnext = trim(next);
+                            for (char c : next) {
+                                if (c == '{') depth++;
+                                else if (c == '}') depth--;
+                            }
+                            if (depth <= 0) {
+                                size_t rb = next.rfind('}');
+                                if (rb != std::string::npos) {
+                                    std::string before = next.substr(0, rb);
+                                    if (!trim(before).empty()) cs_lines.push_back(before);
+                                }
+                                break;
+                            }
+                            if (tnext == "cs:end") break;
+                            cs_lines.push_back(next);
+                        }
+                    }
+                } else {
+                    while (line_idx < lines.size()) {
+                        std::string next = lines[line_idx++];
+                        std::string trimmed_next = trim(next);
+                        if (trimmed_next == "cs:end" || trimmed_next == "end") break;
+                        cs_lines.push_back(next);
+                    }
+                }
+                statements.push_back(std::make_shared<CSharpBlockStmt>(join_lines(dedent(cs_lines))));
+                continue;
+            }
+
+            // 1b-cs. C# snippet definition: insert cssnippet as <name>: ...
+            std::regex cssnip_inline_r(R"(^(?:insert\s+)?(?:cs|csharp)snippet\s+(?:as\s+)?([A-Za-z0-9_]+)\s*:\s*(.+)$)");
+            std::smatch cssnip_in_m;
+            if (std::regex_search(line, cssnip_in_m, cssnip_inline_r)) {
+                statements.push_back(std::make_shared<CSharpSnippetDefStmt>(cssnip_in_m[1], cssnip_in_m[2]));
+                continue;
+            }
+            std::regex cssnip_r(R"(^(?:insert\s+)?(?:cs|csharp)snippet\s+(?:as\s+)?([A-Za-z0-9_]+)\s*(?:\{|:)?$)");
+            std::smatch cssnip_m;
+            if (std::regex_search(line, cssnip_m, cssnip_r)) {
+                std::string snip_name = cssnip_m[1];
+                std::vector<std::string> cs_lines;
+                if (line.find('{') != std::string::npos) {
+                    int depth = 1;
+                    while (line_idx < lines.size() && depth > 0) {
+                        std::string next = lines[line_idx++];
+                        for (char c : next) {
+                            if (c == '{') depth++;
+                            else if (c == '}') depth--;
+                        }
+                        if (depth <= 0) break;
+                        cs_lines.push_back(next);
+                    }
+                } else {
+                    size_t base_indent = raw_line.find_first_not_of(" \t");
+                    if (base_indent == std::string::npos) base_indent = 0;
+                    while (line_idx < lines.size()) {
+                        std::string next_raw = lines[line_idx];
+                        std::string next_t = trim(next_raw);
+                        if (next_t == "end" || next_t == "cs:end") { line_idx++; break; }
+                        size_t ind = next_raw.find_first_not_of(" \t");
+                        if (!next_t.empty() && ind != std::string::npos && ind <= base_indent) break;
+                        cs_lines.push_back(next_raw);
+                        line_idx++;
+                    }
+                }
+                statements.push_back(std::make_shared<CSharpSnippetDefStmt>(snip_name, join_lines(dedent(cs_lines))));
                 continue;
             }
 
@@ -1302,6 +1440,7 @@ public:
             auto eq_pos = rem.find('=');
             if (eq_pos != std::string::npos) {
                 std::string lhs = trim(rem.substr(0, eq_pos));
+                if (!lhs.empty() && lhs.back() == ':') lhs = trim(lhs.substr(0, lhs.size() - 1));
                 std::string expr_str = trim(rem.substr(eq_pos + 1));
                 if ((lhs.front() == '[' && lhs.back() == ']') || (lhs.front() == '(' && lhs.back() == ')')) {
                     std::string inner_names = lhs.substr(1, lhs.size() - 2);
@@ -1312,10 +1451,36 @@ public:
             }
         }
 
-        // 11. Walrus Declaration: x := 10
-        auto walrus_pos = s.find(":=");
+        // 11. Walrus Declaration: x := 10 (also tolerates `val x := 10`)
+        size_t walrus_pos = std::string::npos;
+        {
+            bool in_str = false;
+            char quote_c = 0;
+            int paren_depth = 0;
+            for (size_t i = 0; i + 1 < s.size(); ++i) {
+                char c = s[i];
+                if (in_str) {
+                    if (c == '\\') { ++i; continue; }
+                    if (c == quote_c) in_str = false;
+                } else {
+                    if (c == '"' || c == '\'') { in_str = true; quote_c = c; }
+                    else if (c == '(' || c == '[' || c == '{') paren_depth++;
+                    else if (c == ')' || c == ']' || c == '}') paren_depth--;
+                    else if (paren_depth == 0 && c == ':' && s[i + 1] == '=') {
+                        walrus_pos = i;
+                        break;
+                    }
+                }
+            }
+        }
         if (walrus_pos != std::string::npos) {
             std::string name = trim(s.substr(0, walrus_pos));
+            for (const std::string& kw : {"let", "mut", "val", "var"}) {
+                if (name.rfind(kw, 0) == 0 && name.size() > kw.size() && std::isspace(static_cast<unsigned char>(name[kw.size()]))) {
+                    name = trim(name.substr(kw.size()));
+                    break;
+                }
+            }
             std::string expr_str = trim(s.substr(walrus_pos + 2));
             if (!name.empty() && !expr_str.empty()) {
                 return std::make_shared<SetStmt>(name, "=", parse_single_expr(expr_str));
@@ -1598,13 +1763,13 @@ public:
             return cfg;
         }
 
-        // 16y. 3D Entity Spawners: spawn3d.*(...) and 3D spawn.* aliases
+        // 16y. 3D Entity Spawners: spawn3d.*(...) and 3D spawn.* aliases (including spawn3d.obj / spawn.obj)
         if ((s.rfind("spawn3d.", 0) == 0 ||
              s.rfind("spawn.player3d(", 0) == 0 || s.rfind("spawn.cube(", 0) == 0 ||
              s.rfind("spawn.sphere(", 0) == 0 || s.rfind("spawn.pyramid(", 0) == 0 ||
              s.rfind("spawn.cylinder(", 0) == 0 || s.rfind("spawn.torus(", 0) == 0 ||
              s.rfind("spawn.ring3d(", 0) == 0 || s.rfind("spawn.crystal(", 0) == 0 ||
-             s.rfind("spawn.portal3d(", 0) == 0) && s.find('(') != std::string::npos) {
+             s.rfind("spawn.portal3d(", 0) == 0 || s.rfind("spawn.obj(", 0) == 0) && s.find('(') != std::string::npos) {
             auto sp = std::make_shared<SpawnEntity3DStmt>();
             size_t dot_p = s.find('.');
             size_t par_p = s.find('(');
@@ -1617,13 +1782,30 @@ public:
             sp->entity_type = raw_type;
             auto args = parse_call_args(s.substr(par_p + 1, s.find_last_of(')') - par_p - 1));
             sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", raw_type);
-            sp->mesh = args.get("mesh", (raw_type == "player") ? "hovercraft" : raw_type);
+            sp->obj_file = args.get("obj", args.get("file", args.get("model", (raw_type == "obj" && args.positional.size() >= 2) ? args.positional[1] : "")));
+            sp->mesh = args.get("mesh", !sp->obj_file.empty() ? "obj" : ((raw_type == "player") ? "hovercraft" : raw_type));
+            if (sp->obj_file.empty() && sp->mesh.size() > 4 && sp->mesh.substr(sp->mesh.size() - 4) == ".obj") {
+                sp->obj_file = sp->mesh;
+            }
+            sp->cs_class = args.get("cs", args.get("script", args.get("behavior", "")));
+            sp->tag = args.get("tag", raw_type);
             auto at = args.get_triple("at", {0, 1, 0});
             auto sz = args.get_triple("size", (raw_type == "player") ? std::array<double,3>{1.8, 1.2, 2.4} : std::array<double,3>{6, 1, 6});
             auto rt = args.get_triple("rot", {0, 0, 0});
             sp->x = at[0]; sp->y = at[1]; sp->z = at[2];
             sp->sx = sz[0]; sp->sy = sz[1]; sp->sz = sz[2];
             sp->rx = rt[0]; sp->ry = rt[1]; sp->rz = rt[2];
+            if (args.has("scale")) {
+                std::string sc_raw = args.get("scale", "1");
+                if (sc_raw.find('(') != std::string::npos || sc_raw.find(',') != std::string::npos) {
+                    auto sc3 = args.get_triple("scale", {1.0, 1.0, 1.0});
+                    sp->scale_x = sc3[0]; sp->scale_y = sc3[1]; sp->scale_z = sc3[2];
+                } else {
+                    double us = args.get_num("scale", 1.0);
+                    sp->scale_x = us; sp->scale_y = us; sp->scale_z = us;
+                }
+            }
+            sp->double_sided = args.get_bool("double_sided", true);
             sp->radius = args.get_num("radius", (raw_type == "ring" || raw_type == "portal") ? 3.2 : 1.4);
             sp->axis = args.get("axis", "x");
             auto rng = args.get_pair("range", {(sp->axis == "z" ? sp->z : sp->x) - 10.0, (sp->axis == "z" ? sp->z : sp->x) + 10.0});
@@ -2334,6 +2516,17 @@ public:
             auto left = parse_single_expr(trim(s.substr(0, nc_pos)));
             auto right = parse_single_expr(trim(s.substr(nc_pos + 2)));
             return std::make_shared<BinaryExpr>(left, "??", right);
+        }
+
+        // 1. C# inline: cs!(code) OR csharp!(code) OR @cs(code)
+        if (s.rfind("cs!(", 0) == 0 && s.back() == ')') {
+            return std::make_shared<CSharpInlineExpr>(trim(s.substr(4, s.size() - 5)));
+        }
+        if (s.rfind("csharp!(", 0) == 0 && s.back() == ')') {
+            return std::make_shared<CSharpInlineExpr>(trim(s.substr(8, s.size() - 9)));
+        }
+        if (s.rfind("@cs(", 0) == 0 && s.back() == ')') {
+            return std::make_shared<CSharpInlineExpr>(trim(s.substr(4, s.size() - 5)));
         }
 
         // 1. Python inline: py!(code) OR @py(code) OR py: code

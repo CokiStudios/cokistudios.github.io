@@ -1,9 +1,657 @@
 // ═══════════════════════════════════════════════════════════════
 //  LOOPING COMPILE — CORE RUNTIME & 2D/3D QUANTUM ENGINE v1.1 (Production)
-//  Architecture Core: 3.0A (Quantum 3D Perspective, 120Hz Physics & CS Modules)
+//  Architecture Core: 3.0A (Quantum 3D Perspective, 120Hz Physics, .obj, C# & loopize++)
 //  Channels: Looping (Prod) • Omega Looping (RC) • Alpha! Looping (Super Experimental)
 //  Developed by Holo Entertainment & Coki Studios © 2026
 // ═══════════════════════════════════════════════════════════════
+
+export const BUILTIN_OBJ_MODELS = {
+    starfighter: `# Wavefront OBJ — Angel Interceptor Starfighter
+o AngelStarfighter
+v  0.0000  0.0800  1.8500
+v -0.4800  0.1800  0.4500
+v  0.4800  0.1800  0.4500
+v -1.6500 -0.0800 -0.9500
+v  1.6500 -0.0800 -0.9500
+v -0.6200  0.2600 -1.4500
+v  0.6200  0.2600 -1.4500
+v  0.0000 -0.3600  0.7500
+v -0.5800 -0.3200 -1.3500
+v  0.5800 -0.3200 -1.3500
+v  0.0000  0.6400 -0.1500
+v -0.3200  0.3200 -0.8500
+v  0.3200  0.3200 -0.8500
+v  0.0000  0.9200 -1.1000
+v -1.3500  0.1200 -1.3000
+v  1.3500  0.1200 -1.3000
+usemtl CyberHullCyan
+f 1 3 2
+f 2 12 6 4
+f 3 5 7 13
+f 1 2 4 9 8
+f 1 8 10 5 3
+f 8 9 10
+usemtl HoloCanopyGlass
+f 2 3 11
+f 2 11 12
+f 3 13 11
+f 11 13 12
+usemtl CyberWingIndigo
+f 11 12 14
+f 11 14 13
+f 4 6 15
+f 5 16 7
+usemtl IonThrusterNeon
+f 6 7 10 9
+f 12 13 7 6`,
+    valkyrie_drone: `# Wavefront OBJ — Valkyrie Sentinel Drone
+o ValkyrieDrone
+v  0.0000  0.0000  1.3000
+v -0.7500  0.2500  0.3000
+v  0.7500  0.2500  0.3000
+v -0.7500 -0.2500  0.3000
+v  0.7500 -0.2500  0.3000
+v  0.0000  0.8500 -0.1000
+v  0.0000 -0.7500 -0.1000
+v -1.4000  0.0000 -0.4500
+v  1.4000  0.0000 -0.4500
+v -0.5500  0.3000 -1.1000
+v  0.5500  0.3000 -1.1000
+v  0.0000 -0.3500 -1.2000
+usemtl CrimsonArmor
+f 1 3 2
+f 1 4 5
+f 1 2 4
+f 1 5 3
+f 2 3 6
+f 4 7 5
+usemtl DarkTitanium
+f 2 6 8
+f 4 8 7
+f 3 9 6
+f 5 7 9
+f 6 11 10
+f 10 11 12
+f 8 6 10
+f 9 11 6
+f 8 10 12 7
+f 9 7 12 11`,
+    omega_titan: `# Wavefront OBJ — Omega Titan Mecha Boss
+o OmegaTitanMecha
+v -1.4000 -1.2000  0.9000
+v  1.4000 -1.2000  0.9000
+v  1.8000  1.1000  1.1000
+v -1.8000  1.1000  1.1000
+v -1.4000 -1.2000 -0.9000
+v  1.4000 -1.2000 -0.9000
+v  1.8000  1.1000 -1.1000
+v -1.8000  1.1000 -1.1000
+v  0.0000  0.1000  1.6500
+v  0.0000  2.3500  0.2000
+v -3.1000  1.6500  0.0000
+v  3.1000  1.6500  0.0000
+v  0.0000 -2.4000  0.0000
+usemtl OmegaReactorCore
+f 1 2 9
+f 2 3 9
+f 3 4 9
+f 4 1 9
+usemtl OmegaChassisRose
+f 5 8 7 6
+f 4 3 10
+f 3 7 10
+f 7 8 10
+f 8 4 10
+f 1 4 11 5
+f 4 8 11
+f 2 6 12 3
+f 3 12 7
+f 1 13 2
+f 2 13 6
+f 6 13 5
+f 5 13 1`,
+    cyber_crystal: `# Wavefront OBJ — Quantum Cyber Crystal
+o CyberCrystal
+v  0.0000  1.4500  0.0000
+v  0.0000 -1.4500  0.0000
+v -0.8500  0.3500  0.0000
+v  0.0000  0.3500  0.8500
+v  0.8500  0.3500  0.0000
+v  0.0000  0.3500 -0.8500
+v -0.8500 -0.3500  0.0000
+v  0.0000 -0.3500  0.8500
+v  0.8500 -0.3500  0.0000
+v  0.0000 -0.3500 -0.8500
+usemtl GoldQuantumGem
+f 1 4 3
+f 1 5 4
+f 1 6 5
+f 1 3 6
+f 3 4 8 7
+f 4 5 9 8
+f 5 6 10 9
+f 6 3 7 10
+f 2 7 8
+f 2 8 9
+f 2 9 10
+f 2 10 7`,
+    star_gate: `# Wavefront OBJ — Quantum Star Gate Portal Ring
+o StarGateRing
+v  0.0000  3.2000  0.4500
+v  2.2627  2.2627  0.4500
+v  3.2000  0.0000  0.4500
+v  2.2627 -2.2627  0.4500
+v  0.0000 -3.2000  0.4500
+v -2.2627 -2.2627  0.4500
+v -3.2000  0.0000  0.4500
+v -2.2627  2.2627  0.4500
+v  0.0000  3.2000 -0.4500
+v  2.2627  2.2627 -0.4500
+v  3.2000  0.0000 -0.4500
+v  2.2627 -2.2627 -0.4500
+v  0.0000 -3.2000 -0.4500
+v -2.2627 -2.2627 -0.4500
+v -3.2000  0.0000 -0.4500
+v -2.2627  2.2627 -0.4500
+v  0.0000  2.3500  0.0000
+v  1.6617  1.6617  0.0000
+v  2.3500  0.0000  0.0000
+v  1.6617 -1.6617  0.0000
+v  0.0000 -2.3500  0.0000
+v -1.6617 -1.6617  0.0000
+v -2.3500  0.0000  0.0000
+v -1.6617  1.6617  0.0000
+usemtl PortalNeonViolet
+f 1 2 18 17
+f 2 3 19 18
+f 3 4 20 19
+f 4 5 21 20
+f 5 6 22 21
+f 6 7 23 22
+f 7 8 24 23
+f 8 1 17 24
+f 9 17 18 10
+f 10 18 19 11
+f 11 19 20 12
+f 12 20 21 13
+f 13 21 22 14
+f 14 22 23 15
+f 15 23 24 16
+f 16 24 17 9
+f 1 9 10 2
+f 2 10 11 3
+f 3 11 12 4
+f 4 12 13 5
+f 5 13 14 6
+f 6 14 15 7
+f 7 15 16 8
+f 8 16 9 1`
+};
+
+const OBJ_MATERIAL_TINTS = {
+    cyberhullcyan: '#38bdf8',
+    holocanopyglass: '#e0f2fe',
+    cyberwingindigo: '#6366f1',
+    ionthrusterneon: '#00f5d4',
+    crimsonarmor: '#ef4444',
+    darktitanium: '#475569',
+    omegareactorcore: '#00f5d4',
+    omegachassisrose: '#f43f5e',
+    goldquantumgem: '#fbbf24',
+    portalneonviolet: '#c084fc'
+};
+
+export function resolveBuiltinOBJKey(pathOrKey) {
+    const k = String(pathOrKey || '').toLowerCase().split('/').pop().replace(/\.obj$/, '').trim();
+    if (BUILTIN_OBJ_MODELS[k]) return k;
+    if (k.includes('starfighter') || k.includes('ship') || k.includes('fighter')) return 'starfighter';
+    if (k.includes('valkyrie') || k.includes('drone')) return 'valkyrie_drone';
+    if (k.includes('omega') || k.includes('titan') || k.includes('boss')) return 'omega_titan';
+    if (k.includes('crystal') || k.includes('gem')) return 'cyber_crystal';
+    if (k.includes('gate') || k.includes('ring') || k.includes('portal')) return 'star_gate';
+    return '';
+}
+
+export function recomputeOBJBounds(mesh) {
+    const verts = mesh.vertices || [];
+    if (!verts.length) {
+        mesh.size = [0, 0, 0];
+        mesh.center = [0, 0, 0];
+        mesh.boundingRadius = 0;
+        return mesh;
+    }
+    let minX = Infinity, minY = Infinity, minZ = Infinity;
+    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (const v of verts) {
+        if (v[0] < minX) minX = v[0]; if (v[1] < minY) minY = v[1]; if (v[2] < minZ) minZ = v[2];
+        if (v[0] > maxX) maxX = v[0]; if (v[1] > maxY) maxY = v[1]; if (v[2] > maxZ) maxZ = v[2];
+    }
+    const cx = (minX + maxX) * 0.5, cy = (minY + maxY) * 0.5, cz = (minZ + maxZ) * 0.5;
+    let maxR2 = 0;
+    for (const v of verts) {
+        const dx = v[0] - cx, dy = v[1] - cy, dz = v[2] - cz;
+        const r2 = dx * dx + dy * dy + dz * dz;
+        if (r2 > maxR2) maxR2 = r2;
+    }
+    mesh.center = [cx, cy, cz];
+    mesh.size = [maxX - minX, maxY - minY, maxZ - minZ];
+    mesh.boundingRadius = Math.sqrt(maxR2);
+    let tris = 0;
+    for (const f of (mesh.faces || [])) {
+        if (f.indices.length >= 3) tris += f.indices.length - 2;
+    }
+    mesh.triangles = tris;
+    return mesh;
+}
+
+export function parseWavefrontOBJ(objText, scale = 1, name = 'ObjMesh') {
+    const rawVerts = [];
+    const faces = [];
+    let objName = name;
+    let currentMtl = '';
+    const s = Number(scale) || 1;
+    const lines = String(objText || '').split(/\r?\n/);
+
+    for (const raw of lines) {
+        const line = raw.trim();
+        if (!line || line.startsWith('#')) continue;
+        const parts = line.split(/\s+/);
+        const cmd = parts[0];
+        if (cmd === 'o' && parts[1]) {
+            objName = parts[1];
+        } else if (cmd === 'usemtl' && parts[1]) {
+            currentMtl = parts[1].toLowerCase();
+        } else if (cmd === 'v' && parts.length >= 4) {
+            rawVerts.push([parseFloat(parts[1]) * s, parseFloat(parts[2]) * s, parseFloat(parts[3]) * s]);
+        } else if (cmd === 'f' && parts.length >= 4) {
+            const idxs = [];
+            for (let k = 1; k < parts.length; k++) {
+                const tok = parts[k].split('/')[0];
+                let vi = parseInt(tok, 10);
+                if (isNaN(vi)) continue;
+                vi = vi < 0 ? rawVerts.length + vi : vi - 1;
+                if (vi >= 0 && vi < rawVerts.length) idxs.push(vi);
+            }
+            if (idxs.length >= 3) {
+                const p0 = rawVerts[idxs[0]], p1 = rawVerts[idxs[1]], p2 = rawVerts[idxs[2]];
+                const ux = p1[0] - p0[0], uy = p1[1] - p0[1], uz = p1[2] - p0[2];
+                const vx = p2[0] - p0[0], vy = p2[1] - p0[1], vz = p2[2] - p0[2];
+                let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+                const nl = Math.hypot(nx, ny, nz) || 1;
+                nx /= nl; ny /= nl; nz /= nl;
+                const tint = OBJ_MATERIAL_TINTS[currentMtl] || null;
+                faces.push({ indices: idxs, nx, ny, nz, bias: tint ? 1.08 : 0.96, tint, material: currentMtl });
+            }
+        }
+    }
+    return recomputeOBJBounds({ name: objName, vertices: rawVerts, faces });
+}
+
+export function normalizeOBJMesh(mesh, targetExtent = 2.0) {
+    recomputeOBJBounds(mesh);
+    if (!mesh.vertices.length) return mesh;
+    const maxDim = Math.max(mesh.size[0], mesh.size[1], mesh.size[2], 1e-6);
+    const sc = targetExtent / maxDim;
+    const c = mesh.center;
+    mesh.vertices = mesh.vertices.map(v => [(v[0] - c[0]) * sc, (v[1] - c[1]) * sc, (v[2] - c[2]) * sc]);
+    return recomputeOBJBounds(mesh);
+}
+
+export function subdivideOBJMesh(mesh) {
+    const verts = mesh.vertices.map(v => [...v]);
+    const newFaces = [];
+    for (const f of mesh.faces) {
+        if (f.indices.length < 3) continue;
+        const i0 = f.indices[0];
+        for (let k = 1; k + 1 < f.indices.length; k++) {
+            const i1 = f.indices[k], i2 = f.indices[k + 1];
+            const v0 = verts[i0], v1 = verts[i1], v2 = verts[i2];
+            const m01 = verts.length; verts.push([(v0[0] + v1[0]) * 0.5, (v0[1] + v1[1]) * 0.5, (v0[2] + v1[2]) * 0.5]);
+            const m12 = verts.length; verts.push([(v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5]);
+            const m20 = verts.length; verts.push([(v2[0] + v0[0]) * 0.5, (v2[1] + v0[1]) * 0.5, (v2[2] + v0[2]) * 0.5]);
+            for (const tri of [[i0, m01, m20], [m01, i1, m12], [m20, m12, i2], [m01, m12, m20]]) {
+                newFaces.push({ indices: tri, nx: f.nx, ny: f.ny, nz: f.nz, bias: f.bias, tint: f.tint, material: f.material });
+            }
+        }
+    }
+    return recomputeOBJBounds({ name: `${mesh.name}_Subdiv`, vertices: verts, faces: newFaces });
+}
+
+export function exportWavefrontOBJ(mesh) {
+    const out = [`# Wavefront OBJ exported by Looping Engine v1.1 + Web Loopize Kit`, `o ${mesh.name || 'LoopMesh3D'}`];
+    for (const v of mesh.vertices || []) {
+        out.push(`v ${v[0].toFixed(4)} ${v[1].toFixed(4)} ${v[2].toFixed(4)}`);
+    }
+    let lastMtl = '';
+    for (const f of mesh.faces || []) {
+        if (f.material && f.material !== lastMtl) { out.push(`usemtl ${f.material}`); lastMtl = f.material; }
+        out.push(`f ${f.indices.map(idx => idx + 1).join(' ')}`);
+    }
+    return out.join('\n');
+}
+
+export class CSharpMiniVM {
+    constructor(interp) {
+        this.interp = interp;
+        this.classes = {};
+        this.instances = {};
+        this.snippets = {};
+        this.logs = [];
+    }
+    stripComments(code) {
+        return String(code || '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    }
+    findMatching(str, openIdx, openCh, closeCh) {
+        let d = 0, inS = false, q = '';
+        for (let i = openIdx; i < str.length; i++) {
+            const c = str[i];
+            if (inS) { if (c === '\\') { i++; continue; } if (c === q) inS = false; continue; }
+            if (c === '"' || c === "'") { inS = true; q = c; continue; }
+            if (c === openCh) d++;
+            else if (c === closeCh && --d === 0) return i;
+        }
+        return -1;
+    }
+    parseAndRegisterClasses(rawCode) {
+        const clean = this.stripComments(rawCode);
+        const leftover = [];
+        let pos = 0;
+        while (pos < clean.length) {
+            while (pos < clean.length && /\s/.test(clean[pos])) pos++;
+            if (pos >= clean.length) break;
+            if (clean.slice(pos).startsWith('using ')) {
+                const sc = clean.indexOf(';', pos);
+                pos = sc < 0 ? clean.length : sc + 1;
+                continue;
+            }
+            const rest = clean.slice(pos);
+            const clsMatch = rest.match(/^(?:(?:public|private|internal|sealed|static)\s+)*class\s+([A-Za-z0-9_]+)(?:\s*:\s*([A-Za-z0-9_<>,.\s]+))?\s*\{/);
+            if (clsMatch) {
+                const ob = pos + clsMatch[0].length - 1;
+                const cb = this.findMatching(clean, ob, '{', '}');
+                if (cb > ob) {
+                    const clsName = clsMatch[1];
+                    const def = { name: clsName, base: (clsMatch[2] || 'MonoBehaviour').trim(), fields: {}, methods: {} };
+                    this.parseClassBody(clean.slice(ob + 1, cb), def);
+                    this.classes[clsName] = def;
+                    pos = cb + 1;
+                    continue;
+                }
+            }
+            const sc = clean.indexOf(';', pos);
+            if (sc >= 0) { leftover.push(clean.slice(pos, sc)); pos = sc + 1; }
+            else { leftover.push(clean.slice(pos)); break; }
+        }
+        return leftover.join(';\n');
+    }
+    parseClassBody(body, def) {
+        let pos = 0;
+        while (pos < body.length) {
+            while (pos < body.length && /\s/.test(body[pos])) pos++;
+            if (pos >= body.length) break;
+            const ob = body.indexOf('{', pos);
+            const sc = body.indexOf(';', pos);
+            if (ob >= 0 && (sc < 0 || ob < sc)) {
+                const cb = this.findMatching(body, ob, '{', '}');
+                if (cb < 0) break;
+                const sig = body.slice(pos, ob).trim();
+                const lp = sig.indexOf('('), rp = sig.lastIndexOf(')');
+                if (lp > 0 && rp > lp) {
+                    const mName = sig.slice(0, lp).trim().split(/\s+/).pop();
+                    const params = sig.slice(lp + 1, rp).split(',').map(p => p.trim().split(/\s+/).pop()).filter(Boolean);
+                    def.methods[mName] = { params, body: body.slice(ob + 1, cb) };
+                }
+                pos = cb + 1;
+            } else if (sc >= 0) {
+                const fLine = body.slice(pos, sc).trim();
+                const m = fLine.match(/^(?:(?:public|private|protected|internal|static|readonly|const)\s+)*(?:int|float|double|bool|string|var|Vector3)\s+([A-Za-z0-9_]+)(?:\s*=\s*(.+))?$/);
+                if (m) def.fields[m[1]] = m[2] !== undefined ? this.evalExpr(m[2], def.fields) : 0;
+                pos = sc + 1;
+            } else break;
+        }
+    }
+    instantiate(className, instId, entityName) {
+        const cls = this.classes[className];
+        if (!cls) return '';
+        const id = instId || `${className}_${Object.keys(this.instances).length + 1}`;
+        this.instances[id] = { id, className, entityName: entityName || '', fields: { ...cls.fields, gameObject: entityName || '' }, started: false };
+        if (cls.methods.Start) {
+            this.callMethod(id, 'Start', []);
+            this.instances[id].started = true;
+        }
+        return id;
+    }
+    callMethod(instId, methodName, args = []) {
+        const inst = this.instances[instId];
+        if (!inst) return undefined;
+        const cls = this.classes[inst.className];
+        const method = cls && cls.methods[methodName];
+        if (!method) return undefined;
+        const locals = { ...inst.fields };
+        method.params.forEach((p, idx) => { locals[p] = args[idx]; });
+        const res = this.execStatements(method.body, locals, inst.entityName);
+        for (const k of Object.keys(inst.fields)) {
+            if (Object.prototype.hasOwnProperty.call(locals, k)) inst.fields[k] = locals[k];
+        }
+        return res;
+    }
+    stepAll(dt = 1 / 60) {
+        let count = 0;
+        for (const id of Object.keys(this.instances)) {
+            const inst = this.instances[id];
+            const cls = this.classes[inst.className];
+            if (!cls) continue;
+            if (!inst.started && cls.methods.Start) { this.callMethod(id, 'Start', []); inst.started = true; }
+            if (cls.methods.Update) { this.callMethod(id, 'Update', [dt]); count++; }
+        }
+        return count;
+    }
+    evalExpr(raw, locals = {}, boundEntity = '') {
+        let s = String(raw || '').trim().replace(/(\d+(?:\.\d+)?)[fFdDmL]\b/g, '$1');
+        if (!s) return 0;
+        const vars = this.interp ? this.interp.variables : {};
+        const findEnt = (name) => (this.interp?.entities3D || []).find(e => e.name === name || e.label === name);
+        const fnEnv = {
+            Mathf: { Clamp: (v, a, b) => Math.max(a, Math.min(b, v)), Lerp: (a, b, t) => a + (b - a) * t, Sin: Math.sin, Cos: Math.cos, Abs: Math.abs, Sqrt: Math.sqrt, Min: Math.min, Max: Math.max, PI: Math.PI },
+            Math,
+            Time: { deltaTime: 1 / 60 },
+            Console: { WriteLine: (...a) => { const msg = a.join(' '); this.logs.push(msg); this.interp?.log(`[C#] ${msg}`, 'output'); return msg; } },
+            Debug: { Log: (...a) => { const msg = a.join(' '); this.logs.push(msg); this.interp?.log(`[C#] ${msg}`, 'output'); return msg; } },
+            LoopingBridge: { Get: (k) => vars[k], Set: (k, v) => { vars[k] = v; return v; } },
+            Vector3: {
+                zero: [0, 0, 0], one: [1, 1, 1], up: [0, 1, 0], forward: [0, 0, 1],
+                Distance: (a, b) => Math.hypot((a[0] || 0) - (b[0] || 0), (a[1] || 0) - (b[1] || 0), (a[2] || 0) - (b[2] || 0)),
+                Lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+            },
+            Scene3D: {
+                Move: (n, dx, dy, dz) => { const e = findEnt(n || boundEntity); if (e) { e.x += dx || 0; e.y += dy || 0; e.z += dz || 0; } return e ? [e.x, e.y, e.z] : [0, 0, 0]; },
+                Rotate: (n, rx, ry, rz) => { const e = findEnt(n || boundEntity); if (e) { e.pitch += (rx || 0) * Math.PI / 180; e.yaw += (ry || 0) * Math.PI / 180; e.roll += (rz || 0) * Math.PI / 180; } return e ? [e.pitch, e.yaw, e.roll] : [0, 0, 0]; },
+                SetPosition: (n, x, y, z) => { const e = findEnt(n || boundEntity); if (e) { e.x = x; e.y = y; e.z = z; } return [x, y, z]; },
+                Damage: (n, amt) => { const e = findEnt(n || boundEntity); if (e) { e.health = Math.max(0, e.health - (amt || 0)); return e.health; } return 0; }
+            }
+        };
+        s = s.replace(/new\s+Vector3\(([^)]+)\)/g, '[$1]');
+        try {
+            const keys = [...Object.keys(fnEnv), ...Object.keys(locals), ...Object.keys(vars).filter(k => /^[A-Za-z_][A-Za-z0-9_]*$/.test(k) && !(k in fnEnv) && !(k in locals))];
+            const vals = keys.map(k => (k in fnEnv ? fnEnv[k] : (k in locals ? locals[k] : vars[k])));
+            return Function(...keys, `"use strict"; return (${s});`)(...vals);
+        } catch (e) {
+            return 0;
+        }
+    }
+    execStatements(code, locals = {}, boundEntity = '') {
+        const stmts = String(code || '').split(/[;\n]+/).map(s => s.trim()).filter(Boolean);
+        let last = 0;
+        const vars = this.interp ? this.interp.variables : {};
+        for (const raw of stmts) {
+            let line = raw.replace(/^(?:public|private|internal|static)\s+/, '');
+            if (line.startsWith('return ')) return this.evalExpr(line.slice(7), locals, boundEntity);
+            const declM = line.match(/^(?:var|int|float|double|bool|string|Vector3)\s+([A-Za-z0-9_]+)\s*=\s*(.+)$/);
+            if (declM) { locals[declM[1]] = this.evalExpr(declM[2], locals, boundEntity); last = locals[declM[1]]; continue; }
+            const opM = line.match(/^([A-Za-z0-9_]+)\s*(\+=|-=|\*=|\/=|=)\s*(.+)$/);
+            if (opM) {
+                const [, k, op, rhs] = opM;
+                const rv = this.evalExpr(rhs, locals, boundEntity);
+                const cur = k in locals ? locals[k] : vars[k];
+                const next = op === '=' ? rv : op === '+=' ? cur + rv : op === '-=' ? cur - rv : op === '*=' ? cur * rv : cur / (rv || 1);
+                if (k in locals || !(k in vars)) locals[k] = next; else vars[k] = next;
+                last = next;
+                continue;
+            }
+            const incM = line.match(/^([A-Za-z0-9_]+)(\+\+|--)$/);
+            if (incM) {
+                const k = incM[1], d = incM[2] === '++' ? 1 : -1;
+                if (k in locals) locals[k] = Number(locals[k] || 0) + d; else vars[k] = Number(vars[k] || 0) + d;
+                continue;
+            }
+            last = this.evalExpr(line, locals, boundEntity);
+        }
+        return last;
+    }
+    executeBlock(rawCode) {
+        const leftover = this.parseAndRegisterClasses(rawCode);
+        const locals = {};
+        const ret = this.execStatements(leftover, locals);
+        if (this.interp) Object.assign(this.interp.variables, locals);
+        return ret;
+    }
+    exportScene(className = 'LoopizeGeneratedGame') {
+        const scene = this.interp?.scene3D || { name: 'LoopizeWorld' };
+        const ents = this.interp?.entities3D || [];
+        return [
+            `// Generated by Looping Engine v1.1 (Arch 3.0A) + Web Loopize Kit`,
+            `using System;`,
+            `using System.Collections.Generic;`,
+            `namespace CokiStudios.Loopize {`,
+            `    public class ${className} {`,
+            `        public string WorldName = "${scene.name}";`,
+            `        public int EntityCount = ${ents.length};`,
+            `    }`,
+            `}`
+        ].join('\n');
+    }
+}
+
+export class LoopizeRuntimeJS {
+    constructor(interp) {
+        this.interp = interp;
+        this.ecs = [];
+        this.nextId = 1;
+        this.waves = {};
+        this.fsm = {};
+        this.combo = { hits: 0, timer: 0, window: 2.8, multiplier: 1.0, score: 0, maxCombo: 0 };
+        this.tweens = {};
+        this.inventory = {};
+        this.quests = {};
+        this.xp = 0;
+        this.level = 1;
+        this.cameraShake = { trauma: 0, maxOffset: 0.75 };
+    }
+    ease(mode, tRaw) {
+        const t = Math.max(0, Math.min(1, Number(tRaw) || 0));
+        switch (String(mode || 'linear').toLowerCase()) {
+            case 'in_quad': return t * t;
+            case 'out_quad': return 1 - (1 - t) * (1 - t);
+            case 'in_out_quad': return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            case 'out_cubic': return 1 - Math.pow(1 - t, 3);
+            case 'in_out_cubic': return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            case 'out_back': { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+            default: return t;
+        }
+    }
+    ecsSpawn(name, tag = 'entity', pos = [0, 2, 0], hp = 100, objFile = '', csClass = '') {
+        const id = this.nextId++;
+        this.ecs.push({ id, name, tag, pos: [...pos], hp, maxHp: hp, objFile, csClass, alive: true });
+        if (this.interp && objFile && !this.interp.entities3D.some(e => e.name === name)) {
+            this.interp.spawnObjEntity3D({ name, obj: objFile, at: pos, health: hp, type: tag, cs: csClass });
+        }
+        return id;
+    }
+    spatialRadius(center, radius, tag = '') {
+        const out = [];
+        for (const s of this.ecs) {
+            if (!s.alive || (tag && s.tag !== tag)) continue;
+            if (Math.hypot(s.pos[0] - center[0], s.pos[1] - center[1], s.pos[2] - center[2]) <= radius) out.push(s.id);
+        }
+        return out;
+    }
+    waveDefine(waveNum, count = 4, hp = 80, archetype = 'valkyrie', objFile = 'valkyrie_drone.obj') {
+        this.waves[waveNum] = { waveNum, count, hp, archetype, objFile, spawned: false, cleared: false };
+        return true;
+    }
+    waveSpawn(waveNum) {
+        const w = this.waves[waveNum];
+        if (!w) return 0;
+        let spawned = 0;
+        for (let i = 0; i < w.count; i++) {
+            const ang = (i / Math.max(1, w.count)) * Math.PI * 2;
+            const pos = [Number((Math.cos(ang) * 9.5).toFixed(2)), 2.2, Number((14 + Math.sin(ang) * 9.5).toFixed(2))];
+            this.ecsSpawn(`Wave${waveNum}_${w.archetype}_${i + 1}`, 'enemy', pos, w.hp, w.objFile, '');
+            spawned++;
+        }
+        w.spawned = true;
+        return spawned;
+    }
+    comboHit(basePoints = 100) {
+        this.combo.hits++;
+        this.combo.timer = this.combo.window;
+        this.combo.maxCombo = Math.max(this.combo.maxCombo, this.combo.hits);
+        this.combo.multiplier = Math.min(8.0, 1.0 + (this.combo.hits - 1) * 0.25);
+        const award = basePoints * this.combo.multiplier;
+        this.combo.score += award;
+        if (this.interp) { this.interp.score += Math.round(award); this.interp.combo = this.combo.hits; this.interp.comboTimer = this.combo.window; }
+        return award;
+    }
+    shake(trauma = 0.45) {
+        this.cameraShake.trauma = Math.min(1.0, this.cameraShake.trauma + Number(trauma || 0));
+        if (this.interp?.camera3D) this.interp.camera3D.shake = Math.max(this.interp.camera3D.shake || 0, this.cameraShake.trauma);
+        return this.cameraShake.trauma;
+    }
+    questAdd(id, title, goal = 1, rewardXp = 500) {
+        this.quests[id] = { id, title, progress: 0, goal, rewardXp, completed: false };
+        return true;
+    }
+    questProgress(id, delta = 1) {
+        const q = this.quests[id];
+        if (!q || q.completed) return q ? q.completed : false;
+        q.progress = Math.min(q.goal, q.progress + delta);
+        if (q.progress >= q.goal) {
+            q.completed = true;
+            this.xp += q.rewardXp;
+            this.level = 1 + Math.floor(this.xp / 500);
+        }
+        return q.completed;
+    }
+    tick(dt) {
+        if (this.combo.timer > 0) {
+            this.combo.timer = Math.max(0, this.combo.timer - dt);
+            if (this.combo.timer <= 0) { this.combo.hits = 0; this.combo.multiplier = 1.0; }
+        }
+        this.cameraShake.trauma = Math.max(0, this.cameraShake.trauma - 1.6 * dt);
+        for (const tw of Object.values(this.tweens)) {
+            if (!tw.done) {
+                tw.elapsed += dt;
+                const p = Math.min(1, tw.elapsed / Math.max(1e-4, tw.dur));
+                tw.cur = tw.from + (tw.to - tw.from) * this.ease(tw.mode, p);
+                if (p >= 1) tw.done = true;
+            }
+        }
+    }
+    stats() {
+        return {
+            initialized: true,
+            ecs_count: this.ecs.filter(e => e.alive).length,
+            waves_total: Object.keys(this.waves).length,
+            combo_hits: this.combo.hits,
+            combo_mult: this.combo.multiplier,
+            combo_max: this.combo.maxCombo,
+            xp: this.xp,
+            level: this.level,
+            cs_classes: Object.keys(this.interp?.csharpBridge?.classes || {}).length,
+            obj_cache: Object.keys(this.interp?.objMeshes3D || {}).length
+        };
+    }
+}
 
 export class LoopingInterpreter {
     constructor(canvas, terminalOutput) {
@@ -94,6 +742,9 @@ export class LoopingInterpreter {
         this.particles3D = [];
         this.projectiles3D = [];
         this.popups3D = [];
+        this.objMeshes3D = {};
+        this.csharpBridge = new CSharpMiniVM(this);
+        this.loopize = new LoopizeRuntimeJS(this);
         this.scene3D = {
             name: 'Neon Cyber Horizon 3D',
             sizeX: 180,
@@ -873,6 +1524,69 @@ export class LoopingInterpreter {
                 }
             }
 
+            // Multiline C# Block: cs! { ... } / csharp! { ... } / cs { ... } / cs: ... end
+            if (line.startsWith('cs! {') || line.startsWith('csharp! {') ||
+                line.startsWith('cs {') || line.startsWith('csharp {') ||
+                line === 'csharp:' || line === 'cs:' || line === 'cs:begin') {
+                const csLines = [];
+                if (line.includes('{')) {
+                    const ob = line.indexOf('{');
+                    const after = line.slice(ob + 1);
+                    let depth = 1;
+                    for (const ch of after) { if (ch === '{') depth++; else if (ch === '}') depth--; }
+                    if (depth <= 0) {
+                        const rb = after.lastIndexOf('}');
+                        csLines.push(rb >= 0 ? after.slice(0, rb) : after);
+                    } else {
+                        if (after.trim()) csLines.push(after);
+                        while (i < lines.length && depth > 0) {
+                            const nl = lines[i++];
+                            for (const ch of nl) { if (ch === '{') depth++; else if (ch === '}') depth--; }
+                            if (depth <= 0) {
+                                const rb = nl.lastIndexOf('}');
+                                if (rb > 0) csLines.push(nl.slice(0, rb));
+                                break;
+                            }
+                            if (nl.trim() === 'cs:end') break;
+                            csLines.push(nl);
+                        }
+                    }
+                } else {
+                    while (i < lines.length) {
+                        const nl = lines[i++];
+                        const tn = nl.trim();
+                        if (tn === 'end' || tn === 'cs:end') break;
+                        csLines.push(nl);
+                    }
+                }
+                const csCode = csLines.join('\n');
+                this.csharpBridge.executeBlock(csCode);
+                this.log(`⚡ [C# BRIDGE] Bloque C# ejecutado (${Object.keys(this.csharpBridge.classes).length} clases MonoBehaviour)`, 'system');
+                continue;
+            }
+
+            // Embedded C# Snippet: insert cssnippet as <name>:
+            if (line.startsWith('insert cssnippet') || line.startsWith('cssnippet ')) {
+                const csm = line.match(/(?:insert\s+)?(?:cs|csharp)snippet\s+(?:as\s+)?([A-Za-z0-9_]+)\s*[:{]?/);
+                if (csm) {
+                    const sName = csm[1];
+                    const baseIndent = rawLine.search(/\S|$/);
+                    const sLines = [];
+                    while (i < lines.length) {
+                        const nextRaw = lines[i];
+                        const nextTrim = nextRaw.trim();
+                        if (nextTrim === '}' || nextTrim === 'end' || nextTrim === 'cs:end') { i++; break; }
+                        if (line.endsWith(':') && nextTrim && nextRaw.search(/\S|$/) <= baseIndent) break;
+                        sLines.push(nextRaw);
+                        i++;
+                    }
+                    this.csharpBridge.snippets[sName] = sLines.join('\n');
+                    this.variables[sName] = this.csharpBridge.snippets[sName];
+                    this.log(`[C# SNIPPET] Registrado cssnippet "${sName}"`, 'system');
+                    continue;
+                }
+            }
+
             // Multiline Python Block: python { ... } OR py: ... end
             if (line.startsWith('python {') || line === 'python:' || line === 'py:' || line.startsWith('py:begin')) {
                 let pyBlockLines = [];
@@ -1054,7 +1768,11 @@ export class LoopingInterpreter {
         }
         if (line.startsWith('use ') && !line.startsWith('use python ')) {
             const modName = line.replace('use ', '').trim().replace(/['"]/g, '');
-            this.log(`[MODULE LOADER] Vinculado paquete smiledev: ${modName}`, 'system');
+            if (modName === 'loopize++') {
+                this.log(`⚡ [LOOPIZE++ WEB] Módulo híbrido cargado (.obj + C# + ECS + Waves + FSM + Combo + Shake)`, 'success');
+            } else {
+                this.log(`[MODULE LOADER] Vinculado paquete smiledev: ${modName}`, 'system');
+            }
             return;
         }
 
@@ -1110,7 +1828,7 @@ export class LoopingInterpreter {
             line.startsWith('spawn.sphere') || line.startsWith('spawn.pyramid') ||
             line.startsWith('spawn.cylinder') || line.startsWith('spawn.torus') ||
             line.startsWith('spawn.ring3d') || line.startsWith('spawn.crystal') ||
-            line.startsWith('spawn.portal3d')) {
+            line.startsWith('spawn.portal3d') || line.startsWith('spawn.obj')) {
             this.parseSpawn3DDirective(line);
             return;
         }
@@ -1272,10 +1990,10 @@ export class LoopingInterpreter {
             return;
         }
 
-        // 10. Variables: val <var> = <value> | var <var> = <value> | set <var> to <value>
-        if ((line.startsWith('val ') || line.startsWith('var ')) && line.includes('=')) {
+        // 10. Variables: val <var> [= | :=] <value> | var/let/mut <var> [= | :=] <value>
+        if ((line.startsWith('val ') || line.startsWith('var ') || line.startsWith('let ') || line.startsWith('mut ')) && line.includes('=')) {
             const eqIdx = line.indexOf('=');
-            const varName = line.slice(4, eqIdx).trim();
+            const varName = line.slice(4, eqIdx).replace(/:$/, '').trim();
             const valExpr = line.slice(eqIdx + 1).trim();
             this.variables[varName] = this.evaluateExpression(valExpr);
             return;
@@ -2055,6 +2773,13 @@ export class LoopingInterpreter {
             this.spawnParticleBurst(px, py, pColor, 20);
             return;
         }
+
+        // 27. Standalone 3D / .obj / C# / loopize++ statement calls
+        if (/^(?:obj3d|mesh3d|csharp|cs|loopize|lz|ecs)\.[A-Za-z0-9_]+\(/.test(line) ||
+            /^(?:lz_[A-Za-z0-9_]+|runcs|cs!)\(/.test(line)) {
+            this.evaluate3DBuiltin(line);
+            return;
+        }
     }
 
     spawnParticleBurst(x, y, color, count = 16) {
@@ -2129,8 +2854,11 @@ export class LoopingInterpreter {
         if (expr === 'true') return true;
         if (expr === 'false') return false;
 
-        // 3D Native Built-in Evaluation (math3d.* / physics3d.* / scene3d.*)
-        if (expr.startsWith('math3d.') || expr.startsWith('physics3d.') || expr.startsWith('scene3d.')) {
+        // 3D Native Built-in Evaluation (math3d.* / physics3d.* / scene3d.* / obj3d.* / csharp.* / loopize.* / lz_*)
+        if (expr.startsWith('math3d.') || expr.startsWith('physics3d.') || expr.startsWith('scene3d.') ||
+            expr.startsWith('obj3d.') || expr.startsWith('mesh3d.') ||
+            expr.startsWith('csharp.') || expr.startsWith('cs.') || expr.startsWith('cs!(') || expr.startsWith('runcs(') ||
+            expr.startsWith('loopize.') || expr.startsWith('lz.') || expr.startsWith('lz_') || expr.startsWith('ecs.')) {
             return this.evaluate3DBuiltin(expr);
         }
 
@@ -2147,6 +2875,17 @@ export class LoopingInterpreter {
             if (target !== null && target !== undefined && target[key] !== undefined) {
                 return target[key];
             }
+        }
+
+        // Property / method access e.g. ship_info.triangles or cs_export.length()
+        if (expr.endsWith('.length()')) {
+            const target = this.evaluateExpression(expr.slice(0, -9));
+            return (target && target.length !== undefined) ? target.length : 0;
+        }
+        const dotPropMatch = expr.match(/^([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)$/);
+        if (dotPropMatch && this.variables.hasOwnProperty(dotPropMatch[1])) {
+            const obj = this.variables[dotPropMatch[1]];
+            if (obj && typeof obj === 'object' && dotPropMatch[2] in obj) return obj[dotPropMatch[2]];
         }
 
         // Python Math Module & Arithmetic Expressions
@@ -2178,7 +2917,11 @@ export class LoopingInterpreter {
                     .replace(/math\.random/g, 'Math.random');
 
                 return Function(`"use strict"; return (${resolvedExpr});`)();
-            } catch(e) {}
+            } catch(e) {
+                if (expr.includes(' + ')) {
+                    return expr.split(/\s+\+\s+/).map(p => this.evaluateExpression(p)).join('');
+                }
+            }
         }
 
         if (this.variables.hasOwnProperty(expr)) {
@@ -3769,10 +4512,38 @@ export class LoopingInterpreter {
         if (kind === 'player' && (!args.mesh || meshType === 'player')) meshType = 'hovercraft';
         if (kind === 'moving_platform') meshType = 'box';
 
+        const objSpec = args.obj || args.file || args.model || '';
+        const scaleVal = args.scale !== undefined ? Number(args.scale) : 1.0;
+        const csClass = args.cs || args.csharp || '';
+
+        let customMesh = null;
+        if (kind === 'obj' || objSpec) {
+            const cacheKey = String(objSpec || args.name || 'starfighter');
+            const cached = this.objMeshes3D[cacheKey];
+            const bKey = resolveBuiltinOBJKey(cacheKey);
+            if (cached) {
+                customMesh = cached;
+            } else if (bKey && BUILTIN_OBJ_MODELS[bKey]) {
+                customMesh = parseWavefrontOBJ(BUILTIN_OBJ_MODELS[bKey], 1.0, bKey);
+                this.objMeshes3D[cacheKey] = customMesh;
+            }
+            if (customMesh && customMesh.vertices.length) {
+                meshType = 'obj';
+                sx = Math.max(0.8, (customMesh.size[0] || 2) * scaleVal);
+                sy = Math.max(0.8, (customMesh.size[1] || 2) * scaleVal);
+                sz = Math.max(0.8, (customMesh.size[2] || 2) * scaleVal);
+            }
+        }
+
         const ent = {
             id: this.entities3D.length + 1,
-            type: kind,
+            type: (kind === 'obj' && objSpec) ? 'obj' : kind,
             meshType: meshType,
+            objFile: objSpec,
+            csClass: csClass,
+            tag: args.tag || kind,
+            doubleSided: Boolean(args.double_sided || kind === 'ring' || kind === 'portal' || String(objSpec).includes('gate')),
+            scaleVal: scaleVal,
             name: args.name || args.label || (kind === 'player' ? 'AngelPilot3D' : (kind === 'boss' ? 'OMEGA TITAN 3D' : kind)),
             label: args.label || args.name || '',
             isPlayer: kind === 'player',
@@ -3822,17 +4593,54 @@ export class LoopingInterpreter {
             mesh: null
         };
 
-        ent.mesh = this.buildMesh3D(ent.meshType, ent.sx, ent.sy, ent.sz);
+        ent.mesh = customMesh
+            ? {
+                vertices: customMesh.vertices.map(v => [v[0] * scaleVal, v[1] * scaleVal, v[2] * scaleVal]),
+                faces: customMesh.faces
+            }
+            : this.buildMesh3D(ent.meshType, ent.sx, ent.sy, ent.sz);
         this.entities3D.push(ent);
+
+        if (csClass && this.csharpBridge.classes[csClass]) {
+            this.csharpBridge.instantiate(csClass, `${ent.name}_cs`, ent.name);
+        }
 
         if (ent.isPlayer) {
             this.camera3D.x = ent.x - Math.sin(ent.yaw) * this.camera3D.distance;
             this.camera3D.y = ent.y + this.camera3D.heightOffset;
             this.camera3D.z = ent.z - Math.cos(ent.yaw) * this.camera3D.distance;
             this.log(`🚀 [ENTITY 3D] Protagonista 3D "${ent.name}" en (${px}, ${py}, ${pz}) [Mesh: ${ent.meshType}]`, 'info');
+        } else if (kind === 'obj' || objSpec) {
+            const triCnt = ent.mesh?.faces ? ent.mesh.faces.length : 0;
+            this.log(`🛸 [OBJ 3D] "${ent.name}" (${objSpec || ent.meshType}) en (${px}, ${py}, ${pz}) | Faces: ${triCnt}${csClass ? ` | C#: ${csClass}` : ''}`, 'info');
         } else if (kind === 'boss' || kind === 'enemy' || kind === 'portal' || kind === 'checkpoint') {
             this.log(`✨ [ENTITY 3D] ${kind.toUpperCase()} "${ent.name}" en (${px}, ${py}, ${pz})`, 'info');
         }
+    }
+
+    spawnObjEntity3D(opts = {}) {
+        const name = String(opts.name || 'ObjEntity');
+        const objSpec = String(opts.obj || opts.model || 'starfighter.obj');
+        const at = Array.isArray(opts.at) ? opts.at : [0, 2, 0];
+        const scale = opts.scale !== undefined ? Number(opts.scale) : 1.0;
+        const color = opts.color || '#38bdf8';
+        const hp = opts.health !== undefined ? Number(opts.health) : 100;
+        const cs = opts.cs ? `, cs: "${opts.cs}"` : '';
+        const tag = opts.type ? `, tag: "${opts.type}"` : '';
+        this.parseSpawn3DDirective(
+            `spawn3d.obj("${name}", obj: "${objSpec}", at: (${at[0] || 0}, ${at[1] ?? 2}, ${at[2] || 0}), scale: ${scale}, color: "${color}", health: ${hp}${tag}${cs})`
+        );
+        return this.entities3D.length;
+    }
+
+    spawnObjEntity3D(opts = {}) {
+        const at = opts.at || [0, 2, 0];
+        const parts = [`"${opts.name || 'ObjEntity'}"`, `obj: "${opts.obj || 'starfighter'}"`, `at: (${at[0] || 0}, ${at[1] || 2}, ${at[2] || 0})`];
+        if (opts.scale !== undefined) parts.push(`scale: ${opts.scale}`);
+        if (opts.color) parts.push(`color: "${opts.color}"`);
+        if (opts.cs) parts.push(`cs: "${opts.cs}"`);
+        if (opts.health !== undefined) parts.push(`health: ${opts.health}`);
+        this.parseSpawn3DDirective(`spawn3d.obj(${parts.join(', ')})`);
     }
 
     evaluate3DBuiltin(expr) {
@@ -3924,12 +4732,176 @@ export class LoopingInterpreter {
                     effective_hz: 60 * this.physics3D.substeps
                 };
             }
+
+            // ── Wavefront .obj Pipeline (obj3d.* / mesh3d.*) ──
+            if (fn === 'obj3d.load' || fn === 'mesh3d.load') {
+                const src = String(parts[0] || 'starfighter');
+                const key = String(parts[1] || src);
+                const bKey = resolveBuiltinOBJKey(src) || 'starfighter';
+                const mesh = parseWavefrontOBJ(BUILTIN_OBJ_MODELS[bKey] || '', 1.0, bKey);
+                this.objMeshes3D[key] = mesh;
+                return { ok: true, path: src, name: mesh.name, vertices: mesh.vertices.length, faces: mesh.faces.length, triangles: mesh.triangles, bounding_radius: mesh.boundingRadius, size: mesh.size };
+            }
+            if (fn === 'obj3d.parse' || fn === 'mesh3d.parse') {
+                const key = String(parts[1] || `obj_${Object.keys(this.objMeshes3D).length + 1}`);
+                const mesh = parseWavefrontOBJ(String(parts[0] || ''), 1.0, key);
+                this.objMeshes3D[key] = mesh;
+                return { ok: true, name: key, vertices: mesh.vertices.length, faces: mesh.faces.length, triangles: mesh.triangles, bounding_radius: mesh.boundingRadius, size: mesh.size };
+            }
+            if (fn === 'obj3d.subdivide' || fn === 'mesh3d.subdivide') {
+                const key = String(parts[0] || '');
+                if (this.objMeshes3D[key]) {
+                    this.objMeshes3D[key] = subdivideOBJMesh(this.objMeshes3D[key]);
+                    return this.objMeshes3D[key].faces.length;
+                }
+                return 0;
+            }
+            if (fn === 'obj3d.normalize' || fn === 'mesh3d.normalize') {
+                const key = String(parts[0] || '');
+                const tgt = Number(parts[1] || 2.0);
+                if (this.objMeshes3D[key]) {
+                    normalizeOBJMesh(this.objMeshes3D[key], tgt);
+                    return this.objMeshes3D[key].boundingRadius;
+                }
+                return 0;
+            }
+            if (fn === 'obj3d.export' || fn === 'mesh3d.export_obj') {
+                const key = String(parts[0] || '');
+                const m = this.objMeshes3D[key] || parseWavefrontOBJ(BUILTIN_OBJ_MODELS[resolveBuiltinOBJKey(key) || 'starfighter'], 1.0, key);
+                return exportWavefrontOBJ(m);
+            }
+            if (fn === 'obj3d.stats' || fn === 'mesh3d.stats') {
+                const key = String(parts[0] || '');
+                const m = this.objMeshes3D[key];
+                return m ? { name: m.name, vertices: m.vertices.length, faces: m.faces.length, triangles: m.triangles, bounding_radius: m.boundingRadius, size: m.size } : {};
+            }
+            if (fn === 'obj3d.spawn' || fn === 'mesh3d.spawn_obj') {
+                return this.spawnObjEntity3D({
+                    name: String(parts[0] || 'ObjMesh'),
+                    obj: String(parts[1] || 'starfighter.obj'),
+                    at: [Number(parts[2] || 0), Number(parts[3] ?? 2), Number(parts[4] || 0)],
+                    scale: parts[5] !== undefined ? Number(parts[5]) : 1.4,
+                    color: parts[6] ? String(parts[6]) : '#38bdf8',
+                    cs: parts[7] ? String(parts[7]) : ''
+                });
+            }
+
+            // ── C# Bridge Builtins (csharp.* / cs.* / runcs / cs!) ──
+            if (fn === 'cs!') {
+                return this.csharpBridge.evalExpr(rawArgs);
+            }
+            if (fn === 'runcs') {
+                const snipKey = rawArgs.replace(/['"]/g, '').trim();
+                const code = this.csharpBridge.snippets[snipKey] || String(parts[0] || '');
+                return this.csharpBridge.executeBlock(code);
+            }
+            if (fn === 'csharp.new' || fn === 'cs.new' || fn === 'csharp.attach' || fn === 'csharp.instantiate') {
+                return this.csharpBridge.instantiate(String(parts[0] || ''), String(parts[1] || ''), String(parts[2] || parts[1] || ''));
+            }
+            if (fn === 'csharp.call' || fn === 'cs.call') {
+                return this.csharpBridge.callMethod(String(parts[0] || ''), String(parts[1] || 'Update'), parts.slice(2));
+            }
+            if (fn === 'csharp.step' || fn === 'cs.step') {
+                return this.csharpBridge.stepAll(Number(parts[0] ?? 1 / 60));
+            }
+            if (fn === 'csharp.get' || fn === 'cs.get') {
+                const inst = this.csharpBridge.instances[String(parts[0] || '')];
+                return inst ? inst.fields[String(parts[1] || '')] : undefined;
+            }
+            if (fn === 'csharp.set' || fn === 'cs.set') {
+                const inst = this.csharpBridge.instances[String(parts[0] || '')];
+                if (inst) { inst.fields[String(parts[1] || '')] = parts[2]; return parts[2]; }
+                return undefined;
+            }
+            if (fn === 'csharp.classes' || fn === 'cs.classes') {
+                return Object.keys(this.csharpBridge.classes);
+            }
+            if (fn === 'csharp.export' || fn === 'cs.export') {
+                return this.csharpBridge.exportScene(String(parts[0] || 'LoopizeGeneratedGame'));
+            }
+
+            // ── loopize++ Game Additions Builtins (loopize.* / lz.* / lz_* / ecs.*) ──
+            if (fn === 'lz_banner') {
+                this.log(`⚡ [loopize++ v1.0.0] Game Additions Engine Ready -> ${parts[0] || ''}`, 'success');
+                return true;
+            }
+            if (fn === 'loopize.ecs_spawn' || fn === 'lz.ecs_spawn' || fn === 'ecs.spawn' || fn === 'lz_spawn_obj') {
+                return this.loopize.ecsSpawn(String(parts[0] || 'Entity'), String(parts[1] || 'entity'), parts[2] || [0, 2, 0], Number(parts[3] ?? 100), String(parts[4] || ''), String(parts[5] || ''));
+            }
+            if (fn === 'loopize.spatial_radius' || fn === 'lz.spatial_radius') {
+                return this.loopize.spatialRadius(toV3(parts[0]), Number(parts[1] || 5), String(parts[2] || ''));
+            }
+            if (fn === 'lz_wave_rush') {
+                this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[2] || 3), Number(parts[3] || 90), String(parts[1] || 'valkyrie'), String(parts[4] || 'valkyrie_drone.obj'));
+                return this.loopize.waveSpawn(Number(parts[0] || 1));
+            }
+            if (fn === 'loopize.wave_define' || fn === 'lz.wave_define') {
+                return this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[1] || 4), Number(parts[2] || 80), String(parts[3] || 'valkyrie'), String(parts[4] || 'valkyrie_drone.obj'));
+            }
+            if (fn === 'loopize.wave_spawn' || fn === 'lz.wave_spawn') {
+                return this.loopize.waveSpawn(Number(parts[0] || 1));
+            }
+            if (fn === 'loopize.fsm_set' || fn === 'lz.fsm_set' || fn === 'lz_fsm') {
+                this.loopize.fsm[String(parts[0] || 'hero')] = String(parts[1] || 'idle');
+                return this.loopize.fsm[String(parts[0] || 'hero')];
+            }
+            if (fn === 'loopize.fsm_get' || fn === 'lz.fsm_get') {
+                return this.loopize.fsm[String(parts[0] || 'hero')] || 'idle';
+            }
+            if (fn === 'loopize.combo_hit' || fn === 'lz.combo_hit' || fn === 'lz_hit_combo') {
+                if (parts[1] !== undefined) this.loopize.shake(Number(parts[1]));
+                return this.loopize.comboHit(Number(parts[0] || 100));
+            }
+            if (fn === 'loopize.ease' || fn === 'lz.ease' || fn === 'lz_ease') {
+                return this.loopize.ease(String(parts[0] || 'out_cubic'), Number(parts[1] || 0));
+            }
+            if (fn === 'loopize.shake' || fn === 'lz.shake' || fn === 'loopize.camera_shake') {
+                return this.loopize.shake(Number(parts[0] || 0.4));
+            }
+            if (fn === 'loopize.camera_update' || fn === 'lz.camera_update') {
+                this.loopize.tick(Number(parts[1] || 0.016));
+                return [this.camera3D.x, this.camera3D.y, this.camera3D.z];
+            }
+            if (fn === 'loopize.inventory_add' || fn === 'lz.inventory_add') {
+                const k = String(parts[0] || 'item');
+                this.loopize.inventory[k] = (this.loopize.inventory[k] || 0) + Number(parts[1] || 1);
+                return this.loopize.inventory[k];
+            }
+            if (fn === 'loopize.inventory_use' || fn === 'lz.inventory_use') {
+                const k = String(parts[0] || 'item'), amt = Number(parts[1] || 1);
+                if ((this.loopize.inventory[k] || 0) >= amt) { this.loopize.inventory[k] -= amt; return true; }
+                return false;
+            }
+            if (fn === 'loopize.quest_add' || fn === 'lz.quest_add' || fn === 'lz_mission') {
+                return this.loopize.questAdd(String(parts[0] || 'q1'), String(parts[1] || 'Quest'), Number(parts[2] || 1), Number(parts[3] || 500));
+            }
+            if (fn === 'loopize.quest_progress' || fn === 'lz.quest_progress') {
+                return this.loopize.questProgress(String(parts[0] || 'q1'), Number(parts[1] || 1));
+            }
+            if (fn === 'loopize.stats' || fn === 'lz.stats' || fn === 'lz_report') {
+                const st = this.loopize.stats();
+                this.log(`📊 [loopize++] ECS=${st.ecs_count} | Waves=${st.waves_total} | Combo x${st.combo_mult} | Lvl ${st.level} (${st.xp} XP)`, 'info');
+                return st;
+            }
         } catch (e) {}
         return 0;
     }
 
-    // ── Procedural 3D Mesh Synthesis (Zero External Assets) ──
+    // ── Procedural & Wavefront .obj 3D Mesh Synthesis ──
     buildMesh3D(meshType, sx, sy, sz) {
+        const builtinKey = resolveBuiltinOBJKey(meshType);
+        if (builtinKey && BUILTIN_OBJ_MODELS[builtinKey]) {
+            const parsed = parseWavefrontOBJ(BUILTIN_OBJ_MODELS[builtinKey], 1.0, builtinKey);
+            const rx = (sx || 2) / Math.max(parsed.size[0] || 1, 0.25);
+            const ry = (sy || 2) / Math.max(parsed.size[1] || 1, 0.25);
+            const rz = (sz || 2) / Math.max(parsed.size[2] || 1, 0.25);
+            const sc = Math.min(rx, ry, rz);
+            return {
+                vertices: parsed.vertices.map(v => [v[0] * sc, v[1] * sc, v[2] * sc]),
+                faces: parsed.faces
+            };
+        }
+
         const hx = sx * 0.5, hy = sy * 0.5, hz = sz * 0.5;
         const vertices = [];
         const faces = [];
@@ -4223,6 +5195,10 @@ export class LoopingInterpreter {
 
         const steps = Math.max(1, Math.min(16, this.physics3D.substeps || 4));
         const sdt = dt / steps;
+        if (this.loopize) this.loopize.tick(dt);
+        if (this.csharpBridge && Object.keys(this.csharpBridge.instances).length > 0) {
+            this.csharpBridge.stepAll(dt);
+        }
 
         for (let step = 0; step < steps; step++) {
             // 1. Step Moving Platforms & Rotating Collectibles/Portals
@@ -4982,8 +5958,8 @@ export class LoopingInterpreter {
                 const wn = rotVec(face.nx, face.ny, face.nz);
                 const toCamX = ex - fcx, toCamY = ey - fcy, toCamZ = ez - fcz;
 
-                // Backface Culling (allow double-sided on rings & portals)
-                if (ent.type !== 'ring' && ent.type !== 'portal') {
+                // Backface Culling (allow double-sided on rings, portals & doubleSided .obj models)
+                if (ent.type !== 'ring' && ent.type !== 'portal' && !ent.doubleSided) {
                     if (wn[0] * toCamX + wn[1] * toCamY + wn[2] * toCamZ <= -0.05) continue;
                 }
 

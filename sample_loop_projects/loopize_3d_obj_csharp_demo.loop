@@ -1,0 +1,72 @@
+// ═══════════════════════════════════════════════════════════════════════
+//  loopize++ 3D Showcase: Wavefront .OBJ Models + C# MonoBehaviour + ECS
+//  Run: ./bin/looping sample_loop_projects/loopize_3d_obj_csharp_demo.loop
+//  Preview 3D: ./bin/looping preview3d sample_loop_projects/loopize_3d_obj_csharp_demo.loop
+// ═══════════════════════════════════════════════════════════════════════
+
+use "loopize++"
+use "csharp"
+
+define game3d "Loopize++ Starfleet Arena" version 3.0:
+    scene3d.world(name: "Orbit Sector 7", size: (220, 100, 220), sky: "nebula_void", fog: 0.007, grid: true)
+    camera3d.set(mode: "chase", pos: (0, 8.5, -16), target: (0, 2, 16), fov: 65, smooth: 0.14)
+    light3d.directional(dir: (-0.42, -0.92, -0.35), color: "#f8fafc", intensity: 1.15)
+    light3d.point(at: (0, 10, 18), color: "#38bdf8", intensity: 1.5, range: 65)
+    physics3d.config(gravity: -26.0, substeps: 4, friction: 0.86, bounce: 0.12)
+
+    // Embedded C# MonoBehaviour driving entity rotation & shield telemetry
+    cs! {
+        public class StarfighterPilot : MonoBehaviour {
+            public float Shield = 100.0f;
+            public int Pulses = 0;
+
+            public void Start() {
+                LoopingBridge.Set("cs_pilot_ready", true);
+                Console.WriteLine("[C# Start] StarfighterPilot online.");
+            }
+
+            public void Update(float dt) {
+                Scene3D.Rotate("Starfighter01", 0.0f, dt * 45.0f, 0.0f);
+                Shield = Mathf.Clamp(Shield + dt * 5.0f, 0.0f, 100.0f);
+                Pulses = Pulses + 1;
+                LoopingBridge.Set("cs_shield", Shield);
+            }
+        }
+    }
+
+    // 1. Load & prepare Wavefront .obj assets
+    val sf_mesh = obj3d.load("assets/models/starfighter.obj", "starfighter")
+    val titan_mesh = obj3d.load("assets/models/omega_titan.obj", "titan")
+    val crystal_mesh = obj3d.load("assets/models/cyber_crystal.obj", "crystal")
+    val gate_mesh = obj3d.load("assets/models/star_gate.obj", "gate")
+    val norm_ext = obj3d.normalize("starfighter", 2.4)
+    val sub_faces = obj3d.subdivide("crystal")
+    out($"🛸 OBJ Fleet Loaded -> Starfighter tris: {sf_mesh.triangles} (norm: {norm_ext}) | Titan tris: {titan_mesh.triangles} | Crystal subdiv faces: {sub_faces}")
+
+    // 2. Spawn 3D .obj entities and attach C# script
+    spawn3d.obj("Starfighter01", obj: "assets/models/starfighter.obj", at: (0, 2.2, 6), scale: 1.5, color: "#38bdf8", cs: "StarfighterPilot")
+    spawn3d.obj("TitanFlagship", obj: "assets/models/omega_titan.obj", at: (0, 3.0, 26), scale: 1.6, color: "#f43f5e")
+    spawn3d.obj("EnergyCrystal", obj: "assets/models/cyber_crystal.obj", at: (-4, 2.5, 14), scale: 1.4, color: "#fbbf24")
+    spawn3d.obj("WarpGate", obj: "assets/models/star_gate.obj", at: (0, 4.0, 44), scale: 2.0, color: "#c084fc", double_sided: true)
+
+    // 3. loopize++ Game Additions: ECS, Spatial Query, Wave Director, FSM, Tweens, Combo & Quests
+    lz_banner("Orbit Sector 7")
+    val hero_ecs = loopize.ecs_spawn("Starfighter01", "player", [0, 2.2, 6], 150, "starfighter.obj", "StarfighterPilot")
+    val near_threats = loopize.spatial_radius([0, 2.2, 6], 30.0, "enemy")
+    val wave_cnt = lz_wave_rush(1, "valkyrie", 3, 95, "valkyrie_drone.obj")
+    lz_fsm("hero", "overdrive")
+    lz_tween("shield_boost", 50.0, 100.0, 0.5, "out_cubic")
+    val hit_pts = lz_hit_combo(250, 0.35)
+    lz_mission("m_sector7", "Clear Valkyrie Squad", 3, 750)
+    loopize.quest_progress("m_sector7", 3)
+    loopize.inventory_add("ion_cell", 4)
+    val used_cell = loopize.inventory_use("ion_cell", 1)
+
+    // 4. Step simulation (loopize++ + C# Update + Scene3D) & raycast check
+    lz_step(0.25)
+    val ray = physics3d.raycast_scene([0, 2.5, 0], [0, 0, 1])
+    val cs_code = csharp.export("OrbitSector7Arena")
+    val stats = lz_report()
+
+    out($"⚡ C# Shield={cs_shield} | Ready={cs_pilot_ready} | Wave={wave_cnt} | ComboPts={hit_pts} | RayHit={ray.entity}@{ray.distance}m | ExportBytes={cs_code.length()}")
+    out scene3d.render_tui(74, 18)

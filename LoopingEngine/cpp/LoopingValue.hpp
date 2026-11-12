@@ -45,6 +45,10 @@ public:
     Value(const std::vector<Value>& l) : type(ValueType::List), list_val(std::make_shared<std::vector<Value>>(l)) {}
     Value(const std::unordered_map<std::string, Value>& m) : type(ValueType::Map), map_val(std::make_shared<std::unordered_map<std::string, Value>>(m)) {}
 
+    static Value nil() { return Value(); }
+    bool equals(const Value& other) const { return *this == other; }
+    std::string to_string() const { return as_string(); }
+
     // Truthiness
     bool is_truthy() const {
         switch (type) {

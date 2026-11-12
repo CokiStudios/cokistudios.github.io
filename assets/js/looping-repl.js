@@ -212,7 +212,46 @@ define game3d "Cyber Odyssey 3D" version 3.0:
     spawn3d.boss("OMEGA TITAN 3D", at: (0, 9.4, 132), range: (-9, 9), speed: 11, health: 450, color: "#f43f5e")
     spawn3d.portal(at: (0, 10.2, 145), radius: 3.4, label: "OMEGA NEXUS", color: "#c084fc")
 
-    print("✔ Motor 3D Activo: [WASD] Mover • [Espacio] Doble Salto • [Shift/X] Hyper-Dash • [Z/Clic] Plasma • [C] Cámara")`
+    print("✔ Motor 3D Activo: [WASD] Mover • [Espacio] Doble Salto • [Shift/X] Hyper-Dash • [Z/Clic] Plasma • [C] Cámara")`,
+
+        loopize3d: `// ⚡ 8. loopize++: Wavefront .OBJ Models + C# MonoBehaviour + ECS & Wave Director
+use "loopize++"
+use "csharp"
+
+define game3d "Loopize++ Starfleet Arena" version 3.0:
+    scene3d.world(name: "Orbit Sector 7", size: (220, 100, 220), sky: "nebula_void", fog: 0.007, grid: true)
+    camera3d.set(mode: "chase", pos: (0, 8.5, -16), target: (0, 2, 14), fov: 65, smooth: 0.14)
+    light3d.directional(dir: (-0.4, -0.9, -0.35), color: "#f8fafc", intensity: 1.15)
+    light3d.point(at: (0, 10, 20), color: "#38bdf8", intensity: 1.5, range: 65)
+
+    cs! {
+        public class StarfighterPilot : MonoBehaviour {
+            public float Shield = 100.0f;
+            public void Start() {
+                LoopingBridge.Set("cs_pilot_ready", true);
+            }
+            public void Update(float dt) {
+                Scene3D.Rotate("Starfighter01", 0.0f, dt * 42.0f, 0.0f);
+                Shield = Mathf.Clamp(Shield + dt * 4.0f, 0.0f, 100.0f);
+            }
+        }
+    }
+
+    val sf_mesh := obj3d.load("starfighter.obj", "starfighter")
+    print($"🛸 OBJ Cargado: {sf_mesh.name} | Tris: {sf_mesh.triangles} | Norm Radio: {sf_mesh.bounding_radius}")
+
+    spawn3d.player("Starfighter01", at: (0, 2.2, 4), obj: "starfighter.obj", scale: 1.6, color: "#38bdf8", cs: "StarfighterPilot")
+    spawn3d.box(at: (0, -0.6, 18), size: (26, 1.2, 42), color: "#312e81")
+    spawn3d.obj("TitanFlagship", obj: "omega_titan.obj", at: (0, 5.2, 34), scale: 1.8, color: "#f43f5e")
+    spawn3d.obj("WarpGate", obj: "star_gate.obj", at: (0, 4.5, 52), scale: 2.0, color: "#c084fc")
+
+    lz_banner("Orbit Sector 7")
+    val wave_cnt := lz_wave_rush(1, "valkyrie", 4, 90, "valkyrie_drone.obj")
+    val hit_pts := lz_hit_combo(200, 0.35)
+    lz_mission("m_sector", "Purgar Escuadrón Valkyrie", 4, 650)
+    loopize.quest_progress("m_sector", 4)
+    val st := lz_report()
+    print($"[loopize++ & C#] Wave={wave_cnt} | ComboPts={hit_pts} | CS Ready={cs_pilot_ready} | Level={st.level}")`
     };
 
     // Helper: CRC-32 IEEE 802.3 in Browser
@@ -485,6 +524,12 @@ define game3d "Cyber Odyssey 3D" version 3.0:
                     let inner = expr.slice(2, -1);
                     return inner.replace(/\{([^}]+)\}/g, (_, k) => {
                         const trimmedK = k.trim();
+                        if (trimmedK.includes('.')) {
+                            const [objK, propK] = trimmedK.split('.');
+                            if (variables[objK] && typeof variables[objK] === 'object' && variables[objK][propK] !== undefined) {
+                                return variables[objK][propK];
+                            }
+                        }
                         if (variables[trimmedK] !== undefined) {
                             const v = variables[trimmedK];
                             return Array.isArray(v) ? `[${v.join(', ')}]` : v;
@@ -703,11 +748,32 @@ define game3d "Cyber Odyssey 3D" version 3.0:
             let inMatch = false;
             let matchVal = null;
             let matchHandled = false;
+            let inCsBlock = false;
+            let csDepth = 0;
 
             for (let rawLine of lines) {
                 let line = rawLine.trim();
-                if (!line || line.startsWith('//')) continue;
+                if (!line || line.startsWith('//') || line.startsWith('#')) continue;
                 astNodes++;
+
+                if (inCsBlock) {
+                    for (const ch of rawLine) { if (ch === '{') csDepth++; else if (ch === '}') csDepth--; }
+                    if (csDepth <= 0 || line === 'cs:end') inCsBlock = false;
+                    continue;
+                }
+                if (line.startsWith('cs! {') || line.startsWith('csharp! {')) {
+                    inCsBlock = true;
+                    csDepth = 0;
+                    for (const ch of rawLine) { if (ch === '{') csDepth++; else if (ch === '}') csDepth--; }
+                    if (csDepth <= 0) inCsBlock = false;
+                    variables['cs_pilot_ready'] = true;
+                    logs.push('  [C# BRIDGE] Clase MonoBehaviour registrada en CSharpMiniVM');
+                    continue;
+                }
+                if (line.startsWith('lz_banner(')) {
+                    logs.push('  ⚡ [loopize++] Game Additions Engine Online');
+                    continue;
+                }
 
                 if (inMatch) {
                     if (line === '}') {
@@ -817,7 +883,7 @@ define game3d "Cyber Odyssey 3D" version 3.0:
             const elapsed = Math.max(0.04, (endTime - startTime) * 0.12).toFixed(3);
 
             // 2D & 3D Quantum Game Runtime Detection & Interactive Canvas Mounting
-            const is3DGameCode = /define\s+game3d|@game3d|scene3d\.|spawn3d\.|camera3d\.|light3d\.|physics3d\.|game\.mode\(\s*["']3d["']\s*\)/i.test(code);
+            const is3DGameCode = /define\s+game3d|@game3d|scene3d\.|spawn3d\.|camera3d\.|light3d\.|physics3d\.|obj3d\.|use\s+"loopize\+\+"|game\.mode\(\s*["']3d["']\s*\)/i.test(code);
             const isGameCode = is3DGameCode || /spawn|game\.|loop\.engine|define game/i.test(code);
             const gameContainer = document.getElementById('repl-game-container');
             const gameCanvas = document.getElementById('repl-game-canvas');

@@ -1,0 +1,58 @@
+// ═══════════════════════════════════════════════════════════════════════
+//  loopize++ Standard Game Additions Library v1.0 (Arch 3.0A)
+//  Loaded via: use "loopize++"  OR  import loopize++
+// ═══════════════════════════════════════════════════════════════════════
+
+val LOOPIZE_VERSION = "1.0.0"
+
+fn lz_banner(title = "Loopize++ 3D Arena") {
+    loopize.init(title)
+    out($"⚡ [loopize++ v{LOOPIZE_VERSION}] Game Additions Engine Ready -> {title}")
+    return true
+}
+
+fn lz_spawn_obj(name, obj_path, x = 0, y = 2, z = 0, scale = 1.5, color = "#38bdf8", cs_class = "") {
+    return obj3d.spawn(name, obj_path, x, y, z, scale, color, cs_class)
+}
+
+fn lz_wave_rush(wave_num = 1, enemy_kind = "valkyrie", count = 3, hp = 85, model = "valkyrie_drone.obj") {
+    loopize.wave_add(wave_num, enemy_kind, count, hp, 18.0, model)
+    return loopize.wave_next()
+}
+
+fn lz_hit_combo(base_pts = 150, trauma = 0.25) {
+    val pts = loopize.combo_hit(base_pts)
+    loopize.shake(trauma)
+    return pts
+}
+
+fn lz_mission(id, title, target = 3, xp = 300) {
+    loopize.quest_add(id, title, target, xp)
+    return true
+}
+
+fn lz_ease(curve = "out_cubic", t = 0.5) {
+    return loopize.ease(curve, t)
+}
+
+fn lz_tween(key = "t1", from_v = 0.0, to_v = 1.0, dur = 1.0, curve = "out_cubic") {
+    return loopize.tween(key, from_v, to_v, dur, curve)
+}
+
+fn lz_fsm(key = "hero", state = "idle") {
+    return loopize.fsm_set(key, state)
+}
+
+fn lz_step(dt = 0.016) {
+    return loopize.step(dt)
+}
+
+fn lz_collide(entity_a, entity_b) {
+    return physics3d.collide_entities(entity_a, entity_b)
+}
+
+fn lz_report() {
+    val st = loopize.stats()
+    out($"📊 [loopize++] ECS={st.ecs_count} | Waves={st.waves_total} | Combo x{st.combo_mult} | Lvl {st.level} ({st.xp} XP)")
+    return st
+}

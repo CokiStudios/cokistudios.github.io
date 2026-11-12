@@ -4,6 +4,8 @@
 #include "LoopingAST.hpp"
 #include "LoopingParser.hpp"
 #include "LoopingPythonBridge.hpp"
+#include "LoopingCSharpBridge.hpp"
+#include "LoopizeCore.hpp"
 #include "LoopingCompiler.hpp"
 #include <iostream>
 #include <fstream>
@@ -194,6 +196,10 @@ public:
     std::string theme = "frosted_aqua_a17";
     UIProfileSpecs active_ui_specs = resolve_ui_profile("xui");
     PythonBridge python_bridge;
+    CSharpBridge csharp_bridge;
+    std::unordered_map<std::string, std::string> csharp_snippets;
+    std::unordered_map<std::string, loop_math::Mesh3D> loaded_obj_meshes;
+    loopize::LoopizeRuntime loopize_runtime;
     DynamicWindow current_window;
     std::string last_exported_native_script = "";
     bool has_active_window = false;
@@ -482,6 +488,25 @@ public:
         }
 
         return Value(out);
+    }
+
+    Value execute_runcs(const std::vector<std::shared_ptr<Expr>>& args) {
+        if (args.empty()) {
+            std::cerr << color::RED << "[ERROR]" << color::RESET << " runcs expects a snippet name or expression\n";
+            return Value();
+        }
+        std::string cs_code = "";
+        if (auto var = std::dynamic_pointer_cast<VariableExpr>(args[0])) {
+            auto it = csharp_snippets.find(var->name);
+            if (it != csharp_snippets.end()) cs_code = it->second;
+            else cs_code = eval(args[0]).as_string();
+        } else {
+            std::string s = eval(args[0]).as_string();
+            auto it = csharp_snippets.find(s);
+            cs_code = (it != csharp_snippets.end()) ? it->second : s;
+        }
+        if (cs_code.empty()) return Value();
+        return csharp_bridge.execute_block(cs_code, variables, &current_scene3d);
     }
 
     Interpreter() {
@@ -776,9 +801,12 @@ public:
             return Value(out);
         }
 
-        // 5. Python Inline: py: math.sqrt(16) * 1.5
+        // 5. Python & C# Inline: py!(...) / cs!(...) / @cs(...)
         if (auto py_expr = std::dynamic_pointer_cast<PyInlineExpr>(expr)) {
             return python_bridge.eval_expr(py_expr->py_code, variables);
+        }
+        if (auto cs_expr = std::dynamic_pointer_cast<CSharpInlineExpr>(expr)) {
+            return csharp_bridge.evaluate_inline(cs_expr->cs_code, variables, &current_scene3d);
         }
 
         // 5b. Ternary Conditional Expression: cond ? then_expr : else_expr
@@ -893,6 +921,10 @@ public:
                     obj_var != "game_plus" && obj_var != "utils" && obj_var != "core_utils" &&
                     obj_var != "ai" && obj_var != "sound" && obj_var != "audio" &&
                     obj_var != "cpp_snippets" &&
+                    obj_var != "obj3d" && obj_var != "mesh3d" && obj_var != "csharp" && obj_var != "cs" &&
+                    obj_var != "loopize" && obj_var != "lz" && obj_var != "ecs" &&
+                    obj_var != "scene3d" && obj_var != "math3d" && obj_var != "physics3d" &&
+                    obj_var != "camera3d" && obj_var != "light3d" &&
                     obj_var != "str" && obj_var != "base64" && obj_var != "env" && obj_var != "button") {
                     if (method_name == "push" || method_name == "append") {
                         if (!evaluated_args.empty()) vit->second.push(evaluated_args[0]);
@@ -921,9 +953,12 @@ public:
                 }
             }
 
-            // pyloop runpy
+            // pyloop runpy & C# runcs
             if (name == "runpy") {
                 return execute_runpy(call->args);
+            }
+            if (name == "runcs") {
+                return execute_runcs(call->args);
             }
 
             // Builtin Math Functions
@@ -3344,7 +3379,9 @@ public:
                 for (const auto& e : current_scene3d.entities) {
                     if (e.type == "player" || e.type == "terrain") continue;
                     loop_math::RayHit3D r;
-                    if (e.type == "sphere" || e.type == "crystal" || e.type == "ring" || e.type == "portal") {
+                    if (e.has_custom_mesh && !e.custom_mesh.vertices.empty()) {
+                        r = loop_math::raycast_mesh(orig, dir, e.custom_mesh, e.pos, e.rot_deg, e.scale);
+                    } else if (e.type == "sphere" || e.type == "crystal" || e.type == "ring" || e.type == "portal") {
                         r = loop_math::raycast_sphere(orig, dir, e.pos, e.radius);
                     } else {
                         r = loop_math::raycast_aabb(orig, dir, e.pos, e.size);
@@ -3364,6 +3401,26 @@ public:
                 m["point"] = vec3_to_val(best.point);
                 m["normal"] = vec3_to_val(best.normal);
                 return Value(m);
+            }
+            if (name == "physics3d.collide_entities") {
+                std::string a_name = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string b_name = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                const loop_math::Entity3D *ea = nullptr, *eb = nullptr;
+                for (const auto& e : current_scene3d.entities) {
+                    if (e.name == a_name) ea = &e;
+                    if (e.name == b_name) eb = &e;
+                }
+                std::unordered_map<std::string, Value> hm;
+                if (ea && eb) {
+                    auto h = loop_math::collide_entities_aabb(*ea, *eb);
+                    hm["collided"] = Value(h.collided);
+                    hm["penetration"] = Value(h.penetration);
+                    hm["normal"] = vec3_to_val(h.normal);
+                    hm["other"] = Value(h.other_name);
+                } else {
+                    hm["collided"] = Value(false);
+                }
+                return Value(hm);
             }
             if (name == "physics3d.step_body" || name == "game3d.step_body") {
                 loop_math::RigidBody3DState b;
@@ -3427,6 +3484,405 @@ public:
                 current_scene3d.clear();
                 current_window.entities_3d.clear();
                 return Value(true);
+            }
+
+            // 4b. Wavefront .OBJ & Mesh3D Geometry Pipeline (obj3d.* / mesh3d.*)
+            if (name == "obj3d.load" || name == "mesh3d.load_obj") {
+                std::string path = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string alias = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : path;
+                loop_math::Mesh3D m = loop_math::load_obj_file(path);
+                if (m.vertices.empty()) m = loop_math::make_preset_obj_mesh(path);
+                loaded_obj_meshes[alias] = m;
+                loaded_obj_meshes[path] = m;
+                std::unordered_map<std::string, Value> res;
+                res["ok"] = Value(!m.vertices.empty());
+                res["name"] = Value(m.name);
+                res["path"] = Value(m.source_path.empty() ? path : m.source_path);
+                res["vertices"] = Value(static_cast<int64_t>(m.vertices.size()));
+                res["faces"] = Value(static_cast<int64_t>(m.faces.size()));
+                res["triangles"] = Value(static_cast<int64_t>(m.triangle_count()));
+                res["normals"] = Value(static_cast<int64_t>(m.normals.size()));
+                res["uvs"] = Value(static_cast<int64_t>(m.uvs.size()));
+                res["bounding_radius"] = Value(m.bounding_radius);
+                res["size"] = vec3_to_val(m.size);
+                res["center"] = vec3_to_val(m.center);
+                return Value(res);
+            }
+            if (name == "obj3d.parse" || name == "mesh3d.parse") {
+                std::string raw = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string key = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : ("obj_" + std::to_string(loaded_obj_meshes.size() + 1));
+                loop_math::Mesh3D m = loop_math::parse_obj_string(raw, key);
+                loaded_obj_meshes[key] = m;
+                std::unordered_map<std::string, Value> res;
+                res["name"] = Value(key);
+                res["vertices"] = Value(static_cast<int64_t>(m.vertices.size()));
+                res["faces"] = Value(static_cast<int64_t>(m.faces.size()));
+                res["triangles"] = Value(static_cast<int64_t>(m.triangle_count()));
+                res["bounding_radius"] = Value(m.bounding_radius);
+                return Value(res);
+            }
+            if (name == "obj3d.export" || name == "mesh3d.export_obj") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                auto it = loaded_obj_meshes.find(key);
+                if (it != loaded_obj_meshes.end()) return Value(loop_math::export_obj_string(it->second));
+                for (const auto& e : current_scene3d.entities) {
+                    if (e.name == key && e.has_custom_mesh) return Value(loop_math::export_obj_string(e.custom_mesh));
+                }
+                return Value(loop_math::export_obj_string(loop_math::make_preset_obj_mesh(key)));
+            }
+            if (name == "obj3d.normalize" || name == "mesh3d.normalize") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                double target_r = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 1.0;
+                auto it = loaded_obj_meshes.find(key);
+                if (it != loaded_obj_meshes.end()) {
+                    loop_math::normalize_mesh(it->second, target_r);
+                    return Value(it->second.bounding_radius);
+                }
+                return Value(0.0);
+            }
+            if (name == "obj3d.subdivide" || name == "mesh3d.subdivide") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                auto it = loaded_obj_meshes.find(key);
+                if (it != loaded_obj_meshes.end()) {
+                    it->second = loop_math::subdivide_mesh(it->second);
+                    return Value(static_cast<int64_t>(it->second.faces.size()));
+                }
+                return Value(static_cast<int64_t>(0));
+            }
+            if (name == "obj3d.stats" || name == "mesh3d.stats") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                auto it = loaded_obj_meshes.find(key);
+                const loop_math::Mesh3D* m_ptr = nullptr;
+                if (it != loaded_obj_meshes.end()) {
+                    m_ptr = &it->second;
+                } else {
+                    loop_math::Mesh3D tmp = loop_math::load_obj_file(key);
+                    if (!tmp.vertices.empty()) {
+                        loaded_obj_meshes[key] = tmp;
+                        m_ptr = &loaded_obj_meshes[key];
+                    }
+                }
+                if (m_ptr) {
+                    const auto& m = *m_ptr;
+                    std::unordered_map<std::string, Value> res;
+                    res["name"] = Value(m.name);
+                    res["vertices"] = Value(static_cast<int64_t>(m.vertices.size()));
+                    res["faces"] = Value(static_cast<int64_t>(m.faces.size()));
+                    res["triangles"] = Value(static_cast<int64_t>(m.triangle_count()));
+                    res["bounding_radius"] = Value(m.bounding_radius);
+                    res["size"] = vec3_to_val(m.size);
+                    return Value(res);
+                }
+                return Value();
+            }
+            if (name == "obj3d.list" || name == "mesh3d.list") {
+                std::vector<Value> list;
+                for (const auto& kv : loaded_obj_meshes) list.push_back(Value(kv.first));
+                return Value(list);
+            }
+            if (name == "obj3d.raycast" || name == "mesh3d.raycast") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                loop_math::Vec3 orig = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, -10};
+                loop_math::Vec3 dir  = evaluated_args.size() >= 3 ? val_to_vec3(evaluated_args[2]) : loop_math::Vec3{0, 0, 1};
+                loop_math::Vec3 pos  = evaluated_args.size() >= 4 ? val_to_vec3(evaluated_args[3]) : loop_math::Vec3{0, 0, 0};
+                loop_math::Vec3 rot  = evaluated_args.size() >= 5 ? val_to_vec3(evaluated_args[4]) : loop_math::Vec3{0, 0, 0};
+                loop_math::Vec3 scl  = evaluated_args.size() >= 6 ? val_to_vec3(evaluated_args[5]) : loop_math::Vec3{1, 1, 1};
+                loop_math::Mesh3D mesh = loaded_obj_meshes.count(key) ? loaded_obj_meshes[key] : loop_math::make_preset_obj_mesh(key);
+                return rayhit_to_val(loop_math::raycast_mesh(orig, dir, mesh, pos, rot, scl));
+            }
+            if (name == "obj3d.spawn" || name == "spawn3d.obj_at") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "ObjEntity";
+                std::string path  = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "starfighter";
+                double x = evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 0.0;
+                double y = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 2.0;
+                double z = evaluated_args.size() >= 5 ? evaluated_args[4].as_number() : 0.0;
+                double sc = evaluated_args.size() >= 6 ? evaluated_args[5].as_number() : 1.0;
+                std::string col = evaluated_args.size() >= 7 ? evaluated_args[6].as_string() : "#38bdf8";
+                std::string cs_cls = evaluated_args.size() >= 8 ? evaluated_args[7].as_string() : "";
+
+                loop_math::Entity3D e;
+                e.type = "obj";
+                e.name = ename;
+                e.mesh = "obj";
+                e.obj_file = path;
+                e.cs_class = cs_cls;
+                e.pos = {x, y, z};
+                e.scale = {sc, sc, sc};
+                e.color = col;
+                if (loaded_obj_meshes.count(path)) {
+                    e.custom_mesh = loaded_obj_meshes[path];
+                } else {
+                    e.custom_mesh = loop_math::load_obj_file(path);
+                }
+                e.has_custom_mesh = !e.custom_mesh.vertices.empty();
+                if (e.has_custom_mesh) {
+                    loaded_obj_meshes[path] = e.custom_mesh;
+                    e.size = {
+                        std::max(0.5, e.custom_mesh.size.x * sc),
+                        std::max(0.5, e.custom_mesh.size.y * sc),
+                        std::max(0.5, e.custom_mesh.size.z * sc)
+                    };
+                    e.radius = std::max(0.6, e.custom_mesh.bounding_radius * sc);
+                }
+                current_scene3d.active = true;
+                current_scene3d.entities.push_back(e);
+                current_window.add_entity_3d(e);
+                if (!cs_cls.empty() && csharp_bridge.classes.count(cs_cls)) {
+                    csharp_bridge.instantiate(cs_cls, ename + "_cs", ename, variables, &current_scene3d);
+                }
+                return Value(static_cast<int64_t>(e.triangle_count()));
+            }
+
+            // 4c. C# Bridge Builtins (csharp.* / cs.*)
+            if (name == "csharp.eval" || name == "cs.eval" || name == "csharp.exec") {
+                std::string code = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                return csharp_bridge.execute_block(code, variables, &current_scene3d);
+            }
+            if (name == "csharp.load" || name == "cs.load") {
+                std::string path = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::ifstream cf(path);
+                if (!cf.good()) return Value(false);
+                std::string content((std::istreambuf_iterator<char>(cf)), std::istreambuf_iterator<char>());
+                csharp_bridge.execute_block(content, variables, &current_scene3d);
+                return Value(true);
+            }
+            if (name == "csharp.new" || name == "cs.new" || name == "csharp.attach" || name == "csharp.instantiate" || name == "cs.instantiate") {
+                std::string cls = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string iid = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                std::string ent = evaluated_args.size() >= 3 ? evaluated_args[2].as_string() : iid;
+                return csharp_bridge.instantiate(cls, iid, ent, variables, &current_scene3d);
+            }
+            if (name == "csharp.call" || name == "cs.call") {
+                std::string iid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string mth = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "Update";
+                std::vector<Value> cargs;
+                for (size_t i = 2; i < evaluated_args.size(); ++i) cargs.push_back(evaluated_args[i]);
+                return csharp_bridge.call_method(iid, mth, cargs, variables, &current_scene3d);
+            }
+            if (name == "csharp.step" || name == "cs.step" || name == "csharp.step_scripts" || name == "cs.step_scripts") {
+                double dt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : (1.0 / 60.0);
+                return Value(static_cast<int64_t>(csharp_bridge.step_all(dt, variables, &current_scene3d)));
+            }
+            if (name == "csharp.get" || name == "cs.get") {
+                std::string iid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string fld = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                if (csharp_bridge.instances.count(iid) && csharp_bridge.instances[iid].fields.count(fld)) {
+                    return csharp_bridge.instances[iid].fields[fld];
+                }
+                return Value();
+            }
+            if (name == "csharp.set" || name == "cs.set") {
+                std::string iid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string fld = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                Value val = evaluated_args.size() >= 3 ? evaluated_args[2] : Value::nil();
+                if (csharp_bridge.instances.count(iid)) {
+                    csharp_bridge.instances[iid].fields[fld] = val;
+                    return val;
+                }
+                return Value::nil();
+            }
+            if (name == "csharp.classes" || name == "cs.classes") {
+                std::vector<Value> list;
+                for (const auto& kv : csharp_bridge.classes) list.push_back(Value(kv.first));
+                return Value(list);
+            }
+            if (name == "csharp.instances" || name == "cs.instances") {
+                std::vector<Value> list;
+                for (const auto& kv : csharp_bridge.instances) list.push_back(Value(kv.first));
+                return Value(list);
+            }
+            if (name == "csharp.logs" || name == "cs.logs") {
+                std::vector<Value> list;
+                for (const auto& l : csharp_bridge.logs) list.push_back(Value(l));
+                return Value(list);
+            }
+            if (name == "csharp.export" || name == "cs.export" || name == "csharp.export_scene") {
+                std::string cname = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "LoopizeGeneratedGame";
+                std::string cs_src = CSharpBridge::export_scene_csharp(current_scene3d, cname);
+                if (evaluated_args.size() >= 2) {
+                    std::string out_p = evaluated_args[1].as_string();
+                    std::ofstream cf(out_p);
+                    if (cf.is_open()) cf << cs_src;
+                }
+                return Value(cs_src);
+            }
+            if (name == "csharp.is_dotnet_available" || name == "cs.is_available") {
+                return Value(csharp_bridge.detect());
+            }
+            if (name == "csharp.toolchain" || name == "cs.toolchain") {
+                std::string tool;
+                csharp_bridge.detect(&tool);
+                return Value(tool);
+            }
+
+            // 4d. loopize++ Native Game Additions Builtins (loopize.* / lz.* / ecs.*)
+            if (name == "loopize.init" || name == "lz.init") {
+                loopize_runtime.reset();
+                if (!evaluated_args.empty()) current_scene3d.world_name = evaluated_args[0].as_string();
+                return Value(true);
+            }
+            if (name == "loopize.ecs_spawn" || name == "lz.ecs_spawn" || name == "ecs.spawn") {
+                std::string eid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string tag = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "default";
+                loop_math::Vec3 pos = evaluated_args.size() >= 3 ? val_to_vec3(evaluated_args[2]) : loop_math::Vec3{0, 0, 0};
+                double hp = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 100.0;
+                std::string objm = evaluated_args.size() >= 5 ? evaluated_args[4].as_string() : "";
+                std::string csc  = evaluated_args.size() >= 6 ? evaluated_args[5].as_string() : "";
+                return Value(loopize_runtime.spawn_ecs(eid, tag, pos, hp, objm, csc));
+            }
+            if (name == "loopize.ecs_query_tag" || name == "lz.ecs_query_tag" || name == "ecs.query_tag") {
+                std::string tag = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "*";
+                std::vector<Value> list;
+                for (const auto& id : loopize_runtime.query_tag(tag)) list.push_back(Value(id));
+                return Value(list);
+            }
+            if (name == "loopize.spatial_radius" || name == "lz.spatial_radius" || name == "ecs.radius") {
+                loop_math::Vec3 c = evaluated_args.size() >= 1 ? val_to_vec3(evaluated_args[0]) : loop_math::Vec3{0, 0, 0};
+                double r = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 10.0;
+                std::string tag = evaluated_args.size() >= 3 ? evaluated_args[2].as_string() : "*";
+                std::vector<Value> list;
+                for (const auto& id : loopize_runtime.spatial_radius(c, r, tag)) list.push_back(Value(id));
+                return Value(list);
+            }
+            if (name == "loopize.wave_add" || name == "lz.wave_add") {
+                int num = evaluated_args.size() >= 1 ? static_cast<int>(evaluated_args[0].as_number()) : 1;
+                std::string kind = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "valkyrie";
+                int cnt = evaluated_args.size() >= 3 ? static_cast<int>(evaluated_args[2].as_number()) : 3;
+                double hp = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 80.0;
+                double rad = evaluated_args.size() >= 5 ? evaluated_args[4].as_number() : 18.0;
+                std::string objm = evaluated_args.size() >= 6 ? evaluated_args[5].as_string() : "valkyrie_drone.obj";
+                return Value(static_cast<int64_t>(loopize_runtime.add_wave(num, kind, cnt, hp, rad, objm)));
+            }
+            if (name == "loopize.wave_next" || name == "lz.wave_next") {
+                auto spawned = loopize_runtime.trigger_next_wave(current_scene3d);
+                for (const auto& se : spawned) current_window.add_entity_3d(se);
+                return Value(static_cast<int64_t>(spawned.size()));
+            }
+            if (name == "loopize.fsm_set" || name == "lz.fsm_set") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "default";
+                std::string st  = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "idle";
+                loopize_runtime.fsms[key].transition(st);
+                return Value(loopize_runtime.fsms[key].name);
+            }
+            if (name == "loopize.fsm_get" || name == "lz.fsm_get") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "default";
+                return Value(loopize_runtime.fsms[key].name);
+            }
+            if (name == "loopize.combo_hit" || name == "lz.combo_hit") {
+                double base_pts = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 100.0;
+                return Value(loopize_runtime.combo.register_hit(base_pts));
+            }
+            if (name == "loopize.combo_mult" || name == "lz.combo_mult") {
+                return Value(loopize_runtime.combo.multiplier);
+            }
+            if (name == "loopize.ease" || name == "lz.ease") {
+                std::string curve = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "out_cubic";
+                double t = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 0.5;
+                return Value(loop_math::tween_ease(curve, t));
+            }
+            if (name == "loopize.tween" || name == "lz.tween") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "t1";
+                double a = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 0.0;
+                double b = evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 1.0;
+                double dur = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 1.0;
+                std::string curve = evaluated_args.size() >= 5 ? evaluated_args[4].as_string() : "out_cubic";
+                loopize::TweenTrack tw{key, curve, a, b, dur, 0.0, false, false};
+                loopize_runtime.tweens[key] = tw;
+                return Value(tw.current());
+            }
+            if (name == "loopize.shake" || name == "lz.shake") {
+                double amt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.35;
+                loopize_runtime.camera.add_trauma(amt);
+                return Value(loopize_runtime.camera.trauma);
+            }
+            if (name == "loopize.camera_update" || name == "lz.camera_update") {
+                loop_math::Vec3 tgt = evaluated_args.size() >= 1 ? val_to_vec3(evaluated_args[0]) : current_scene3d.cam_target;
+                double dt = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : (1.0 / 60.0);
+                if (evaluated_args.size() >= 3) loopize_runtime.camera.yaw_deg = evaluated_args[2].as_number();
+                loopize_runtime.camera.update(tgt, dt);
+                current_scene3d.cam_pos = loopize_runtime.camera.current_pos;
+                current_scene3d.cam_target = loopize_runtime.camera.current_target;
+                return vec3_to_val(current_scene3d.cam_pos);
+            }
+            if (name == "loopize.inventory_add" || name == "lz.inventory_add") {
+                std::string id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                int qty = evaluated_args.size() >= 2 ? static_cast<int>(evaluated_args[1].as_number()) : 1;
+                return Value(static_cast<int64_t>(loopize_runtime.add_item(id, qty)));
+            }
+            if (name == "loopize.inventory_has" || name == "lz.inventory_has") {
+                std::string id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                int qty = evaluated_args.size() >= 2 ? static_cast<int>(evaluated_args[1].as_number()) : 1;
+                return Value(loopize_runtime.inventory.count(id) && loopize_runtime.inventory[id] >= qty);
+            }
+            if (name == "loopize.inventory_use" || name == "lz.inventory_use") {
+                std::string id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                int qty = evaluated_args.size() >= 2 ? static_cast<int>(evaluated_args[1].as_number()) : 1;
+                return Value(loopize_runtime.consume_item(id, qty));
+            }
+            if (name == "loopize.ecs_set" || name == "lz.ecs_set" || name == "ecs.set") {
+                std::string eid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string key = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                std::string val = evaluated_args.size() >= 3 ? evaluated_args[2].as_string() : "";
+                if (loopize_runtime.ecs.count(eid)) {
+                    loopize_runtime.ecs[eid].props[key] = val;
+                    return Value(true);
+                }
+                return Value(false);
+            }
+            if (name == "loopize.ecs_get" || name == "lz.ecs_get" || name == "ecs.get") {
+                std::string eid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string key = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "";
+                if (loopize_runtime.ecs.count(eid) && loopize_runtime.ecs[eid].props.count(key)) {
+                    return Value(loopize_runtime.ecs[eid].props[key]);
+                }
+                return Value::nil();
+            }
+            if (name == "loopize.ecs_destroy" || name == "lz.ecs_destroy" || name == "ecs.destroy") {
+                std::string eid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                return Value(loopize_runtime.ecs.erase(eid) > 0);
+            }
+            if (name == "loopize.tween_value" || name == "lz.tween_value") {
+                std::string key = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "t1";
+                if (loopize_runtime.tweens.count(key)) return Value(loopize_runtime.tweens[key].current());
+                return Value(0.0);
+            }
+            if (name == "loopize.camera_pos" || name == "lz.camera_pos") {
+                return vec3_to_val(loopize_runtime.camera.current_pos);
+            }
+            if (name == "loopize.quest_add" || name == "lz.quest_add") {
+                std::string id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "q1";
+                std::string ttl = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "Mission";
+                int tgt = evaluated_args.size() >= 3 ? static_cast<int>(evaluated_args[2].as_number()) : 1;
+                int xp = evaluated_args.size() >= 4 ? static_cast<int>(evaluated_args[3].as_number()) : 250;
+                loopize_runtime.add_quest(id, ttl, tgt, xp);
+                return Value(true);
+            }
+            if (name == "loopize.quest_progress" || name == "lz.quest_progress") {
+                std::string id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "q1";
+                int d = evaluated_args.size() >= 2 ? static_cast<int>(evaluated_args[1].as_number()) : 1;
+                return Value(loopize_runtime.progress_quest(id, d));
+            }
+            if (name == "loopize.step" || name == "lz.step") {
+                double dt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : (1.0 / 60.0);
+                loopize_runtime.step(dt);
+                csharp_bridge.step_all(dt, variables, &current_scene3d);
+                current_scene3d.step(dt);
+                return Value(loopize_runtime.elapsed_time);
+            }
+            if (name == "loopize.stats" || name == "lz.stats") {
+                std::unordered_map<std::string, Value> st;
+                st["initialized"] = Value(loopize_runtime.initialized);
+                st["ecs_count"] = Value(static_cast<int64_t>(loopize_runtime.ecs.size()));
+                st["waves_total"] = Value(static_cast<int64_t>(loopize_runtime.waves.size()));
+                st["active_wave"] = Value(static_cast<int64_t>(loopize_runtime.active_wave_index + 1));
+                st["combo_hits"] = Value(static_cast<int64_t>(loopize_runtime.combo.hits));
+                st["combo_max"] = Value(static_cast<int64_t>(loopize_runtime.combo.max_hits));
+                st["combo_mult"] = Value(loopize_runtime.combo.multiplier);
+                st["xp"] = Value(static_cast<int64_t>(loopize_runtime.xp));
+                st["level"] = Value(static_cast<int64_t>(loopize_runtime.level));
+                st["obj_cache"] = Value(static_cast<int64_t>(loaded_obj_meshes.size()));
+                st["cs_classes"] = Value(static_cast<int64_t>(csharp_bridge.classes.size()));
+                return Value(st);
             }
 
             // 5. Sound & Synthesizer (audio / sound)
@@ -4047,7 +4503,7 @@ public:
             return;
         }
 
-        // 10. Python Multiline Block
+        // 10. Python & C# Multiline Blocks
         if (auto py_b = std::dynamic_pointer_cast<PythonBlockStmt>(stmt)) {
             std::cout << color::PURPLE << "[PYTHON EXEC]" << color::RESET << " Running Python block...\n";
             std::string out = python_bridge.execute_block(py_b->py_code, variables);
@@ -4056,11 +4512,20 @@ public:
             }
             return;
         }
+        if (auto cs_b = std::dynamic_pointer_cast<CSharpBlockStmt>(stmt)) {
+            csharp_bridge.execute_block(cs_b->cs_code, variables, &current_scene3d);
+            return;
+        }
 
-        // 10b. Python Snippet Definition: insert pysnippet as <name>: ...
+        // 10b. Python & C# Snippet Definitions
         if (auto sn = std::dynamic_pointer_cast<PySnippetDefStmt>(stmt)) {
             python_snippets[sn->snippet_name] = sn->py_code;
             variables[sn->snippet_name] = Value(sn->py_code);
+            return;
+        }
+        if (auto csn = std::dynamic_pointer_cast<CSharpSnippetDefStmt>(stmt)) {
+            csharp_snippets[csn->snippet_name] = csn->cs_code;
+            variables[csn->snippet_name] = Value(csn->cs_code);
             return;
         }
 
@@ -4093,7 +4558,9 @@ public:
                 "game_plus", "game",
                 "csms", "ai",
                 "sound", "audio", "cpp_snippets", "metal4", "metal", "loop.metal4",
-                "zbash-utils", "zbash_utils", "loop.zbash-utils", "zbash"
+                "zbash-utils", "zbash_utils", "loop.zbash-utils", "zbash",
+                "csharp", "cs", "loop.csharp", "obj3d", "mesh3d",
+                "loopize++", "loopize", "loopize_pp", "loop.loopize"
             };
             std::string local_manifest_check = "./modules/" + mod + "/smile.json";
             std::ifstream mf_check(local_manifest_check);
@@ -4185,8 +4652,25 @@ public:
                         std::cout << "  " << color::YELLOW << "✔" << color::RESET << " Node Web/Window Component linked: " << node_comp << "\n";
                     }
 
+                    std::string cs_comp = extract_comp("csharp");
+                    if (!cs_comp.empty()) {
+                        std::ifstream csf(base_dir + "/" + cs_comp);
+                        if (csf.good()) {
+                            std::string cs_content((std::istreambuf_iterator<char>(csf)), std::istreambuf_iterator<char>());
+                            csharp_bridge.execute_block(cs_content, variables, &current_scene3d);
+                            variables[mod + ".csharp_script"] = Value(base_dir + "/" + cs_comp);
+                            std::cout << "  " << color::PURPLE << "✔" << color::RESET << " C# SDK Component loaded: " << cs_comp << "\n";
+                        }
+                    }
+
+                    std::string web_comp = extract_comp("web");
+                    if (!web_comp.empty()) {
+                        variables[mod + ".web_kit"] = Value(base_dir + "/" + web_comp);
+                    }
+
                     std::string loop_comp = extract_comp("loop");
-                    if (!loop_comp.empty()) {
+                    std::string entry_comp = extract_comp("entry_point");
+                    if (!loop_comp.empty() && loop_comp != entry_comp) {
                         std::string loop_path = base_dir + "/" + loop_comp;
                         std::ifstream lf(loop_path);
                         if (lf.good()) {
@@ -4495,8 +4979,12 @@ public:
             e.type = sp3->entity_type;
             e.name = sp3->name;
             e.mesh = sp3->mesh;
+            e.obj_file = sp3->obj_file;
+            e.cs_class = sp3->cs_class;
+            e.tag = sp3->tag;
             e.pos = {sp3->x, sp3->y, sp3->z};
             e.size = {sp3->sx, sp3->sy, sp3->sz};
+            e.scale = {sp3->scale_x, sp3->scale_y, sp3->scale_z};
             e.rot_deg = {sp3->rx, sp3->ry, sp3->rz};
             e.radius = sp3->radius;
             e.axis = sp3->axis;
@@ -4509,14 +4997,41 @@ public:
             e.points = sp3->points;
             e.metallic = sp3->metallic;
             e.fire_rate = sp3->fire_rate;
+            e.double_sided = sp3->double_sided;
             e.color = sp3->color;
             e.label = sp3->label;
+
+            if (!e.obj_file.empty()) {
+                if (loaded_obj_meshes.count(e.obj_file)) {
+                    e.custom_mesh = loaded_obj_meshes[e.obj_file];
+                } else {
+                    e.custom_mesh = loop_math::load_obj_file(e.obj_file);
+                }
+                e.has_custom_mesh = !e.custom_mesh.vertices.empty();
+                if (e.has_custom_mesh) {
+                    loaded_obj_meshes[e.obj_file] = e.custom_mesh;
+                    e.size = {
+                        std::max(0.5, e.custom_mesh.size.x * std::abs(e.scale.x)),
+                        std::max(0.5, e.custom_mesh.size.y * std::abs(e.scale.y)),
+                        std::max(0.5, e.custom_mesh.size.z * std::abs(e.scale.z))
+                    };
+                    e.radius = std::max(0.6, e.custom_mesh.bounding_radius * std::abs(e.scale.x));
+                }
+            }
+
+            if (!e.cs_class.empty() && csharp_bridge.classes.count(e.cs_class)) {
+                csharp_bridge.instantiate(e.cs_class, e.name + "_cs", e.name, variables, &current_scene3d);
+            }
+
             current_scene3d.entities.push_back(e);
             current_window.add_entity_3d(e);
 
             std::cout << color::PURPLE << "[ENTITY 3D]" << color::RESET << " Spawned " << e.type
                       << " \"" << e.name << "\" at (" << e.pos.x << ", " << e.pos.y << ", " << e.pos.z
-                      << ") [" << e.color << "]\n";
+                      << ") [" << e.color << "]"
+                      << (e.has_custom_mesh ? (" | OBJ tris: " + std::to_string(e.triangle_count())) : "")
+                      << (!e.cs_class.empty() ? (" | CS: " + e.cs_class) : "")
+                      << "\n";
             return;
         }
 

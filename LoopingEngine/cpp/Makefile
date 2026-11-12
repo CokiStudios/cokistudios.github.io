@@ -9,7 +9,7 @@ else
 endif
 
 SRC = main.cpp
-HEADERS = LoopingValue.hpp Looping3D.hpp LoopingAST.hpp LoopingCompiler.hpp LoopingPythonBridge.hpp LoopingParser.hpp LoopingInterpreter.hpp LoopingREPL.hpp
+HEADERS = LoopingValue.hpp Looping3D.hpp LoopingAST.hpp LoopingCompiler.hpp LoopingPythonBridge.hpp LoopingCSharpBridge.hpp LoopizeCore.hpp LoopingParser.hpp LoopingInterpreter.hpp LoopingREPL.hpp
 
 ifneq ($(wildcard ../Makefile),)
     TARGET = ../bin/looping

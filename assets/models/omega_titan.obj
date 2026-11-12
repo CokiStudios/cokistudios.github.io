@@ -1,0 +1,52 @@
+# Wavefront OBJ — Coki Studios & Holo Entertainment (Looping Engine 3D)
+# Model: OMEGA TITAN 3D Boss Mecha Chassis (Arch 3.0A)
+o OmegaTitanMecha
+mtllib cyber_fleet.mtl
+
+# Core Torso & Reactor
+v -1.4000 -1.2000  0.9000
+v  1.4000 -1.2000  0.9000
+v  1.8000  1.1000  1.1000
+v -1.8000  1.1000  1.1000
+v -1.4000 -1.2000 -0.9000
+v  1.4000 -1.2000 -0.9000
+v  1.8000  1.1000 -1.1000
+v -1.8000  1.1000 -1.1000
+# Reactor Apex & Command Head
+v  0.0000  0.1000  1.6500
+v  0.0000  2.3500  0.2000
+# Left & Right Shoulder Pauldrons
+v -3.1000  1.6500  0.0000
+v  3.1000  1.6500  0.0000
+# Lower Base Anchor
+v  0.0000 -2.4000  0.0000
+
+vn  0.0  0.0  1.0
+vn  0.0  0.0 -1.0
+vn  0.0  1.0  0.0
+vn  0.0 -1.0  0.0
+vn -1.0  0.2  0.0
+vn  1.0  0.2  0.0
+
+g TitanChestReactor
+usemtl OmegaReactorCore
+f 1//1 2//1 9//1
+f 2//1 3//1 9//1
+f 3//1 4//1 9//1
+f 4//1 1//1 9//1
+
+g TitanArmorFrame
+usemtl OmegaChassisRose
+f 5//2 8//2 7//2 6//2
+f 4//3 3//3 10//3
+f 3//3 7//3 10//3
+f 7//3 8//3 10//3
+f 8//3 4//3 10//3
+f 1//5 4//5 11//5 5//5
+f 4//5 8//5 11//5
+f 2//6 6//6 12//6 3//6
+f 3//6 12//6 7//6
+f 1//4 13//4 2//4
+f 2//4 13//4 6//4
+f 6//4 13//4 5//4
+f 5//4 13//4 1//4

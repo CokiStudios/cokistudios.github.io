@@ -1,0 +1,19 @@
+{
+  "name": "loopize++",
+  "version": "1.0.0",
+  "language": "hybrid",
+  "author": "Coki Studios & Holo Entertainment",
+  "description": "High-performance 2D/3D Game Additions Kit for Looping: Wavefront .obj mesh pipeline, C# MonoBehaviour game scripts, ECS registry, Wave Director, Spring-Arm 3D Camera + Trauma Shake, FSM, Combos, Tweening, Spatial Queries, Inventory, Quests & Web Loopize Kit.",
+  "license": "MIT",
+  "entry_point": "loopize.loop",
+  "components": {
+    "loop": "loopize.loop",
+    "cpp": "components/loopize_core.hpp",
+    "csharp": "components/LoopizeGame.cs",
+    "web": "components/web-loopize-kit.js"
+  },
+  "dependencies": [
+    "loop-math-3d",
+    "loop-game-plus"
+  ]
+}

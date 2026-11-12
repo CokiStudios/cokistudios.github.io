@@ -441,14 +441,18 @@ public:
     std::string str2 = "";
 };
 
-// 3D Entity Spawner: spawn3d.player / box / cube / platform / moving_platform / sphere / cylinder / pyramid / torus / ring / crystal / enemy / boss / pad / hazard / checkpoint / portal / terrain
+// 3D Entity Spawner: spawn3d.player / box / cube / platform / moving_platform / sphere / cylinder / pyramid / torus / ring / crystal / enemy / boss / pad / hazard / checkpoint / portal / terrain / obj
 class SpawnEntity3DStmt : public Stmt {
 public:
     std::string entity_type = "box";
     std::string name = "Entity3D";
     std::string mesh = "box";
+    std::string obj_file = "";
+    std::string cs_class = "";
+    std::string tag = "default";
     double x = 0, y = 0, z = 0;
     double sx = 4, sy = 1, sz = 4;
+    double scale_x = 1.0, scale_y = 1.0, scale_z = 1.0;
     double rx = 0, ry = 0, rz = 0;
     double radius = 1.5;
     std::string axis = "x";
@@ -460,6 +464,7 @@ public:
     double points = 150.0;
     double metallic = 0.5;
     double fire_rate = 1.6;
+    bool double_sided = true;
     std::string color = "#38bdf8";
     std::string label = "";
 };
@@ -637,6 +642,27 @@ public:
     bool capture_only;
     explicit ZBashExecStmt(const std::string& cmd, bool capture = false)
         : raw_command(cmd), capture_only(capture) {}
+};
+
+// C# Interop Expressions & Statements: cs!(...), cs! { ... }, csharp { ... }, insert cssnippet as <name>:
+class CSharpInlineExpr : public Expr {
+public:
+    std::string cs_code;
+    CSharpInlineExpr(const std::string& code) : cs_code(code) {}
+};
+
+class CSharpBlockStmt : public Stmt {
+public:
+    std::string cs_code;
+    CSharpBlockStmt(const std::string& code) : cs_code(code) {}
+};
+
+class CSharpSnippetDefStmt : public Stmt {
+public:
+    std::string snippet_name;
+    std::string cs_code;
+    CSharpSnippetDefStmt(const std::string& name, const std::string& code)
+        : snippet_name(name), cs_code(code) {}
 };
 
 } // namespace looping

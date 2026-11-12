@@ -127,6 +127,9 @@
                     <li><a href="#intro">Introducción</a></li>
                     <li><a href="#arch">Arquitectura 3.0A</a></li>
                     <li><a href="#quick">Quick Start</a></li>
+                    <li><a href="#obj-csharp">Wavefront .obj &amp; C#</a></li>
+                    <li><a href="#loopize">Librería loopize++</a></li>
+                    <li><a href="#web-loopize-kit">Web Loopize Kit</a></li>
                     <li><a href="#api">API Reference</a></li>
                 </ul>
             </nav>
@@ -153,6 +156,15 @@ const engine = new LoopingEngine({
 });
 
 engine.start();</code></pre>
+            <section id="api" class="card">
+                <h2>Modelos .OBJ, C# Interop &amp; <code>loopize++</code></h2>
+                <p>Carga de mallas Wavefront <code>.obj</code> (<code>obj3d.load</code>, <code>spawn3d.obj</code>, raycasting por triángulo), scripting C# embebido (<code>cs! { ... }</code>, <code>MonoBehaviour</code>, <code>LoopingBridge</code>) y librería híbrida <code>loopize++</code> para ECS, oleadas, FSM, curvas de easing, sacudida de cámara y misiones.</p>
+                <pre><code>use "loopize++"
+use "csharp"
+
+spawn3d.obj("Starfighter01", obj: "assets/models/starfighter.obj", at: (0, 2, 6), scale: 1.5, color: "#38bdf8")
+lz_wave_rush(1, "valkyrie", 3, 90, "valkyrie_drone.obj")
+lz_report()</code></pre>
             </section>
         </main>
     </div>
