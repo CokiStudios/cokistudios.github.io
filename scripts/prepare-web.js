@@ -68,6 +68,7 @@ function copyFilteredDir(srcDir, destDir, relDir = '') {
   const entries = fs.readdirSync(srcDir, { withFileTypes: true });
 
   for (const entry of entries) {
+    if (entry.name === '.DS_Store') continue;
     const srcPath = path.join(srcDir, entry.name);
     const destPath = path.join(destDir, entry.name);
     const relPath = path.posix.join(relDir, entry.name);
@@ -87,13 +88,21 @@ function copyFilteredDir(srcDir, destDir, relDir = '') {
   }
 }
 
-const webDirs = ['assets', 'apt', 'debian', 'engine'];
+const webDirs = ['assets', 'apt', 'debian', 'docs', 'engine', 'modules/loopize++'];
 for (const dir of webDirs) {
   const src = path.join(rootDir, dir);
   const dest = path.join(publicDir, dir);
   if (fs.existsSync(src)) {
     copyFilteredDir(src, dest, dir);
   }
+}
+
+// Copy Web Runtime core (exclude C++ source/binaries in LoopingEngine/cpp)
+const loopingCoreSrc = path.join(rootDir, 'LoopingEngine', 'looping_core.js');
+if (fs.existsSync(loopingCoreSrc)) {
+  const loopingPublicDir = path.join(publicDir, 'LoopingEngine');
+  fs.mkdirSync(loopingPublicDir, { recursive: true });
+  fs.copyFileSync(loopingCoreSrc, path.join(loopingPublicDir, 'looping_core.js'));
 }
 
 // 3. Write _redirects if any large files need fallback routing

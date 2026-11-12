@@ -186,8 +186,10 @@ function hexToRgb(hex) {
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+const BaseHTMLElement = typeof HTMLElement !== 'undefined' ? HTMLElement : class {};
+
 // ── <loopize-obj-viewer> Web Component ──
-export class LoopizeObjViewerElement extends HTMLElement {
+export class LoopizeObjViewerElement extends BaseHTMLElement {
     static get observedAttributes() {
         return ['model', 'color', 'wireframe', 'autorotate', 'label'];
     }
@@ -431,7 +433,7 @@ export class LoopizeObjViewerElement extends HTMLElement {
 }
 
 // ── <loopize-stage> Web Component ──
-export class LoopizeStageElement extends HTMLElement {
+export class LoopizeStageElement extends BaseHTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });

@@ -1,172 +1,524 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="claude:viewport-fit-sides" content="cover">
-    <title>Looping Engine Docs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Looping Engine Documentation — Coki Studios</title>
+    <meta name="description" content="Documentación oficial de Looping Engine v1.1. Motor de videojuegos 2D y Quantum 3D de alta velocidad, sintaxis nativa y arquitectura multiplataforma.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /*
-           Layout: Multi-column responsive documentation portal with sticky sidebar.
-           Tokens: Elegant technical aesthetic, high contrast.
-        */
         :root {
-            --bg: #ffffff;
-            --fg: #1a1a1a;
-            --accent: #0066ff;
-            --surface: #f5f5f5;
-            --border: #e0e0e0;
-            --code-bg: #1e1e1e;
-            --code-fg: #d4d4d4;
-            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --bg-primary: #06090f;
+            --bg-secondary: #0d131f;
+            --bg-card: rgba(13, 19, 31, 0.7);
+            --border-color: rgba(56, 189, 248, 0.15);
+            --border-hover: rgba(56, 189, 248, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #38bdf8;
+            --accent-emerald: #34d399;
+            --accent-amber: #fbbf24;
+            --accent-rose: #f43f5e;
+            --gradient-main: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            --shadow-glow: 0 0 30px rgba(56, 189, 248, 0.15);
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root:not([data-theme="light"]) {
-                --bg: #0a0a0a;
-                --fg: #ededed;
-                --accent: #4d94ff;
-                --surface: #171717;
-                --border: #333333;
-                color-scheme: dark;
-            }
+        :root[data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(14, 165, 233, 0.2);
+            --border-hover: rgba(14, 165, 233, 0.5);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-cyan: #0284c7;
+            --accent-emerald: #059669;
+            --accent-amber: #d97706;
+            --accent-rose: #e11d48;
+            --gradient-main: linear-gradient(135deg, #0284c7 0%, #6366f1 50%, #9333ea 100%);
+            --shadow-glow: 0 0 30px rgba(2, 132, 199, 0.12);
         }
 
-        :root[data-theme="dark"] {
-            --bg: #0a0a0a;
-            --fg: #ededed;
-            --accent: #4d94ff;
-            --surface: #171717;
-            --border: #333333;
-            color-scheme: dark;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
         body {
-            background: var(--bg);
-            color: var(--fg);
-            font-family: var(--font-main);
-            margin: 0;
-            padding-left: max(16px, env(safe-area-inset-left, 0px));
-            padding-right: max(16px, env(safe-area-inset-right, 0px));
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        body::before {
-            content: "";
+        header {
             position: fixed;
-            inset: 0 0 auto;
-            height: env(safe-area-inset-top, 0px);
-            z-index: 10;
-            background: var(--bg);
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .container {
-            display: grid;
-            grid-template-columns: 240px 1fr;
-            gap: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-top: calc(env(safe-area-inset-top, 20px) + 20px);
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 1.25rem;
         }
 
-        @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-main);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: var(--shadow-glow);
         }
 
-        nav ul {
-            list-style: none;
-            padding: 0;
-            position: sticky;
-            top: calc(env(safe-area-inset-top, 20px) + 20px);
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
         }
 
         nav a {
-            display: block;
-            padding: 8px 0;
-            color: var(--fg);
             text-decoration: none;
-            opacity: 0.7;
-            transition: opacity 0.2s;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
         }
 
-        nav a:hover { opacity: 1; color: var(--accent); }
+        nav a:hover, nav a.active {
+            color: var(--accent-cyan);
+        }
 
-        h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
 
-        .hero { margin-bottom: 60px; }
-        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .theme-toggle:hover {
+            border-color: var(--border-hover);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem 2rem;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 3rem;
+        }
+
+        aside {
+            position: sticky;
+            top: 6rem;
+            height: calc(100vh - 8rem);
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        aside::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        aside::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-menu .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .sidebar-menu a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .hero-doc {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero-doc::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: var(--gradient-main);
+            opacity: 0.08;
+            filter: blur(80px);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .lead {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-color);
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-main);
+        }
+
+        p, li {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
 
         pre {
-            background: var(--code-bg);
-            color: var(--code-fg);
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-        }
-
-        .card {
-            border: 1px solid var(--border);
-            padding: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            margin-bottom: 24px;
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            color: var(--text-main);
         }
 
-        code { background: var(--surface); padding: 2px 4px; border-radius: 4px; font-family: var(--font-mono); }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        .grid-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .card-feature {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-feature h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gradient-main);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            box-shadow: var(--shadow-glow);
+            margin-top: 1rem;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 6rem 1rem 2rem 1rem;
+            }
+            aside {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
+    <header>
+        <a href="/" class="logo-area">
+            <div class="logo-icon">CS</div>
+            <span>Coki Studios / Looping</span>
+        </a>
+        <nav>
+            <a href="/developer.html">Developers</a>
+            <a href="/loopize-kit.html">Web Loopize Kit</a>
+            <a href="/shine-find.html">Shine Find</a>
+            <a href="/dashboard.html">Dashboard</a>
+            <button class="theme-toggle" onclick="toggleTheme()">☀️ / 🌙</button>
+        </nav>
+    </header>
+
     <div class="container">
-        <aside class="sidebar">
-            <nav>
-                <p><strong>Looping Engine</strong></p>
-                <ul>
-                    <li><a href="#intro">Introducción</a></li>
-                    <li><a href="#arch">Arquitectura 3.0A</a></li>
-                    <li><a href="#quick">Quick Start</a></li>
-                    <li><a href="#obj-csharp">Wavefront .obj &amp; C#</a></li>
-                    <li><a href="#loopize">Librería loopize++</a></li>
-                    <li><a href="#web-loopize-kit">Web Loopize Kit</a></li>
-                    <li><a href="#api">API Reference</a></li>
-                </ul>
-            </nav>
+        <aside>
+            <ul class="sidebar-menu">
+                <div class="section-title">Introducción</div>
+                <li><a href="#overview" class="active">Visión General</a></li>
+                <li><a href="#architecture">Arquitectura 3.0A</a></li>
+
+                <div class="section-title">Modos de Juego</div>
+                <li><a href="#platformer2d">Plataformas 2D</a></li>
+                <li><a href="#quantum3d">Quantum 3D</a></li>
+                <li><a href="#obj-csharp">Wavefront .OBJ &amp; C#</a></li>
+                <li><a href="#loopize">Librería loopize++</a></li>
+                <li><a href="#web-loopize-kit">Web Loopize Kit</a></li>
+
+                <div class="section-title">Sistemas Núcleo</div>
+                <li><a href="#sfx">Síntesis de Audio Web</a></li>
+                <li><a href="#physics">Colisiones y Partículas</a></li>
+                <li><a href="#repl">REPL & Pipeline</a></li>
+
+                <div class="section-title">Referencia API</div>
+                <li><a href="#directives">Directivas Sintácticas</a></li>
+            </ul>
         </aside>
+
         <main>
-            <section class="hero" id="intro">
-                <h1>Looping Engine</h1>
-                <p>El núcleo de alto rendimiento para el Ecosistema Coki Studios. Rendimiento bruto, latencia cero, control absoluto.</p>
+            <section id="overview" class="hero-doc">
+                <h1>Looping Engine v1.1</h1>
+                <p class="lead">El motor de ejecución e interpretación de alto rendimiento desarrollado por Coki Studios para experiencias de juego fluidas en 2D y 3D Cuántico.</p>
+                <div class="badge-group">
+                    <span class="badge">Arch 3.0A</span>
+                    <span class="badge">120Hz ProMotion</span>
+                    <span class="badge">Zero Dependencies</span>
+                    <span class="badge">Web Audio API</span>
+                </div>
+                <a href="/developer.html" class="btn-action">Abrir Laboratorio REPL ➔</a>
             </section>
 
-            <section id="arch" class="card">
+            <section id="architecture">
                 <h2>Arquitectura 3.0A</h2>
-                <p>Nuestra arquitectura base optimizada para Apple Silicon y hardware nativo. Diseñada para sub-stepping de 120 FPS constantes mediante el aislamiento de memoria del motor.</p>
+                <p>Looping Engine v1.1 introduce una tubería de renderizado optimizada con aceleración por hardware, sub-stepping físico de alta precisión y síntesis de audio nativa sin dependencias externas.</p>
+                <div class="grid-features">
+                    <div class="card-feature">
+                        <h4>Física Sub-stepped</h4>
+                        <p>Simulación gravitacional e inercial robusta con detección de colisiones AABB precisa.</p>
+                    </div>
+                    <div class="card-feature">
+                        <h4>Audio Sintetizado</h4>
+                        <p>Generación de efectos de sonido en tiempo real mediante Web Audio API con osciladores múltiples.</p>
+                    </div>
+                    <div class="card-feature">
+                        <h4>Quantum 3D</h4>
+                        <p>Perspectiva tridimensional con cámara de brazo elástico y proyección de profundidad vectorial.</p>
+                    </div>
+                </div>
             </section>
 
-            <section id="quick">
-                <h2>Quick Start</h2>
-                <p>Inicializa el motor en tu entorno:</p>
-                <pre><code>import { LoopingEngine } from '@coki/looping';
+            <section id="platformer2d">
+                <h2>Modo Plataformas 2D</h2>
+                <p>Diseñado para velocidad y precisión milimétrica. Soporta doble salto, dashing direccional, plataformas móviles con transferencia de inercia y orbes de impulso aéreo.</p>
+                <pre><code>// Ejemplo de escenario 2D en Looping
+scene.set(name: "Cyber Horizon", weather: "stars", bg: "#06090f")
+player.spawn(at: (100, 280), color: "#38bdf8")
+entity.platform(at: (300, 340), size: (220, 24), type: "moving", speed: 90)
+entity.orb(at: (520, 240), power: 580, color: "#f59e0b")</code></pre>
+            </section>
 
-const engine = new LoopingEngine({
-    fps: 120,
-    substepping: true
-});
-
-engine.start();</code></pre>
-            <section id="api" class="card">
-                <h2>Modelos .OBJ, C# Interop &amp; <code>loopize++</code></h2>
-                <p>Carga de mallas Wavefront <code>.obj</code> (<code>obj3d.load</code>, <code>spawn3d.obj</code>, raycasting por triángulo), scripting C# embebido (<code>cs! { ... }</code>, <code>MonoBehaviour</code>, <code>LoopingBridge</code>) y librería híbrida <code>loopize++</code> para ECS, oleadas, FSM, curvas de easing, sacudida de cámara y misiones.</p>
-                <pre><code>use "loopize++"
+            <section id="quantum3d">
+                <h2>Modo Quantum 3D, Modelos .OBJ, C# &amp; loopize++</h2>
+                <p>Proyección tridimensional inmersiva con carga nativa de modelos Wavefront <code>.obj</code>, Scripting C# (<code>cs!</code> y <code>MonoBehaviour</code>), raycasting Möller–Trumbore por triángulo y la librería híbrida <strong>loopize++</strong> (ECS, oleadas, cámara spring-arm con sacudida, combos, tweens y misiones).</p>
+                <pre><code>// Escena 3D con .OBJ, C# MonoBehaviour y loopize++
+use "loopize++"
 use "csharp"
 
-spawn3d.obj("Starfighter01", obj: "assets/models/starfighter.obj", at: (0, 2, 6), scale: 1.5, color: "#38bdf8")
-lz_wave_rush(1, "valkyrie", 3, 90, "valkyrie_drone.obj")
+scene3d.world(name: "Orbit Sector 7", size: (220, 100, 220), sky: "nebula_void")
+spawn3d.obj("Starfighter01", obj: "assets/models/starfighter.obj", at: (0, 2.2, 6), scale: 1.5, color: "#38bdf8", cs: "StarfighterPilot")
+val spawned = lz_wave_rush(1, "valkyrie", 3, 90, "valkyrie_drone.obj")
+lz_hit_combo(250, 0.35)
 lz_report()</code></pre>
+            </section>
+
+            <section id="obj-csharp">
+                <h2>Wavefront <code>.OBJ</code> &amp; C# MonoBehaviour Interop</h2>
+                <p>El motor nativo (75/75 pruebas C++17) y el runtime web cargan mallas <code>.obj</code> con <code>obj3d.load</code> / <code>spawn3d.obj</code>, normalización de escala, subdivisión, raycasting por triángulo y puente C# integrado (<code>cs! { ... }</code>, <code>LoopingBridge.Get/Set</code>, <code>Scene3D</code>, <code>csharp.export</code>).</p>
+                <pre><code>cs! {
+    public class OrbitalBossAI : MonoBehaviour {
+        public float Shield = 180.0f;
+        public void Start() => LoopingBridge.Set("cs_pilot_ready", true);
+        public void Update(float dt) {
+            Scene3D.Rotate("TitanFlagship", 0.0f, dt * 32.0f, 0.0f);
+            Shield = Mathf.Clamp(Shield + dt * 4.0f, 0.0f, 200.0f);
+        }
+    }
+}</code></pre>
+            </section>
+
+            <section id="loopize">
+                <h2>Librería Oficial <code>loopize++</code></h2>
+                <p>Adiciones de juego híbridas (Loop + C++17 + C# SDK + Web Components): ECS Registry (<code>loopize.ecs_spawn</code>), Wave Director (<code>lz_wave_rush</code>), Spring-Arm Camera Shake, FSM, Tweening, Sistema de Combo x8 e Inventario/Misiones XP (<code>lz_mission</code>, <code>lz_report</code>).</p>
+            </section>
+
+            <section id="web-loopize-kit">
+                <h2>Web Loopize Kit (<code>@cokistudios/web-loopize-kit</code>)</h2>
+                <p>SDK de cero dependencias para ejecutar escenas 3D, mallas <code>.obj</code> y scripts C# directamente en el navegador mediante Web Components nativos.</p>
+                <pre><code>&lt;script type="module" src="/web-loopize-kit.js"&gt;&lt;/script&gt;
+&lt;loopize-obj-viewer model="starfighter" color="#38bdf8" autorotate="true"&gt;&lt;/loopize-obj-viewer&gt;
+&lt;loopize-stage preset="orbital_arena" title="Orbit Sector 7"&gt;&lt;/loopize-stage&gt;</code></pre>
+                <a href="/loopize-kit.html" class="btn-action" style="margin-top: 10px;">Abrir Web Loopize Kit Studio ➔</a>
+            </section>
+
+            <section id="sfx">
+                <h2>Síntesis de Audio Web</h2>
+                <p>El sistema de audio integrado genera efectos cristalinos sin cargar archivos externos de audio. Utiliza envolventes exponenciales y buffers de ruido blanco para saltos, dashes, impactos y recolección de coleccionables.</p>
+                <ul>
+                    <li><code>jump</code>: Barrido de frecuencia sinusoidal ascendente.</li>
+                    <li><code>double_jump</code>: Triángulo con textura de ruido sintético.</li>
+                    <li><code>dash</code>: Sierra doble con decaimiento rápido.</li>
+                    <li><code>coin</code>: Acorde armónico de alta frecuencia (B5 - E6).</li>
+                </ul>
+            </section>
+
+            <section id="physics">
+                <h2>Colisiones y Partículas</h2>
+                <p>Las colisiones AABB resuelven la profundidad y la velocidad en cada subpaso para evitar traspasos de geometría. El sistema de partículas emite ráfagas con gravedad configurable, decaimiento de opacidad y escala dinámica.</p>
+            </section>
+
+            <section id="repl">
+                <h2>REPL & Pipeline Funcional</h2>
+                <p>El entorno interactivo permite evaluar código en tiempo real con soporte para tuberías funcionales (<code>|></code>), expresiones de coincidencia (<code>match</code>) y plantillas de interpolación avanzadas.</p>
+                <pre><code>val score := 95
+val tier := score >= 90 ? "SS" : "A"
+print($"Rango Actual: {tier} ({score} pts)")</code></pre>
+            </section>
+
+            <section id="directives">
+                <h2>Referencia de Directivas</h2>
+                <p>Consulta la lista completa de directivas soportadas por el intérprete en el manual de desarrollo de Coki Studios.</p>
+                <a href="/LOOPING_USE.md" class="btn-action">Ver Manual Técnico Completo ➔</a>
             </section>
         </main>
     </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('docs_theme', next);
+        }
+
+        const savedTheme = localStorage.getItem('docs_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    </script>
 </body>
 </html>
