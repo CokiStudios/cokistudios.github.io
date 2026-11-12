@@ -630,5 +630,14 @@ public:
         : input_path(in_p), output_path(out_p), target_ui(tgt), compact_mode(compact) {}
 };
 
+// zbash-utils Terminal Script Statement: !exec <shell command>
+class ZBashExecStmt : public Stmt {
+public:
+    std::string raw_command;
+    bool capture_only;
+    explicit ZBashExecStmt(const std::string& cmd, bool capture = false)
+        : raw_command(cmd), capture_only(capture) {}
+};
+
 } // namespace looping
 

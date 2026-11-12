@@ -1,12 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "Looping Compile",
-  "fileTypes": ["loop", "ruup"],
+  "name": "Looping Compile v2.8",
   "patterns": [
     { "include": "#comments" },
     { "include": "#strings" },
     { "include": "#numbers" },
+    { "include": "#constants" },
+    { "include": "#operators" },
     { "include": "#keywords" },
+    { "include": "#stdlib" },
     { "include": "#commands" },
     { "include": "#graphics" }
   ],
@@ -33,6 +35,10 @@
             {
               "name": "constant.character.escape.loop",
               "match": "\\\\."
+            },
+            {
+              "name": "meta.embedded.line.interpolation.loop",
+              "match": "\\{[a-zA-Z_][a-zA-Z0-9_.]*\\}"
             }
           ]
         }
@@ -41,8 +47,32 @@
     "numbers": {
       "patterns": [
         {
+          "name": "constant.numeric.hex.loop",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.binary.loop",
+          "match": "\\b0[bB][01]+\\b"
+        },
+        {
           "name": "constant.numeric.loop",
           "match": "\\b\\d+(\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.loop",
+          "match": "\\b(true|false|null)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.loop",
+          "match": "(\\b(and|or|not|in)\\b|\\|>|=>|:=|\\.\\.=|\\.\\.|\\+=|-=|\\*=|/=|%=|==|!=|<=|>=|\\?\\?)"
         }
       ]
     },
@@ -50,7 +80,19 @@
       "patterns": [
         {
           "name": "keyword.control.loop",
-          "match": "\\b(define|app|version|import|as|when|is|clicked|loop|for|from|to|set|with|and|at|size|color|title|text|action)\\b"
+          "match": "(@app|\\b(fn|let|mut|val|set|to|if|else|match|try|catch|for|while|repeat|times|from|step|return|break|continue|when|is|clicked|define|app|version|import|as|compile|program|insert|with|at|size|color|title|text|action|sound|frequency|duration|ms)\\b)"
+        }
+      ]
+    },
+    "stdlib": {
+      "patterns": [
+        {
+          "name": "support.class.namespace.loop",
+          "match": "\\b(math|str|crypto|csv|datetime|time|regex|url|json|fs|sys|env|ui|audio|loop)\\b(?=\\.)"
+        },
+        {
+          "name": "support.function.stdlib.loop",
+          "match": "\\b(map|filter|reduce|sort_by|group_by|partition|take|drop|min_by|max_by|sum_by|frequencies|zip|unique|flatten|chunk|find|count_if|any|all|range|len|type|keys|values|entries|has_key|merge|remove_key|push|pop|sort|reverse|join|slice|contains|index_of|assert|input)\\b"
         }
       ]
     },
@@ -58,7 +100,7 @@
       "patterns": [
         {
           "name": "support.function.loop",
-          "match": "\\b(print|create window|display notification|wait|seconds|load|save)\\b"
+          "match": "\\b(out|say|print|window|create window|display notification|wait|seconds|load|save|emit)\\b"
         }
       ]
     },
@@ -66,7 +108,7 @@
       "patterns": [
         {
           "name": "entity.name.function.graphics.loop",
-          "match": "\\b(draw card|draw button|draw text|spawn sprite|on render|loop\\.ui|loop\\.engine)\\b"
+          "match": "\\b(draw card|draw button|draw text|spawn sprite|on render|ui\\.card|ui\\.btn|ui\\.text|ui\\.notify|audio\\.tone|loop\\.ui|loop\\.engine)\\b"
         }
       ]
     }

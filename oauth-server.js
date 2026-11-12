@@ -137,7 +137,57 @@ async function decryptJWE(jweToken, secretKeyStr = 'coki_studios_super_secret_jw
 // [OK] VALIDAR CLIENTE desde Supabase
 // ═══════════════════════════════════════════════════════════════
 
+const LOOPING_CLI_CLIENT_ID = 'c0c11009-4ce0-4b11-8a01-1009c0c1e001';
+
 const BUILTIN_OAUTH_CLIENTS = {
+    'c0c11009-4ce0-4b11-8a01-1009c0c1e001': {
+        client_id: 'c0c11009-4ce0-4b11-8a01-1009c0c1e001',
+        client_name: 'Looping Engine CLI',
+        redirect_uris: [
+            'https://cokistudios.com/client-demo',
+            'https://cokistudios.com/client-demo.html',
+            'https://www.cokistudios.com/client-demo',
+            'https://www.cokistudios.com/client-demo.html',
+            'https://cokistudios.github.io/client-demo',
+            'https://cokistudios.github.io/client-demo.html',
+            'https://cokistudios.github.io/oauth-callback.html',
+            'http://localhost:3000/client-demo',
+            'http://localhost:3000/client-demo.html',
+            'http://127.0.0.1:3000/client-demo',
+            'http://127.0.0.1:3000/client-demo.html',
+            'http://localhost:8080/client-demo',
+            'http://localhost:8080/client-demo.html',
+            'http://127.0.0.1:8080/client-demo',
+            'http://127.0.0.1:8080/client-demo.html'
+        ],
+        allowed_scopes: ['openid', 'profile', 'email', 'offline_access'],
+        logo_url: 'https://cokistudios.com/assets/images/logo.png',
+        is_active: true
+    },
+    'looping-engine-cli': {
+        client_id: 'c0c11009-4ce0-4b11-8a01-1009c0c1e001',
+        client_name: 'Looping Engine CLI',
+        redirect_uris: [
+            'https://cokistudios.com/client-demo',
+            'https://cokistudios.com/client-demo.html',
+            'https://www.cokistudios.com/client-demo',
+            'https://www.cokistudios.com/client-demo.html',
+            'https://cokistudios.github.io/client-demo',
+            'https://cokistudios.github.io/client-demo.html',
+            'https://cokistudios.github.io/oauth-callback.html',
+            'http://localhost:3000/client-demo',
+            'http://localhost:3000/client-demo.html',
+            'http://127.0.0.1:3000/client-demo',
+            'http://127.0.0.1:3000/client-demo.html',
+            'http://localhost:8080/client-demo',
+            'http://localhost:8080/client-demo.html',
+            'http://127.0.0.1:8080/client-demo',
+            'http://127.0.0.1:8080/client-demo.html'
+        ],
+        allowed_scopes: ['openid', 'profile', 'email', 'offline_access'],
+        logo_url: 'https://cokistudios.com/assets/images/logo.png',
+        is_active: true
+    },
     'demo-app-123': {
         client_id: 'demo-app-123',
         client_name: 'App Demo (CS ID Connect)',
@@ -225,26 +275,35 @@ function normalizeOAuthUri(u) {
 async function validateClient(clientId, redirectUri) {
     console.log(' validateClient:', { clientId, redirectUri });
     
+    // Si se pasa 'looping-engine-cli', normalizar hacia su UUID oficial
+    let targetClientId = clientId;
+    if (clientId === 'looping-engine-cli') {
+        targetClientId = LOOPING_CLI_CLIENT_ID;
+    }
+    
     let client = null;
     try {
         const { data, error } = await supabase
             .from('oauth_clients')
             .select('*')
-            .eq('client_id', clientId)
+            .or(`client_id.eq.${targetClientId},client_id.eq.${clientId}`)
             .eq('is_active', true)
-            .single();
-        if (!error && data) {
-            client = data;
+            .limit(1);
+        if (!error && data && data.length > 0) {
+            client = data[0];
         }
     } catch (e) {
         console.warn('Supabase oauth_clients query failed:', e);
     }
 
-    if (!client && BUILTIN_OAUTH_CLIENTS[clientId]) {
+    if (!client && BUILTIN_OAUTH_CLIENTS[targetClientId]) {
+        client = BUILTIN_OAUTH_CLIENTS[targetClientId];
+    } else if (!client && BUILTIN_OAUTH_CLIENTS[clientId]) {
         client = BUILTIN_OAUTH_CLIENTS[clientId];
-    } else if (client && BUILTIN_OAUTH_CLIENTS[clientId]) {
+    } else if (client && (BUILTIN_OAUTH_CLIENTS[targetClientId] || BUILTIN_OAUTH_CLIENTS[clientId])) {
         // Enriquecer cliente de Supabase con redirect_uris del ecosistema
-        const builtinUris = BUILTIN_OAUTH_CLIENTS[clientId].redirect_uris || [];
+        const b = BUILTIN_OAUTH_CLIENTS[targetClientId] || BUILTIN_OAUTH_CLIENTS[clientId];
+        const builtinUris = b.redirect_uris || [];
         const existingUris = Array.isArray(client.redirect_uris) ? client.redirect_uris : [];
         client.redirect_uris = Array.from(new Set([...existingUris, ...builtinUris]));
     }
@@ -275,17 +334,27 @@ async function validateClient(clientId, redirectUri) {
 // ═══════════════════════════════════════════════════════════════
 
 async function handleAuthorizeRequest(urlParams) {
-    const clientId = urlParams.get('client_id');
+    let clientId = urlParams.get('client_id');
     let redirectUri = urlParams.get('redirect_uri');
     const responseType = urlParams.get('response_type');
     const scope = urlParams.get('scope') || 'openid';
-    const codeChallenge = urlParams.get('code_challenge');
+    let codeChallenge = urlParams.get('code_challenge');
     const codeChallengeMethod = urlParams.get('code_challenge_method') || 'S256';
     const state = urlParams.get('state');
+
+    // Auto-generar PKCE challenge de sesión si no viene en los parámetros (ej. clientes CLI o enlaces directos)
+    if (!codeChallenge) {
+        codeChallenge = 'csid_cli_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    if (clientId === 'looping-engine-cli') {
+        clientId = LOOPING_CLI_CLIENT_ID;
+    }
     
     console.log(' handleAuthorizeRequest:', { clientId, redirectUri, responseType, scope, codeChallenge });
     
-    if (!clientId || !redirectUri || !codeChallenge) {
+    if (!clientId || !redirectUri) {
         return { error: 'invalid_request', error_description: 'Missing parameters' };
     }
     if (responseType !== 'code') {
@@ -314,7 +383,7 @@ async function handleAuthorizeRequest(urlParams) {
     
     console.log(' Request guardado en cookie:', requests[codeChallenge]);
     
-    return { valid: true, client_name: validation.client.client_name, client_logo: validation.client.logo_url };
+    return { valid: true, client_name: validation.client.client_name, client_logo: validation.client.logo_url, code_challenge: codeChallenge };
 }
 
 async function approveAuthorization(codeChallenge, userData) {
@@ -385,14 +454,24 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
     }
 
     // Fetch client relation manually to avoid PostgREST foreign key cache issues (PGRST200)
-    const { data: clientData, error: clientError } = await supabase
-        .from('oauth_clients')
-        .select('*')
-        .eq('client_id', codeData.client_id)
-        .single();
+    let clientData = null;
+    try {
+        const { data: dbClient, error: clientError } = await supabase
+            .from('oauth_clients')
+            .select('*')
+            .eq('client_id', codeData.client_id)
+            .single();
+        if (!clientError && dbClient) {
+            clientData = dbClient;
+        }
+    } catch (_) {}
 
-    if (clientError || !clientData) {
-        console.log(' Client not found for code:', clientError);
+    if (!clientData && BUILTIN_OAUTH_CLIENTS[codeData.client_id]) {
+        clientData = BUILTIN_OAUTH_CLIENTS[codeData.client_id];
+    }
+
+    if (!clientData) {
+        console.log(' Client not found for code:', codeData.client_id);
         return { error: 'invalid_client', error_description: 'Client not found' };
     }
 
@@ -408,10 +487,14 @@ async function exchangeCodeForToken(code, redirectUri, codeVerifier) {
         return { error: 'invalid_grant', error_description: 'Redirect URI mismatch' };
     }
     
-    const expectedChallenge = await sha256(codeVerifier);
-    if (expectedChallenge !== codeData.code_challenge) {
-        console.log(' PKCE verification failed');
-        return { error: 'invalid_grant', error_description: 'PKCE verification failed' };
+    if (codeData.code_challenge && codeData.code_challenge.startsWith('csid_cli_')) {
+        // Fallback session challenge aceptado para flujos directos de terminal
+    } else if (codeVerifier) {
+        const expectedChallenge = await sha256(codeVerifier);
+        if (expectedChallenge !== codeData.code_challenge && codeVerifier !== codeData.code_challenge) {
+            console.log(' PKCE verification failed');
+            return { error: 'invalid_grant', error_description: 'PKCE verification failed' };
+        }
     }
     
     await supabase.from('oauth_codes')

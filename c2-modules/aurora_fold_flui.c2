@@ -1,0 +1,52 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ SHINE OS MOBILE UI COMPONENT 2 (.c2) ✦
+# Adaptado para Shine f1 / fW1 / i1 (120Hz Plegable Dual-Screen & Flex Mode)
+# Desarrollado por Coki Studios Design Lab
+# ═══════════════════════════════════════════════════════════════════════════════
+
+component "AuroraFold" target "flui" {
+    device: "Shine f1 / fW1 / i1"
+    family: "flui"
+    fps: 120
+    theme: "aurora_indigo_fold"
+    primary: "#c084fc"
+    accent: "#581c87"
+    background: "#0b0714"
+    surface: "rgba(30, 16, 50, 0.85)"
+    corner_radius: 24
+    elevation: 12
+
+    state {
+        mut hinge_angle = 180
+        mut is_flex_mode = false
+        mut dual_screen_active = true
+    }
+
+    draw status_pill at (center, top) with text "● SHINE FOLD • 120Hz DUAL-SCREEN" and glow true
+
+    draw card at (20, 80) with title "FLEX HINGE TELEMETRY":
+        text $"Ángulo de bisagra: {hinge_angle}° | Flex Mode: {is_flex_mode}"
+        button "CALIBRAR BISAGRA" action "calibrate_hinge"
+
+    draw card at (20, 200) with title "DUAL DISPLAY WORKSPACE":
+        text "Pantalla Izquierda: Apps Principales | Pantalla Derecha: Widgets"
+        button "SINCRONIZAR PANTALLAS" action "sync_screens"
+
+    draw dock at bottom with apps ["phone", "messages", "shinemaps", "camera", "settings"]
+
+    fn on_hinge_change(angle) {
+        hinge_angle = angle
+        if (angle > 75 and angle < 105) {
+            is_flex_mode = true
+            print "[C2 flUI] Flex Mode 90° activado automáticamente."
+        } else {
+            is_flex_mode = false
+        }
+    }
+
+    fn calibrate_hinge() {
+        play tone at 587 Hz for 80 ms
+        play tone at 880 Hz for 100 ms
+        print "[C2 flUI] Sensor Hall y bisagra calibrados."
+    }
+}

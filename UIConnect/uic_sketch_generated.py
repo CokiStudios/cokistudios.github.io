@@ -29,7 +29,6 @@ BUTTONS = [
     {'text': "🍚 [Sketch] Uic.transfork (Bowl -> .c2)", 'action': "_Sketch_Uictransfork_Bowl___c2", 'snippet': "print \"[UIC SKETCH] Simulando conversión [app] + [sys] => .c2:\"\nprint \"  • Bowl origen (hiOP / smiledev) validado por Malicious Day AI (0 exploits).\"\nprint \"  • Empaquetado preliminar para C2loader en Felte.\"\n"},
     {'text': "🔬 [Sketch] Telemetría NEX1 & ESC X1", 'action': "_Sketch_Telemetra_NEX1__ESC_X1", 'snippet': "val chips = {\"ESC_X1\": \"minii OS + Rotate 1 + Keystores R1m (Lookit)\", \"NEX1_NFC_E286\": \"W1 WiFi + NFC RW + BT + brightsmile 1 (brs1)\", \"XR1\": \"8 Lightcores + 2 PowerCores\", \"XRo_G1\": \"6 Power + 6 Staticker Cores\"}\nprint $\"[UIC SKETCH] Mapa de silicio CS en el boceto:\\n  -> {chips}\"\n"},
     {'text': "🎮 [Sketch] Loop OoS ARM & Loopize", 'action': "_Sketch_Loop_OoS_ARM__Loopize", 'snippet': "print \"[UIC SKETCH] Simulación de Loop OoS ARM (Advanced Recovery Mode — Pág. 9-10):\"\nprint \"  1. Descargar paquete desde cokistudios.com/oosrestore al mando Loopize <eNAND>.\"\nprint \"  2. Conectar Loopize a la consola Loop en ARM (Do NOT unplug your Loopize).\"\nprint \"  3. Soporte para paquetes .cg (Component Game), Proton, Port Kit y COK1 IA.\"\n"},
-    {'text': "⚡ [Sketch] Metal 4 Pipeline Telemetría", 'action': "_Sketch_Metal_4_Pipeline_Telemetra", 'snippet': "val m4 = metal4.pipeline_info()\nprint $\"[UIC SKETCH] Pipeline gráfico activo Metal 4:\\n  • API: {m4[\\\"api\\\"]} | Target: {m4[\\\"target_fps\\\"]} FPS | GPU: {m4[\\\"gpu\\\"]}\\n  • Latencia: {m4[\\\"render_latency\\\"]} | Status: {m4[\\\"status\\\"]}\"\n"},
 ]
 
 class LoopNativeWindow(tk.Tk):
@@ -63,7 +62,6 @@ class LoopNativeWindow(tk.Tk):
             {'title': "🔌 🔌 [Pág. 8] MRM (Multi Recovery Mode)", 'badge': "MRM MODE", 'text': "3 pantallas en celular: Disconnect ([PC] !), Uic idle (• • •) y Working (NO Disconnect / Not power off). Permite Restore SUI, Repair SUI, Inject .c2 on PS y Change OS."},
             {'title': "🍚 🍚 [Pág. 3-4] Rice, Bowls & Shinerien", 'badge': "RICE -> .C2", 'text': "Rice es la base; los 'Bowls' son los módulos creados en hiOP y subidos a Felte vía smiledev. Uic.transfork convierte Rice/Bowls a .c2 con el kernel Shinerien."},
             {'title': "🔬 🔬 [Pág. 1-2, 6] Chips ESC, NEX1 & XR1", 'badge': "CS SILICON", 'text': "ESC X1 (minii OS + Rotate 1 + Keystores R1m con Lookit), NEX1 / NFC.E 286 (W1 WiFi + NFC + BT + brightsmile 1 + Battery Coil), XR1 (8L+2P) y XRo G1 (6P+6S)."},
-            {'title': "⚡ ⚡ [Metal 4] Aceleración Apple Silicon", 'badge': "METAL 4", 'text': "Renderizado a 240Hz ProMotion en Apple M4 / APU Unified Memory. Pipeline MSL 4.0 con hardware mesh shaders y trazado por hardware."},
         ]
         self.c_cards = tk.Canvas(main_frame, height=225, bg=THEME['bg'], highlightthickness=0)
         self.c_cards.pack(fill='x', pady=(0, 10))
@@ -143,8 +141,6 @@ class LoopNativeWindow(tk.Tk):
         btn_3.pack(side='left', padx=(0, 8))
         btn_4 = tk.Button(btn_bar, text="⚡ 🎮 [Sketch] Loop OoS ARM & Loopize", font=('Helvetica', 9, 'bold'), bg=THEME['btn_bg'], fg=THEME['btn_fg'], relief='flat', padx=8, pady=5, activebackground=THEME['primary'], cursor='hand2', command=lambda idx=4: self.on_btn_click(idx))
         btn_4.pack(side='left', padx=(0, 8))
-        btn_5 = tk.Button(btn_bar, text="⚡ ⚡ [Sketch] Metal 4 Pipeline Telemetría", font=('Helvetica', 9, 'bold'), bg=THEME['btn_bg'], fg=THEME['btn_fg'], relief='flat', padx=8, pady=5, activebackground=THEME['primary'], cursor='hand2', command=lambda idx=5: self.on_btn_click(idx))
-        btn_5.pack(side='left', padx=(0, 8))
 
         # Interactive Console Log Drawer
         log_frame = tk.Frame(main_frame, bg=THEME['log_bg'], highlightbackground=THEME['card_border'], highlightthickness=1)

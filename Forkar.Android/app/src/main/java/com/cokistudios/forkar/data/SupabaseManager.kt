@@ -980,6 +980,62 @@ class SupabaseManager private constructor(context: Context) {
         }
     }
 
+    // Profile cache for fast avatar and name resolution in CSMS
+    private val profileCache = java.util.concurrent.ConcurrentHashMap<String, Pair<String?, String?>>()
+
+    suspend fun fetchUserProfile(userId: String): Pair<String?, String?>? = withContext(Dispatchers.IO) {
+        val cleanUid = userId.trim().lowercase()
+        if (cleanUid.isBlank()) return@withContext null
+        profileCache[cleanUid]?.let { return@withContext it }
+
+        try {
+            val path = "/rest/v1/profiles"
+            val req = makeRequest(path, queryParams = mapOf("select" to "full_name,avatar_url", "id" to "eq.$cleanUid", "limit" to "1"))
+            client.newCall(req).execute().use { resp ->
+                val body = resp.body?.string() ?: ""
+                if (resp.isSuccessful && body.isNotBlank()) {
+                    val arr = JSONArray(body)
+                    if (arr.length() > 0) {
+                        val prof = arr.getJSONObject(0)
+                        val name = prof.optString("full_name").takeIf { it.isNotBlank() && it != "null" }
+                        val avatar = prof.optString("avatar_url").takeIf { it.isNotBlank() && it != "null" }
+                        val pair = Pair(name, avatar)
+                        profileCache[cleanUid] = pair
+                        return@withContext pair
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error fetching profile for $cleanUid", e)
+        }
+        null
+    }
+
+    suspend fun fetchRoomMembers(rawRoomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val roomId = ensureValidRoomUUID(rawRoomId)
+        val path = "/rest/v1/chat_room_members"
+        val queryParams = mapOf(
+            "room_id" to "eq.$roomId",
+            "select" to "room_id,user_id,user_name,user_avatar"
+        )
+        val request = makeRequest(path, queryParams = queryParams)
+        val list = mutableListOf<JSONObject>()
+        try {
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.isNotBlank()) {
+                    val array = JSONArray(body)
+                    for (i in 0 until array.length()) {
+                        list.add(array.getJSONObject(i))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SupabaseManager", "Error fetching room members for $roomId", e)
+        }
+        list
+    }
+
     suspend fun fetchChatRooms(): List<JSONObject> = withContext(Dispatchers.IO) {
         val path = "/rest/v1/chat_rooms"
         val queryParams = mapOf(
@@ -997,68 +1053,122 @@ class SupabaseManager private constructor(context: Context) {
                 if (response.isSuccessful && body.isNotBlank()) {
                     val array = JSONArray(body)
                     for (i in 0 until array.length()) {
-                        val obj = array.getJSONObject(i)
-                        val id = obj.optString("id")
-                        val isGroup = obj.optBoolean("is_group", true)
-                        val createdBy = obj.optString("created_by").lowercase()
-                        var roomName = obj.optString("name")
-                        var contactAvatar: String? = null
-
-                        if (!isGroup) {
-                            // En chats 1-a-1 directos, resolver el nombre y avatar del OTRO participante
-                            val membersArr = obj.optJSONArray("chat_room_members")
-                            if (membersArr != null && membersArr.length() > 0) {
-                                var foundOther: JSONObject? = null
-                                for (mIdx in 0 until membersArr.length()) {
-                                    val memObj = membersArr.optJSONObject(mIdx) ?: continue
-                                    val memUid = memObj.optString("user_id").lowercase()
-                                    if (memUid.isNotBlank() && memUid != myUid) {
-                                        foundOther = memObj
-                                        break
-                                    }
-                                }
-                                if (foundOther != null) {
-                                    val otherName = foundOther.optString("user_name")
-                                    if (otherName.isNotBlank() && otherName != "null") {
-                                        roomName = otherName
-                                    }
-                                    val otherAvatar = foundOther.optString("user_avatar")
-                                    if (otherAvatar.isNotBlank() && otherAvatar != "null") {
-                                        contactAvatar = otherAvatar
-                                    }
-                                }
-                            }
-                        }
-
-                        if (roomName.isBlank() || roomName == "null" || roomName.equals("Chat Directo", ignoreCase = true) || roomName.equals("Chat Instantáneo", ignoreCase = true)) {
-                            roomName = if (isGroup) "Grupo CSMS" else "Chat Directo"
-                        }
-                        obj.put("displayName", roomName)
-                        if (contactAvatar != null) {
-                            obj.put("displayAvatar", contactAvatar)
-                        }
-
-                        val isCanonical = id.equals(CSMS_COMMUNITY_GLOBAL_ID, ignoreCase = true) ||
-                                          id.equals(CSMS_ECO_HUB_ID, ignoreCase = true) ||
-                                          id.equals(CSMS_FORKAR_CARPOOL_ID, ignoreCase = true)
-
-                        val canDelete = !isCanonical && (
-                            createdBy == myUid || 
-                            roomName.equals("TEST", ignoreCase = true) || 
-                            roomName.equals("Hello", ignoreCase = true) ||
-                            roomName.startsWith("Test", ignoreCase = true)
-                        )
-                        obj.put("canDelete", canDelete)
-
-                        if (id.isNotBlank()) {
-                            seenIds.add(id.lowercase())
-                        }
-                        list.add(obj)
+                        list.add(array.getJSONObject(i))
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.w("SupabaseManager", "Error fetching chat rooms from Supabase", e)
+            Log.w("SupabaseManager", "Primary chat_rooms query failed, falling back to memberships", e)
+        }
+
+        // Fallback vía chat_room_members si la consulta directa vino vacía o falló por RLS
+        if (list.isEmpty() && currentUser != null) {
+            try {
+                val memberPath = "/rest/v1/chat_room_members"
+                val memberQuery = mapOf(
+                    "user_id" to "eq.$myUid",
+                    "select" to "room_id,chat_rooms(*,chat_room_members(user_id,user_name,user_avatar))"
+                )
+                val fallbackReq = makeRequest(memberPath, queryParams = memberQuery)
+                client.newCall(fallbackReq).execute().use { resp ->
+                    val fBody = resp.body?.string() ?: ""
+                    if (resp.isSuccessful && fBody.isNotBlank()) {
+                        val arr = JSONArray(fBody)
+                        for (i in 0 until arr.length()) {
+                            val row = arr.getJSONObject(i)
+                            val roomObj = row.optJSONObject("chat_rooms")
+                            if (roomObj != null) {
+                                list.add(roomObj)
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("SupabaseManager", "Fallback chat_room_members query error", e)
+            }
+        }
+
+        val resolvedList = mutableListOf<JSONObject>()
+        for (i in 0 until list.size) {
+            val obj = list[i]
+            val id = obj.optString("id")
+            val isGroup = obj.optBoolean("is_group", true)
+            val createdBy = obj.optString("created_by").lowercase()
+            var roomName = obj.optString("name")
+            var contactAvatar: String? = null
+
+            if (!isGroup) {
+                // En chats 1-a-1 directos, resolver el nombre y avatar del OTRO participante
+                var membersArr = obj.optJSONArray("chat_room_members")
+                if (membersArr == null || membersArr.length() == 0) {
+                    // Si no vinieron embebidos, resolverlos individualmente
+                    val fetchedMembers = fetchRoomMembers(id)
+                    if (fetchedMembers.isNotEmpty()) {
+                        membersArr = JSONArray()
+                        fetchedMembers.forEach { membersArr.put(it) }
+                        obj.put("chat_room_members", membersArr)
+                    }
+                }
+
+                if (membersArr != null && membersArr.length() > 0) {
+                    var foundOther: JSONObject? = null
+                    for (mIdx in 0 until membersArr.length()) {
+                        val memObj = membersArr.optJSONObject(mIdx) ?: continue
+                        val memUid = memObj.optString("user_id").lowercase()
+                        if (memUid.isNotBlank() && memUid != myUid) {
+                            foundOther = memObj
+                            break
+                        }
+                    }
+                    if (foundOther != null) {
+                        val otherUid = foundOther.optString("user_id")
+                        val otherName = foundOther.optString("user_name")
+                        if (otherName.isNotBlank() && otherName != "null") {
+                            roomName = otherName
+                        }
+                        val otherAvatar = foundOther.optString("user_avatar")
+                        if (otherAvatar.isNotBlank() && otherAvatar != "null") {
+                            contactAvatar = otherAvatar
+                        }
+
+                        // Si falta el avatar o el nombre, consultar profiles
+                        if ((contactAvatar == null || roomName.isBlank() || roomName.equals("Chat Directo", ignoreCase = true)) && otherUid.isNotBlank()) {
+                            val prof = fetchUserProfile(otherUid)
+                            if (prof != null) {
+                                if (prof.first != null && (roomName.isBlank() || roomName.equals("Chat Directo", ignoreCase = true))) {
+                                    roomName = prof.first!!
+                                }
+                                if (prof.second != null && contactAvatar == null) {
+                                    contactAvatar = prof.second
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (roomName.isBlank() || roomName == "null" || roomName.equals("Chat Directo", ignoreCase = true) || roomName.equals("Chat Instantáneo", ignoreCase = true)) {
+                roomName = if (isGroup) "Grupo CSMS" else "Chat Directo"
+            }
+            obj.put("displayName", roomName)
+            if (contactAvatar != null) {
+                obj.put("displayAvatar", contactAvatar)
+            }
+
+            val isProtected = CSMSCanonicalRooms.isProtected(id) || CSIMSCanonicalRooms.isInternalRoom(id)
+
+            val canDelete = !isProtected && (
+                createdBy == myUid || 
+                roomName.equals("TEST", ignoreCase = true) || 
+                roomName.equals("Hello", ignoreCase = true) ||
+                roomName.startsWith("Test", ignoreCase = true)
+            )
+            obj.put("canDelete", canDelete)
+
+            if (id.isNotBlank()) {
+                seenIds.add(id.lowercase())
+            }
+            resolvedList.add(obj)
         }
 
         // Always ensure canonical official channels exist in the room list
@@ -1078,15 +1188,19 @@ class SupabaseManager private constructor(context: Context) {
                     put("canDelete", false)
                     put("created_at", "2026-09-20T00:00:00Z")
                 }
-                list.add(0, canonObj)
+                resolvedList.add(0, canonObj)
                 seenIds.add(id.lowercase())
             }
         }
 
-        list
+        resolvedList
     }
 
     suspend fun deleteChatRoom(roomId: String): Boolean = withContext(Dispatchers.IO) {
+        if (CSMSCanonicalRooms.isProtected(roomId) || CSIMSCanonicalRooms.isInternalRoom(roomId)) {
+            Log.w("SupabaseManager", "Protected room cannot be deleted: $roomId")
+            return@withContext false
+        }
         try {
             val path = "/rest/v1/chat_rooms"
             val request = makeRequest(path, "DELETE", queryParams = mapOf("id" to "eq.$roomId"))
@@ -1115,17 +1229,27 @@ class SupabaseManager private constructor(context: Context) {
         count
     }
 
-    suspend fun joinRoomAsMember(rawRoomId: String, memberId: String? = null, memberName: String? = null): Boolean = withContext(Dispatchers.IO) {
+    suspend fun joinRoomAsMember(
+        rawRoomId: String, 
+        memberId: String? = null, 
+        memberName: String? = null,
+        memberAvatar: String? = null
+    ): Boolean = withContext(Dispatchers.IO) {
         try {
             val roomId = ensureValidRoomUUID(rawRoomId)
             val uid = memberId ?: getValidUserUUID()
             val user = currentUser
-            val name = memberName ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
+            val name = memberName ?: user?.userMetadata?.displayName ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
+            val avatar = memberAvatar ?: if (memberId == null || memberId == uid) (user?.userMetadata?.avatarUrl ?: user?.userMetadata?.picture) else null
+
             val path = "/rest/v1/chat_room_members"
             val bodyJson = JSONObject().apply {
                 put("room_id", roomId)
                 put("user_id", uid)
                 put("user_name", name)
+                if (!avatar.isNullOrBlank()) {
+                    put("user_avatar", avatar)
+                }
             }
             val body = bodyJson.toString().toRequestBody("application/json".toMediaType())
             val request = makeRequest(path, "POST", body)
@@ -1195,10 +1319,12 @@ class SupabaseManager private constructor(context: Context) {
         val email = targetEmail.trim().lowercase()
         if (email.isBlank()) return@withContext null
         val myUid = getValidUserUUID()
-        val myName = currentUser?.userMetadata?.fullName ?: currentUser?.userMetadata?.name ?: currentUser?.email?.substringBefore("@") ?: "Usuario Android"
+        val myName = currentUser?.userMetadata?.displayName ?: currentUser?.userMetadata?.fullName ?: currentUser?.email?.substringBefore("@") ?: "Usuario Android"
+        val myAvatar = currentUser?.userMetadata?.avatarUrl ?: currentUser?.userMetadata?.picture
 
         var targetUserId: String? = null
         var targetUserName: String = email
+        var targetUserAvatar: String? = null
 
         try {
             val path = "/rest/v1/profiles"
@@ -1210,12 +1336,19 @@ class SupabaseManager private constructor(context: Context) {
                     if (arr.length() > 0) {
                         val prof = arr.getJSONObject(0)
                         targetUserId = prof.optString("id")
-                        targetUserName = prof.optString("full_name", email)
+                        val fName = prof.optString("full_name")
+                        if (fName.isNotBlank() && fName != "null") {
+                            targetUserName = fName
+                        }
+                        val avUrl = prof.optString("avatar_url")
+                        if (avUrl.isNotBlank() && avUrl != "null") {
+                            targetUserAvatar = avUrl
+                        }
                     }
                 }
             }
         } catch (e: Exception) {
-            // ignore
+            Log.w("SupabaseManager", "Error looking up target profile for DM", e)
         }
 
         val roomPath = "/rest/v1/chat_rooms"
@@ -1242,11 +1375,11 @@ class SupabaseManager private constructor(context: Context) {
         }
 
         val roomId = newRoomId ?: java.util.UUID.randomUUID().toString()
-        joinRoomAsMember(roomId, myUid, myName)
+        joinRoomAsMember(roomId, myUid, myName, myAvatar)
         if (targetUserId != null) {
-            joinRoomAsMember(roomId, targetUserId!!, targetUserName)
+            joinRoomAsMember(roomId, targetUserId, targetUserName, targetUserAvatar)
         } else {
-            joinRoomAsMember(roomId, "00000000-0000-0000-0000-000000000000", targetUserName)
+            joinRoomAsMember(roomId, "00000000-0000-0000-0000-000000000000", targetUserName, null)
         }
         roomId
     }
@@ -1254,7 +1387,9 @@ class SupabaseManager private constructor(context: Context) {
     suspend fun createGroupChat(name: String): String? = withContext(Dispatchers.IO) {
         val user = currentUser
         val createdBy = getValidUserUUID()
-        val authorName = user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario Android"
+        val authorName = user?.userMetadata?.displayName ?: user?.userMetadata?.fullName ?: user?.email?.substringBefore("@") ?: "Usuario Android"
+        val authorAvatar = user?.userMetadata?.avatarUrl ?: user?.userMetadata?.picture
+
         val path = "/rest/v1/chat_rooms"
         val bodyJson = JSONObject().apply {
             put("name", name)
@@ -1283,12 +1418,13 @@ class SupabaseManager private constructor(context: Context) {
         }
 
         val roomId = createdRoomId ?: java.util.UUID.randomUUID().toString()
-        joinRoomAsMember(roomId, createdBy, authorName)
+        joinRoomAsMember(roomId, createdBy, authorName, authorAvatar)
         roomId
     }
 
     suspend fun fetchChatMessages(rawRoomId: String): List<JSONObject> = withContext(Dispatchers.IO) {
         val roomId = ensureValidRoomUUID(rawRoomId)
+        val isInternal = CSIMSCanonicalRooms.isInternalRoom(roomId)
         val path = "/rest/v1/chat_messages"
         val queryParams = mapOf(
             "select" to "*",
@@ -1305,9 +1441,29 @@ class SupabaseManager private constructor(context: Context) {
                     for (i in 0 until array.length()) {
                         val msgObj = array.getJSONObject(i)
                         val rawContent = msgObj.optString("content")
-                        val (plainContent, wasEncrypted) = CSMSEncryption.decrypt(roomId, rawContent)
+
+                        // Descifrado E2EE en memoria con respaldo por hardware (CSIMS / CSMS)
+                        val (plainContent, wasEncrypted) = if (isInternal || rawContent.startsWith(CSIMSEncryption.E2EE_PREFIX)) {
+                            CSIMSEncryption.decrypt(rawContent, roomId)
+                        } else {
+                            CSMSEncryption.decrypt(roomId, rawContent)
+                        }
+
                         msgObj.put("content", plainContent)
                         msgObj.put("is_encrypted", wasEncrypted)
+
+                        // Auto-resolución de avatar si el mensaje remoto no lo traía
+                        val existingAvatar = msgObj.optString("author_avatar").takeIf { it.isNotBlank() && it != "null" }
+                        if (existingAvatar == null) {
+                            val senderUid = if (msgObj.has("user_id") && !msgObj.isNull("user_id")) msgObj.optString("user_id") else msgObj.optString("sender_id")
+                            if (senderUid.isNotBlank()) {
+                                val cached = profileCache[senderUid.lowercase()]
+                                if (cached?.second != null) {
+                                    msgObj.put("author_avatar", cached.second)
+                                }
+                            }
+                        }
+
                         remoteList.add(msgObj)
                     }
                 }
@@ -1346,14 +1502,31 @@ class SupabaseManager private constructor(context: Context) {
         val roomId = ensureValidRoomUUID(rawRoomId)
         val user = currentUser
         val senderId = getValidUserUUID()
-        val authorName = customAuthor ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario CSMS"
+        val authorName = customAuthor ?: user?.userMetadata?.displayName ?: user?.userMetadata?.fullName ?: user?.userMetadata?.name ?: user?.email?.substringBefore("@") ?: "Usuario CSMS"
+        val authorAvatar = if (customAuthor != null) null else (user?.userMetadata?.avatarUrl ?: user?.userMetadata?.picture)
         val nowIso = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
         }.format(java.util.Date())
         val localMsgId = java.util.UUID.randomUUID().toString()
 
-        // 🔒 Cifrado E2EE con AES-256-GCM para Supabase
-        val encryptedContent = CSMSEncryption.encrypt(roomId, content)
+        val isInternal = CSIMSCanonicalRooms.isInternalRoom(roomId)
+
+        // 🔒 Cifrado E2EE con respaldo de hardware (SEP / StrongBox)
+        val (encryptedContent, wasEncrypted) = if (isInternal) {
+            try {
+                Pair(CSIMSEncryption.encrypt(content, roomId, user?.email), true)
+            } catch (e: Exception) {
+                Log.w("SupabaseManager", "CSIMS Encryption fallback: ${e.message}")
+                Pair(content, false)
+            }
+        } else {
+            try {
+                Pair(CSMSEncryption.encrypt(roomId, content), true)
+            } catch (e: Exception) {
+                Log.w("SupabaseManager", "CSMS Encryption fallback: ${e.message}")
+                Pair(content, false)
+            }
+        }
 
         val localMsgObj = JSONObject().apply {
             put("id", localMsgId)
@@ -1361,8 +1534,11 @@ class SupabaseManager private constructor(context: Context) {
             put("user_id", senderId)
             put("sender_id", senderId)
             put("author_name", authorName)
+            if (!authorAvatar.isNullOrBlank()) {
+                put("author_avatar", authorAvatar)
+            }
             put("content", content)
-            put("is_encrypted", true)
+            put("is_encrypted", wasEncrypted)
             if (!mediaUrl.isNullOrBlank()) put("media_url", mediaUrl)
             if (!mediaType.isNullOrBlank()) put("media_type", mediaType)
             put("created_at", nowIso)
@@ -1377,6 +1553,9 @@ class SupabaseManager private constructor(context: Context) {
             put("user_id", senderId)
             put("sender_id", senderId)
             put("author_name", authorName)
+            if (!authorAvatar.isNullOrBlank()) {
+                put("author_avatar", authorAvatar)
+            }
             put("content", encryptedContent) // Solo viaja cifrado por la red y a la base de datos
             if (!mediaUrl.isNullOrBlank()) put("media_url", mediaUrl)
             if (!mediaType.isNullOrBlank()) put("media_type", mediaType)

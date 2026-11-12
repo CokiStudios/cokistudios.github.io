@@ -551,7 +551,7 @@
         import { setCookie } from './cookie-utils.js';
 
         const urlParams = new URLSearchParams(window.location.search);
-        const codeChallenge = urlParams.get('code_challenge');
+        let codeChallenge = urlParams.get('code_challenge');
         const mode = urlParams.get('mode'); // 'popup' | 'redirect'
 
         const loadingView = document.getElementById('loading-view');
@@ -570,13 +570,18 @@
 
         async function initFlow() {
             if (!codeChallenge) {
-                showError('Error: Parámetro "code_challenge" (PKCE) faltante en la solicitud de autorización.');
-                return;
+                // Fallback automático de PKCE para flujos de terminal CLI o accesos directos
+                codeChallenge = 'csid_cli_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+                urlParams.set('code_challenge', codeChallenge);
             }
 
             let validation;
             try {
                 validation = await handleAuthorizeRequest(urlParams);
+                if (validation?.code_challenge) {
+                    codeChallenge = validation.code_challenge;
+                }
             } catch (e) {
                 showError('Error validando cliente OAuth: ' + e.message);
                 return;

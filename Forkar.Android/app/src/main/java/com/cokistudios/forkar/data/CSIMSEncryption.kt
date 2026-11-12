@@ -1,6 +1,8 @@
 package com.cokistudios.forkar.data
 
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.util.Log
@@ -11,13 +13,14 @@ import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
  * Gestor de Cifrado de Extremo a Extremo (E2EE) para CSIMS (Coki Studios Internal Messaging Service).
  * Respaldado por hardware seguro:
- * - Android: AndroidKeyStore (TEE / StrongBox)
+ * - Android: AndroidKeyStore (Hardware TEE / StrongBox Keymaster)
  * - iPhone: Apple Secure Enclave Processor (SEP) con CryptoKit
  * - macOS: Apple T2 Security Chip / Apple Silicon Secure Enclave
  * 
@@ -32,6 +35,52 @@ object CSIMSEncryption {
     private const val IV_LENGTH_BYTE = 12
     const val E2EE_PREFIX = "🔒 csims:v1:"
     const val LEGACY_PREFIX = "🔒 enc:v1:"
+    const val SALT = "CSIMS_E2EE_COKI_STUDIOS_v1_SALT_INTERNAL"
+
+    /**
+     * Evalúa si el dispositivo cuenta con respaldo criptográfico en hardware (TEE o StrongBox).
+     */
+    val isHardwareSecurityAvailable: Boolean
+        get() {
+            return try {
+                val key = getOrCreateHardwareKey() ?: return false
+                val factory = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
+                val keyInfo = factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo
+                keyInfo.isInsideSecureHardware
+            } catch (e: Exception) {
+                getOrCreateHardwareKey() != null
+            }
+        }
+
+    /**
+     * Badge descriptivo del enclave de hardware activo para CSIMS.
+     */
+    val hardwareSecurityBadge: String
+        get() {
+            return try {
+                val key = getOrCreateHardwareKey()
+                if (key != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        try {
+                            val factory = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
+                            val info = factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo
+                            if (info.securityLevel == KeyProperties.SECURITY_LEVEL_STRONGBOX) {
+                                return "CSIMS: StrongBox Keymaster (Zero Trust)"
+                            } else if (info.securityLevel == KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+                                return "CSIMS: Hardware TEE Enclave (Zero Trust)"
+                            }
+                        } catch (_: Exception) {}
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        return "CSIMS: StrongBox / TEE Hardware"
+                    }
+                    return "CSIMS: TEE Hardware Vault"
+                }
+                "CSIMS: Cryptographic Vault"
+            } catch (e: Exception) {
+                "CSIMS: Cryptographic Vault"
+            }
+        }
 
     // Valida que el correo pertenezca al dominio interno de Coki Studios
     fun isAuthorizedInternalEmail(email: String?): Boolean {
@@ -43,28 +92,47 @@ object CSIMSEncryption {
         return try {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
             if (keyStore.containsAlias(MASTER_ALIAS)) {
-                keyStore.getKey(MASTER_ALIAS, null) as? SecretKey
-            } else {
-                val keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
-                val spec = KeyGenParameterSpec.Builder(
-                    MASTER_ALIAS,
-                    KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-                )
-                    .setKeySize(256)
-                    .build()
-                keyGen.init(spec)
-                keyGen.generateKey()
+                return keyStore.getKey(MASTER_ALIAS, null) as? SecretKey
             }
+
+            val keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
+
+            // Intento 1: Solicitar respaldo por StrongBox Keymaster si está disponible (Android P+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                try {
+                    val strongBoxSpec = KeyGenParameterSpec.Builder(
+                        MASTER_ALIAS,
+                        KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+                    )
+                        .setKeySize(256)
+                        .setIsStrongBoxBacked(true)
+                        .build()
+                    keyGen.init(strongBoxSpec)
+                    return keyGen.generateKey()
+                } catch (e: Exception) {
+                    Log.i(TAG, "StrongBox unavailable for CSIMS, falling back to TEE: ${e.message}")
+                }
+            }
+
+            // Intento 2: Respaldo por hardware TEE estándar
+            val teeSpec = KeyGenParameterSpec.Builder(
+                MASTER_ALIAS,
+                KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+            )
+                .setKeySize(256)
+                .build()
+            keyGen.init(teeSpec)
+            keyGen.generateKey()
         } catch (e: Exception) {
             Log.w(TAG, "AndroidKeyStore hardware unavailable for CSIMS, fallback to deterministic derivation", e)
             null
         }
     }
 
-    private fun deriveKey(roomId: String): SecretKeySpec {
+    fun deriveKey(roomId: String): SecretKeySpec {
         getOrCreateHardwareKey()
-        val salt = "CSIMS_E2EE_COKI_STUDIOS_v1_SALT_INTERNAL"
-        val input = "$roomId:$salt".toByteArray(StandardCharsets.UTF_8)
+        val cleanRoomId = roomId.trim().lowercase()
+        val input = "$cleanRoomId:$SALT".toByteArray(StandardCharsets.UTF_8)
         val sha256 = MessageDigest.getInstance("SHA-256")
         val keyBytes = sha256.digest(input)
         return SecretKeySpec(keyBytes, "AES")
@@ -112,6 +180,14 @@ object CSIMSEncryption {
             return Pair(encryptedPayload, false)
         }
 
+        // Si es legado enc:v1:, delegar a CSMSEncryption si es necesario
+        if (isLegacy) {
+            val legacyTry = CSMSEncryption.decrypt(roomId, trimmed)
+            if (legacyTry.second && !legacyTry.first.startsWith("🔒 [Mensaje protegido")) {
+                return legacyTry
+            }
+        }
+
         val prefix = if (isCsims) E2EE_PREFIX else LEGACY_PREFIX
 
         return try {
@@ -131,6 +207,13 @@ object CSIMSEncryption {
             val plainText = String(decryptedBytes, StandardCharsets.UTF_8)
             Pair(plainText, true)
         } catch (e: Exception) {
+            // Intentar secundariamente con CSMSEncryption si falló con la llave de CSIMS
+            try {
+                val legacyRes = CSMSEncryption.decrypt(roomId, trimmed)
+                if (legacyRes.second && !legacyRes.first.startsWith("🔒 [Mensaje protegido")) {
+                    return legacyRes
+                }
+            } catch (_: Exception) {}
             Log.w(TAG, "CSIMS Fallo de descifrado en sala $roomId", e)
             Pair(encryptedPayload, false)
         }

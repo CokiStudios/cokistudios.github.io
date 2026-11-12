@@ -1,17 +1,24 @@
 # Looping Programming Language — Official Syntax & Reference Guide
-> **Looping Commercial Production Edition v1.0.0 (Architecture 2.8A Quantum Signature & C++17 Native Engine)**  
+> **Looping v1.1 — Production Release (Architecture 3.0A Quantum 3D Synthesis & C++17 Native Engine)**  
+> *Release Channels: **Looping** (Production) • **Omega Looping** (Release Candidate / RC) • **Alpha! Looping** (Super Experimental)*  
 > *Developed by Coki Studios & Holo Entertainment*  
 > *Target Hardware & OS: Shine Loop Console • Holo Looping OoS (POSIX / macOS Universal / Linux Gaming Subsystem)*  
-> *Historical Architecture Series: 2.8A, 2.7A, 2.6A, 2.5A, 2.0A, 1.0A*
+> *Historical Architecture Series: 3.0A, 2.8A, 2.7A, 2.6A, 2.5A, 2.0A, 1.0A*
 
 ---
 
-## 1. Introducción & Filosofía de Diseño
-**Looping** (extensiones de archivo `.loop` y `.ruup`) es un lenguaje de programación moderno, expresivo y de alto rendimiento diseñado para la creación ágil de videojuegos 2D, aplicaciones gráficas interactivas, ciencia de datos, criptografía segura, síntesis de audio en tiempo real y lógica multimedia.
+## 1. Introducción, Nomenclatura de Canales & Filosofía de Diseño
+**Looping** (extensiones de archivo `.loop` y `.ruup`) es un lenguaje de programación moderno, expresivo y de alto rendimiento diseñado para la creación ágil de videojuegos 2D y 3D, aplicaciones gráficas interactivas, ciencia de datos, criptografía segura, síntesis de audio en tiempo real y lógica multimedia.
 
-Con el lanzamiento de **Looping v1.0.0 Comercial** (impulsado por la arquitectura **2.8A Quantum Signature**), Looping consolida su **sintaxis propia, concisa y distintiva** (`let`, `mut`, `val`, `:=`, `fn` con argumentos por defecto, `match` multi-patrón `|` y por rangos `..=`, `? :`, `??`, `try / catch`, destructuring `[a, b]`, llamadas de método sobre variables `s.trim().upper()`, `loop (N)`, `for..in` con `..=` y `step`, `|>`, `ui.*`, `spawn.*`, `audio.*`, `crypto.*`, `csv.*`, `datetime.*`, `regex.*`, `py!`), manteniendo un rendimiento de ejecución nativo en C++17 de **< 0.5 ms** y cero dependencias de Node.js.
+### Nomenclatura Oficial de Lanzamientos
+Looping se distribuye bajo tres canales oficiales seleccionables con `--channel=<prod|omega|alpha>`:
+* ⚡ **`Looping`** *(Producción / Stable)*: Versión oficial estable lista para entornos comerciales (**actual: `v1.1` / `Arch 3.0A`**).
+* 🧬 **`Omega Looping`** *(Release Candidate / RC)*: Candidatas a lanzamiento con congelación funcional y validación previa a producción (`v1.1-omega`).
+* 🧪 **`Alpha! Looping`** *(Super Experimental)*: Builds súper experimentales de laboratorio y funciones bleeding-edge (`v1.1-alpha`).
 
-Las versiones anteriores de desarrollo han sido oficialmente consolidadas bajo la serie de arquitectura (**2.8A**, **2.7A**, **2.6A**, **2.5A**, **2.0A**, **1.0A**), dando paso a la primera línea comercial de producción oficial.
+Con el lanzamiento de **Looping v1.1** (impulsado por la arquitectura **3.0A Quantum 3D Synthesis + Invis. Compile LPBN v3.0A Binary Pipeline**), Looping consolida su sintaxis expresiva (`let`, `mut`, `val`, `:=`, `fn`, `match`, `|>`, `invis. compile`, `invis.*`, `ui.*`, `spawn.*`, `scene3d.*`, `spawn3d.*`, `math3d.*`, `physics3d.*`, `csid.*`, `csms.*`, `audio.*`, `crypto.*`, `py!`), manteniendo un rendimiento nativo en C++17 de **< 0.5 ms**, **70/70 pruebas unitarias** y cero dependencias de Node.js.
+
+Las versiones de arquitectura quedan catalogadas bajo la serie (**3.0A**, **2.8A**, **2.7A**, **2.6A**, **2.5A**, **2.0A**, **1.0A**).
 
 ### Transición de Node.js a C++17 Nativo (Hito del 3 de Octubre de 2026)
 Looping comenzó como un prototipo experimental interpretado en JavaScript / Node.js (`bin/looping.js` en la serie 1.0A). El **3 de octubre de 2026** (Commit `67a72391`), el motor fue completamente reescrito en **C++17 nativo**, eliminando el entorno V8, reduciendo los tiempos de arranque de ~120 ms a **< 0.5 ms**, la memoria de 45 MB a **< 2.8 MB RSS**, y produciendo binarios universales sin dependencias de Node.js para macOS (`arm64`/`x86_64`) y Linux.
@@ -29,20 +36,24 @@ El ejecutable nativo compilado reside directamente en el repositorio (`arm64` + 
 ### Comandos de la CLI
 | Comando | Descripción |
 | :--- | :--- |
-| `looping <archivo.loop>` | Ejecuta un archivo de código `.loop` o `.ruup` |
+| `looping <archivo.loop\|.bin>` | Ejecuta un archivo de código `.loop`, `.ruup` o binario compilado (`LPBN v3.0A`) |
+| `looping invis <archivo.loop> [-o out.bin] [--target <ui>] [--compact]` | Compila un `.loop` a un archivo binario sellado (`LPBN v3.0A` standalone o compacto `.loopb`) |
+| `looping guide [--export <ruta.md>]` | Imprime o exporta la Guía Completa de Aprendizaje de Looping Code (`LOOPING_LEARNING_GUIDE.md`) |
 | `looping --gui <archivo.loop>` | Ejecuta el script abriendo la ventana gráfica interactiva |
 | `looping --native <archivo.loop>` | Ejecuta el script sintetizando una ventana nativa del SO (sin HTML5) |
-| `looping compile <archivo.loop> --target <shine_ui\|xui\|flui\|c2> [-o out]` | Compila el script para una arquitectura de interfaz nativa |
-| `looping check <archivo.loop>` | Analizador estático recursivo de sintaxis y reporte de métricas AST en microsegundos |
-| `looping ast <archivo.loop>` | Visualiza el árbol sintáctico abstracto (AST) jerárquico completo del script |
+| `looping compile <archivo.loop> --target <shine_ui\|xui\|flui\|c2\|invis> [-o out]` | Compila el script a binario `LPBN v3.0A` para una arquitectura de interfaz nativa |
+| `looping check <archivo.loop\|.bin>` | Analizador estático recursivo de sintaxis y reporte de métricas AST en microsegundos |
+| `looping ast <archivo.loop\|.bin>` | Visualiza el árbol sintáctico abstracto (AST) jerárquico completo del script o binario |
 | `looping fmt <archivo.loop> [--write]` | Formatea y normaliza la indentación de un archivo `.loop` |
-| `looping doc [topic]` | Manual de referencia integrado (`syntax`, `math`, `collections`, `crypto`, `csv`, `datetime`, `regex`, `ui`) |
+| `looping doc [topic]` | Manual de referencia integrado (`syntax`, `math`, `collections`, `crypto`, `csv`, `datetime`, `regex`, `ui`, `invis`) |
 | `looping bench` | Ejecuta el benchmark de rendimiento de la máquina virtual nativa C++17 |
-| `looping doctor` | Verifica el estado del motor C++, perfiles de UI, criptografía e interoperabilidad Python |
+| `looping doctor` | Verifica el estado del motor C++, `Invis. Compile`, perfiles de UI, criptografía e interoperabilidad Python |
 | `looping repl` | Inicia la consola interactiva (REPL) con comandos `vars`, `funcs`, `bench`, `reset` |
+| `looping preview3d <archivo.loop>` | Renderiza la escena 3D en viewport Z-Buffer TrueColor en la terminal |
 | `looping eval "<code>"` | Evalúa una instrucción o bloque de código en línea |
-| `looping test` | Ejecuta la suite de verificación unitaria (**50/50 pruebas**) |
-| `looping --version` | Muestra la versión del motor nativo (`v2.8.0`) |
+| `looping test` | Ejecuta la suite de verificación unitaria (**70/70 pruebas**) |
+| `looping --channel <alpha\|omega\|prod>` | Selecciona canal (`Alpha! Looping`, `Omega Looping` RC o `Looping` Prod) |
+| `looping --version` | Muestra la versión y canal del motor nativo (`Looping v1.1 / Arch 3.0A`) |
 | `looping --help` | Despliega el menú de ayuda |
 
 ---
@@ -752,6 +763,61 @@ define game "QuantumRunner2D" version 2.8:
    - **Teclado**: `[A/D]` o Flechas para mover, `[W / Espacio]` saltar, `[Z / J]` disparar, `[X / K / Shift]` dash, `[R]` reiniciar.
    - **Gamepad**: Compatible directamente con mandos Bluetooth/USB (Xbox, PlayStation, Switch).
    - **Táctil**: Cruceta virtual D-Pad y botones [A] y [B] automáticos en dispositivos móviles y tabletas.
+
+---
+
+## 20. Motor de Videojuegos 3D Quantum (Perspectiva, Z-Buffer & Física 120Hz+)
+
+A partir de **Arch 3.0A (Looping v1.2 Commercial)**, el motor incorpora capacidades completas de **juego 3D en tiempo real** tanto en el núcleo nativo C++17 (`Looping3D.hpp` + TUI Z-Buffer + Viewport OS nativo) como en el runtime interactivo Web (`looping_core.js` a 60/120 FPS con sub-stepping físico a 240Hz).
+
+### 20.1 Ejemplo Declarativo de Juego 3D (`define game3d`)
+```looping
+use "loop-math-3d"
+use "loop-game-plus"
+
+define game3d "Cyber Odyssey 3D" version 3.0:
+    game.lives(3)
+
+    # 1. Mundo 3D, Cámara Spring-Arm, Iluminación Blinn-Phong y Física 240Hz
+    scene3d.world(name: "Neo Horizon 3D", size: (200, 100, 260), sky: "cyber_night", fog: 0.0075, grid: true)
+    camera3d.set(mode: "chase", pos: (0, 8.5, -16), target: (0, 2.2, 12), fov: 64, smooth: 0.14)
+    light3d.directional(dir: (-0.42, -0.92, -0.35), color: "#f8fafc", intensity: 1.12)
+    light3d.point(at: (0, 12, 24), color: "#38bdf8", intensity: 1.45, range: 60)
+    physics3d.config(gravity: -28.0, substeps: 4, friction: 0.86, bounce: 0.08)
+
+    # 2. Protagonista y Escenario 3D
+    spawn3d.player("AngelPilot3D", at: (0, 2.2, 2), mesh: "hovercraft", speed: 26, jump: 17.5)
+    spawn3d.box(at: (0, -0.6, 12), size: (16, 1.2, 30), color: "#4f46e5")
+    spawn3d.moving_platform(at: (0, 0.5, 37), size: (8, 1.0, 9), axis: "x", range: (-7, 7), speed: 8.5)
+    spawn3d.ring(at: (0, 4.2, 24), radius: 2.8, power: 36, color: "#00f5d4")
+    spawn3d.crystal(at: (0, 2.5, 15), points: 200)
+    spawn3d.enemy("ValkyrieDrone", at: (0, 3.2, 53), range: (-5.5, 5.5), speed: 9.5, health: 50)
+    spawn3d.boss("OMEGA TITAN 3D", at: (0, 9.4, 132), range: (-9, 9), speed: 11, health: 450)
+    spawn3d.portal(at: (0, 10.2, 145), radius: 3.4, label: "OMEGA NEXUS")
+```
+
+### 20.2 Directivas de Escena, Cámara, Luces y Entidades 3D
+| Directiva / Entidad | Sintaxis | Descripción |
+|---|---|---|
+| **Mundo 3D** | `scene3d.world(name, size, sky, fog, grid, floor)` | Configura dimensiones `(X,Y,Z)`, skybox (`cyber_night`, `sunset_synth`, `nebula_void`, `arctic_holo`) y niebla exponencial. |
+| **Cámara 3D** | `camera3d.set(mode, pos, target, fov, smooth)` | Modos `chase`, `orbit`, `fps` y `topdown` con warp dinámico de FOV al acelerar. |
+| **Iluminación 3D** | `light3d.directional(...)` / `light3d.point(...)` | Sombreado Blinn-Phong con especular, luces puntuales atenuadas y luz ambiental. |
+| **Física 120/240Hz** | `physics3d.config(gravity, substeps, friction, bounce)` | Sub-stepping rígido (`substeps: 4` = 240Hz efectivos a 60 FPS) sin *tunneling*. |
+| **Jugador 3D** | `spawn3d.player(name, at, mesh, speed, jump)` | Malla procedural `hovercraft` con alabeo (*roll/pitch*), KERS Hyper-Dash y cañón de plasma. |
+| **Geometría Sólida** | `spawn3d.box(at, size, color)` / `spawn3d.moving_platform(...)` | Plataformas arquitectónicas subdivididas y puentes Maglev en ejes `x`, `y` o `z`. |
+| **Mallas Primitivas** | `spawn3d.sphere` / `cylinder` / `pyramid` / `torus` | Primitivas 3D procedurales con normales salientes y *backface culling*. |
+| **Interactivos 3D** | `spawn3d.ring` / `crystal` / `heart` / `pad` / `checkpoint` / `hazard` | Anillos turbo toroidales, gemas octaédricas, propulsores, checkpoints y trampas 3D. |
+| **IA & Jefes 3D** | `spawn3d.enemy(...)` / `spawn3d.boss(...)` / `spawn3d.portal(...)` | Drones centinela, titanes con proyectiles 3D dirigidos y estado *enraged*, y portal de meta. |
+
+### 20.3 Álgebra Lineal, Cuaterniones y Física 3D Nativa (`math3d.*` & `physics3d.*`)
+- **Álgebra y Proyección (`math3d.*`)**: `vec3`, `add`, `sub`, `scale`, `dot`, `cross`, `length`, `distance`, `normalize`, `lerp`, `quat_euler`, `quat_slerp`, `quat_rotate`, `mat4_trs`, `mat4_look_at`, `mat4_perspective`, `transform_point`, `project`.
+- **Colisiones y Raycasting (`physics3d.*`)**: `collide_sphere`, `collide_aabb`, `collide_capsule_sphere`, `raycast_sphere`, `raycast_aabb`, `raycast_plane`, `raycast_scene`, `step_body`.
+- **Herramientas CLI y REPL 3D**:
+  - `./bin/looping preview3d sample_loop_projects/cyber_odyssey_3d.loop` — Rasterizador software TrueColor Z-Buffer directamente en la terminal ANSI.
+  - `./bin/looping sample_loop_projects/cyber_odyssey_3d.loop --native` — Sintetiza y abre un viewport interactivo nativo del sistema operativo a 60 FPS.
+  - `./bin/looping new MiJuego3D --template game3d` — Genera un proyecto 3D completo con arquitectura Arch 3.0A.
+- **Controles 3D Universales**:
+  - `[W/A/S/D]` o Flechas: Movimiento 3D relativo a la cámara • `[Espacio]`: Salto / Doble Salto (con *Coyote Time* y sombra proyectada en suelo) • `[Shift / X / K]`: Hyper-Dash 3D (barra KERS + warp FOV) • `[Z / J / Clic]`: Cañón de Plasma 3D • `[Q / E / Arrastrar Ratón]`: Órbita de cámara • `[C]`: Alternar cámara (`CHASE`, `ORBIT`, `FPS`, `TOPDOWN`).
 
 ---
 

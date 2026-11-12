@@ -1,0 +1,21 @@
+model_list:
+  # Entrada estricta para Claude Code v2.1.316
+  - model_name: claude-sonnet-5-5
+    litellm_params:
+      model: openai/yuxinlu1/Gemma-4-12B-Coder-Fable5-Composer2.5-v1-GGUF
+      api_base: "http://localhost:1235/v1"
+      api_key: "lm-studio"
+      drop_params: true
+      unsupported_params: drop
+
+  # Respaldo por si el CLI conmuta el alias alternativo
+  - model_name: claude-5-sonnet
+    litellm_params:
+      model: openai/yuxinlu1/Gemma-4-12B-Coder-Fable5-Composer2.5-v1-GGUF
+      api_base: "http://localhost:1235/v1"
+      api_key: "lm-studio"
+      drop_params: true
+      unsupported_params: drop
+
+litellm_settings:
+  drop_exceptions: true

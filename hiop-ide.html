@@ -331,7 +331,7 @@
                 <img src="assets/hiop-icon.svg" alt="hiOP Studio" style="width:22px; height:22px; object-fit:contain; border-radius:5px;">
                 <span style="font-weight:700; color:#f1f5f9;">hiOP Studio</span>
             </a>
-            <span class="cs-addon-badge">v2.7.0 Quantum</span>
+            <span class="cs-addon-badge">Looping v1.1 • Arch 3.0A</span>
             <span style="font-size:11px; color:#94a3b8; margin-left:8px; border-left:1px solid rgba(255,255,255,0.15); padding-left:8px;">Target: <strong>Shine Loop Console</strong> (Holo Looping OoS)</span>
         </div>
         <div class="title-actions" style="align-items:center;">
@@ -365,9 +365,10 @@
 
         <!-- Explorer Sidebar -->
         <div class="sidebar">
-            <div class="sidebar-header">Holo Project (v2.7)</div>
+            <div class="sidebar-header">Holo Project (Arch 3.0A)</div>
             <ul class="file-tree">
                 <li class="file-item active" data-file="arcade.loop">🎮 arcade.loop</li>
+                <li class="file-item" data-file="odyssey_3d.loop">🕹️ odyssey_3d.loop</li>
                 <li class="file-item" data-file="dashboard.loop">📊 dashboard.loop</li>
                 <li class="file-item" data-file="eco_telemetry.loop">🌱 eco_telemetry.loop</li>
                 <li class="file-item" data-file="config.loop">⚙️ config.loop</li>
@@ -422,9 +423,57 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <script type="module">
-        import { LoopingInterpreter } from './LoopingEngine/looping_core.js?v=2.0.4';
+        import { LoopingInterpreter } from './LoopingEngine/looping_core.js?v=3.0.0';
 
         const sampleCodes = {
+            "odyssey_3d.loop": `# ═══════════════════════════════════════════════════════════════
+#  Cyber Odyssey 3D — Shine Loop Quantum 3D Engine (Arch 3.0A)
+#  Perspectiva 3D • Iluminación Blinn-Phong • Física 240Hz
+# ═══════════════════════════════════════════════════════════════
+
+use "loop-math-3d"
+use "loop-game-plus"
+
+define game3d "Cyber Odyssey 3D" version 3.0:
+    game.lives(3)
+
+    scene3d.world(name: "Neo Horizon 3D", size: (200, 100, 260), sky: "cyber_night", fog: 0.0075, grid: true)
+    camera3d.set(mode: "chase", pos: (0, 8.5, -16), target: (0, 2.2, 12), fov: 64, smooth: 0.14)
+    light3d.directional(dir: (-0.42, -0.92, -0.35), color: "#f8fafc", intensity: 1.12)
+    light3d.point(at: (0, 12, 24), color: "#38bdf8", intensity: 1.45, range: 60)
+    light3d.point(at: (0, 16, 126), color: "#c084fc", intensity: 1.65, range: 70)
+    physics3d.config(gravity: -28.0, substeps: 4, friction: 0.86, bounce: 0.08)
+
+    spawn3d.player("AngelPilot3D", at: (0, 2.2, 2), mesh: "hovercraft", speed: 26, jump: 17.5, color: "#38bdf8")
+
+    # Sector 1: Pista de Despegue y Anillo Turbo 3D
+    spawn3d.box(at: (0, -0.6, 12), size: (16, 1.2, 30), color: "#4f46e5")
+    spawn3d.crystal(at: (-3.2, 2.2, 10), points: 150)
+    spawn3d.crystal(at: (0, 2.5, 15), points: 150)
+    spawn3d.crystal(at: (3.2, 2.2, 10), points: 150)
+    spawn3d.ring(at: (0, 4.2, 24), radius: 2.8, power: 36, color: "#00f5d4")
+
+    # Sector 2: Puente Maglev, Dron Centinela y Propulsor
+    spawn3d.moving_platform(at: (0, 0.5, 37), size: (8, 1.0, 9), axis: "x", range: (-7, 7), speed: 8.5, color: "#06b6d4")
+    spawn3d.crystal(at: (0, 3.2, 37), points: 250)
+    spawn3d.box(at: (0, 1.2, 54), size: (14, 1.2, 18), color: "#6366f1")
+    spawn3d.enemy("ValkyrieDrone_01", at: (0, 3.2, 53), range: (-5.5, 5.5), speed: 9.5, health: 50)
+    spawn3d.pad(at: (0, 2.1, 60), radius: 2.0, power: 26, color: "#fbbf24")
+
+    # Sector 3: Autopista Celeste, Checkpoint y Puente Z
+    spawn3d.box(at: (0, 6.2, 78), size: (15, 1.2, 22), color: "#4338ca")
+    spawn3d.checkpoint(at: (-4.5, 8.8, 74), label: "SECTOR ALPHA", color: "#38bdf8")
+    spawn3d.heart(at: (4.5, 8.2, 76), heal: 40)
+    spawn3d.ring(at: (0, 10.2, 91), radius: 3.0, power: 38, color: "#00f5d4")
+    spawn3d.moving_platform(at: (0, 6.2, 102), size: (8, 1.0, 9), axis: "z", range: (96, 108), speed: 7.5, color: "#0ea5e9")
+
+    # Sector 4: Arena OMEGA TITAN 3D y Portal Nexus
+    spawn3d.box(at: (0, 6.0, 130), size: (26, 1.4, 36), color: "#312e81")
+    spawn3d.boss("OMEGA TITAN 3D", at: (0, 9.4, 132), range: (-9, 9), speed: 11, health: 450, color: "#f43f5e")
+    spawn3d.portal(at: (0, 10.2, 145), radius: 3.4, label: "OMEGA NEXUS", color: "#c084fc")
+
+    print " [3D QUANTUM] WASD Mover • Espacio Salto • Shift Dash • Z Plasma • C Cámara"`,
+
             "arcade.loop": `# ═══════════════════════════════════════════════════════════════
 #  Holo Quantum Arcade 2D — Built with Looping Compile (.loop)
 # Powered by hiOP IDE & CS Looping Graphics Engine v2.8
@@ -519,20 +568,20 @@ define app "ForkarEcoTelemetry" version 2.7:
     print " [ECO HUB] Telemetría ambiental sincronizada con Supabase."`,
 
             "config.loop": `# ═══════════════════════════════════════════════════════════════
-#  Looping v2.7.0 Quantum Signature — System & Crypto Config
+#  Looping v1.1 (Arch 3.0A) — Channels, System & Crypto Config
 # ═══════════════════════════════════════════════════════════════
 
 import loop.ui as ui
 
-define app "QuantumConfig" version 2.7:
-    create window with title "Kernel & Crypto Configuration" and size (720, 480)
+define app "QuantumConfig" version 1.1:
+    create window with title "Kernel & Release Channels (Arch 3.0A)" and size (720, 480)
     set theme to "dark_neon"
 
-    draw card at (40, 40) with size (640, 130) and title "Looping C++17 Native Engine v2.7.0" and text "Target: XUI 240Hz / Shine UI 60Hz\\nSubsystems: Regex, HMAC-SHA256, Data Science Math, PyLoop"
+    draw card at (40, 40) with size (640, 130) and title "Looping C++17 Native Engine v1.1 (Arch 3.0A)" and text "Channels: Looping (Prod) • Omega Looping (RC) • Alpha! Looping (Super Exp)\\nSubsystems: Looping3D Quantum, Regex, HMAC-SHA256, PyLoop"
     draw card at (40, 190) with size (640, 120) and title "CSMS Hardware Encryption" and text "Cipher: AES-256-GCM (Secure Enclave / StrongBox)\\nFormat: enc:v1:<iv>:<ciphertext>"
 
-    draw button at (40, 330) with text "Run 40/40 Verification Suite" and action "run_tests"
-    print " [KERNEL] Looping v2.7.0 Quantum Signature verified (40/40 PASS)."`
+    draw button at (40, 330) with text "Run 69/69 Verification Suite" and action "run_tests"
+    print " [KERNEL] Looping v1.1 (Arch 3.0A) verified (69/69 PASS)."`
         };
 
         const canvas = document.getElementById('gameCanvas');
@@ -557,9 +606,11 @@ define app "QuantumConfig" version 2.7:
             monaco.languages.register({ id: 'looping' });
             monaco.languages.setMonarchTokensProvider('looping', {
                 keywords: [
-                    'define', 'app', 'version', 'import', 'create', 'window', 'with', 'title', 'and', 'size',
+                    'define', 'app', 'game', 'game3d', 'version', 'import', 'use', 'val', 'var',
+                    'create', 'window', 'with', 'title', 'and', 'size',
                     'set', 'theme', 'to', 'print', 'draw', 'card', 'button', 'text', 'action',
-                    'spawn', 'sprite', 'color', 'at', 'when', 'is', 'clicked', 'loop', 'for', 'from'
+                    'spawn', 'spawn3d', 'scene3d', 'camera3d', 'light3d', 'physics3d', 'math3d',
+                    'sprite', 'color', 'at', 'when', 'is', 'clicked', 'loop', 'for', 'from'
                 ],
                 tokenizer: {
                     root: [
@@ -603,20 +654,23 @@ define app "QuantumConfig" version 2.7:
             // AST Inspector button event
             document.getElementById('btn-ast-code')?.addEventListener('click', () => {
                 const lines = editor.getValue().split('\n');
-                appendLog('[AST INSPECTOR v2.7.0] Analyzing syntax tree...', 'system');
+                appendLog('[AST INSPECTOR v1.1 • Arch 3.0A] Analyzing syntax tree...', 'system');
                 let count = 0;
                 lines.forEach((raw, idx) => {
                     const l = raw.trim();
                     if (!l || l.startsWith('#')) return;
                     count++;
                     let kind = 'StmtNode';
-                    if (l.startsWith('define app')) kind = 'AppDefineStmt';
-                    else if (l.startsWith('create window')) kind = 'WindowStmt';
-                    else if (l.startsWith('draw card')) kind = 'DrawUI(Card)';
-                    else if (l.startsWith('draw button')) kind = 'DrawUI(Button)';
-                    else if (l.startsWith('spawn sprite')) kind = 'SpawnEntity(Sprite2D)';
-                    else if (l.startsWith('set ')) kind = 'SetVarStmt';
-                    else if (l.startsWith('import ')) kind = 'ImportModuleStmt';
+                    if (l.startsWith('define game3d')) kind = 'AppDefineStmt(Game3D)';
+                    else if (l.startsWith('define app') || l.startsWith('define game')) kind = 'AppDefineStmt';
+                    else if (l.startsWith('scene3d.') || l.startsWith('camera3d.') || l.startsWith('light3d.') || l.startsWith('physics3d.')) kind = 'Scene3DConfigStmt';
+                    else if (l.startsWith('spawn3d.')) kind = 'SpawnEntity3DStmt';
+                    else if (l.startsWith('create window') || l.startsWith('window.create')) kind = 'WindowStmt';
+                    else if (l.startsWith('draw card') || l.startsWith('ui.card')) kind = 'DrawUI(Card)';
+                    else if (l.startsWith('draw button') || l.startsWith('ui.button')) kind = 'DrawUI(Button)';
+                    else if (l.startsWith('spawn')) kind = 'SpawnEntity(2D)';
+                    else if (l.startsWith('set ') || l.startsWith('val ') || l.startsWith('var ')) kind = 'SetVarStmt';
+                    else if (l.startsWith('import ') || l.startsWith('use ')) kind = 'ImportModuleStmt';
                     else if (l.startsWith('print')) kind = 'PrintStmt';
                     appendLog(`  ├── [L${idx + 1}] ${kind}: ${l.slice(0, 52)}${l.length > 52 ? '...' : ''}`, 'info');
                 });
@@ -636,7 +690,7 @@ define app "QuantumConfig" version 2.7:
                     return out;
                 }).join('\n');
                 editor.setValue(formatted);
-                appendLog('✔ [FMT] Code formatted according to Looping v2.7 style guide.', 'success');
+                appendLog('✔ [FMT] Code formatted according to Looping v1.1 (Arch 3.0A) style guide.', 'success');
             });
 
             // Download .loop button event

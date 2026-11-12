@@ -29,9 +29,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
 
 @Composable
 fun LiquidGlassTopBar(
@@ -41,6 +43,8 @@ fun LiquidGlassTopBar(
     icon: ImageVector? = null,
     iconColor: Color = Color(0xFF6366F1),
     onIconClick: (() -> Unit)? = null,
+    avatarUrl: String? = null,
+    avatarPlaceholder: String? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val glassBg = Brush.linearGradient(
@@ -97,7 +101,28 @@ fun LiquidGlassTopBar(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+
+                if (!avatarUrl.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = avatarUrl,
+                        contentDescription = title,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            CircleAvatarPlaceholder(avatarPlaceholder ?: title.take(1).uppercase(), size = 38.dp)
+                        },
+                        error = {
+                            CircleAvatarPlaceholder(avatarPlaceholder ?: title.take(1).uppercase(), size = 38.dp)
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                } else if (!avatarPlaceholder.isNullOrBlank()) {
+                    CircleAvatarPlaceholder(avatarPlaceholder, size = 38.dp)
+                    Spacer(modifier = Modifier.width(10.dp))
                 }
 
                 Column {

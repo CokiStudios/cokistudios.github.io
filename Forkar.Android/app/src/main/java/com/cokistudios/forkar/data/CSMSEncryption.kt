@@ -1,6 +1,8 @@
 package com.cokistudios.forkar.data
 
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.util.Log
@@ -11,18 +13,20 @@ import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
  * Gestor de Cifrado de Extremo a Extremo (E2EE) para CSMS (Coki Studios Messaging Service).
  * Respaldado por hardware seguro según plataforma:
- * - Android: AndroidKeyStore (TEE / StrongBox)
+ * - Android: AndroidKeyStore (Hardware TEE / StrongBox Keymaster)
  * - iPhone: Apple Secure Enclave Processor (SEP) con CryptoKit
  * - macOS: Apple T2 Security Chip / Apple Silicon Secure Enclave
  * 
  * Utiliza AES-256 en modo GCM (Galois/Counter Mode) con tags de 128 bits e IVs
  * de 12 bytes únicos por mensaje.
+ * Formato del payload: "🔒 enc:v1:<base64-iv>:<base64-ciphertext>"
  */
 object CSMSEncryption {
     private const val TAG = "CSMSEncryption"
@@ -32,6 +36,53 @@ object CSMSEncryption {
     private const val TAG_LENGTH_BIT = 128
     private const val IV_LENGTH_BYTE = 12
     const val E2EE_PREFIX = "🔒 enc:v1:"
+    const val SALT = "CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"
+
+    /**
+     * Evalúa si el dispositivo cuenta con respaldo criptográfico en hardware (TEE o StrongBox).
+     */
+    val isHardwareSecurityAvailable: Boolean
+        get() {
+            return try {
+                val key = getOrCreateHardwareKey() ?: return false
+                val factory = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
+                val keyInfo = factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo
+                keyInfo.isInsideSecureHardware
+            } catch (e: Exception) {
+                // Si la consulta directa de KeyInfo falla pero se generó la clave en AndroidKeyStore
+                getOrCreateHardwareKey() != null
+            }
+        }
+
+    /**
+     * Badge descriptivo del enclave de hardware activo para la UI.
+     */
+    val hardwareSecurityBadge: String
+        get() {
+            return try {
+                val key = getOrCreateHardwareKey()
+                if (key != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        try {
+                            val factory = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
+                            val info = factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo
+                            if (info.securityLevel == KeyProperties.SECURITY_LEVEL_STRONGBOX) {
+                                return "Android StrongBox Keymaster (SEP)"
+                            } else if (info.securityLevel == KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+                                return "Android Hardware TEE (Enclave)"
+                            }
+                        } catch (_: Exception) {}
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        return "Android StrongBox / TEE (Hardware)"
+                    }
+                    return "Android TEE Keystore (Hardware)"
+                }
+                "Android Cryptographic Vault"
+            } catch (e: Exception) {
+                "Android Cryptographic Vault"
+            }
+        }
 
     // Inicializa o recupera la llave de identidad en AndroidKeyStore (Hardware TEE / StrongBox)
     private fun getOrCreateHardwareKey(): SecretKey? {
@@ -44,7 +95,7 @@ object CSMSEncryption {
             val keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
 
             // Intento 1: Solicitar respaldo por StrongBox Keymaster si está disponible (Android P+)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 try {
                     val strongBoxSpec = KeyGenParameterSpec.Builder(
                         MASTER_ALIAS,
@@ -76,13 +127,12 @@ object CSMSEncryption {
     }
 
     // Deriva una clave AES-256 simétrica y determinista por sala (100% interoperable entre Android, iOS y macOS)
-    private fun deriveKey(roomId: String): SecretKeySpec {
+    fun deriveKey(roomId: String): SecretKeySpec {
         // Inicializa el hardware keystore para asegurar presencia del enclave
         getOrCreateHardwareKey()
 
         val cleanRoomId = roomId.trim().lowercase()
-        val salt = "CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR"
-        val input = "$cleanRoomId:$salt".toByteArray(StandardCharsets.UTF_8)
+        val input = "$cleanRoomId:$SALT".toByteArray(StandardCharsets.UTF_8)
         val sha256 = MessageDigest.getInstance("SHA-256")
         val keyBytes = sha256.digest(input)
         return SecretKeySpec(keyBytes, "AES")
@@ -116,15 +166,24 @@ object CSMSEncryption {
 
     /**
      * Descifra un mensaje cifrado con AES-256-GCM.
-     * Si no contiene el prefijo de cifrado, retorna el texto original (retrocompatibilidad).
+     * Si el mensaje pertenece al esquema CSIMS ("🔒 csims:v1:"), delega a CSIMSEncryption.
+     * Si no contiene prefijo de cifrado, retorna el texto original.
      * Retorna Pair(textoDescifrado, fueCifrado).
      */
     fun decrypt(roomId: String, cipherText: String): Pair<String, Boolean> {
-        if (!cipherText.startsWith(E2EE_PREFIX)) {
+        val trimmed = cipherText.trim()
+
+        // Delegación transparente si fue cifrado con CSIMS interno
+        if (trimmed.startsWith(CSIMSEncryption.E2EE_PREFIX)) {
+            return CSIMSEncryption.decrypt(trimmed, roomId)
+        }
+
+        if (!trimmed.startsWith(E2EE_PREFIX)) {
             return Pair(cipherText, false)
         }
+
         return try {
-            val payload = cipherText.removePrefix(E2EE_PREFIX)
+            val payload = trimmed.removePrefix(E2EE_PREFIX)
             val separatorIndex = payload.indexOf(':')
             if (separatorIndex == -1) return Pair(cipherText, false)
 
@@ -142,6 +201,11 @@ object CSMSEncryption {
             val plainBytes = cipher.doFinal(cipherBytes)
             Pair(String(plainBytes, StandardCharsets.UTF_8), true)
         } catch (e: Exception) {
+            // Intentar fallback si el ciphertext vino con el salt alternativo de CSIMS
+            try {
+                val csimsResult = CSIMSEncryption.decrypt(trimmed, roomId)
+                if (csimsResult.second) return csimsResult
+            } catch (_: Exception) {}
             Pair("🔒 [Mensaje protegido con E2EE]", true)
         }
     }

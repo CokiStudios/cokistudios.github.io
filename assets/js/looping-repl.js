@@ -1,12 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   🌟 LOOPING v2.8.0 QUANTUM SIGNATURE — WEB PLAYGROUND, REPL & AST LAB
+   🌟 LOOPING v1.1 (ARCH 3.0A) — WEB PLAYGROUND, REPL & AST LAB
+   Channels: Looping (Prod) • Omega Looping (RC) • Alpha! Looping (Super Experimental)
    High-Performance Client-Side Execution Engine, AST Visualizer & Benchmark
    Coki Studios & Holo Entertainment © 2026
    ═══════════════════════════════════════════════════════════════════════ */
 
 (function () {
     const PRESETS = {
-        novedades: `// 🌟 1. Looping v2.8 Quantum: Multi-Match, Ranges, Defaults & Methods
+        novedades: `// 🌟 1. Looping v1.1 (Arch 3.0A): Multi-Match, Ranges, Defaults & Methods
 fn format_pilot(name, rank = "Commander") => $"{rank} {name}"
 
 val raw_route := "   Ruta: Cota   Chia   Bogota (2026)   "
@@ -165,7 +166,53 @@ define game "QuantumRunner2D" version 2.8:
     # ── Portal de Victoria ──
     spawn.portal(at: (1180, 308), label: "NEON HUB")
 
-    print("✔ Controles: [A/D o Flechas] Mover • [W / Espacio] Salto / Doble Salto • [Z / J] Disparo • [X / K] Dash")`
+    print("✔ Controles: [A/D o Flechas] Mover • [W / Espacio] Salto / Doble Salto • [Z / J] Disparo • [X / K] Dash")`,
+
+        arcade3d: `// 🕹️ 7. Looping 3D Quantum Engine (Perspectiva + Física 240Hz + Iluminación Blinn-Phong)
+use "loop-math-3d"
+use "loop-game-plus"
+
+define game3d "Cyber Odyssey 3D" version 3.0:
+    game.lives(3)
+
+    # ── Escena 3D, Cámara Spring-Arm, Luces Dinámicas y Física 240Hz ──
+    scene3d.world(name: "Neo Horizon 3D", size: (200, 100, 260), sky: "cyber_night", fog: 0.0075, grid: true)
+    camera3d.set(mode: "chase", pos: (0, 8.5, -16), target: (0, 2.2, 12), fov: 64, smooth: 0.14)
+    light3d.directional(dir: (-0.42, -0.92, -0.35), color: "#f8fafc", intensity: 1.12)
+    light3d.point(at: (0, 12, 24), color: "#38bdf8", intensity: 1.45, range: 60)
+    light3d.point(at: (0, 16, 126), color: "#c084fc", intensity: 1.65, range: 70)
+    physics3d.config(gravity: -28.0, substeps: 4, friction: 0.86, bounce: 0.08)
+
+    # ── Protagonista 3D: Aerodeslizador con Doble Salto, Hyper-Dash [Shift] y Plasma [Z] ──
+    spawn3d.player("AngelPilot3D", at: (0, 2.2, 2), mesh: "hovercraft", speed: 26, jump: 17.5, color: "#38bdf8")
+
+    # ── Sector 1: Pista de Despegue, Cristales y Anillo Turbo 3D ──
+    spawn3d.box(at: (0, -0.6, 12), size: (16, 1.2, 30), color: "#4f46e5")
+    spawn3d.crystal(at: (-3.2, 2.2, 10), points: 150)
+    spawn3d.crystal(at: (0, 2.5, 15), points: 150)
+    spawn3d.crystal(at: (3.2, 2.2, 10), points: 150)
+    spawn3d.ring(at: (0, 4.2, 24), radius: 2.8, power: 36, color: "#00f5d4")
+
+    # ── Sector 2: Puente Maglev Móvil, Dron Centinela y Propulsor Vertical ──
+    spawn3d.moving_platform(at: (0, 0.5, 37), size: (8, 1.0, 9), axis: "x", range: (-7, 7), speed: 8.5, color: "#06b6d4")
+    spawn3d.crystal(at: (0, 3.2, 37), points: 250)
+    spawn3d.box(at: (0, 1.2, 54), size: (14, 1.2, 18), color: "#6366f1")
+    spawn3d.enemy("ValkyrieDrone_01", at: (0, 3.2, 53), range: (-5.5, 5.5), speed: 9.5, health: 50)
+    spawn3d.pad(at: (0, 2.1, 60), radius: 2.0, power: 26, color: "#fbbf24")
+
+    # ── Sector 3: Autopista Celeste, Checkpoint y Puente Eje Z ──
+    spawn3d.box(at: (0, 6.2, 78), size: (15, 1.2, 22), color: "#4338ca")
+    spawn3d.checkpoint(at: (-4.5, 8.8, 74), label: "SECTOR ALPHA", color: "#38bdf8")
+    spawn3d.heart(at: (4.5, 8.2, 76), heal: 40)
+    spawn3d.ring(at: (0, 10.2, 91), radius: 3.0, power: 38, color: "#00f5d4")
+    spawn3d.moving_platform(at: (0, 6.2, 102), size: (8, 1.0, 9), axis: "z", range: (96, 108), speed: 7.5, color: "#0ea5e9")
+
+    # ── Sector 4: Arena del Jefe OMEGA TITAN 3D y Portal de Victoria ──
+    spawn3d.box(at: (0, 6.0, 130), size: (26, 1.4, 36), color: "#312e81")
+    spawn3d.boss("OMEGA TITAN 3D", at: (0, 9.4, 132), range: (-9, 9), speed: 11, health: 450, color: "#f43f5e")
+    spawn3d.portal(at: (0, 10.2, 145), radius: 3.4, label: "OMEGA NEXUS", color: "#c084fc")
+
+    print("✔ Motor 3D Activo: [WASD] Mover • [Espacio] Doble Salto • [Shift/X] Hyper-Dash • [Z/Clic] Plasma • [C] Cámara")`
     };
 
     // Helper: CRC-32 IEEE 802.3 in Browser
@@ -303,7 +350,7 @@ define game "QuantumRunner2D" version 2.8:
         if (!textarea || !outputEl) return;
 
         const lines = textarea.value.split('\n');
-        const treeLines = ['<span style="color:#38bdf8;font-weight:700;">[LOOPING AST TREE INSPECTOR v2.8.0]</span>'];
+        const treeLines = ['<span style="color:#38bdf8;font-weight:700;">[LOOPING AST TREE INSPECTOR v1.1 • ARCH 3.0A]</span>'];
         const valid = lines.map((l, idx) => ({ text: l.trim(), lineNo: idx + 1 })).filter(x => x.text && !x.text.startsWith('//') && x.text !== '}' && x.text !== 'end');
 
         valid.forEach((item, i) => {
@@ -380,13 +427,16 @@ define game "QuantumRunner2D" version 2.8:
         const startTime = performance.now();
         const logs = [];
 
-        logs.push('[LOOPING C++ NATIVE v2.8.0] Compilando AST Quantum y evaluando...');
+        logs.push('[LOOPING v1.1 • ARCH 3.0A] Compilando AST Quantum y evaluando...');
 
         try {
             const lines = code.split('\n');
             let astNodes = 0;
             const variables = {
-                'sys.version': '2.8.0',
+                'sys.version': '1.1',
+                'sys.arch_version': '3.0A',
+                'sys.channel': 'prod',
+                'sys.channel_name': 'Looping',
                 'sys.platform': 'darwin',
                 'sys.arch': 'arm64',
                 'sys.cpus': navigator.hardwareConcurrency || 8,
@@ -766,24 +816,41 @@ define game "QuantumRunner2D" version 2.8:
             const endTime = performance.now();
             const elapsed = Math.max(0.04, (endTime - startTime) * 0.12).toFixed(3);
 
-            // 2D Game Runtime Detection & Interactive Canvas Mounting
-            const isGameCode = /spawn|game\.|loop\.engine|define game/i.test(code);
+            // 2D & 3D Quantum Game Runtime Detection & Interactive Canvas Mounting
+            const is3DGameCode = /define\s+game3d|@game3d|scene3d\.|spawn3d\.|camera3d\.|light3d\.|physics3d\.|game\.mode\(\s*["']3d["']\s*\)/i.test(code);
+            const isGameCode = is3DGameCode || /spawn|game\.|loop\.engine|define game/i.test(code);
             const gameContainer = document.getElementById('repl-game-container');
             const gameCanvas = document.getElementById('repl-game-canvas');
+            const gameIconEl = document.getElementById('repl-game-icon');
+            const gameTitleEl = document.getElementById('repl-game-title');
+            const gameBadgeEl = document.getElementById('repl-game-badge');
+            const gameControlsEl = document.getElementById('repl-game-controls');
 
             if (isGameCode && gameCanvas && gameContainer) {
                 gameContainer.style.display = 'block';
+                if (gameIconEl) gameIconEl.textContent = is3DGameCode ? '🕹️' : '🎮';
+                if (gameTitleEl) gameTitleEl.textContent = is3DGameCode ? 'SHINE LOOP 3D QUANTUM ENGINE' : 'SHINE LOOP 2D CANVAS RUNTIME';
+                if (gameBadgeEl) gameBadgeEl.textContent = is3DGameCode ? '60 FPS • 240Hz PHYSICS' : '60 FPS DIRECT';
+                if (gameControlsEl) {
+                    gameControlsEl.textContent = is3DGameCode
+                        ? '[WASD] Mover 3D • [Espacio] Doble Salto • [Shift/X] Hyper-Dash • [Z/Clic] Plasma • [Q/E/Mouse] Órbita • [C] Cámara'
+                        : '[A / D] Mover • [W / Espacio] Doble Salto • [Z / J] Disparo • [X / K] Dash • [R] Reiniciar';
+                }
                 try {
-                    const module = await import('./LoopingEngine/looping_core.js?v=2.8.5');
+                    const coreUrl = new URL('LoopingEngine/looping_core.js?v=3.0.0', document.baseURI).href;
+                    const module = await import(coreUrl);
                     if (window._activeLoopingGameRuntime) {
                         window._activeLoopingGameRuntime.reset();
                     }
+                    const runtimeTag = is3DGameCode ? 'SHINE LOOP 3D' : 'SHINE LOOP 2D';
                     const runtime = new module.LoopingInterpreter(gameCanvas, (msg, type) => {
-                        logs.push(`  [SHINE LOOP 2D] ${msg}`);
+                        logs.push(`  [${runtimeTag}] ${msg}`);
                     });
                     window._activeLoopingGameRuntime = runtime;
                     runtime.execute(code);
-                    logs.push('  [GAME RUNTIME] ✨ Pipeline Shine Loop 2D activo a 60 FPS en el canvas interactivo.');
+                    logs.push(is3DGameCode
+                        ? '  [GAME RUNTIME 3D] ✨ Motor 3D Quantum activo (Perspectiva + Z-Sort + Física 240Hz) en el viewport interactivo.'
+                        : '  [GAME RUNTIME 2D] ✨ Pipeline Shine Loop 2D activo a 60 FPS en el canvas interactivo.');
                 } catch (gameErr) {
                     logs.push(`  [GAME ERROR] ${gameErr.message}`);
                 }

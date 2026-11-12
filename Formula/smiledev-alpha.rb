@@ -19,3 +19,4 @@ class SmiledevAlpha < Formula
     assert_match "v1.1A", shell_output("#{bin}/smiledev-alpha version")
   end
 end
+

@@ -1,0 +1,57 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ SHINE OS MOBILE UI COMPONENT 2 (.c2) ✦
+# Adaptado para Shine X1 / Xa1 (240Hz Direct-APU Esports HUD)
+# Desarrollado por Coki Studios Engine Team
+# ═══════════════════════════════════════════════════════════════════════════════
+
+component "CyberNeonXUI" target "xui" {
+    device: "Shine X1 / Xa1"
+    family: "xui"
+    fps: 240
+    theme: "cyber_neon_xui"
+    primary: "#38bdf8"
+    accent: "#082f49"
+    background: "#07090e"
+    surface: "rgba(15, 23, 42, 0.85)"
+    corner_radius: 16
+    elevation: 8
+
+    # Variables reactivas en memoria del celular Shine
+    state {
+        mut boost_active = true
+        mut apu_frequency_ghz = 3.4
+        mut fps_counter = 240
+    }
+
+    # Barra superior con píldora de telemetría y resplandor
+    draw status_pill at (center, top) with text "● SHINE OS • 240Hz APU BOOST" and glow true
+
+    # Tarjeta de telemetría y rendimiento
+    draw card at (20, 80) with title "DIRECT APU PERFORMANCE":
+        text $"Frecuencia APU: {apu_frequency_ghz} GHz | Latencia: <0.2ms"
+        badge $"LOCKED: {fps_counter} FPS" color "#38bdf8"
+        button "TURBO BOOST APU" action "boost_apu"
+
+    # Tarjeta de modos de juego y refrigeración
+    draw card at (20, 200) with title "GAMING HUD MODES":
+        button "LOW LATENCY VULKAN" action "enable_vulkan"
+        button "COOLING FAN MAX" action "fan_max"
+
+    # Dock inferior de apps móviles
+    draw dock at bottom with apps ["phone", "messages", "shinemaps", "camera", "settings"]
+
+    # Métodos y eventos del componente
+    fn boost_apu() {
+        play tone at 880 Hz for 60 ms
+        play tone at 1174 Hz for 90 ms
+        print "[C2 XUI] APU Turbo Boost 240Hz activado en Shine X1!"
+    }
+
+    fn enable_vulkan() {
+        print "[C2 XUI] Vulkan Subpass Direct-Rendering activo."
+    }
+
+    fn fan_max() {
+        print "[C2 XUI] Refrigeración activa a máxima potencia."
+    }
+}

@@ -99,8 +99,12 @@ public:
     std::vector<std::shared_ptr<Stmt>> parse_script() {
         std::vector<std::string> raw_lines = split_lines(source);
         std::vector<std::string> lines;
+        auto is_zbash_exec_line = [](const std::string& raw_s) -> bool {
+            std::string t = trim(raw_s);
+            return t == "!exec" || t.rfind("!exec ", 0) == 0 || t.rfind("!exec\t", 0) == 0;
+        };
         for (const auto& rl : raw_lines) {
-            if (rl.find(';') != std::string::npos) {
+            if (rl.find(';') != std::string::npos && !is_zbash_exec_line(rl)) {
                 size_t p = rl.find_first_not_of(" \t");
                 std::string indent = (p != std::string::npos) ? rl.substr(0, p) : "";
                 auto sub = split_semicolons(rl);
@@ -995,6 +999,14 @@ public:
                 }
             }
 
+            if (line == "!exec" || line.rfind("!exec ", 0) == 0 || line.rfind("!exec\t", 0) == 0) {
+                auto stmt = parse_statement_line(line);
+                if (stmt) {
+                    statements.push_back(stmt);
+                }
+                continue;
+            }
+
             // Parse single line statement (handling potential semicolons outside quotes)
             auto sub_lines = split_semicolons(line);
             for (const auto& sl : sub_lines) {
@@ -1011,6 +1023,11 @@ public:
     // Parse single line statement
     std::shared_ptr<Stmt> parse_statement_line(const std::string& line) {
         std::string s = trim(line);
+        // zbash-utils shell execution: !exec <command or script> (preserve raw shell ';' etc.)
+        if (s == "!exec" || s.rfind("!exec ", 0) == 0 || s.rfind("!exec\t", 0) == 0) {
+            std::string cmd = (s.size() > 5) ? trim(s.substr(5)) : "";
+            return std::make_shared<ZBashExecStmt>(cmd);
+        }
         // Strip trailing semicolon
         while (!s.empty() && s.back() == ';') s.pop_back();
         s = trim(s);

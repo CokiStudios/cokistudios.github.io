@@ -1,0 +1,19 @@
+{
+  "server_name": "Coki Studios Web Enterprise & Business Server",
+  "edition": "Enterprise Gold Edition 2026",
+  "port": 8080,
+  "host": "0.0.0.0",
+  "cors": true,
+  "max_upload_size_mb": 50,
+  "csid_attestation": "hardware_backed",
+  "c2_repo_enabled": true,
+  "document_root": "./",
+  "modules_directory": "./c2-modules",
+  "forkar_services": {
+    "location_enabled": true,
+    "auth_enabled": true,
+    "messaging_enabled": true,
+    "telemetry_enabled": true,
+    "c2_ota_enabled": true
+  }
+}

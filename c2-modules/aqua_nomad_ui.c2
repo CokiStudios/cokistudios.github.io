@@ -1,0 +1,46 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ SHINE OS MOBILE UI COMPONENT 2 (.c2) ✦
+# Adaptado para Shine Nomad 1 (90Hz Ultra-Durabilidad & Batería 3 Días)
+# Desarrollado por Coki Studios Outdoor Lab
+# ═══════════════════════════════════════════════════════════════════════════════
+
+component "NomadAqua" target "ui" {
+    device: "Shine Nomad 1"
+    family: "ui"
+    fps: 90
+    theme: "aqua_nomad_rugged"
+    primary: "#00f5d4"
+    accent: "#0ea5e9"
+    background: "#051315"
+    surface: "rgba(10, 30, 35, 0.90)"
+    corner_radius: 14
+    elevation: 6
+
+    state {
+        mut battery_days_left = 3.2
+        mut gps_satellite_count = 14
+        mut altitude_meters = 2640
+    }
+
+    draw status_pill at (center, top) with text "● SHINE NOMAD 1 • GPS SATELLITE OK" and glow true
+
+    draw card at (20, 80) with title "TELEMETRÍA TODO-TERRENO":
+        text $"Autonomía estimada: {battery_days_left} Días | Altitud: {altitude_meters}m"
+        badge "OUTDOOR HIGH-CONTRAST" color "#00f5d4"
+        button "MODO LUZ SOLAR" action "sunlight_boost"
+
+    draw card at (20, 200) with title "SEGURIDAD & S.O.S. SATELITAL":
+        text $"Satélites conectados: {gps_satellite_count} (Red Iridium)"
+        button "TRANSMITIR PING SOS" action "satellite_ping"
+
+    draw dock at bottom with apps ["maps", "radio", "flashlight", "camera"]
+
+    fn sunlight_boost() {
+        print "[C2 NOMAD] Brillo ultra-alto a 2500 nits activado."
+    }
+
+    fn satellite_ping() {
+        play tone at 987 Hz for 80 ms
+        print "[C2 NOMAD] Baliza de rescate enviada a satélite."
+    }
+}

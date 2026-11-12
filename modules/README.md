@@ -1,6 +1,7 @@
 # 📦 Looping Modules Directory & Manual Authoring Guide
 
-> **Guía Oficial de Módulos para Looping Engine & smiledev (Comercial v1.0.0 / Arch 2.8A)**  
+> **Guía Oficial de Módulos para Looping Engine & smiledev (v1.1 Producción / Arch 3.0A)**  
+> *Canales Oficiales: Looping (Prod) • Omega Looping (RC) • Alpha! Looping (Super Experimental)*  
 > *Coki Studios & Holo Entertainment © 2026*
 
 ---
@@ -10,7 +11,8 @@
 | Módulo | Versión | Lenguaje | Punto de Entrada | Descripción |
 | :--- | :---: | :---: | :--- | :--- |
 | **`loop-core-utils`** | `1.1.0` | 🟢 Loop | `core_utils.loop` | Utilidades fundamentales de colecciones, parsers JSON y helpers reactivos. |
-| **`loop-math-3d`** | `1.2.0` | 🔵 C++ | `loop_math_3d.hpp` | Álgebra lineal acelerada por hardware, cuaterniones y física de proyectiles. |
+| **`loop-math-3d`** | `2.0.0` | 🔵 C++ | `loop_math_3d.hpp` | Motor matemático y físico 3D C++17: Vec3, Quaternions, Matrices 4x4, Raycasting 3D, colisiones (Esfera/AABB/Cápsula), física Rigidbody 120Hz+ y Z-Buffer TUI. |
+| **`loop-game-plus`** | `2.0.0` | 🟢 Loop | `loop-game-plus.loop` | Cámara orbital/chase 3D nativa (`math3d.*`), renderizado 3D sin overhead Python, sub-stepping físico `physics3d.step_body` y mandos multi-OS con deadzone radial. |
 | **`loop-cpp-snippets`**| `1.0.0` | 🔵 C++ | `cpp_snippets.hpp` | Benchmarking RAII, RingBuffers, hash FNV-1a y colisiones AABB. |
 | **`loop-gui-tk`** | `2.0.0` | 🟡 Python | `loop_gui_tk.py` | UI compleja con Tkinter: pestañas, tablas ordenables, árboles, editor monospaced, KPI cards, canvas vectorial 2D y schema declarativo. |
 | **`loop-gui-qt`** | `2.0.0` | 🟡 Python | `loop_gui_qt.py` | UI compleja con PyQt6 / PySide6 (con fallback Tkinter): temas QSS oscuros, QTabWidget, tablas ordenables, QTreeWidget, editor y sliders. |

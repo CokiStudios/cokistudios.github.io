@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ SHINE OS MOBILE UI COMPONENT 2 (.c2) ✦
+# Adaptado para Shine A1 (60Hz Eficiencia Ultra-ligera <30MB RAM)
+# Desarrollado por Coki Studios Core Team
+# ═══════════════════════════════════════════════════════════════════════════════
+
+component "FeatherLite" target "hiui" {
+    device: "Shine A1"
+    family: "hiui"
+    fps: 60
+    theme: "feather_lite"
+    primary: "#06b6d4"
+    accent: "#164e63"
+    background: "#080d12"
+    surface: "rgba(14, 23, 33, 0.95)"
+    corner_radius: 10
+    elevation: 2
+
+    state {
+        mut ram_footprint_mb = 18.4
+        mut cpu_usage_pct = 2.1
+    }
+
+    draw status_pill at (center, top) with text "● SHINE A1 • EFICIENCIA MÁXIMA" and glow false
+
+    draw card at (20, 80) with title "MEMORIA Y BATERÍA OPTIMIZADA":
+        text $"Uso de RAM: {ram_footprint_mb} MB / 2048 MB | CPU: {cpu_usage_pct}%"
+        button "LIMPIEZA ULTRA-RÁPIDA" action "flush_cache"
+
+    draw dock at bottom with apps ["phone", "messages", "browser", "settings"]
+
+    fn flush_cache() {
+        print "[C2 hiUI] Limpieza de caché completada en 0.4ms."
+    }
+}

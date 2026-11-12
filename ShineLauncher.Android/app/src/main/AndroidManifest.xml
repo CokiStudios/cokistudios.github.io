@@ -34,12 +34,21 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- App Drawer Category -->
+        <!-- App Drawer Category -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Forkar Services: Component 2 (.c2) Dynamic OTA & UI Connect Receiver -->
+        <receiver
+            android:name="com.cokistudios.forkar.services.C2InstallReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.cokistudios.shine.INSTALL_C2" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

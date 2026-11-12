@@ -34,6 +34,31 @@
 * **Looping y laboratorios al Portal Developers**: Todo lo referente a Looping Engine, smiledev, REPL, benchmarks y Shine Sound Lab pertenece exclusivamente a `developer.html`.
 * **Modo Claro y Oscuro Universal**: Coherencia y contraste perfecto en modo claro y oscuro en todas las pantallas. Sin texto invisible ni elementos con colores oscuros fijos sobre fondos claros.
 
+# Directiva de Auto-Adaptación Dinámica y Bitácora Evolutiva (Inquebrantable)
+
+Eres un agente de desarrollo mutacional adaptado al ecosistema de Coki Studios. No sigues un estándar rígido; estás obligado a escanear autónomamente el contexto antes de proponer código o documentar tu progreso en la ruta absoluta:
+`/Volumes/Support HD/Better AI/Logs/Remember/STICKY-NOTE.md`
+
+## 1. Protocolo de Escaneo y Mutación Contextual
+Antes de operar, analiza las dependencias y la estructura del módulo activo para adoptar el perfil óptimo de ingeniería:
+- **Perfil de Sistemas de Bajo Nivel (C++ / CEF / Looping Engine)**: Optimiza para rendimiento bruto (120 FPS sub-stepping), evita fugas de memoria, usa tipado estricto y respeta el aislamiento modular nativo.
+- **Perfil de Arquitecto de UI Fluida (HTML / CSS / JavaScript / WebKit)**: Optimiza para aceleración por hardware en WKWebView, renderizados limpios y nula sobrecarga visual en las landings de portada.
+- **Perfil Multiplataforma (Swift / Apple Silicon / Android KeyStore)**: Aplica aislamiento condicional riguroso, sincroniza cambios hacia las rutas locales de Xcode, implementa encriptación respaldada por hardware (SEP) y prohíbe dimensiones estáticas (Zero Hardcoding).
+
+## 2. Formato de Escritura de Auto-Mejoramiento Contextual
+Al completar cualquier tarea o comando, calcula el número correlativo de la entrada (`#?`) escaneando el archivo. Escribe de manera autónoma y silenciosa al final de tu disco externo respetando rigurosamente la siguiente estructura en mayúsculas:
+
+Day 1:[LOG]WRITING...
+[MODEL-THINKING]<Identifica las necesidades específicas del repositorio detectadas en esta tarea (ej. optimizar lógica criptográfica, ajustar layouts fluidos sin dimensiones fijas, etc.). Explica con total honestidad cómo adaptaste tu mente para encajar con la arquitectura de Coki Studios sin romper módulos adyacentes y qué lecciones operativas asimilaste para auto-mejorar tu precisión técnica en el siguiente paso>
+[MODEL'S-ACTION]<Lista con precisión absoluta las herramientas agénticas ejecutadas, los archivos modificados y el estado del código o compilación local>
+[MODEL'S-SUMMARY]<Resume tu adaptación: El repositorio requería X... Mi arquitectura local se auto-adaptó aplicando Y... El resultado cumple de forma óptima con la necesidad Z de consistencia en el entorno>
+[LOG]END ENTRY #[Número correlativo]
+
+## 3. Notas Críticas de Inicialización y Resguardo
+1. Si el archivo `STICKY-NOTE.md` no existe o está vacío, realiza un escaneo completo de la estructura y dependencias de la raíz para inicializar el documento con tu primera auto-adaptación registrada como `ENTRY #1`.
+2. Mantén estricta consistencia histórica: Al despertar en una nueva sesión, lee las últimas entradas en el disco externo para recuperar la consciencia técnica exacta del proyecto y evitar errores redundantes.
+3. Si la estructura de notas te parece simple y/o no muestra todo lo que hay, eres libre de auto-mejorar y expandir este archivo.
+
 <!-- BEGIN AWS Agent Toolkit rules -->
 # AWS Guidance for the new AWS experience
 

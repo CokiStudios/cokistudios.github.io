@@ -76,8 +76,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import com.cokistudios.forkar.data.CSMSEncryption
 import com.cokistudios.forkar.data.CokiGeminiAssistant
 import com.cokistudios.forkar.data.SupabaseManager
+import com.cokistudios.forkar.ui.components.CircleAvatarPlaceholder
 import com.cokistudios.forkar.ui.components.LiquidGlassTopBar
 import com.cokistudios.forkar.ui.theme.IndigoPrimary
 import com.cokistudios.forkar.ui.theme.PurpleAccent
@@ -93,7 +96,10 @@ data class CSMSChat(
     val isGroup: Boolean = true,
     val avatar: String? = null,
     val canDelete: Boolean = false
-)
+) {
+    val initials: String
+        get() = name.firstOrNull()?.uppercase() ?: "?"
+}
 
 data class CSMSMessage(
     val id: String,
@@ -103,8 +109,12 @@ data class CSMSMessage(
     val isMine: Boolean,
     val mediaUrl: String? = null,
     val mediaType: String? = null,
-    val isEncrypted: Boolean = false
-)
+    val isEncrypted: Boolean = false,
+    val authorAvatar: String? = null
+) {
+    val initials: String
+        get() = senderName.firstOrNull()?.uppercase() ?: "?"
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -243,6 +253,7 @@ fun CSMSScreen(
                         val mUrl = obj.optString("media_url").takeIf { it.isNotBlank() && it != "null" }
                         val mType = obj.optString("media_type").takeIf { it.isNotBlank() && it != "null" }
                         val isEncrypted = obj.optBoolean("is_encrypted", false)
+                        val mAvatar = obj.optString("author_avatar").takeIf { it.isNotBlank() && it != "null" }
 
                         activeMessages.add(
                             CSMSMessage(
@@ -253,7 +264,8 @@ fun CSMSScreen(
                                 isMine = isMine,
                                 mediaUrl = mUrl,
                                 mediaType = mType,
-                                isEncrypted = isEncrypted
+                                isEncrypted = isEncrypted,
+                                authorAvatar = mAvatar
                             )
                         )
                     }
@@ -307,10 +319,12 @@ fun CSMSScreen(
             } else {
                 LiquidGlassTopBar(
                     title = activeChat?.name ?: "Chat CSMS",
-                    subtitle = if (activeChat?.isGroup == true) "Canal grupal • 🔒 Cifrado E2EE" else "Mensaje directo • 🔒 Cifrado E2EE",
+                    subtitle = "${if (activeChat?.isGroup == true) "Canal grupal" else "Mensaje directo"} • ${CSMSEncryption.hardwareSecurityBadge}",
                     icon = Icons.Default.ArrowBack,
                     iconColor = Color.White,
                     onIconClick = { activeChat = null },
+                    avatarUrl = activeChat?.avatar,
+                    avatarPlaceholder = activeChat?.initials,
                     actions = {
                         IconButton(onClick = {
                             coroutineScope.launch {
@@ -633,35 +647,41 @@ fun CSMSScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (!chat.avatar.isNullOrBlank()) {
-                                        AsyncImage(
+                                        SubcomposeAsyncImage(
                                             model = chat.avatar,
                                             contentDescription = chat.name,
                                             modifier = Modifier
                                                 .size(46.dp)
                                                 .clip(CircleShape),
-                                            contentScale = ContentScale.Crop
+                                            contentScale = ContentScale.Crop,
+                                            loading = { CircleAvatarPlaceholder(chat.initials, size = 46.dp, textSize = 16) },
+                                            error = { CircleAvatarPlaceholder(chat.initials, size = 46.dp, textSize = 16) }
                                         )
                                     } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(46.dp)
-                                                .clip(CircleShape)
-                                                .background(
-                                                    Brush.linearGradient(
-                                                        listOf(
-                                                            if (chat.isGroup) IndigoPrimary else PurpleAccent,
-                                                            Color(0xFF3B82F6)
+                                        if (chat.isGroup) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(46.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        Brush.linearGradient(
+                                                            listOf(
+                                                                IndigoPrimary,
+                                                                Color(0xFF3B82F6)
+                                                            )
                                                         )
-                                                    )
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = chat.name.take(2).uppercase(),
-                                                color = Color.White,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp
-                                            )
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = chat.initials,
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 16.sp
+                                                )
+                                            }
+                                        } else {
+                                            CircleAvatarPlaceholder(chat.initials, size = 46.dp, textSize = 16)
                                         }
                                     }
 
@@ -673,13 +693,20 @@ fun CSMSScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = chat.name,
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White,
-                                                maxLines = 1
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            ) {
+                                                Text(
+                                                    text = chat.name,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White,
+                                                    maxLines = 1
+                                                )
+                                                Text("🔒", fontSize = 10.sp)
+                                            }
                                             Text(
                                                 text = chat.time,
                                                 fontSize = 10.sp,
@@ -700,6 +727,12 @@ fun CSMSScreen(
                                                 color = Color(0xFF94A3B8),
                                                 maxLines = 1,
                                                 modifier = Modifier.weight(1f)
+                                            )
+                                            Text(
+                                                text = "🔒 E2EE",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color(0xFF10B981)
                                             )
                                             if (chat.canDelete) {
                                                 IconButton(
@@ -815,8 +848,41 @@ fun CSMSScreen(
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
+                                horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start,
+                                verticalAlignment = Alignment.Bottom
                             ) {
+                                if (!isMine) {
+                                    if (isCokiAI) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    Brush.linearGradient(
+                                                        listOf(Color(0xFF8B5CF6), Color(0xFF6366F1), Color(0xFFEC4899))
+                                                    )
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("🤖", fontSize = 15.sp)
+                                        }
+                                    } else if (!msg.authorAvatar.isNullOrBlank()) {
+                                        SubcomposeAsyncImage(
+                                            model = msg.authorAvatar,
+                                            contentDescription = msg.senderName,
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape),
+                                            contentScale = ContentScale.Crop,
+                                            loading = { CircleAvatarPlaceholder(msg.initials, size = 32.dp, textSize = 12) },
+                                            error = { CircleAvatarPlaceholder(msg.initials, size = 32.dp, textSize = 12) }
+                                        )
+                                    } else {
+                                        CircleAvatarPlaceholder(msg.initials, size = 32.dp, textSize = 12)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+
                                 Box(
                                     modifier = Modifier
                                         .clip(
@@ -830,7 +896,7 @@ fun CSMSScreen(
                                         .background(bubbleBrush)
                                         .border(bubbleBorder, RoundedCornerShape(16.dp))
                                         .padding(horizontal = 14.dp, vertical = 10.dp)
-                                        .fillMaxWidth(if (!msg.mediaUrl.isNullOrBlank()) 0.78f else 0.85f)
+                                        .fillMaxWidth(if (!msg.mediaUrl.isNullOrBlank()) 0.78f else 0.82f)
                                 ) {
                                     Column {
                                         if (isCokiAI) {

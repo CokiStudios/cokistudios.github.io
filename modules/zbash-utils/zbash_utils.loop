@@ -1,0 +1,4 @@
+define module "zbash-utils" version 1.1:
+    fn zbash_exec(cmd) => zbash.exec(cmd)
+    fn zbash_run(cmd) => zbash.run(cmd)
+    fn zbash_has(tool) => zbash.has(tool)

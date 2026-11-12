@@ -97,10 +97,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val c2ReloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val componentName = intent?.getStringExtra("component_id") ?: "Módulo .c2"
+            val colorHex = intent?.getStringExtra("primary_color")
+            if (colorHex != null) {
+                try {
+                    bubblyStatusIndicator.setBackgroundColor(android.graphics.Color.parseColor(colorHex))
+                } catch (_: Exception) {}
+            }
+            bubblyTitleText.text = "C2: $componentName"
+            Toast.makeText(this@MainActivity, "🔄 Hot-Reload .c2: $componentName", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        com.cokistudios.forkar.services.ForkarServices.initialize(this)
 
         initViews()
         setupInsets()
@@ -120,6 +136,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        try {
+            registerReceiver(c2ReloadReceiver, IntentFilter(com.cokistudios.forkar.services.C2InstallReceiver.ACTION_C2_RELOADED))
+        } catch (_: Exception) {}
         updateSystemRamAndDate()
     }
 
@@ -127,6 +146,9 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         try {
             unregisterReceiver(batteryReceiver)
+        } catch (_: Exception) {}
+        try {
+            unregisterReceiver(c2ReloadReceiver)
         } catch (_: Exception) {}
     }
 

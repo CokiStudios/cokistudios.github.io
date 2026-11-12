@@ -4,5 +4,6 @@
   "language": "loop",
   "entry_point": "core_utils.loop",
   "author": "Coki Studios Foundation",
-  "description": "Colecci\u00f3n de utilidades fundamentales escritas 100% en sintaxis Loop: colecciones reactivas, formatters y parsers JSON."
+  "description": "Colecci\u00f3n de utilidades fundamentales escritas 100% en sintaxis Loop: colecciones reactivas, formatters y parsers JSON.",
+  "dependencies": []
 }

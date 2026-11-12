@@ -1,0 +1,10 @@
+Package: com.cokistudios.hiop
+Name: HiOP iOS 9
+Depends: 
+Description: HiOP Cloud IDE & Looping Script Runner for iPad 3 Retina (iOS 9.3.6)
+Maintainer: Coki Studios <dev@cokistudios.com>
+Author: Coki Studios
+Section: Development
+Architecture: iphoneos-arm
+Version: 1.0.0-1+debug
+Installed-Size: 84

@@ -16,7 +16,13 @@
 #include <chrono>
 #include <iomanip>
 #include <cstdlib>
+#include <cstdio>
 #include <thread>
+#ifndef _WIN32
+#include <unistd.h>
+#include <sys/wait.h>
+#include <cerrno>
+#endif
 
 namespace looping {
 
@@ -261,6 +267,136 @@ public:
     bool has_thrown = false;
     std::string thrown_error = "";
     Value last_return_value;
+
+    struct ZBashResult {
+        int exit_code = 0;
+        std::string output;
+    };
+
+    bool has_zbash_utils_imported() const {
+        return imported_modules.count("zbash-utils") > 0 ||
+               imported_modules.count("zbash_utils") > 0 ||
+               imported_modules.count("loop.zbash-utils") > 0 ||
+               imported_modules.count("zbash") > 0;
+    }
+
+    static std::string resolve_zbash_shell() {
+#ifndef _WIN32
+        static const char* candidates[] = {"/bin/zsh", "/usr/bin/zsh", "/bin/bash", "/bin/sh"};
+        for (const char* sh : candidates) {
+            if (access(sh, X_OK) == 0) return std::string(sh);
+        }
+        return "/bin/sh";
+#else
+        return "cmd.exe";
+#endif
+    }
+
+    static std::string shell_single_quote(const std::string& arg) {
+        std::string out = "'";
+        for (char c : arg) {
+            if (c == '\'') out += "'\\''";
+            else out += c;
+        }
+        out += "'";
+        return out;
+    }
+
+    std::string interpolate_zbash_command(const std::string& raw_cmd) const {
+        std::string out;
+        out.reserve(raw_cmd.size());
+        for (size_t i = 0; i < raw_cmd.size(); ++i) {
+            if (raw_cmd[i] == '{') {
+                size_t close = raw_cmd.find('}', i + 1);
+                if (close != std::string::npos && close > i + 1) {
+                    std::string key = raw_cmd.substr(i + 1, close - i - 1);
+                    bool valid_id = std::isalpha(static_cast<unsigned char>(key[0])) || key[0] == '_';
+                    for (size_t k = 1; k < key.size() && valid_id; ++k) {
+                        char ch = key[k];
+                        valid_id = std::isalnum(static_cast<unsigned char>(ch)) || ch == '_' || ch == '.';
+                    }
+                    if (valid_id) {
+                        auto it = variables.find(key);
+                        if (it != variables.end()) {
+                            out += it->second.as_string();
+                            i = close;
+                            continue;
+                        }
+                    }
+                }
+            }
+            out += raw_cmd[i];
+        }
+        return out;
+    }
+
+    ZBashResult run_zbash_command(const std::string& cmd, bool stream_to_stdout) {
+        ZBashResult res;
+#ifndef _WIN32
+        std::string shell_path = resolve_zbash_shell();
+        int pipefd[2];
+        if (pipe(pipefd) != 0) {
+            res.exit_code = 127;
+            return res;
+        }
+        std::cout.flush();
+        std::cerr.flush();
+        fflush(nullptr);
+        pid_t pid = fork();
+        if (pid == 0) {
+            close(pipefd[0]);
+            dup2(pipefd[1], STDOUT_FILENO);
+            dup2(pipefd[1], STDERR_FILENO);
+            close(pipefd[1]);
+            execl(shell_path.c_str(), shell_path.c_str(), "-c", cmd.c_str(), static_cast<char*>(nullptr));
+            _exit(127);
+        }
+        close(pipefd[1]);
+        if (pid > 0) {
+            char buf[4096];
+            while (true) {
+                ssize_t n = read(pipefd[0], buf, sizeof(buf));
+                if (n > 0) {
+                    res.output.append(buf, static_cast<size_t>(n));
+                    if (stream_to_stdout) {
+                        std::cout.write(buf, n);
+                        std::cout.flush();
+                    }
+                } else if (n == 0) {
+                    break;
+                } else if (errno != EINTR) {
+                    break;
+                }
+            }
+            close(pipefd[0]);
+            int status = 0;
+            while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {}
+            if (WIFEXITED(status)) res.exit_code = WEXITSTATUS(status);
+            else if (WIFSIGNALED(status)) res.exit_code = 128 + WTERMSIG(status);
+            else res.exit_code = 1;
+        } else {
+            close(pipefd[0]);
+            res.exit_code = 127;
+        }
+#else
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) {
+            res.exit_code = 127;
+            return res;
+        }
+        char buf[512];
+        while (fgets(buf, sizeof(buf), pipe) != nullptr) {
+            res.output += buf;
+            if (stream_to_stdout) std::cout << buf << std::flush;
+        }
+        res.exit_code = pclose(pipe);
+#endif
+        variables["zbash_last_code"] = Value(static_cast<int64_t>(res.exit_code));
+        variables["zbash.last_code"] = Value(static_cast<int64_t>(res.exit_code));
+        variables["zbash_last_output"] = Value(res.output);
+        variables["zbash.last_output"] = Value(res.output);
+        return res;
+    }
 
     void set_target_ui(const std::string& target_name) {
         active_ui_specs = resolve_ui_profile(target_name);
@@ -2287,18 +2423,25 @@ public:
             }
             if (name == "sys.exec") {
                 if (!evaluated_args.empty()) {
-                    std::string cmd = evaluated_args[0].as_string();
-                    FILE* pipe = popen(cmd.c_str(), "r");
-                    if (!pipe) return Value("");
-                    char buffer[256];
-                    std::string result = "";
-                    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-                        result += buffer;
-                    }
-                    pclose(pipe);
-                    return Value(result);
+                    return Value(run_zbash_command(evaluated_args[0].as_string(), false).output);
                 }
                 return Value("");
+            }
+            if (name == "zbash.exec" || name == "zbash_utils.exec") {
+                if (evaluated_args.empty()) return Value("");
+                return Value(run_zbash_command(evaluated_args[0].as_string(), false).output);
+            }
+            if (name == "zbash.run" || name == "zbash_utils.run") {
+                if (evaluated_args.empty()) return Value(static_cast<int64_t>(1));
+                return Value(static_cast<int64_t>(run_zbash_command(evaluated_args[0].as_string(), true).exit_code));
+            }
+            if (name == "zbash.has" || name == "zbash_utils.has") {
+                if (evaluated_args.empty()) return Value(false);
+                std::string check = "command -v -- " + shell_single_quote(evaluated_args[0].as_string()) + " >/dev/null 2>&1";
+                return Value(run_zbash_command(check, false).exit_code == 0);
+            }
+            if (name == "zbash.shell" || name == "zbash_utils.shell") {
+                return Value(resolve_zbash_shell());
             }
             if (name == "time.now" || name == "timestamp" || name == "sys.time") {
                 auto now = std::chrono::system_clock::now();
@@ -3596,6 +3739,23 @@ public:
             return;
         }
 
+        // 0b2. zbash-utils Terminal Script Statement (!exec <command>)
+        if (auto zb = std::dynamic_pointer_cast<ZBashExecStmt>(stmt)) {
+            if (!has_zbash_utils_imported()) {
+                std::cerr << color::YELLOW << "[ZBASH-UTILS]" << color::RESET
+                          << " '!exec' requiere importar primero la libreria: usa "
+                          << color::CYAN << "import zbash-utils" << color::RESET << "\n";
+                thrown_error = "zbash-utils module not imported";
+                has_thrown = true;
+                return;
+            }
+            std::string cmd = interpolate_zbash_command(zb->raw_command);
+            if (!cmd.empty()) {
+                run_zbash_command(cmd, !zb->capture_only);
+            }
+            return;
+        }
+
         // 0c. Try / Catch Block
         if (auto tc = std::dynamic_pointer_cast<TryCatchStmt>(stmt)) {
             for (auto& s : tc->try_body) {
@@ -3932,7 +4092,8 @@ public:
                 "csid", "core_utils", "utils",
                 "game_plus", "game",
                 "csms", "ai",
-                "sound", "audio", "cpp_snippets", "metal4", "metal", "loop.metal4"
+                "sound", "audio", "cpp_snippets", "metal4", "metal", "loop.metal4",
+                "zbash-utils", "zbash_utils", "loop.zbash-utils", "zbash"
             };
             std::string local_manifest_check = "./modules/" + mod + "/smile.json";
             std::ifstream mf_check(local_manifest_check);

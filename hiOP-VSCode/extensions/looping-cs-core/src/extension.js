@@ -1,11 +1,50 @@
 const vscode = require('vscode');
+const { C2EditorProvider } = require('./c2EditorProvider');
 
 let currentPanel = undefined;
 
 function activate(context) {
-    console.log(' CS Looping Proprietary Core Active in VS Code');
+    console.log('⚡ CS Looping Proprietary Core & Component 2 (.c2) Viewer Active');
 
-    // 1. Command: Run .loop in Live Viewport Webview
+    // Register .c2 Visual Inspector Custom Editor
+    const c2ProviderDisposable = C2EditorProvider.register(context);
+    context.subscriptions.push(c2ProviderDisposable);
+
+    // 1. Command: Open .c2 Visual Inspector
+    let c2OpenDisposable = vscode.commands.registerCommand('c2.openViewer', function (uri) {
+        const targetUri = uri || (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri);
+        if (!targetUri) {
+            vscode.window.showErrorMessage('No se seleccionó ningún archivo .c2');
+            return;
+        }
+        vscode.commands.executeCommand('vscode.openWith', targetUri, 'c2.viewer');
+    });
+
+    // 2. Command: Install .c2 to Connected Shine Phone
+    let c2InstallDisposable = vscode.commands.registerCommand('c2.installToShine', function (uri) {
+        const targetUri = uri || (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri);
+        if (!targetUri) {
+            vscode.window.showErrorMessage('No se seleccionó ningún archivo .c2');
+            return;
+        }
+        const filePath = targetUri.fsPath;
+        const provider = new C2EditorProvider(context);
+        provider.installToPhone(filePath);
+    });
+
+    // 3. Command: Deploy .c2 to CS WEBS (OTA)
+    let c2DeployDisposable = vscode.commands.registerCommand('c2.deployOta', function (uri) {
+        const targetUri = uri || (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri);
+        if (!targetUri) {
+            vscode.window.showErrorMessage('No se seleccionó ningún archivo .c2');
+            return;
+        }
+        const filePath = targetUri.fsPath;
+        const provider = new C2EditorProvider(context);
+        provider.deployOta(filePath);
+    });
+
+    // 4. Command: Run .loop in Live Viewport Webview
     let runDisposable = vscode.commands.registerCommand('looping.runActiveFile', function () {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -23,12 +62,12 @@ function activate(context) {
         showLiveViewport(context, code);
     });
 
-    // 2. Command: Build Native Binary
+    // 5. Command: Build Native Binary
     let buildDisposable = vscode.commands.registerCommand('looping.buildBinary', function () {
-        vscode.window.showInformationMessage(' Compiling .loop with CS Proprietary Compiler Engine -> Target: Universal Native Binary (Mac/iOS/Droid)...');
+        vscode.window.showInformationMessage('⚡ Compiling .loop with CS Proprietary Compiler Engine -> Target: Universal Native Binary (Mac/iOS/Droid)...');
     });
 
-    context.subscriptions.push(runDisposable, buildDisposable);
+    context.subscriptions.push(c2OpenDisposable, c2InstallDisposable, c2DeployDisposable, runDisposable, buildDisposable);
 }
 
 function showLiveViewport(context, initialCode) {

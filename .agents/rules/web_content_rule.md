@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Regla de Contenido Web y Landing Pages de Coki Studios
 
 - **No digas todo en la web**: La landing principal (`index.html`) debe ser limpia, minimalista, enfocada y directa. No sobrecargar el index con simuladores pesados, benchmarks ni laboratorios interactivos técnicos.

@@ -1,0 +1,40 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✦ SHINE OS MOBILE UI COMPONENT 2 (.c2) ✦
+# Adaptado para Shine Vintage (Barra ergonómica inferior curvada tUIlbar)
+# Desarrollado por Coki Studios Retro Division
+# ═══════════════════════════════════════════════════════════════════════════════
+
+component "VintageAmber" target "vintage" {
+    device: "Shine Vintage"
+    family: "vintage"
+    fps: 60
+    theme: "vintage_amber_monochrome"
+    primary: "#f59e0b"
+    accent: "#78350f"
+    background: "#140e05"
+    surface: "rgba(40, 24, 8, 0.92)"
+    corner_radius: 8
+    elevation: 4
+
+    state {
+        mut mono_clock = "18:55"
+        mut analog_battery = 98
+    }
+
+    draw status_pill at (center, top) with text "✦ SHINE VINTAGE • tUIlbar ENGINE ✦" and glow false
+
+    draw card at (20, 80) with title "RETRO MONOSPACE TERMINAL":
+        text $"Reloj Cuarzo: {mono_clock} | Energía: {analog_battery}%"
+        button "SONIDO ARPEGIO 440Hz" action "play_chime"
+
+    draw card at (20, 200) with title "BARRA INFERIOR CURVADA":
+        text "tUIlbar activa con atajos físicos ergonómicos [1]..[4]"
+
+    draw dock at bottom with apps ["phone", "messages", "shinemaps", "settings"]
+
+    fn play_chime() {
+        play tone at 440 Hz for 120 ms
+        play tone at 659 Hz for 140 ms
+        print "[C2 VINTAGE] Tono retro reproducido en altavoz DAC."
+    }
+}

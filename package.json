@@ -1,6 +1,6 @@
 {
   "name": "cokistudios.com",
-  "version": "2.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Coki Studios Ecosystem & Looping Runtime Engine",
   "main": "bin/looping",

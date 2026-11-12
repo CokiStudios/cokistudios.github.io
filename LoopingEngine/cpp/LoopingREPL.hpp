@@ -236,6 +236,7 @@ private:
                 trimmed.rfind("physics3d.config(", 0) == 0 || trimmed.rfind("game.mode(", 0) == 0 ||
                 trimmed.rfind("audio.", 0) == 0 || trimmed.rfind("@audio", 0) == 0 ||
                 trimmed.rfind("fx.", 0) == 0 || trimmed.rfind("@fx", 0) == 0 ||
+                trimmed == "!exec" || trimmed.rfind("!exec ", 0) == 0 || trimmed.rfind("!exec\t", 0) == 0 ||
                 trimmed.rfind("return", 0) == 0 || trimmed == "break"
             );
 
@@ -250,6 +251,7 @@ private:
             }
 
             vm.execute_code(trimmed);
+            vm.has_thrown = false;
         }
     }
 

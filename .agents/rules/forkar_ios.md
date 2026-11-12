@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Reglas de Sincronización de Forkar iOS
 
 - **Destino del proyecto Xcode**: Cada vez que se realicen cambios, correcciones o novedades en el código de **Forkar iOS** (en `Forkar.iOS/`), se deben sincronizar/copiar los archivos actualizados hacia:

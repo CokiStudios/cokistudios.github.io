@@ -179,4 +179,52 @@ data class SocialFollow(
     @SerializedName("created_at") val createdAt: String? = null
 )
 
+// MARK: - CSMS Canonical Protected Rooms
+
+object CSMSCanonicalRooms {
+    const val COMMUNITY_GLOBAL = "00000000-0000-4000-8000-000000000001"
+    const val ECO_HUB = "00000000-0000-4000-8000-000000000002"
+    const val FORKAR_CARPOOL = "00000000-0000-4000-8000-000000000003"
+
+    val protectedIds: Set<String> = setOf(
+        COMMUNITY_GLOBAL.lowercase(),
+        ECO_HUB.lowercase(),
+        FORKAR_CARPOOL.lowercase(),
+        // Compatibilidad con identificadores legacy
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000003"
+    )
+
+    fun isProtected(roomId: String): Boolean {
+        return protectedIds.contains(roomId.trim().lowercase())
+    }
+}
+
+// MARK: - CSIMS Canonical Protected Internal Rooms (Zero Trust: @cokistudios.com only)
+
+object CSIMSCanonicalRooms {
+    const val GENERAL_COKI = "10000000-0000-0000-0000-000000000001"
+    const val ENG_FORKAR = "10000000-0000-0000-0000-000000000002"
+    const val SECURITY_OPS = "10000000-0000-0000-0000-000000000003"
+    const val DESIGN_SYSTEM = "10000000-0000-0000-0000-000000000004"
+
+    val internalIds: Set<String> = setOf(
+        GENERAL_COKI.lowercase(),
+        ENG_FORKAR.lowercase(),
+        SECURITY_OPS.lowercase(),
+        DESIGN_SYSTEM.lowercase()
+    )
+
+    fun isInternalRoom(roomId: String): Boolean {
+        return internalIds.contains(roomId.trim().lowercase())
+    }
+}
+
+data class ChatRoomMemberBasic(
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("user_name") val userName: String?,
+    @SerializedName("user_avatar") val userAvatar: String?
+)
+
 

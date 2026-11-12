@@ -1,9 +1,9 @@
 {
   "name": "loop-game-plus",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "language": "loop",
   "entry_point": "loop-game-plus.loop",
-  "author": "Argon",
-  "description": "Subruntime extendido para Looping: renderizado 3D acelerado, puente de gamepads nativo (macOS 27 GameController, Windows XInput, Linux evdev) y popups in-game con evaluaci\u00f3n condicional.",
-  "dependencies": []
+  "author": "Coki Studios & Holo Entertainment",
+  "description": "Subruntime 3D/2D de alto rendimiento para Looping: proyeccion 3D nativa C++17 (cero sobrecarga por vertice), fisicas 3D con sub-stepping a 120Hz, raycasting, camaras orbitales/persecucion, puente universal de mandos y modales reactivos.",
+  "dependencies": ["loop-math-3d"]
 }

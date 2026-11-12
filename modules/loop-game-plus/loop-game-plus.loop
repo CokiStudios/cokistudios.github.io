@@ -1,13 +1,16 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎮 MODULE: loop-game-plus v1.0.0
-// Universal 3D, Multi-OS Gamepad & In-Game Popup Subsystem
+// 🎮 MODULE: loop-game-plus v2.0.0
+// Native C++17 3D Projection, 120Hz Physics, Multi-OS Gamepad & Modals
+// Coki Studios & Holo Entertainment © 2026
 // ═══════════════════════════════════════════════════════════════
 
-define module "loop-game-plus" version 1.0:
+define module "loop-game-plus" version 2.0:
 
     mut pad_connected = false;
     mut pad_x = 0.0;
     mut pad_y = 0.0;
+    mut pad_rx = 0.0;
+    mut pad_ry = 0.0;
     mut pad_a = false;
     mut pad_b = false;
 
@@ -16,60 +19,64 @@ define module "loop-game-plus" version 1.0:
     mut popup_code_payload = "";
     mut popup_progress = 0;
 
-    // ── 1. SONDEO DE MANDOS ──
-    fn poll_gamepad(deadzone) {
-        py! {
-            import sys, os
-            sys.path.append(os.path.abspath("modules/loop-game-plus"))
-            import bridge_runtime
-            st = bridge_runtime.poll_gamepad(looping_vars.get("deadzone", 0.15))
-
-            looping_set("pad_connected", st.get("connected", False))
-            looping_set("pad_x", st.get("axis_x", 0.0))
-            looping_set("pad_y", st.get("axis_y", 0.0))
-            looping_set("pad_a", st.get("btn_a", False))
-            looping_set("pad_b", st.get("btn_b", False))
+    // ── 1. SONDEO DE MANDOS CON ZONA MUERTA RADIAL 3D ──
+    fn poll_gamepad(deadzone = 0.15) {
+        val raw = game.poll_gamepad();
+        mut ax = raw["axis_x"] ?? 0.0;
+        mut ay = raw["axis_y"] ?? 0.0;
+        val mag = math.hypot(ax, ay);
+        if (mag < deadzone) {
+            ax := 0.0;
+            ay := 0.0;
         }
+        pad_connected := raw["connected"] ?? true;
+        pad_x := ax;
+        pad_y := ay;
+        pad_a := raw["btn_a"] ?? false;
+        pad_b := raw["btn_b"] ?? false;
 
         return {
-            connected: pad_connected,
-            x: pad_x,
-            y: pad_y,
-            btn_a: pad_a,
-            btn_b: pad_b
+            "connected": pad_connected,
+            "x": pad_x,
+            "y": pad_y,
+            "rx": pad_rx,
+            "ry": pad_ry,
+            "btn_a": pad_a,
+            "btn_b": pad_b
         };
     }
 
-    // ── 2. PROYECCIÓN Y RENDERIZADO 3D ──
-    fn render_cube(cx, cy, cz, size, rot_x, rot_y, fov, w, h) {
+    // ── 2. CÁMARA ORBITAL / CHASE 3D NATIVA (math3d.*) ──
+    fn compute_chase_camera(target_pos, yaw_deg = 0.0, pitch_deg = 18.0, distance = 16.0) {
+        val q = math3d.quat_euler(pitch_deg, yaw_deg, 0.0);
+        val offset = math3d.quat_rotate(q, [0.0, 0.0, -distance]);
+        val eye = math3d.add(target_pos, offset);
+        val look = math3d.add(target_pos, [0.0, 1.8, 0.0]);
+        return {
+            "eye": eye,
+            "target": look,
+            "view_matrix": math3d.mat4_look_at(eye, look, [0.0, 1.0, 0.0])
+        };
+    }
+
+    // ── 3. PROYECCIÓN Y RENDERIZADO 3D NATIVO C++17 (CERO PYTHON POR VÉRTICE) ──
+    fn render_cube(cx, cy, cz, size, rot_x, rot_y, fov = 62, w = 800, h = 480) {
         val s = size / 2.0;
-        val verts = [
+        val q = math3d.quat_euler(rot_x, rot_y, 0.0);
+        val center = [cx, cy, cz];
+        val eye = [0.0, 0.0, -18.0];
+        val look = [0.0, 0.0, 10.0];
+
+        val local_verts = [
             [-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s],
             [-s, -s,  s], [s, -s,  s], [s, s,  s], [-s, s,  s]
         ];
 
         mut screen_coords = [];
-
         for (idx in 0..8) {
-            val [vx, vy, vz] = verts[idx];
-            py! {
-                import math
-                rx = math.radians(looping_vars.get("rot_x", 0))
-                ry = math.radians(looping_vars.get("rot_y", 0))
-                x, y, z = looping_vars.get("vx"), looping_vars.get("vy"), looping_vars.get("vz")
-
-                x1 = x * math.cos(ry) + z * math.sin(ry)
-                z1 = -x * math.sin(ry) + z * math.cos(ry)
-
-                y2 = y * math.cos(rx) - z1 * math.sin(rx)
-                z2 = y * math.sin(rx) + z1 * math.cos(rx)
-
-                d = max(0.1, z2 + looping_vars.get("cz", 100))
-                factor = looping_vars.get("fov", 300) / d
-                looping_set("out_x", (x1 + looping_vars.get("cx", 0)) * factor + (looping_vars.get("w", 800) / 2))
-                looping_set("out_y", (-y2 + looping_vars.get("cy", 0)) * factor + (looping_vars.get("h", 600) / 2))
-            }
-            screen_coords = screen_coords |> append([out_x, out_y]);
+            val world_v = math3d.add(center, math3d.quat_rotate(q, local_verts[idx]));
+            val pr = math3d.project(world_v, eye, look, fov, w, h);
+            screen_coords.push([pr["x"], pr["y"], pr["visible"]]);
         }
 
         val edges = [
@@ -81,11 +88,19 @@ define module "loop-game-plus" version 1.0:
         for (e in 0..12) {
             val p1 = screen_coords[edges[e][0]];
             val p2 = screen_coords[edges[e][1]];
-            fx.line(from: (p1[0], p1[1]), to: (p2[0], p2[1]), color: "#38bdf8", stroke: 1.5);
+            if (p1[2] && p2[2]) {
+                fx.line(from: (p1[0], p1[1]), to: (p2[0], p2[1]), color: "#38bdf8", stroke: 1.6);
+            }
         }
+        return screen_coords;
     }
 
-    // ── 3. POPUPS Y EVALUACIÓN CONDICIONAL ──
+    // ── 4. FÍSICAS RIGIDBODY 3D CON SUB-STEPPING A 120Hz+ ──
+    fn step_body_3d(body, dt = 0.0166, substeps = 4) {
+        return physics3d.step_body(body, dt, substeps);
+    }
+
+    // ── 5. POPUPS IN-GAME Y EVALUACIÓN CONDICIONAL ──
     fn show_popup(title, payload_code) {
         popup_title := title;
         popup_code_payload := payload_code;

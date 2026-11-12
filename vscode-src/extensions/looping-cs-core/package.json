@@ -1,8 +1,8 @@
 {
   "name": "looping-cs-core",
   "displayName": "L∞ping Compile — CS Proprietary Core",
-  "description": "Official runtime, language server, live previewer, and compiler for Looping Compile (.loop) by Coki Studios",
-  "version": "2.0.0",
+  "description": "Official runtime, language server, live 2D/3D previewer, .c2 visual inspector, and compiler for Looping v1.1 (Arch 3.0A) & Component 2 (.c2) by Coki Studios",
+  "version": "1.1.0",
   "publisher": "cokistudios",
   "icon": "icon.png",
   "engines": {
@@ -20,7 +20,42 @@
         "id": "looping",
         "aliases": ["Looping Compile", "looping", "loop"],
         "extensions": [".loop"],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/loop-file-icon-light.svg",
+          "dark": "./icons/loop-file-icon.svg"
+        }
+      },
+      {
+        "id": "ruuping",
+        "aliases": ["Ruuping Native", "ruuping", "ruup"],
+        "extensions": [".ruup"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/ruup-file-icon.svg",
+          "dark": "./icons/ruup-file-icon.svg"
+        }
+      },
+      {
+        "id": "c2",
+        "aliases": ["Component 2", "c2", "Shine UI Module"],
+        "extensions": [".c2"],
+        "icon": {
+          "light": "./icons/loop-file-icon-light.svg",
+          "dark": "./icons/loop-file-icon.svg"
+        }
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "c2.viewer",
+        "displayName": "Component 2 (.c2) Visual Inspector",
+        "selector": [
+          {
+            "filenamePattern": "*.c2"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "grammars": [
@@ -28,9 +63,29 @@
         "language": "looping",
         "scopeName": "source.loop",
         "path": "./syntaxes/looping.tmLanguage.json"
+      },
+      {
+        "language": "ruuping",
+        "scopeName": "source.loop",
+        "path": "./syntaxes/looping.tmLanguage.json"
       }
     ],
     "commands": [
+      {
+        "command": "c2.openViewer",
+        "title": "Coki Studios: Abrir Inspector Visual .c2",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "c2.installToShine",
+        "title": "Coki Studios: Instalar .c2 en Celular Shine (USB/ADB)",
+        "icon": "$(device-mobile)"
+      },
+      {
+        "command": "c2.deployOta",
+        "title": "Coki Studios: Desplegar .c2 en CS WEBS (OTA)",
+        "icon": "$(cloud-upload)"
+      },
       {
         "command": "looping.runActiveFile",
         "title": "L∞ping: Run in Live Viewport",
@@ -48,6 +103,28 @@
           "command": "looping.runActiveFile",
           "group": "navigation",
           "when": "resourceExtname == .loop"
+        },
+        {
+          "command": "c2.openViewer",
+          "group": "navigation",
+          "when": "resourceExtname == .c2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "c2.openViewer",
+          "group": "navigation",
+          "when": "resourceExtname == .c2"
+        },
+        {
+          "command": "c2.installToShine",
+          "group": "1_modification",
+          "when": "resourceExtname == .c2"
+        },
+        {
+          "command": "c2.deployOta",
+          "group": "1_modification",
+          "when": "resourceExtname == .c2"
         }
       ]
     },

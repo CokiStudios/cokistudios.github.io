@@ -163,6 +163,25 @@ VALUES
         ],
         ARRAY['openid', 'profile', 'email'],
         true
+    ),
+    (
+        'c0c11009-4ce0-4b11-8a01-1009c0c1e001',
+        'Looping Engine CLI',
+        ARRAY[
+            'https://cokistudios.com/client-demo',
+            'https://cokistudios.com/client-demo.html',
+            'https://www.cokistudios.com/client-demo',
+            'https://www.cokistudios.com/client-demo.html',
+            'https://cokistudios.github.io/client-demo',
+            'https://cokistudios.github.io/client-demo.html',
+            'https://cokistudios.github.io/oauth-callback.html',
+            'http://localhost:3000/client-demo',
+            'http://localhost:3000/client-demo.html',
+            'http://127.0.0.1:3000/client-demo',
+            'http://127.0.0.1:3000/client-demo.html'
+        ],
+        ARRAY['openid', 'profile', 'email', 'offline_access'],
+        true
     )
 ON CONFLICT (client_id) 
 DO UPDATE SET 
