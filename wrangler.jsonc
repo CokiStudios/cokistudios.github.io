@@ -17,5 +17,11 @@
     "developer.cokistudios.com/*",
     "cdn.cokistudios.com/*",
     "mdm.cokistudios.com/*"
-  ]
+  ],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  }
 }
