@@ -1311,50 +1311,6 @@ export class LoopingInterpreter {
                 gain.connect(masterGain);
                 osc.start(now);
                 osc.stop(now + 0.16);
-            }
-        } catch (e) { console.error("Sound Synthesis Error:", e); }
-    }
-
-    createNoiseBuffer(duration) {
-        if (!this.audioCtx) return null;
-        const bufferSize = this.audioCtx.sampleRate * duration;
-        const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-        return buffer;
-    }
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.14);
-            } else if (type === 'hurt') {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(190, now);
-                osc.frequency.exponentialRampToValueAtTime(65, now + 0.2);
-                gain.gain.setValueAtTime(0.22, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.2);
-            } else if (type === 'shoot') {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(940, now);
-                osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
-                gain.gain.setValueAtTime(0.09, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.08);
             } else if (type === 'heal') {
                 const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
                 notes.forEach((freq, idx) => {
@@ -1366,7 +1322,7 @@ export class LoopingInterpreter {
                     gain.gain.setValueAtTime(0.12, t);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
                     osc.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(masterGain || ctx.destination);
                     osc.start(t);
                     osc.stop(t + 0.18);
                 });
@@ -1381,7 +1337,7 @@ export class LoopingInterpreter {
                     gain.gain.setValueAtTime(0.16, t);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
                     osc.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(masterGain || ctx.destination);
                     osc.start(t);
                     osc.stop(t + 0.2);
                 });
@@ -1396,12 +1352,23 @@ export class LoopingInterpreter {
                     gain.gain.setValueAtTime(0.14, t);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
                     osc.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(masterGain || ctx.destination);
                     osc.start(t);
                     osc.stop(t + 0.22);
                 });
             }
-        } catch (e) {}
+        } catch (e) { console.error("Sound Synthesis Error:", e); }
+    }
+
+    createNoiseBuffer(duration) {
+        if (!this.audioCtx) return null;
+        const bufferSize = this.audioCtx.sampleRate * duration;
+        const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        return buffer;
     }
 
     addPopup(x, y, text, color = '#38bdf8') {
