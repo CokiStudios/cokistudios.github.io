@@ -5,14 +5,7 @@ set -euo pipefail
 # Base model: mlx-community/Qwen2.5-Coder-7B-Instruct-4bit (tuned safely for 16 GB RAM)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COKI_AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-REPO_ROOT="$(cd "$COKI_AI_DIR/.." && pwd)"
-
-BASE_MODEL="${COKI_AI_BASE_MODEL:-mlx-community/Qwen2.5-Coder-7B-Instruct-4bit}"
-DATA_DIR="$COKI_AI_DIR/data"
-ADAPTER_DIR="$COKI_AI_DIR/adapters/looping-7b"
-MODEL_OUT_DIR="$COKI_AI_DIR/models/coki-looping-7b-mlx"
-VENV_DIR="$COKI_AI_DIR/.venv"
+source "$SCRIPT_DIR/_env.sh"
 
 ITERS="${COKI_AI_ITERS:-300}"
 BATCH_SIZE="${COKI_AI_BATCH_SIZE:-1}"
@@ -23,6 +16,8 @@ LR="${COKI_AI_LR:-5e-6}"
 OPTIMIZER="${COKI_AI_OPTIMIZER:-adamw}"
 SETUP_ONLY=0
 FUSE_ONLY=0
+
+mkdir -p "$STORAGE_ROOT" "$HF_HOME"
 
 for arg in "$@"; do
   case "$arg" in

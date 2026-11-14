@@ -5,12 +5,11 @@ set -euo pipefail
 # No external inference servers — Hugging Face hosts open weights only.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COKI_AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-MODEL_DIR="${COKI_AI_MODEL_DIR:-$COKI_AI_DIR/models/coki-looping-7b-mlx}"
+source "$SCRIPT_DIR/_env.sh"
 HF_REPO_ID="${HF_REPO_ID:-CokiStudios/coki-looping-7b-mlx}"
 
 pick_hf_cli() {
-  for cand in "$COKI_AI_DIR/.venv/bin/hf" "$(command -v hf 2>/dev/null || true)" /Users/jerix/Library/Python/3.9/bin/hf; do
+  for cand in "$VENV_DIR/bin/hf" "$COKI_AI_DIR/.venv/bin/hf" "$(command -v hf 2>/dev/null || true)" /Users/jerix/Library/Python/3.9/bin/hf; do
     if [[ -n "$cand" && -x "$cand" ]]; then
       echo "$cand"
       return 0
@@ -25,9 +24,9 @@ if [[ ! -d "$MODEL_DIR" || ! -f "$MODEL_DIR/config.json" ]]; then
   exit 1
 fi
 
-if [[ -x "$COKI_AI_DIR/.venv/bin/python" ]]; then
+if [[ -x "$VENV_DIR/bin/python" ]]; then
   echo "🧪 [Coki AI] Verifying fused weights sanity before Hugging Face upload..."
-  "$COKI_AI_DIR/.venv/bin/python" - "$MODEL_DIR" <<'PYEOF'
+  "$VENV_DIR/bin/python" - "$MODEL_DIR" <<'PYEOF'
 import sys
 from mlx_lm import load, generate
 model, tok = load(sys.argv[1])

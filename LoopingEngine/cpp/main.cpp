@@ -2057,7 +2057,8 @@ int main(int argc, char* argv[]) {
 
         std::string ai_root = chat_script.substr(0, chat_script.find_last_of("/\\"));
         std::string venv_py = ai_root + "/.venv/bin/python";
-        std::string py_exec = file_exists(venv_py) ? venv_py : "python3";
+        std::string ext_venv_py = "/Volumes/Support HD/CokiAI/.venv/bin/python";
+        std::string py_exec = file_exists(venv_py) ? venv_py : (file_exists(ext_venv_py) ? ext_venv_py : "python3");
 
         std::string cmd = shell_quote(py_exec) + " " + shell_quote(chat_script);
         if (argc < 3) {

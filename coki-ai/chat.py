@@ -152,7 +152,7 @@ def query_local_llm(
     resp, err = _post_json(
         endpoint,
         {"model": resolved_model, "messages": messages, "temperature": 0.25, "max_tokens": 1100},
-        timeout=60.0,
+        timeout=120.0,
     )
     if resp and resp.get("choices"):
         content = resp["choices"][0].get("message", {}).get("content", "").strip()

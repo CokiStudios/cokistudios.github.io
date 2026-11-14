@@ -74,7 +74,7 @@ def query_endpoint(endpoint: str, model: str, prompt: str) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=60.0) as res:
+    with urllib.request.urlopen(req, timeout=120.0) as res:
         data = json.loads(res.read().decode("utf-8"))
     return data["choices"][0]["message"]["content"]
 

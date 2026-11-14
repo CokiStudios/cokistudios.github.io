@@ -28,7 +28,8 @@ $(LOCAL_TARGET): $(SRC) $(HEADERS)
 	@echo "Built: $(LOCAL_TARGET)"
 
 $(TARGET): $(LOCAL_TARGET)
-	@-mkdir -p $(dir $(TARGET)) 2>/dev/null && cp $(LOCAL_TARGET) $(TARGET) 2>/dev/null || true
+	@-mkdir -p $(dir $(TARGET)) 2>/dev/null && rm -f $(TARGET) && cp $(LOCAL_TARGET) $(TARGET) 2>/dev/null || true
+	@-if [ "$(UNAME_S)" = "Darwin" ]; then codesign -s - --force $(TARGET) >/dev/null 2>&1 || true; fi
 	@echo "Copied to: $(TARGET)"
 
 install: $(LOCAL_TARGET)

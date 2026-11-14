@@ -4,17 +4,15 @@ set -euo pipefail
 # Starts Coki AI local OpenAI-compatible MLX server on 127.0.0.1:8080 (zero cloud servers).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COKI_AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VENV_PY="$COKI_AI_DIR/.venv/bin/python"
+source "$SCRIPT_DIR/_env.sh"
+VENV_PY="$VENV_DIR/bin/python"
 
 HOST="${COKI_AI_HOST:-127.0.0.1}"
 PORT="${COKI_AI_PORT:-8080}"
-FUSED_MODEL="$COKI_AI_DIR/models/coki-looping-7b-mlx"
-ADAPTER_DIR="$COKI_AI_DIR/adapters/looping-7b"
-BASE_MODEL="${COKI_AI_BASE_MODEL:-mlx-community/Qwen2.5-Coder-7B-Instruct-4bit}"
+FUSED_MODEL="$MODEL_OUT_DIR"
 
 if [[ ! -x "$VENV_PY" ]]; then
-  echo "❌ Falta el entorno virtual local en $COKI_AI_DIR/.venv."
+  echo "❌ Falta el entorno virtual local en $VENV_DIR."
   echo "   Ejecuta primero: bash coki-ai/scripts/setup_and_train.sh"
   exit 1
 fi

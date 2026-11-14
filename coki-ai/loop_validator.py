@@ -18,7 +18,8 @@ from typing import List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LOOPING_BIN = REPO_ROOT / "bin" / "looping"
-LOCAL_MODEL_DIR = REPO_ROOT / "coki-ai" / "models" / "coki-looping-7b-mlx"
+EXTERNAL_MODEL_DIR = Path("/Volumes/Support HD/CokiAI/models/coki-looping-7b-mlx")
+LOCAL_MODEL_DIR = EXTERNAL_MODEL_DIR if EXTERNAL_MODEL_DIR.exists() else (REPO_ROOT / "coki-ai" / "models" / "coki-looping-7b-mlx")
 
 
 def resolve_openai_model(endpoint: str, preferred: str = "auto") -> str:
