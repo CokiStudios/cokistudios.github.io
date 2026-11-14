@@ -6,15 +6,44 @@ Combines balanced delimiter/quote checks with `./bin/looping check` AST parsing.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
 import tempfile
+import urllib.parse
+import urllib.request
 from pathlib import Path
 from typing import List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LOOPING_BIN = REPO_ROOT / "bin" / "looping"
+LOCAL_MODEL_DIR = REPO_ROOT / "coki-ai" / "models" / "coki-looping-7b-mlx"
+
+
+def resolve_openai_model(endpoint: str, preferred: str = "auto") -> str:
+    """Resolve active model ID from `/v1/models` so `mlx_lm.server` doesn't fetch missing HF repos."""
+    if preferred and preferred != "auto":
+        return preferred
+    parsed = urllib.parse.urlsplit(endpoint)
+    if parsed.scheme and parsed.netloc:
+        models_url = f"{parsed.scheme}://{parsed.netloc}/v1/models"
+        try:
+            with urllib.request.urlopen(models_url, timeout=2.0) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            items = [m.get("id", "") for m in payload.get("data", []) if isinstance(m, dict) and m.get("id")]
+            for mid in items:
+                if "coki-looping" in mid:
+                    return mid
+            if "default_model" in items:
+                return "default_model"
+            if items:
+                return items[-1]
+        except Exception:
+            pass
+    if LOCAL_MODEL_DIR.exists():
+        return str(LOCAL_MODEL_DIR)
+    return "default_model"
 
 
 def extract_loop_blocks(text: str, allow_generic: bool = False) -> List[str]:

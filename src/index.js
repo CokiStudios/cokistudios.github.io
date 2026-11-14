@@ -84,18 +84,29 @@ const BUILTIN_MODULES = [
     downloads_count: 520,
     is_verified: true,
     code_payload: `# pyloop-ai: Local MLX & Edge AI Inference bridge for Looping
-import json, urllib.request
+import json, urllib.parse, urllib.request
 
 class PyLoopAI:
-    def __init__(self, endpoint="http://127.0.0.1:8080/v1/chat/completions", fallback_endpoint="https://cokistudios.com/api/coki", model="CokiStudios/coki-looping-7b-mlx"):
+    def __init__(self, endpoint="http://127.0.0.1:8080/v1/chat/completions", fallback_endpoint="https://cokistudios.com/api/coki", model="auto"):
         self.endpoint = endpoint
         self.fallback_endpoint = fallback_endpoint
         self.model = model
 
+    def _resolve_model(self):
+        if self.model and self.model != "auto":
+            return self.model
+        p = urllib.parse.urlsplit(self.endpoint)
+        try:
+            with urllib.request.urlopen(f"{p.scheme}://{p.netloc}/v1/models", timeout=2) as res:
+                items = [m.get("id", "") for m in json.loads(res.read().decode("utf-8")).get("data", []) if m.get("id")]
+                return next((m for m in items if "coki-looping" in m), items[-1] if items else "default_model")
+        except Exception:
+            return "default_model"
+
     def prompt(self, system_prompt, user_message):
         """Send a prompt to local MLX (127.0.0.1:8080) with optional Coki Edge fallback."""
         mlx_payload = json.dumps({
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}

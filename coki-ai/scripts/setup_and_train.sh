@@ -14,11 +14,13 @@ ADAPTER_DIR="$COKI_AI_DIR/adapters/looping-7b"
 MODEL_OUT_DIR="$COKI_AI_DIR/models/coki-looping-7b-mlx"
 VENV_DIR="$COKI_AI_DIR/.venv"
 
-ITERS="${COKI_AI_ITERS:-600}"
+ITERS="${COKI_AI_ITERS:-300}"
 BATCH_SIZE="${COKI_AI_BATCH_SIZE:-1}"
+GRAD_ACCUM="${COKI_AI_GRAD_ACCUM:-4}"
 NUM_LAYERS="${COKI_AI_NUM_LAYERS:-8}"
-MAX_SEQ_LEN="${COKI_AI_MAX_SEQ_LEN:-1536}"
-LR="${COKI_AI_LR:-1e-5}"
+MAX_SEQ_LEN="${COKI_AI_MAX_SEQ_LEN:-1280}"
+LR="${COKI_AI_LR:-5e-6}"
+OPTIMIZER="${COKI_AI_OPTIMIZER:-adamw}"
 SETUP_ONLY=0
 FUSE_ONLY=0
 
@@ -28,7 +30,7 @@ for arg in "$@"; do
     --fuse-only)  FUSE_ONLY=1 ;;
     --help|-h)
       echo "Usage: $0 [--setup-only] [--fuse-only]"
-      echo "Env overrides: COKI_AI_BASE_MODEL, COKI_AI_ITERS, COKI_AI_BATCH_SIZE, COKI_AI_NUM_LAYERS, COKI_AI_MAX_SEQ_LEN, COKI_AI_LR"
+      echo "Env overrides: COKI_AI_BASE_MODEL, COKI_AI_ITERS, COKI_AI_BATCH_SIZE, COKI_AI_GRAD_ACCUM, COKI_AI_NUM_LAYERS, COKI_AI_MAX_SEQ_LEN, COKI_AI_LR, COKI_AI_OPTIMIZER"
       exit 0
       ;;
   esac
@@ -72,21 +74,56 @@ fi
 mkdir -p "$ADAPTER_DIR" "$MODEL_OUT_DIR"
 
 if [[ "$FUSE_ONLY" -eq 0 ]]; then
-  echo "🧠 [Coki AI] Starting MLX LoRA fine-tuning on $BASE_MODEL (iters=$ITERS, layers=$NUM_LAYERS, batch=$BATCH_SIZE)..."
+  echo "🧠 [Coki AI] Starting stabilized MLX LoRA fine-tuning on $BASE_MODEL (iters=$ITERS, opt=$OPTIMIZER, lr=$LR, grad_accum=$GRAD_ACCUM)..."
+  # Remove stale checkpoints so an old divergent run never lingers in $ADAPTER_DIR
+  rm -f "$ADAPTER_DIR"/*_adapters.safetensors "$ADAPTER_DIR"/adapters.safetensors
   "$VENV_PY" -m mlx_lm lora \
     --model "$BASE_MODEL" \
     --train \
     --data "$DATA_DIR" \
     --adapter-path "$ADAPTER_DIR" \
+    --optimizer "$OPTIMIZER" \
+    --mask-prompt \
     --batch-size "$BATCH_SIZE" \
+    --grad-accumulation-steps "$GRAD_ACCUM" \
     --num-layers "$NUM_LAYERS" \
     --iters "$ITERS" \
     --learning-rate "$LR" \
     --max-seq-length "$MAX_SEQ_LEN" \
-    --steps-per-eval 100 \
-    --save-every 100 \
+    --steps-per-eval 50 \
+    --save-every 50 \
     --grad-checkpoint
 fi
+
+echo "🩺 [Coki AI] Checking LoRA adapters for NaN/Inf divergence before fusing..."
+"$VENV_PY" - "$ADAPTER_DIR" <<'PYEOF'
+import glob, os, shutil, sys
+import mlx.core as mx
+
+adapter_dir = sys.argv[1]
+final_path = os.path.join(adapter_dir, "adapters.safetensors")
+
+def is_finite(path):
+    if not os.path.exists(path):
+        return False
+    weights = mx.load(path)
+    return all(not bool(mx.any(mx.isnan(v) | mx.isinf(v)).item()) for v in weights.values())
+
+if is_finite(final_path):
+    print(f"✔ [OK] {final_path} has finite weights.")
+    sys.exit(0)
+
+print(f"⚠️  Warning: {final_path} contains NaN/Inf or is missing; scanning finite checkpoints...")
+ckpts = sorted(glob.glob(os.path.join(adapter_dir, "*_adapters.safetensors")), reverse=True)
+for ckpt in ckpts:
+    if is_finite(ckpt):
+        shutil.copy2(ckpt, final_path)
+        print(f"✔ [RECOVERED] Copied latest valid finite checkpoint {os.path.basename(ckpt)} -> adapters.safetensors")
+        sys.exit(0)
+
+print("❌ [ERROR] No valid finite LoRA adapters found. Lower COKI_AI_LR and re-run training.", file=sys.stderr)
+sys.exit(1)
+PYEOF
 
 echo "🔗 [Coki AI] Fusing LoRA adapters into standalone local MLX model at $MODEL_OUT_DIR..."
 "$VENV_PY" -m mlx_lm fuse \
@@ -95,6 +132,20 @@ echo "🔗 [Coki AI] Fusing LoRA adapters into standalone local MLX model at $MO
   --save-path "$MODEL_OUT_DIR"
 
 cp "$COKI_AI_DIR/MODEL_CARD_TEMPLATE.md" "$MODEL_OUT_DIR/README.md"
+
+echo "🧪 [Coki AI] Running quick post-fuse sanity generation..."
+"$VENV_PY" - "$MODEL_OUT_DIR" <<'PYEOF'
+import sys
+from mlx_lm import load, generate
+model_dir = sys.argv[1]
+model, tok = load(model_dir)
+prompt = tok.apply_chat_template([{"role": "user", "content": "Responde OK en una palabra."}], tokenize=False, add_generation_prompt=True)
+out = generate(model, tok, prompt=prompt, max_tokens=20)
+print("Sample output:", repr(out))
+if not out.strip() or out.count("!") > 10:
+    print("❌ [ERROR] Fused model failed coherence sanity check!", file=sys.stderr)
+    sys.exit(1)
+PYEOF
 
 echo ""
 echo "✔ [Coki AI] Entrenamiento y fusión completados en local."

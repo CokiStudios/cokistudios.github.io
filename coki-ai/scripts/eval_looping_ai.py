@@ -25,11 +25,11 @@ COKI_AI_DIR = Path(__file__).resolve().parents[1]
 if str(COKI_AI_DIR) not in sys.path:
     sys.path.insert(0, str(COKI_AI_DIR))
 
-from loop_validator import check_loop_with_cli, extract_loop_blocks  # noqa: E402
+from loop_validator import check_loop_with_cli, extract_loop_blocks, resolve_openai_model  # noqa: E402
 
 TEST_JSONL = COKI_AI_DIR / "data" / "test.jsonl"
 DEFAULT_ENDPOINT = os.environ.get("COKI_AI_ENDPOINT", "http://127.0.0.1:8080/v1/chat/completions")
-DEFAULT_MODEL = os.environ.get("COKI_AI_MODEL", "CokiStudios/coki-looping-7b-mlx")
+DEFAULT_MODEL = os.environ.get("COKI_AI_MODEL", "auto")
 
 BENCH_PROMPTS: List[Tuple[str, List[str]]] = [
     (
@@ -80,11 +80,12 @@ def query_endpoint(endpoint: str, model: str, prompt: str) -> str:
 
 
 def evaluate_live(endpoint: str, model: str) -> int:
-    print(f"[eval] Querying local MLX endpoint: {endpoint} (model={model})")
+    active_model = resolve_openai_model(endpoint, model)
+    print(f"[eval] Querying local MLX endpoint: {endpoint} (model={active_model})")
     passed = 0
     for idx, (prompt, required_tokens) in enumerate(BENCH_PROMPTS, 1):
         try:
-            answer = query_endpoint(endpoint, model, prompt)
+            answer = query_endpoint(endpoint, active_model, prompt)
         except Exception as exc:
             print(f"  [ERROR #{idx}] Could not reach local server: {exc}")
             return 1

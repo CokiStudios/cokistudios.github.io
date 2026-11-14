@@ -131,19 +131,42 @@
             }
         }
 
+        let localMlxModelCache = null;
+
+        async function resolveLocalMlxModel() {
+            if (localMlxModelCache) return localMlxModelCache;
+            const probe = new AbortController();
+            const probeTimer = setTimeout(() => probe.abort(), 1200);
+            try {
+                const res = await fetch('http://127.0.0.1:8080/v1/models', { signal: probe.signal });
+                clearTimeout(probeTimer);
+                if (!res.ok) return null;
+                const payload = await res.json();
+                const items = Array.isArray(payload.data) ? payload.data.map(m => m && m.id).filter(Boolean) : [];
+                if (!items.length) return null;
+                localMlxModelCache = items.find(id => id.includes('coki-looping')) || items[items.length - 1];
+                return localMlxModelCache;
+            } catch (_) {
+                clearTimeout(probeTimer);
+                return null;
+            }
+        }
+
         async function tryLocalMlx(query, context) {
             const isLocalHost = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
             if (!isLocalHost) return null;
             try {
+                const activeModel = await resolveLocalMlxModel();
+                if (!activeModel) return null;
                 const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), 3500);
+                const timer = setTimeout(() => controller.abort(), 25000);
                 const sys = 'Eres Coki AI, experto en el lenguaje Looping de Coki Studios.' + (context ? '\nContexto:\n' + context : '');
                 const res = await fetch('http://127.0.0.1:8080/v1/chat/completions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
                     body: JSON.stringify({
-                        model: 'CokiStudios/coki-looping-7b-mlx',
+                        model: activeModel,
                         messages: [
                             { role: 'system', content: sys },
                             { role: 'user', content: query }
@@ -153,7 +176,10 @@
                     })
                 });
                 clearTimeout(timer);
-                if (!res.ok) return null;
+                if (!res.ok) {
+                    localMlxModelCache = null;
+                    return null;
+                }
                 const data = await res.json();
                 return data && data.choices && data.choices[0] && data.choices[0].message
                     ? data.choices[0].message.content

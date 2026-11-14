@@ -32,11 +32,17 @@ RAG_INDEX_PATH = REPO_ROOT / "assets" / "data" / "coki-rag-index.json"
 if str(COKI_AI_DIR) not in sys.path:
     sys.path.insert(0, str(COKI_AI_DIR))
 
-from loop_validator import check_loop_with_cli, extract_loop_blocks  # noqa: E402
+from loop_validator import check_loop_with_cli, extract_loop_blocks, resolve_openai_model  # noqa: E402
 
 DEFAULT_MLX_ENDPOINT = os.environ.get("COKI_AI_ENDPOINT", "http://127.0.0.1:8080/v1/chat/completions")
-DEFAULT_MODEL = os.environ.get("COKI_AI_MODEL", "CokiStudios/coki-looping-7b-mlx")
+DEFAULT_MODEL = os.environ.get("COKI_AI_MODEL", "auto")
 HUGGINGFACE_URL = "https://huggingface.co/CokiStudios"
+
+RAG_STOPWORDS = {
+    "hola", "como", "sirve", "para", "con", "que", "sobre", "una", "uno", "unos", "unas",
+    "explicame", "explica", "dame", "quiero", "puedo", "hacer", "usa", "usar", "funciona",
+    "del", "las", "los", "por", "the", "and", "how", "what", "with", "for", "does",
+}
 
 SYSTEM_PROMPT = (
     "Eres Coki AI, asistente experto en el lenguaje Looping de Coki Studios "
@@ -58,9 +64,12 @@ def load_rag_chunks() -> List[Dict]:
 def search_rag(query: str, chunks: List[Dict], top_k: int = 3) -> List[Dict]:
     if not chunks or not query.strip():
         return []
-    q_tokens = [t for t in re.findall(r"[a-zA-Z0-9_+.!]{2,}", query.lower()) if len(t) >= 2]
-    if not q_tokens:
-        return chunks[:top_k]
+    raw_tokens = re.findall(r"[a-zA-Z0-9_+.!]{2,}", query.lower())
+    q_tokens = [t for t in raw_tokens if t not in RAG_STOPWORDS] or raw_tokens
+    # Map bare "loop" shorthand in casual Spanish questions to Looping language docs too
+    expanded = list(q_tokens)
+    if "loop" in expanded and "looping" not in expanded:
+        expanded.append("looping")
 
     scored: List[Tuple[float, Dict]] = []
     for ch in chunks:
@@ -68,9 +77,12 @@ def search_rag(query: str, chunks: List[Dict], top_k: int = 3) -> List[Dict]:
         kw = {str(k).lower() for k in ch.get("keywords", [])}
         body = str(ch.get("content", "")).lower()
         score = 0.0
-        for tok in q_tokens:
-            if tok in title:
-                score += 4.0
+        for tok in expanded:
+            whole_re = rf"\b{re.escape(tok)}\b"
+            if re.search(whole_re, title):
+                score += 6.0
+            elif tok in title:
+                score += 3.0
             if tok in kw:
                 score += 2.5
             hits = body.count(tok)
@@ -136,15 +148,17 @@ def query_local_llm(
     ]
 
     # 1. Local Apple Silicon MLX Server (127.0.0.1:8080)
+    resolved_model = resolve_openai_model(endpoint, model)
     resp, err = _post_json(
         endpoint,
-        {"model": model, "messages": messages, "temperature": 0.25, "max_tokens": 1100},
+        {"model": resolved_model, "messages": messages, "temperature": 0.25, "max_tokens": 1100},
         timeout=60.0,
     )
     if resp and resp.get("choices"):
         content = resp["choices"][0].get("message", {}).get("content", "").strip()
         if content:
-            return content, f"MLX Local ({endpoint})", None
+            model_label = Path(resolved_model).name if ("/" in resolved_model or "\\" in resolved_model) else resolved_model
+            return content, f"MLX Local ({model_label})", None
 
     # 2. Optional local Ollama fallback (if running on 127.0.0.1:11434)
     ollama_model = _first_local_ollama_model()

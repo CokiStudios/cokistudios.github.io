@@ -25,6 +25,20 @@ if [[ ! -d "$MODEL_DIR" || ! -f "$MODEL_DIR/config.json" ]]; then
   exit 1
 fi
 
+if [[ -x "$COKI_AI_DIR/.venv/bin/python" ]]; then
+  echo "🧪 [Coki AI] Verifying fused weights sanity before Hugging Face upload..."
+  "$COKI_AI_DIR/.venv/bin/python" - "$MODEL_DIR" <<'PYEOF'
+import sys
+from mlx_lm import load, generate
+model, tok = load(sys.argv[1])
+prompt = tok.apply_chat_template([{"role": "user", "content": "Di OK."}], tokenize=False, add_generation_prompt=True)
+out = generate(model, tok, prompt=prompt, max_tokens=15)
+if not out.strip() or out.count("!") > 8:
+    print("❌ Model coherence sanity check failed; refusing to upload broken weights.", file=sys.stderr)
+    sys.exit(1)
+PYEOF
+fi
+
 HF_CLI="$(pick_hf_cli || true)"
 if [[ -z "$HF_CLI" ]]; then
   echo "❌ No se encontró el CLI 'hf' (huggingface_hub). Instálalo con: pip install huggingface_hub"
