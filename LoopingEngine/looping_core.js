@@ -447,12 +447,25 @@ export class CSharpMiniVM {
         return count;
     }
     evalExpr(raw, locals = {}, boundEntity = '') {
-        let s = String(raw || '').trim().replace(/(\d+(?:\.\d+)?)[fFdDmL]\b/g, '$1');
+        let s = String(raw || '').trim().replace(/\b(\d+(?:\.\d+)?)[fFdDmL]\b/g, '$1');
         if (!s) return 0;
         const vars = this.interp ? this.interp.variables : {};
         const findEnt = (name) => (this.interp?.entities3D || []).find(e => e.name === name || e.label === name);
         const fnEnv = {
-            Mathf: { Clamp: (v, a, b) => Math.max(a, Math.min(b, v)), Lerp: (a, b, t) => a + (b - a) * t, Sin: Math.sin, Cos: Math.cos, Abs: Math.abs, Sqrt: Math.sqrt, Min: Math.min, Max: Math.max, PI: Math.PI },
+            Mathf: {
+                Clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+                Lerp: (a, b, t) => a + (b - a) * t,
+                MoveTowards: (cur, tgt, maxD) => {
+                    const diff = tgt - cur;
+                    if (Math.abs(diff) <= maxD) return tgt;
+                    return cur + Math.sign(diff) * maxD;
+                },
+                SmoothStep: (a, b, t) => {
+                    const c = Math.max(0, Math.min(1, Number(t) || 0));
+                    return a + (b - a) * (c * c * (3 - 2 * c));
+                },
+                Sin: Math.sin, Cos: Math.cos, Abs: Math.abs, Sqrt: Math.sqrt, Min: Math.min, Max: Math.max, PI: Math.PI
+            },
             Math,
             Time: { deltaTime: 1 / 60 },
             Console: { WriteLine: (...a) => { const msg = a.join(' '); this.logs.push(msg); this.interp?.log(`[C#] ${msg}`, 'output'); return msg; } },
@@ -464,10 +477,36 @@ export class CSharpMiniVM {
                 Lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
             },
             Scene3D: {
+                Find: (n) => findEnt(n || boundEntity) ? findEnt(n || boundEntity).name : '',
+                GetHealth: (n) => { const e = findEnt(n || boundEntity); return e ? e.health : 0; },
+                SetColor: (n, hex) => {
+                    const e = findEnt(n || boundEntity);
+                    if (e && this.interp) { e.color = String(hex); e.rgb = this.interp.parseHexRGB(e.color); return 1; }
+                    return 0;
+                },
+                LookAt: (n, tx, ty, tz) => {
+                    const e = findEnt(n || boundEntity);
+                    if (!e) return 0;
+                    const dx = (Number(tx) || 0) - e.x;
+                    const dy = (Number(ty) || 0) - e.y;
+                    const dz = (Number(tz) || 0) - e.z;
+                    e.yaw = Math.atan2(dx, dz);
+                    e.pitch = -Math.atan2(dy, Math.hypot(dx, dz) || 1);
+                    return e.yaw;
+                },
                 Move: (n, dx, dy, dz) => { const e = findEnt(n || boundEntity); if (e) { e.x += dx || 0; e.y += dy || 0; e.z += dz || 0; } return e ? [e.x, e.y, e.z] : [0, 0, 0]; },
                 Rotate: (n, rx, ry, rz) => { const e = findEnt(n || boundEntity); if (e) { e.pitch += (rx || 0) * Math.PI / 180; e.yaw += (ry || 0) * Math.PI / 180; e.roll += (rz || 0) * Math.PI / 180; } return e ? [e.pitch, e.yaw, e.roll] : [0, 0, 0]; },
                 SetPosition: (n, x, y, z) => { const e = findEnt(n || boundEntity); if (e) { e.x = x; e.y = y; e.z = z; } return [x, y, z]; },
-                Damage: (n, amt) => { const e = findEnt(n || boundEntity); if (e) { e.health = Math.max(0, e.health - (amt || 0)); return e.health; } return 0; }
+                Damage: (n, amt) => {
+                    const e = findEnt(n || boundEntity);
+                    if (e) {
+                        e.health = Math.max(0, e.health - (amt || 0));
+                        e.hitFlash = 1.0;
+                        if (e.health <= 0) e.isAlive = false;
+                        return e.health;
+                    }
+                    return 0;
+                }
             }
         };
         s = s.replace(/new\s+Vector3\(([^)]+)\)/g, '[$1]');
@@ -535,9 +574,12 @@ export class CSharpMiniVM {
 export class LoopizeRuntimeJS {
     constructor(interp) {
         this.interp = interp;
+        this.initialized = true;
+        this.projectName = 'LoopizeGame';
         this.ecs = [];
         this.nextId = 1;
         this.waves = {};
+        this.currentWave = 0;
         this.fsm = {};
         this.combo = { hits: 0, timer: 0, window: 2.8, multiplier: 1.0, score: 0, maxCombo: 0 };
         this.tweens = {};
@@ -547,25 +589,71 @@ export class LoopizeRuntimeJS {
         this.level = 1;
         this.cameraShake = { trauma: 0, maxOffset: 0.75 };
     }
+    init(name = 'LoopizeGame') {
+        this.initialized = true;
+        this.projectName = String(name || 'LoopizeGame');
+        return true;
+    }
     ease(mode, tRaw) {
         const t = Math.max(0, Math.min(1, Number(tRaw) || 0));
         switch (String(mode || 'linear').toLowerCase()) {
             case 'in_quad': return t * t;
             case 'out_quad': return 1 - (1 - t) * (1 - t);
             case 'in_out_quad': return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            case 'in_cubic': return t * t * t;
             case 'out_cubic': return 1 - Math.pow(1 - t, 3);
             case 'in_out_cubic': return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
             case 'out_back': { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+            case 'out_bounce': {
+                const n1 = 7.5625, d1 = 2.75;
+                if (t < 1 / d1) return n1 * t * t;
+                if (t < 2 / d1) { const u = t - 1.5 / d1; return n1 * u * u + 0.75; }
+                if (t < 2.5 / d1) { const u = t - 2.25 / d1; return n1 * u * u + 0.9375; }
+                const u = t - 2.625 / d1; return n1 * u * u + 0.984375;
+            }
+            case 'out_elastic': {
+                if (t === 0 || t === 1) return t;
+                return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
+            }
             default: return t;
         }
     }
     ecsSpawn(name, tag = 'entity', pos = [0, 2, 0], hp = 100, objFile = '', csClass = '') {
         const id = this.nextId++;
-        this.ecs.push({ id, name, tag, pos: [...pos], hp, maxHp: hp, objFile, csClass, alive: true });
+        this.ecs.push({ id, name, tag, pos: [...pos], hp, maxHp: hp, objFile, csClass, alive: true, data: {} });
         if (this.interp && objFile && !this.interp.entities3D.some(e => e.name === name)) {
-            this.interp.spawnObjEntity3D({ name, obj: objFile, at: pos, health: hp, type: tag, cs: csClass });
+            const roleType = (tag === 'enemy' || tag === 'boss' || tag === 'player') ? tag : 'obj';
+            this.interp.spawnObjEntity3D({ name, obj: objFile, at: pos, health: hp, type: roleType, tag, cs: csClass });
         }
         return id;
+    }
+    ecsQueryTag(tag) {
+        return this.ecs.filter(e => e.alive && (!tag || e.tag === tag)).map(e => e.id);
+    }
+    ecsSet(id, key, val) {
+        const ent = this.ecs.find(e => e.id === Number(id) || e.name === String(id));
+        if (!ent) return false;
+        ent.data[key] = val;
+        if (key === 'hp') { ent.hp = Number(val); if (ent.hp <= 0) ent.alive = false; }
+        return true;
+    }
+    ecsGet(id, key) {
+        const ent = this.ecs.find(e => e.id === Number(id) || e.name === String(id));
+        if (!ent) return undefined;
+        if (key === 'hp') return ent.hp;
+        if (key === 'name') return ent.name;
+        if (key === 'tag') return ent.tag;
+        return ent.data[key];
+    }
+    ecsDestroy(id) {
+        const ent = this.ecs.find(e => e.id === Number(id) || e.name === String(id));
+        if (!ent) return false;
+        ent.alive = false;
+        if (this.interp) {
+            const e3 = this.interp.entities3D.find(x => x.name === ent.name);
+            if (e3) { e3.isAlive = false; e3.health = 0; }
+        }
+        return true;
     }
     spatialRadius(center, radius, tag = '') {
         const out = [];
@@ -579,9 +667,13 @@ export class LoopizeRuntimeJS {
         this.waves[waveNum] = { waveNum, count, hp, archetype, objFile, spawned: false, cleared: false };
         return true;
     }
+    waveAdd(waveNum, archetype = 'valkyrie', count = 4, hp = 80, objFile = 'valkyrie_drone.obj') {
+        return this.waveDefine(waveNum, count, hp, archetype, objFile);
+    }
     waveSpawn(waveNum) {
         const w = this.waves[waveNum];
         if (!w) return 0;
+        this.currentWave = waveNum;
         let spawned = 0;
         for (let i = 0; i < w.count; i++) {
             const ang = (i / Math.max(1, w.count)) * Math.PI * 2;
@@ -592,6 +684,28 @@ export class LoopizeRuntimeJS {
         w.spawned = true;
         return spawned;
     }
+    waveNext() {
+        const keys = Object.keys(this.waves).map(Number).sort((a, b) => a - b);
+        const nextNum = keys.find(n => n > this.currentWave && !this.waves[n].spawned);
+        if (nextNum === undefined) return 0;
+        return this.waveSpawn(nextNum);
+    }
+    waveStatus(waveNum = 0) {
+        const target = waveNum || this.currentWave || 1;
+        const w = this.waves[target];
+        const prefix = `Wave${target}_`;
+        const aliveEnemies = this.interp
+            ? this.interp.entities3D.filter(e => e.isAlive && e.name.startsWith(prefix)).length
+            : this.ecs.filter(e => e.alive && e.name.startsWith(prefix)).length;
+        if (w && w.spawned && aliveEnemies === 0) w.cleared = true;
+        return {
+            wave: target,
+            exists: Boolean(w),
+            spawned: Boolean(w && w.spawned),
+            cleared: Boolean(w && w.cleared),
+            alive_enemies: aliveEnemies
+        };
+    }
     comboHit(basePoints = 100) {
         this.combo.hits++;
         this.combo.timer = this.combo.window;
@@ -601,6 +715,25 @@ export class LoopizeRuntimeJS {
         this.combo.score += award;
         if (this.interp) { this.interp.score += Math.round(award); this.interp.combo = this.combo.hits; this.interp.comboTimer = this.combo.window; }
         return award;
+    }
+    tween(key, mode = 'linear', from = 0, to = 1, dur = 1.0, loop = false, pingPong = false) {
+        this.tweens[key] = {
+            key: String(key),
+            mode: String(mode || 'linear'),
+            from: Number(from),
+            to: Number(to),
+            cur: Number(from),
+            dur: Math.max(1e-4, Number(dur) || 1),
+            elapsed: 0,
+            loop: Boolean(loop),
+            pingPong: Boolean(pingPong),
+            done: false
+        };
+        return Number(from);
+    }
+    tweenValue(key) {
+        const tw = this.tweens[key];
+        return tw ? tw.cur : 0;
     }
     shake(trauma = 0.45) {
         this.cameraShake.trauma = Math.min(1.0, this.cameraShake.trauma + Number(trauma || 0));
@@ -631,22 +764,38 @@ export class LoopizeRuntimeJS {
         for (const tw of Object.values(this.tweens)) {
             if (!tw.done) {
                 tw.elapsed += dt;
-                const p = Math.min(1, tw.elapsed / Math.max(1e-4, tw.dur));
-                tw.cur = tw.from + (tw.to - tw.from) * this.ease(tw.mode, p);
-                if (p >= 1) tw.done = true;
+                if (tw.loop || tw.pingPong) {
+                    const cycles = tw.elapsed / tw.dur;
+                    const frac = cycles - Math.floor(cycles);
+                    const rawP = (tw.pingPong && Math.floor(cycles) % 2 === 1) ? (1 - frac) : frac;
+                    tw.cur = tw.from + (tw.to - tw.from) * this.ease(tw.mode, rawP);
+                } else {
+                    const p = Math.min(1, tw.elapsed / tw.dur);
+                    tw.cur = tw.from + (tw.to - tw.from) * this.ease(tw.mode, p);
+                    if (p >= 1) tw.done = true;
+                }
             }
         }
     }
     stats() {
+        const aliveEnemies = this.interp
+            ? this.interp.entities3D.filter(e => e.isAlive && (e.type === 'enemy' || e.type === 'boss')).length
+            : this.ecs.filter(e => e.alive && e.tag === 'enemy').length;
         return {
-            initialized: true,
+            initialized: this.initialized,
+            project: this.projectName,
             ecs_count: this.ecs.filter(e => e.alive).length,
             waves_total: Object.keys(this.waves).length,
+            current_wave: this.currentWave,
+            alive_enemies: aliveEnemies,
             combo_hits: this.combo.hits,
             combo_mult: this.combo.multiplier,
             combo_max: this.combo.maxCombo,
+            camera_trauma: Number(this.cameraShake.trauma.toFixed(3)),
+            tweens_active: Object.values(this.tweens).filter(t => !t.done).length,
             xp: this.xp,
             level: this.level,
+            quests_done: Object.values(this.quests).filter(q => q.completed).length,
             cs_classes: Object.keys(this.interp?.csharpBridge?.classes || {}).length,
             obj_cache: Object.keys(this.interp?.objMeshes3D || {}).length
         };
@@ -691,6 +840,8 @@ export class LoopingInterpreter {
         this.maxLives = 3;
         this.gameOver = false;
         this.gameWon = false;
+        this.paused = false;
+        this.hitstopTimer = 0;
         this.sourceCode = '';
         
         // World, Scenario & 2D Physics Configuration
@@ -716,6 +867,7 @@ export class LoopingInterpreter {
         this.mousePos = { x: 0, y: 0 };
         this.isMouseDown = false;
         this.dragOrbit = { active: false, lastX: 0, lastY: 0, moved: false };
+        this.prevGamepadButtons = {};
         this.gamepadState = {
             dpad: { left: false, right: false, up: false, down: false },
             axisX: 0,
@@ -862,6 +1014,12 @@ export class LoopingInterpreter {
             if (key === 'r') {
                 if (this.gameOver || this.gameWon || this.is3DMode) {
                     if (this.gameOver || this.gameWon) this.restartGame();
+                }
+            }
+            if ((key === 'p' || key === 'escape') && !e.repeat) {
+                if (this.isRunning && !this.gameOver && !this.gameWon) {
+                    this.paused = !this.paused;
+                    this.log(this.paused ? '⏸️ Juego en pausa [P/Esc para reanudar]' : '▶️ Juego reanudado', 'system');
                 }
             }
             
@@ -1439,6 +1597,20 @@ export class LoopingInterpreter {
         this.init3DState();
         this.gameOver = false;
         this.gameWon = false;
+        this.paused = false;
+        this.hitstopTimer = 0;
+        this.keysDown = {};
+        this.prevGamepadButtons = {};
+        if (this.gamepadState) {
+            this.gamepadState.dpad = { left: false, right: false, up: false, down: false };
+            this.gamepadState.axisX = 0;
+            this.gamepadState.axisY = 0;
+            this.gamepadState.axisCamX = 0;
+            this.gamepadState.btnA = false;
+            this.gamepadState.btnB = false;
+            this.gamepadState.btnX = false;
+            this.gamepadState.btnY = false;
+        }
         if (this.ctx && this.canvas) {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
@@ -2966,11 +3138,11 @@ export class LoopingInterpreter {
             this.fps = Math.round(this.fpsSmooth);
         }
 
-        // Poll Gamepad Hardware via Standard HTML5 API
-        if (navigator.getGamepads) {
+        // Poll Gamepad Hardware via Standard HTML5 API (with clean release + edge triggers)
+        if (typeof navigator !== 'undefined' && navigator.getGamepads) {
             const gps = navigator.getGamepads();
-            if (gps && gps[0]) {
-                const gp = gps[0];
+            const gp = gps && gps[0];
+            if (gp) {
                 const axisX = gp.axes[0] || 0;
                 const axisY = gp.axes[1] || 0;
                 const axisCamX = gp.axes[2] || 0;
@@ -2978,28 +3150,68 @@ export class LoopingInterpreter {
                 this.gamepadState.axisY = Math.abs(axisY) > 0.16 ? -axisY : 0;
                 this.gamepadState.axisCamX = Math.abs(axisCamX) > 0.18 ? axisCamX : 0;
 
-                if (axisX < -0.3 || (gp.buttons[14] && gp.buttons[14].pressed)) this.gamepadState.dpad.left = true;
-                if (axisX > 0.3 || (gp.buttons[15] && gp.buttons[15].pressed)) this.gamepadState.dpad.right = true;
-                if (this.is3DMode) {
-                    if (axisY < -0.3 || (gp.buttons[12] && gp.buttons[12].pressed)) this.gamepadState.dpad.up = true;
-                    if (axisY > 0.3 || (gp.buttons[13] && gp.buttons[13].pressed)) this.gamepadState.dpad.down = true;
-                    if (gp.buttons[0] && gp.buttons[0].pressed) {
-                        this.gamepadState.btnA = true;
-                        const p3 = this.getPlayer3D();
-                        if (p3 && p3.jumpBufferTimer <= 0) p3.jumpBufferTimer = this.jumpBuffer;
+                const kbLeft = !!(this.keysDown['a'] || this.keysDown['arrowleft']);
+                const kbRight = !!(this.keysDown['d'] || this.keysDown['arrowright']);
+                const kbUp = !!(this.keysDown['w'] || this.keysDown['arrowup']);
+                const kbDown = !!(this.keysDown['s'] || this.keysDown['arrowdown']);
+                const kbJump = this.is3DMode ? !!this.keysDown[' '] : !!(this.keysDown['w'] || this.keysDown['arrowup'] || this.keysDown[' ']);
+                const kbShoot = !!(this.keysDown['j'] || this.keysDown['z'] || this.keysDown['f'] || this.keysDown['enter']);
+                const kbDash = !!(this.keysDown['k'] || this.keysDown['x'] || this.keysDown['shift']);
+
+                const gpLeft = axisX < -0.3 || !!(gp.buttons[14] && gp.buttons[14].pressed);
+                const gpRight = axisX > 0.3 || !!(gp.buttons[15] && gp.buttons[15].pressed);
+                const gpUp = axisY < -0.3 || !!(gp.buttons[12] && gp.buttons[12].pressed);
+                const gpDown = axisY > 0.3 || !!(gp.buttons[13] && gp.buttons[13].pressed);
+                const btnAHeld = !!(gp.buttons[0] && gp.buttons[0].pressed) || (!this.is3DMode && gpUp);
+                const btnBHeld = !!(gp.buttons[1] && gp.buttons[1].pressed) || !!(gp.buttons[2] && gp.buttons[2].pressed);
+                const btnXHeld = !!(gp.buttons[3] && gp.buttons[3].pressed);
+                const btnPauseHeld = !!(gp.buttons[9] && gp.buttons[9].pressed);
+
+                this.gamepadState.dpad.left = kbLeft || gpLeft;
+                this.gamepadState.dpad.right = kbRight || gpRight;
+                this.gamepadState.dpad.up = kbUp || gpUp;
+                this.gamepadState.dpad.down = kbDown || gpDown;
+                this.gamepadState.btnA = kbJump || btnAHeld;
+                this.gamepadState.btnB = kbShoot || btnBHeld;
+                this.gamepadState.btnX = kbDash || btnXHeld;
+
+                if (btnPauseHeld && !this.prevGamepadButtons.pause && !this.gameOver && !this.gameWon) {
+                    this.paused = !this.paused;
+                }
+                if (!this.paused && !this.gameOver && !this.gameWon) {
+                    if (btnAHeld && !this.prevGamepadButtons.a) {
+                        const actor = this.is3DMode ? this.getPlayer3D() : this.getPlayer();
+                        if (actor) actor.jumpBufferTimer = this.jumpBuffer;
                     }
-                } else {
-                    if (axisY < -0.3 || (gp.buttons[12] && gp.buttons[12].pressed) || (gp.buttons[0] && gp.buttons[0].pressed)) {
-                        this.gamepadState.btnA = true;
+                    if (btnBHeld && !this.prevGamepadButtons.b) {
+                        if (this.is3DMode) {
+                            const p3 = this.getPlayer3D();
+                            if (p3) this.shootProjectile3D(p3);
+                        } else {
+                            const p = this.getPlayer();
+                            if (p) this.shootProjectile(p);
+                        }
+                    }
+                    if (btnXHeld && !this.prevGamepadButtons.x) {
+                        if (this.is3DMode) {
+                            const p3 = this.getPlayer3D();
+                            if (p3) this.triggerDash3D(p3);
+                        } else {
+                            const p = this.getPlayer();
+                            if (p) this.triggerDash(p);
+                        }
                     }
                 }
-                if ((gp.buttons[1] && gp.buttons[1].pressed) || (gp.buttons[2] && gp.buttons[2].pressed)) {
-                    this.gamepadState.btnB = true;
-                }
-                if (gp.buttons[3] && gp.buttons[3].pressed) {
-                    this.gamepadState.btnX = true;
-                }
+                this.prevGamepadButtons = { a: btnAHeld, b: btnBHeld, x: btnXHeld, pause: btnPauseHeld };
             }
+        }
+
+        if (this.paused && !this.gameOver && !this.gameWon) {
+            return;
+        }
+        if (this.hitstopTimer > 0) {
+            this.hitstopTimer = Math.max(0, this.hitstopTimer - dt);
+            return;
         }
 
         if (this.is3DMode) {
@@ -3182,7 +3394,7 @@ export class LoopingInterpreter {
                         if (entity.x + entity.w > other.x + 4 && entity.x < other.x + other.w - 4 &&
                             entity.y + entity.h >= other.y + 6 && entity.y <= other.y + other.h) {
                             
-                            if (entity.invulnerableTimer <= 0) {
+                            if (entity.invulnerableTimer <= 0 && !entity.isDashing) {
                                 entity.health -= other.damage || 35;
                                 entity.invulnerableTimer = 1.0;
                                 this.camera.shake = 10;
@@ -3190,19 +3402,6 @@ export class LoopingInterpreter {
                                 this.addPopup(entity.x, entity.y - 12, `-${other.damage || 35} HP`, '#ef4444');
                                 this.spawnParticleBurst(entity.x + entity.w / 2, entity.y + entity.h / 2, '#ef4444', 20);
                                 entity.vy = -300; // Knockback rebound
-
-                                if (entity.health <= 0) {
-                                    this.lives--;
-                                    if (this.lives > 0) {
-                                        entity.health = entity.maxHealth;
-                                        entity.x = 100;
-                                        entity.y = 280;
-                                        entity.vy = 0;
-                                        this.log(`⚠️ Te quedan ${this.lives} vidas. Reapareciendo...`, 'error');
-                                    } else {
-                                        this.triggerGameOver();
-                                    }
-                                }
                             }
                         }
                     }
@@ -3488,6 +3687,7 @@ export class LoopingInterpreter {
                                 const pts = other.type === 'boss' ? 1000 : 200 * Math.min(4, this.combo);
                                 this.score += pts;
                                 this.camera.shake = other.type === 'boss' ? 18 : 7;
+                                this.hitstopTimer = Math.max(this.hitstopTimer || 0, other.type === 'boss' ? 0.075 : 0.04);
                                 this.addPopup(other.x + other.w / 2, other.y - 14, `+${pts} ${other.type === 'boss' ? 'BOSS SLAIN!' : 'DESTROYED!'}`, '#fbbf24');
                                 this.spawnParticleBurst(other.x + other.w / 2, other.y + other.h / 2, '#ef4444', other.type === 'boss' ? 48 : 24);
                             }
@@ -3508,12 +3708,30 @@ export class LoopingInterpreter {
                             }
                             break;
                         }
+                    } else if (other.type === 'platform' || other.type === 'moving_platform') {
+                        if (pr.x + pr.w >= other.x && pr.x <= other.x + other.w &&
+                            pr.y + pr.h >= other.y && pr.y <= other.y + other.h) {
+                            this.spawnParticleBurst(pr.x, pr.y, pr.color || '#38bdf8', 6);
+                            pr.life = 0;
+                            break;
+                        }
                     }
                 }
             } else {
-                // Enemy/Boss Projectile hitting Player
+                // Enemy/Boss Projectile hitting Solid Platform or Player
+                let hitWall = false;
+                for (let other of this.gameEntities) {
+                    if ((other.type === 'platform' || other.type === 'moving_platform') &&
+                        pr.x + pr.w >= other.x && pr.x <= other.x + other.w &&
+                        pr.y + pr.h >= other.y && pr.y <= other.y + other.h) {
+                        this.spawnParticleBurst(pr.x, pr.y, '#f43f5e', 5);
+                        pr.life = 0;
+                        hitWall = true;
+                        break;
+                    }
+                }
                 const pl = this.getPlayer();
-                if (pl && !this.gameOver && pl.invulnerableTimer <= 0 && !pl.isDashing) {
+                if (!hitWall && pl && !this.gameOver && pl.invulnerableTimer <= 0 && !pl.isDashing) {
                     if (pr.x + pr.w >= pl.x && pr.x <= pl.x + pl.w &&
                         pr.y + pr.h >= pl.y && pr.y <= pl.y + pl.h) {
                         pl.health -= pr.damage || 20;
@@ -4227,10 +4445,24 @@ export class LoopingInterpreter {
             ctx.textAlign = 'left';
         }
 
+        // Pause Overlay
+        if (this.paused && !this.gameOver && !this.gameWon) {
+            ctx.fillStyle = 'rgba(6, 9, 15, 0.72)';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '900 30px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('JUEGO EN PAUSA', w / 2, h / 2 - 14);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 14px Outfit, sans-serif';
+            ctx.fillText('Presiona [P] o [Esc] para continuar', w / 2, h / 2 + 20);
+            ctx.textAlign = 'left';
+        }
+
         // Bottom Watermark & Controls Helper
         ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.font = '900 11px monospace';
-        ctx.fillText("SHINE LOOP CONSOLE • 60 FPS 2D ENGINE • CS QUANTUM", 20, h - 16);
+        ctx.fillText("SHINE LOOP CONSOLE • 60 FPS 2D ENGINE • [P] Pausa • [R] Reiniciar", 20, h - 16);
     }
 
     roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -4502,19 +4734,23 @@ export class LoopingInterpreter {
             }
         }
 
+        const roleTag = String(args.tag || '').toLowerCase();
+        const resolvedType = (kind === 'obj')
+            ? ((roleTag === 'enemy' || roleTag === 'boss' || roleTag === 'player') ? roleTag : (objSpec ? 'obj' : kind))
+            : kind;
         const ent = {
             id: this.entities3D.length + 1,
-            type: (kind === 'obj' && objSpec) ? 'obj' : kind,
+            type: resolvedType,
             meshType: meshType,
             objFile: objSpec,
             csClass: csClass,
-            tag: args.tag || kind,
-            doubleSided: Boolean(args.double_sided || kind === 'ring' || kind === 'portal' || String(objSpec).includes('gate')),
+            tag: args.tag || resolvedType,
+            doubleSided: Boolean(args.double_sided || resolvedType === 'ring' || resolvedType === 'portal' || String(objSpec).includes('gate')),
             scaleVal: scaleVal,
-            name: args.name || args.label || (kind === 'player' ? 'AngelPilot3D' : (kind === 'boss' ? 'OMEGA TITAN 3D' : kind)),
+            name: args.name || args.label || (resolvedType === 'player' ? 'AngelPilot3D' : (resolvedType === 'boss' ? 'OMEGA TITAN 3D' : resolvedType)),
             label: args.label || args.name || '',
-            isPlayer: kind === 'player',
-            isSolid: kind === 'box' || kind === 'moving_platform',
+            isPlayer: resolvedType === 'player',
+            isSolid: resolvedType === 'box' || resolvedType === 'moving_platform',
             x: px, y: py, z: pz,
             spawnX: px, spawnY: py, spawnZ: pz,
             vx: 0, vy: 0, vz: 0,
@@ -4525,14 +4761,15 @@ export class LoopingInterpreter {
             roll: (rot[2] || 0) * Math.PI / 180,
             color: color,
             rgb: this.parseHexRGB(color),
-            speed: args.speed !== undefined ? Number(args.speed) : (kind === 'player' ? 25 : (kind === 'boss' ? 11 : 8.5)),
+            speed: args.speed !== undefined ? Number(args.speed) : (resolvedType === 'player' ? 25 : (resolvedType === 'boss' ? 11 : 8.5)),
             jumpForce: args.jump !== undefined ? Number(args.jump) : 17.0,
             power: args.power !== undefined ? Number(args.power) : 25.0,
-            points: args.points !== undefined ? Number(args.points) : (kind === 'ring' ? 150 : 200),
+            points: args.points !== undefined ? Number(args.points) : (resolvedType === 'ring' ? 150 : 200),
             heal: args.heal !== undefined ? Number(args.heal) : 35,
             damage: args.damage !== undefined ? Number(args.damage) : 30,
-            health: args.health !== undefined ? Number(args.health) : (kind === 'player' ? 100 : (kind === 'boss' ? 450 : 50)),
-            maxHealth: args.health !== undefined ? Number(args.health) : (kind === 'player' ? 100 : (kind === 'boss' ? 450 : 50)),
+            health: args.health !== undefined ? Number(args.health) : (resolvedType === 'player' ? 100 : (resolvedType === 'boss' ? 450 : 50)),
+            maxHealth: args.health !== undefined ? Number(args.health) : (resolvedType === 'player' ? 100 : (resolvedType === 'boss' ? 450 : 50)),
+            hitFlash: 0,
             axis: axis,
             minPos: Math.min(minPos, maxPos),
             maxPos: Math.max(minPos, maxPos),
@@ -4593,21 +4830,14 @@ export class LoopingInterpreter {
         const color = opts.color || '#38bdf8';
         const hp = opts.health !== undefined ? Number(opts.health) : 100;
         const cs = opts.cs ? `, cs: "${opts.cs}"` : '';
-        const tag = opts.type ? `, tag: "${opts.type}"` : '';
+        const roleType = (opts.type === 'enemy' || opts.type === 'boss' || opts.type === 'player') ? opts.type : 'obj';
+        const tag = opts.tag || opts.type || roleType;
+        const rangePart = (opts.range && Array.isArray(opts.range)) ? `, range: (${opts.range[0]}, ${opts.range[1]})` : '';
+        const speedPart = opts.speed !== undefined ? `, speed: ${opts.speed}` : '';
         this.parseSpawn3DDirective(
-            `spawn3d.obj("${name}", obj: "${objSpec}", at: (${at[0] || 0}, ${at[1] ?? 2}, ${at[2] || 0}), scale: ${scale}, color: "${color}", health: ${hp}${tag}${cs})`
+            `spawn3d.${roleType}("${name}", obj: "${objSpec}", at: (${at[0] || 0}, ${at[1] ?? 2}, ${at[2] || 0}), scale: ${scale}, color: "${color}", health: ${hp}, tag: "${tag}"${rangePart}${speedPart}${cs})`
         );
         return this.entities3D.length;
-    }
-
-    spawnObjEntity3D(opts = {}) {
-        const at = opts.at || [0, 2, 0];
-        const parts = [`"${opts.name || 'ObjEntity'}"`, `obj: "${opts.obj || 'starfighter'}"`, `at: (${at[0] || 0}, ${at[1] || 2}, ${at[2] || 0})`];
-        if (opts.scale !== undefined) parts.push(`scale: ${opts.scale}`);
-        if (opts.color) parts.push(`color: "${opts.color}"`);
-        if (opts.cs) parts.push(`cs: "${opts.cs}"`);
-        if (opts.health !== undefined) parts.push(`health: ${opts.health}`);
-        this.parseSpawn3DDirective(`spawn3d.obj(${parts.join(', ')})`);
     }
 
     evaluate3DBuiltin(expr) {
@@ -4671,7 +4901,18 @@ export class LoopingInterpreter {
                 const a = toV3(parts[0]), ra = Number(parts[1] || 1), b = toV3(parts[2]), rb = Number(parts[3] || 1);
                 return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) <= (ra + rb);
             }
-            if (fn === 'physics3d.raycast_scene') {
+            if (fn === 'game.shake') {
+                const amt = Number(parts[0] ?? 0.5);
+                this.camera.shake = Math.max(this.camera.shake || 0, amt * 12);
+                this.camera3D.shake = Math.min(1.5, Math.max(this.camera3D.shake || 0, amt));
+                return amt;
+            }
+            if (fn === 'game.approach' || fn === 'game.move_toward') {
+                const cur = Number(parts[0] || 0), tgt = Number(parts[1] || 0), maxD = Math.abs(Number(parts[2] ?? 1));
+                const diff = tgt - cur;
+                return Math.abs(diff) <= maxD ? tgt : cur + Math.sign(diff) * maxD;
+            }
+            if (fn === 'physics3d.raycast_scene' || fn === 'scene3d.raycast') {
                 const orig = toV3(parts[0]), dir = toV3(parts[1]);
                 const dl = Math.hypot(dir[0], dir[1], dir[2]) || 1;
                 const dx = dir[0] / dl, dy = dir[1] / dl, dz = dir[2] / dl;
@@ -4690,11 +4931,93 @@ export class LoopingInterpreter {
                 }
                 return { hit: bestD < Infinity, distance: bestD < Infinity ? Number(bestD.toFixed(2)) : -1, entity: bestName };
             }
+            if (fn === 'physics3d.resolve_collisions' || fn === 'scene3d.resolve_collisions') {
+                const ent = this.entities3D.find(e => e.name === String(parts[0] || ''));
+                if (!ent) return 0;
+                let fixes = 0;
+                const ehx = ent.sx * 0.5, ehy = ent.sy * 0.5, ehz = ent.sz * 0.5;
+                for (const box of this.entities3D) {
+                    if (box === ent || !box.isSolid || !box.isAlive) continue;
+                    const bhx = box.sx * 0.5, bhy = box.sy * 0.5, bhz = box.sz * 0.5;
+                    const dx = ent.x - box.x, dy = ent.y - box.y, dz = ent.z - box.z;
+                    const ox = (ehx + bhx) - Math.abs(dx);
+                    const oy = (ehy + bhy) - Math.abs(dy);
+                    const oz = (ehz + bhz) - Math.abs(dz);
+                    if (ox > 0 && oy > 0 && oz > 0) {
+                        if (ox <= oy && ox <= oz) ent.x += dx >= 0 ? ox : -ox;
+                        else if (oy <= ox && oy <= oz) ent.y += dy >= 0 ? oy : -oy;
+                        else ent.z += dz >= 0 ? oz : -oz;
+                        fixes++;
+                    }
+                }
+                return fixes;
+            }
+            if (fn === 'scene3d.find') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || '') || x.label === String(parts[0] || ''));
+                return e ? e.name : '';
+            }
+            if (fn === 'scene3d.get') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                return e ? { name: e.name, kind: e.type, x: e.x, y: e.y, z: e.z, health: e.health, active: e.isAlive, color: e.color } : {};
+            }
+            if (fn === 'scene3d.set_pos') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return false;
+                e.x = Number(parts[1] ?? e.x); e.y = Number(parts[2] ?? e.y); e.z = Number(parts[3] ?? e.z);
+                return [e.x, e.y, e.z];
+            }
+            if (fn === 'scene3d.move') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return [0, 0, 0];
+                e.x += Number(parts[1] || 0); e.y += Number(parts[2] || 0); e.z += Number(parts[3] || 0);
+                return [e.x, e.y, e.z];
+            }
+            if (fn === 'scene3d.rotate') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return [0, 0, 0];
+                e.pitch += Number(parts[1] || 0) * Math.PI / 180;
+                e.yaw += Number(parts[2] || 0) * Math.PI / 180;
+                e.roll += Number(parts[3] || 0) * Math.PI / 180;
+                return [e.pitch, e.yaw, e.roll];
+            }
+            if (fn === 'scene3d.damage') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return 0;
+                e.health = Math.max(0, e.health - Number(parts[1] ?? 10));
+                e.hitFlash = 1.0;
+                if (e.health <= 0) e.isAlive = false;
+                return e.health;
+            }
+            if (fn === 'scene3d.heal') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return 0;
+                e.health = Math.min(e.maxHealth || 100, e.health + Number(parts[1] ?? 10));
+                if (e.health > 0) e.isAlive = true;
+                return e.health;
+            }
+            if (fn === 'scene3d.set_color') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return false;
+                e.color = String(parts[1] || '#38bdf8');
+                e.rgb = this.parseHexRGB(e.color);
+                return true;
+            }
+            if (fn === 'scene3d.set_active') {
+                const e = this.entities3D.find(x => x.name === String(parts[0] || ''));
+                if (!e) return false;
+                e.isAlive = Boolean(parts[1] ?? true);
+                return e.isAlive;
+            }
+            if (fn === 'scene3d.alive_count') {
+                const kindFilter = String(parts[0] || '');
+                return this.entities3D.filter(e => e.isAlive && !e.collected && (!kindFilter || e.type === kindFilter)).length;
+            }
             if (fn === 'scene3d.stats') {
                 return {
                     active: this.is3DMode,
                     world: this.scene3D.name,
                     entities: this.entities3D.length,
+                    alive_entities: this.entities3D.filter(e => e.isAlive && !e.collected).length,
                     substeps: this.physics3D.substeps,
                     effective_hz: 60 * this.physics3D.substeps
                 };
@@ -4792,8 +5115,23 @@ export class LoopingInterpreter {
                 this.log(`⚡ [loopize++ v1.0.0] Game Additions Engine Ready -> ${parts[0] || ''}`, 'success');
                 return true;
             }
+            if (fn === 'loopize.init' || fn === 'lz.init') {
+                return this.loopize.init(String(parts[0] || 'LoopizeGame'));
+            }
             if (fn === 'loopize.ecs_spawn' || fn === 'lz.ecs_spawn' || fn === 'ecs.spawn' || fn === 'lz_spawn_obj') {
                 return this.loopize.ecsSpawn(String(parts[0] || 'Entity'), String(parts[1] || 'entity'), parts[2] || [0, 2, 0], Number(parts[3] ?? 100), String(parts[4] || ''), String(parts[5] || ''));
+            }
+            if (fn === 'loopize.ecs_query_tag' || fn === 'lz.ecs_query_tag') {
+                return this.loopize.ecsQueryTag(String(parts[0] || ''));
+            }
+            if (fn === 'loopize.ecs_set' || fn === 'lz.ecs_set') {
+                return this.loopize.ecsSet(parts[0], String(parts[1] || ''), parts[2]);
+            }
+            if (fn === 'loopize.ecs_get' || fn === 'lz.ecs_get') {
+                return this.loopize.ecsGet(parts[0], String(parts[1] || ''));
+            }
+            if (fn === 'loopize.ecs_destroy' || fn === 'lz.ecs_destroy') {
+                return this.loopize.ecsDestroy(parts[0]);
             }
             if (fn === 'loopize.spatial_radius' || fn === 'lz.spatial_radius') {
                 return this.loopize.spatialRadius(toV3(parts[0]), Number(parts[1] || 5), String(parts[2] || ''));
@@ -4805,8 +5143,17 @@ export class LoopingInterpreter {
             if (fn === 'loopize.wave_define' || fn === 'lz.wave_define') {
                 return this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[1] || 4), Number(parts[2] || 80), String(parts[3] || 'valkyrie'), String(parts[4] || 'valkyrie_drone.obj'));
             }
+            if (fn === 'loopize.wave_add' || fn === 'lz.wave_add') {
+                return this.loopize.waveAdd(Number(parts[0] || 1), String(parts[1] || 'valkyrie'), Number(parts[2] || 4), Number(parts[3] || 80), String(parts[4] || 'valkyrie_drone.obj'));
+            }
             if (fn === 'loopize.wave_spawn' || fn === 'lz.wave_spawn') {
                 return this.loopize.waveSpawn(Number(parts[0] || 1));
+            }
+            if (fn === 'loopize.wave_next' || fn === 'lz.wave_next') {
+                return this.loopize.waveNext();
+            }
+            if (fn === 'loopize.wave_status' || fn === 'lz.wave_status') {
+                return this.loopize.waveStatus(Number(parts[0] || 0));
             }
             if (fn === 'loopize.fsm_set' || fn === 'lz.fsm_set' || fn === 'lz_fsm') {
                 this.loopize.fsm[String(parts[0] || 'hero')] = String(parts[1] || 'idle');
@@ -4819,14 +5166,26 @@ export class LoopingInterpreter {
                 if (parts[1] !== undefined) this.loopize.shake(Number(parts[1]));
                 return this.loopize.comboHit(Number(parts[0] || 100));
             }
+            if (fn === 'loopize.combo_mult' || fn === 'lz.combo_mult') {
+                return this.loopize.combo.multiplier;
+            }
             if (fn === 'loopize.ease' || fn === 'lz.ease' || fn === 'lz_ease') {
                 return this.loopize.ease(String(parts[0] || 'out_cubic'), Number(parts[1] || 0));
+            }
+            if (fn === 'loopize.tween' || fn === 'lz.tween' || fn === 'lz_tween') {
+                return this.loopize.tween(String(parts[0] || 'tw'), String(parts[1] || 'out_cubic'), Number(parts[2] || 0), Number(parts[3] ?? 1), Number(parts[4] ?? 1), Boolean(parts[5]), Boolean(parts[6]));
+            }
+            if (fn === 'loopize.tween_value' || fn === 'lz.tween_value') {
+                return this.loopize.tweenValue(String(parts[0] || 'tw'));
             }
             if (fn === 'loopize.shake' || fn === 'lz.shake' || fn === 'loopize.camera_shake') {
                 return this.loopize.shake(Number(parts[0] || 0.4));
             }
             if (fn === 'loopize.camera_update' || fn === 'lz.camera_update') {
                 this.loopize.tick(Number(parts[1] || 0.016));
+                return [this.camera3D.x, this.camera3D.y, this.camera3D.z];
+            }
+            if (fn === 'loopize.camera_pos' || fn === 'lz.camera_pos') {
                 return [this.camera3D.x, this.camera3D.y, this.camera3D.z];
             }
             if (fn === 'loopize.inventory_add' || fn === 'lz.inventory_add') {
@@ -4839,15 +5198,23 @@ export class LoopingInterpreter {
                 if ((this.loopize.inventory[k] || 0) >= amt) { this.loopize.inventory[k] -= amt; return true; }
                 return false;
             }
+            if (fn === 'loopize.inventory_has' || fn === 'lz.inventory_has') {
+                const k = String(parts[0] || 'item'), amt = Number(parts[1] ?? 1);
+                return (this.loopize.inventory[k] || 0) >= amt;
+            }
             if (fn === 'loopize.quest_add' || fn === 'lz.quest_add' || fn === 'lz_mission') {
                 return this.loopize.questAdd(String(parts[0] || 'q1'), String(parts[1] || 'Quest'), Number(parts[2] || 1), Number(parts[3] || 500));
             }
             if (fn === 'loopize.quest_progress' || fn === 'lz.quest_progress') {
                 return this.loopize.questProgress(String(parts[0] || 'q1'), Number(parts[1] || 1));
             }
+            if (fn === 'loopize.step' || fn === 'lz.step' || fn === 'lz_step') {
+                this.loopize.tick(Number(parts[0] ?? 1 / 60));
+                return true;
+            }
             if (fn === 'loopize.stats' || fn === 'lz.stats' || fn === 'lz_report') {
                 const st = this.loopize.stats();
-                this.log(`📊 [loopize++] ECS=${st.ecs_count} | Waves=${st.waves_total} | Combo x${st.combo_mult} | Lvl ${st.level} (${st.xp} XP)`, 'info');
+                this.log(`📊 [loopize++] ECS=${st.ecs_count} | Waves=${st.waves_total} | AliveEnemies=${st.alive_enemies} | Combo x${st.combo_mult} | Lvl ${st.level} (${st.xp} XP)`, 'info');
                 return st;
             }
         } catch (e) {}
@@ -5171,6 +5538,7 @@ export class LoopingInterpreter {
             // 1. Step Moving Platforms & Rotating Collectibles/Portals
             for (const ent of this.entities3D) {
                 ent.vxPlatform = 0; ent.vyPlatform = 0; ent.vzPlatform = 0;
+                if (ent.hitFlash > 0) ent.hitFlash = Math.max(0, ent.hitFlash - 4.5 * sdt);
                 if (ent.type === 'moving_platform') {
                     const delta = ent.dir * ent.speed * sdt;
                     if (ent.axis === 'y') {
@@ -5447,16 +5815,27 @@ export class LoopingInterpreter {
                                 if (isAbove || ent.isDashing) {
                                     const dmg = ent.isDashing ? 75 : (other.type === 'boss' ? 95 : other.health);
                                     other.health -= dmg;
+                                    other.hitFlash = 1.0;
                                     ent.vy = 14.5;
                                     ent.doubleJumpAvailable = true;
                                     this.combo = (this.combo || 0) + 1;
                                     this.comboTimer = 4.0;
+                                    if (this.loopize) {
+                                        this.loopize.combo.hits = this.combo;
+                                        this.loopize.combo.timer = this.loopize.combo.window;
+                                        this.loopize.combo.maxCombo = Math.max(this.loopize.combo.maxCombo, this.combo);
+                                    }
                                     this.playSfx('stomp');
                                     if (other.health <= 0) {
                                         other.isAlive = false;
+                                        if (this.loopize) {
+                                            const ecsMatch = this.loopize.ecs.find(x => x.name === other.name);
+                                            if (ecsMatch) { ecsMatch.alive = false; ecsMatch.hp = 0; }
+                                        }
                                         const pts = other.type === 'boss' ? 1200 : 300;
                                         this.score += pts;
                                         this.camera3D.shake = other.type === 'boss' ? 0.85 : 0.4;
+                                        this.hitstopTimer = Math.max(this.hitstopTimer || 0, other.type === 'boss' ? 0.075 : 0.035);
                                         this.spawnParticleBurst3D(other.x, other.y, other.z, '#ef4444', other.type === 'boss' ? 42 : 24, 15);
                                         this.addPopup3D(other.x, other.y + 2, other.z, `+${pts} DESTROYED!`, '#38bdf8');
                                     } else {
@@ -5566,17 +5945,28 @@ export class LoopingInterpreter {
                         const d = Math.hypot(pr.x - other.x, pr.y - other.y, pr.z - other.z);
                         if (d < pr.radius + other.radius + 0.45) {
                             other.health -= pr.damage;
+                            other.hitFlash = 1.0;
                             pr.life = 0;
                             this.combo = (this.combo || 0) + 1;
                             this.comboTimer = 4.0;
+                            if (this.loopize) {
+                                this.loopize.combo.hits = this.combo;
+                                this.loopize.combo.timer = this.loopize.combo.window;
+                                this.loopize.combo.maxCombo = Math.max(this.loopize.combo.maxCombo, this.combo);
+                            }
                             this.playSfx('stomp');
                             this.spawnParticleBurst3D(pr.x, pr.y, pr.z, '#38bdf8', 12, 10);
                             this.addPopup3D(other.x, other.y + 1.8, other.z, `-${pr.damage}`, '#38bdf8');
                             if (other.health <= 0) {
                                 other.isAlive = false;
+                                if (this.loopize) {
+                                    const ecsMatch = this.loopize.ecs.find(x => x.name === other.name);
+                                    if (ecsMatch) { ecsMatch.alive = false; ecsMatch.hp = 0; }
+                                }
                                 const pts = other.type === 'boss' ? 1200 : 250;
                                 this.score += pts;
                                 this.camera3D.shake = other.type === 'boss' ? 0.85 : 0.35;
+                                this.hitstopTimer = Math.max(this.hitstopTimer || 0, other.type === 'boss' ? 0.075 : 0.035);
                                 this.spawnParticleBurst3D(other.x, other.y, other.z, '#ef4444', other.type === 'boss' ? 44 : 24, 15);
                                 this.addPopup3D(other.x, other.y + 2.4, other.z, `+${pts} SLAIN!`, '#fbbf24');
                             }
@@ -5849,6 +6239,14 @@ export class LoopingInterpreter {
                 ? ent.y + Math.sin(this.lastTime * 0.0045 + ent.floatSeed) * 0.35
                 : ent.y;
 
+            // Camera Near/Far + Lateral Frustum Culling before transforming vertices
+            const centerView = worldToView(ent.x, floatY, ent.z);
+            const boundR = Math.max(ent.sx, ent.sy, ent.sz) * 0.9 + 1.5;
+            const farLimit = this.camera3D.far || 280;
+            if (centerView[2] + boundR < nearZ || centerView[2] - boundR > farLimit) continue;
+            const maxHoriz = (cxScreen / Math.max(1, focal)) * Math.max(1, centerView[2]) + boundR * 1.4;
+            if (Math.abs(centerView[0]) > maxHoriz) continue;
+
             // Project 3D Drop Shadow onto platform directly beneath dynamic entities
             if (!ent.isSolid && ent.type !== 'portal' && ent.type !== 'ring') {
                 const surfY = findShadowSurfaceY(ent.x, floatY, ent.z);
@@ -5974,6 +6372,13 @@ export class LoopingInterpreter {
                 let g = Math.min(255, baseCol.g * lightFactor * bias * emissiveBoost + addG);
                 let b = Math.min(255, baseCol.b * lightFactor * bias * emissiveBoost + addB);
 
+                if ((ent.hitFlash || 0) > 0.01) {
+                    const hf = Math.min(1, ent.hitFlash);
+                    r += (255 - r) * hf;
+                    g += (255 - g) * hf;
+                    b += (255 - b) * hf;
+                }
+
                 // Exponential Atmospheric Fog
                 const fogAmt = Math.min(0.86, 1 - Math.exp(-fogDensity * dist3D));
                 r = Math.round(r * (1 - fogAmt) + fogR * fogAmt);
@@ -5994,7 +6399,7 @@ export class LoopingInterpreter {
                 });
             }
 
-            // Floating 3D World Labels for Portals, Checkpoints & Bosses
+            // Floating 3D World Labels & Damaged Enemy HP Bars
             if (ent.type === 'portal' || ent.type === 'checkpoint' || ent.type === 'boss') {
                 const lv = worldToView(ent.x, floatY + ent.sy * 0.65 + 1.1, ent.z);
                 if (lv[2] > nearZ + 0.5 && lv[2] < 130) {
@@ -6006,6 +6411,20 @@ export class LoopingInterpreter {
                         sy: lp[1],
                         text: ent.type === 'checkpoint' && ent.activated ? '✔ SAVED' : (ent.label || ent.name),
                         color: ent.type === 'portal' ? '#e879f9' : (ent.type === 'boss' ? '#fbbf24' : ent.color)
+                    });
+                }
+            }
+            if ((ent.type === 'enemy' || ent.type === 'boss') && ent.health < ent.maxHealth && ent.maxHealth > 0) {
+                const hv = worldToView(ent.x, floatY + ent.sy * 0.65 + 0.55, ent.z);
+                if (hv[2] > nearZ + 0.5 && hv[2] < 110) {
+                    const hpPt = projectView(hv[0], hv[1], hv[2]);
+                    drawQueue.push({
+                        kind: 'hpbar',
+                        sortDepth: hv[2] - 0.55,
+                        sx: hpPt[0],
+                        sy: hpPt[1],
+                        bw: ent.type === 'boss' ? 76 : 44,
+                        ratio: Math.max(0, Math.min(1, ent.health / ent.maxHealth))
                     });
                 }
             }
@@ -6086,6 +6505,12 @@ export class LoopingInterpreter {
                 ctx.arc(item.sx, item.sy, item.r, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.globalAlpha = 1.0;
+            } else if (item.kind === 'hpbar') {
+                const bw = item.bw || 44;
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+                ctx.fillRect(item.sx - bw * 0.5 - 1, item.sy - 3, bw + 2, 6);
+                ctx.fillStyle = item.ratio > 0.5 ? '#10b981' : (item.ratio > 0.25 ? '#f59e0b' : '#ef4444');
+                ctx.fillRect(item.sx - bw * 0.5, item.sy - 2, bw * item.ratio, 4);
             } else if (item.kind === 'label') {
                 ctx.font = 'bold 11px Outfit, monospace, sans-serif';
                 ctx.textAlign = 'center';
@@ -6355,10 +6780,24 @@ export class LoopingInterpreter {
             ctx.textAlign = 'left';
         }
 
+        // Pause Overlay 3D
+        if (this.paused && !this.gameOver && !this.gameWon) {
+            ctx.fillStyle = 'rgba(4, 7, 18, 0.72)';
+            ctx.fillRect(0, 0, w, h);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '900 30px Outfit, sans-serif';
+            ctx.fillText('MUNDO 3D EN PAUSA', w * 0.5, h * 0.5 - 16);
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 14px Outfit, sans-serif';
+            ctx.fillText('Presiona [P] o [Esc] para continuar', w * 0.5, h * 0.5 + 18);
+            ctx.textAlign = 'left';
+        }
+
         // Bottom Telemetry Watermark
         const effHz = 60 * (this.physics3D.substeps || 4);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.48)';
         ctx.font = '900 10.5px monospace';
-        ctx.fillText(`SHINE LOOP 3D QUANTUM • ${this.fps} FPS / ${effHz}Hz PHYSICS • WASD Mover | SPACE Saltar | SHIFT Dash | Z Plasma | Q/E/Mouse Órbita`, 18, h - 14);
+        ctx.fillText(`SHINE LOOP 3D QUANTUM • ${this.fps} FPS / ${effHz}Hz PHYSICS • WASD Mover | SPACE Saltar | SHIFT Dash | Z Plasma | [P] Pausa | Q/E Órbita`, 18, h - 14);
     }
 }

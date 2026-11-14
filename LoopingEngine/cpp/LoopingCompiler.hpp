@@ -1542,7 +1542,11 @@ public:
                   << "\", x: " << e.pos.x << ", y: " << e.pos.y << ", z: " << e.pos.z
                   << ", sx: " << e.size.x << ", sy: " << e.size.y << ", sz: " << e.size.z
                   << ", scx: " << e.scale.x << ", scy: " << e.scale.y << ", scz: " << e.scale.z
-                  << ", r: " << e.radius << ", color: \"" << escape_js(e.color) << "\", rot: " << e.rot_deg.y;
+                  << ", r: " << e.radius << ", hp: " << e.health << ", maxHp: " << std::max(1.0, e.health)
+                  << ", spd: " << e.speed << ", minp: " << e.min_pos << ", maxp: " << e.max_pos
+                  << ", axis: \"" << escape_js(e.axis) << "\", pts: " << e.points
+                  << ", color: \"" << escape_js(e.color) << "\", rot: " << e.rot_deg.y
+                  << ", alive: true, vy: 0, dir: 1, flash: 0";
                 if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 450) {
                     h << ", verts: [";
                     for (size_t vi = 0; vi < e.custom_mesh.vertices.size(); ++vi) {
@@ -1569,17 +1573,81 @@ public:
             h << "    (function init3DViewport(){\n";
             h << "      const c = document.getElementById('canvas3d'); if (!c) return;\n";
             h << "      const ctx = c.getContext('2d');\n";
-            h << "      let yaw = 0.25, pitch = 0.34, dist = 28, drag = false, lx = 0, ly = 0;\n";
+            h << "      let yaw = 0.22, pitch = 0.32, dist = 24, drag = false, lx = 0, ly = 0, score3D = 0;\n";
+            h << "      const keys = new Set(), bolts = [];\n";
             h << "      c.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });\n";
             h << "      window.addEventListener('mouseup', () => { drag = false; });\n";
             h << "      window.addEventListener('mousemove', e => { if (!drag) return; yaw += (e.clientX - lx) * 0.008; pitch = Math.max(-0.2, Math.min(1.3, pitch + (e.clientY - ly) * 0.006)); lx = e.clientX; ly = e.clientY; });\n";
             h << "      c.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(8, Math.min(90, dist + e.deltaY * 0.03)); }, { passive: false });\n";
+            h << "      function fireBolt() {\n";
+            h << "        const pl = entities3D.find(e => e.type === 'player'); if (!pl) return;\n";
+            h << "        const dx = Math.sin(yaw), dz = Math.cos(yaw);\n";
+            h << "        bolts.push({ x: pl.x + dx * 1.4, y: pl.y + 0.5, z: pl.z + dz * 1.4, vx: dx * 48, vz: dz * 48, life: 2.0 });\n";
+            h << "        playTone(1120, 45);\n";
+            h << "      }\n";
+            h << "      window.addEventListener('keydown', e => {\n";
+            h << "        const k = e.key.toLowerCase();\n";
+            h << "        if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();\n";
+            h << "        if (!keys.has(k) && (k === 'z' || k === 'f')) fireBolt();\n";
+            h << "        keys.add(k);\n";
+            h << "      });\n";
+            h << "      window.addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); });\n";
             h << "      function hexRgb(hex) { const m = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex || '#38bdf8'); return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [56,189,248]; }\n";
             h << "      function cubeVerts(sx, sy, sz) { const hx=sx*0.5, hy=sy*0.5, hz=sz*0.5; return [[-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],[-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]]; }\n";
             h << "      const cubeFaces = [[0,1,2,3],[5,4,7,6],[4,0,3,7],[1,5,6,2],[3,2,6,7],[4,5,1,0]];\n";
+            h << "      function octaVerts(r) { return [[0,r*1.35,0],[0,-r*1.35,0],[-r,0,0],[r,0,0],[0,0,-r],[0,0,r]]; }\n";
+            h << "      const octaFaces = [[0,5,3],[0,3,4],[0,4,2],[0,2,5],[1,3,5],[1,4,3],[1,2,4],[1,5,2]];\n";
+            h << "      function pyrVerts(sx, sy, sz) { const hx=sx*0.5, hy=sy*0.5, hz=sz*0.5; return [[-hx,-hy,-hz],[hx,-hy,-hz],[hx,-hy,hz],[-hx,-hy,hz],[0,hy,0]]; }\n";
+            h << "      const pyrFaces = [[0,1,2,3],[0,4,1],[1,4,2],[2,4,3],[3,4,0]];\n";
+            h << "      function shipVerts() { return [[0,0.2,1.8],[-0.6,0.35,0.2],[0.6,0.35,0.2],[-1.7,-0.15,-1.1],[1.7,-0.15,-1.1],[0,-0.25,-1.5]]; }\n";
+            h << "      const shipFaces = [[0,1,3],[0,2,1],[0,4,2],[1,2,5],[1,5,3],[2,4,5],[0,3,5],[0,5,4]];\n";
+            h << "      let lastT = performance.now();\n";
             h << "      function render3DFrame(t) {\n";
+            h << "        const dt = Math.min(0.05, Math.max(0.001, (t - lastT) * 0.001)); lastT = t;\n";
             h << "        const w = c.width, h = c.height; ctx.clearRect(0,0,w,h);\n";
             h << "        const target = entities3D.find(e => e.type === 'player') || { x:0, y:2, z:12 };\n";
+            h << "        if (target && target.type === 'player') {\n";
+            h << "          let mx = 0, mz = 0;\n";
+            h << "          if (keys.has('w') || keys.has('arrowup')) mz += 1;\n";
+            h << "          if (keys.has('s') || keys.has('arrowdown')) mz -= 1;\n";
+            h << "          if (keys.has('a') || keys.has('arrowleft')) mx -= 1;\n";
+            h << "          if (keys.has('d') || keys.has('arrowright')) mx += 1;\n";
+            h << "          const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx;\n";
+            h << "          const spd = target.spd || 18;\n";
+            h << "          target.x += (fx * mz + rx * mx) * spd * dt; target.z += (fz * mz + rz * mx) * spd * dt;\n";
+            h << "          if (keys.has(' ') && target.y <= 2.05) { target.vy = 13.5; playTone(620, 65); }\n";
+            h << "          target.vy = (target.vy || 0) - 26.0 * dt; target.y += target.vy * dt;\n";
+            h << "          if (target.y < 2.0) { target.y = 2.0; target.vy = 0; }\n";
+            h << "          if (mx || mz) target.rot = Math.atan2(fx * mz + rx * mx, fz * mz + rz * mx) * 180 / Math.PI;\n";
+            h << "        }\n";
+            h << "        for (const e of entities3D) {\n";
+            h << "          if (!e.alive) continue;\n";
+            h << "          if (e.flash > 0) e.flash = Math.max(0, e.flash - dt * 5);\n";
+            h << "          if (e.type === 'enemy' || e.type === 'boss' || e.type === 'moving_platform') {\n";
+            h << "            const ax = e.axis || 'x';\n";
+            h << "            e[ax] += e.dir * (e.spd || 6) * dt;\n";
+            h << "            if (e[ax] >= e.maxp) { e[ax] = e.maxp; e.dir = -1; }\n";
+            h << "            if (e[ax] <= e.minp) { e[ax] = e.minp; e.dir = 1; }\n";
+            h << "          } else if (e.type === 'crystal' || e.type === 'ring' || e.type === 'portal') {\n";
+            h << "            e.rot += 90 * dt;\n";
+            h << "            if (target && Math.hypot(target.x - e.x, target.y - e.y, target.z - e.z) < (e.r || 2) + 1.8) {\n";
+            h << "              if (e.type !== 'portal') { e.alive = false; score3D += (e.pts || 150); playTone(980, 90); }\n";
+            h << "            }\n";
+            h << "          }\n";
+            h << "        }\n";
+            h << "        for (let bi = bolts.length - 1; bi >= 0; bi--) {\n";
+            h << "          const b = bolts[bi]; b.x += b.vx * dt; b.z += b.vz * dt; b.life -= dt;\n";
+            h << "          let hit = false;\n";
+            h << "          for (const e of entities3D) {\n";
+            h << "            if (!e.alive || (e.type !== 'enemy' && e.type !== 'boss')) continue;\n";
+            h << "            if (Math.hypot(b.x - e.x, b.y - e.y, b.z - e.z) < (e.r || 2.0) + 0.8) {\n";
+            h << "              e.hp -= 25; e.flash = 1.0; hit = true; playTone(260, 80);\n";
+            h << "              if (e.hp <= 0) { e.alive = false; score3D += (e.pts || 250); playTone(880, 120); }\n";
+            h << "              break;\n";
+            h << "            }\n";
+            h << "          }\n";
+            h << "          if (hit || b.life <= 0) bolts.splice(bi, 1);\n";
+            h << "        }\n";
             h << "        const ex = target.x - Math.sin(yaw) * Math.cos(pitch) * dist;\n";
             h << "        const ey = target.y + Math.sin(pitch) * dist + 2;\n";
             h << "        const ez = target.z - Math.cos(yaw) * Math.cos(pitch) * dist;\n";
@@ -1602,10 +1670,14 @@ public:
             h << "        ctx.stroke();\n";
             h << "        const q = [];\n";
             h << "        for (const e of entities3D) {\n";
-            h << "          const vs = e.verts || cubeVerts(e.sx||1.6, e.sy||1.6, e.sz||1.6);\n";
-            h << "          const fs = e.faces || cubeFaces;\n";
+            h << "          if (!e.alive) continue;\n";
+            h << "          const isOct = !e.verts && (e.type === 'crystal' || e.type === 'ring' || e.type === 'portal' || e.type === 'sphere');\n";
+            h << "          const isPyr = !e.verts && e.type === 'pyramid';\n";
+            h << "          const isShip = !e.verts && e.type === 'player';\n";
+            h << "          const vs = e.verts || (isShip ? shipVerts() : (isOct ? octaVerts(e.r || 1.4) : (isPyr ? pyrVerts(e.sx||2, e.sy||2, e.sz||2) : cubeVerts(e.sx||1.6, e.sy||1.6, e.sz||1.6))));\n";
+            h << "          const fs = e.faces || (isShip ? shipFaces : (isOct ? octaFaces : (isPyr ? pyrFaces : cubeFaces)));\n";
             h << "          const ang = (e.rot * Math.PI / 180) + (e.obj ? t*0.0005 : 0);\n";
-            h << "          const ca = Math.cos(ang), sa = Math.sin(ang), rgb = hexRgb(e.color);\n";
+            h << "          const ca = Math.cos(ang), sa = Math.sin(ang), rgb = hexRgb(e.flash > 0 ? '#ffffff' : e.color);\n";
             h << "          const scx = e.scx || 1, scy = e.scy || 1, scz = e.scz || 1;\n";
             h << "          const wvs = vs.map(v => { const lx = v[0]*scx, ly = v[1]*scy, lz = v[2]*scz; return [e.x + lx*ca + lz*sa, e.y + ly, e.z - lx*sa + lz*ca]; });\n";
             h << "          const pvs = wvs.map(wv => proj(wv[0], wv[1], wv[2]));\n";
@@ -1617,7 +1689,7 @@ public:
             h << "            const bx = w2[0]-w0[0], by = w2[1]-w0[1], bz = w2[2]-w0[2];\n";
             h << "            let nx = ay*bz - az*by, ny = az*bx - ax*bz, nz = ax*by - ay*bx;\n";
             h << "            const nl = Math.hypot(nx,ny,nz)||1; nx/=nl; ny/=nl; nz/=nl;\n";
-            h << "            const lit = 0.42 + Math.max(0, nx*0.35 + ny*0.82 - nz*0.45) * 0.58;\n";
+            h << "            const lit = 0.42 + Math.abs(nx*0.35 + ny*0.82 - nz*0.45) * 0.58;\n";
             h << "            const dz = pts.reduce((s,p)=>s+p[2],0)/pts.length;\n";
             h << "            q.push({ dz, pts, fill: `rgb(${(rgb[0]*lit)|0},${(rgb[1]*lit)|0},${(rgb[2]*lit)|0})` });\n";
             h << "          }\n";
@@ -1629,6 +1701,13 @@ public:
             h << "          ctx.closePath(); ctx.fillStyle = poly.fill; ctx.fill();\n";
             h << "          ctx.strokeStyle = 'rgba(226,232,240,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();\n";
             h << "        }\n";
+            h << "        for (const b of bolts) {\n";
+            h << "          const bp = proj(b.x, b.y, b.z); if (!bp) continue;\n";
+            h << "          ctx.fillStyle = '#00f5d4'; ctx.beginPath(); ctx.arc(bp[0], bp[1], Math.max(2.5, 42/bp[2]), 0, Math.PI*2); ctx.fill();\n";
+            h << "        }\n";
+            h << "        ctx.fillStyle = 'rgba(15,23,42,0.75)'; ctx.fillRect(10, 10, 290, 26);\n";
+            h << "        ctx.fillStyle = '#00f5d4'; ctx.font = 'bold 12px monospace';\n";
+            h << "        ctx.fillText(`SCORE 3D: ${score3D} | WASD + SPACE + [Z] LASER`, 18, 27);\n";
             h << "        requestAnimationFrame(render3DFrame);\n";
             h << "      }\n";
             h << "      requestAnimationFrame(render3DFrame);\n";
@@ -3371,9 +3450,14 @@ public:
                 .add_button(430, 290, "RECOGER MONEDA", "on_collect_coin")
                 .add_button(610, 290, "FRAME DE FÍSICA", "on_game_loop")
                 .add_code("game.scenario(name: \"VoidStage\", weather: \"void\", accent: \"#38bdf8\")\n"
-                          "spawn.sprite(\"PlayerHero\", at: (100, 350), color: \"#38bdf8\")\n"
+                          "spawn.player(name: \"PlayerHero\", at: (100, 320), speed: 280, jump: 450, health: 100)\n"
+                          "spawn.platform(at: (50, 370), size: (210, 18), color: \"#6366f1\")\n"
+                          "spawn.moving_platform(at: (280, 290), size: (140, 18), range: (240, 500), speed: 90, color: \"#06b6d4\")\n"
+                          "spawn.coin(at: (340, 240), points: 150)\n"
                           "spawn.checkpoint(at: (300, 350), label: \"GATE-1\")\n"
+                          "spawn.enemy(name: \"CyberDrone\", at: (520, 350), range: (440, 680), speed: 80, health: 45)\n"
                           "spawn.laser_hazard(at: (550, 300), size: (14, 100), interval: 1.8)\n"
+                          "spawn.portal(at: (740, 330), label: \"NEXT STAGE\")\n"
                           "game.play_sfx(\"powerup\")\n"
                           "print \"[GAME ENGINE] Initialized 2D canvas with embedded reactive snippets.\"");
         } else if (type == "game3d" || type == "3d" || type == "racing3d") {
@@ -3415,6 +3499,7 @@ public:
                           "spawn3d.ring(at: (0, 4, 18), radius: 3.2, points: 250, boost: 22, color: \"#00f5d4\")\n"
                           "spawn3d.crystal(at: (3, 3, 24), points: 150, color: \"#fbbf24\")\n"
                           "spawn3d.enemy(\"Sentinel3D\", at: (0, 2.5, 32), range: (-8, 8), axis: \"x\", speed: 9, health: 60)\n"
+                          "spawn3d.obj(\"ValkyrieWing\", obj: \"valkyrie_drone.obj\", at: (-6, 3.2, 26), scale: 1.0, color: \"#f43f5e\", tag: \"enemy\", health: 60)\n"
                           "spawn3d.portal(at: (0, 3.5, 48), radius: 3.8, label: \"QUANTUM GATE\")\n"
                           "print \"[3D ENGINE] Initialized 3D scene graph with 120Hz physics sub-stepping.\"");
         } else if (type == "rpg" || type == "adventure") {

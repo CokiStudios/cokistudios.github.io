@@ -738,8 +738,8 @@ class DynamicHTMLWindow extends EventEmitter {
             <div class="game-section">
                 <div class="game-header-bar">
                     <div class="game-title-badge">
-                        <span>STAGE RUNTIME</span>
-                        <span class="game-fps-badge">60 FPS V-SYNC</span>
+                        <span id="stage-mode-label">STAGE RUNTIME</span>
+                        <span class="game-fps-badge" id="stage-fps-badge">60 FPS V-SYNC</span>
                     </div>
                     <div style="display: flex; gap: 16px; align-items: center; font-family: var(--font-mono); font-size: 13px;">
                         <span style="color: #38bdf8;">HÉROE: <strong id="hud-hp">100 HP</strong></span>
@@ -774,7 +774,7 @@ class DynamicHTMLWindow extends EventEmitter {
 
                 <div class="controls-hint">
                     <div>
-                        <strong>Controles:</strong> [A / D / ◀ ▶] Mover • [W / Espacio / ▲] Salto / Doble Salto • [Z / J] Disparo Láser • [X / K] Dash
+                        <strong>Controles:</strong> [W/A/S/D o Flechas] Mover • [Espacio] Saltar • [Z / J] Disparo Láser • [X / K] Dash • [P / Esc] Pausa • [Q/E/C en 3D] Cámara
                     </div>
                     <div style="color: var(--accent-cyan);">
                         Gamepad &amp; Pantalla Táctil Activos
@@ -859,15 +859,22 @@ class DynamicHTMLWindow extends EventEmitter {
         setInterval(() => {
             if (!runtime) return;
 
+            const is3D = !!runtime.is3DMode;
             const score = runtime.score || 0;
-            const player = runtime.getPlayer ? runtime.getPlayer() : null;
+            const player = is3D
+                ? (runtime.getPlayer3D ? runtime.getPlayer3D() : null)
+                : (runtime.getPlayer ? runtime.getPlayer() : null);
             const hp = player ? Math.round(player.health) : 100;
             const lives = runtime.lives !== undefined ? runtime.lives : 3;
 
             const hudScore = document.getElementById('hud-score');
             const hudHp = document.getElementById('hud-hp');
+            const stageLabel = document.getElementById('stage-mode-label');
+            const fpsBadge = document.getElementById('stage-fps-badge');
             if (hudScore) hudScore.textContent = score;
             if (hudHp) hudHp.textContent = hp + ' HP';
+            if (stageLabel) stageLabel.textContent = is3D ? 'STAGE 3D QUANTUM' : 'STAGE RUNTIME 2D';
+            if (fpsBadge) fpsBadge.textContent = (runtime.fps || 60) + (is3D ? ' FPS · 240Hz' : ' FPS V-SYNC');
 
             // Sync with Server if changed
             if (score !== lastScore) {
@@ -922,7 +929,47 @@ class DynamicHTMLWindow extends EventEmitter {
 
         window.injectGameCommand = function(cmd) {
             if (!runtime) return;
-            const player = runtime.getPlayer ? runtime.getPlayer() : null;
+            const is3D = !!runtime.is3DMode;
+            const player = is3D
+                ? (runtime.getPlayer3D ? runtime.getPlayer3D() : null)
+                : (runtime.getPlayer ? runtime.getPlayer() : null);
+
+            if (is3D) {
+                const px = player ? player.x : 0;
+                const py = player ? player.y : 2;
+                const pz = player ? player.z : 0;
+                const fwdX = player ? Math.sin(player.yaw || 0) : 0;
+                const fwdZ = player ? Math.cos(player.yaw || 0) : 1;
+
+                if (cmd === 'spawn_coin') {
+                    const cx = Math.round(px + fwdX * 8 + (Math.random() - 0.5) * 4);
+                    const cy = Math.round(py + 1.5);
+                    const cz = Math.round(pz + fwdZ * 8 + (Math.random() - 0.5) * 4);
+                    runtime.parseSpawn3DDirective('spawn3d.crystal at (' + cx + ', ' + cy + ', ' + cz + ') points 150');
+                    runtime.playSfx('coin');
+                    runtime.addPopup3D(cx, cy + 1.5, cz, '+150 CRISTAL!', '#fbbf24');
+                    window.sendAction('spawn_bonus_coin', { x: cx, y: cy, z: cz });
+                } else if (cmd === 'heal' && player) {
+                    player.health = Math.min(player.maxHealth, player.health + 35);
+                    runtime.playSfx('heal');
+                    runtime.addPopup3D(px, py + 1.8, pz, '+35 HP', '#10b981');
+                    window.sendAction('heal_player', { hp: player.health });
+                } else if (cmd === 'boost' && player) {
+                    player.vy = 20;
+                    player.kers = 100;
+                    runtime.playSfx('pad');
+                    runtime.addPopup3D(px, py + 1.8, pz, 'LIVE BOOST 3D!', '#fbbf24');
+                    window.sendAction('boost_player', { power: 20 });
+                } else if (cmd === 'spawn_enemy') {
+                    const ex = Math.round(px + fwdX * 14);
+                    const ey = Math.round(Math.max(2, py + 1));
+                    const ez = Math.round(pz + fwdZ * 14);
+                    runtime.parseSpawn3DDirective('spawn3d.enemy("CyberDrone3D", at: (' + ex + ', ' + ey + ', ' + ez + '), range: (' + (ex - 8) + ', ' + (ex + 8) + '), speed: 8, health: 60)');
+                    runtime.addPopup3D(ex, ey + 2, ez, 'NUEVO DRON 3D!', '#ef4444');
+                    window.sendAction('spawn_enemy', { x: ex, y: ey, z: ez });
+                }
+                return;
+            }
 
             if (cmd === 'spawn_coin') {
                 const rx = player ? player.x + 80 + Math.random() * 120 : 350;
@@ -1008,24 +1055,34 @@ class DynamicHTMLWindow extends EventEmitter {
 
         function handleRemoteGameCommand(cmd, payload) {
             if (!runtime) return;
-            const player = runtime.getPlayer ? runtime.getPlayer() : null;
+            const is3D = !!runtime.is3DMode;
+            const player = is3D
+                ? (runtime.getPlayer3D ? runtime.getPlayer3D() : null)
+                : (runtime.getPlayer ? runtime.getPlayer() : null);
 
             if (cmd === 'heal') {
                 if (player) {
                     const amt = payload.amount || 30;
                     player.health = Math.min(player.maxHealth, player.health + amt);
                     runtime.playSfx('heal');
-                    runtime.addPopup(player.x, player.y - 12, '+' + amt + ' HP', '#10b981');
+                    if (is3D) runtime.addPopup3D(player.x, player.y + 1.8, player.z, '+' + amt + ' HP', '#10b981');
+                    else runtime.addPopup(player.x, player.y - 12, '+' + amt + ' HP', '#10b981');
                 }
             } else if (cmd === 'boost') {
                 if (player) {
-                    player.vy = -(payload.power || 670);
                     runtime.playSfx('pad');
-                    runtime.addPopup(player.x, player.y - 14, 'REMOTE BOOST!', '#fbbf24');
+                    if (is3D) {
+                        player.vy = Math.min(30, payload.power ? payload.power / 30 : 20);
+                        runtime.addPopup3D(player.x, player.y + 1.8, player.z, 'REMOTE BOOST 3D!', '#fbbf24');
+                    } else {
+                        player.vy = -(payload.power || 670);
+                        runtime.addPopup(player.x, player.y - 14, 'REMOTE BOOST!', '#fbbf24');
+                    }
                 }
             } else if (cmd === 'spawn') {
                 if (payload.line) {
-                    runtime.parseLine(payload.line);
+                    if (String(payload.line).trim().startsWith('spawn3d.')) runtime.parseSpawn3DDirective(payload.line);
+                    else runtime.parseLine(payload.line);
                 } else if (payload.entity === 'coin') {
                     const x = payload.x || 300;
                     const y = payload.y || 200;

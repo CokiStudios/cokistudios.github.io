@@ -651,6 +651,20 @@ public:
             if (fn == "Mathf.Sqrt" || fn == "Math.Sqrt") return Value(std::sqrt(std::max(0.0, args.empty() ? 0.0 : args[0].as_number())));
             if (fn == "Mathf.Min" || fn == "Math.Min") return Value(std::min(args.size() > 0 ? args[0].as_number() : 0.0, args.size() > 1 ? args[1].as_number() : 0.0));
             if (fn == "Mathf.Max" || fn == "Math.Max") return Value(std::max(args.size() > 0 ? args[0].as_number() : 0.0, args.size() > 1 ? args[1].as_number() : 0.0));
+            if (fn == "Mathf.MoveTowards" && args.size() >= 3) {
+                double cur = args[0].as_number();
+                double tgt = args[1].as_number();
+                double max_d = std::max(0.0, args[2].as_number());
+                if (std::abs(tgt - cur) <= max_d) return Value(tgt);
+                return Value(cur + ((tgt > cur) ? max_d : -max_d));
+            }
+            if (fn == "Mathf.SmoothStep" && args.size() >= 3) {
+                double a = args[0].as_number();
+                double b = args[1].as_number();
+                double t = std::clamp(args[2].as_number(), 0.0, 1.0);
+                double u = t * t * (3.0 - 2.0 * t);
+                return Value(a + (b - a) * u);
+            }
             if (fn == "Vector3.Distance" && args.size() >= 2) {
                 return Value((val_to_vec3(args[0]) - val_to_vec3(args[1])).length());
             }
@@ -740,10 +754,39 @@ public:
                 for (auto& e : scene3d->entities) {
                     if (e.name == target) {
                         e.health = std::max(0.0, e.health - args[1].as_number());
+                        e.hit_flash = 1.0;
                         return Value(e.health);
                     }
                 }
                 return Value(0.0);
+            }
+            if (fn == "Scene3D.Find" && scene3d && !args.empty()) {
+                const auto* e = scene3d->find_entity(args[0].as_string());
+                return Value(e != nullptr && e->is_live());
+            }
+            if (fn == "Scene3D.GetHealth" && scene3d && !args.empty()) {
+                const auto* e = scene3d->find_entity(args[0].as_string());
+                return Value(e ? e->health : 0.0);
+            }
+            if (fn == "Scene3D.SetColor" && scene3d && args.size() >= 2) {
+                if (auto* e = scene3d->find_entity(args[0].as_string())) {
+                    e->color = args[1].as_string();
+                    return Value(e->color);
+                }
+                return Value("");
+            }
+            if (fn == "Scene3D.LookAt" && scene3d && args.size() >= 2) {
+                std::string target = args[0].as_string();
+                loop_math::Vec3 look_at = (args.size() >= 4)
+                    ? loop_math::Vec3{args[1].as_number(), args[2].as_number(), args[3].as_number()}
+                    : val_to_vec3(args[1]);
+                if (auto* e = scene3d->find_entity(target)) {
+                    double dx = look_at.x - e->pos.x;
+                    double dz = look_at.z - e->pos.z;
+                    e->rot_deg.y = std::atan2(dx, dz) * (180.0 / loop_math::PI_3D);
+                    return vec3_map(e->rot_deg);
+                }
+                return Value();
             }
             return Value();
         }

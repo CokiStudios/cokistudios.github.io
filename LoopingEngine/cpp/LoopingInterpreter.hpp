@@ -203,6 +203,7 @@ public:
     DynamicWindow current_window;
     std::string last_exported_native_script = "";
     bool has_active_window = false;
+    bool has_game_entities = false;
     pid_t window_process_pid = 0;
     loop_math::Scene3D current_scene3d;
 
@@ -3183,6 +3184,18 @@ public:
                 std::cout << color::CYAN << "[AUDIO SYNTH]" << color::RESET << " Tone 880 Hz for 50 ms\n";
                 return Value(true);
             }
+            if (name == "game.shake" || name == "game_plus.shake") {
+                double amt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.35;
+                loopize_runtime.camera.add_trauma(amt);
+                return Value(loopize_runtime.camera.trauma);
+            }
+            if (name == "game.approach" || name == "game.move_toward" || name == "game_plus.approach") {
+                double cur = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.0;
+                double tgt = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 0.0;
+                double step_d = std::max(0.0, evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 1.0);
+                if (std::abs(tgt - cur) <= step_d) return Value(tgt);
+                return Value(cur + ((tgt > cur) ? step_d : -step_d));
+            }
 
             // 4b. Native 3D Mathematics, Quaternions, Matrices, Raycasting & 120Hz Physics (math3d.* / physics3d.* / scene3d.*)
             if (name == "math3d.vec3" || name == "vec3.new") {
@@ -3377,7 +3390,7 @@ public:
                 best.distance = std::numeric_limits<double>::infinity();
                 std::string hit_name = "", hit_type = "";
                 for (const auto& e : current_scene3d.entities) {
-                    if (e.type == "player" || e.type == "terrain") continue;
+                    if (e.type == "player" || e.type == "terrain" || !e.is_live()) continue;
                     loop_math::RayHit3D r;
                     if (e.has_custom_mesh && !e.custom_mesh.vertices.empty()) {
                         r = loop_math::raycast_mesh(orig, dir, e.custom_mesh, e.pos, e.rot_deg, e.scale);
@@ -3484,6 +3497,103 @@ public:
                 current_scene3d.clear();
                 current_window.entities_3d.clear();
                 return Value(true);
+            }
+            if (name == "physics3d.resolve_collisions" || name == "scene3d.resolve_collisions") {
+                bool push = evaluated_args.empty() || evaluated_args[0].is_truthy();
+                return Value(static_cast<int64_t>(current_scene3d.resolve_collisions(push)));
+            }
+            if (name == "scene3d.find" || name == "scene3d.get") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::unordered_map<std::string, Value> m;
+                if (const auto* e = current_scene3d.find_entity(ename)) {
+                    m["found"] = Value(true);
+                    m["name"] = Value(e->name);
+                    m["type"] = Value(e->type);
+                    m["tag"] = Value(e->tag);
+                    m["pos"] = vec3_to_val(e->pos);
+                    m["rot"] = vec3_to_val(e->rot_deg);
+                    m["scale"] = vec3_to_val(e->scale);
+                    m["size"] = vec3_to_val(e->size);
+                    m["health"] = Value(e->health);
+                    m["active"] = Value(e->is_live());
+                    m["color"] = Value(e->color);
+                } else {
+                    m["found"] = Value(false);
+                }
+                return Value(m);
+            }
+            if (name == "scene3d.set_pos") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                loop_math::Vec3 np = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, 0};
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    e->pos = np;
+                    return vec3_to_val(e->pos);
+                }
+                return Value();
+            }
+            if (name == "scene3d.move") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                loop_math::Vec3 dp = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, 0};
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    e->pos = e->pos + dp;
+                    return vec3_to_val(e->pos);
+                }
+                return Value();
+            }
+            if (name == "scene3d.rotate") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                loop_math::Vec3 dr = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, 0};
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    e->rot_deg = e->rot_deg + dr;
+                    return vec3_to_val(e->rot_deg);
+                }
+                return Value();
+            }
+            if (name == "scene3d.damage") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                double dmg = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 25.0;
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    double prev = e->health;
+                    e->health = std::max(0.0, e->health - std::max(0.0, dmg));
+                    e->hit_flash = 1.0;
+                    if (prev > 0.0 && e->health <= 0.0 && (e->type == "enemy" || e->type == "boss")) {
+                        loopize_runtime.combo.register_hit(std::max(100.0, e->points));
+                    }
+                    return Value(e->health);
+                }
+                return Value(0.0);
+            }
+            if (name == "scene3d.heal") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                double amt = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 25.0;
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    e->health += std::max(0.0, amt);
+                    if (e->health > 0.0) e->active = true;
+                    return Value(e->health);
+                }
+                return Value(0.0);
+            }
+            if (name == "scene3d.set_color") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                std::string hex = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "#38bdf8";
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    e->color = hex;
+                    return Value(e->color);
+                }
+                return Value("");
+            }
+            if (name == "scene3d.set_active") {
+                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
+                bool act = evaluated_args.size() < 2 || evaluated_args[1].is_truthy();
+                if (auto* e = current_scene3d.find_entity(ename)) {
+                    e->active = act;
+                    return Value(e->active);
+                }
+                return Value(false);
+            }
+            if (name == "scene3d.alive_count") {
+                std::string filter = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "*";
+                return Value(static_cast<int64_t>(current_scene3d.alive_count(filter)));
             }
 
             // 4b. Wavefront .OBJ & Mesh3D Geometry Pipeline (obj3d.* / mesh3d.*)
@@ -3786,9 +3896,34 @@ public:
                 double b = evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 1.0;
                 double dur = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 1.0;
                 std::string curve = evaluated_args.size() >= 5 ? evaluated_args[4].as_string() : "out_cubic";
-                loopize::TweenTrack tw{key, curve, a, b, dur, 0.0, false, false};
+                bool loop_flag = evaluated_args.size() >= 6 && evaluated_args[5].is_truthy();
+                bool pp_flag = evaluated_args.size() >= 7 && evaluated_args[6].is_truthy();
+                loopize::TweenTrack tw;
+                tw.name = key;
+                tw.curve = curve;
+                tw.start_val = a;
+                tw.end_val = b;
+                tw.duration = dur;
+                tw.elapsed = 0.0;
+                tw.ping_pong = pp_flag;
+                tw.finished = false;
+                tw.loop = loop_flag;
                 loopize_runtime.tweens[key] = tw;
                 return Value(tw.current());
+            }
+            if (name == "loopize.wave_status" || name == "lz.wave_status") {
+                int alive_enemies = current_scene3d.alive_count("enemy") + current_scene3d.alive_count("boss");
+                int waves_total = static_cast<int>(loopize_runtime.waves.size());
+                int active_wave = loopize_runtime.active_wave_index + 1;
+                int remaining = std::max(0, waves_total - std::max(0, active_wave));
+                std::unordered_map<std::string, Value> ws;
+                ws["waves_total"] = Value(static_cast<int64_t>(waves_total));
+                ws["active_wave"] = Value(static_cast<int64_t>(std::max(0, active_wave)));
+                ws["remaining_waves"] = Value(static_cast<int64_t>(remaining));
+                ws["alive_enemies"] = Value(static_cast<int64_t>(alive_enemies));
+                ws["wave_cleared"] = Value(alive_enemies == 0);
+                ws["all_cleared"] = Value(alive_enemies == 0 && remaining == 0 && waves_total > 0);
+                return Value(ws);
             }
             if (name == "loopize.shake" || name == "lz.shake") {
                 double amt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.35;
@@ -3882,6 +4017,9 @@ public:
                 st["level"] = Value(static_cast<int64_t>(loopize_runtime.level));
                 st["obj_cache"] = Value(static_cast<int64_t>(loaded_obj_meshes.size()));
                 st["cs_classes"] = Value(static_cast<int64_t>(csharp_bridge.classes.size()));
+                st["alive_enemies"] = Value(static_cast<int64_t>(current_scene3d.alive_count("enemy") + current_scene3d.alive_count("boss")));
+                st["camera_trauma"] = Value(loopize_runtime.camera.trauma);
+                st["tweens_active"] = Value(static_cast<int64_t>(loopize_runtime.tweens.size()));
                 return Value(st);
             }
 
@@ -4854,6 +4992,7 @@ public:
 
         // 16. Spawn Entity: Sprite / Platform / Coin / Bubbly Dot
         if (auto sp = std::dynamic_pointer_cast<SpawnEntityStmt>(stmt)) {
+            has_game_entities = true;
             if (sp->entity_type == "bubbly_dot") {
                 std::cout << color::GREEN << "[BUBBLY DOT]" << color::RESET << " Active Notch [" 
                           << (sp->state.empty() ? "MUSIC" : sp->state) << "]: \"" 
@@ -4974,6 +5113,7 @@ public:
         }
 
         if (auto sp3 = std::dynamic_pointer_cast<SpawnEntity3DStmt>(stmt)) {
+            has_game_entities = true;
             current_scene3d.active = true;
             loop_math::Entity3D e;
             e.type = sp3->entity_type;
@@ -5037,6 +5177,7 @@ public:
 
         // Game Configuration Directives
         if (auto gcfg = std::dynamic_pointer_cast<GameConfigStmt>(stmt)) {
+            has_game_entities = true;
             if (gcfg->config_key == "world") {
                 std::cout << color::CYAN << "[GAME WORLD]" << color::RESET << " Stage Bounds: " 
                           << gcfg->val1 << "x" << gcfg->val2 << " px\n";

@@ -30,7 +30,7 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
-    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (71 tests)\n";
+    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (79 tests)\n";
     std::cout << "  " << prog_name << " --channel <alpha|omega|prod> Select tier (Alpha! Looping | Omega Looping RC | Prod)\n";
     std::cout << "  " << prog_name << " --version, -v            Display engine version & channel nomenclature\n";
     std::cout << "  " << prog_name << " --help, -h               Show this help message\n\n";
@@ -1251,6 +1251,72 @@ int run_tests() {
                 vm_lz.variables["near_ids"].list_val != nullptr &&
                 vm_lz.variables["near_ids"].list_val->size() == 1);
 
+    // 76. 3D Scene Lifecycle, Dead-Target Raycast Exclusion, Combat Combo & Collision Resolution
+    Interpreter vm_glife;
+    vm_glife.execute_code(
+        "use \"loopize++\"\n"
+        "spawn3d.player(\"Hero\", at: (0, 1.5, 0), color: \"#38bdf8\")\n"
+        "spawn3d.box(\"Wall\", at: (0, 1.5, 1.9), size: (4, 6, 2), color: \"#6366f1\")\n"
+        "spawn3d.enemy(\"DroneAlpha\", at: (0, 1.5, 12), health: 50, points: 200, color: \"#ef4444\")\n"
+        "val cols_n = physics3d.resolve_collisions(true)\n"
+        "val ray_before = scene3d.raycast([0, 1.5, 5], [0, 0, 1])\n"
+        "val hp_left = scene3d.damage(\"DroneAlpha\", 50)\n"
+        "val ray_after = scene3d.raycast([0, 1.5, 5], [0, 0, 1])\n"
+        "val alive_en = scene3d.alive_count(\"enemy\")\n"
+        "val hero_info = scene3d.find(\"Hero\")\n"
+        "val w_st = loopize.wave_status()\n"
+    );
+    assert_test("3D Entity Lifecycle, Collision Pushout & Combat Damage Combo",
+                vm_glife.variables["cols_n"].as_int() >= 1 &&
+                vm_glife.variables["ray_before"].map_val != nullptr &&
+                vm_glife.variables["ray_before"].map_val->at("hit").is_truthy() &&
+                !vm_glife.variables["ray_after"].map_val->at("hit").is_truthy() &&
+                vm_glife.variables["hp_left"].as_number() == 0.0 &&
+                vm_glife.variables["alive_en"].as_int() == 0 &&
+                vm_glife.loopize_runtime.combo.hits == 1 &&
+                vm_glife.variables["w_st"].map_val->at("wave_cleared").is_truthy() &&
+                vm_glife.variables["hero_info"].map_val->at("pos").list_val->at(2).as_number() < 0.0);
+
+    // 77. Wavefront .mtl Material Palette & Camera Frustum Culling
+    auto mtl_pal = loop_math::parse_mtl_colors("newmtl NeonWing\nKd 0.0 0.96 0.83\n");
+    bool vis_front = loop_math::frustum_sphere_visible({0, 2, 20}, 2.0, {0, 4, -10}, {0, 2, 20}, 60.0);
+    bool vis_behind = loop_math::frustum_sphere_visible({0, 2, -40}, 1.5, {0, 4, -10}, {0, 2, 20}, 60.0);
+    assert_test("Wavefront .mtl Color Parsing & 3D Camera Frustum Culling",
+                mtl_pal["NeonWing"] == "#00f5d4" && vis_front && !vis_behind);
+
+    // 78. C# Scene3D.Find / GetHealth / SetColor / LookAt & Mathf.MoveTowards
+    Interpreter vm_cs2;
+    vm_cs2.execute_code(
+        "use \"csharp\"\n"
+        "spawn3d.enemy(\"BossBot\", at: (0, 2, 10), health: 120, color: \"#ef4444\")\n"
+        "val step_mv = cs!(Mathf.MoveTowards(2.0f, 10.0f, 3.0f))\n"
+        "val found_b = cs!(Scene3D.Find(\"BossBot\"))\n"
+        "val rot_b = cs!(Scene3D.LookAt(\"BossBot\", 10.0f, 2.0f, 10.0f))\n"
+        "val col_b = cs!(Scene3D.SetColor(\"BossBot\", \"#f59e0b\"))\n"
+        "val hp_b = cs!(Scene3D.GetHealth(\"BossBot\"))\n"
+    );
+    assert_test("C# Scene3D Helpers (Find, LookAt, SetColor, GetHealth) & MoveTowards",
+                std::abs(vm_cs2.variables["step_mv"].as_number() - 5.0) < 1e-4 &&
+                vm_cs2.variables["found_b"].is_truthy() &&
+                vm_cs2.variables["col_b"].as_string() == "#f59e0b" &&
+                std::abs(vm_cs2.variables["hp_b"].as_number() - 120.0) < 1e-4);
+
+    // 79. Ping-Pong Loop Tweens, Screen Shake & Game Smooth Approach
+    Interpreter vm_tw;
+    vm_tw.execute_code(
+        "use \"loopize++\"\n"
+        "loopize.tween(\"pulse\", 0, 100, 1.0, \"linear\", true, true)\n"
+        "loopize.step(1.35)\n"
+        "val pp_val = loopize.tween_value(\"pulse\")\n"
+        "val trauma_v = game.shake(0.6)\n"
+        "val app_v = game.approach(0, 10, 4)\n"
+    );
+    assert_test("Ping-Pong Tweens, Game Screen Shake & Frame-Independent Approach",
+                vm_tw.variables["pp_val"].as_number() > 60.0 &&
+                vm_tw.variables["pp_val"].as_number() < 90.0 &&
+                vm_tw.variables["trauma_v"].as_number() >= 0.59 &&
+                std::abs(vm_tw.variables["app_v"].as_number() - 4.0) < 1e-6);
+
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
 
@@ -2232,31 +2298,13 @@ int main(int argc, char* argv[]) {
 
     bool success = vm.execute_file(script_path);
 
-    bool has_window = !vm.current_window.cards.empty() || 
-                      !vm.current_window.buttons.empty() || 
-                      !vm.last_exported_native_script.empty() || 
-                      vm.has_active_window || 
-                      gui_mode;
+    bool has_ui_window = !vm.current_window.cards.empty() || 
+                         !vm.current_window.buttons.empty() || 
+                         !vm.last_exported_native_script.empty() || 
+                         vm.has_active_window;
+    bool is_playable_game = vm.has_game_entities || vm.current_scene3d.active || !vm.current_scene3d.entities.empty();
 
-    if (success && has_window) {
-        if (vm.window_process_pid <= 0) {
-            std::string win_script = vm.last_exported_native_script;
-            if (win_script.empty() && (!vm.current_window.cards.empty() || !vm.current_window.buttons.empty())) {
-                win_script = "build/" + vm.current_window.app_name + "_native.py";
-                vm.current_window.save_native_gui(win_script);
-            }
-            if (!win_script.empty()) {
-                std::ifstream test_f(win_script);
-                if (test_f.good()) {
-                    pid_t pid = launch_native_window_process(win_script);
-                    vm.window_process_pid = pid;
-                    std::cout << color::CYAN << "[NATIVE WINDOW]" << color::RESET 
-                              << " Launched native OS window: " << color::BOLD << win_script << color::RESET 
-                              << " (PID: " << pid << ")\n";
-                }
-            }
-        }
-    } else if (success && gui_mode) {
+    if (success && gui_mode && !native_mode && (is_playable_game || !has_ui_window)) {
         // Universal 2D/3D Stage GUI Launcher: resolves loop-node-window from any working directory
         std::string home_dir = getenv("HOME") ? getenv("HOME") : "";
         std::string bin_dir = ".";
@@ -2300,11 +2348,29 @@ int main(int argc, char* argv[]) {
             }
 #endif
         }
+    } else if (success && (has_ui_window || native_mode)) {
+        if (vm.window_process_pid <= 0) {
+            std::string win_script = vm.last_exported_native_script;
+            if (win_script.empty() && (!vm.current_window.cards.empty() || !vm.current_window.buttons.empty())) {
+                win_script = "build/" + vm.current_window.app_name + "_native.py";
+                vm.current_window.save_native_gui(win_script);
+            }
+            if (!win_script.empty()) {
+                std::ifstream test_f(win_script);
+                if (test_f.good()) {
+                    pid_t pid = launch_native_window_process(win_script);
+                    vm.window_process_pid = pid;
+                    std::cout << color::CYAN << "[NATIVE WINDOW]" << color::RESET 
+                              << " Launched native OS window: " << color::BOLD << win_script << color::RESET 
+                              << " (PID: " << pid << ")\n";
+                }
+            }
+        }
     }
 
     // Persistent interactive terminal mode (like py -i):
     // Enter if explicitly requested (-i / --persistent) OR if a window is active and stdin is an interactive terminal
-    bool should_persist = (persistent_mode || (has_window && !batch_mode)) && 
+    bool should_persist = (persistent_mode || ((has_ui_window || native_mode) && !is_playable_game && !batch_mode)) && 
                           (isatty(fileno(stdin)) || persistent_mode);
 
     if (should_persist) {

@@ -52,6 +52,7 @@ struct TweenTrack {
     double elapsed = 0.0;
     bool ping_pong = false;
     bool finished = false;
+    bool loop = false;
 
     double current() const {
         if (duration <= 1e-9) return end_val;
@@ -63,11 +64,16 @@ struct TweenTrack {
     }
 
     void step(double dt) {
-        if (finished) return;
+        if (finished && !loop) return;
         elapsed += dt;
         if (elapsed >= duration) {
-            elapsed = duration;
-            finished = true;
+            if (loop && duration > 1e-9) {
+                elapsed = std::fmod(elapsed, duration);
+                finished = false;
+            } else {
+                elapsed = duration;
+                finished = true;
+            }
         }
     }
 };

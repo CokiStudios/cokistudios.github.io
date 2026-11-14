@@ -500,6 +500,7 @@ struct Mesh3D {
     std::string name = "Mesh3D";
     std::string source_path = "";
     std::string material_lib = "";
+    std::unordered_map<std::string, std::string> material_colors{};
     std::vector<Vec3> vertices;
     std::vector<Vec3> normals;
     std::vector<std::array<double, 2>> uvs;
@@ -824,6 +825,8 @@ inline Mesh3D make_preset_obj_mesh(const std::string& preset_raw, double uniform
     return m;
 }
 
+inline std::unordered_map<std::string, std::string> parse_mtl_colors(const std::string& mtl_text);
+
 inline bool load_obj_file(const std::string& raw_path, Mesh3D& out_mesh, std::string* out_resolved_path = nullptr) {
     std::vector<std::string> candidates = {
         raw_path,
@@ -846,6 +849,25 @@ inline bool load_obj_file(const std::string& raw_path, Mesh3D& out_mesh, std::st
             if (dot != std::string::npos) base_name = base_name.substr(0, dot);
             out_mesh = parse_obj_string(ss.str(), base_name);
             out_mesh.source_path = cp;
+            if (!out_mesh.material_lib.empty()) {
+                size_t cp_slash = cp.find_last_of("/\\");
+                std::string cp_dir = (cp_slash != std::string::npos) ? cp.substr(0, cp_slash + 1) : "";
+                std::vector<std::string> mtl_cands = {
+                    cp_dir + out_mesh.material_lib,
+                    "./assets/models/" + out_mesh.material_lib,
+                    "../assets/models/" + out_mesh.material_lib,
+                    out_mesh.material_lib
+                };
+                for (const auto& mp : mtl_cands) {
+                    std::ifstream mf(mp);
+                    if (mf.good()) {
+                        std::ostringstream mss;
+                        mss << mf.rdbuf();
+                        out_mesh.material_colors = parse_mtl_colors(mss.str());
+                        break;
+                    }
+                }
+            }
             if (out_resolved_path) *out_resolved_path = cp;
             return !out_mesh.vertices.empty();
         }
@@ -1036,7 +1058,16 @@ struct Entity3D {
     std::string label = "";
     bool has_custom_mesh = false;
     bool double_sided = true;
+    bool active = true;
+    bool collected = false;
+    double hit_flash = 0.0;
     Mesh3D custom_mesh{};
+
+    bool is_live() const {
+        if (!active || collected) return false;
+        if ((type == "enemy" || type == "boss" || type == "breakable") && health <= 0.0) return false;
+        return true;
+    }
 
     void world_aabb(Vec3& out_min, Vec3& out_max) const {
         if (has_custom_mesh && !custom_mesh.vertices.empty()) {
@@ -1269,6 +1300,8 @@ struct Scene3D {
         double sdt = dt / static_cast<double>(steps);
         for (int s = 0; s < steps; ++s) {
             for (auto& e : entities) {
+                if (!e.is_live()) continue;
+                if (e.hit_flash > 0.0) e.hit_flash = std::max(0.0, e.hit_flash - sdt * 5.0);
                 if (e.type == "moving_platform" || e.type == "enemy" || e.type == "boss") {
                     double& coord = (e.axis == "y") ? e.pos.y : ((e.axis == "z") ? e.pos.z : e.pos.x);
                     if (e.vel.x == 0 && e.vel.y == 0 && e.vel.z == 0) e.vel.x = e.speed;
@@ -1280,15 +1313,77 @@ struct Scene3D {
                     e.rot_deg.y += 90.0 * sdt;
                 } else if (e.type == "obj" && e.speed > 0.01 && e.axis == "spin") {
                     e.rot_deg.y += e.speed * 18.0 * sdt;
+                } else if (e.type == "projectile") {
+                    e.pos = e.pos + e.vel * sdt;
                 }
             }
         }
     }
 
+    Entity3D* find_entity(const std::string& entity_name) {
+        for (auto& e : entities) {
+            if (e.name == entity_name) return &e;
+        }
+        return nullptr;
+    }
+
+    const Entity3D* find_entity(const std::string& entity_name) const {
+        for (const auto& e : entities) {
+            if (e.name == entity_name) return &e;
+        }
+        return nullptr;
+    }
+
+    int alive_count(const std::string& filter_type = "*") const {
+        int c = 0;
+        for (const auto& e : entities) {
+            if (!e.is_live()) continue;
+            if (filter_type == "*" || e.type == filter_type || e.tag == filter_type) c++;
+        }
+        return c;
+    }
+
+    int resolve_collisions(bool push_dynamic = true) {
+        auto is_trigger_like = [](const std::string& tp) {
+            return tp == "terrain" || tp == "trigger" || tp == "crystal" ||
+                   tp == "ring" || tp == "portal" || tp == "checkpoint" || tp == "pad";
+        };
+        auto is_movable = [](const std::string& tp) {
+            return tp == "player" || tp == "enemy" || tp == "boss" || tp == "obj" || tp == "sphere";
+        };
+        int resolved = 0;
+        for (size_t i = 0; i < entities.size(); ++i) {
+            Entity3D& a = entities[i];
+            if (!a.is_live() || is_trigger_like(a.type)) continue;
+            for (size_t j = i + 1; j < entities.size(); ++j) {
+                Entity3D& b = entities[j];
+                if (!b.is_live() || is_trigger_like(b.type)) continue;
+                CollisionHit3D hit = collide_entities_aabb(a, b);
+                if (!hit.collided) continue;
+                resolved++;
+                if (!push_dynamic) continue;
+                bool ma = is_movable(a.type);
+                bool mb = is_movable(b.type);
+                if (ma && !mb) {
+                    a.pos = a.pos + hit.normal * hit.penetration;
+                    if (hit.normal.y > 0.5 && a.vel.y < 0.0) a.vel.y = 0.0;
+                } else if (mb && !ma) {
+                    b.pos = b.pos - hit.normal * hit.penetration;
+                    if (hit.normal.y < -0.5 && b.vel.y < 0.0) b.vel.y = 0.0;
+                } else if (ma && mb) {
+                    Vec3 half_push = hit.normal * (hit.penetration * 0.5);
+                    a.pos = a.pos + half_push;
+                    b.pos = b.pos - half_push;
+                }
+            }
+        }
+        return resolved;
+    }
+
     int total_triangles() const {
         int tris = 0;
         for (const auto& e : entities) {
-            if (e.type != "terrain") tris += e.triangle_count();
+            if (e.type != "terrain" && e.is_live()) tris += e.triangle_count();
         }
         return tris;
     }
@@ -1297,7 +1392,7 @@ struct Scene3D {
         RayHit3D closest;
         closest.distance = max_dist;
         for (const auto& e : entities) {
-            if (e.type == "terrain") continue;
+            if (e.type == "terrain" || !e.is_live()) continue;
             RayHit3D h;
             if (e.has_custom_mesh && !e.custom_mesh.vertices.empty()) {
                 h = raycast_mesh(origin, dir_raw, e.custom_mesh, e.pos, e.rot_deg, e.scale);
@@ -1437,7 +1532,9 @@ struct Scene3D {
         };
 
         for (const auto& e : entities) {
-            if (e.type == "terrain") continue;
+            if (e.type == "terrain" || !e.is_live()) continue;
+            double cull_r = std::max({e.radius, e.size.x * 0.6, e.size.y * 0.6, e.size.z * 0.6, 2.0});
+            if (!frustum_sphere_visible(e.pos, cull_r, eye, target, cam_fov, 260.0)) continue;
             Mesh3D mesh;
             if (e.has_custom_mesh && !e.custom_mesh.vertices.empty()) {
                 mesh = e.custom_mesh;
@@ -1473,22 +1570,37 @@ struct Scene3D {
                 Vec3 n = cross(v1 - v0, v2 - v0).normalized();
                 double ndotl_raw = dot(n, light_dir);
                 double ndotl = e.double_sided ? std::abs(ndotl_raw) * 0.92 : std::max(0.0, ndotl_raw);
-                double pt_boost = 0.0;
                 Vec3 face_center = (v0 + v1 + v2) * (1.0 / 3.0);
+                Vec3 view_dir = (eye - face_center).normalized();
+                Vec3 half_v = (light_dir + view_dir).normalized();
+                double spec = std::pow(std::max(0.0, dot(n, half_v)), 18.0) * std::clamp(e.metallic, 0.0, 1.0) * 0.45;
+                double pt_r = 0.0, pt_g = 0.0, pt_b = 0.0;
                 for (const auto& pl : point_lights) {
                     Vec3 to_l = pl.pos - face_center;
                     double dist = to_l.length();
                     if (dist < pl.range && dist > 1e-4) {
                         double atten = (1.0 - dist / pl.range);
                         double pd = e.double_sided ? std::abs(dot(n, to_l / dist)) : std::max(0.0, dot(n, to_l / dist));
-                        pt_boost += pd * atten * pl.intensity * 0.45;
+                        double contrib = pd * atten * pl.intensity * 0.45;
+                        RGBColor plc = RGBColor::from_hex(pl.color);
+                        pt_r += (plc.r / 255.0) * contrib * 90.0;
+                        pt_g += (plc.g / 255.0) * contrib * 90.0;
+                        pt_b += (plc.b / 255.0) * contrib * 90.0;
                     }
                 }
-                double intensity = std::clamp((ambient_intensity + ndotl * dir_intensity * 0.78 + pt_boost) * f.shade_bias, 0.24, 1.45);
+                RGBColor face_base = base;
+                if (!f.material.empty() && mesh.material_colors.count(f.material)) {
+                    face_base = RGBColor::from_hex(mesh.material_colors.at(f.material));
+                }
+                double intensity = std::clamp((ambient_intensity + ndotl * dir_intensity * 0.78 + spec) * f.shade_bias, 0.24, 1.45);
+                double hf = std::clamp(e.hit_flash, 0.0, 1.0);
+                double rr = std::clamp(face_base.r * intensity + pt_r + spec * 120.0, 0.0, 255.0);
+                double gg = std::clamp(face_base.g * intensity + pt_g + spec * 120.0, 0.0, 255.0);
+                double bb = std::clamp(face_base.b * intensity + pt_b + spec * 120.0, 0.0, 255.0);
                 RGBColor shaded{
-                    static_cast<uint8_t>(std::clamp(base.r * intensity, 0.0, 255.0)),
-                    static_cast<uint8_t>(std::clamp(base.g * intensity, 0.0, 255.0)),
-                    static_cast<uint8_t>(std::clamp(base.b * intensity, 0.0, 255.0))
+                    static_cast<uint8_t>(std::clamp(rr + (255.0 - rr) * hf, 0.0, 255.0)),
+                    static_cast<uint8_t>(std::clamp(gg + (255.0 - gg) * hf, 0.0, 255.0)),
+                    static_cast<uint8_t>(std::clamp(bb + (255.0 - bb) * hf, 0.0, 255.0))
                 };
 
                 ProjectedPoint p0 = project_point(v0, eye, target, cam_fov, px_w, px_h);
