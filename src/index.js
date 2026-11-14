@@ -75,25 +75,45 @@ const SUPABASE_REPO_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const BUILTIN_MODULES = [
   {
     name: "pyloop-ai",
-    version: "1.0.0",
+    version: "1.1.0",
     language: "python",
     author_name: "Coki Studios AI Research",
-    description: "Python AI & Neural inference bridge for Looping. Connects Looping games and tools to LLMs, text generation, and prompt pipelines.",
+    description: "Python AI & MLX Local Inference bridge for Looping. Connects Looping games and tools to local Apple Silicon MLX (127.0.0.1:8080) and Coki Edge AI.",
     license: "MIT",
     entry_point: "pyloop_ai.py",
     downloads_count: 520,
     is_verified: true,
-    code_payload: `# pyloop-ai: AI & LLM Inference bridge for Looping
+    code_payload: `# pyloop-ai: Local MLX & Edge AI Inference bridge for Looping
 import json, urllib.request
 
 class PyLoopAI:
-    def __init__(self, endpoint="https://cokistudios.com/api/moderate"):
+    def __init__(self, endpoint="http://127.0.0.1:8080/v1/chat/completions", fallback_endpoint="https://cokistudios.com/api/coki", model="CokiStudios/coki-looping-7b-mlx"):
         self.endpoint = endpoint
+        self.fallback_endpoint = fallback_endpoint
+        self.model = model
 
     def prompt(self, system_prompt, user_message):
-        """Send a prompt to the AI model and return response."""
-        req_data = json.dumps({"title": system_prompt, "content": user_message}).encode("utf-8")
-        req = urllib.request.Request(self.endpoint, data=req_data, headers={"Content-Type": "application/json"})
+        """Send a prompt to local MLX (127.0.0.1:8080) with optional Coki Edge fallback."""
+        mlx_payload = json.dumps({
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            "temperature": 0.25
+        }).encode("utf-8")
+        try:
+            req = urllib.request.Request(self.endpoint, data=mlx_payload, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=20) as res:
+                data = json.loads(res.read().decode("utf-8"))
+                choices = data.get("choices") or []
+                if choices:
+                    return {"answer": choices[0]["message"]["content"], "engine": "MLX Local 7B"}
+        except Exception:
+            pass
+
+        req_data = json.dumps({"query": user_message, "context": system_prompt}).encode("utf-8")
+        req = urllib.request.Request(self.fallback_endpoint, data=req_data, headers={"Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(req, timeout=10) as res:
                 return json.loads(res.read().decode("utf-8"))
@@ -3010,34 +3030,36 @@ export default {
     if ((url.pathname === '/api/coki' || url.pathname === '/api/ask') && request.method === 'POST') {
       try {
         const body = await request.json().catch(() => ({}));
-        const query = (body.query || body.content || '').trim();
+        const query = (body.query || body.prompt || body.content || '').trim();
         const context = (body.context || body.title || '').trim();
 
         if (!query) {
+          const emptyMsg = "¡Hola! Soy Coki AI 🤖. Pregúntame sobre Looping, loopize++, terminales, desarrollo o cualquier duda técnica.";
           return Response.json({
-            answer: "¡Hola! Soy Coki with AI 🤖. Pregúntame sobre programación, terminales, ciencia, ideas o dudas generales.",
+            answer: emptyMsg,
+            response: emptyMsg,
+            reply: emptyMsg,
             engine: "Cloudflare Edge AI"
           }, { headers: corsHeaders });
         }
 
         if (env.AI) {
-          const systemPrompt = `You are Coki, the official versatile, insightful, and friendly AI assistant of Coki Studios.
+          const systemPrompt = `You are Coki AI, the official versatile, insightful, and friendly AI assistant of Coki Studios.
 You assist with everything the user asks:
-- Programming, code (Swift, JavaScript, Python, etc.), terminals/CLI, debugging, and software architecture
+- Looping programming language (.loop, define game3d, spawn3d.*, loopize++, cs!, pyloop, ui.*, smiledev), Swift, JavaScript, Python, C++17, terminals/CLI, debugging
+- Note: Coki AI's open local 7B MLX model weights live at https://huggingface.co/CokiStudios
 - Science, technology, mathematics, everyday explanations, productivity, and ideas
-- Sustainable mobility or vehicles ONLY IF the user explicitly asks about it
-Do NOT limit your persona or responses to cars or vehicles.
-Always respond in Spanish in 2 to 4 concise, clear sentences with relevant emojis.`;
+Always respond in clear Spanish (unless asked in English) with concise, practical answers and accurate code snippets when helpful.`;
 
-          const userPrompt = context ? `Contexto del chat: "${context}"\nPregunta: ${query}` : query;
+          const userPrompt = context ? `Contexto técnico / documental:\n${context}\n\nPregunta: ${query}` : query;
 
           const aiResponse = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature: 0.7,
-            max_tokens: 300
+            temperature: 0.45,
+            max_tokens: 450
           });
 
           let reply = '';
@@ -3050,16 +3072,22 @@ Always respond in Spanish in 2 to 4 concise, clear sentences with relevant emoji
           }
 
           if (reply.trim()) {
+            const cleanReply = reply.trim();
             return Response.json({
-              answer: reply.trim(),
+              answer: cleanReply,
+              response: cleanReply,
+              reply: cleanReply,
               engine: "Workers AI (@cf/meta/llama-3.2-3b-instruct)"
             }, { headers: corsHeaders });
           }
         }
 
         // Lightweight edge fallback if env.AI is unavailable
+        const fallbackMsg = `✨ Coki AI: Recibí tu consulta sobre "${query}". Puedes usar nuestros pesos locales 7B MLX en https://huggingface.co/CokiStudios o ejecutar \`./bin/looping ai\` en tu terminal. 💡`;
         return Response.json({
-          answer: `✨ Coki AI: Recibí tu consulta sobre "${query}". En Coki Studios estoy diseñado para ayudarte con desarrollo, terminales, tecnología y temas generales. ¡Exploremos la solución juntos! 💡`,
+          answer: fallbackMsg,
+          response: fallbackMsg,
+          reply: fallbackMsg,
           engine: "Edge Heuristic Fallback"
         }, { headers: corsHeaders });
       } catch (err) {

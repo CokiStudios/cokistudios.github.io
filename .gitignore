@@ -38,3 +38,16 @@ Packages/
 *.xcodeproj/
 *.xcworkspace/
 
+# Coki AI Local MLX Artifacts (heavyweight venv, base models, LoRA weights, caches)
+coki-ai/.venv/
+coki-ai/models/
+coki-ai/adapters/
+coki-ai/.cache/
+coki-ai/__pycache__/
+coki-ai/*/__pycache__/
+__pycache__/
+*.pyc
+*.safetensors
+*.gguf
+
+

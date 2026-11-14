@@ -30,6 +30,7 @@
         { id: 'maps', name: 'Shine Maps', sub: 'Mapas GPS', href: appHref('shine-maps.html'), icon: '/assets/shine-maps-icon.svg', match: ['/shine-maps', '/shine-maps.html'] },
         { id: 'dev', name: 'Developers', sub: 'Consola & SDK', href: appHref('developer.html'), icon: '/assets/dev-icon.svg', match: ['/developer', '/developer.html'] },
         { id: 'smiledev', name: 'smiledev', sub: 'Package Studio', href: appHref('smiledev.html'), icon: '/assets/dev-icon.svg', match: ['/smiledev', '/smiledev.html'] },
+        { id: 'cokiai', name: 'Coki AI', sub: 'Hugging Face', href: 'https://huggingface.co/CokiStudios', external: true, icon: '/assets/coki-ai-icon.svg', match: [] },
         { id: 'products', name: 'Productos', sub: 'Catálogo CS', href: appHref('products.html'), icon: '/assets/shine-loop-launcher-icon.svg', match: ['/products', '/products.html'] }
     ];
 
@@ -236,8 +237,9 @@
 
         const itemsHtml = CS_APPS.map(app => {
             const currentClass = isCurrentApp(app) ? ' current' : '';
+            const targetAttrs = app.external ? ' target="_blank" rel="noopener noreferrer"' : '';
             return `
-                <a href="${app.href}" class="cs-waffle-item${currentClass}" data-app-id="${app.id}">
+                <a href="${app.href}" class="cs-waffle-item${currentClass}" data-app-id="${app.id}"${targetAttrs}>
                     <div class="cs-waffle-icon-wrap">
                         <img src="${app.icon}" alt="${app.name}" loading="lazy">
                     </div>

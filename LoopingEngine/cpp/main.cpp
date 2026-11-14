@@ -28,6 +28,7 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " bench                    Run native C++17 VM throughput benchmark\n";
     std::cout << "  " << prog_name << " doctor                   Inspect engine subsystems & environment health\n";
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
+    std::cout << "  " << prog_name << " ai <\"query\"|--chat|--fix> Ask local Coki AI (MLX 7B + RAG) or fix .loop\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
     std::cout << "  " << prog_name << " test                     Run built-in engine test suite (79 tests)\n";
@@ -1993,6 +1994,81 @@ int main(int argc, char* argv[]) {
             std::cerr << "Usage: looping auth <login|whoami|logout>\n";
             return 1;
         }
+    }
+
+    // Coki AI Local Coding Assistant CLI: looping ai "<query>" | --chat | --fix <file.loop> | --rag-only
+    if (first_arg == "ai" || first_arg == "coki-ai") {
+        auto shell_quote = [](const std::string& arg) -> std::string {
+            std::string out = "'";
+            for (char c : arg) {
+                if (c == '\'') out += "'\\''";
+                else out += c;
+            }
+            out += "'";
+            return out;
+        };
+
+        auto file_exists = [](const std::string& p) -> bool {
+            std::ifstream f(p);
+            return f.good();
+        };
+
+        if (argc >= 3 && (std::string(argv[2]) == "--help" || std::string(argv[2]) == "-h")) {
+            std::cout << color::BOLD << color::CYAN << "Coki AI · Local Apple Silicon MLX + Looping RAG" << color::RESET << "\n";
+            std::cout << "  " << argv[0] << " ai \"<consulta>\"          Ask Coki AI using local MLX (127.0.0.1:8080) + RAG\n";
+            std::cout << "  " << argv[0] << " ai --chat                 Interactive terminal chat session\n";
+            std::cout << "  " << argv[0] << " ai --fix <archivo.loop>   Diagnose & repair a .loop file\n";
+            std::cout << "  " << argv[0] << " ai --rag-only \"<tema>\"    Search official local Looping docs offline\n";
+            std::cout << "  " << argv[0] << " ai --cloud \"<consulta>\"   Allow cloud edge fallback if local MLX is off\n";
+            std::cout << "  Hugging Face org: https://huggingface.co/CokiStudios\n";
+            return 0;
+        }
+
+        std::string bin_dir = ".";
+        std::string exe_path = argv[0] ? std::string(argv[0]) : "";
+        size_t slash_pos = exe_path.find_last_of("/\\");
+        if (slash_pos != std::string::npos) {
+            bin_dir = exe_path.substr(0, slash_pos);
+        }
+
+        std::string chat_script;
+        if (const char* env_chat = std::getenv("COKI_AI_CHAT")) {
+            if (file_exists(env_chat)) chat_script = env_chat;
+        }
+        std::vector<std::string> script_candidates = {
+            "coki-ai/chat.py",
+            bin_dir + "/../coki-ai/chat.py",
+            bin_dir + "/../../coki-ai/chat.py"
+        };
+        if (chat_script.empty()) {
+            for (const auto& cand : script_candidates) {
+                if (file_exists(cand)) {
+                    chat_script = cand;
+                    break;
+                }
+            }
+        }
+
+        if (chat_script.empty()) {
+            std::cerr << color::RED << "Error: coki-ai/chat.py not found in workspace." << color::RESET << "\n";
+            std::cerr << "Run from your Looping repo root or set COKI_AI_CHAT, or download weights from https://huggingface.co/CokiStudios\n";
+            return 1;
+        }
+
+        std::string ai_root = chat_script.substr(0, chat_script.find_last_of("/\\"));
+        std::string venv_py = ai_root + "/.venv/bin/python";
+        std::string py_exec = file_exists(venv_py) ? venv_py : "python3";
+
+        std::string cmd = shell_quote(py_exec) + " " + shell_quote(chat_script);
+        if (argc < 3) {
+            cmd += " --chat";
+        } else {
+            for (int i = 2; i < argc; ++i) {
+                cmd += " " + shell_quote(argv[i]);
+            }
+        }
+        int rc = std::system(cmd.c_str());
+        return rc == 0 ? 0 : 1;
     }
 
     // Dynamic Window Creator CLI: looping window <name> [--title <t>] [--size <w,h>] [--theme <th>] [--target <tgt>] [--output <out>] [--html <out>] [--run]

@@ -35,12 +35,13 @@
         modal.innerHTML = `
             <div class="coki-ai-widget-header">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg, #6366f1, #06b6d4); display:flex; align-items:center; justify-content:center; color:#fff;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                    </div>
+                    <img src="/assets/coki-ai-icon.svg" alt="Coki AI" style="width:30px; height:30px; border-radius:8px;">
                     <div>
-                        <div style="font-weight:700; font-size:14px; color:var(--text);">Coki AI Assistant</div>
-                        <div style="font-size:11px; color:#10b981; font-weight:600;">● Workers AI · Llama 3.2 3B</div>
+                        <div style="font-weight:700; font-size:14px; color:var(--text);">Coki AI · Looping</div>
+                        <div style="font-size:11px; color:#10b981; font-weight:600; display:flex; align-items:center; gap:8px;">
+                            <span>● 7B MLX / Edge</span>
+                            <a href="https://huggingface.co/CokiStudios" target="_blank" rel="noopener noreferrer" style="color:var(--accent, #6366f1); text-decoration:none; font-weight:700;">Hugging Face ↗</a>
+                        </div>
                     </div>
                 </div>
                 <button id="coki-ai-close-btn" style="background:transparent; border:none; color:var(--text-sub); cursor:pointer; width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:18px;">✕</button>
@@ -92,7 +93,77 @@
         const sendBtn = document.getElementById('coki-ai-send');
         const input = document.getElementById('coki-ai-input');
 
-        function handleSend() {
+        let ragCache = null;
+
+        async function getRagContext(query) {
+            try {
+                if (!ragCache) {
+                    const res = await fetch('/assets/data/coki-rag-index.json');
+                    if (res.ok) {
+                        const json = await res.json();
+                        ragCache = Array.isArray(json.chunks) ? json.chunks : [];
+                    } else {
+                        ragCache = [];
+                    }
+                }
+                if (!ragCache.length) return '';
+                const tokens = (query.toLowerCase().match(/[a-z0-9_+.!]{2,}/g) || []).slice(0, 8);
+                if (!tokens.length) return '';
+                const ranked = ragCache
+                    .map(ch => {
+                        const title = (ch.title || '').toLowerCase();
+                        const kw = Array.isArray(ch.keywords) ? ch.keywords.join(' ') : '';
+                        const body = (ch.content || '').toLowerCase();
+                        let score = 0;
+                        for (const t of tokens) {
+                            if (title.includes(t)) score += 3;
+                            if (kw.includes(t)) score += 2;
+                            if (body.includes(t)) score += 1;
+                        }
+                        return { score, ch };
+                    })
+                    .filter(x => x.score > 0)
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 2);
+                return ranked.map(x => `[${x.ch.source}] ${x.ch.title}\n${(x.ch.content || '').slice(0, 480)}`).join('\n---\n');
+            } catch (_) {
+                return '';
+            }
+        }
+
+        async function tryLocalMlx(query, context) {
+            const isLocalHost = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+            if (!isLocalHost) return null;
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 3500);
+                const sys = 'Eres Coki AI, experto en el lenguaje Looping de Coki Studios.' + (context ? '\nContexto:\n' + context : '');
+                const res = await fetch('http://127.0.0.1:8080/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        model: 'CokiStudios/coki-looping-7b-mlx',
+                        messages: [
+                            { role: 'system', content: sys },
+                            { role: 'user', content: query }
+                        ],
+                        temperature: 0.25,
+                        max_tokens: 700
+                    })
+                });
+                clearTimeout(timer);
+                if (!res.ok) return null;
+                const data = await res.json();
+                return data && data.choices && data.choices[0] && data.choices[0].message
+                    ? data.choices[0].message.content
+                    : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function handleSend() {
             const query = input.value.trim();
             if (!query) return;
             addUserMessage(query);
@@ -100,17 +171,25 @@
 
             // Loading state
             const loadingMsg = addBotMessage("Pensando...");
+            const ragContext = await getRagContext(query);
+
+            const localReply = await tryLocalMlx(query, ragContext);
+            if (localReply) {
+                loadingMsg.innerHTML = formatMarkdown(localReply);
+                return;
+            }
 
             // Query Workers AI or fallback
             fetch('/api/coki', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: query })
+                body: JSON.stringify({ query: query, prompt: query, context: ragContext })
             })
             .then(res => res.json())
             .then(data => {
-                if (data && (data.response || data.reply)) {
-                    loadingMsg.innerHTML = formatMarkdown(data.response || data.reply);
+                const replyText = data && (data.answer || data.response || data.reply);
+                if (replyText) {
+                    loadingMsg.innerHTML = formatMarkdown(replyText);
                 } else {
                     fallbackAnswer(query, loadingMsg);
                 }
