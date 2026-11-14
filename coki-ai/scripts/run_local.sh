@@ -17,6 +17,26 @@ if [[ ! -x "$VENV_PY" ]]; then
   exit 1
 fi
 
+if command -v lsof >/dev/null 2>&1; then
+  EXISTING_PIDS="$(lsof -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null || true)"
+  for pid in $EXISTING_PIDS; do
+    CMD_LINE="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+    if [[ "$CMD_LINE" == *"mlx_lm"* ]]; then
+      echo "♻️  [Coki AI] Deteniendo servidor MLX previo (PID $pid) en puerto $PORT..."
+      kill "$pid" 2>/dev/null || true
+      sleep 1
+      if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+        sleep 1
+      fi
+    else
+      echo "❌ El puerto $PORT ya está ocupado por otro proceso (PID $pid): $CMD_LINE"
+      echo "   Usa otro puerto con: COKI_AI_PORT=8081 bash coki-ai/scripts/run_local.sh"
+      exit 1
+    fi
+  done
+fi
+
 if [[ -d "$FUSED_MODEL" && -f "$FUSED_MODEL/config.json" ]]; then
   echo "♾️  [Coki AI] Serving fused local 7B MLX model on http://$HOST:$PORT"
   exec "$VENV_PY" -m mlx_lm server \
