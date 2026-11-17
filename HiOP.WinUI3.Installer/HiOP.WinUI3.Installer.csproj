@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\HiOP.WinUI3\Assets\AppIcon.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>HiOP-Native-Setup</AssemblyName>
+    <RootNamespace>HiOP.WinUI3.Installer</RootNamespace>
+    <Version>1.1.0</Version>
+    <Company>Coki Studios</Company>
+    <Product>hiOP Studio Native Installer</Product>
+    <FileDescription>Instalador oficial de hiOP Studio Native (WinUI 3 + C++17 Stage)</FileDescription>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="payload.zip" Condition="Exists('payload.zip')">
+      <LogicalName>payload.zip</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\HiOP.WinUI3\Assets\AppIcon.ico" Condition="Exists('..\HiOP.WinUI3\Assets\AppIcon.ico')">
+      <LogicalName>AppIcon.ico</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
