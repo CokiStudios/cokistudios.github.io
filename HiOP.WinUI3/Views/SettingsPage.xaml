@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="HiOP.WinUI3.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer Padding="22,18">
+        <StackPanel Spacing="18" MaxWidth="920">
+            <TextBlock Text="Configuración &amp; Coki Studios ID (CS ID)" FontSize="22" FontWeight="Bold" />
+
+            <!-- CS ID Auth -->
+            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="🔐 Autenticación CS ID (~/.smiledev/auth.json)" FontWeight="Bold" FontSize="15" Foreground="#00F5D4" />
+                        <TextBlock x:Name="CsIdStatusBadge" Grid.Column="1" FontFamily="Consolas" FontSize="12" Foreground="#10B981" />
+                    </Grid>
+                    <TextBlock Text="Comparte sesión directamente con la CLI 'smiledev' para publicar módulos verificados en LoopModules." FontSize="12" Foreground="#94A3B8" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <TextBox x:Name="CsIdNameBox" Header="Nombre de Desarrollador" Text="Coki Studios Developer" />
+                        <TextBox x:Name="CsIdEmailBox" Grid.Column="1" Header="Correo CS ID" Text="developer@cokistudios.com" />
+                    </Grid>
+                    <PasswordBox x:Name="CsIdPatBox" Header="Personal Access Token (cs_pat_...)" PlaceholderText="cs_pat_..." />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="🔑 Guardar Sesión CS ID" Click="BtnCsIdLogin_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" />
+                        <Button Content="🚪 Cerrar Sesión" Click="BtnCsIdLogout_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="CsIdFeedbackText" FontSize="12" Foreground="#38BDF8" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- Workspace & Engine Paths -->
+            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="📁 Workspace &amp; Rutas del Motor" FontWeight="Bold" FontSize="15" Foreground="#38BDF8" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox x:Name="WorkspacePathBox" Header="Carpeta de Trabajo (cokistudios.github.io / proyecto)" IsReadOnly="True" />
+                        <Button Grid.Column="1" Content="Examinar..." Click="BtnBrowseWorkspace_Click" VerticalAlignment="Bottom" />
+                    </Grid>
+
+                    <TextBox x:Name="EngineRepoBox" Header="Repositorio Engine C++17 (auto-detectado)" IsReadOnly="True" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox x:Name="CustomLoopingPathBox" Header="Binario looping.exe / looping.js personalizado (opcional)" PlaceholderText="Auto-detectado" />
+                        <Button Grid.Column="1" Content="Aplicar" Click="BtnApplyCustomEngine_Click" VerticalAlignment="Bottom" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Backdrop & App Info -->
+            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="🪟 Apariencia WinUI 3 Fluent 2" FontWeight="Bold" FontSize="15" Foreground="#C084FC" />
+                    <ComboBox x:Name="BackdropCombo" Header="Material de fondo de ventana" SelectedIndex="0" Width="260" SelectionChanged="BackdropCombo_SelectionChanged">
+                        <ComboBoxItem Content="Mica Alt (Windows 11)" Tag="MicaAlt" />
+                        <ComboBoxItem Content="Mica Estándar" Tag="Mica" />
+                        <ComboBoxItem Content="Desktop Acrylic" Tag="Acrylic" />
+                    </ComboBox>
+                    <TextBlock Text="hiOP Studio WinUI 3 • Compatible con Looping v1.1, Omega RC, Alpha! 1.1A, Arch 3.0A, Component 2 (.c2), Quantum 3D, loopize++ y smiledev." FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

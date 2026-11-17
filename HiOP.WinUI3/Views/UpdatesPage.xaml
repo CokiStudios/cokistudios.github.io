@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="HiOP.WinUI3.Views.UpdatesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:HiOP.WinUI3.Models">
+
+    <ScrollViewer Padding="22,18">
+        <StackPanel Spacing="18" MaxWidth="1200">
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Actualizaciones, Canales y Auto-Updater (Arch 3.0A)" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="Sincroniza hiOP Studio, Looping Engine, WebCore (looping_core.js) y cambia entre Prod / Omega / Alpha! 1.1A" Foreground="#94A3B8" FontSize="13" />
+                </StackPanel>
+                <Button x:Name="BtnCheckUpdates" Grid.Column="1" Click="BtnCheckUpdates_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE895;" FontSize="14" />
+                        <TextBlock Text="Buscar Actualizaciones" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Download Progress -->
+            <Border x:Name="UpdateProgressCard" Visibility="Collapsed" Background="#B00B162C" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="10" Padding="14">
+                <StackPanel Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock x:Name="UpdateProgressLabel" Text="Conectando..." FontWeight="SemiBold" Foreground="#38BDF8" />
+                        <TextBlock x:Name="UpdateProgressPct" Grid.Column="1" Text="0%" FontFamily="Consolas" Foreground="#00F5D4" />
+                    </Grid>
+                    <ProgressBar x:Name="UpdateProgressBar" Minimum="0" Maximum="100" Value="0" Foreground="#00F5D4" />
+                </StackPanel>
+            </Border>
+
+            <!-- Summary Cards -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="hiOP Studio WinUI 3 (Esta App)" FontWeight="Bold" FontSize="15" Foreground="#00F5D4" />
+                        <TextBlock x:Name="AppVersionText" Text="Versión actual: v1.1.0" FontFamily="Consolas" FontSize="13" />
+                        <TextBlock x:Name="AppRemoteText" Text="Remoto: verificando..." Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap" />
+                        <Button x:Name="BtnSelfUpdateApp" Content="🚀 Descargar y Auto-Actualizar hiOP Studio" Click="BtnSelfUpdateApp_Click" IsEnabled="False" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Looping Engine, Smiledev &amp; WebCore" FontWeight="Bold" FontSize="15" Foreground="#38BDF8" />
+                        <TextBlock x:Name="EngineInstalledText" Text="Motor local: verificando..." FontFamily="Consolas" FontSize="13" />
+                        <TextBlock x:Name="EngineRemoteText" Text="latest.json: verificando..." Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap" />
+                        <Button x:Name="BtnUpdateEngine" Content="⬇ Sincronizar Motor, WebCore y Smiledev" Click="BtnUpdateEngine_Click" Background="#0284C7" Foreground="White" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Channel Selector -->
+            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Canal de Lanzamiento Activo (~/.smiledev/channel)" FontWeight="Bold" FontSize="15" Foreground="#C084FC" />
+                        <TextBlock x:Name="ActiveChannelLabel" Grid.Column="1" FontFamily="Consolas" FontWeight="Bold" Foreground="#00F5D4" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                        <Button x:Name="BtnChanProd" Click="BtnSelectChannel_Click" Tag="prod" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12">
+                            <StackPanel Spacing="3">
+                                <TextBlock Text="Looping (Prod v1.1)" FontWeight="Bold" Foreground="#10B981" />
+                                <TextBlock Text="Estable oficial • Arch 3.0A" FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BtnChanOmega" Grid.Column="1" Click="BtnSelectChannel_Click" Tag="omega" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12">
+                            <StackPanel Spacing="3">
+                                <TextBlock Text="Omega Looping (RC)" FontWeight="Bold" Foreground="#38BDF8" />
+                                <TextBlock Text="Release Candidate congelada QA" FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BtnChanAlpha" Grid.Column="2" Click="BtnSelectChannel_Click" Tag="alpha" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12">
+                            <StackPanel Spacing="3">
+                                <TextBlock Text="Alpha! 1.1A Experimental" FontWeight="Bold" Foreground="#FBBF24" />
+                                <TextBlock Text="Bleeding-edge + Alpha! SmileDev" FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Release Notes & History -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Notas de la Última Versión" FontWeight="Bold" FontSize="15" />
+                        <TextBlock x:Name="ReleaseNotesText" TextWrapping="Wrap" Foreground="#CBD5E1" FontSize="12.5" />
+                        <TextBlock x:Name="MirrorUsedText" Foreground="#64748B" FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Historial de Arquitectura &amp; Releases GitHub" FontWeight="Bold" FontSize="15" Foreground="#C084FC" />
+                        <ItemsControl x:Name="TimelineList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:ArchHistoryEntry">
+                                    <Border Background="#6011192B" CornerRadius="6" Padding="8,6" Margin="0,0,0,6">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{x:Bind Version}" FontWeight="Bold" FontFamily="Consolas" Foreground="#00F5D4" FontSize="12" />
+                                            <TextBlock Text="{x:Bind Name}" FontSize="12" Foreground="#E2E8F0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Update Log Output -->
+            <Border Background="#C0050811" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Registro de Actualización" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" />
+                    <TextBox x:Name="UpdateLogBox" IsReadOnly="True" AcceptsReturn="True" MinHeight="120" BorderThickness="0" Background="Transparent" FontFamily="Cascadia Code, Consolas" FontSize="12" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

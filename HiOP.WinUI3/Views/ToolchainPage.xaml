@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="HiOP.WinUI3.Views.ToolchainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:HiOP.WinUI3.Models">
+
+    <ScrollViewer Padding="22,18">
+        <StackPanel Spacing="18" MaxWidth="1200">
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Toolchain Looping v1.1 &amp; Arch 3.0A" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="Compilación Invis. LPBN v3.0A, transpilador SwiftUI/.c2, diagnóstico Doctor, Benchmark VM y suite de pruebas" Foreground="#94A3B8" FontSize="13" />
+                </StackPanel>
+                <Button Grid.Column="1" Click="BtnRunDoctor_Click" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE9D9;" FontSize="14" Foreground="#00F5D4" />
+                        <TextBlock Text="Re-analizar Sistema (Doctor)" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Doctor Health Cards -->
+            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Salud de Subsistemas Windows" FontWeight="Bold" FontSize="15" Foreground="#38BDF8" />
+                    <ItemsControl x:Name="DoctorItemsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:DoctorCheckItem">
+                                <Border Background="#7011192B" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Border Background="{x:Bind StatusBrush}" CornerRadius="5" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Status}" FontSize="10" FontWeight="Bold" Foreground="#030508" FontFamily="Consolas" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Text="{x:Bind Component}" FontWeight="SemiBold" FontSize="13" />
+                                            <TextBlock Text="{x:Bind Detail}" FontSize="12" Foreground="#CBD5E1" TextWrapping="Wrap" />
+                                            <TextBlock Text="{x:Bind Hint}" FontSize="11" Foreground="#64748B" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Arch 3.0A Actions Grid -->
+            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="Herramientas sobre el archivo activo:" FontWeight="Bold" FontSize="15" />
+                        <TextBlock x:Name="ActiveFileLabel" Foreground="#00F5D4" FontFamily="Consolas" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="📦 Invis. Compile (LPBN v3.0A)" Click="BtnInvis_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" />
+                        <Button Content="🎨 Transpilar SwiftUI / .C2" Click="BtnSwiftUiPreview_Click" />
+                        <Button Content="🔌 Inspeccionar C# &amp; Python" Click="BtnPolyglotInspect_Click" />
+                        <Button Content="⚡ Benchmark VM" Click="BtnBench_Click" />
+                        <Button Content="✔ Suite 71 Tests" Click="BtnRunTestSuite_Click" />
+                        <Button Content="🩺 Engine Doctor" Click="BtnEngineDoctor_Click" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <TextBlock Text="Compilar perfil UI:" VerticalAlignment="Center" Foreground="#94A3B8" FontSize="12" />
+                        <ComboBox x:Name="ProfileCombo" SelectedIndex="0" Width="160">
+                            <ComboBoxItem Content="shine_ui" />
+                            <ComboBoxItem Content="xui" />
+                            <ComboBoxItem Content="flui" />
+                            <ComboBoxItem Content="native" />
+                        </ComboBox>
+                        <Button Content="🔨 Compilar Target" Click="BtnCompileTarget_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Output Console -->
+            <Border Background="#C0050811" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Salida de Toolchain" FontWeight="SemiBold" FontSize="13" Foreground="#C084FC" />
+                    <TextBox
+                        x:Name="ToolchainOutputBox"
+                        IsReadOnly="True"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap"
+                        MinHeight="240"
+                        MaxHeight="420"
+                        FontFamily="Cascadia Code, Consolas"
+                        FontSize="12"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

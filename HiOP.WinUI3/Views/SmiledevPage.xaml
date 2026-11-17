@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="HiOP.WinUI3.Views.SmiledevPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:HiOP.WinUI3.Models">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Background="Transparent">
+
+        <!-- 1. Smiledev Header & KPIs -->
+        <Border Grid.Row="0" Background="#B00B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="0,0,0,1" Padding="20,14">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="10">
+                <StackPanel Spacing="3">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="&#xE7B8;" FontSize="20" Foreground="#00F5D4" />
+                        <TextBlock Text="smiledev Studio — Gestor &amp; Descargador Nativo de Paquetes" FontSize="19" FontWeight="Bold" />
+                        <Border Background="#1800F5D4" BorderBrush="#4000F5D4" BorderThickness="1" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
+                            <TextBlock x:Name="SmileChannelBadge" Text="CANAL: LOOPING PROD" FontSize="10" FontWeight="Bold" Foreground="#00F5D4" FontFamily="Consolas" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock x:Name="RegistryStatusText" Text="Conectado a LoopModules PostgreSQL + Repositorios HTTP / Git / Local" FontSize="12" Foreground="#94A3B8" />
+                </StackPanel>
+
+                <!-- KPIs -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Border Background="#7011192B" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                        <StackPanel>
+                            <TextBlock x:Name="KpiRegistryCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#38BDF8" />
+                            <TextBlock Text="Catálogo" FontSize="10" Foreground="#94A3B8" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#7011192B" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                        <StackPanel>
+                            <TextBlock x:Name="KpiInstalledCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#10B981" />
+                            <TextBlock Text="Instalados" FontSize="10" Foreground="#94A3B8" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#7011192B" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                        <StackPanel>
+                            <TextBlock x:Name="KpiReposCount" Text="1" FontSize="16" FontWeight="Bold" Foreground="#C084FC" />
+                            <TextBlock Text="Repos" FontSize="10" Foreground="#94A3B8" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Section Segmented Buttons -->
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="TabBtnExplore" Content="🌐 Explorar y Descargar" Click="SwitchSection_Click" Tag="explore" Background="#1E293B" BorderBrush="#00F5D4" />
+                    <Button x:Name="TabBtnInstalled" Content="📦 Módulos Instalados" Click="SwitchSection_Click" Tag="installed" />
+                    <Button x:Name="TabBtnCreator" Content="🛠 Crear, Validar y Publicar" Click="SwitchSection_Click" Tag="creator" />
+                    <Button x:Name="TabBtnRepos" Content="🔗 Repositorios &amp; CLI" Click="SwitchSection_Click" Tag="repos" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2. Download Progress Banner -->
+        <Border x:Name="DownloadBanner" Grid.Row="1" Visibility="Collapsed" Background="#C00E1B33" BorderBrush="#38BDF8" BorderThickness="0,0,0,1" Padding="20,8">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="6">
+                <TextBlock x:Name="DownloadStatusText" Text="Descargando paquete..." FontSize="12" Foreground="#38BDF8" FontWeight="SemiBold" />
+                <TextBlock x:Name="DownloadPercentText" Grid.Column="1" Text="0%" FontSize="12" FontFamily="Consolas" Foreground="#00F5D4" />
+                <ProgressBar x:Name="DownloadProgressBar" Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="100" Value="0" Foreground="#00F5D4" />
+            </Grid>
+        </Border>
+
+        <!-- 3. Active Section Content -->
+        <Grid Grid.Row="2">
+
+            <!-- SECTION A: EXPLORE & DOWNLOAD -->
+            <Grid x:Name="ExplorePanel" RowDefinitions="Auto,*" Padding="18,14" RowSpacing="12">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                    <TextBox
+                        x:Name="SearchRegistryBox"
+                        PlaceholderText="Buscar módulo por nombre, autor o descripción (ej: loopize++, csid, math-3d)..."
+                        TextChanged="SearchRegistryBox_TextChanged" />
+
+                    <ComboBox x:Name="LanguageFilterCombo" Grid.Column="1" SelectedIndex="0" Width="150" SelectionChanged="LanguageFilterCombo_SelectionChanged">
+                        <ComboBoxItem Content="Todos los lenguajes" Tag="all" />
+                        <ComboBoxItem Content="Híbrido 4L" Tag="hybrid" />
+                        <ComboBoxItem Content="Looping (.loop)" Tag="loop" />
+                        <ComboBoxItem Content="C++17 (.hpp)" Tag="cpp" />
+                        <ComboBoxItem Content="Python PyLoop" Tag="python" />
+                        <ComboBoxItem Content="Node / Web" Tag="node" />
+                        <ComboBoxItem Content="Component 2 (.c2)" Tag="c2" />
+                    </ComboBox>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                        <TextBox x:Name="DirectInstallBox" Width="190" PlaceholderText="Nombre exacto a descargar..." />
+                        <Button Content="⬇ Descargar" Click="BtnDirectInstall_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" />
+                    </StackPanel>
+
+                    <Button Grid.Column="3" Click="BtnRefreshRegistry_Click" ToolTipService.ToolTip="Recargar catálogo">
+                        <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                    </Button>
+                </Grid>
+
+                <GridView
+                    x:Name="ModulesGridView"
+                    Grid.Row="1"
+                    SelectionMode="None">
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="models:SmileModuleItem">
+                            <Border
+                                Width="355"
+                                Height="205"
+                                Margin="0,0,10,10"
+                                Padding="14"
+                                CornerRadius="12"
+                                Background="#980B111E"
+                                BorderBrush="{StaticResource CsBorderBrush}"
+                                BorderThickness="1">
+                                <Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="8">
+                                    <!-- Top Row -->
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                        <StackPanel>
+                                            <TextBlock Text="{x:Bind Name}" FontSize="15" FontWeight="Bold" FontFamily="Consolas" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{x:Bind AuthorDisplay}" FontSize="11" Foreground="#38BDF8" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top">
+                                            <Border Background="{x:Bind LanguageBrush}" CornerRadius="5" Padding="6,2">
+                                                <TextBlock Text="{x:Bind LanguageLabel}" FontSize="9.5" FontWeight="Bold" Foreground="#030508" />
+                                            </Border>
+                                            <Border Background="#20C084FC" BorderBrush="#60C084FC" BorderThickness="1" CornerRadius="5" Padding="6,2">
+                                                <TextBlock Text="{x:Bind VersionTag}" FontSize="9.5" FontFamily="Consolas" Foreground="#C084FC" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Description -->
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        Text="{x:Bind Description}"
+                                        FontSize="12"
+                                        Foreground="#CBD5E1"
+                                        TextWrapping="Wrap"
+                                        TextTrimming="CharacterEllipsis"
+                                        MaxLines="3" />
+
+                                    <!-- Meta -->
+                                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{x:Bind SourceLabel}" FontSize="10.5" Foreground="#64748B" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind DownloadsDisplay}" FontSize="10.5" Foreground="#94A3B8" FontFamily="Consolas" />
+                                    </Grid>
+
+                                    <!-- Actions -->
+                                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                                        <Button
+                                            Content="{x:Bind InstallButtonText, Mode=OneWay}"
+                                            Tag="{x:Bind Name}"
+                                            Click="BtnDownloadCard_Click"
+                                            HorizontalAlignment="Stretch"
+                                            Background="#0284C7"
+                                            Foreground="White"
+                                            FontSize="12"
+                                            FontWeight="SemiBold" />
+                                        <Button Grid.Column="1" Content="👁" Tag="{x:Bind Name}" Click="BtnInspectCard_Click" ToolTipService.ToolTip="Inspeccionar paquete y orígenes" />
+                                        <Button Grid.Column="2" Content="📋" Tag="{x:Bind Name}" Click="BtnCopyCliCard_Click" ToolTipService.ToolTip="Copiar comando smiledev" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+            </Grid>
+
+            <!-- SECTION B: INSTALLED MODULES -->
+            <Grid x:Name="InstalledPanel" Visibility="Collapsed" RowDefinitions="Auto,*" Padding="18,14" RowSpacing="12">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <TextBlock Text="Módulos instalados localmente (./modules) y globales (~/.smiledev/modules)" VerticalAlignment="Center" Foreground="#CBD5E1" FontWeight="SemiBold" />
+                    <Button Grid.Column="1" Content="⬇ Actualizar Locales" Click="BtnUpdateAllLocal_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" />
+                    <Button Grid.Column="2" Content="↻ Refrescar" Click="BtnRefreshInstalled_Click" />
+                </Grid>
+
+                <ListView x:Name="InstalledModulesList" Grid.Row="1" SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:InstalledModuleItem">
+                            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,8">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <StackPanel Spacing="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontSize="15" FontFamily="Consolas" Foreground="#00F5D4" />
+                                            <TextBlock Text="{x:Bind Version}" FontSize="12" Foreground="#C084FC" VerticalAlignment="Center" FontFamily="Consolas" />
+                                            <Border Background="#1A38BDF8" CornerRadius="4" Padding="6,1">
+                                                <TextBlock Text="{x:Bind Language}" FontSize="10" Foreground="#38BDF8" FontFamily="Consolas" />
+                                            </Border>
+                                            <Border Background="#1A10B981" CornerRadius="4" Padding="6,1">
+                                                <TextBlock Text="{x:Bind ScopeLabel}" FontSize="10" Foreground="#10B981" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{x:Bind Description}" FontSize="12" Foreground="#CBD5E1" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind InstallPath}" FontSize="11" Foreground="#64748B" FontFamily="Consolas" />
+                                        <TextBlock Text="{x:Bind MissingDependenciesSummary}" FontSize="11" Foreground="#FBBF24" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Button Content="Abrir IDE" Tag="{x:Bind InstallPath}" Click="BtnOpenInstalledInIde_Click" FontSize="12" />
+                                        <Button Content="Pack .tar.gz" Tag="{x:Bind InstallPath}" Click="BtnPackInstalled_Click" FontSize="12" />
+                                        <Button Content="Actualizar" Tag="{x:Bind Name}" Click="BtnUpdateSingleInstalled_Click" FontSize="12" />
+                                        <Button Content="Eliminar" Tag="{x:Bind Name}" Click="BtnUninstallModule_Click" Background="#45101E" Foreground="#F43F5E" FontSize="12" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <!-- SECTION C: CREATOR / VALIDATOR / PUBLISHER -->
+            <ScrollViewer x:Name="CreatorPanel" Visibility="Collapsed" Padding="18,14">
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="16" MaxWidth="1280">
+                    <!-- Left Form -->
+                    <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Crear / Publicar Módulo Looping" FontSize="16" FontWeight="Bold" Foreground="#00F5D4" />
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <TextBox x:Name="PubNameBox" Header="Nombre (minúsculas)" Text="mi-util-quantum" TextChanged="CreatorField_Changed" />
+                                <TextBox x:Name="PubVersionBox" Grid.Column="1" Header="Versión SemVer" Text="1.0.0" TextChanged="CreatorField_Changed" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <ComboBox x:Name="PubLangCombo" Header="Lenguaje" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="PubLangCombo_SelectionChanged">
+                                    <ComboBoxItem Content="loop" />
+                                    <ComboBoxItem Content="cpp" />
+                                    <ComboBoxItem Content="python" />
+                                    <ComboBoxItem Content="node" />
+                                    <ComboBoxItem Content="c2" />
+                                    <ComboBoxItem Content="hybrid" />
+                                </ComboBox>
+                                <TextBox x:Name="PubEntryBox" Grid.Column="1" Header="Punto de Entrada" Text="main.loop" TextChanged="CreatorField_Changed" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <TextBox x:Name="PubAuthorBox" Header="Autor / CS ID" Text="Coki Developer" TextChanged="CreatorField_Changed" />
+                                <TextBox x:Name="PubLicenseBox" Grid.Column="1" Header="Licencia" Text="MIT" TextChanged="CreatorField_Changed" />
+                            </Grid>
+
+                            <TextBox x:Name="PubDescBox" Header="Descripción" Text="Módulo personalizado creado desde hiOP WinUI 3." TextChanged="CreatorField_Changed" />
+
+                            <TextBox
+                                x:Name="PubCodeBox"
+                                Header="Código del Entry Point"
+                                AcceptsReturn="True"
+                                MinHeight="170"
+                                FontFamily="Cascadia Code, Consolas"
+                                FontSize="12" />
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="📁 Crear en ./modules" Click="BtnCreateLocalModule_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" />
+                                <Button Content="☁ Publicar en LoopModules" Click="BtnPublishModule_Click" Background="#4F46E5" Foreground="White" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Right Live Validator -->
+                    <Border Grid.Column="1" Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Vista Previa smile.json &amp; Validador" FontSize="16" FontWeight="Bold" Foreground="#C084FC" />
+                                <Border x:Name="CreatorValidBadge" Grid.Column="1" Background="#2010B981" CornerRadius="6" Padding="8,2">
+                                    <TextBlock x:Name="CreatorValidBadgeText" Text="LISTO ✔" FontSize="11" FontWeight="Bold" Foreground="#10B981" />
+                                </Border>
+                            </Grid>
+
+                            <TextBox
+                                x:Name="LiveManifestPreviewBox"
+                                IsReadOnly="True"
+                                AcceptsReturn="True"
+                                MinHeight="220"
+                                FontFamily="Cascadia Code, Consolas"
+                                FontSize="12" />
+
+                            <Border Background="#70050811" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <TextBlock x:Name="ValidationResultText" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- SECTION D: REPOSITORIES & SMILEDEV CLI -->
+            <Grid x:Name="ReposPanel" Visibility="Collapsed" RowDefinitions="Auto,*,Auto" Padding="18,14" RowSpacing="12">
+                <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <TextBox x:Name="AddRepoBox" PlaceholderText="Añadir repositorio HTTP, GitHub o carpeta local (ej: https://repo.com/modules o https://github.com/user/repo)..." />
+                        <Button Grid.Column="1" Content="+ Añadir Repositorio" Click="BtnAddRepo_Click" Background="#00F5D4" Foreground="#030508" FontWeight="Bold" />
+                    </Grid>
+                </Border>
+
+                <ListView x:Name="ReposListView" Grid.Row="1" SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:RepoSourceItem">
+                            <Border Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,6">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <StackPanel Spacing="2">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{x:Bind RepoType}" FontWeight="Bold" Foreground="#38BDF8" FontSize="13" />
+                                            <TextBlock Text="{x:Bind StatusSummary}" Foreground="#10B981" FontSize="11" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{x:Bind Url}" FontFamily="Consolas" FontSize="12" Foreground="#CBD5E1" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Quitar" Tag="{x:Bind Url}" Click="BtnRemoveRepo_Click" IsEnabled="{x:Bind CanRemove}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <Border Grid.Row="2" Background="#900B111E" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                        <TextBlock Text="smiledev" FontFamily="Consolas" FontWeight="Bold" Foreground="#00F5D4" VerticalAlignment="Center" />
+                        <TextBox x:Name="CliInputBox" Grid.Column="1" PlaceholderText="Ejecuta un comando directo: install loop-core-utils | search quantum | doctor | version | list-repos" FontFamily="Consolas" />
+                        <Button Grid.Column="2" Content="▶ Ejecutar CLI" Click="BtnRunCli_Click" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- 4. Bottom Smiledev Activity Console -->
+        <Border Grid.Row="3" Height="135" Background="#E0050811" BorderBrush="{StaticResource CsBorderBrush}" BorderThickness="0,1,0,0" Padding="14,8">
+            <Grid RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="BITÁCORA SMILEDEV &amp; DESCARGAS" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" />
+                    <Button Grid.Column="1" Content="Limpiar" FontSize="10.5" Padding="8,2" Click="BtnClearSmileLogs_Click" />
+                </Grid>
+                <ScrollViewer x:Name="SmileLogScroll" Grid.Row="1">
+                    <TextBox
+                        x:Name="SmileLogBox"
+                        IsReadOnly="True"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        FontFamily="Cascadia Code, Consolas"
+                        FontSize="11.5" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
