@@ -37,7 +37,7 @@ case "$CHANNEL_LC" in
         VERSION="1.1.2A"
         CH_KEY="alpha"
         TAR_NAME="looping-v1.1A-darwin-universal.tar.gz"
-        TARBALL_SHA256="6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+        TARBALL_SHA256="f311e4e3651438748c26cc10f43bba8f1055897727526a06b3d58edd64cd9973"
         ;;
     omega|rc|release-candidate)
         BRAND_NAME="Omega Looping"
@@ -121,6 +121,9 @@ fi
 echo -e "⚙️ Extracting binaries..."
 tar -xzf "$TMP_TAR" -C "$TMP_DIR"
 chmod 755 "$TMP_DIR/looping" "$TMP_DIR/smiledev"
+if [ -f "$TMP_DIR/looping-exp" ]; then
+    chmod 755 "$TMP_DIR/looping-exp"
+fi
 
 NEED_SUDO=false
 if [ ! -w "$TARGET_DIR" ]; then
@@ -135,12 +138,20 @@ if [ "$NEED_SUDO" = true ]; then
     sudo ln -sf "$TARGET_DIR/looping" "$TARGET_DIR/ruuping" 2>/dev/null || true
     sudo cp "$TMP_DIR/smiledev" "$TARGET_DIR/smiledev"
     sudo chmod 755 "$TARGET_DIR/smiledev"
+    if [ -f "$TMP_DIR/looping-exp" ]; then
+        sudo cp "$TMP_DIR/looping-exp" "$TARGET_DIR/looping-exp"
+        sudo chmod 755 "$TARGET_DIR/looping-exp"
+    fi
 else
     cp "$TMP_DIR/looping" "$TARGET_DIR/looping"
     chmod 755 "$TARGET_DIR/looping"
     ln -sf "$TARGET_DIR/looping" "$TARGET_DIR/ruuping" 2>/dev/null || true
     cp "$TMP_DIR/smiledev" "$TARGET_DIR/smiledev"
     chmod 755 "$TARGET_DIR/smiledev"
+    if [ -f "$TMP_DIR/looping-exp" ]; then
+        cp "$TMP_DIR/looping-exp" "$TARGET_DIR/looping-exp"
+        chmod 755 "$TARGET_DIR/looping-exp"
+    fi
 fi
 
 rm -rf "$TMP_DIR"
@@ -156,6 +167,10 @@ if [ -x "$TARGET_DIR/looping" ]; then
     echo -n "  • Engine:   "
     LOOPING_CHANNEL="$CH_KEY" "$TARGET_DIR/looping" --version | head -n1
 fi
+if [ -x "$TARGET_DIR/looping-exp" ]; then
+    echo -n "  • Exp. ASM: "
+    "$TARGET_DIR/looping-exp" --version | head -n1
+fi
 if [ -x "$TARGET_DIR/smiledev" ]; then
     echo -n "  • smiledev: "
     "$TARGET_DIR/smiledev" version --channel="$CH_KEY"
@@ -166,6 +181,7 @@ echo -e "${C_BOLD}QUICK START:${C_RESET}"
 echo -e "  ${C_CYAN}looping${C_RESET}                        Interactive REPL (Prod v1.1.2 / Arch 3.1A)"
 echo -e "  ${C_CYAN}looping run <file.loop>${C_RESET}        Execute a 2D/3D .loop script (-i for persistent)"
 echo -e "  ${C_CYAN}looping preview3d <file.loop>${C_RESET}  TrueColor Z-Buffer 3D terminal preview"
-echo -e "  ${C_CYAN}looping test${C_RESET}                   Run native test suite (78/78 tests)"
+echo -e "  ${C_CYAN}looping --exp --serve 8787${C_RESET}     Alpha! Zero-dependency Asm+ObjC+C HTTP server (macOS)"
+echo -e "  ${C_CYAN}looping test${C_RESET}                   Run native test suite (80/80 tests)"
 echo -e "  ${C_CYAN}smiledev upgrade --alpha${C_RESET}       Switch channel (prod [1.1.2] | omega [RC] | alpha [1.1.2A])"
 echo ""

@@ -1,22 +1,25 @@
 class SmiledevAlpha < Formula
-  desc "Alpha! 1.1A (Super Experimental) package manager for Looping v1.1 (Arch 3.0A)"
-  homepage "https://cokistudios.github.io"
-  version "1.1A"
+  desc "Alpha! 1.1.2A (Super Experimental) package manager & Asm+ObjC+C micro-runtime for Looping (Arch 3.1A)"
+  homepage "https://engine.cokistudios.com"
+  version "1.1.2A"
   version_scheme 1
   license "MIT"
 
-  url "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz"
+  url "https://engine.cokistudios.com/looping-v1.1A-darwin-universal.tar.gz"
+  mirror "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz"
   mirror "https://github.com/CokiStudios/engine/releases/download/v1.1/looping-v1.1A-darwin-universal.tar.gz"
   mirror "https://github.com/CokiStudios/cokistudios.github.io/releases/download/v1.1/looping-v1.1A-darwin-universal.tar.gz"
-  sha256 "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+  sha256 "f311e4e3651438748c26cc10f43bba8f1055897727526a06b3d58edd64cd9973"
 
   def install
     libexec.install "smiledev"
     (bin/"smiledev-alpha").write_env_script libexec/"smiledev", LOOPING_CHANNEL: "alpha"
+    bin.install "looping-exp" if File.exist?("looping-exp")
   end
 
   test do
-    assert_match "v1.1A", shell_output("#{bin}/smiledev-alpha version")
+    assert_match "1.1.2A", shell_output("#{bin}/smiledev-alpha version")
+    assert_match "PASS", shell_output("#{bin}/looping-exp --test") if File.exist?(bin/"looping-exp")
   end
 end
 

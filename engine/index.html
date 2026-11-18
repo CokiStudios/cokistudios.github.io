@@ -460,7 +460,7 @@
         <div class="hero">
             <span class="badge-ver" style="margin-bottom: 14px;"><span class="badge-dot"></span> Looping v1.1.2 • Alpha! 1.1.2A • Arch 3.1A (Windows x64 DX11 / macOS / Linux / WebAssembly)</span>
             <h1>Looping Engine &amp; smiledev</h1>
-            <p>El motor híbrido C++17 2D/3D de alto rendimiento para <strong>Windows x64 (DirectX 11 + Direct2D)</strong>, <strong>macOS Universal</strong>, <strong>Linux</strong> y la Web vía <strong>C++17 WebAssembly</strong> (<code>looping_wasm.wasm</code>). Incluye ventanas dinámicas nativas sin Python, <code>LoopNativeWindow</code> con <code>pygame</code> + réplica <code>_PygameCompat</code>, canales oficiales (<strong>Looping</strong> Prod v1.1.2, <strong>Omega Looping</strong> RC y <strong>Alpha! 1.1.2A</strong>), 78/78 pruebas nativas verificadas y gestor <code>smiledev</code>.</p>
+            <p>El motor híbrido C++17 2D/3D de alto rendimiento para <strong>Windows x64 (DirectX 11 + Direct2D)</strong>, <strong>macOS Universal (Cocoa + Objective-C + Assembly)</strong>, <strong>Linux</strong> y la Web vía <strong>C++17 WebAssembly</strong> (<code>looping_wasm.wasm</code>). Incluye ventanas dinámicas nativas sin Python, micro-runtime experimental <code>looping-exp</code> (Assembly + ObjC + C11 cero dependencias en Alpha!), canales oficiales (<strong>Looping</strong> Prod v1.1.2, <strong>Omega Looping</strong> RC y <strong>Alpha! 1.1.2A</strong>), 80/80 pruebas nativas verificadas y gestor <code>smiledev</code>.</p>
         </div>
 
         <div class="install-box">
@@ -522,7 +522,7 @@
                         <h4 style="color: var(--pink);">Alpha! 1.1.2A (SmileDev)</h4>
                         <span style="font-size:10px; background:rgba(244,63,94,0.15); color:#f43f5e; padding:2px 7px; border-radius:4px; font-family:monospace;">SUPER EXPERIMENTAL • v1.1.2A</span>
                     </div>
-                    <p style="margin-bottom:10px;">Canal Super Experimental para <code>smiledev</code> y <code>Looping</code> con DirectX 11 dinámico, Metal 4, terminal persistente (<code>-i</code>), shaders Quantum y APIs Arch 3.1A.</p>
+                    <p style="margin-bottom:10px;">Canal Super Experimental con <code>looping-exp</code> (Assembly + <code>objc_msgSend</code> + C11 cero dependencias para <code>--exp-serve</code> y ventanas Cocoa), Cocoa+ASM y DirectX 11 dinámico.</p>
                     <button class="btn-copy" style="margin-left:0; width:100%; font-family:monospace; font-size:0.78rem;" onclick="copySnippet('smiledev upgrade --alpha', this)">smiledev upgrade --alpha</button>
                 </div>
             </div>
@@ -567,14 +567,14 @@
                         <span class="card-icon">📦</span>
                         <div>
                             <h3 class="card-title">Universal Tarball</h3>
-                            <span style="font-size: 0.78rem; color: var(--aqua); font-family: 'JetBrains Mono';">v1.1 / Alpha! 1.1A (Arch 3.0A) • 1215 KB</span>
+                            <span style="font-size: 0.78rem; color: var(--aqua); font-family: 'JetBrains Mono';">v1.1 / Alpha! 1.1.2A (Arch 3.1A) • 1.7 MB</span>
                         </div>
                     </div>
-                    <p class="card-sub">Contiene los binarios universales de <code>looping</code> v1.1 y el gestor <code>smiledev</code> (v1.1 &amp; Alpha! 1.1A) para Apple Silicon &amp; Intel.</p>
+                    <p class="card-sub">Contiene <code>looping</code>, <code>smiledev</code> y el nuevo micro-runtime <strong>Alpha! Asm+ObjC+C</strong> (<code>looping-exp</code> — cero dependencias para servir y crear ventanas nativas) para Apple Silicon &amp; Intel.</p>
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <a href="./looping-v1.1-darwin-universal.tar.gz" class="btn-download" style="flex:1; min-width:140px;">Descargar .tar.gz (v1.1)</a>
-                    <a href="./looping-v1.1A-darwin-universal.tar.gz" class="btn-download" style="flex:1; min-width:140px; border-color:rgba(244,63,94,0.45);">Alpha! 1.1A (.tar.gz)</a>
+                    <a href="./looping-v1.1A-darwin-universal.tar.gz" class="btn-download" style="flex:1; min-width:140px; border-color:rgba(244,63,94,0.45);">Alpha! 1.1.2A (.tar.gz)</a>
                 </div>
             </div>
 
@@ -749,19 +749,24 @@
                         <td><code>637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d</code></td>
                     </tr>
                     <tr>
-                        <td><strong>looping-v1.1A-darwin-universal.tar.gz (Alpha! 1.1A)</strong></td>
+                        <td><strong>looping-v1.1A-darwin-universal.tar.gz (Alpha! 1.1.2A • Asm+ObjC+C)</strong></td>
                         <td>SHA-256</td>
-                        <td><code>6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d</code></td>
+                        <td><code>f311e4e3651438748c26cc10f43bba8f1055897727526a06b3d58edd64cd9973</code></td>
                     </tr>
                     <tr>
                         <td><strong>bin/looping (Universal Mach-O)</strong></td>
                         <td>SHA-256</td>
-                        <td><code>40b6f467e85ec5c8061fd2ddce7bc5194bc44b57e1e9cb381ff7325282f409cf</code></td>
+                        <td><code>30eae6ca985d05e8e392ed45fd039472409be1e223e5cd973c43f2f8c387dbb8</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>bin/looping-exp (Alpha! Assembly + ObjC + C11 Zero-Dep)</strong></td>
+                        <td>SHA-256</td>
+                        <td><code>218296cb6dca019e0aee886f30422464a2dd42b7fb06b3fb933c9eca1a84a913</code></td>
                     </tr>
                     <tr>
                         <td><strong>bin/smiledev v1.1.2 / Alpha! 1.1.2A (CLI)</strong></td>
                         <td>SHA-256</td>
-                        <td><code>fe5a23ef68290be09ae2eb30431131a59cc4a863da7cc7d16634b5463d9f88a7</code></td>
+                        <td><code>e69bd4a81895c2f5a48228ecff833f23b49f26e19d4ca0211eb287b6b633aed5</code></td>
                     </tr>
                     <tr>
                         <td><strong>Instalar Looping.pkg</strong></td>

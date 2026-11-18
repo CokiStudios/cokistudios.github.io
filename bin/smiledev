@@ -8,9 +8,12 @@
 
 set -e
 
-SMILE_VERSION="1.1"
-SMILE_ALPHA_VERSION="1.1A"
-SMILE_ARCH_VERSION="3.0A"
+SMILE_VERSION="1.1.2"
+SMILE_ALPHA_VERSION="1.1.2A"
+SMILE_ARCH_VERSION="3.1A"
+if [ -z "${HOME:-}" ] && [ -n "${USERPROFILE:-}" ]; then
+    HOME="$USERPROFILE"
+fi
 CONFIG_DIR="$HOME/.smiledev"
 GLOBAL_MODULES_DIR="$CONFIG_DIR/modules"
 LOCAL_MODULES_DIR="$(pwd)/modules"
@@ -18,6 +21,15 @@ CONFIG_FILE="$CONFIG_DIR/config.json"
 AUTH_FILE="$CONFIG_DIR/auth.json"
 CHANNEL_FILE="$CONFIG_DIR/channel"
 SMILE_CHANNEL="${LOOPING_CHANNEL:-$(cat "$CHANNEL_FILE" 2>/dev/null || echo prod)}"
+
+# Cross-platform Python 3 resolution (Windows Git Bash / MSYS2 uses python or py -3)
+if ! command -v python3 >/dev/null 2>&1 || ! python3 -c "import sys" >/dev/null 2>&1; then
+    if command -v python >/dev/null 2>&1 && python -c "import sys" >/dev/null 2>&1; then
+        python3() { python "$@"; }
+    elif command -v py >/dev/null 2>&1 && py -3 -c "import sys" >/dev/null 2>&1; then
+        python3() { py -3 "$@"; }
+    fi
+fi
 
 SUPABASE_URL="https://ayxklxciqgqeyuzkziov.supabase.co"
 SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5eGtseGNpcWdxZXl1emt6aW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTY4MzIsImV4cCI6MjEwNjc5MjgzMn0.03wUc8blB-cNq9F8Nz5o88GShtMIXeHsNYqmeK_N-hI"
@@ -55,7 +67,7 @@ fi
 resolve_channel_brand() {
     local ch="$(echo "${1:-$SMILE_CHANNEL}" | tr '[:upper:]' '[:lower:]')"
     case "$ch" in
-        alpha|alpha!|1.1a|alpha-1.1a|experimental|super-experimental)
+        alpha|alpha!|1.1a|alpha-1.1a|1.1.2a|alpha-1.1.2a|experimental|super-experimental)
             echo "Alpha! SmileDev|Super Experimental|${SMILE_ALPHA_VERSION}|alpha"
             ;;
         omega|rc|release-candidate)
@@ -123,9 +135,9 @@ cmd_help() {
     echo -e "  ${C_AQUA}version${C_RESET}                Display current version & release channel nomenclature"
     echo ""
     echo -e "${C_BOLD}RELEASE CHANNELS:${C_RESET}"
-    echo -e "  • ${C_GREEN}Looping${C_RESET}        (prod / stable) : Official Production Release (v1.1 / Arch 3.0A)"
-    echo -e "  • ${C_YELLOW}Omega Looping${C_RESET}  (omega / rc)    : Release Candidate (RC) builds (v1.1-omega)"
-    echo -e "  • ${C_PINK}Alpha! 1.1A${C_RESET}    (alpha)         : Super Experimental builds (Alpha! SmileDev & Looping)"
+    echo -e "  • ${C_GREEN}Looping${C_RESET}        (prod / stable) : Official Production Release (v1.1.2 / Arch 3.1A)"
+    echo -e "  • ${C_YELLOW}Omega Looping${C_RESET}  (omega / rc)    : Release Candidate (RC) builds (v1.1.2-omega)"
+    echo -e "  • ${C_PINK}Alpha! 1.1.2A${C_RESET}  (alpha)         : Super Experimental builds (Alpha! SmileDev & Looping)"
     echo ""
     echo -e "${C_BOLD}EXAMPLES:${C_RESET}"
     echo -e "  smiledev install loop-core-utils"
@@ -2130,7 +2142,7 @@ cmd_upgrade() {
             --force|-f) force_flag=true ;;
             --channel=*) req_channel="${1#*=}" ;;
             --channel|-c) shift || true; req_channel="${1:-prod}" ;;
-            --alpha|--alpha!|--1.1a|--1.1A) req_channel="alpha" ;;
+            --alpha|--alpha!|--1.1a|--1.1A|--1.1.2a|--1.1.2A) req_channel="alpha" ;;
             --omega|--rc) req_channel="omega" ;;
             --prod|--stable) req_channel="prod" ;;
         esac
@@ -2146,11 +2158,15 @@ cmd_upgrade() {
     echo -e "${C_CYAN}═══════════════════════════════════════════════════════════════${C_RESET}"
     echo -e "${C_BOLD}🚀 COKI STUDIOS ENGINE & SMILEDEV AUTO-UPDATER [$ch_title — $ch_tier]${C_RESET}"
     echo -e "${C_CYAN}═══════════════════════════════════════════════════════════════${C_RESET}"
-    echo -e "${C_DIM}Checking for $ch_title ($ch_key) updates on repo.cokistudios.com/engine...${C_RESET}"
+    echo -e "${C_DIM}Checking for $ch_title ($ch_key) updates on engine.cokistudios.com...${C_RESET}"
 
     local manifest=""
-    local manifest_url="https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/engine/latest.json"
+    local manifest_url="https://engine.cokistudios.com/latest.json"
     manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "$manifest_url" 2>/dev/null || true)
+
+    if [ -z "$manifest" ]; then
+        manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/engine/latest.json" 2>/dev/null || true)
+    fi
 
     if [ -z "$manifest" ]; then
         manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "https://repo.cokistudios.com/engine/latest.json" 2>/dev/null || true)
@@ -2256,9 +2272,20 @@ except Exception as e:
     tmp_dir=$(mktemp -d /tmp/smiledev-upgrade-XXXXXX)
     local tmp_tar="$tmp_dir/engine.tar.gz"
 
+    local tar_basename
+    tar_basename=$(basename "$tarball_url")
     local download_success=false
     # 1. Try local workspace package first if available
-    if [ -n "$repo_root" ] && [ -f "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
+    if [ -n "$repo_root" ] && [ -f "$repo_root/engine/$tar_basename" ]; then
+        cp "$repo_root/engine/$tar_basename" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/dist/$tar_basename" ]; then
+        cp "$repo_root/dist/$tar_basename" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/$tar_basename" ]; then
+        cp "$repo_root/public/engine/$tar_basename" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
         cp "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
         download_success=true
     elif [ -n "$repo_root" ] && [ -f "$repo_root/dist/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
@@ -2271,13 +2298,11 @@ except Exception as e:
 
     # 2. Try direct GitHub raw / CDN / Engine release stream
     if [ "$download_success" != true ]; then
-        local tar_basename
-        tar_basename=$(basename "$tarball_url")
         local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/${tar_basename}"
         local gh_engine_rel_url="https://github.com/CokiStudios/engine/releases/download/v1.1/${tar_basename}"
-        if curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null; then
+        if curl -fsSL -H "Cache-Control: no-cache" "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
-        elif curl -fsSL -H "Cache-Control: no-cache" "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
+        elif curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
         elif curl -fsSL -L -H "Cache-Control: no-cache" "$gh_engine_rel_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
@@ -2323,6 +2348,9 @@ except Exception as e:
     fi
 
     chmod 755 "$tmp_dir/looping" "$tmp_dir/smiledev"
+    if [ -f "$tmp_dir/looping-exp" ]; then
+        chmod 755 "$tmp_dir/looping-exp"
+    fi
 
     local target_dir="/usr/local/bin"
     if [ -n "$looping_bin" ]; then
@@ -2344,12 +2372,20 @@ except Exception as e:
         sudo ln -sf "$target_dir/looping" "$target_dir/ruuping" 2>/dev/null || true
         sudo cp "$tmp_dir/smiledev" "$target_dir/smiledev"
         sudo chmod 755 "$target_dir/smiledev"
+        if [ -f "$tmp_dir/looping-exp" ]; then
+            sudo cp "$tmp_dir/looping-exp" "$target_dir/looping-exp"
+            sudo chmod 755 "$target_dir/looping-exp"
+        fi
     else
         cp "$tmp_dir/looping" "$target_dir/looping"
         chmod 755 "$target_dir/looping"
         ln -sf "$target_dir/looping" "$target_dir/ruuping" 2>/dev/null || true
         cp "$tmp_dir/smiledev" "$target_dir/smiledev"
         chmod 755 "$target_dir/smiledev"
+        if [ -f "$tmp_dir/looping-exp" ]; then
+            cp "$tmp_dir/looping-exp" "$target_dir/looping-exp"
+            chmod 755 "$target_dir/looping-exp"
+        fi
     fi
 
     local self_bin
@@ -2363,6 +2399,10 @@ except Exception as e:
             cp "$tmp_dir/looping" "$self_dir/looping"
             chmod 755 "$self_dir/looping"
         fi
+        if [ -f "$tmp_dir/looping-exp" ] && [ -w "$self_dir" ]; then
+            cp "$tmp_dir/looping-exp" "$self_dir/looping-exp"
+            chmod 755 "$self_dir/looping-exp"
+        fi
     fi
 
     for extra_dir in "$HOME/.local/bin" "/opt/homebrew/bin"; do
@@ -2374,6 +2414,10 @@ except Exception as e:
                     ln -sf "$extra_dir/looping" "$extra_dir/ruuping" 2>/dev/null || true
                     cp -f "$tmp_dir/smiledev" "$extra_dir/smiledev" 2>/dev/null || true
                     chmod 755 "$extra_dir/smiledev" 2>/dev/null || true
+                    if [ -f "$tmp_dir/looping-exp" ]; then
+                        cp -f "$tmp_dir/looping-exp" "$extra_dir/looping-exp" 2>/dev/null || true
+                        chmod 755 "$extra_dir/looping-exp" 2>/dev/null || true
+                    fi
                     echo -e "   ${C_GREEN}✔ Synchronized binaries in:${C_RESET} $extra_dir"
                 fi
             fi
@@ -2393,6 +2437,10 @@ except Exception as e:
         echo -n "• Looping:  "
         LOOPING_CHANNEL="$ch_key" "$target_dir/looping" --version | head -n1
     fi
+    if [ -x "$target_dir/looping-exp" ]; then
+        echo -n "• Exp. ASM: "
+        "$target_dir/looping-exp" --version | head -n1
+    fi
     if [ -x "$target_dir/smiledev" ]; then
         echo -n "• smiledev: "
         "$target_dir/smiledev" version --channel="$ch_key"
@@ -2406,7 +2454,7 @@ cmd_doctor() {
         case "$1" in
             --channel=*) SMILE_CHANNEL="${1#*=}" ;;
             --channel|-c) shift || true; SMILE_CHANNEL="${1:-prod}" ;;
-            --alpha|--alpha!|--1.1a|--1.1A) SMILE_CHANNEL="alpha" ;;
+            --alpha|--alpha!|--1.1a|--1.1A|--1.1.2a|--1.1.2A) SMILE_CHANNEL="alpha" ;;
             --omega|--rc) SMILE_CHANNEL="omega" ;;
             --prod|--stable) SMILE_CHANNEL="prod" ;;
         esac
@@ -2423,18 +2471,36 @@ cmd_doctor() {
     echo -e "  ${C_GREEN}✔${C_RESET} smiledev CLI      : v$ch_ver ($ch_title — $ch_tier | $0)"
     local lbin
     lbin=$(command -v looping 2>/dev/null || echo "")
-    if [ -z "$lbin" ] && [ -x "./bin/looping" ]; then
-        lbin="./bin/looping"
+    if [ -z "$lbin" ]; then
+        if [ -f "./bin/looping.exe" ]; then
+            lbin="./bin/looping.exe"
+        elif [ -x "./bin/looping" ]; then
+            lbin="./bin/looping"
+        fi
     fi
     if [ -n "$lbin" ]; then
         local lver
-        lver=$("$lbin" --version 2>/dev/null | head -n1)
-        echo -e "  ${C_GREEN}✔${C_RESET} Looping Binary    : $lver ($lbin)"
+        lver=$("$lbin" --version 2>/dev/null | head -n1 || echo "")
+        if [ -z "$lver" ] && [ -f "./bin/looping_cli.mjs" ] && command -v node >/dev/null 2>&1; then
+            lver=$(node "./bin/looping_cli.mjs" --version 2>/dev/null | head -n1 || echo "Looping Engine v1.1")
+        fi
+        echo -e "  ${C_GREEN}✔${C_RESET} Looping Binary    : ${lver:-Looping Engine v1.1} ($lbin)"
     else
         echo -e "  ${C_RED}✘${C_RESET} Looping Binary    : Not found in PATH"
     fi
 
-    if command -v python3 >/dev/null 2>&1; then
+    local expbin
+    expbin=$(command -v looping-exp 2>/dev/null || echo "")
+    if [ -z "$expbin" ] && [ -x "./bin/looping-exp" ]; then
+        expbin="./bin/looping-exp"
+    fi
+    if [ -n "$expbin" ]; then
+        local expver
+        expver=$("$expbin" --version 2>/dev/null | head -n1 || echo "Asm+ObjC+C Zero-Dependency Micro-Runtime")
+        echo -e "  ${C_GREEN}✔${C_RESET} Alpha! Exp. ASM   : $expver ($expbin)"
+    fi
+
+    if python3 -c "import sys" >/dev/null 2>&1; then
         local pyver
         pyver=$(python3 --version 2>&1)
         echo -e "  ${C_GREEN}✔${C_RESET} Python Interop    : $pyver"
@@ -2446,8 +2512,14 @@ cmd_doctor() {
         local cxxver
         cxxver=$(clang++ --version 2>/dev/null | head -n1)
         echo -e "  ${C_GREEN}✔${C_RESET} C++ Toolchain     : $cxxver"
+    elif command -v g++ >/dev/null 2>&1; then
+        local cxxver
+        cxxver=$(g++ --version 2>/dev/null | head -n1)
+        echo -e "  ${C_GREEN}✔${C_RESET} C++ Toolchain     : $cxxver"
+    elif command -v cl.exe >/dev/null 2>&1 || [ -d "/c/Program Files/Microsoft Visual Studio" ]; then
+        echo -e "  ${C_GREEN}✔${C_RESET} C++ Toolchain     : Microsoft Visual C++ (MSVC C++17)"
     else
-        echo -e "  ${C_YELLOW}⚠${C_RESET} C++ Toolchain     : clang++ not found"
+        echo -e "  ${C_YELLOW}⚠${C_RESET} C++ Toolchain     : C++17 compiler not found"
     fi
 
     if command -v brew >/dev/null 2>&1; then
@@ -2619,7 +2691,7 @@ case "$1" in
             case "$1" in
                 --channel=*) SMILE_CHANNEL="${1#*=}" ;;
                 --channel|-c) shift || true; SMILE_CHANNEL="${1:-prod}" ;;
-                --alpha|--alpha!|--1.1a|--1.1A) SMILE_CHANNEL="alpha" ;;
+                --alpha|--alpha!|--1.1a|--1.1A|--1.1.2a|--1.1.2A) SMILE_CHANNEL="alpha" ;;
                 --omega|--rc) SMILE_CHANNEL="omega" ;;
                 --prod|--stable) SMILE_CHANNEL="prod" ;;
             esac

@@ -2906,12 +2906,14 @@ export default {
               smiledev_version: "1.1.2A",
               arch_version: "3.1A",
               tarball_url: "https://engine.cokistudios.com/looping-v1.1A-darwin-universal.tar.gz",
-              tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
+              tarball_sha256: "f311e4e3651438748c26cc10f43bba8f1055897727526a06b3d58edd64cd9973",
+              exp_binary_url: "https://engine.cokistudios.com/looping-exp",
+              exp_binary_sha256: "218296cb6dca019e0aee886f30422464a2dd42b7fb06b3fb933c9eca1a84a913",
               windows_zip_url: "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
               windows_zip_sha256: "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
             }
           },
-          release_notes: "Looping v1.1.2 & smiledev (Prod v1.1.2 / Alpha! 1.1.2A / Arch 3.1A): Dynamic DirectX 11 Windows, Native macOS Cocoa/ASM Windows, Zero-Python py!() Fast-Path, WebAssembly Runtime & 78+ native tests.",
+          release_notes: "Looping v1.1.2 & Alpha! 1.1.2A (Arch 3.1A): Pure Assembly + Objective-C ABI + C11 micro-runtime (looping-exp) in Alpha!, Dynamic DX11 & Cocoa+ASM Windows, Zero-Python py!() Fast-Path, WebAssembly Runtime & 80/80 native tests.",
           tarball_url: "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
           tarball_sha256: "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
           windows_zip_url: "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
@@ -2925,7 +2927,11 @@ export default {
           binaries: {
             looping: {
               url: "https://engine.cokistudios.com/looping",
-              sha256: "c9655eb37a84ff22c7570c3ca218fdfe7eac3fd8c4b0f812dda46a162fbfed72"
+              sha256: "30eae6ca985d05e8e392ed45fd039472409be1e223e5cd973c43f2f8c387dbb8"
+            },
+            looping_exp: {
+              url: "https://engine.cokistudios.com/looping-exp",
+              sha256: "218296cb6dca019e0aee886f30422464a2dd42b7fb06b3fb933c9eca1a84a913"
             },
             looping_exe: {
               url: "https://engine.cokistudios.com/looping.exe",
@@ -2933,11 +2939,11 @@ export default {
             },
             smiledev: {
               url: "https://engine.cokistudios.com/smiledev",
-              sha256: "1a16a9a30a0d7f93ea72020f113904d60930d58b9ab356b384bcd213aaafff72"
+              sha256: "e69bd4a81895c2f5a48228ecff833f23b49f26e19d4ca0211eb287b6b633aed5"
             },
             smiledev_ps1: {
               url: "https://engine.cokistudios.com/smiledev.ps1",
-              sha256: "9d90bb3c17c3197131f8f8460021a3d572a5f540b14fff80381de4ce6cd25dfc"
+              sha256: "0cef3e73bbe02ba48386df5161735145ec2d7ad66f1bb925ec4ed043842a9c53"
             }
           },
           homebrew: {

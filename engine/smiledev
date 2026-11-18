@@ -2158,11 +2158,15 @@ cmd_upgrade() {
     echo -e "${C_CYAN}═══════════════════════════════════════════════════════════════${C_RESET}"
     echo -e "${C_BOLD}🚀 COKI STUDIOS ENGINE & SMILEDEV AUTO-UPDATER [$ch_title — $ch_tier]${C_RESET}"
     echo -e "${C_CYAN}═══════════════════════════════════════════════════════════════${C_RESET}"
-    echo -e "${C_DIM}Checking for $ch_title ($ch_key) updates on repo.cokistudios.com/engine...${C_RESET}"
+    echo -e "${C_DIM}Checking for $ch_title ($ch_key) updates on engine.cokistudios.com...${C_RESET}"
 
     local manifest=""
-    local manifest_url="https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/engine/latest.json"
+    local manifest_url="https://engine.cokistudios.com/latest.json"
     manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "$manifest_url" 2>/dev/null || true)
+
+    if [ -z "$manifest" ]; then
+        manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "https://raw.githubusercontent.com/CokiStudios/cokistudios.github.io/main/engine/latest.json" 2>/dev/null || true)
+    fi
 
     if [ -z "$manifest" ]; then
         manifest=$(curl -fsSL --connect-timeout 5 -H "Cache-Control: no-cache" "https://repo.cokistudios.com/engine/latest.json" 2>/dev/null || true)
@@ -2268,9 +2272,20 @@ except Exception as e:
     tmp_dir=$(mktemp -d /tmp/smiledev-upgrade-XXXXXX)
     local tmp_tar="$tmp_dir/engine.tar.gz"
 
+    local tar_basename
+    tar_basename=$(basename "$tarball_url")
     local download_success=false
     # 1. Try local workspace package first if available
-    if [ -n "$repo_root" ] && [ -f "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
+    if [ -n "$repo_root" ] && [ -f "$repo_root/engine/$tar_basename" ]; then
+        cp "$repo_root/engine/$tar_basename" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/dist/$tar_basename" ]; then
+        cp "$repo_root/dist/$tar_basename" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/public/engine/$tar_basename" ]; then
+        cp "$repo_root/public/engine/$tar_basename" "$tmp_tar"
+        download_success=true
+    elif [ -n "$repo_root" ] && [ -f "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
         cp "$repo_root/engine/looping-v${remote_ver}-darwin-universal.tar.gz" "$tmp_tar"
         download_success=true
     elif [ -n "$repo_root" ] && [ -f "$repo_root/dist/looping-v${remote_ver}-darwin-universal.tar.gz" ]; then
@@ -2283,13 +2298,11 @@ except Exception as e:
 
     # 2. Try direct GitHub raw / CDN / Engine release stream
     if [ "$download_success" != true ]; then
-        local tar_basename
-        tar_basename=$(basename "$tarball_url")
         local gh_direct_url="https://github.com/CokiStudios/cokistudios.github.io/raw/main/engine/${tar_basename}"
         local gh_engine_rel_url="https://github.com/CokiStudios/engine/releases/download/v1.1/${tar_basename}"
-        if curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null; then
+        if curl -fsSL -H "Cache-Control: no-cache" "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
-        elif curl -fsSL -H "Cache-Control: no-cache" "$tarball_url" -o "$tmp_tar" 2>/dev/null; then
+        elif curl -fsSL -H "Cache-Control: no-cache" "$gh_direct_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
         elif curl -fsSL -L -H "Cache-Control: no-cache" "$gh_engine_rel_url" -o "$tmp_tar" 2>/dev/null; then
             download_success=true
@@ -2335,6 +2348,9 @@ except Exception as e:
     fi
 
     chmod 755 "$tmp_dir/looping" "$tmp_dir/smiledev"
+    if [ -f "$tmp_dir/looping-exp" ]; then
+        chmod 755 "$tmp_dir/looping-exp"
+    fi
 
     local target_dir="/usr/local/bin"
     if [ -n "$looping_bin" ]; then
@@ -2356,12 +2372,20 @@ except Exception as e:
         sudo ln -sf "$target_dir/looping" "$target_dir/ruuping" 2>/dev/null || true
         sudo cp "$tmp_dir/smiledev" "$target_dir/smiledev"
         sudo chmod 755 "$target_dir/smiledev"
+        if [ -f "$tmp_dir/looping-exp" ]; then
+            sudo cp "$tmp_dir/looping-exp" "$target_dir/looping-exp"
+            sudo chmod 755 "$target_dir/looping-exp"
+        fi
     else
         cp "$tmp_dir/looping" "$target_dir/looping"
         chmod 755 "$target_dir/looping"
         ln -sf "$target_dir/looping" "$target_dir/ruuping" 2>/dev/null || true
         cp "$tmp_dir/smiledev" "$target_dir/smiledev"
         chmod 755 "$target_dir/smiledev"
+        if [ -f "$tmp_dir/looping-exp" ]; then
+            cp "$tmp_dir/looping-exp" "$target_dir/looping-exp"
+            chmod 755 "$target_dir/looping-exp"
+        fi
     fi
 
     local self_bin
@@ -2375,6 +2399,10 @@ except Exception as e:
             cp "$tmp_dir/looping" "$self_dir/looping"
             chmod 755 "$self_dir/looping"
         fi
+        if [ -f "$tmp_dir/looping-exp" ] && [ -w "$self_dir" ]; then
+            cp "$tmp_dir/looping-exp" "$self_dir/looping-exp"
+            chmod 755 "$self_dir/looping-exp"
+        fi
     fi
 
     for extra_dir in "$HOME/.local/bin" "/opt/homebrew/bin"; do
@@ -2386,6 +2414,10 @@ except Exception as e:
                     ln -sf "$extra_dir/looping" "$extra_dir/ruuping" 2>/dev/null || true
                     cp -f "$tmp_dir/smiledev" "$extra_dir/smiledev" 2>/dev/null || true
                     chmod 755 "$extra_dir/smiledev" 2>/dev/null || true
+                    if [ -f "$tmp_dir/looping-exp" ]; then
+                        cp -f "$tmp_dir/looping-exp" "$extra_dir/looping-exp" 2>/dev/null || true
+                        chmod 755 "$extra_dir/looping-exp" 2>/dev/null || true
+                    fi
                     echo -e "   ${C_GREEN}✔ Synchronized binaries in:${C_RESET} $extra_dir"
                 fi
             fi
@@ -2404,6 +2436,10 @@ except Exception as e:
     if [ -x "$target_dir/looping" ]; then
         echo -n "• Looping:  "
         LOOPING_CHANNEL="$ch_key" "$target_dir/looping" --version | head -n1
+    fi
+    if [ -x "$target_dir/looping-exp" ]; then
+        echo -n "• Exp. ASM: "
+        "$target_dir/looping-exp" --version | head -n1
     fi
     if [ -x "$target_dir/smiledev" ]; then
         echo -n "• smiledev: "
@@ -2451,6 +2487,17 @@ cmd_doctor() {
         echo -e "  ${C_GREEN}✔${C_RESET} Looping Binary    : ${lver:-Looping Engine v1.1} ($lbin)"
     else
         echo -e "  ${C_RED}✘${C_RESET} Looping Binary    : Not found in PATH"
+    fi
+
+    local expbin
+    expbin=$(command -v looping-exp 2>/dev/null || echo "")
+    if [ -z "$expbin" ] && [ -x "./bin/looping-exp" ]; then
+        expbin="./bin/looping-exp"
+    fi
+    if [ -n "$expbin" ]; then
+        local expver
+        expver=$("$expbin" --version 2>/dev/null | head -n1 || echo "Asm+ObjC+C Zero-Dependency Micro-Runtime")
+        echo -e "  ${C_GREEN}✔${C_RESET} Alpha! Exp. ASM   : $expver ($expbin)"
     fi
 
     if python3 -c "import sys" >/dev/null 2>&1; then
