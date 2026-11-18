@@ -518,7 +518,7 @@ class DynamicHTMLWindow extends EventEmitter {
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         main {
             padding: 24px;
-            max-width: 1160px;
+            max-width: 1420px;
             width: 100%;
             margin: 0 auto;
             flex: 1;
@@ -535,6 +535,93 @@ class DynamicHTMLWindow extends EventEmitter {
             padding: 20px;
             backdrop-filter: blur(14px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+        }
+        .game-stage-layout {
+            display: flex;
+            gap: 16px;
+            align-items: stretch;
+        }
+        .ui-inspector-aside {
+            width: 340px;
+            flex-shrink: 0;
+            background: rgba(9, 13, 24, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 540px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .ui-inspector-aside.active {
+            display: flex;
+        }
+        .ui-panel-hdr {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-cyan);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+        .ui-ctl-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .ui-ctl-row label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-sub);
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+        .ui-ctl-row input[type="range"] {
+            width: 100%;
+            accent-color: #00f5d4;
+            cursor: pointer;
+        }
+        .ui-preset-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .ui-preset-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+        }
+        .ui-preset-btn.active {
+            border-color: #00f5d4;
+            color: #ffffff;
+            background: rgba(0, 245, 212, 0.18);
+        }
+        .ui-alg-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+        }
+        .ui-alg-table th, .ui-alg-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: left;
+        }
+        .ui-alg-table tr.over td {
+            color: #fda4af;
+            background: rgba(244, 63, 94, 0.14);
+        }
+        @media (max-width: 980px) {
+            .game-stage-layout { flex-direction: column; }
+            .ui-inspector-aside { width: 100%; max-height: none; }
         }
         .game-header-bar {
             display: flex;
@@ -747,8 +834,11 @@ class DynamicHTMLWindow extends EventEmitter {
                     </div>
                 </div>
 
-                <div class="game-canvas-wrapper">
-                    <canvas id="game-stage-canvas" width="760" height="440"></canvas>
+                <div class="game-stage-layout">
+                    <div class="game-canvas-wrapper" style="flex: 1; min-width: 0;">
+                        <canvas id="game-stage-canvas" width="760" height="440"></canvas>
+                    </div>
+                    <aside class="ui-inspector-aside" id="ui-inspector-aside"></aside>
                 </div>
 
                 <div class="game-action-bar">
@@ -835,6 +925,97 @@ class DynamicHTMLWindow extends EventEmitter {
         });
         window.gameRuntime = runtime;
 
+        const _origExecute = runtime.execute.bind(runtime);
+        runtime.execute = (script) => {
+            const ok = _origExecute(script);
+            buildInspectorUI();
+            return ok;
+        };
+
+        function buildInspectorUI() {
+            const aside = document.getElementById('ui-inspector-aside');
+            if (!aside || !runtime) return;
+            const controls = (runtime.renderQueue || []).filter(e =>
+                e.type === 'slider' || e.type === 'toggle' || e.type === 'progress' || (e.type === 'button' && e.explicitPos === false)
+            );
+            const hasUI = controls.length > 0 || Boolean(runtime.algebraTable) || (runtime.stagePresets && runtime.stagePresets.length > 0);
+            runtime.externalUiHost = hasUI;
+            aside.classList.toggle('active', hasUI);
+            if (!hasUI) { aside.innerHTML = ''; return; }
+
+            let html = '';
+            const hdrTitle = runtime.uiLayout?.header || Object.values(runtime.uiLayout?.panels || {}).slice(-1)[0] || 'Looping UI';
+            html += '<div class="ui-panel-hdr">' + hdrTitle + '</div>';
+            if (runtime.uiLayout?.labels?.length) {
+                html += '<div style="color: var(--text-sub); font-size: 11px;">' + runtime.uiLayout.labels.join(' • ') + '</div>';
+            }
+            if (runtime.stagePresets?.length) {
+                html += '<div class="ui-preset-grid">';
+                runtime.stagePresets.forEach((pr, idx) => {
+                    html += '<button class="ui-preset-btn ' + (idx === runtime.activePresetIdx ? 'active' : '') + '" data-preset="' + idx + '">[' + (idx + 1) + '] ' + pr.label + '</button>';
+                });
+                html += '</div>';
+            }
+            controls.forEach((item, idx) => {
+                if (item.type === 'slider') {
+                    const cur = Number(item.varName && (item.varName in runtime.variables) ? runtime.variables[item.varName] : item.val);
+                    const step = Math.abs(item.max - item.min) <= 10 ? '0.05' : '1';
+                    html += '<div class="ui-ctl-row"><label><span>' + item.label + '</span><span id="ui-sv-' + idx + '">' + cur + '</span></label><input type="range" min="' + item.min + '" max="' + item.max + '" step="' + step + '" value="' + cur + '" data-slider-idx="' + idx + '" /></div>';
+                } else if (item.type === 'toggle') {
+                    const chk = Boolean(item.varName && (item.varName in runtime.variables) ? runtime.variables[item.varName] : item.checked);
+                    html += '<label style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(255,255,255,0.04);border-radius:6px;cursor:pointer;"><span>' + item.label + '</span><input type="checkbox" ' + (chk ? 'checked' : '') + ' data-toggle-idx="' + idx + '" /></label>';
+                } else if (item.type === 'progress') {
+                    const cur = item.rawValExpr ? Number(runtime.evaluateExpression(item.rawValExpr)) : item.val;
+                    const pct = Math.max(0, Math.min(100, (cur / Math.max(1e-6, item.max)) * 100));
+                    html += '<div class="ui-ctl-row"><label><span>' + item.label + '</span><span>' + Math.round(cur) + '/' + item.max + '</span></label><div style="height:6px;background:#1e293b;border-radius:4px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + (item.color || '#38bdf8') + ';"></div></div></div>';
+                } else if (item.type === 'button') {
+                    html += '<button class="ui-btn" style="width:100%;justify-content:center;" data-btn-idx="' + idx + '">' + item.text + '</button>';
+                }
+            });
+            if (runtime.algebraTable) {
+                const t = runtime.algebraTable;
+                html += '<div class="ui-panel-hdr" style="margin-top:4px;color:#c084fc;">' + t.title + ' (≥ ' + t.threshold + ')</div>';
+                html += '<table class="ui-alg-table"><thead><tr><th>Escena</th><th>E</th><th>Hits</th></tr></thead><tbody>';
+                for (const r of t.rows) {
+                    const over = r.hits >= t.threshold ? 'over' : '';
+                    html += '<tr class="' + over + '"><td>' + r.label + '</td><td>' + Math.round(r.energy) + '</td><td>' + r.hits + '</td></tr>';
+                }
+                html += '</tbody></table>';
+            }
+            aside.innerHTML = html;
+
+            aside.querySelectorAll('[data-preset]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    runtime.activatePreset(Number(btn.getAttribute('data-preset')));
+                    buildInspectorUI();
+                });
+            });
+            aside.querySelectorAll('[data-slider-idx]').forEach(inp => {
+                inp.addEventListener('input', () => {
+                    const item = controls[Number(inp.getAttribute('data-slider-idx'))];
+                    const v = Number(inp.value);
+                    item.val = v;
+                    if (item.varName) runtime.setBoundVariable(item.varName, v);
+                    const lbl = document.getElementById('ui-sv-' + inp.getAttribute('data-slider-idx'));
+                    if (lbl) lbl.textContent = v;
+                });
+            });
+            aside.querySelectorAll('[data-toggle-idx]').forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const item = controls[Number(chk.getAttribute('data-toggle-idx'))];
+                    item.checked = chk.checked;
+                    if (item.varName) runtime.setBoundVariable(item.varName, chk.checked);
+                });
+            });
+            aside.querySelectorAll('[data-btn-idx]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = controls[Number(btn.getAttribute('data-btn-idx'))];
+                    runtime.dispatchUIAction(item.action, item.text);
+                    buildInspectorUI();
+                });
+            });
+        }
+
         // Load initial game script from Looping
         const initialScript = ${escapedScript};
         if (initialScript) {
@@ -855,6 +1036,7 @@ class DynamicHTMLWindow extends EventEmitter {
         let lastScore = -1;
         let lastHp = -1;
         let lastLives = -1;
+        let lastPresetIdx = -1;
 
         setInterval(() => {
             if (!runtime) return;
@@ -875,6 +1057,13 @@ class DynamicHTMLWindow extends EventEmitter {
             if (hudHp) hudHp.textContent = hp + ' HP';
             if (stageLabel) stageLabel.textContent = is3D ? 'STAGE 3D QUANTUM' : 'STAGE RUNTIME 2D';
             if (fpsBadge) fpsBadge.textContent = (runtime.fps || 60) + (is3D ? ' FPS · 240Hz' : ' FPS V-SYNC');
+
+            if (runtime.activePresetIdx !== lastPresetIdx) {
+                lastPresetIdx = runtime.activePresetIdx;
+                document.querySelectorAll('#ui-inspector-aside [data-preset]').forEach(btn => {
+                    btn.classList.toggle('active', Number(btn.getAttribute('data-preset')) === lastPresetIdx);
+                });
+            }
 
             // Sync with Server if changed
             if (score !== lastScore) {

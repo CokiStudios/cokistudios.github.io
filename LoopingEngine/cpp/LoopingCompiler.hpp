@@ -417,7 +417,8 @@ inline UIProfileSpecs resolve_ui_profile(const std::string& raw) {
     }
 
     // 1. XUI (Gama X / 240Hz Gaming)
-    if (s == "xui" || s == "x_ui" || s == "x-ui" || s == "gama_x" || s == "gama-x" || s == "gamax") {
+    if (s == "xui" || s == "x_ui" || s == "x-ui" || s == "gama_x" || s == "gama-x" || s == "gamax" ||
+        s == "cyber_neon_xui" || s == "cyberneonxui" || s == "cyber_neon") {
         return {
             "XUI",
             "xui",
@@ -893,6 +894,8 @@ public:
         std::string button_text;
         std::string action;
         std::string visible_when;
+        std::string raw_title;
+        std::string raw_text;
     };
 
     struct ButtonItem {
@@ -949,6 +952,8 @@ public:
         double width = 240;
         double height = 28;
         std::string visible_when;
+        double max_val = 100.0;
+        std::string color = "";
     };
 
     struct ToolbarItem {
@@ -988,8 +993,17 @@ public:
     double stage_world_width = 1200.0;
     double stage_world_height = 480.0;
     double stage_gravity = 980.0;
+    double stage_friction = 0.84;
+    double stage_time_scale = 1.0;
+    int stage_lives = 3;
     std::string stage_scenario_name = "Holo Cyber Stage";
+    std::string stage_scenario_weather = "stars";
     std::string stage_scenario_accent = "#38bdf8";
+    std::string header_text = "";
+    std::vector<std::string> labels;
+    std::vector<DxStagePresetSpec> stage_presets;
+    DxAlgebraTableSpec algebra_table;
+    std::vector<std::pair<std::string, std::string>> init_vars;
 
     DynamicWindow& add_entity_3d(const loop_math::Entity3D& e) {
         is_3d_mode = true;
@@ -1060,10 +1074,13 @@ public:
 
     DynamicWindow& add_card(const std::string& card_title, const std::string& card_text,
                            double x = -1, double y = -1, double w = -1, double h = -1,
-                           const std::string& badge = "", const std::string& icon = "") {
+                           const std::string& badge = "", const std::string& icon = "",
+                           const std::string& raw_t = "", const std::string& raw_tx = "") {
         CardItem c;
         c.title = card_title;
         c.text = card_text;
+        c.raw_title = raw_t.empty() ? card_title : raw_t;
+        c.raw_text = raw_tx.empty() ? card_text : raw_tx;
         c.badge = badge.empty() ? derive_badge(card_title) : badge;
         c.icon = icon.empty() ? derive_icon(card_title) : icon;
 
@@ -1168,11 +1185,14 @@ public:
     }
 
     DynamicWindow& add_progress(const std::string& label, double progress = 0,
-                               const std::string& binding = "", double x = -1, double y = -1, double w = 240, double h = 28) {
+                               const std::string& binding = "", double x = -1, double y = -1, double w = 240, double h = 28,
+                               double max_v = 100.0, const std::string& col = "") {
         ProgressItem p;
         p.label = label;
         p.progress = progress;
         p.binding = binding.empty() ? sanitize_id(label) : binding;
+        p.max_val = max_v > 0 ? max_v : 100.0;
+        p.color = col;
         if (x < 0 || y < 0) {
             p.x = 24;
             p.y = 80 + (cards.size() * 50) + (progress_bars.size() * 35);
@@ -3270,15 +3290,27 @@ if __name__ == '__main__':
             dx.accent_color = "#38bdf8";
         }
 
+        if (!background.empty()) {
+            dx.bg_color = background;
+        }
         dx.is_3d_mode = is_3d_mode || !entities_3d.empty();
         dx.world_width = stage_world_width;
         dx.world_height = stage_world_height;
         dx.gravity = stage_gravity;
+        dx.friction = stage_friction;
+        dx.time_scale = stage_time_scale;
+        dx.lives = stage_lives;
         dx.scenario_name = stage_scenario_name;
+        dx.scenario_weather = stage_scenario_weather;
         dx.scenario_accent = stage_scenario_accent;
+        dx.header_text = header_text;
+        dx.labels = labels;
+        dx.stage_presets = stage_presets;
+        dx.algebra_table = algebra_table;
+        dx.init_vars = init_vars;
 
         for (const auto& c : cards) {
-            dx.cards.push_back({c.title, c.text, c.badge, c.icon, c.x, c.y, c.width, c.height});
+            dx.cards.push_back({c.title, c.text, c.badge, c.icon, c.x, c.y, c.width, c.height, c.raw_title, c.raw_text});
         }
         for (const auto& b : buttons) {
             dx.buttons.push_back({b.text, b.action, b.snippet, b.x, b.y, b.width, b.height});
@@ -3293,7 +3325,7 @@ if __name__ == '__main__':
             dx.toggles.push_back({tg.label, tg.binding, tg.is_checked});
         }
         for (const auto& pr : progress_bars) {
-            dx.progress_bars.push_back({pr.label, pr.binding, pr.progress});
+            dx.progress_bars.push_back({pr.label, pr.binding, pr.progress, pr.max_val, pr.color});
         }
         for (const auto& tn : tones) {
             dx.tones.push_back({tn.freq_hz, tn.duration_ms});

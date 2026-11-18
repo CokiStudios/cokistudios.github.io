@@ -620,10 +620,11 @@ export class LoopizeRuntimeJS {
     }
     ecsSpawn(name, tag = 'entity', pos = [0, 2, 0], hp = 100, objFile = '', csClass = '') {
         const id = this.nextId++;
-        this.ecs.push({ id, name, tag, pos: [...pos], hp, maxHp: hp, objFile, csClass, alive: true, data: {} });
-        if (this.interp && objFile && !this.interp.entities3D.some(e => e.name === name)) {
+        const normPos = Array.isArray(pos) ? pos : [Number(pos) || 0, 2, 0];
+        this.ecs.push({ id, name, tag, pos: [...normPos], hp, maxHp: hp, objFile, csClass, alive: true, data: {} });
+        if (this.interp && objFile && typeof objFile === 'string' && objFile.includes('.obj') && !this.interp.entities3D.some(e => e.name === name)) {
             const roleType = (tag === 'enemy' || tag === 'boss' || tag === 'player') ? tag : 'obj';
-            this.interp.spawnObjEntity3D({ name, obj: objFile, at: pos, health: hp, type: roleType, tag, cs: csClass });
+            this.interp.spawnObjEntity3D({ name, obj: objFile, at: normPos, health: hp, type: roleType, tag, cs: csClass });
         }
         return id;
     }
@@ -657,17 +658,18 @@ export class LoopizeRuntimeJS {
     }
     spatialRadius(center, radius, tag = '') {
         const out = [];
+        const cx = Number(center?.[0] ?? 0), cy = Number(center?.[1] ?? 0), cz = Number(center?.[2] ?? 0);
         for (const s of this.ecs) {
             if (!s.alive || (tag && s.tag !== tag)) continue;
-            if (Math.hypot(s.pos[0] - center[0], s.pos[1] - center[1], s.pos[2] - center[2]) <= radius) out.push(s.id);
+            if (Math.hypot(s.pos[0] - cx, s.pos[1] - cy, s.pos[2] - cz) <= radius) out.push(s.id);
         }
         return out;
     }
-    waveDefine(waveNum, count = 4, hp = 80, archetype = 'valkyrie', objFile = 'valkyrie_drone.obj') {
+    waveDefine(waveNum, count = 4, hp = 80, archetype = 'drone', objFile = '') {
         this.waves[waveNum] = { waveNum, count, hp, archetype, objFile, spawned: false, cleared: false };
         return true;
     }
-    waveAdd(waveNum, archetype = 'valkyrie', count = 4, hp = 80, objFile = 'valkyrie_drone.obj') {
+    waveAdd(waveNum, archetype = 'drone', count = 4, hp = 80, objFile = '') {
         return this.waveDefine(waveNum, count, hp, archetype, objFile);
     }
     waveSpawn(waveNum) {
@@ -675,10 +677,39 @@ export class LoopizeRuntimeJS {
         if (!w) return 0;
         this.currentWave = waveNum;
         let spawned = 0;
+        const use3D = this.interp ? this.interp.is3DMode : true;
         for (let i = 0; i < w.count; i++) {
             const ang = (i / Math.max(1, w.count)) * Math.PI * 2;
-            const pos = [Number((Math.cos(ang) * 9.5).toFixed(2)), 2.2, Number((14 + Math.sin(ang) * 9.5).toFixed(2))];
-            this.ecsSpawn(`Wave${waveNum}_${w.archetype}_${i + 1}`, 'enemy', pos, w.hp, w.objFile, '');
+            const eName = `Wave${waveNum}_${w.archetype}_${i + 1}`;
+            if (use3D) {
+                const pos = [Number((Math.cos(ang) * 9.5).toFixed(2)), 2.2, Number((14 + Math.sin(ang) * 9.5).toFixed(2))];
+                this.ecsSpawn(eName, 'enemy', pos, w.hp, w.objFile || 'drone', '');
+            } else {
+                const worldW = this.interp.world?.width || 1200;
+                const worldH = this.interp.world?.height || 480;
+                const floorPlat = this.interp.gameEntities.find(e => e.type === 'platform' && e.w >= 400);
+                const ex = Math.min(worldW - 80, 900 + i * 160);
+                const ey = floorPlat ? (floorPlat.y - 44) : Math.max(120, worldH - 104);
+                const minB = Math.max(40, ex - 140);
+                const maxB = Math.min(worldW - 40, ex + 140);
+                this.ecsSpawn(eName, 'enemy', [ex, ey, 0], w.hp, '', '');
+                this.interp.gameEntities.push({
+                    type: 'enemy',
+                    name: eName,
+                    x: ex, y: ey, w: 34, h: 44,
+                    minX: minB, maxX: maxB,
+                    minPos: minB, maxPos: maxB,
+                    dir: (i % 2 === 0 ? 1 : -1),
+                    speed: 95,
+                    vx: (i % 2 === 0 ? 95 : -95),
+                    vy: 0,
+                    health: w.hp,
+                    maxHealth: w.hp,
+                    color: '#f43f5e',
+                    isAlive: true,
+                    glowPulse: 0
+                });
+            }
             spawned++;
         }
         w.spawned = true;
@@ -695,7 +726,9 @@ export class LoopizeRuntimeJS {
         const w = this.waves[target];
         const prefix = `Wave${target}_`;
         const aliveEnemies = this.interp
-            ? this.interp.entities3D.filter(e => e.isAlive && e.name.startsWith(prefix)).length
+            ? (this.interp.is3DMode
+                ? this.interp.entities3D.filter(e => e.isAlive && e.name.startsWith(prefix)).length
+                : this.interp.gameEntities.filter(e => e.isAlive && String(e.name || '').startsWith(prefix)).length)
             : this.ecs.filter(e => e.alive && e.name.startsWith(prefix)).length;
         if (w && w.spawned && aliveEnemies === 0) w.cleared = true;
         return {
@@ -745,6 +778,9 @@ export class LoopizeRuntimeJS {
         return true;
     }
     questProgress(id, delta = 1) {
+        if (!this.quests[id]) {
+            this.questAdd(id, id, 100, 250);
+        }
         const q = this.quests[id];
         if (!q || q.completed) return q ? q.completed : false;
         q.progress = Math.min(q.goal, q.progress + delta);
@@ -779,7 +815,9 @@ export class LoopizeRuntimeJS {
     }
     stats() {
         const aliveEnemies = this.interp
-            ? this.interp.entities3D.filter(e => e.isAlive && (e.type === 'enemy' || e.type === 'boss')).length
+            ? (this.interp.is3DMode
+                ? this.interp.entities3D.filter(e => e.isAlive && (e.type === 'enemy' || e.type === 'boss')).length
+                : this.interp.gameEntities.filter(e => e.isAlive && (e.type === 'enemy' || e.type === 'boss')).length)
             : this.ecs.filter(e => e.alive && e.tag === 'enemy').length;
         return {
             initialized: this.initialized,
@@ -939,7 +977,7 @@ export class LoopingInterpreter {
     }
     
     setupInputListeners() {
-        if (!this.canvas) return;
+        if (!this.canvas || typeof window === 'undefined' || typeof this.canvas.addEventListener !== 'function') return;
         
         const ensureAudio = () => {
             try {
@@ -999,22 +1037,30 @@ export class LoopingInterpreter {
                     if (p) p.jumpBufferTimer = this.jumpBuffer;
                 }
                 if (key === 's' || key === 'arrowdown') this.gamepadState.dpad.down = true;
-                if (key === 'j' || key === 'z' || key === 'enter') {
+                if (key === 'j' || key === 'z' || key === 'f' || key === 'enter') {
                     this.gamepadState.btnB = true;
                     const p = this.getPlayer();
                     if (p && !this.gameOver && !this.gameWon) this.shootProjectile(p);
                 }
-                if (key === 'k' || key === 'x' || key === 'shift') {
+                if (key === 'k' || key === 'x' || key === 'b' || key === 'shift') {
                     this.gamepadState.btnX = true;
                     const p = this.getPlayer();
                     if (p) this.triggerDash(p);
                 }
             }
 
-            if (key === 'r') {
-                if (this.gameOver || this.gameWon || this.is3DMode) {
-                    if (this.gameOver || this.gameWon) this.restartGame();
-                }
+            if ((key === '[' || key === 'braceleft') && !e.repeat) this.presetPrev();
+            if ((key === ']' || key === 'braceright') && !e.repeat) this.presetNext();
+            if (/^[1-9]$/.test(key) && !e.repeat) {
+                const idx = parseInt(key, 10) - 1;
+                if (this.stagePresets && idx < this.stagePresets.length) this.activatePreset(idx);
+            }
+            if (key === 'tab' && !e.repeat && this.isRunning) {
+                e.preventDefault();
+                this.uiDrawerOpen = !this.uiDrawerOpen;
+            }
+            if (key === 'r' && !e.repeat) {
+                this.restartGame();
             }
             if ((key === 'p' || key === 'escape') && !e.repeat) {
                 if (this.isRunning && !this.gameOver && !this.gameWon) {
@@ -1045,7 +1091,7 @@ export class LoopingInterpreter {
                 if (key === 's' || key === 'arrowdown') this.gamepadState.dpad.down = false;
             }
             if (key === 'j' || key === 'z' || key === 'f' || key === 'enter') this.gamepadState.btnB = false;
-            if (key === 'k' || key === 'x' || key === 'shift') this.gamepadState.btnX = false;
+            if (key === 'k' || key === 'x' || key === 'b' || key === 'shift') this.gamepadState.btnX = false;
             
             this.triggerEvent('keyup', e.key);
         });
@@ -1056,6 +1102,10 @@ export class LoopingInterpreter {
             const scaleY = this.canvas.height / rect.height;
             const mx = (e.clientX - rect.left) * scaleX;
             const my = (e.clientY - rect.top) * scaleY;
+
+            if (this.activeSliderDrag) {
+                this.applySliderPointer(this.activeSliderDrag, mx);
+            }
 
             if (this.is3DMode && this.dragOrbit.active) {
                 const dx = mx - this.dragOrbit.lastX;
@@ -1073,12 +1123,58 @@ export class LoopingInterpreter {
         
         this.canvas.addEventListener('mousedown', (e) => {
             ensureAudio();
+            const rect = this.canvas.getBoundingClientRect();
+            this.mousePos.x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+            this.mousePos.y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
             this.isMouseDown = true;
             this.triggerEvent('click', this.mousePos);
 
             if (this.gameOver || this.gameWon) {
                 this.restartGame();
                 return;
+            }
+
+            // Stage Preset Pills Click
+            if (this.presetPillBounds && this.presetPillBounds.length) {
+                for (const pb of this.presetPillBounds) {
+                    if (this.mousePos.x >= pb.x && this.mousePos.x <= pb.x + pb.w &&
+                        this.mousePos.y >= pb.y && this.mousePos.y <= pb.y + pb.h) {
+                        this.activatePreset(pb.idx);
+                        return;
+                    }
+                }
+            }
+
+            // Inspector UI Drawer Toggle Pill Click
+            if (this.uiTogglePill) {
+                const tb = this.uiTogglePill;
+                if (this.mousePos.x >= tb.x && this.mousePos.x <= tb.x + tb.w &&
+                    this.mousePos.y >= tb.y && this.mousePos.y <= tb.y + tb.h) {
+                    this.uiDrawerOpen = !this.uiDrawerOpen;
+                    return;
+                }
+            }
+
+            // Interactive UI Drawer Controls (Sliders, Toggles, Buttons)
+            if (this.uiDrawerHits && this.uiDrawerHits.length) {
+                for (const hit of this.uiDrawerHits) {
+                    if (this.mousePos.x >= hit.x && this.mousePos.x <= hit.x + hit.w &&
+                        this.mousePos.y >= hit.y && this.mousePos.y <= hit.y + hit.h) {
+                        if (hit.kind === 'slider') {
+                            this.activeSliderDrag = hit;
+                            this.applySliderPointer(hit, this.mousePos.x);
+                            return;
+                        } else if (hit.kind === 'toggle') {
+                            hit.elem.checked = !hit.elem.checked;
+                            this.setBoundVariable(hit.elem.varName, hit.elem.checked);
+                            this.playSfx('coin');
+                            return;
+                        } else if (hit.kind === 'button') {
+                            this.dispatchUIAction(hit.elem.action, hit.elem.text);
+                            return;
+                        }
+                    }
+                }
             }
 
             // 3D Camera Mode Pill Click (Top-Right under radar/score)
@@ -1095,21 +1191,13 @@ export class LoopingInterpreter {
             let hitUIButton = false;
             for (let elem of this.renderQueue) {
                 if (elem.type === 'button') {
-                    if (this.mousePos.x >= elem.x && this.mousePos.x <= elem.x + elem.w &&
-                        this.mousePos.y >= elem.y && this.mousePos.y <= elem.y + elem.h) {
-                        
+                    const bx = elem._drawX !== undefined ? elem._drawX : elem.x;
+                    const by = elem._drawY !== undefined ? elem._drawY : elem.y;
+                    if (this.mousePos.x >= bx && this.mousePos.x <= bx + elem.w &&
+                        this.mousePos.y >= by && this.mousePos.y <= by + elem.h) {
                         hitUIButton = true;
                         elem.isPressed = true;
-                        this.log(`[BUTTON CLICK] Triggered action: "${elem.action || elem.text}"`, 'success');
-                        this.playSfx('coin');
-
-                        if (elem.action && typeof this.functions[elem.action] === 'function') {
-                            this.functions[elem.action]();
-                        } else if (elem.action && this.functions[elem.action] && this.functions[elem.action].body) {
-                            this.executeSubScript(this.functions[elem.action].body);
-                        } else if (elem.action === 'launch_arcade' || elem.action === 'launch_forkar') {
-                            this.log(`[LAUNCHER] Booting game module: ${elem.action} @ 60 FPS...`, 'system');
-                        }
+                        this.dispatchUIAction(elem.action, elem.text);
                     }
                 }
             }
@@ -1126,6 +1214,9 @@ export class LoopingInterpreter {
         });
         
         window.addEventListener('mouseup', () => {
+            if (this.activeSliderDrag) {
+                this.activeSliderDrag = null;
+            }
             if (this.is3DMode && this.dragOrbit.active && !this.dragOrbit.moved) {
                 const p3 = this.getPlayer3D();
                 if (p3 && !this.gameOver && !this.gameWon && this.mousePos.y < this.canvas.height - 130) {
@@ -1562,8 +1653,10 @@ export class LoopingInterpreter {
         this.lives = this.maxLives;
         this.gameOver = false;
         this.gameWon = false;
-        if (this.sourceCode) {
-            this.execute(this.sourceCode);
+        this.paused = false;
+        const scriptToRun = this.lastExecutedCode || this.sourceCode;
+        if (scriptToRun) {
+            this.execute(scriptToRun);
         }
     }
 
@@ -1576,18 +1669,31 @@ export class LoopingInterpreter {
     }
 
     reset() {
-        if (this.animationFrameId) {
+        if (this.animationFrameId && typeof cancelAnimationFrame === 'function') {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
         this.isRunning = false;
         this.variables = {};
+        this.varExprs = {};
+        this.varExprOrder = [];
+        this.boundVarNames = new Set();
         this.functions = {};
         this.gameEntities = [];
         this.renderQueue = [];
         this.particles = [];
         this.projectiles = [];
         this.popups = [];
+        this.stagePresets = [];
+        this.activePresetIdx = 0;
+        this.presetPillBounds = [];
+        this.uiDrawerHits = [];
+        this.uiTogglePill = null;
+        this.uiDrawerOpen = false;
+        this.activeSliderDrag = null;
+        this.algebraTable = null;
+        this.gamepadConfig = { profile: 'universal', deadzone: 0.16, bindings: {} };
+        this.uiLayout = { header: '', split: null, panels: {}, labels: [] };
         this.timeScale = 1.0;
         this.combo = 0;
         this.comboTimer = 0;
@@ -1616,8 +1722,159 @@ export class LoopingInterpreter {
         }
     }
 
+    setBoundVariable(varName, value) {
+        if (!varName) return;
+        this.variables[varName] = value;
+        if (String(varName).toLowerCase().includes('overdrive')) {
+            const p = this.getPlayer();
+            if (p) p.overdrive = Boolean(value);
+            const p3 = this.getPlayer3D ? this.getPlayer3D() : null;
+            if (p3) p3.overdrive = Boolean(value);
+        }
+        this.recomputeReactiveVars(varName);
+    }
+
+    recomputeReactiveVars(changedKey = '') {
+        if (!this.varExprOrder || !this.varExprOrder.length) return;
+        for (const k of this.varExprOrder) {
+            if (k === changedKey) continue;
+            if (this.boundVarNames && this.boundVarNames.has(k)) continue;
+            const rawExpr = this.varExprs[k];
+            if (!rawExpr) continue;
+            if (!/[A-Za-z_]/.test(rawExpr) || /^(?:true|false)$/i.test(rawExpr.trim())) continue;
+            this.variables[k] = this.evaluateExpression(rawExpr);
+        }
+    }
+
+    applySliderPointer(hit, mouseX) {
+        const elem = hit.elem;
+        const ratio = Math.max(0, Math.min(1, (mouseX - hit.trackX) / Math.max(1, hit.trackW)));
+        let nextVal = elem.min + ratio * (elem.max - elem.min);
+        const span = Math.abs(elem.max - elem.min);
+        nextVal = span <= 10 ? Math.round(nextVal * 100) / 100 : Math.round(nextVal);
+        elem.val = nextVal;
+        if (elem.varName) {
+            this.setBoundVariable(elem.varName, nextVal);
+        }
+    }
+
+    dispatchUIAction(act, label = '') {
+        this.log(`[BUTTON CLICK] Triggered action: "${act || label}"`, 'success');
+        this.playSfx('coin');
+        if (!act) return;
+        const cleanAct = String(act).trim();
+        if (typeof this.functions[cleanAct] === 'function') {
+            this.functions[cleanAct]();
+        } else if (this.functions[cleanAct] && this.functions[cleanAct].body) {
+            this.executeSubScript(this.functions[cleanAct].body);
+        } else if (cleanAct === 'restart' || cleanAct === 'reset') {
+            this.restartGame();
+        } else if (cleanAct === 'next_stage' || cleanAct === 'preset_next') {
+            this.presetNext();
+        } else if (cleanAct === 'prev_stage' || cleanAct === 'preset_prev') {
+            this.presetPrev();
+        } else if (cleanAct === 'launch_arcade' || cleanAct === 'launch_forkar') {
+            this.log(`[LAUNCHER] Booting game module: ${cleanAct} @ 60 FPS...`, 'system');
+        } else if (cleanAct.includes('(')) {
+            this.parseLine(cleanAct);
+            const stepM = cleanAct.match(/^(?:lz_step|lz\.step|loopize\.step)\(\s*([\d.]+)/);
+            if (stepM && !this.is3DMode) {
+                const total = Math.min(0.25, Math.max(0.016, parseFloat(stepM[1]) || 0.05));
+                const slices = Math.max(1, Math.round(total / 0.016));
+                for (let s = 0; s < slices; s++) this.update(total / slices);
+                const p = this.getPlayer();
+                if (p) this.addPopup(p.x, p.y - 16, `STEP +${total.toFixed(2)}s`, '#38bdf8');
+            }
+        }
+    }
+
+    interpolateVars(rawStr) {
+        return String(rawStr || '').replace(/\{([A-Za-z0-9_]+)\}/g, (match, varKey) => {
+            if (this.variables.hasOwnProperty(varKey)) return this.variables[varKey];
+            const ev = this.evaluateExpression(varKey);
+            return ev !== varKey ? ev : match;
+        });
+    }
+
+    splitCallArgsRaw(inner) {
+        const parts = [];
+        let cur = '';
+        let inQ = false, qCh = '', depth = 0;
+        for (let i = 0; i < inner.length; i++) {
+            const c = inner[i];
+            if ((c === '"' || c === "'") && (i === 0 || inner[i - 1] !== '\\')) {
+                if (!inQ) { inQ = true; qCh = c; }
+                else if (qCh === c) inQ = false;
+            } else if (!inQ) {
+                if (c === '(' || c === '[' || c === '{') depth++;
+                else if (c === ')' || c === ']' || c === '}') depth = Math.max(0, depth - 1);
+                else if (c === ',' && depth === 0) { parts.push(cur.trim()); cur = ''; continue; }
+            }
+            cur += c;
+        }
+        if (cur.trim()) parts.push(cur.trim());
+        return parts;
+    }
+
+    activatePreset(idx) {
+        if (!this.stagePresets || idx < 0 || idx >= this.stagePresets.length) return false;
+        this.activePresetIdx = idx;
+        const pr = this.stagePresets[idx];
+        const player = this.getPlayer ? this.getPlayer() : this.gameEntities.find(e => e.isPlayer);
+        if (player) {
+            player.x = pr.x;
+            player.y = pr.y;
+            player.vx = 0;
+            player.vy = -120;
+            player.spawnX = pr.x;
+            player.spawnY = pr.y;
+            player.overdrive = Boolean(pr.overdrive);
+        }
+        if (pr.weather) this.scenario.weather = pr.weather;
+        if (pr.gravity > 0) this.gravity = pr.gravity;
+        if (pr.friction > 0) this.friction = pr.friction;
+        if (pr.bg) this.scenario.bg = pr.bg;
+        if (pr.color) this.scenario.accent = pr.color;
+        this.scenario.name = pr.label;
+        this.playSfx('pad');
+        if (player) {
+            this.popups.push({ x: player.x, y: player.y - 16, text: pr.label, color: pr.color || '#38bdf8', vy: -48, alpha: 1.0 });
+            this.spawnParticleBurst(player.x + player.w / 2, player.y + player.h / 2, pr.color || '#38bdf8', 20);
+        }
+        this.log(`🎛️ [STAGE PRESET] ${pr.label}`, 'info');
+        return true;
+    }
+
+    presetNext() {
+        if (!this.stagePresets || this.stagePresets.length === 0) return false;
+        return this.activatePreset((this.activePresetIdx + 1) % this.stagePresets.length);
+    }
+
+    presetPrev() {
+        if (!this.stagePresets || this.stagePresets.length === 0) return false;
+        const n = this.stagePresets.length;
+        return this.activatePreset((this.activePresetIdx - 1 + n) % n);
+    }
+
     // ── AST & Lexer Compiler ──
+    parenBracketDepth(text) {
+        let depth = 0, inQ = false, qCh = '';
+        for (let idx = 0; idx < text.length; idx++) {
+            const c = text[idx];
+            if ((c === '"' || c === "'") && (idx === 0 || text[idx - 1] !== '\\')) {
+                if (!inQ) { inQ = true; qCh = c; }
+                else if (qCh === c) inQ = false;
+            } else if (!inQ) {
+                if (c === '#' || (c === '/' && text[idx + 1] === '/')) break;
+                if (c === '(' || c === '[') depth++;
+                else if (c === ')' || c === ']') depth = Math.max(0, depth - 1);
+            }
+        }
+        return depth;
+    }
+
     execute(code) {
+        this.lastExecutedCode = code;
         this.sourceCode = code;
         this.reset();
         this.log(`⚙️ Compilando Código Fuente ${this.channelName} v${this.engineVersion} (Arch ${this.archVersion})...`, "system");
@@ -1799,6 +2056,13 @@ export class LoopingInterpreter {
                 }
             }
 
+            while (this.parenBracketDepth(line) > 0 && i < lines.length) {
+                const cont = lines[i].trim();
+                i++;
+                if (!cont || cont.startsWith('#') || cont.startsWith('//')) continue;
+                line += ' ' + cont;
+            }
+
             try {
                 this.parseLine(line);
             } catch (err) {
@@ -1906,7 +2170,9 @@ export class LoopingInterpreter {
             return;
         }
         if (line.startsWith('use ') && !line.startsWith('use python ')) {
-            const modName = line.replace('use ', '').trim().replace(/['"]/g, '');
+            let modName = line.slice(4).trim();
+            if (modName.includes(' as ')) modName = modName.split(' as ')[0].trim();
+            modName = modName.replace(/['"]/g, '');
             if (modName === 'loopize++') {
                 this.log(`⚡ [LOOPIZE++ WEB] Módulo híbrido cargado (.obj + C# + ECS + Waves + FSM + Combo + Shake)`, 'success');
             } else {
@@ -1923,11 +2189,12 @@ export class LoopingInterpreter {
         }
 
         // 2. App, 2D Game & 3D Game Definition
-        if (line.startsWith('define game3d') || line.startsWith('@game3d')) {
+        if (line.startsWith('define game3d') || line.startsWith('@game3d') ||
+            /^game3d\s+(?:["']|as\s)/i.test(line)) {
             this.is3DMode = true;
             let appName = 'QuantumOdyssey3D';
-            const quoteMatch = line.match(/(?:define game3d|@game3d)\s*(?:as)?\s*["'](.*?)["']/);
-            const asMatch = line.match(/define game3d\s+as\s+([A-Za-z0-9_]+)/);
+            const quoteMatch = line.match(/(?:define game3d|@game3d|game3d)\s*(?:as)?\s*["'](.*?)["']/);
+            const asMatch = line.match(/(?:define game3d|game3d)\s+as\s+([A-Za-z0-9_]+)/);
             if (quoteMatch) appName = quoteMatch[1];
             else if (asMatch) appName = asMatch[1];
             this.scene3D.name = appName;
@@ -1935,10 +2202,11 @@ export class LoopingInterpreter {
             return;
         }
 
-        if (line.startsWith('define app') || line.startsWith('define game') || line.startsWith('@app') || line.startsWith('@game')) {
+        if (line.startsWith('define app') || line.startsWith('define game') || line.startsWith('@app') || line.startsWith('@game') ||
+            /^(?:app|game)\s+(?:["']|as\s)/i.test(line)) {
             let appName = 'HoloGame';
-            const quoteMatch = line.match(/(?:define (?:app|game)|@(?:app|game))\s*(?:as)?\s*["'](.*?)["']/);
-            const asMatch = line.match(/define (?:app|game)\s+as\s+([A-Za-z0-9_]+)/);
+            const quoteMatch = line.match(/(?:define (?:app|game)|@(?:app|game)|app|game)\s*(?:as)?\s*["'](.*?)["']/);
+            const asMatch = line.match(/(?:define (?:app|game)|app|game)\s+as\s+([A-Za-z0-9_]+)/);
             if (quoteMatch) appName = quoteMatch[1];
             else if (asMatch) appName = asMatch[1];
             
@@ -2018,12 +2286,80 @@ export class LoopingInterpreter {
         }
 
         if (line.startsWith('game.world(') || line.startsWith('set world_size to ')) {
-            const sizeMatch = line.match(/\((\d+),\s*(\d+)\)/);
-            if (sizeMatch) {
-                this.world.width = parseInt(sizeMatch[1]);
-                this.world.height = parseInt(sizeMatch[2]);
+            let ww = null, hh = null;
+            if (line.startsWith('game.world(')) {
+                const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+                const args = this.parseNamedArgs(inner);
+                if (args.size && Array.isArray(args.size)) {
+                    ww = parseInt(args.size[0]); hh = parseInt(args.size[1]);
+                } else if (args.width !== undefined || args.height !== undefined) {
+                    ww = parseInt(args.width ?? this.world.width);
+                    hh = parseInt(args.height ?? this.world.height);
+                } else {
+                    const sizeMatch = line.match(/\((\d+),\s*(\d+)\)/);
+                    if (sizeMatch) { ww = parseInt(sizeMatch[1]); hh = parseInt(sizeMatch[2]); }
+                }
+            } else {
+                const sizeMatch = line.match(/\((\d+),\s*(\d+)\)/);
+                if (sizeMatch) { ww = parseInt(sizeMatch[1]); hh = parseInt(sizeMatch[2]); }
+            }
+            if (ww !== null && hh !== null) {
+                this.world.width = ww;
+                this.world.height = hh;
                 this.world.hasCustomBounds = true;
                 this.log(`[WORLD] Dimensiones de nivel configuradas: ${this.world.width}x${this.world.height}px`, 'info');
+            }
+            return;
+        }
+
+        if (line.startsWith('game.stage_preset(') || line.startsWith('scenario.preset(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            const at = Array.isArray(args.at) ? args.at : [Number(args.x ?? 70), Number(args.y ?? 300)];
+            const pr = {
+                id: `preset_${this.stagePresets.length + 1}`,
+                label: String(args.name || args.label || 'Escenario'),
+                x: Number(at[0] ?? 70),
+                y: Number(at[1] ?? 300),
+                gravity: Number(args.gravity ?? 980),
+                friction: Number(args.friction ?? 0),
+                weather: String(args.weather || 'stars'),
+                bg: String(args.bg || ''),
+                color: String(args.accent || args.color || '#38bdf8'),
+                overdrive: Boolean(args.overdrive)
+            };
+            this.stagePresets.push(pr);
+            this.log(`[STAGE PRESET] "${pr.label}" -> (${pr.x}, ${pr.y}) [G=${pr.gravity}]`, 'info');
+            return;
+        }
+
+        if (line.startsWith('game.preset_next(')) { this.presetNext(); return; }
+        if (line.startsWith('game.preset_prev(')) { this.presetPrev(); return; }
+
+        if (line.startsWith('gamepad.init(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            if (!this.gamepadConfig) this.gamepadConfig = { profile: 'universal', deadzone: 0.16, bindings: {} };
+            if (args.profile) this.gamepadConfig.profile = String(args.profile);
+            if (args.deadzone !== undefined) this.gamepadConfig.deadzone = Math.max(0.02, Math.min(0.6, Number(args.deadzone)));
+            this.log(`🎮 [GAMEPAD] Perfil "${this.gamepadConfig.profile}" (deadzone: ${this.gamepadConfig.deadzone})`, 'info');
+            return;
+        }
+
+        if (line.startsWith('gamepad.bind(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            if (!this.gamepadConfig) this.gamepadConfig = { profile: 'universal', deadzone: 0.16, bindings: {} };
+            this.gamepadConfig.bindings = { ...(this.gamepadConfig.bindings || {}), ...args };
+            this.log(`🎮 [GAMEPAD BIND] Controles mapeados (${Object.keys(args).join(', ')})`, 'info');
+            return;
+        }
+
+        if (line.startsWith('gamepad.deadzone(')) {
+            const m = line.match(/gamepad\.deadzone\(([\d.]+)\)/);
+            if (m) {
+                if (!this.gamepadConfig) this.gamepadConfig = { profile: 'universal', deadzone: 0.16, bindings: {} };
+                this.gamepadConfig.deadzone = Math.max(0.02, Math.min(0.6, parseFloat(m[1])));
             }
             return;
         }
@@ -2135,6 +2471,8 @@ export class LoopingInterpreter {
             const varName = line.slice(4, eqIdx).replace(/:$/, '').trim();
             const valExpr = line.slice(eqIdx + 1).trim();
             this.variables[varName] = this.evaluateExpression(valExpr);
+            this.varExprs[varName] = valExpr;
+            if (!this.varExprOrder.includes(varName)) this.varExprOrder.push(varName);
             return;
         }
 
@@ -2144,23 +2482,36 @@ export class LoopingInterpreter {
             else if (line.includes(' as ')) delimiter = ' as ';
             else if (line.includes(' = ')) delimiter = ' = ';
 
-            const parts = line.replace('set ', '').split(delimiter);
-            const varName = parts[0].trim();
-            const valExpr = parts.slice(1).join(delimiter).trim();
+            const rest = line.slice(4);
+            const dIdx = rest.indexOf(delimiter);
+            const varName = rest.slice(0, dIdx).trim();
+            const valExpr = rest.slice(dIdx + delimiter.length).trim();
             this.variables[varName] = this.evaluateExpression(valExpr);
+            this.varExprs[varName] = valExpr;
+            if (!this.varExprOrder.includes(varName)) this.varExprOrder.push(varName);
             return;
         }
 
-        // Functional Window & UI Directives (window.create / window.ui / ui.card / ui.button)
+        // Functional Window & UI Directives (window.create / window.ui / ui.*)
         if (line.startsWith('window.create(')) {
             const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
             const args = this.parseNamedArgs(inner);
-            const title = args.title || args.name || 'Shine Loop Window';
-            if (args.size && Array.isArray(args.size) && this.canvas) {
-                this.canvas.width = parseInt(args.size[0]);
-                this.canvas.height = parseInt(args.size[1]);
+            const pos = this.splitCallArgsRaw(inner);
+            let title = args.title || (pos[0] && !pos[0].includes(':') ? this.evaluateExpression(pos[0]) : (args.name || 'Shine Loop Window'));
+            let ww = null, hh = null;
+            if (args.size && Array.isArray(args.size)) {
+                ww = parseInt(args.size[0]); hh = parseInt(args.size[1]);
+            } else if (args.width !== undefined || args.height !== undefined) {
+                ww = parseInt(args.width ?? 900); hh = parseInt(args.height ?? 600);
+            } else if (pos.length >= 3 && !pos[1].includes(':') && !pos[2].includes(':')) {
+                ww = parseInt(this.evaluateExpression(pos[1]));
+                hh = parseInt(this.evaluateExpression(pos[2]));
             }
-            this.log(`🖥️ Ventana Shine Loop: "${title}" (${this.canvas ? this.canvas.width : 900}x${this.canvas ? this.canvas.height : 600})`, 'info');
+            if (ww > 0 && hh > 0 && this.canvas) {
+                this.canvas.width = ww;
+                this.canvas.height = hh;
+            }
+            this.log(`🖥️ Ventana Shine Loop: "${title}" (${ww || (this.canvas ? this.canvas.width : 900)}x${hh || (this.canvas ? this.canvas.height : 600)})`, 'info');
             return;
         }
 
@@ -2173,33 +2524,156 @@ export class LoopingInterpreter {
             return;
         }
 
+        if (line.startsWith('ui.header(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const pos = this.splitCallArgsRaw(inner);
+            const hdr = this.interpolateVars(pos[0] ? String(this.evaluateExpression(pos[0])) : '');
+            this.uiLayout.header = hdr;
+            this.variables.__ui_header = hdr;
+            this.log(`📐 [UI HEADER] ${hdr}`, 'info');
+            return;
+        }
+
+        if (line.startsWith('ui.split(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const pos = this.splitCallArgsRaw(inner);
+            this.uiLayout.split = {
+                left: pos[0] ? String(this.evaluateExpression(pos[0])) : 'left',
+                right: pos[1] ? String(this.evaluateExpression(pos[1])) : 'right',
+                ratio: pos[2] ? Number(this.evaluateExpression(pos[2])) : 0.5
+            };
+            this.uiDrawerOpen = true;
+            return;
+        }
+
+        if (line.startsWith('ui.panel(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const pos = this.splitCallArgsRaw(inner);
+            const pid = pos[0] ? String(this.evaluateExpression(pos[0])) : 'panel';
+            const ptitle = pos[1] ? this.interpolateVars(String(this.evaluateExpression(pos[1]))) : pid;
+            this.uiLayout.panels[pid] = ptitle;
+            return;
+        }
+
+        if (line.startsWith('ui.label(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const pos = this.splitCallArgsRaw(inner);
+            const txt = pos[0] ? this.interpolateVars(String(this.evaluateExpression(pos[0]))) : '';
+            this.uiLayout.labels.push(txt);
+            return;
+        }
+
         if (line.startsWith('ui.card(')) {
             const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
             const args = this.parseNamedArgs(inner);
+            const rawTitle = String(args.title || args.name || 'Holo UI Card');
+            const rawText = String(args.text || '');
             this.renderQueue.push({
                 type: 'card',
                 x: args.at ? args.at[0] : 20,
                 y: args.at ? args.at[1] : 20,
                 w: args.size ? args.size[0] : 280,
                 h: args.size ? args.size[1] : 110,
-                title: args.title || args.name || 'Holo UI Card',
-                text: args.text || ''
+                rawTitle,
+                rawText,
+                title: this.interpolateVars(rawTitle),
+                text: this.interpolateVars(rawText)
             });
             return;
         }
 
-        if (line.startsWith('ui.button(')) {
+        if (line.startsWith('ui.button(') || line.startsWith('ui.btn(')) {
             const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
             const args = this.parseNamedArgs(inner);
+            const pos = this.splitCallArgsRaw(inner);
+            const txt = args.text || (pos[0] && !pos[0].includes(':') ? String(this.evaluateExpression(pos[0])) : (args.name || 'Shine Action'));
+            const act = args.action || (pos[1] && !pos[1].includes(':') ? String(this.evaluateExpression(pos[1])) : '');
             this.renderQueue.push({
                 type: 'button',
                 x: args.at ? args.at[0] : 20,
-                y: args.at ? args.at[1] : 150,
+                y: args.at ? args.at[1] : 150 + this.renderQueue.length * 46,
                 w: args.size ? args.size[0] : 190,
                 h: args.size ? args.size[1] : 40,
-                text: args.text || args.name || 'Shine Action',
-                action: args.action || ''
+                explicitPos: Boolean(args.at),
+                text: this.interpolateVars(txt),
+                action: act
             });
+            return;
+        }
+
+        if (line.startsWith('ui.slider(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            const pos = this.splitCallArgsRaw(inner);
+            const label = args.label || args.text || (pos[0] && !pos[0].includes(':') ? String(this.evaluateExpression(pos[0])) : 'Slider');
+            const minV = args.min !== undefined ? Number(args.min) : (pos[1] ? Number(this.evaluateExpression(pos[1])) : 0);
+            const maxV = args.max !== undefined ? Number(args.max) : (pos[2] ? Number(this.evaluateExpression(pos[2])) : 100);
+            let val = args.val !== undefined ? Number(args.val) : (args.value !== undefined ? Number(args.value) : (pos[3] ? Number(this.evaluateExpression(pos[3])) : 50));
+            const varName = args.bind || args.var || (pos[4] ? String(this.evaluateExpression(pos[4])) : '');
+            if (varName) {
+                this.boundVarNames.add(varName);
+                if (!this.variables.hasOwnProperty(varName)) this.variables[varName] = val;
+                else val = Number(this.variables[varName]);
+            }
+            this.renderQueue.push({ type: 'slider', label: this.interpolateVars(label), min: minV, max: maxV, val, varName });
+            return;
+        }
+
+        if (line.startsWith('ui.toggle(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            const pos = this.splitCallArgsRaw(inner);
+            const label = args.label || args.text || (pos[0] && !pos[0].includes(':') ? String(this.evaluateExpression(pos[0])) : 'Toggle');
+            let chk = args.checked !== undefined ? Boolean(args.checked) : (pos[1] ? Boolean(this.evaluateExpression(pos[1])) : false);
+            const varName = args.bind || args.var || (pos[2] ? String(this.evaluateExpression(pos[2])) : '');
+            if (varName) {
+                this.boundVarNames.add(varName);
+                if (!this.variables.hasOwnProperty(varName)) this.variables[varName] = chk;
+                else chk = Boolean(this.variables[varName]);
+                if (String(varName).toLowerCase().includes('overdrive')) {
+                    const p = this.getPlayer();
+                    if (p) p.overdrive = chk;
+                }
+            }
+            this.renderQueue.push({ type: 'toggle', label: this.interpolateVars(label), checked: chk, varName });
+            return;
+        }
+
+        if (line.startsWith('ui.progress(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            const pos = this.splitCallArgsRaw(inner);
+            const label = args.label || args.text || (pos[0] && !pos[0].includes(':') ? String(this.evaluateExpression(pos[0])) : 'Progress');
+            const rawValExpr = args.val !== undefined ? String(args.val) : (args.value !== undefined ? String(args.value) : (pos[1] ? pos[1].trim() : '0'));
+            const val = Number(this.evaluateExpression(rawValExpr));
+            const maxV = args.max !== undefined ? Number(args.max) : (pos[2] ? Number(this.evaluateExpression(pos[2])) : 100);
+            const col = args.color || (pos[3] ? String(this.evaluateExpression(pos[3])) : '#38bdf8');
+            this.renderQueue.push({ type: 'progress', label: this.interpolateVars(label), val, rawValExpr, max: maxV, color: col });
+            return;
+        }
+
+        if (line.startsWith('ui.algebra_table(') || line.startsWith('game.algebra_table(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            this.algebraTable = {
+                title: String(args.title || 'Modelo Algebraico'),
+                formula: String(args.formula || '0.5*m*v^2 + 9.8*m*h'),
+                threshold: Number(args.threshold ?? args.monster_hits ?? 760),
+                rows: this.algebraTable?.rows || []
+            };
+            this.log(`📊 [HUD TABLE] "${this.algebraTable.title}" [${this.algebraTable.formula} | >= ${this.algebraTable.threshold}]`, 'info');
+            return;
+        }
+
+        if (line.startsWith('ui.algebra_row(') || line.startsWith('game.algebra_row(')) {
+            const inner = line.slice(line.indexOf('(') + 1, line.lastIndexOf(')'));
+            const args = this.parseNamedArgs(inner);
+            if (!this.algebraTable) {
+                this.algebraTable = { title: 'Modelo Algebraico', formula: '0.5*m*v^2 + 9.8*m*h', threshold: 760, rows: [] };
+            }
+            const m = Number(args.m ?? 10), v = Number(args.v ?? 8), h = Number(args.h ?? 1.2), hits = Number(args.hits ?? 0);
+            const energy = 0.5 * m * v * v + 9.8 * m * h;
+            this.algebraTable.rows.push({ label: String(args.label || 'Escena'), m, v, h, hits, energy });
             return;
         }
 
@@ -2289,6 +2763,8 @@ export class LoopingInterpreter {
             const sizeMatch = line.match(/size \((\d+),\s*(\d+)\)/);
             const titleMatch = line.match(/title ["'](.*?)["']/);
             const textMatch = line.match(/text ["'](.*?)["']/);
+            const rawTitle = titleMatch ? titleMatch[1] : 'Holo UI Card';
+            const rawText = textMatch ? textMatch[1] : '';
             
             this.renderQueue.push({
                 type: 'card',
@@ -2296,8 +2772,10 @@ export class LoopingInterpreter {
                 y: posMatch ? parseInt(posMatch[2]) : 50,
                 w: sizeMatch ? parseInt(sizeMatch[1]) : 300,
                 h: sizeMatch ? parseInt(sizeMatch[2]) : 140,
-                title: titleMatch ? titleMatch[1] : 'Holo UI Card',
-                text: textMatch ? textMatch[1] : ''
+                rawTitle,
+                rawText,
+                title: this.interpolateVars(rawTitle),
+                text: this.interpolateVars(rawText)
             });
             return;
         }
@@ -2313,6 +2791,7 @@ export class LoopingInterpreter {
                 y: posMatch ? parseInt(posMatch[2]) : 200,
                 w: 180,
                 h: 44,
+                explicitPos: true,
                 text: textMatch ? textMatch[1] : 'Shine Action',
                 action: actionMatch ? actionMatch[1] : ''
             });
@@ -2975,6 +3454,9 @@ export class LoopingInterpreter {
         expr = String(expr).trim();
         if (!expr) return '';
 
+        while ((expr.startsWith('py!(') || expr.startsWith('@py(')) && expr.endsWith(')')) {
+            expr = expr.slice(expr.indexOf('(') + 1, -1).trim();
+        }
         if (expr.startsWith('py:') || expr.startsWith('py ')) {
             expr = expr.replace(/^(py:\s*|py\s+)/, '').trim();
         } else if (expr.startsWith('python:') || expr.startsWith('python eval ') || expr.startsWith('python ')) {
@@ -3027,19 +3509,14 @@ export class LoopingInterpreter {
             if (obj && typeof obj === 'object' && dotPropMatch[2] in obj) return obj[dotPropMatch[2]];
         }
 
-        // Python Math Module & Arithmetic Expressions
-        if (expr.startsWith('math.') || expr.includes(' + ') || expr.includes(' - ') || expr.includes(' * ') || expr.includes(' / ') || expr.includes(' % ')) {
+        // Python Math Module, Helpers & Arithmetic Expressions
+        const looksMathOrArith = expr.startsWith('math.') ||
+            /[+*/%]/.test(expr) ||
+            (expr.includes('-') && !/^[A-Za-z0-9_-]+$/.test(expr)) ||
+            /^(?:round|abs|min|max|int|float|pow|sqrt|floor|ceil|sin|cos|tan|len)\s*\(/.test(expr);
+        if (looksMathOrArith) {
             try {
-                let resolvedExpr = expr;
-                const varKeys = Object.keys(this.variables).sort((a, b) => b.length - a.length);
-                for (let k of varKeys) {
-                    const regex = new RegExp(`\\b${k}\\b`, 'g');
-                    const val = this.variables[k];
-                    const valRepr = typeof val === 'string' ? JSON.stringify(val) : String(val);
-                    resolvedExpr = resolvedExpr.replace(regex, valRepr);
-                }
-                
-                resolvedExpr = resolvedExpr
+                let resolvedExpr = expr
                     .replace(/math\.pi/g, Math.PI.toString())
                     .replace(/math\.e/g, Math.E.toString())
                     .replace(/math\.sqrt/g, 'Math.sqrt')
@@ -3055,7 +3532,26 @@ export class LoopingInterpreter {
                     .replace(/math\.max/g, 'Math.max')
                     .replace(/math\.random/g, 'Math.random');
 
-                return Function(`"use strict"; return (${resolvedExpr});`)();
+                resolvedExpr = resolvedExpr.replace(/"[^"]*"|'[^']*'|\b([A-Za-z_][A-Za-z0-9_]*)\b/g, (tok, ident) => {
+                    if (!ident) return tok;
+                    if (this.variables.hasOwnProperty(ident)) {
+                        const val = this.variables[ident];
+                        return typeof val === 'string' ? JSON.stringify(val) : String(val);
+                    }
+                    return tok;
+                });
+
+                const fn = new Function(
+                    'round', 'abs', 'min', 'max', 'pow', 'int', 'float', 'sqrt', 'floor', 'ceil', 'sin', 'cos', 'tan', 'len',
+                    `"use strict"; return (${resolvedExpr});`
+                );
+                const pyRound = (x, d = 0) => d ? Number(Number(x).toFixed(Math.max(0, Math.min(12, d | 0)))) : Math.round(Number(x));
+                return fn(
+                    pyRound, Math.abs, Math.min, Math.max, Math.pow,
+                    (v) => parseInt(v, 10), (v) => parseFloat(v),
+                    Math.sqrt, Math.floor, Math.ceil, Math.sin, Math.cos, Math.tan,
+                    (v) => (v && v.length !== undefined ? v.length : 0)
+                );
             } catch(e) {
                 if (expr.includes(' + ')) {
                     return expr.split(/\s+\+\s+/).map(p => this.evaluateExpression(p)).join('');
@@ -3115,7 +3611,8 @@ export class LoopingInterpreter {
 
     startLoop() {
         this.isRunning = true;
-        this.lastTime = performance.now();
+        this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        if (typeof requestAnimationFrame !== 'function') return;
         
         const loop = (timestamp) => {
             if (!this.isRunning) return;
@@ -3143,12 +3640,13 @@ export class LoopingInterpreter {
             const gps = navigator.getGamepads();
             const gp = gps && gps[0];
             if (gp) {
+                const dz = this.gamepadConfig?.deadzone || 0.16;
                 const axisX = gp.axes[0] || 0;
                 const axisY = gp.axes[1] || 0;
                 const axisCamX = gp.axes[2] || 0;
-                this.gamepadState.axisX = Math.abs(axisX) > 0.16 ? axisX : 0;
-                this.gamepadState.axisY = Math.abs(axisY) > 0.16 ? -axisY : 0;
-                this.gamepadState.axisCamX = Math.abs(axisCamX) > 0.18 ? axisCamX : 0;
+                this.gamepadState.axisX = Math.abs(axisX) > dz ? axisX : 0;
+                this.gamepadState.axisY = Math.abs(axisY) > dz ? -axisY : 0;
+                this.gamepadState.axisCamX = Math.abs(axisCamX) > dz ? axisCamX : 0;
 
                 const kbLeft = !!(this.keysDown['a'] || this.keysDown['arrowleft']);
                 const kbRight = !!(this.keysDown['d'] || this.keysDown['arrowright']);
@@ -3156,16 +3654,19 @@ export class LoopingInterpreter {
                 const kbDown = !!(this.keysDown['s'] || this.keysDown['arrowdown']);
                 const kbJump = this.is3DMode ? !!this.keysDown[' '] : !!(this.keysDown['w'] || this.keysDown['arrowup'] || this.keysDown[' ']);
                 const kbShoot = !!(this.keysDown['j'] || this.keysDown['z'] || this.keysDown['f'] || this.keysDown['enter']);
-                const kbDash = !!(this.keysDown['k'] || this.keysDown['x'] || this.keysDown['shift']);
+                const kbDash = !!(this.keysDown['k'] || this.keysDown['x'] || this.keysDown['b'] || this.keysDown['shift']);
 
-                const gpLeft = axisX < -0.3 || !!(gp.buttons[14] && gp.buttons[14].pressed);
-                const gpRight = axisX > 0.3 || !!(gp.buttons[15] && gp.buttons[15].pressed);
-                const gpUp = axisY < -0.3 || !!(gp.buttons[12] && gp.buttons[12].pressed);
-                const gpDown = axisY > 0.3 || !!(gp.buttons[13] && gp.buttons[13].pressed);
+                const gpLeft = axisX < -Math.max(0.25, dz) || !!(gp.buttons[14] && gp.buttons[14].pressed);
+                const gpRight = axisX > Math.max(0.25, dz) || !!(gp.buttons[15] && gp.buttons[15].pressed);
+                const gpUp = axisY < -Math.max(0.25, dz) || !!(gp.buttons[12] && gp.buttons[12].pressed);
+                const gpDown = axisY > Math.max(0.25, dz) || !!(gp.buttons[13] && gp.buttons[13].pressed);
                 const btnAHeld = !!(gp.buttons[0] && gp.buttons[0].pressed) || (!this.is3DMode && gpUp);
-                const btnBHeld = !!(gp.buttons[1] && gp.buttons[1].pressed) || !!(gp.buttons[2] && gp.buttons[2].pressed);
-                const btnXHeld = !!(gp.buttons[3] && gp.buttons[3].pressed);
+                const btnBHeld = !!(gp.buttons[2] && gp.buttons[2].pressed) || !!(gp.buttons[7] && gp.buttons[7].pressed);
+                const btnXHeld = !!(gp.buttons[1] && gp.buttons[1].pressed) || !!(gp.buttons[3] && gp.buttons[3].pressed) || !!(gp.buttons[6] && gp.buttons[6].pressed);
+                const btnLbHeld = !!(gp.buttons[4] && gp.buttons[4].pressed);
+                const btnRbHeld = !!(gp.buttons[5] && gp.buttons[5].pressed);
                 const btnPauseHeld = !!(gp.buttons[9] && gp.buttons[9].pressed);
+                const btnResetHeld = !!(gp.buttons[8] && gp.buttons[8].pressed);
 
                 this.gamepadState.dpad.left = kbLeft || gpLeft;
                 this.gamepadState.dpad.right = kbRight || gpRight;
@@ -3174,6 +3675,13 @@ export class LoopingInterpreter {
                 this.gamepadState.btnA = kbJump || btnAHeld;
                 this.gamepadState.btnB = kbShoot || btnBHeld;
                 this.gamepadState.btnX = kbDash || btnXHeld;
+
+                if (btnResetHeld && !this.prevGamepadButtons.reset) {
+                    this.restartGame();
+                    return;
+                }
+                if (btnLbHeld && !this.prevGamepadButtons.lb) this.presetPrev();
+                if (btnRbHeld && !this.prevGamepadButtons.rb) this.presetNext();
 
                 if (btnPauseHeld && !this.prevGamepadButtons.pause && !this.gameOver && !this.gameWon) {
                     this.paused = !this.paused;
@@ -3202,7 +3710,7 @@ export class LoopingInterpreter {
                         }
                     }
                 }
-                this.prevGamepadButtons = { a: btnAHeld, b: btnBHeld, x: btnXHeld, pause: btnPauseHeld };
+                this.prevGamepadButtons = { a: btnAHeld, b: btnBHeld, x: btnXHeld, pause: btnPauseHeld, lb: btnLbHeld, rb: btnRbHeld, reset: btnResetHeld };
             }
         }
 
@@ -3224,7 +3732,9 @@ export class LoopingInterpreter {
             this.comboTimer -= dt;
             if (this.comboTimer <= 0) this.combo = 0;
         }
-        const floorY = this.canvas ? this.canvas.height - 44 : 436;
+        const floorY = (this.world.hasCustomBounds && this.world.height > 0)
+            ? (this.world.height - 44)
+            : (this.canvas ? this.canvas.height - 44 : 436);
 
         // 1. Update Moving Platforms, Portals, Teleporters & Laser Gates
         for (let other of this.gameEntities) {
@@ -3870,16 +4380,22 @@ export class LoopingInterpreter {
         // ═══════════════════════════════════════════════════════════════
         //  WORLD SPACE (Camera Translated)
         // ═══════════════════════════════════════════════════════════════
+        const worldPadY = (this.world.hasCustomBounds && this.world.height > 0 && this.world.height < h - 80)
+            ? Math.round((h - this.world.height) * 0.5)
+            : 0;
         ctx.save();
-        ctx.translate(-Math.round(this.camera.x + shakeX), -Math.round(this.camera.y + shakeY));
+        ctx.translate(-Math.round(this.camera.x + shakeX), worldPadY - Math.round(this.camera.y + shakeY));
 
         // 3. World Ground Surface
-        const floorY = h - 44;
-        const groundGrad = ctx.createLinearGradient(0, floorY, 0, h);
+        const floorY = (this.world.hasCustomBounds && this.world.height > 0)
+            ? (this.world.height - 44)
+            : (h - 44);
+        const groundBottom = Math.max(h + 200, (this.world.height || h) + 200);
+        const groundGrad = ctx.createLinearGradient(0, floorY, 0, floorY + 120);
         groundGrad.addColorStop(0, '#0f172a');
         groundGrad.addColorStop(1, '#020617');
         ctx.fillStyle = groundGrad;
-        ctx.fillRect(0, floorY, this.world.width, 44);
+        ctx.fillRect(0, floorY, this.world.width, groundBottom - floorY);
 
         // Neon Barrier Line
         ctx.strokeStyle = '#38bdf8';
@@ -4274,45 +4790,237 @@ export class LoopingInterpreter {
             ctx.fillText(`⚡ COMBO x${this.combo}`, 18, h - 56);
         }
 
-        // Render UI HUD Cards & Buttons
+        // UI Header & Clickable Stage Preset Pills
+        this.presetPillBounds = [];
+        let topCenterY = activeBoss ? 52 : 16;
+        if (this.uiLayout?.header && !activeBoss) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+            ctx.lineWidth = 1;
+            const hdrW = Math.min(w - 420, 480);
+            if (hdrW > 180) {
+                this.roundRect(ctx, (w - hdrW) / 2, 14, hdrW, 24, 7, true, true);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = 'bold 10.5px Outfit, monospace, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.uiLayout.header.slice(0, 62), w / 2, 30);
+                ctx.textAlign = 'left';
+                topCenterY = 44;
+            }
+        }
+        if (this.stagePresets && this.stagePresets.length > 0 && w >= 680) {
+            const pills = this.stagePresets;
+            const gap = 6;
+            const maxBarW = Math.max(200, w - 430);
+            const pillW = Math.min(132, Math.floor((maxBarW - gap * (pills.length - 1)) / pills.length));
+            if (pillW >= 54) {
+                const totalW = pills.length * pillW + (pills.length - 1) * gap;
+                let px = (w - totalW) / 2;
+                for (let idx = 0; idx < pills.length; idx++) {
+                    const pr = pills[idx];
+                    const isAct = idx === this.activePresetIdx;
+                    ctx.fillStyle = isAct ? 'rgba(56, 189, 248, 0.28)' : 'rgba(15, 23, 42, 0.76)';
+                    ctx.strokeStyle = isAct ? (pr.color || '#38bdf8') : 'rgba(148, 163, 184, 0.3)';
+                    ctx.lineWidth = isAct ? 1.5 : 1;
+                    this.roundRect(ctx, px, topCenterY, pillW, 22, 6, true, true);
+                    ctx.fillStyle = isAct ? '#ffffff' : '#94a3b8';
+                    ctx.font = 'bold 9.5px Outfit, monospace, sans-serif';
+                    ctx.textAlign = 'center';
+                    const rawLbl = `[${idx + 1}] ${pr.label.replace(/^Cap \d+(?:-\d+)?:\s*/i, '')}`;
+                    const clipped = rawLbl.length > 16 ? rawLbl.slice(0, 15) + '…' : rawLbl;
+                    ctx.fillText(clipped, px + pillW / 2, topCenterY + 14.5);
+                    ctx.textAlign = 'left';
+                    this.presetPillBounds.push({ x: px, y: topCenterY, w: pillW, h: 22, idx });
+                    px += pillW + gap;
+                }
+            }
+        }
+
+        // Render Live HUD Cards & Explicit Buttons (auto-offset below HP badge if overlapping)
+        const hasPlayerHUD = Boolean(this.getPlayer());
+        let shiftedTopLeftCard = false;
         for (let elem of this.renderQueue) {
             if (elem.type === 'card') {
-                const cardGrad = ctx.createLinearGradient(elem.x, elem.y, elem.x + elem.w, elem.y + elem.h);
-                cardGrad.addColorStop(0, 'rgba(15, 23, 42, 0.82)');
-                cardGrad.addColorStop(1, 'rgba(30, 41, 59, 0.88)');
+                const rawTitle = elem.rawTitle !== undefined ? elem.rawTitle : elem.title;
+                const rawText = elem.rawText !== undefined ? elem.rawText : elem.text;
+                const liveTitle = this.interpolateVars(rawTitle);
+                const liveText = this.interpolateVars(rawText);
+                const needsShift = hasPlayerHUD && elem.x < 240 && elem.y < 74;
+                if (needsShift) shiftedTopLeftCard = true;
+                const dx = elem.x;
+                const dy = needsShift ? elem.y + 56 : elem.y;
+                elem._drawX = dx;
+                elem._drawY = dy;
+
+                const cardGrad = ctx.createLinearGradient(dx, dy, dx + elem.w, dy + elem.h);
+                cardGrad.addColorStop(0, 'rgba(15, 23, 42, 0.84)');
+                cardGrad.addColorStop(1, 'rgba(30, 41, 59, 0.90)');
 
                 ctx.fillStyle = cardGrad;
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
                 ctx.lineWidth = 1.2;
-                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 14, true, true);
+                this.roundRect(ctx, dx, dy, elem.w, elem.h, 14, true, true);
 
                 ctx.fillStyle = '#38bdf8';
                 ctx.font = 'bold 14px Outfit, sans-serif';
-                ctx.fillText(elem.title, elem.x + 16, elem.y + 28);
+                ctx.fillText(liveTitle, dx + 16, dy + 28);
 
-                ctx.fillStyle = '#94a3b8';
+                ctx.fillStyle = '#cbd5e1';
                 ctx.font = '11.5px Outfit, monospace, sans-serif';
-                const lines = String(elem.text || '').replace(/\\n/g, '\n').split('\n');
+                const lines = String(liveText || '').replace(/\\n/g, '\n').split('\n');
                 for (let i = 0; i < lines.length; i++) {
-                    const lineY = elem.y + 52 + (i * 20);
-                    if (lineY < elem.y + elem.h - 8) {
-                        ctx.fillText(lines[i], elem.x + 16, lineY);
+                    const lineY = dy + 52 + (i * 20);
+                    if (lineY < dy + elem.h - 8) {
+                        ctx.fillText(lines[i], dx + 16, lineY);
                     }
                 }
-            } else if (elem.type === 'button') {
-                const btnGrad = ctx.createLinearGradient(elem.x, elem.y, elem.x + elem.w, elem.y + elem.h);
-                btnGrad.addColorStop(0, '#6366f1');
+            } else if (elem.type === 'button' && (elem.explicitPos !== false || !this.uiDrawerOpen || this.externalUiHost)) {
+                if (elem.explicitPos === false && this.uiDrawerOpen && !this.externalUiHost) continue;
+                const shiftBtn = hasPlayerHUD && elem.x < 240 && (elem.y < 74 || (shiftedTopLeftCard && elem.y < 210));
+                const dx = elem.x;
+                const dy = shiftBtn ? elem.y + 56 : elem.y;
+                elem._drawX = dx;
+                elem._drawY = dy;
+
+                const btnGrad = ctx.createLinearGradient(dx, dy, dx + elem.w, dy + elem.h);
+                btnGrad.addColorStop(0, elem.isPressed ? '#4f46e5' : '#6366f1');
                 btnGrad.addColorStop(1, '#8b5cf6');
                 ctx.fillStyle = btnGrad;
                 ctx.strokeStyle = '#a5b4fc';
                 ctx.lineWidth = 1.5;
-                this.roundRect(ctx, elem.x, elem.y, elem.w, elem.h, 10, true, true);
+                this.roundRect(ctx, dx, dy, elem.w, elem.h, 10, true, true);
 
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 13px Outfit, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(elem.text, elem.x + elem.w / 2, elem.y + 26);
+                ctx.fillText(elem.text, dx + elem.w / 2, dy + Math.round(elem.h * 0.62));
                 ctx.textAlign = 'left';
+            }
+        }
+
+        // Collapsible Inspector / Sandbox Drawer for Canvas-Only Views
+        this.uiDrawerHits = [];
+        this.uiTogglePill = null;
+        const drawerItems = this.renderQueue.filter(e =>
+            e.type === 'slider' || e.type === 'toggle' || e.type === 'progress' || (e.type === 'button' && e.explicitPos === false)
+        );
+        const hasInspector = drawerItems.length > 0 || Boolean(this.algebraTable);
+        if (hasInspector && !this.externalUiHost) {
+            const pillX = w - 170, pillY = 66, pillW = 154, pillH = 24;
+            this.uiTogglePill = { x: pillX, y: pillY, w: pillW, h: pillH };
+            ctx.fillStyle = this.uiDrawerOpen ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.85)';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.2;
+            this.roundRect(ctx, pillX, pillY, pillW, pillH, 7, true, true);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.font = 'bold 10.5px Outfit, monospace, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.uiDrawerOpen ? '▼ INSPECTOR [TAB]' : '▶ INSPECTOR [TAB]', pillX + pillW / 2, pillY + 15.5);
+            ctx.textAlign = 'left';
+
+            if (this.uiDrawerOpen && w >= 600) {
+                const dw = Math.min(316, Math.round(w * 0.34));
+                const dx = w - dw - 14;
+                const dy = 96;
+                const maxBottom = h - 36;
+                const dh = Math.max(160, Math.min(maxBottom - dy, 480));
+                ctx.fillStyle = 'rgba(6, 10, 22, 0.86)';
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
+                ctx.lineWidth = 1.2;
+                this.roundRect(ctx, dx, dy, dw, dh, 12, true, true);
+
+                let cy = dy + 16;
+                const panelTitle = (this.uiLayout?.panels && Object.values(this.uiLayout.panels).slice(-1)[0]) || 'Sandbox UI';
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 11.5px Outfit, monospace, sans-serif';
+                ctx.fillText(String(panelTitle).slice(0, 36), dx + 12, cy + 6);
+                cy += 20;
+
+                for (const item of drawerItems) {
+                    if (cy + 30 > dy + dh - 8) break;
+                    if (item.type === 'toggle') {
+                        const checked = Boolean(item.varName && this.variables.hasOwnProperty(item.varName) ? this.variables[item.varName] : item.checked);
+                        item.checked = checked;
+                        ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
+                        this.roundRect(ctx, dx + 12, cy, dw - 24, 24, 6, true, false);
+                        ctx.fillStyle = '#e2e8f0';
+                        ctx.font = '11px Outfit, sans-serif';
+                        ctx.fillText(item.label, dx + 20, cy + 16);
+                        const sw = 34, sh = 14, sx = dx + dw - 20 - sw, sy = cy + 5;
+                        ctx.fillStyle = checked ? '#06b6d4' : '#334155';
+                        this.roundRect(ctx, sx, sy, sw, sh, 7, true, false);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(checked ? sx + sw - 7 : sx + 7, sy + 7, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        this.uiDrawerHits.push({ kind: 'toggle', elem: item, x: dx + 12, y: cy, w: dw - 24, h: 24 });
+                        cy += 28;
+                    } else if (item.type === 'slider') {
+                        const curVal = Number(item.varName && this.variables.hasOwnProperty(item.varName) ? this.variables[item.varName] : item.val);
+                        item.val = curVal;
+                        ctx.fillStyle = '#cbd5e1';
+                        ctx.font = '10.5px Outfit, monospace, sans-serif';
+                        ctx.fillText(`${item.label}: ${curVal}`, dx + 14, cy + 10);
+                        const tx = dx + 14, tw = dw - 28, ty = cy + 16;
+                        const norm = Math.max(0, Math.min(1, (curVal - item.min) / Math.max(1e-6, item.max - item.min)));
+                        ctx.fillStyle = '#1e293b';
+                        this.roundRect(ctx, tx, ty, tw, 6, 3, true, false);
+                        ctx.fillStyle = '#00f5d4';
+                        this.roundRect(ctx, tx, ty, Math.max(6, tw * norm), 6, 3, true, false);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(tx + tw * norm, ty + 3, 5.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        this.uiDrawerHits.push({ kind: 'slider', elem: item, x: tx - 6, y: cy, w: tw + 12, h: 28, trackX: tx, trackW: tw });
+                        cy += 30;
+                    } else if (item.type === 'progress') {
+                        const curVal = item.rawValExpr ? Number(this.evaluateExpression(item.rawValExpr)) : item.val;
+                        const ratio = Math.max(0, Math.min(1, curVal / Math.max(1e-6, item.max)));
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = '10px Outfit, monospace, sans-serif';
+                        ctx.fillText(`${item.label} (${Math.round(curVal)}/${item.max})`, dx + 14, cy + 9);
+                        ctx.fillStyle = '#1e293b';
+                        this.roundRect(ctx, dx + 14, cy + 13, dw - 28, 7, 3, true, false);
+                        ctx.fillStyle = item.color || '#38bdf8';
+                        this.roundRect(ctx, dx + 14, cy + 13, Math.max(4, (dw - 28) * ratio), 7, 3, true, false);
+                        cy += 24;
+                    } else if (item.type === 'button') {
+                        ctx.fillStyle = '#4f46e5';
+                        ctx.strokeStyle = '#a5b4fc';
+                        ctx.lineWidth = 1;
+                        this.roundRect(ctx, dx + 12, cy, dw - 24, 24, 6, true, true);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 11px Outfit, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(item.text, dx + dw / 2, cy + 16);
+                        ctx.textAlign = 'left';
+                        this.uiDrawerHits.push({ kind: 'button', elem: item, x: dx + 12, y: cy, w: dw - 24, h: 24 });
+                        cy += 28;
+                    }
+                }
+
+                if (this.algebraTable && cy + 44 < dy + dh) {
+                    cy += 4;
+                    ctx.fillStyle = '#a855f7';
+                    ctx.font = 'bold 10.5px Outfit, monospace, sans-serif';
+                    ctx.fillText(`${this.algebraTable.title} (>=${this.algebraTable.threshold})`, dx + 12, cy + 10);
+                    cy += 16;
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '9.5px monospace';
+                    ctx.fillText(`f: ${this.algebraTable.formula}`, dx + 12, cy + 8);
+                    cy += 14;
+                    for (const row of this.algebraTable.rows) {
+                        if (cy + 16 > dy + dh - 6) break;
+                        const over = row.hits >= this.algebraTable.threshold;
+                        ctx.fillStyle = over ? 'rgba(244, 63, 94, 0.20)' : 'rgba(30, 41, 59, 0.45)';
+                        this.roundRect(ctx, dx + 12, cy, dw - 24, 15, 3, true, false);
+                        ctx.fillStyle = over ? '#fda4af' : '#cbd5e1';
+                        ctx.font = '9.5px monospace';
+                        const lblShort = row.label.length > 22 ? row.label.slice(0, 21) + '…' : row.label;
+                        ctx.fillText(`${lblShort} | E=${Math.round(row.energy)} | ${row.hits}x`, dx + 16, cy + 11);
+                        cy += 17;
+                    }
+                }
             }
         }
 
@@ -5119,7 +5827,16 @@ export class LoopingInterpreter {
                 return this.loopize.init(String(parts[0] || 'LoopizeGame'));
             }
             if (fn === 'loopize.ecs_spawn' || fn === 'lz.ecs_spawn' || fn === 'ecs.spawn' || fn === 'lz_spawn_obj') {
-                return this.loopize.ecsSpawn(String(parts[0] || 'Entity'), String(parts[1] || 'entity'), parts[2] || [0, 2, 0], Number(parts[3] ?? 100), String(parts[4] || ''), String(parts[5] || ''));
+                if (Array.isArray(parts[2])) {
+                    return this.loopize.ecsSpawn(String(parts[0] || 'Entity'), String(parts[1] || 'entity'), parts[2], Number(parts[3] ?? 100), String(parts[4] || ''), String(parts[5] || ''));
+                }
+                const px = Number(parts[2] ?? 0), py = Number(parts[3] ?? 2), pz = Number(parts[4] ?? 0);
+                const hp = Number(parts[5] ?? 100);
+                const tail = parts[6] !== undefined ? String(parts[6]) : '';
+                const obj = tail.includes('.') ? tail : '';
+                const eid = this.loopize.ecsSpawn(String(parts[0] || 'Entity'), String(parts[1] || 'entity'), [px, py, pz], hp, obj, '');
+                if (tail && !obj && !isNaN(tail)) this.loopize.ecsSet(eid, 'speed', Number(tail));
+                return eid;
             }
             if (fn === 'loopize.ecs_query_tag' || fn === 'lz.ecs_query_tag') {
                 return this.loopize.ecsQueryTag(String(parts[0] || ''));
@@ -5134,17 +5851,24 @@ export class LoopingInterpreter {
                 return this.loopize.ecsDestroy(parts[0]);
             }
             if (fn === 'loopize.spatial_radius' || fn === 'lz.spatial_radius') {
-                return this.loopize.spatialRadius(toV3(parts[0]), Number(parts[1] || 5), String(parts[2] || ''));
+                if (Array.isArray(parts[0])) {
+                    return this.loopize.spatialRadius(toV3(parts[0]), Number(parts[1] || 5), String(parts[2] || ''));
+                }
+                const center = [Number(parts[0] ?? 0), Number(parts[1] ?? 0), Number(parts[2] ?? 0)];
+                return this.loopize.spatialRadius(center, Number(parts[3] || 5), String(parts[4] || ''));
             }
             if (fn === 'lz_wave_rush') {
-                this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[2] || 3), Number(parts[3] || 90), String(parts[1] || 'valkyrie'), String(parts[4] || 'valkyrie_drone.obj'));
+                const defaultObj = this.is3DMode ? 'drone.obj' : '';
+                this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[2] || 3), Number(parts[3] || 90), String(parts[1] || 'drone'), String(parts[4] || defaultObj));
                 return this.loopize.waveSpawn(Number(parts[0] || 1));
             }
             if (fn === 'loopize.wave_define' || fn === 'lz.wave_define') {
-                return this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[1] || 4), Number(parts[2] || 80), String(parts[3] || 'valkyrie'), String(parts[4] || 'valkyrie_drone.obj'));
+                const defaultObj = this.is3DMode ? 'drone.obj' : '';
+                return this.loopize.waveDefine(Number(parts[0] || 1), Number(parts[1] || 4), Number(parts[2] || 80), String(parts[3] || 'drone'), String(parts[4] || defaultObj));
             }
             if (fn === 'loopize.wave_add' || fn === 'lz.wave_add') {
-                return this.loopize.waveAdd(Number(parts[0] || 1), String(parts[1] || 'valkyrie'), Number(parts[2] || 4), Number(parts[3] || 80), String(parts[4] || 'valkyrie_drone.obj'));
+                const defaultObj = this.is3DMode ? 'drone.obj' : '';
+                return this.loopize.waveAdd(Number(parts[0] || 1), String(parts[1] || 'drone'), Number(parts[2] || 4), Number(parts[3] || 80), String(parts[4] || defaultObj));
             }
             if (fn === 'loopize.wave_spawn' || fn === 'lz.wave_spawn') {
                 return this.loopize.waveSpawn(Number(parts[0] || 1));
@@ -5173,7 +5897,11 @@ export class LoopingInterpreter {
                 return this.loopize.ease(String(parts[0] || 'out_cubic'), Number(parts[1] || 0));
             }
             if (fn === 'loopize.tween' || fn === 'lz.tween' || fn === 'lz_tween') {
-                return this.loopize.tween(String(parts[0] || 'tw'), String(parts[1] || 'out_cubic'), Number(parts[2] || 0), Number(parts[3] ?? 1), Number(parts[4] ?? 1), Boolean(parts[5]), Boolean(parts[6]));
+                if (typeof parts[1] === 'string' && isNaN(parts[1])) {
+                    return this.loopize.tween(String(parts[0] || 'tw'), String(parts[1] || 'out_cubic'), Number(parts[2] || 0), Number(parts[3] ?? 1), Number(parts[4] ?? 1), Boolean(parts[5]), Boolean(parts[6]));
+                }
+                const mode = (typeof parts[4] === 'string' && isNaN(parts[4])) ? parts[4] : 'out_cubic';
+                return this.loopize.tween(String(parts[0] || 'tw'), mode, Number(parts[1] ?? 0), Number(parts[2] ?? 1), Number(parts[3] ?? 1), false, false);
             }
             if (fn === 'loopize.tween_value' || fn === 'lz.tween_value') {
                 return this.loopize.tweenValue(String(parts[0] || 'tw'));
@@ -5203,6 +5931,14 @@ export class LoopingInterpreter {
                 return (this.loopize.inventory[k] || 0) >= amt;
             }
             if (fn === 'loopize.quest_add' || fn === 'lz.quest_add' || fn === 'lz_mission') {
+                if (parts.length <= 2 && (parts[1] === undefined || typeof parts[1] === 'number' || !isNaN(parts[1]))) {
+                    const qid = String(parts[0] || 'Mission');
+                    const prog = Number(parts[1] ?? 100);
+                    this.loopize.questAdd(qid, qid, 100, 250);
+                    this.loopize.questProgress(qid, prog);
+                    this.log(`🎯 [MISSION] "${qid}" (${prog}%)`, 'info');
+                    return true;
+                }
                 return this.loopize.questAdd(String(parts[0] || 'q1'), String(parts[1] || 'Quest'), Number(parts[2] || 1), Number(parts[3] || 500));
             }
             if (fn === 'loopize.quest_progress' || fn === 'lz.quest_progress') {

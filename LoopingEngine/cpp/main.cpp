@@ -17,6 +17,9 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " --py-gui <script.loop>   Execute Looping script with Python LoopNativeWindow (pygame/compat)\n";
     std::cout << "  " << prog_name << " --dx-window <file.dxwin> Launch native window from .dxwin spec (DX11 Win32 / Cocoa macOS)\n";
     std::cout << "  " << prog_name << " --mac-window <file.dxwin> Launch native macOS Cocoa + Objective-C + Assembly window\n";
+    std::cout << "  " << prog_name << " --exp [args...]          Delegate to Alpha! zero-dependency Asm+ObjC+C micro-runtime (looping-exp)\n";
+    std::cout << "  " << prog_name << " --exp-serve <port>       Zero-dependency HTTP micro-server via Asm+ObjC+C (macOS Alpha!)\n";
+    std::cout << "  " << prog_name << " --exp-window <file.loop> Pure objc_msgSend + Assembly native Cocoa window (macOS Alpha!)\n";
     std::cout << "  " << prog_name << " window <name> [flags]    Create, synthesize & launch dynamic graphical window\n";
     std::cout << "  " << prog_name << " run <script.loop>        Execute Looping script\n";
     std::cout << "  " << prog_name << " create <name> [--type]   Create new app/game with reactive snippets (Arch 3.1A)\n";
@@ -1568,6 +1571,71 @@ int main(int argc, char* argv[]) {
 
     std::string first_arg = argv[1];
 
+#if defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+    auto resolve_exp_binary = [&]() -> std::string {
+        std::vector<std::string> cands;
+        std::string argv0_str = argv[0] ? argv[0] : "";
+        size_t sl = argv0_str.find_last_of('/');
+        if (sl != std::string::npos) {
+            cands.push_back(argv0_str.substr(0, sl) + "/looping-exp");
+        }
+        cands.push_back("./bin/looping-exp");
+        cands.push_back("./experimental/asm-objc-c/looping-exp");
+        cands.push_back("/opt/homebrew/bin/looping-exp");
+        cands.push_back("/usr/local/bin/looping-exp");
+        if (const char* home = std::getenv("HOME")) {
+            cands.push_back(std::string(home) + "/.local/bin/looping-exp");
+            cands.push_back(std::string(home) + "/engine/bin/looping-exp");
+        }
+        for (const auto& cand : cands) {
+            if (access(cand.c_str(), X_OK) == 0) return cand;
+        }
+        FILE* pipe = popen("command -v looping-exp 2>/dev/null", "r");
+        if (pipe) {
+            char buf[1024];
+            std::string found;
+            if (fgets(buf, sizeof(buf), pipe)) {
+                found = buf;
+                while (!found.empty() && (found.back() == '\n' || found.back() == '\r')) found.pop_back();
+            }
+            pclose(pipe);
+            if (!found.empty() && access(found.c_str(), X_OK) == 0) return found;
+        }
+        return "";
+    };
+
+    if (first_arg == "--exp" || first_arg == "exp" ||
+        first_arg == "--exp-serve" || first_arg == "--serve" ||
+        first_arg == "--exp-window") {
+        std::string exp_bin = resolve_exp_binary();
+        if (exp_bin.empty()) {
+            std::cerr << color::RED << "[ALPHA! EXP ERROR]" << color::RESET
+                      << " 'looping-exp' (Asm+ObjC+C micro-runtime) not found in bin/ or PATH.\n"
+                      << "   Install/update Alpha! channel: curl -fsSL https://engine.cokistudios.com/install.sh | bash -s -- --alpha\n";
+            return 1;
+        }
+        std::vector<char*> exp_argv;
+        std::string injected_flag;
+        exp_argv.push_back(const_cast<char*>(exp_bin.c_str()));
+        if (first_arg == "--exp-serve" || first_arg == "--serve") {
+            injected_flag = "--serve";
+            exp_argv.push_back(const_cast<char*>(injected_flag.c_str()));
+        } else if (first_arg == "--exp-window") {
+            injected_flag = "--window";
+            exp_argv.push_back(const_cast<char*>(injected_flag.c_str()));
+        }
+        for (int i = 2; i < argc; ++i) {
+            exp_argv.push_back(argv[i]);
+        }
+        exp_argv.push_back(nullptr);
+        fflush(stdout);
+        fflush(stderr);
+        execv(exp_bin.c_str(), exp_argv.data());
+        perror("execv(looping-exp)");
+        return 1;
+    }
+#endif
+
     if (first_arg == "--help" || first_arg == "-h") {
         vm.print_banner();
         print_usage(argv[0]);
@@ -1601,6 +1669,13 @@ int main(int argc, char* argv[]) {
                   << " (" << vm.eval(std::make_shared<VariableExpr>("sys.arch")).as_string() << ")\n";
 #if defined(_WIN32) && !defined(__EMSCRIPTEN__)
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Win32 DirectX GUI  : DirectX 11 + Direct2D + DirectWrite Dynamic Native Window (Zero Python)\n";
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+        std::string exp_bin_path = resolve_exp_binary();
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " macOS Cocoa+ASM    : AppKit + Objective-C + Assembly Native Window (Zero Python)\n";
+        std::cout << "  " << (!exp_bin_path.empty() ? color::GREEN : color::YELLOW)
+                  << (!exp_bin_path.empty() ? "✔" : "⚠") << color::RESET
+                  << " Alpha! Asm+ObjC+C  : "
+                  << (!exp_bin_path.empty() ? exp_bin_path + " (Zero C++ stdlib / Zero Python / Zero Node)" : "Not installed (run smiledev upgrade --alpha)") << "\n";
 #endif
         std::cout << "  " << (vm.python_bridge.is_available ? color::GREEN : color::YELLOW)
                   << (vm.python_bridge.is_available ? "✔" : "⚠") << color::RESET

@@ -112,7 +112,9 @@ struct StagePreset2D {
     double x = 70, y = 300;
     std::string weather = "stars";
     double gravity = 980;
+    double friction = 0.0;
     std::string color = "#38bdf8";
+    std::string bg = "";
     bool overdrive = false;
 };
 
@@ -148,6 +150,7 @@ public:
     std::string scenario_name = "Holo Cyber Stage";
     std::string scenario_weather = "stars";
     std::string scenario_bg = "#06090f";
+    bool has_custom_bg = false;
     std::string scenario_accent = "#38bdf8";
 
     // Camera 2D
@@ -181,6 +184,7 @@ public:
     std::vector<StageProjectile> projectiles;
     std::vector<StagePopup> popups;
     std::vector<StagePreset2D> stage_presets;
+    int active_preset_idx = 0;
     AlgebraTableSpec algebra_table;
 
     // Event Queues drained by host (WebAudio SFX + UI Log)
@@ -330,6 +334,7 @@ public:
             if (!cfg.str_val.empty()) scenario_name = cfg.str_val;
             if (!cfg.str_val2.empty()) scenario_weather = cfg.str_val2;
             if (!cfg.str_val3.empty()) scenario_accent = cfg.str_val3;
+            if (!cfg.str_val4.empty()) { scenario_bg = cfg.str_val4; has_custom_bg = true; }
         } else if (cfg.config_key == "stage_preset") {
             StagePreset2D pr;
             pr.x = cfg.val1;
@@ -339,6 +344,8 @@ public:
             pr.weather = cfg.str_val3.empty() ? "stars" : cfg.str_val3;
             pr.gravity = cfg.val3 > 0 ? cfg.val3 : 980.0;
             pr.overdrive = cfg.val4 > 0.5;
+            pr.friction = cfg.val5;
+            pr.bg = cfg.str_val4;
             pr.id = "preset_" + std::to_string(stage_presets.size() + 1);
             stage_presets.push_back(pr);
         } else if (cfg.config_key == "algebra_table") {
@@ -397,6 +404,7 @@ public:
 
     bool activate_preset(int idx) {
         if (idx < 0 || idx >= static_cast<int>(stage_presets.size())) return false;
+        active_preset_idx = idx;
         const auto& pr = stage_presets[static_cast<size_t>(idx)];
         if (auto* p = get_player_2d()) {
             p->x = pr.x;
@@ -409,6 +417,9 @@ public:
         }
         if (!pr.weather.empty()) scenario_weather = pr.weather;
         if (pr.gravity > 0) gravity = pr.gravity;
+        if (pr.friction > 0) friction = pr.friction;
+        if (!pr.bg.empty()) scenario_bg = pr.bg;
+        if (!pr.color.empty()) scenario_accent = pr.color;
         scenario_name = pr.label;
         emit_sfx("pad");
         if (auto* p = get_player_2d()) {
@@ -416,6 +427,17 @@ public:
             spawn_particles(p->x + p->w * 0.5, p->y + p->h * 0.5, pr.color, 24);
         }
         return true;
+    }
+
+    bool preset_next() {
+        if (stage_presets.empty()) return false;
+        return activate_preset((active_preset_idx + 1) % static_cast<int>(stage_presets.size()));
+    }
+
+    bool preset_prev() {
+        if (stage_presets.empty()) return false;
+        int n = static_cast<int>(stage_presets.size());
+        return activate_preset((active_preset_idx - 1 + n) % n);
     }
 
     void trigger_game_over() {
@@ -1057,6 +1079,27 @@ private:
                             add_popup(e.x, e.y - 12.0, "+" + std::to_string(pts), "#fbbf24");
                             spawn_particles(e.x + e.w * 0.5, e.y + e.h * 0.5, e.color, 22);
                         }
+                        break;
+                    } else if (e.type == "breakable" && !e.broken &&
+                               pr.x + pr.radius > e.x && pr.x - pr.radius < e.x + e.w &&
+                               pr.y + pr.radius > e.y && pr.y - pr.radius < e.y + e.h) {
+                        e.health -= pr.damage;
+                        remove_me = true;
+                        spawn_particles(pr.x, pr.y, e.color, 12);
+                        if (e.health <= 0) {
+                            e.broken = true;
+                            e.alive = false;
+                            score += 100;
+                            emit_sfx("coin");
+                            add_popup(e.x, e.y - 10.0, "BREACHED!", e.color);
+                            spawn_particles(e.x + e.w * 0.5, e.y + e.h * 0.5, e.color, 20);
+                        }
+                        break;
+                    } else if ((e.type == "platform" || e.type == "moving_platform") &&
+                               pr.x + pr.radius > e.x && pr.x - pr.radius < e.x + e.w &&
+                               pr.y + pr.radius > e.y && pr.y - pr.radius < e.y + e.h) {
+                        remove_me = true;
+                        spawn_particles(pr.x, pr.y, pr.color, 6);
                         break;
                     }
                 }

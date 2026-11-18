@@ -257,6 +257,38 @@ public:
         return Value(std::vector<Value>{Value(v.x), Value(v.y), Value(v.z)});
     }
 
+    std::string interpolate_string_vars(const std::string& raw) {
+        if (raw.find('{') == std::string::npos) return raw;
+        std::string out;
+        out.reserve(raw.size() + 16);
+        size_t i = 0;
+        while (i < raw.size()) {
+            if (raw[i] == '{') {
+                size_t close = raw.find('}', i);
+                if (close != std::string::npos) {
+                    std::string inner_expr = raw.substr(i + 1, close - i - 1);
+                    auto it = variables.find(inner_expr);
+                    if (it != variables.end()) {
+                        out += it->second.as_string();
+                    } else {
+                        Parser sub_p("");
+                        auto parsed = sub_p.parse_single_expr(inner_expr);
+                        if (parsed) {
+                            Value v = eval(parsed);
+                            out += v.as_string();
+                        } else {
+                            out += "{" + inner_expr + "}";
+                        }
+                    }
+                    i = close + 1;
+                    continue;
+                }
+            }
+            out += raw[i++];
+        }
+        return out;
+    }
+
     static loop_math::Quat val_to_quat(const Value& v) {
         if (v.type == ValueType::List && v.list_val && v.list_val->size() >= 4) {
             const auto& l = *v.list_val;
@@ -546,8 +578,45 @@ public:
         current_window.stage_world_width = stage.world_width;
         current_window.stage_world_height = stage.world_height;
         current_window.stage_gravity = stage.gravity;
+        current_window.stage_friction = stage.friction;
+        current_window.stage_time_scale = stage.time_scale;
+        current_window.stage_lives = stage.lives;
         current_window.stage_scenario_name = stage.scenario_name;
+        current_window.stage_scenario_weather = stage.scenario_weather;
         current_window.stage_scenario_accent = stage.scenario_accent;
+        if (stage.has_custom_bg && !stage.scenario_bg.empty()) {
+            current_window.set_background(stage.scenario_bg);
+        }
+        current_window.stage_presets.clear();
+        for (const auto& pr : stage.stage_presets) {
+            DxStagePresetSpec dp;
+            dp.id = pr.id;
+            dp.label = pr.label;
+            dp.x = pr.x; dp.y = pr.y;
+            dp.weather = pr.weather;
+            dp.gravity = pr.gravity;
+            dp.friction = pr.friction;
+            dp.color = pr.color;
+            dp.bg = pr.bg;
+            dp.overdrive = pr.overdrive;
+            current_window.stage_presets.push_back(std::move(dp));
+        }
+        current_window.algebra_table.enabled = stage.algebra_table.enabled;
+        current_window.algebra_table.title = stage.algebra_table.title;
+        current_window.algebra_table.formula = stage.algebra_table.formula;
+        current_window.algebra_table.threshold = stage.algebra_table.monster_hits;
+        current_window.algebra_table.rows.clear();
+        for (const auto& r : stage.algebra_table.rows) {
+            current_window.algebra_table.rows.push_back({r.label, r.m, r.v, r.h, r.hits});
+        }
+        current_window.init_vars.clear();
+        for (const auto& kv : variables) {
+            if (kv.first.rfind("__", 0) == 0) continue;
+            if (kv.second.type == ValueType::Int || kv.second.type == ValueType::Float ||
+                kv.second.type == ValueType::Bool || kv.second.type == ValueType::String) {
+                current_window.init_vars.push_back({kv.first, kv.second.as_string()});
+            }
+        }
         current_window.entities_2d.clear();
         for (const auto& se : stage.entities_2d) {
             DxEntity2DSpec de;
@@ -572,6 +641,17 @@ public:
             de.is_player = se.is_player;
             de.spawn_x = se.spawn_x;
             de.spawn_y = se.spawn_y;
+            de.scale = se.scale;
+            de.wind_x = se.wind_x;
+            de.wind_y = se.wind_y;
+            de.fire_rate = se.fire_rate;
+            de.interval = se.interval;
+            de.facing = se.facing;
+            de.state = se.state;
+            de.broken = se.broken;
+            de.activated = se.activated;
+            de.active = se.active;
+            de.overdrive = se.overdrive;
             current_window.entities_2d.push_back(std::move(de));
         }
         if (!current_scene3d.entities.empty() && current_scene3d.entities.size() > current_window.entities_3d.size()) {
@@ -946,34 +1026,7 @@ public:
 
         // 4. Interpolated String
         if (auto interp = std::dynamic_pointer_cast<InterpolatedStringExpr>(expr)) {
-            std::string res = interp->raw_template;
-            std::string out = "";
-            size_t i = 0;
-            while (i < res.size()) {
-                if (res[i] == '{') {
-                    size_t close = res.find('}', i);
-                    if (close != std::string::npos) {
-                        std::string inner_expr = res.substr(i + 1, close - i - 1);
-                        auto it = variables.find(inner_expr);
-                        if (it != variables.end()) {
-                            out += it->second.as_string();
-                        } else {
-                            Parser sub_p("");
-                            auto parsed = sub_p.parse_single_expr(inner_expr);
-                            if (parsed) {
-                                Value v = eval(parsed);
-                                out += v.as_string();
-                            } else {
-                                out += "{" + inner_expr + "}";
-                            }
-                        }
-                        i = close + 1;
-                        continue;
-                    }
-                }
-                out += res[i++];
-            }
-            return Value(out);
+            return Value(interpolate_string_vars(interp->raw_template));
         }
 
         // 5. Python & C# Inline: py!(...) / cs!(...) / @cs(...)
@@ -1487,6 +1540,14 @@ public:
                                 execute_snippet_code(b.action, python_snippets[b.action]);
                             } else if (!b.action.empty() && functions.find(b.action) != functions.end()) {
                                 invoke_callable(b.action, {});
+                            } else if (b.action == "restart" || b.action == "reset") {
+                                stage.activate_preset(0);
+                                stage.game_over = false;
+                                stage.game_won = false;
+                                stage.score = 0;
+                                stage.lives = stage.max_lives;
+                            } else if (!b.action.empty() && b.action.find('(') != std::string::npos) {
+                                execute_code(b.action);
                             }
                             return Value(true);
                         }
@@ -3983,11 +4044,40 @@ public:
             if (name == "loopize.ecs_spawn" || name == "lz.ecs_spawn" || name == "ecs.spawn") {
                 std::string eid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
                 std::string tag = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "default";
-                loop_math::Vec3 pos = evaluated_args.size() >= 3 ? val_to_vec3(evaluated_args[2]) : loop_math::Vec3{0, 0, 0};
-                double hp = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 100.0;
-                std::string objm = evaluated_args.size() >= 5 ? evaluated_args[4].as_string() : "";
-                std::string csc  = evaluated_args.size() >= 6 ? evaluated_args[5].as_string() : "";
-                return Value(loopize_runtime.spawn_ecs(eid, tag, pos, hp, objm, csc));
+                loop_math::Vec3 pos{0, 0, 0};
+                double hp = 100.0;
+                std::string objm = "";
+                std::string csc = "";
+                double speed = 0.0;
+                bool flat_coords = evaluated_args.size() >= 5 &&
+                                   evaluated_args[2].type != ValueType::List &&
+                                   evaluated_args[2].type != ValueType::Map;
+                if (flat_coords) {
+                    pos = {
+                        evaluated_args[2].as_number(),
+                        evaluated_args[3].as_number(),
+                        evaluated_args[4].as_number()
+                    };
+                    hp = evaluated_args.size() >= 6 ? evaluated_args[5].as_number() : 100.0;
+                    if (evaluated_args.size() >= 7) {
+                        if (evaluated_args[6].type == ValueType::Int || evaluated_args[6].type == ValueType::Float) {
+                            speed = evaluated_args[6].as_number();
+                        } else {
+                            objm = evaluated_args[6].as_string();
+                        }
+                    }
+                    if (evaluated_args.size() >= 8) csc = evaluated_args[7].as_string();
+                } else {
+                    pos = evaluated_args.size() >= 3 ? val_to_vec3(evaluated_args[2]) : loop_math::Vec3{0, 0, 0};
+                    hp = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 100.0;
+                    objm = evaluated_args.size() >= 5 ? evaluated_args[4].as_string() : "";
+                    csc  = evaluated_args.size() >= 6 ? evaluated_args[5].as_string() : "";
+                }
+                std::string spawned_id = loopize_runtime.spawn_ecs(eid, tag, pos, hp, objm, csc);
+                if (speed > 0.0 && loopize_runtime.ecs.count(eid)) {
+                    loopize_runtime.ecs[eid].props["speed"] = std::to_string(speed);
+                }
+                return Value(spawned_id);
             }
             if (name == "loopize.ecs_query_tag" || name == "lz.ecs_query_tag" || name == "ecs.query_tag") {
                 std::string tag = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "*";
@@ -3996,16 +4086,32 @@ public:
                 return Value(list);
             }
             if (name == "loopize.spatial_radius" || name == "lz.spatial_radius" || name == "ecs.radius") {
-                loop_math::Vec3 c = evaluated_args.size() >= 1 ? val_to_vec3(evaluated_args[0]) : loop_math::Vec3{0, 0, 0};
-                double r = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 10.0;
-                std::string tag = evaluated_args.size() >= 3 ? evaluated_args[2].as_string() : "*";
+                loop_math::Vec3 c{0, 0, 0};
+                double r = 10.0;
+                std::string tag = "*";
+                bool flat_coords = evaluated_args.size() >= 4 &&
+                                   evaluated_args[0].type != ValueType::List &&
+                                   evaluated_args[0].type != ValueType::Map;
+                if (flat_coords) {
+                    c = {
+                        evaluated_args[0].as_number(),
+                        evaluated_args[1].as_number(),
+                        evaluated_args[2].as_number()
+                    };
+                    r = evaluated_args[3].as_number();
+                    if (evaluated_args.size() >= 5) tag = evaluated_args[4].as_string();
+                } else {
+                    c = evaluated_args.size() >= 1 ? val_to_vec3(evaluated_args[0]) : loop_math::Vec3{0, 0, 0};
+                    r = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 10.0;
+                    tag = evaluated_args.size() >= 3 ? evaluated_args[2].as_string() : "*";
+                }
                 std::vector<Value> list;
                 for (const auto& id : loopize_runtime.spatial_radius(c, r, tag)) list.push_back(Value(id));
                 return Value(list);
             }
-            if (name == "loopize.wave_add" || name == "lz.wave_add") {
+            if (name == "loopize.wave_add" || name == "lz.wave_add" || name == "loopize.wave_define" || name == "lz.wave_define") {
                 int num = evaluated_args.size() >= 1 ? static_cast<int>(evaluated_args[0].as_number()) : 1;
-                std::string kind = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "valkyrie";
+                std::string kind = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "drone";
                 int cnt = evaluated_args.size() >= 3 ? static_cast<int>(evaluated_args[2].as_number()) : 3;
                 double hp = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 80.0;
                 double rad = evaluated_args.size() >= 5 ? evaluated_args[4].as_number() : 18.0;
@@ -4013,8 +4119,35 @@ public:
                 return Value(static_cast<int64_t>(loopize_runtime.add_wave(num, kind, cnt, hp, rad, objm)));
             }
             if (name == "loopize.wave_next" || name == "lz.wave_next") {
-                auto spawned = loopize_runtime.trigger_next_wave(current_scene3d);
-                for (const auto& se : spawned) current_window.add_entity_3d(se);
+                bool use_3d = current_scene3d.active || !current_scene3d.entities.empty() || stage.entities_2d.empty();
+                auto spawned = loopize_runtime.trigger_next_wave(current_scene3d, use_3d);
+                if (use_3d) {
+                    for (const auto& se : spawned) current_window.add_entity_3d(se);
+                } else {
+                    double base_x = 900.0;
+                    double base_y = std::max(120.0, stage.world_height - 104.0);
+                    for (const auto& se : stage.entities_2d) {
+                        if (se.type == "platform" && se.w >= stage.world_width * 0.4) {
+                            base_y = std::max(60.0, se.y - 44.0);
+                            break;
+                        }
+                    }
+                    for (size_t wi = 0; wi < spawned.size(); ++wi) {
+                        auto sp = std::make_shared<SpawnEntityStmt>();
+                        sp->entity_type = "enemy";
+                        sp->name = spawned[wi].name;
+                        sp->x = std::min(stage.world_width - 80.0, base_x + wi * 160.0);
+                        sp->y = base_y;
+                        sp->w = 34.0;
+                        sp->h = 44.0;
+                        sp->min_pos = std::max(40.0, sp->x - 140.0);
+                        sp->max_pos = std::min(stage.world_width - 40.0, sp->x + 140.0);
+                        sp->speed = spawned[wi].speed > 0 ? spawned[wi].speed * 10.0 : 95.0;
+                        sp->health = spawned[wi].health;
+                        sp->color = "#f43f5e";
+                        stage.ingest_spawn_2d(*sp);
+                    }
+                }
                 return Value(static_cast<int64_t>(spawned.size()));
             }
             if (name == "loopize.fsm_set" || name == "lz.fsm_set") {
@@ -4110,9 +4243,18 @@ public:
             }
             if (name == "loopize.quest_add" || name == "lz.quest_add") {
                 std::string id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "q1";
-                std::string ttl = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "Mission";
-                int tgt = evaluated_args.size() >= 3 ? static_cast<int>(evaluated_args[2].as_number()) : 1;
-                int xp = evaluated_args.size() >= 4 ? static_cast<int>(evaluated_args[3].as_number()) : 250;
+                std::string ttl = id;
+                int tgt = 1;
+                int xp = 250;
+                if (evaluated_args.size() >= 2 &&
+                    (evaluated_args[1].type == ValueType::Int || evaluated_args[1].type == ValueType::Float)) {
+                    tgt = 100;
+                    xp = static_cast<int>(evaluated_args[1].as_number());
+                } else {
+                    ttl = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "Mission";
+                    tgt = evaluated_args.size() >= 3 ? static_cast<int>(evaluated_args[2].as_number()) : 1;
+                    xp = evaluated_args.size() >= 4 ? static_cast<int>(evaluated_args[3].as_number()) : 250;
+                }
                 loopize_runtime.add_quest(id, ttl, tgt, xp);
                 return Value(true);
             }
@@ -4125,7 +4267,8 @@ public:
                 double dt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : (1.0 / 60.0);
                 loopize_runtime.step(dt);
                 csharp_bridge.step_all(dt, variables, &current_scene3d);
-                current_scene3d.step(dt);
+                if (current_scene3d.active) current_scene3d.step(dt);
+                else if (!stage.entities_2d.empty()) stage.step(dt, nullptr);
                 return Value(loopize_runtime.elapsed_time);
             }
             if (name == "loopize.stats" || name == "lz.stats") {
@@ -4142,6 +4285,83 @@ public:
                 st["obj_cache"] = Value(static_cast<int64_t>(loaded_obj_meshes.size()));
                 st["cs_classes"] = Value(static_cast<int64_t>(csharp_bridge.classes.size()));
                 return Value(st);
+            }
+
+            // 4e. Declarative UI Layout/Text & Gamepad Configuration Builtins
+            if (name == "ui.header") {
+                std::string hdr = evaluated_args.size() >= 1 ? interpolate_string_vars(evaluated_args[0].as_string()) : current_window.title;
+                if (evaluated_args.size() >= 1 && evaluated_args[0].type == ValueType::Map && evaluated_args[0].map_val && evaluated_args[0].map_val->count("_pos0")) {
+                    hdr = interpolate_string_vars(evaluated_args[0].map_val->at("_pos0").as_string());
+                }
+                variables["__ui_header"] = Value(hdr);
+                if (!hdr.empty()) {
+                    current_window.header_text = hdr;
+                    current_window.set_title(hdr);
+                }
+                std::cout << color::CYAN << "[UI HEADER]" << color::RESET << " " << hdr << "\n";
+                return Value(hdr);
+            }
+            if (name == "ui.split") {
+                std::string left_id = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "left";
+                std::string right_id = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "right";
+                double ratio = evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 0.5;
+                std::unordered_map<std::string, Value> sp;
+                sp["left"] = Value(left_id);
+                sp["right"] = Value(right_id);
+                sp["ratio"] = Value(ratio);
+                variables["__ui_split"] = Value(sp);
+                return Value(sp);
+            }
+            if (name == "ui.panel") {
+                std::string pid = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "panel";
+                std::string ptitle = evaluated_args.size() >= 2 ? interpolate_string_vars(evaluated_args[1].as_string()) : pid;
+                variables["__ui_panel_" + pid] = Value(ptitle);
+                if (!ptitle.empty()) current_window.labels.push_back(ptitle);
+                std::cout << color::CYAN << "[UI PANEL]" << color::RESET << " [" << pid << "] \"" << ptitle << "\"\n";
+                return Value(ptitle);
+            }
+            if (name == "ui.label") {
+                std::string lbl = evaluated_args.size() >= 1 ? interpolate_string_vars(evaluated_args[0].as_string()) : "";
+                variables["__ui_last_label"] = Value(lbl);
+                if (!lbl.empty()) current_window.labels.push_back(lbl);
+                std::cout << color::WHITE << "[UI LABEL]" << color::RESET << " " << lbl << "\n";
+                return Value(lbl);
+            }
+            if (name == "gamepad.init") {
+                std::unordered_map<std::string, Value> gp_cfg;
+                gp_cfg["profile"] = Value("universal");
+                gp_cfg["deadzone"] = Value(0.15);
+                gp_cfg["connected"] = Value(true);
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::Map && evaluated_args[0].map_val) {
+                    for (const auto& kv : *evaluated_args[0].map_val) gp_cfg[kv.first] = kv.second;
+                } else {
+                    if (evaluated_args.size() >= 1) gp_cfg["profile"] = evaluated_args[0];
+                    if (evaluated_args.size() >= 2) gp_cfg["deadzone"] = evaluated_args[1];
+                }
+                variables["__gamepad_config"] = Value(gp_cfg);
+                std::cout << color::GREEN << "[GAMEPAD]" << color::RESET << " Initialized profile \""
+                          << gp_cfg["profile"].as_string() << "\" (deadzone: " << gp_cfg["deadzone"].as_string() << ")\n";
+                return Value(gp_cfg);
+            }
+            if (name == "gamepad.bind") {
+                std::unordered_map<std::string, Value> binds;
+                if (!evaluated_args.empty() && evaluated_args[0].type == ValueType::Map && evaluated_args[0].map_val) {
+                    for (const auto& kv : *evaluated_args[0].map_val) binds[kv.first] = kv.second;
+                }
+                variables["__gamepad_bindings"] = Value(binds);
+                std::cout << color::GREEN << "[GAMEPAD BIND]" << color::RESET << " Mapped " << binds.size() << " controller actions\n";
+                return Value(binds);
+            }
+            if (name == "gamepad.deadzone") {
+                double dz = evaluated_args.empty() ? 0.15 : evaluated_args[0].as_number();
+                variables["__gamepad_deadzone"] = Value(dz);
+                return Value(dz);
+            }
+            if (name == "game.preset_next" || name == "game_plus.preset_next") {
+                return Value(stage.preset_next());
+            }
+            if (name == "game.preset_prev" || name == "game_plus.preset_prev") {
+                return Value(stage.preset_prev());
             }
 
             // 5. Sound & Synthesizer (audio / sound)
@@ -4819,6 +5039,8 @@ public:
             // Check if built-in stdlib module (only if no local package on disk)
             static const std::unordered_set<std::string> stdlib_modules = {
                 "math", "crypto", "sys", "system", "csv", "datetime", "regex", "ui", "swiftui", "json", "file",
+                "loop.ui", "loop.engine", "loop.system", "loop-node-window", "node-window",
+                "pyloop-gamepad", "pyloop_gamepad", "gamepad",
                 "csid", "core_utils", "utils", "loop-core-utils",
                 "game_plus", "game", "loop-game-plus",
                 "math3d", "physics3d", "scene3d", "loop-math-3d", "invis",
@@ -5089,10 +5311,12 @@ public:
 
         // 15. Draw UI: Card / Button / Input / Slider / Toggle / Progress
         if (auto draw = std::dynamic_pointer_cast<DrawUIStmt>(stmt)) {
+            std::string resolved_title = interpolate_string_vars(draw->title);
+            std::string resolved_text = interpolate_string_vars(draw->text);
             if (draw->ui_type == "card") {
-                current_window.add_card(draw->title.empty() ? "Card" : draw->title, draw->text, draw->x, draw->y, draw->w, draw->h);
+                current_window.add_card(resolved_title.empty() ? "Card" : resolved_title, resolved_text, draw->x, draw->y, draw->w, draw->h, "", "", draw->title, draw->text);
             } else if (draw->ui_type == "button") {
-                std::string btn_label = draw->text.empty() ? "Button" : draw->text;
+                std::string btn_label = resolved_text.empty() ? "Button" : resolved_text;
                 std::string act_id = draw->action.empty() ? DynamicWindow::sanitize_id(btn_label) : draw->action;
                 current_window.add_button(btn_label, act_id, draw->x, draw->y, draw->w > 0 ? draw->w : 150, draw->h > 0 ? draw->h : 42, draw->snippet);
                 if (!draw->snippet.empty()) {
@@ -5103,17 +5327,23 @@ public:
             } else if (draw->ui_type == "input") {
                 current_window.add_input(draw->placeholder, draw->var_name, draw->x, draw->y, draw->w, draw->h);
             } else if (draw->ui_type == "slider") {
-                current_window.add_slider(draw->text, draw->min_val, draw->max_val, draw->current_val, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+                current_window.add_slider(resolved_text, draw->min_val, draw->max_val, draw->current_val, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+                if (!draw->var_name.empty() && variables.find(draw->var_name) == variables.end()) {
+                    variables[draw->var_name] = Value(draw->current_val);
+                }
             } else if (draw->ui_type == "toggle") {
-                current_window.add_toggle(draw->text, draw->is_checked, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+                current_window.add_toggle(resolved_text, draw->is_checked, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+                if (!draw->var_name.empty() && variables.find(draw->var_name) == variables.end()) {
+                    variables[draw->var_name] = Value(draw->is_checked);
+                }
             } else if (draw->ui_type == "progress") {
-                current_window.add_progress(draw->text, draw->current_val, draw->var_name, draw->x, draw->y, draw->w, draw->h);
+                current_window.add_progress(resolved_text, draw->current_val, draw->var_name, draw->x, draw->y, draw->w, draw->h, draw->max_val, draw->color);
             }
             std::string label = draw->ui_type;
             label[0] = std::toupper(label[0]);
             std::cout << color::YELLOW << "[UI]" << color::RESET << " Rendered UI " << label << " Component";
-            if (!draw->title.empty()) std::cout << " [\"" << draw->title << "\"]";
-            else if (!draw->text.empty()) std::cout << " [\"" << draw->text << "\"]";
+            if (!resolved_title.empty()) std::cout << " [\"" << resolved_title << "\"]";
+            else if (!resolved_text.empty()) std::cout << " [\"" << resolved_text << "\"]";
             std::cout << "\n";
             return;
         }

@@ -419,13 +419,16 @@ public:
 class GameConfigStmt : public Stmt {
 public:
     std::string config_key; // "gravity", "world", "camera", "camera3d", "lives", "friction", "scenario", "physics", "time_scale", "stage_preset", "algebra_table", "algebra_row"
-    double val1 = 0, val2 = 0, val3 = 0, val4 = 0;
+    double val1 = 0, val2 = 0, val3 = 0, val4 = 0, val5 = 0;
     std::string str_val = "";
     std::string str_val2 = "";
     std::string str_val3 = "";
+    std::string str_val4 = "";
     GameConfigStmt(const std::string& key, double v1 = 0, double v2 = 0, const std::string& sv = "",
-                   const std::string& sv2 = "", const std::string& sv3 = "", double v3 = 0, double v4 = 0)
-        : config_key(key), val1(v1), val2(v2), val3(v3), val4(v4), str_val(sv), str_val2(sv2), str_val3(sv3) {}
+                   const std::string& sv2 = "", const std::string& sv3 = "", double v3 = 0, double v4 = 0,
+                   double v5 = 0, const std::string& sv4 = "")
+        : config_key(key), val1(v1), val2(v2), val3(v3), val4(v4), val5(v5),
+          str_val(sv), str_val2(sv2), str_val3(sv3), str_val4(sv4) {}
 };
 
 // 3D Scene, Camera, Lighting & Physics Configuration:

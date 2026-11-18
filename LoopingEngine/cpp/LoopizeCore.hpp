@@ -207,7 +207,7 @@ struct LoopizeRuntime {
         return static_cast<int>(waves.size());
     }
 
-    std::vector<loop_math::Entity3D> trigger_next_wave(loop_math::Scene3D& scene) {
+    std::vector<loop_math::Entity3D> trigger_next_wave(loop_math::Scene3D& scene, bool activate_scene_3d = true) {
         initialized = true;
         std::vector<loop_math::Entity3D> spawned;
         int next_idx = active_wave_index + 1;
@@ -240,10 +240,12 @@ struct LoopizeRuntime {
                 e.custom_mesh = loop_math::make_preset_obj_mesh(w.obj_model);
                 e.has_custom_mesh = !e.custom_mesh.vertices.empty();
             }
-            scene.active = true;
-            scene.entities.push_back(e);
+            if (activate_scene_3d) {
+                scene.active = true;
+                scene.entities.push_back(e);
+            }
             spawned.push_back(e);
-            spawn_ecs(eid, "wave_enemy", p, w.enemy_hp, w.obj_model, "ValkyrieAI");
+            spawn_ecs(eid, "wave_enemy", p, w.enemy_hp, w.obj_model, "WaveAI");
         }
         w.completed = true;
         return spawned;
@@ -274,7 +276,10 @@ struct LoopizeRuntime {
 
     bool progress_quest(const std::string& id, int delta = 1) {
         auto it = quests.find(id);
-        if (it == quests.end()) return false;
+        if (it == quests.end()) {
+            add_quest(id, id, 100, 250);
+            it = quests.find(id);
+        }
         if (it->second.completed) return true;
         it->second.progress = std::min(it->second.target, it->second.progress + delta);
         if (it->second.progress >= it->second.target) {

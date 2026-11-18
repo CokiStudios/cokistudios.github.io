@@ -109,7 +109,26 @@ public:
         int raw_brace_depth = 0;
         bool in_raw_indent_block = false;
         size_t raw_indent_base = 0;
-        for (const auto& rl : raw_lines) {
+        auto paren_delta = [](const std::string& line_s) -> int {
+            std::string ts = trim(line_s);
+            if (ts.empty() || ts.front() == '#' || ts.rfind("//", 0) == 0) return 0;
+            int delta = 0;
+            bool in_q = false;
+            char q_ch = 0;
+            for (size_t i = 0; i < line_s.size(); ++i) {
+                char c = line_s[i];
+                if ((c == '"' || c == '\'') && (i == 0 || line_s[i - 1] != '\\')) {
+                    if (!in_q) { in_q = true; q_ch = c; }
+                    else if (q_ch == c) in_q = false;
+                } else if (!in_q) {
+                    if (c == '(') delta++;
+                    else if (c == ')') delta--;
+                }
+            }
+            return delta;
+        };
+        for (size_t rli = 0; rli < raw_lines.size(); ++rli) {
+            std::string rl = raw_lines[rli];
             std::string trl = trim(rl);
             if (in_raw_brace_block) {
                 lines.push_back(rl);
@@ -152,6 +171,16 @@ public:
                     in_raw_indent_block = true;
                 }
                 continue;
+            }
+            if (!is_zbash_exec_line(rl)) {
+                int pdepth = paren_delta(rl);
+                while (pdepth > 0 && rli + 1 < raw_lines.size()) {
+                    std::string next_rl = raw_lines[++rli];
+                    std::string tnext = trim(next_rl);
+                    if (tnext.empty() || tnext.front() == '#' || tnext.rfind("//", 0) == 0) continue;
+                    rl += " " + tnext;
+                    pdepth += paren_delta(next_rl);
+                }
             }
             if (rl.find(';') != std::string::npos && !is_zbash_exec_line(rl)) {
                 size_t p = rl.find_first_not_of(" \t");
@@ -1032,18 +1061,20 @@ public:
 
             // 7. App / Game / Game3D declaration block: @app(...) { ... } or define app|game|game3d ...:
             if (line.rfind("@app", 0) == 0 || line.rfind("app(", 0) == 0 || line.rfind("define app", 0) == 0 ||
-                line.rfind("@game", 0) == 0 || line.rfind("define game", 0) == 0) {
+                line.rfind("@game", 0) == 0 || line.rfind("define game", 0) == 0 ||
+                line.rfind("game \"", 0) == 0 || line.rfind("game '", 0) == 0 ||
+                line.rfind("game3d \"", 0) == 0 || line.rfind("game3d '", 0) == 0) {
                 std::string app_name = "HoloApp", ver = "2.0";
                 std::string kind = "app";
-                if (line.rfind("@game3d", 0) == 0 || line.rfind("define game3d", 0) == 0) kind = "game3d";
-                else if (line.rfind("@game", 0) == 0 || line.rfind("define game", 0) == 0) kind = "game";
+                if (line.rfind("@game3d", 0) == 0 || line.rfind("define game3d", 0) == 0 || line.rfind("game3d ", 0) == 0) kind = "game3d";
+                else if (line.rfind("@game", 0) == 0 || line.rfind("define game", 0) == 0 || line.rfind("game ", 0) == 0) kind = "game";
 
                 if (line.find('(') != std::string::npos && line.rfind("define ", 0) != 0) {
                     auto args = parse_call_args(line.substr(line.find('(') + 1, line.find_last_of(')') - line.find('(') - 1));
                     if (!args.positional.empty()) app_name = args.positional[0];
                     if (args.positional.size() > 1) ver = args.positional[1];
                 } else {
-                    std::regex r(R"((?:define (?:app|game3d|game)\s*(?:as)?|@(?:app|game3d|game))\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
+                    std::regex r(R"((?:define\s+(?:app|game3d|game)\s*(?:as)?|@(?:app|game3d|game)|(?:game3d|game|app))\s*["'](.*?)["'](?:\s*(?:version\s*|v)?["']?([0-9\.]+)["']?)?)");
                     std::smatch m;
                     if (std::regex_search(line, m, r)) {
                         app_name = m[1];
@@ -1253,10 +1284,17 @@ public:
             return std::make_shared<ImportStmt>(mod, alias, false);
         }
         if (s.rfind("use ", 0) == 0 && s.find("python") == std::string::npos) {
-            std::string mod = trim(s.substr(4));
-            if (mod.rfind("module ", 0) == 0) mod = trim(mod.substr(7));
+            std::string rem = trim(s.substr(4));
+            if (rem.rfind("module ", 0) == 0) rem = trim(rem.substr(7));
+            std::string mod = rem;
+            std::string alias = "";
+            auto as_pos = rem.find(" as ");
+            if (as_pos != std::string::npos) {
+                mod = trim(rem.substr(0, as_pos));
+                alias = trim(rem.substr(as_pos + 4));
+            }
             mod = trim_quotes(mod);
-            return std::make_shared<ImportStmt>(mod, "", false);
+            return std::make_shared<ImportStmt>(mod, alias, false);
         }
 
         // 5. App / Game / Game3D declaration single-line
@@ -1566,8 +1604,8 @@ public:
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
                 d->text = args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "");
-                d->action = args.get("action");
-                d->snippet = args.get("snippet");
+                d->action = args.has("action") ? args.get("action") : (args.positional.size() >= 2 ? args.positional[1] : "");
+                d->snippet = args.has("snippet") ? args.get("snippet") : (args.positional.size() >= 3 ? args.positional[2] : "");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
@@ -1624,10 +1662,16 @@ public:
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
                 d->text = args.has("label") ? args.get("label") : (args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "Slider"));
-                d->min_val = args.get_num("min", 0);
-                d->max_val = args.get_num("max", 100);
-                d->current_val = args.has("val") ? args.get_num("val", 50) : args.get_num("value", 50);
-                d->var_name = args.has("bind") ? args.get("bind") : args.get("var");
+                auto pos_num = [&](size_t idx, double def) -> double {
+                    if (idx >= args.positional.size()) return def;
+                    try { return std::stod(args.positional[idx]); } catch (...) { return def; }
+                };
+                d->min_val = args.has("min") ? args.get_num("min", 0) : pos_num(1, 0);
+                d->max_val = args.has("max") ? args.get_num("max", 100) : pos_num(2, 100);
+                d->current_val = args.has("val") ? args.get_num("val", 50)
+                               : (args.has("value") ? args.get_num("value", 50) : pos_num(3, 50));
+                d->var_name = args.has("bind") ? args.get("bind")
+                            : (args.has("var") ? args.get("var") : (args.positional.size() >= 5 ? args.positional[4] : ""));
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
@@ -1660,8 +1704,10 @@ public:
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
                 d->text = args.has("label") ? args.get("label") : (args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "Toggle"));
-                d->var_name = args.has("bind") ? args.get("bind") : args.get("var");
-                std::string chk = args.get("checked", "false");
+                d->var_name = args.has("bind") ? args.get("bind")
+                            : (args.has("var") ? args.get("var") : (args.positional.size() >= 3 ? args.positional[2] : ""));
+                std::string chk = args.has("checked") ? args.get("checked")
+                                : (args.has("val") ? args.get("val") : (args.positional.size() >= 2 ? args.positional[1] : "false"));
                 d->is_checked = (chk == "true" || chk == "1");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
@@ -1692,8 +1738,19 @@ public:
                 d->x = at.first; d->y = at.second;
                 d->w = sz.first; d->h = sz.second;
                 d->text = args.has("label") ? args.get("label") : (args.has("text") ? args.get("text") : (!args.positional.empty() ? args.positional[0] : "Progress"));
-                d->current_val = args.has("val") ? args.get_num("val", 0) : (args.has("value") ? args.get_num("value", 0) : args.get_num("progress", 0));
+                auto pos_num = [&](size_t idx, double def) -> double {
+                    if (idx >= args.positional.size()) return def;
+                    try { return std::stod(args.positional[idx]); } catch (...) { return def; }
+                };
+                double raw_v = args.has("val") ? args.get_num("val", 0)
+                             : (args.has("value") ? args.get_num("value", 0)
+                             : (args.has("progress") ? args.get_num("progress", 0) : pos_num(1, 0)));
+                double max_v = args.has("max") ? args.get_num("max", 100)
+                             : (args.positional.size() >= 3 ? pos_num(2, 100) : 100);
+                d->max_val = max_v > 0 ? max_v : 100.0;
+                d->current_val = (args.has("max") || args.positional.size() >= 3) ? ((raw_v / d->max_val) * 100.0) : raw_v;
                 d->var_name = args.has("bind") ? args.get("bind") : args.get("var");
+                d->color = args.has("color") ? args.get("color") : (args.positional.size() >= 4 ? args.positional[3] : "");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
@@ -1708,6 +1765,38 @@ public:
                 if (std::regex_search(s, m, bd_r)) d->var_name = m[1];
             }
             return d;
+        }
+
+        // 16e. Declarative UI Layout/Text & Gamepad Configuration Statements (with named args support)
+        if (s.rfind("ui.header(", 0) == 0 || s.rfind("ui.split(", 0) == 0 ||
+            s.rfind("ui.panel(", 0) == 0 || s.rfind("ui.label(", 0) == 0 ||
+            s.rfind("gamepad.init(", 0) == 0 || s.rfind("gamepad.bind(", 0) == 0 ||
+            s.rfind("gamepad.deadzone(", 0) == 0) {
+            size_t lp = s.find('(');
+            size_t rp = s.find_last_of(')');
+            if (lp != std::string::npos && rp != std::string::npos && rp > lp) {
+                std::string fn_name = trim(s.substr(0, lp));
+                std::string inner = s.substr(lp + 1, rp - lp - 1);
+                auto args = parse_call_args(inner);
+                std::vector<std::shared_ptr<Expr>> call_args;
+                if (!args.named.empty()) {
+                    std::vector<std::pair<std::string, std::shared_ptr<Expr>>> entries;
+                    for (const auto& kv : args.named) {
+                        entries.push_back({kv.first, std::make_shared<LiteralExpr>(Value(kv.second))});
+                    }
+                    if (!args.positional.empty()) {
+                        for (size_t pi = 0; pi < args.positional.size(); ++pi) {
+                            entries.push_back({"_pos" + std::to_string(pi), std::make_shared<LiteralExpr>(Value(args.positional[pi]))});
+                        }
+                    }
+                    call_args.push_back(std::make_shared<MapExpr>(entries));
+                } else {
+                    for (const auto& a : split_arguments(inner)) {
+                        call_args.push_back(parse_single_expr(a));
+                    }
+                }
+                return std::make_shared<CallStmt>(fn_name, call_args);
+            }
         }
 
         // 16x. 3D Scene, Camera, Lighting & Physics Configuration Directives
@@ -2323,7 +2412,9 @@ public:
         }
         if (s.rfind("ui.algebra_table(", 0) == 0 || s.rfind("game.algebra_table(", 0) == 0) {
             auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-            return std::make_shared<GameConfigStmt>("algebra_table", args.get_num("monster_hits", 760), 0,
+            double hits_thresh = args.has("monster_hits") ? args.get_num("monster_hits", 760)
+                               : args.get_num("threshold", 760);
+            return std::make_shared<GameConfigStmt>("algebra_table", hits_thresh, 0,
                 args.get("title", "Modelo Algebraico"), args.get("formula", "0.5*m*v^2 + 9.8*m*h"), "");
         }
         if (s.rfind("ui.algebra_row(", 0) == 0 || s.rfind("game.algebra_row(", 0) == 0) {
@@ -2335,11 +2426,14 @@ public:
         if (s.rfind("game.stage_preset(", 0) == 0 || s.rfind("scenario.preset(", 0) == 0) {
             auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
             auto at = args.get_pair("at", {args.get_num("x", 70), args.get_num("y", 300)});
-            std::string col = args.get("color", "#38bdf8");
+            std::string col = args.has("accent") ? args.get("accent") : args.get("color", "#38bdf8");
+            std::string lbl = args.has("name") ? args.get("name") : args.get("label", "Escenario");
+            std::string bg = args.get("bg", "");
+            double fric = args.get_num("friction", 0.0);
             double od = args.get_bool("overdrive", false) ? 1.0 : 0.0;
             return std::make_shared<GameConfigStmt>("stage_preset", at.first, at.second,
-                col, args.get("label", "Escenario"), args.get("weather", "stars"),
-                args.get_num("gravity", 980), od);
+                col, lbl, args.get("weather", "stars"),
+                args.get_num("gravity", 980), od, fric, bg);
         }
 
         // 23l. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.camera3d(...) / game.lives(...) / game.friction(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)
@@ -2350,8 +2444,8 @@ public:
             s.rfind("game.physics(", 0) == 0 || s.rfind("game.time_scale(", 0) == 0) {
             std::string key = s.substr(5, s.find('(') - 5);
             auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-            double v1 = 0, v2 = 0, v3 = 0, v4 = 0;
-            std::string sv = "", sv2 = "", sv3 = "";
+            double v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0;
+            std::string sv = "", sv2 = "", sv3 = "", sv4 = "";
             if (key == "gravity") {
                 v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 980);
             } else if (key == "friction") {
@@ -2374,6 +2468,7 @@ public:
                 sv = !args.positional.empty() ? args.positional[0] : args.get("name", "CyberStage");
                 sv2 = args.get("weather", args.get("theme", "stars"));
                 sv3 = args.get("accent", args.get("bg", "#38bdf8"));
+                sv4 = args.get("bg", "");
             } else if (key == "physics") {
                 v1 = args.get_num("gravity", 980);
                 v2 = args.get_num("friction", 0.82);
@@ -2381,7 +2476,7 @@ public:
             } else if (key == "time_scale") {
                 v1 = !args.positional.empty() ? std::stod(args.positional[0]) : args.get_num("val", 1.0);
             }
-            return std::make_shared<GameConfigStmt>(key, v1, v2, sv, sv2, sv3, v3, v4);
+            return std::make_shared<GameConfigStmt>(key, v1, v2, sv, sv2, sv3, v3, v4, v5, sv4);
         }
 
         // 24. Audio Tone Directives: audio.tone(...) / @audio::tone(...) / sound.tone(...) / play tone ...

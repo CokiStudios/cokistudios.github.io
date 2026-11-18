@@ -49,6 +49,8 @@ struct DxCardSpec {
     double y = 0;
     double width = 240;
     double height = 150;
+    std::string raw_title = "";
+    std::string raw_text = "";
 };
 
 struct DxButtonSpec {
@@ -89,6 +91,33 @@ struct DxProgressSpec {
     std::string label;
     std::string binding;
     double progress = 0;
+    double max_val = 100.0;
+    std::string color = "";
+};
+
+struct DxStagePresetSpec {
+    std::string id;
+    std::string label;
+    double x = 70, y = 300;
+    std::string weather = "stars";
+    double gravity = 980;
+    double friction = 0.0;
+    std::string color = "#38bdf8";
+    std::string bg = "";
+    bool overdrive = false;
+};
+
+struct DxAlgebraRowSpec {
+    std::string label;
+    double m = 10.0, v = 8.0, h = 1.2, hits = 0.0;
+};
+
+struct DxAlgebraTableSpec {
+    bool enabled = false;
+    std::string title = "Modelo Algebraico";
+    std::string formula = "0.5*m*v^2 + 9.8*m*h";
+    double threshold = 760.0;
+    std::vector<DxAlgebraRowSpec> rows;
 };
 
 struct DxToneSpec {
@@ -144,6 +173,19 @@ struct DxEntity2DSpec {
     double dash_timer = 0.0;
     double dash_cd = 0.0;
     double shoot_cd = 0.0;
+    double scale = 0.35;
+    double wind_x = 0.0, wind_y = 0.0;
+    double fire_rate = 1.8, fire_timer = 0.0;
+    double interval = 2.0, timer = 0.0;
+    double angle = 0.0, pulse = 0.0;
+    double coyote_timer = 0.0, jump_buf_timer = 0.0;
+    double teleport_cd = 0.0, shield_timer = 0.0;
+    int facing = 1;
+    std::string state = "";
+    bool broken = false;
+    bool activated = false;
+    bool active = true;
+    bool overdrive = false;
 };
 
 struct DirectXWindowSpec {
@@ -172,8 +214,13 @@ struct DirectXWindowSpec {
     double world_width = 1200;
     double world_height = 480;
     double gravity = 980;
+    double friction = 0.84;
+    double time_scale = 1.0;
+    int lives = 3;
     std::string scenario_name = "Holo Cyber Stage";
+    std::string scenario_weather = "stars";
     std::string scenario_accent = "#38bdf8";
+    std::string header_text = "";
 
     std::vector<DxCardSpec> cards;
     std::vector<DxButtonSpec> buttons;
@@ -184,6 +231,10 @@ struct DirectXWindowSpec {
     std::vector<DxToneSpec> tones;
     std::vector<DxEntity3DSpec> entities_3d;
     std::vector<DxEntity2DSpec> entities_2d;
+    std::vector<std::string> labels;
+    std::vector<DxStagePresetSpec> stage_presets;
+    DxAlgebraTableSpec algebra_table;
+    std::vector<std::pair<std::string, std::string>> init_vars;
 };
 
 inline std::string dxwin_escape(const std::string& in) {
@@ -269,13 +320,19 @@ inline bool save_dxwin_file(const std::string& path, const DirectXWindowSpec& sp
     meta("world_width", std::to_string(spec.world_width));
     meta("world_height", std::to_string(spec.world_height));
     meta("gravity", std::to_string(spec.gravity));
+    meta("friction", std::to_string(spec.friction));
+    meta("time_scale", std::to_string(spec.time_scale));
+    meta("lives", std::to_string(spec.lives));
     meta("scenario_name", spec.scenario_name);
+    meta("scenario_weather", spec.scenario_weather);
     meta("scenario_accent", spec.scenario_accent);
+    meta("header_text", spec.header_text);
 
     for (const auto& c : spec.cards) {
         out << "CARD|" << dxwin_escape(c.title) << "|" << dxwin_escape(c.text) << "|"
             << dxwin_escape(c.badge) << "|" << dxwin_escape(c.icon) << "|"
-            << c.x << "|" << c.y << "|" << c.width << "|" << c.height << "\n";
+            << c.x << "|" << c.y << "|" << c.width << "|" << c.height << "|"
+            << dxwin_escape(c.raw_title) << "|" << dxwin_escape(c.raw_text) << "\n";
     }
     for (const auto& b : spec.buttons) {
         out << "BTN|" << dxwin_escape(b.text) << "|" << dxwin_escape(b.action) << "|"
@@ -295,7 +352,26 @@ inline bool save_dxwin_file(const std::string& path, const DirectXWindowSpec& sp
     }
     for (const auto& pr : spec.progress_bars) {
         out << "PRG|" << dxwin_escape(pr.label) << "|" << dxwin_escape(pr.binding) << "|"
-            << pr.progress << "\n";
+            << pr.progress << "|" << pr.max_val << "|" << dxwin_escape(pr.color) << "\n";
+    }
+    for (const auto& lbl : spec.labels) {
+        out << "LBL|" << dxwin_escape(lbl) << "\n";
+    }
+    for (const auto& kv : spec.init_vars) {
+        out << "VAR|" << dxwin_escape(kv.first) << "|" << dxwin_escape(kv.second) << "\n";
+    }
+    for (const auto& ps : spec.stage_presets) {
+        out << "PRESET|" << dxwin_escape(ps.id) << "|" << dxwin_escape(ps.label) << "|"
+            << ps.x << "|" << ps.y << "|" << dxwin_escape(ps.weather) << "|"
+            << ps.gravity << "|" << ps.friction << "|" << dxwin_escape(ps.color) << "|"
+            << dxwin_escape(ps.bg) << "|" << (ps.overdrive ? "1" : "0") << "\n";
+    }
+    if (spec.algebra_table.enabled) {
+        out << "ALGTBL|" << dxwin_escape(spec.algebra_table.title) << "|"
+            << dxwin_escape(spec.algebra_table.formula) << "|" << spec.algebra_table.threshold << "\n";
+        for (const auto& r : spec.algebra_table.rows) {
+            out << "ALGROW|" << dxwin_escape(r.label) << "|" << r.m << "|" << r.v << "|" << r.h << "|" << r.hits << "\n";
+        }
     }
     for (const auto& tn : spec.tones) {
         out << "TONE|" << tn.freq_hz << "|" << tn.duration_ms << "\n";
@@ -327,7 +403,9 @@ inline bool save_dxwin_file(const std::string& path, const DirectXWindowSpec& sp
             << e.x << "|" << e.y << "|" << e.w << "|" << e.h << "|" << e.radius << "|"
             << e.speed << "|" << e.jump_force << "|" << e.power << "|" << e.health << "|"
             << e.damage << "|" << e.points << "|" << e.min_pos << "|" << e.max_pos << "|"
-            << e.to_x << "|" << e.to_y << "|" << (e.is_player ? "1" : "0") << "\n";
+            << e.to_x << "|" << e.to_y << "|" << (e.is_player ? "1" : "0") << "|"
+            << e.scale << "|" << e.wind_x << "|" << e.wind_y << "|" << e.fire_rate << "|"
+            << e.interval << "|" << dxwin_escape(e.state) << "|" << (e.overdrive ? "1" : "0") << "\n";
     }
     return true;
 }
@@ -376,12 +454,18 @@ inline bool load_dxwin_file(const std::string& path, DirectXWindowSpec& spec) {
             else if (k == "world_width") spec.world_width = to_d(v, 1200);
             else if (k == "world_height") spec.world_height = to_d(v, 480);
             else if (k == "gravity") spec.gravity = to_d(v, 980);
+            else if (k == "friction") spec.friction = to_d(v, 0.84);
+            else if (k == "time_scale") spec.time_scale = to_d(v, 1.0);
+            else if (k == "lives") spec.lives = to_i(v, 3);
             else if (k == "scenario_name") spec.scenario_name = v;
+            else if (k == "scenario_weather") spec.scenario_weather = v;
             else if (k == "scenario_accent") spec.scenario_accent = v;
+            else if (k == "header_text") spec.header_text = v;
         } else if (f[0] == "CARD" && f.size() >= 9) {
             DxCardSpec c;
             c.title = f[1]; c.text = f[2]; c.badge = f[3]; c.icon = f[4];
             c.x = to_d(f[5]); c.y = to_d(f[6]); c.width = to_d(f[7], 240); c.height = to_d(f[8], 150);
+            if (f.size() >= 11) { c.raw_title = f[9]; c.raw_text = f[10]; }
             spec.cards.push_back(std::move(c));
         } else if (f[0] == "BTN" && f.size() >= 8) {
             DxButtonSpec b;
@@ -405,7 +489,26 @@ inline bool load_dxwin_file(const std::string& path, DirectXWindowSpec& spec) {
         } else if (f[0] == "PRG" && f.size() >= 4) {
             DxProgressSpec pr;
             pr.label = f[1]; pr.binding = f[2]; pr.progress = to_d(f[3], 0);
+            if (f.size() >= 6) { pr.max_val = to_d(f[4], 100.0); pr.color = f[5]; }
             spec.progress_bars.push_back(std::move(pr));
+        } else if (f[0] == "LBL" && f.size() >= 2) {
+            spec.labels.push_back(f[1]);
+        } else if (f[0] == "VAR" && f.size() >= 3) {
+            spec.init_vars.push_back({f[1], f[2]});
+        } else if (f[0] == "PRESET" && f.size() >= 11) {
+            DxStagePresetSpec ps;
+            ps.id = f[1]; ps.label = f[2];
+            ps.x = to_d(f[3], 70); ps.y = to_d(f[4], 300);
+            ps.weather = f[5]; ps.gravity = to_d(f[6], 980); ps.friction = to_d(f[7], 0.0);
+            ps.color = f[8]; ps.bg = f[9]; ps.overdrive = (f[10] == "1");
+            spec.stage_presets.push_back(std::move(ps));
+        } else if (f[0] == "ALGTBL" && f.size() >= 4) {
+            spec.algebra_table.enabled = true;
+            spec.algebra_table.title = f[1]; spec.algebra_table.formula = f[2];
+            spec.algebra_table.threshold = to_d(f[3], 760.0);
+        } else if (f[0] == "ALGROW" && f.size() >= 6) {
+            spec.algebra_table.enabled = true;
+            spec.algebra_table.rows.push_back({f[1], to_d(f[2], 10), to_d(f[3], 8), to_d(f[4], 1.2), to_d(f[5], 0)});
         } else if (f[0] == "TONE" && f.size() >= 3) {
             spec.tones.push_back({to_d(f[1], 440), to_d(f[2], 80)});
         } else if (f[0] == "E3D" && f.size() >= 21) {
@@ -452,6 +555,15 @@ inline bool load_dxwin_file(const std::string& path, DirectXWindowSpec& spec) {
             e.min_pos = to_d(f[17]); e.max_pos = to_d(f[18]);
             e.to_x = to_d(f[19]); e.to_y = to_d(f[20]);
             e.is_player = (f[21] == "1");
+            if (f.size() >= 29) {
+                e.scale = to_d(f[22], 0.35);
+                e.wind_x = to_d(f[23], 0.0);
+                e.wind_y = to_d(f[24], 0.0);
+                e.fire_rate = to_d(f[25], 1.8);
+                e.interval = to_d(f[26], 2.0);
+                e.state = f[27];
+                e.overdrive = (f[28] == "1");
+            }
             e.spawn_x = e.x;
             e.spawn_y = e.y;
             spec.entities_2d.push_back(std::move(e));
