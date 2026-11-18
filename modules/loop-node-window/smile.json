@@ -1,6 +1,6 @@
 {
   "name": "loop-node-window",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "language": "node",
   "entry_point": "index.js",
   "author": "Coki Studios Web & Loop Lab",

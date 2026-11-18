@@ -23,8 +23,8 @@ if ($env:LOOPING_SMILEDEV_PWSH -ne "1" -and (Test-Path $SmileBash)) {
     }
 }
 
-$SmileVersion = "1.1.2"
-$SmileAlphaVersion = "1.1.2A"
+$SmileVersion = "1.1.3"
+$SmileAlphaVersion = "1.1.3A"
 $SmileArchVersion = "3.1A"
 $ConfigDir = Join-Path $env:USERPROFILE ".smiledev"
 $ModulesDir = Join-Path $ConfigDir "modules"
@@ -34,7 +34,7 @@ $Channel = if ($env:LOOPING_CHANNEL) { $env:LOOPING_CHANNEL } elseif (Test-Path 
 $Positional = New-Object System.Collections.Generic.List[string]
 foreach ($a in $args) {
     if ($a -like "--channel=*") { $Channel = $a.Substring(10) }
-    elseif ($a -in @("--alpha", "--alpha!", "--1.1a", "--1.1A", "--1.1.2a", "--1.1.2A")) { $Channel = "alpha" }
+    elseif ($a -in @("--alpha", "--alpha!", "--1.1a", "--1.1A", "--1.1.2a", "--1.1.2A", "--1.1.3a", "--1.1.3A")) { $Channel = "alpha" }
     elseif ($a -in @("--omega", "--rc")) { $Channel = "omega" }
     elseif ($a -in @("--prod", "--stable")) { $Channel = "prod" }
     else { [void]$Positional.Add($a) }
@@ -44,7 +44,7 @@ $ChTitle = "Looping"
 $ChTier = "Production Release"
 $ChVer = $SmileVersion
 switch -Regex ($Channel.ToLower()) {
-    "^(alpha|alpha!|1\.1a|1\.1\.2a|experimental)" {
+    "^(alpha|alpha!|1\.1a|1\.1\.2a|1\.1\.3a|experimental)" {
         $ChTitle = "Alpha! SmileDev"
         $ChTier = "Super Experimental"
         $ChVer = $SmileAlphaVersion
@@ -119,8 +119,8 @@ switch ($cmd) {
         $mainLoop = Join-Path $projName "main.loop"
         if (-not (Test-Path $mainLoop)) {
             $loopContent = @(
-                "# Looping v1.1.2 Project: $projName",
-                "define app `"$projName`" version 1.1.2:",
+                "# Looping v1.1.3 Project: $projName",
+                "define app `"$projName`" version 1.1.3:",
                 "    say(`"Hello from $projName on Looping Arch 3.1A!`")"
             ) -join "`n"
             [System.IO.File]::WriteAllText((Join-Path (Resolve-Path $projName).Path "main.loop"), $loopContent, $utf8NoBom)
@@ -130,7 +130,7 @@ switch ($cmd) {
             "  `"name`": `"$projName`",",
             "  `"version`": `"1.0.0`",",
             "  `"entry`": `"main.loop`",",
-            "  `"engine`": `"1.1.2`",",
+            "  `"engine`": `"1.1.3`",",
             "  `"arch`": `"3.1A`"",
             "}"
         ) -join "`n"

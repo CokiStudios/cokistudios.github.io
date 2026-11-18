@@ -183,10 +183,10 @@ public:
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
-    std::string base_version = "1.1.2";
-    std::string engine_version = "1.1.2";
-    std::string semver = "1.1.2";
-    std::string app_version = "1.1.2";
+    std::string base_version = "1.1.3";
+    std::string engine_version = "1.1.3";
+    std::string semver = "1.1.3";
+    std::string app_version = "1.1.3";
     std::string arch_version = "3.1A";
     std::string channel = "prod";
     std::string channel_name = "Looping";
@@ -797,23 +797,24 @@ public:
         std::string ch = ch_raw;
         for (char& c : ch) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         if (ch == "alpha" || ch == "alpha!" || ch == "1.1a" || ch == "alpha-1.1a" ||
-            ch == "1.1.2a" || ch == "alpha-1.1.2a" || ch == "experimental" || ch == "super-experimental") {
+            ch == "1.1.2a" || ch == "alpha-1.1.2a" || ch == "1.1.3a" || ch == "alpha-1.1.3a" ||
+            ch == "experimental" || ch == "super-experimental") {
             channel = "alpha";
             channel_name = "Alpha! Looping";
             engine_version = base_version + "-alpha";
-            semver = "1.1.2-alpha";
+            semver = "1.1.3-alpha";
             edition = "Alpha! Looping — Super Experimental (Arch " + arch_version + ")";
         } else if (ch == "omega" || ch == "rc" || ch == "release-candidate") {
             channel = "omega";
             channel_name = "Omega Looping";
             engine_version = base_version + "-omega";
-            semver = "1.1.2-omega";
+            semver = "1.1.3-omega";
             edition = "Omega Looping — Release Candidate / RC (Arch " + arch_version + ")";
         } else {
             channel = "prod";
             channel_name = "Looping";
             engine_version = base_version;
-            semver = "1.1.2";
+            semver = "1.1.3";
             edition = "Production Release (Arch " + arch_version + " Quantum Synthesis)";
         }
         app_version = engine_version;

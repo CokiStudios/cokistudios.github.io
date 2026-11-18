@@ -847,8 +847,8 @@ export class LoopingInterpreter {
         this.terminalOutput = terminalOutput || console.log;
         
         // Virtual Machine, Version & Official Release Nomenclature
-        this.engineVersion = "1.1";
-        this.archVersion = "3.0A";
+        this.engineVersion = "1.1.3";
+        this.archVersion = "3.1A";
         this.releaseChannel = "prod";
         this.channelName = "Looping";
         this.releaseChannels = {

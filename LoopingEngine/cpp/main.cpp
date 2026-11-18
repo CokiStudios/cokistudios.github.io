@@ -44,7 +44,7 @@ void print_usage(const char* prog_name) {
 }
 
 int run_tests() {
-    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v1.1.2 Production / Arch 3.1A)...\n\n";
+    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v1.1.3 Production / Arch 3.1A)...\n\n";
     Interpreter vm;
 
     int passed = 0;
@@ -547,7 +547,7 @@ int run_tests() {
     );
     assert_test("System Hardware & Environment Inspection (sys.cpus, sys.version, sys.env)",
                 vm.variables["cores"].as_int() >= 1 &&
-                vm.variables["eng_v"].as_string() == "1.1.2" &&
+                vm.variables["eng_v"].as_string() == "1.1.3" &&
                 vm.variables["fallback_env"].as_string() == "default_ok");
 
     // Test 41: Default Function Arguments & Compound Modulo Assignment (%=)
@@ -820,7 +820,7 @@ int run_tests() {
                 vm.variables["is_h_ok"].is_truthy() &&
                 vm.imported_modules.count("csid-login-button") > 0);
 
-    // Test 59: Looping Engine v1.1.2 & Arch 3.1A Quantum Synthesis
+    // Test 59: Looping Engine v1.1.3 & Arch 3.1A Quantum Synthesis
     vm.execute_code(
         "val v_ver = sys.version\n"
         "val v_arch = sys.arch_version\n"
@@ -828,8 +828,8 @@ int run_tests() {
         "val v_cid = csid.client_id\n"
         "val v_salt = csms.salt\n"
     );
-    assert_test("Looping Engine v1.1.2 & Arch 3.1A Quantum Synthesis Inspection",
-                vm.variables["v_ver"].as_string() == "1.1.2" &&
+    assert_test("Looping Engine v1.1.3 & Arch 3.1A Quantum Synthesis Inspection",
+                vm.variables["v_ver"].as_string() == "1.1.3" &&
                 vm.variables["v_arch"].as_string() == "3.1A" &&
                 vm.variables["v_ch_name"].as_string() == "Looping" &&
                 vm.variables["v_cid"].as_string() == "c0c11009-4ce0-4b11-8a01-1009c0c1e001" &&
@@ -1025,7 +1025,7 @@ int run_tests() {
                 vm_tpl3d.current_scene3d.active &&
                 vm_tpl3d.variables["score_3d"].as_int() == 250);
 
-    // Test 69: Official Release Nomenclature (Alpha! Looping, Omega Looping RC, Looping Prod v1.1.2 / Arch 3.1A)
+    // Test 69: Official Release Nomenclature (Alpha! Looping, Omega Looping RC, Looping Prod v1.1.3 / Arch 3.1A)
     Interpreter vm_ch;
     vm_ch.execute_code(
         "val ch_alpha_name = looping.set_channel(\"alpha\")\n"
@@ -1041,15 +1041,15 @@ int run_tests() {
         "val ch_map_alpha = ch_map[\"alpha\"]\n"
         "val ch_map_omega = ch_map[\"omega\"]\n"
     );
-    assert_test("Release Nomenclature (Alpha! Looping Super Experimental, Omega Looping RC, Looping Prod v1.1.2 / Arch 3.1A)",
+    assert_test("Release Nomenclature (Alpha! Looping Super Experimental, Omega Looping RC, Looping Prod v1.1.3 / Arch 3.1A)",
                 vm_ch.variables["ch_alpha_name"].as_string() == "Alpha! Looping" &&
-                vm_ch.variables["ch_alpha_ver"].as_string() == "1.1.2-alpha" &&
+                vm_ch.variables["ch_alpha_ver"].as_string() == "1.1.3-alpha" &&
                 vm_ch.variables["ch_alpha_ed"].as_string().find("Super Experimental") != std::string::npos &&
                 vm_ch.variables["ch_omega_name"].as_string() == "Omega Looping" &&
-                vm_ch.variables["ch_omega_ver"].as_string() == "1.1.2-omega" &&
+                vm_ch.variables["ch_omega_ver"].as_string() == "1.1.3-omega" &&
                 vm_ch.variables["ch_omega_ed"].as_string().find("Release Candidate") != std::string::npos &&
                 vm_ch.variables["ch_prod_name"].as_string() == "Looping" &&
-                vm_ch.variables["ch_prod_ver"].as_string() == "1.1.2" &&
+                vm_ch.variables["ch_prod_ver"].as_string() == "1.1.3" &&
                 vm_ch.variables["ch_arch"].as_string() == "3.1A" &&
                 vm_ch.variables["ch_map_alpha"].as_string().find("Alpha! Looping") != std::string::npos &&
                 vm_ch.variables["ch_map_omega"].as_string().find("Omega Looping") != std::string::npos);
@@ -1905,9 +1905,9 @@ int main(int argc, char* argv[]) {
         std::cout << color::BOLD << color::CYAN << "═══ " << vm.channel_name << " v" << vm.engine_version << " (Arch " << vm.arch_version << ") REFERENCE MANUAL ═══" << color::RESET << "\n\n";
         if (topic == "all" || topic == "channels" || topic == "nomenclature") {
             std::cout << color::YELLOW << "▸ OFFICIAL RELEASE NOMENCLATURE & CHANNELS:" << color::RESET << "\n"
-                      << "  • Looping        [prod]  : Production Release (v1.1.2 / Arch 3.1A)\n"
-                      << "  • Omega Looping  [omega] : Release Candidate / RC (v1.1.2-omega / Arch 3.1A)\n"
-                      << "  • Alpha! Looping [alpha] : Super Experimental Lab Builds (v1.1.2-alpha / Arch 3.1A)\n\n";
+                      << "  • Looping        [prod]  : Production Release (v1.1.3 / Arch 3.1A)\n"
+                      << "  • Omega Looping  [omega] : Release Candidate / RC (v1.1.3-omega / Arch 3.1A)\n"
+                      << "  • Alpha! Looping [alpha] : Super Experimental Lab Builds (v1.1.3-alpha / Arch 3.1A)\n\n";
         }
         if (topic == "all" || topic == "syntax") {
             std::cout << color::YELLOW << "▸ SYNTAX & CONTROL FLOW:" << color::RESET << "\n"
@@ -2014,7 +2014,7 @@ int main(int argc, char* argv[]) {
             }
         }
         std::ostringstream g;
-        g << "# Looping Code (v1.1.2 / Arch 3.1A) — Complete Learning & Mastery Guide\n\n"
+        g << "# Looping Code (v1.1.3 / Arch 3.1A) — Complete Learning & Mastery Guide\n\n"
           << "> **Official Nomenclature**: `Looping` (`[prod]`), `Omega Looping` (`[omega]`), `Alpha! Looping` (`[alpha]`)  \n"
           << "> **Engine Architecture**: Native C++17 Universal Engine + `Invis. Compile` (`LPBN v3.0A` Binary Pipeline)\n\n"
           << "---\n\n"
@@ -2305,9 +2305,9 @@ int main(int argc, char* argv[]) {
         if (!theme.empty()) win.set_theme(theme);
 
         UIProfileSpecs specs = resolve_ui_profile(target_ui);
-        win.add_card(title, "Ventana dinámica generada por Looping v1.1.2 (Arch 3.1A)\nArquitectura: " + specs.name + " (" + specs.pipeline + ")")
+        win.add_card(title, "Ventana dinámica generada por Looping v1.1.3 (Arch 3.1A)\nArquitectura: " + specs.name + " (" + specs.pipeline + ")")
            .add_card("Métricas de Sistema", "Frecuencia: " + std::to_string(specs.target_fps) + " FPS\nLatencia Entrada: <0.2ms\nEstado: Óptimo")
-           .add_card("Módulos Activos", "• Xtraps Background Engine\n• Looping AST & Interpreter v1.1.2 (Arch 3.1A)\n• Audio Synthesizer Core")
+           .add_card("Módulos Activos", "• Xtraps Background Engine\n• Looping AST & Interpreter v1.1.3 (Arch 3.1A)\n• Audio Synthesizer Core")
            .add_card("Acciones de Control", "Panel reactivo interactivo. Haz clic en los botones para disparar eventos.")
            .add_button("INICIAR PROCESO", "start_process")
            .add_button("REINICIAR SERVICIOS", "restart_services")
