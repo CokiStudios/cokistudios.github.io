@@ -9,6 +9,13 @@
 #include <cmath>
 #include <iomanip>
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE && !defined(LOOPING_NO_SUBPROCESS)
+#define LOOPING_NO_SUBPROCESS 1
+#endif
+#endif
+
 namespace looping {
 
 enum class ValueType {

@@ -4,9 +4,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#ifndef _WIN32
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#endif
 
 namespace looping {
 
@@ -45,7 +47,13 @@ private:
 
         auto cleanup_window = [&]() {
             if (win_pid > 0) {
-#ifndef _WIN32
+#if defined(_WIN32)
+                HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(win_pid));
+                if (hProc) {
+                    TerminateProcess(hProc, 0);
+                    CloseHandle(hProc);
+                }
+#elif !defined(__EMSCRIPTEN__)
                 kill(win_pid, SIGTERM);
                 int status = 0;
                 waitpid(win_pid, &status, WNOHANG);

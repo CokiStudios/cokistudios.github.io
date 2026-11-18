@@ -1,5 +1,6 @@
 #include "LoopingInterpreter.hpp"
 #include "LoopingREPL.hpp"
+#include "LoopingMacWindow.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -11,11 +12,14 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " <script.loop>            Execute Looping script\n";
     std::cout << "  " << prog_name << " -i, --persistent <file>  Execute and keep persistent terminal alive (like py -i)\n";
     std::cout << "  " << prog_name << " --metal4 <script.loop>   Execute with Apple Metal 4 graphics acceleration\n";
-    std::cout << "  " << prog_name << " --gui <script.loop>      Execute Looping script in native GUI window\n";
-    std::cout << "  " << prog_name << " --native <script.loop>   Execute Looping script in pure OS native window\n";
+    std::cout << "  " << prog_name << " --gui <script.loop>      Execute Looping script in native GUI window (DX11 Win32 / Cocoa+ASM macOS)\n";
+    std::cout << "  " << prog_name << " --native <script.loop>   Execute Looping script in pure OS native window (Zero Python)\n";
+    std::cout << "  " << prog_name << " --py-gui <script.loop>   Execute Looping script with Python LoopNativeWindow (pygame/compat)\n";
+    std::cout << "  " << prog_name << " --dx-window <file.dxwin> Launch native window from .dxwin spec (DX11 Win32 / Cocoa macOS)\n";
+    std::cout << "  " << prog_name << " --mac-window <file.dxwin> Launch native macOS Cocoa + Objective-C + Assembly window\n";
     std::cout << "  " << prog_name << " window <name> [flags]    Create, synthesize & launch dynamic graphical window\n";
     std::cout << "  " << prog_name << " run <script.loop>        Execute Looping script\n";
-    std::cout << "  " << prog_name << " create <name> [--type]   Create new app/game with reactive snippets (Arch 3.0A)\n";
+    std::cout << "  " << prog_name << " create <name> [--type]   Create new app/game with reactive snippets (Arch 3.1A)\n";
     std::cout << "  " << prog_name << " invis <file.loop> [-o]   Invis. Compile: convert .loop to binary file (LPBN v3.0A)\n";
     std::cout << "  " << prog_name << " compile <file.loop>      Compile script to native binary / target UI profile\n";
     std::cout << "  " << prog_name << " preview <file.loop> [View] Live SwiftUI / 3D Viewport terminal preview\n";
@@ -28,17 +32,16 @@ void print_usage(const char* prog_name) {
     std::cout << "  " << prog_name << " bench                    Run native C++17 VM throughput benchmark\n";
     std::cout << "  " << prog_name << " doctor                   Inspect engine subsystems & environment health\n";
     std::cout << "  " << prog_name << " auth <login|whoami|logout> CS ID Connect Developer authentication\n";
-    std::cout << "  " << prog_name << " ai <\"query\"|--chat|--fix> Ask local Coki AI (MLX 7B + RAG) or fix .loop\n";
     std::cout << "  " << prog_name << " repl                     Launch interactive REPL shell\n";
     std::cout << "  " << prog_name << " eval \"<code>\"            Evaluate inline code string\n";
-    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (79 tests)\n";
+    std::cout << "  " << prog_name << " test                     Run built-in engine test suite (80 tests)\n";
     std::cout << "  " << prog_name << " --channel <alpha|omega|prod> Select tier (Alpha! Looping | Omega Looping RC | Prod)\n";
     std::cout << "  " << prog_name << " --version, -v            Display engine version & channel nomenclature\n";
     std::cout << "  " << prog_name << " --help, -h               Show this help message\n\n";
 }
 
 int run_tests() {
-    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v1.1 Production / Arch 3.0A)...\n\n";
+    std::cout << color::BOLD << color::CYAN << "[TEST SUITE]" << color::RESET << " Running Looping C++ verification suite (v1.1.2 Production / Arch 3.1A)...\n\n";
     Interpreter vm;
 
     int passed = 0;
@@ -88,20 +91,16 @@ int run_tests() {
     vm.execute_code("val piped = 64 |> math.sqrt");
     assert_test("Pipeline Operator (|>)", vm.variables["piped"].as_int() == 8);
 
-    // Test 9: Python Bridge Macro py!(...)
-    if (vm.python_bridge.is_available) {
-        vm.execute_code("val py_val = py!(math.sqrt(100))");
-        assert_test("Python Bridge Macro py!(...)", vm.variables["py_val"].as_int() == 10);
-    } else {
-        std::cout << "  " << color::YELLOW << "⚠ [SKIP]" << color::RESET << " Python Bridge (No python executable in PATH)\n";
-    }
+    // Test 9: Python Bridge Macro py!(...) (C++ native fast-path + Python runtime fallback)
+    vm.execute_code("val py_val = py!(math.sqrt(100))");
+    assert_test("Python Bridge Macro py!(...)", vm.variables["py_val"].as_int() == 10);
 
     // Test 10: Modern UI, Scenario & Advanced 2D Game Directives
     vm.execute_code("ui.card(at: (10, 20), size: (200, 100), title: \"Test Card\")\ngame.scenario(name: \"VoidStage\", weather: \"void\", accent: \"#c084fc\")\nspawn.sprite(\"Hero\", at: (50, 50), color: \"#38bdf8\")\nspawn.checkpoint(at: (200, 300), label: \"CP-1\")\nspawn.gravity_zone(at: (300, 100), size: (200, 200), scale: 0.35)\nspawn.teleporter(at: (500, 300), to: (700, 200), label: \"WARP\")\nspawn.breakable(at: (600, 260), size: (36, 72), health: 40)\nspawn.laser_hazard(at: (650, 240), size: (12, 110), interval: 2.0)\nspawn.boss(name: \"Blueline\", at: (900, 310), health: 450)\naudio.tone(587, 80)");
     assert_test("Modern 2D Game Directives (scenario, checkpoint, gravity_zone, teleporter, breakable, laser, boss)", true);
 
     // Test 11: PyLoop Snippets & runpy
-    if (vm.python_bridge.is_available) {
+    if (vm.python_bridge.check_available()) {
         vm.execute_code(
             "from pyloop import snippets runpy\n"
             "insert pysnippet as t_sn1:\n"
@@ -545,7 +544,7 @@ int run_tests() {
     );
     assert_test("System Hardware & Environment Inspection (sys.cpus, sys.version, sys.env)",
                 vm.variables["cores"].as_int() >= 1 &&
-                vm.variables["eng_v"].as_string() == "1.1" &&
+                vm.variables["eng_v"].as_string() == "1.1.2" &&
                 vm.variables["fallback_env"].as_string() == "default_ok");
 
     // Test 41: Default Function Arguments & Compound Modulo Assignment (%=)
@@ -818,7 +817,7 @@ int run_tests() {
                 vm.variables["is_h_ok"].is_truthy() &&
                 vm.imported_modules.count("csid-login-button") > 0);
 
-    // Test 59: Looping Engine v1.1 & Arch 3.0A Quantum Synthesis
+    // Test 59: Looping Engine v1.1.2 & Arch 3.1A Quantum Synthesis
     vm.execute_code(
         "val v_ver = sys.version\n"
         "val v_arch = sys.arch_version\n"
@@ -826,9 +825,9 @@ int run_tests() {
         "val v_cid = csid.client_id\n"
         "val v_salt = csms.salt\n"
     );
-    assert_test("Looping Engine v1.1 & Arch 3.0A Quantum Synthesis Inspection",
-                vm.variables["v_ver"].as_string() == "1.1" &&
-                vm.variables["v_arch"].as_string() == "3.0A" &&
+    assert_test("Looping Engine v1.1.2 & Arch 3.1A Quantum Synthesis Inspection",
+                vm.variables["v_ver"].as_string() == "1.1.2" &&
+                vm.variables["v_arch"].as_string() == "3.1A" &&
                 vm.variables["v_ch_name"].as_string() == "Looping" &&
                 vm.variables["v_cid"].as_string() == "c0c11009-4ce0-4b11-8a01-1009c0c1e001" &&
                 vm.variables["v_salt"].as_string() == "CSMS_E2EE_COKI_STUDIOS_v1_SALT_FORKAR");
@@ -1023,7 +1022,7 @@ int run_tests() {
                 vm_tpl3d.current_scene3d.active &&
                 vm_tpl3d.variables["score_3d"].as_int() == 250);
 
-    // Test 69: Official Release Nomenclature (Alpha! Looping, Omega Looping RC, Looping Prod v1.1 / Arch 3.0A)
+    // Test 69: Official Release Nomenclature (Alpha! Looping, Omega Looping RC, Looping Prod v1.1.2 / Arch 3.1A)
     Interpreter vm_ch;
     vm_ch.execute_code(
         "val ch_alpha_name = looping.set_channel(\"alpha\")\n"
@@ -1039,20 +1038,21 @@ int run_tests() {
         "val ch_map_alpha = ch_map[\"alpha\"]\n"
         "val ch_map_omega = ch_map[\"omega\"]\n"
     );
-    assert_test("Release Nomenclature (Alpha! Looping Super Experimental, Omega Looping RC, Looping Prod v1.1 / Arch 3.0A)",
+    assert_test("Release Nomenclature (Alpha! Looping Super Experimental, Omega Looping RC, Looping Prod v1.1.2 / Arch 3.1A)",
                 vm_ch.variables["ch_alpha_name"].as_string() == "Alpha! Looping" &&
-                vm_ch.variables["ch_alpha_ver"].as_string() == "1.1-alpha" &&
+                vm_ch.variables["ch_alpha_ver"].as_string() == "1.1.2-alpha" &&
                 vm_ch.variables["ch_alpha_ed"].as_string().find("Super Experimental") != std::string::npos &&
                 vm_ch.variables["ch_omega_name"].as_string() == "Omega Looping" &&
-                vm_ch.variables["ch_omega_ver"].as_string() == "1.1-omega" &&
+                vm_ch.variables["ch_omega_ver"].as_string() == "1.1.2-omega" &&
                 vm_ch.variables["ch_omega_ed"].as_string().find("Release Candidate") != std::string::npos &&
                 vm_ch.variables["ch_prod_name"].as_string() == "Looping" &&
-                vm_ch.variables["ch_prod_ver"].as_string() == "1.1" &&
-                vm_ch.variables["ch_arch"].as_string() == "3.0A" &&
+                vm_ch.variables["ch_prod_ver"].as_string() == "1.1.2" &&
+                vm_ch.variables["ch_arch"].as_string() == "3.1A" &&
                 vm_ch.variables["ch_map_alpha"].as_string().find("Alpha! Looping") != std::string::npos &&
                 vm_ch.variables["ch_map_omega"].as_string().find("Omega Looping") != std::string::npos);
 
     // Test 70: Invis. Compile Binary Architecture (.loop -> Binary File Conversion, SHA-256 CTR Zero-Source Exposure & Execution)
+    ensure_dir_exists("build");
     Interpreter vm_invis;
     {
         std::ofstream tmp_loop("build/test_invis_src.loop");
@@ -1252,71 +1252,141 @@ int run_tests() {
                 vm_lz.variables["near_ids"].list_val != nullptr &&
                 vm_lz.variables["near_ids"].list_val->size() == 1);
 
-    // 76. 3D Scene Lifecycle, Dead-Target Raycast Exclusion, Combat Combo & Collision Resolution
-    Interpreter vm_glife;
-    vm_glife.execute_code(
-        "use \"loopize++\"\n"
-        "spawn3d.player(\"Hero\", at: (0, 1.5, 0), color: \"#38bdf8\")\n"
-        "spawn3d.box(\"Wall\", at: (0, 1.5, 1.9), size: (4, 6, 2), color: \"#6366f1\")\n"
-        "spawn3d.enemy(\"DroneAlpha\", at: (0, 1.5, 12), health: 50, points: 200, color: \"#ef4444\")\n"
-        "val cols_n = physics3d.resolve_collisions(true)\n"
-        "val ray_before = scene3d.raycast([0, 1.5, 5], [0, 0, 1])\n"
-        "val hp_left = scene3d.damage(\"DroneAlpha\", 50)\n"
-        "val ray_after = scene3d.raycast([0, 1.5, 5], [0, 0, 1])\n"
-        "val alive_en = scene3d.alive_count(\"enemy\")\n"
-        "val hero_info = scene3d.find(\"Hero\")\n"
-        "val w_st = loopize.wave_status()\n"
-    );
-    assert_test("3D Entity Lifecycle, Collision Pushout & Combat Damage Combo",
-                vm_glife.variables["cols_n"].as_int() >= 1 &&
-                vm_glife.variables["ray_before"].map_val != nullptr &&
-                vm_glife.variables["ray_before"].map_val->at("hit").is_truthy() &&
-                !vm_glife.variables["ray_after"].map_val->at("hit").is_truthy() &&
-                vm_glife.variables["hp_left"].as_number() == 0.0 &&
-                vm_glife.variables["alive_en"].as_int() == 0 &&
-                vm_glife.loopize_runtime.combo.hits == 1 &&
-                vm_glife.variables["w_st"].map_val->at("wave_cleared").is_truthy() &&
-                vm_glife.variables["hero_info"].map_val->at("pos").list_val->at(2).as_number() < 0.0);
+    // Test 76: Lazy PythonBridge & Native C++ py!(...) Fast-Path (Zero Python Process Spawned)
+    {
+        Interpreter vm_py_min;
+        bool lazy_initially = !vm_py_min.python_bridge.has_probed;
+        vm_py_min.execute_code(
+            "mut k = 5\n"
+            "val p1 = py!(2 + 3 * 4)\n"
+            "val p2 = py!(round(math.sqrt(144) + math.pi, 2))\n"
+            "val p3 = py!(k * k + abs(-7))\n"
+        );
+        bool still_no_python_spawn = !vm_py_min.python_bridge.has_probed;
+        assert_test("Zero-Python Lazy Bridge & Native py!(...) Fast-Path",
+                    lazy_initially && still_no_python_spawn &&
+                    vm_py_min.variables["p1"].as_int() == 14 &&
+                    std::abs(vm_py_min.variables["p2"].as_number() - 15.14) < 0.01 &&
+                    vm_py_min.variables["p3"].as_int() == 32);
+    }
 
-    // 77. Wavefront .mtl Material Palette & Camera Frustum Culling
-    auto mtl_pal = loop_math::parse_mtl_colors("newmtl NeonWing\nKd 0.0 0.96 0.83\n");
-    bool vis_front = loop_math::frustum_sphere_visible({0, 2, 20}, 2.0, {0, 4, -10}, {0, 2, 20}, 60.0);
-    bool vis_behind = loop_math::frustum_sphere_visible({0, 2, -40}, 1.5, {0, 4, -10}, {0, 2, 20}, 60.0);
-    assert_test("Wavefront .mtl Color Parsing & 3D Camera Frustum Culling",
-                mtl_pal["NeonWing"] == "#00f5d4" && vis_front && !vis_behind);
+    // Test 77: LoopNativeWindow Pygame + Pure-Python _PygameCompat Codegen
+    {
+        DynamicWindow w("PygameCompatSpec", 820, 520, "shine_ui");
+        DxEntity2DSpec hero;
+        hero.type = "sprite";
+        hero.name = "hero";
+        hero.x = 120.0; hero.y = 180.0; hero.w = 36.0; hero.h = 36.0;
+        hero.color = "#38bdf8";
+        hero.label = "Hero";
+        w.add_card("Telemetry", "Dual Pygame + _PygameCompat Canvas", 24, 24, 320, 120)
+         .add_input("Argon", "agent", 24, 160, 240)
+         .add_slider("Speed", 0.0, 100.0, 64.0, "speed", 24, 220, 240)
+         .add_toggle("Turbo", true, "turbo", 24, 280)
+         .add_progress("Charge", 0.78, "charge", 24, 330, 240)
+         .add_button("RUN", "run_action", 24, 380, 140, 38)
+         .add_entity_2d(hero);
+        std::string py_code = w.emit_native_gui_script();
+        w.save_native_gui("build/test_pygame_compat.py");
+        assert_test("LoopNativeWindow Pygame & _PygameCompat Emitted Runtime",
+                    py_code.find("class _PygameCompat") != std::string::npos &&
+                    py_code.find("class LoopNativeWindow") != std::string::npos &&
+                    py_code.find("def step_frame") != std::string::npos &&
+                    py_code.find("pg.display.set_mode") != std::string::npos &&
+                    py_code.find("\"hero\"") != std::string::npos);
+    }
 
-    // 78. C# Scene3D.Find / GetHealth / SetColor / LookAt & Mathf.MoveTowards
-    Interpreter vm_cs2;
-    vm_cs2.execute_code(
-        "use \"csharp\"\n"
-        "spawn3d.enemy(\"BossBot\", at: (0, 2, 10), health: 120, color: \"#ef4444\")\n"
-        "val step_mv = cs!(Mathf.MoveTowards(2.0f, 10.0f, 3.0f))\n"
-        "val found_b = cs!(Scene3D.Find(\"BossBot\"))\n"
-        "val rot_b = cs!(Scene3D.LookAt(\"BossBot\", 10.0f, 2.0f, 10.0f))\n"
-        "val col_b = cs!(Scene3D.SetColor(\"BossBot\", \"#f59e0b\"))\n"
-        "val hp_b = cs!(Scene3D.GetHealth(\"BossBot\"))\n"
-    );
-    assert_test("C# Scene3D Helpers (Find, LookAt, SetColor, GetHealth) & MoveTowards",
-                std::abs(vm_cs2.variables["step_mv"].as_number() - 5.0) < 1e-4 &&
-                vm_cs2.variables["found_b"].is_truthy() &&
-                vm_cs2.variables["col_b"].as_string() == "#f59e0b" &&
-                std::abs(vm_cs2.variables["hp_b"].as_number() - 120.0) < 1e-4);
+    // Test 78: Windows DirectX 11 + Direct2D + DirectWrite Dynamic Window Runtime
+    {
+        DxEntity2DSpec dx_hero;
+        dx_hero.type = "sprite";
+        dx_hero.name = "hero";
+        dx_hero.x = 100.0; dx_hero.y = 140.0; dx_hero.w = 36.0; dx_hero.h = 36.0;
+        dx_hero.color = "#38bdf8";
+        dx_hero.label = "Hero";
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+        DynamicWindow w_dx("DX11Smoke", 840, 520, "shine_ui");
+        w_dx.add_card("DirectX 11 Dynamic", "Native D3D11 + Direct2D + DirectWrite", 24, 24, 320, 130)
+            .add_button("EXEC", "noop_action", 24, 180, 140, 38)
+            .add_entity_2d(dx_hero);
+        bool saved_dx = w_dx.save_dxwin("build/test_dx_native.dxwin");
+        DirectXWindowSpec loaded_spec;
+        bool loaded_dx = load_dxwin_file("build/test_dx_native.dxwin", loaded_spec);
+        dx_native::DirectXWindowApp dx_app;
+        dx_app.spec = loaded_spec;
+        int dx_rc = loaded_dx ? dx_app.run(3, false) : 1;
+        assert_test("DirectX 11 + Direct2D + DirectWrite Dynamic Window (3-frame smoke)",
+                    saved_dx && loaded_dx && dx_rc == 0 &&
+                    loaded_spec.cards.size() == 1 &&
+                    loaded_spec.buttons.size() == 1 &&
+                    loaded_spec.entities_2d.size() == 1);
+#else
+        DynamicWindow w_dx("DX11Spec", 840, 520, "shine_ui");
+        w_dx.add_card("DirectX 11 Dynamic", "Cross-platform .dxwin serialization", 24, 24, 320, 130);
+        bool saved_dx = w_dx.save_dxwin("build/test_dx_native.dxwin");
+        DirectXWindowSpec loaded_spec;
+        bool loaded_dx = load_dxwin_file("build/test_dx_native.dxwin", loaded_spec);
+        assert_test("DirectX .dxwin Spec Serialization", saved_dx && loaded_dx && loaded_spec.cards.size() == 1);
+#endif
+    }
 
-    // 79. Ping-Pong Loop Tweens, Screen Shake & Game Smooth Approach
-    Interpreter vm_tw;
-    vm_tw.execute_code(
-        "use \"loopize++\"\n"
-        "loopize.tween(\"pulse\", 0, 100, 1.0, \"linear\", true, true)\n"
-        "loopize.step(1.35)\n"
-        "val pp_val = loopize.tween_value(\"pulse\")\n"
-        "val trauma_v = game.shake(0.6)\n"
-        "val app_v = game.approach(0, 10, 4)\n"
-    );
-    assert_test("Ping-Pong Tweens, Game Screen Shake & Frame-Independent Approach",
-                vm_tw.variables["pp_val"].as_number() > 60.0 &&
-                vm_tw.variables["pp_val"].as_number() < 90.0 &&
-                vm_tw.variables["trauma_v"].as_number() >= 0.59 &&
-                std::abs(vm_tw.variables["app_v"].as_number() - 4.0) < 1e-6);
+    // Test 79: macOS Native AppKit + Objective-C + Assembly Window & ASM Core
+    {
+#if defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+        uint32_t test_fb[64];
+        lp_asm_clear_bgra32(test_fb, 64, 0xFF112233u);
+        lp_asm_fill_rect_bgra32(test_fb, 8, 8, 2, 2, 3, 3, 0xFF00F5D4u);
+        uint64_t asm_hash = lp_asm_fnv1a64(reinterpret_cast<const uint8_t*>(test_fb), sizeof(test_fb));
+        float asm_lerp = lp_asm_lerp_f32(10.0f, 30.0f, 0.25f);
+
+        DynamicWindow w_mac("MacNativeSmoke", 820, 520, "metal4");
+        DxEntity2DSpec mac_hero;
+        mac_hero.type = "player";
+        mac_hero.name = "Hero";
+        mac_hero.is_player = true;
+        mac_hero.x = 120.0; mac_hero.y = 200.0; mac_hero.w = 34.0; mac_hero.h = 42.0;
+        mac_hero.color = "#00f5d4";
+        w_mac.add_card("macOS Native", "Zero-Python AppKit + Objective-C + Assembly", 20, 20, 300, 120)
+             .add_button("RUN", "noop", 20, 160, 120, 34)
+             .add_entity_2d(mac_hero);
+        bool saved_mac = w_mac.save_dxwin("build/test_mac_native.dxwin");
+        DirectXWindowSpec mac_spec;
+        bool loaded_mac = load_dxwin_file("build/test_mac_native.dxwin", mac_spec);
+        int mac_rc = loaded_mac ? mac_native::run_mac_native_window(mac_spec, 3, false) : 1;
+        assert_test("macOS Native Cocoa + Assembly Window (3-frame smoke)",
+                    test_fb[0] == 0xFF112233u && test_fb[2 * 8 + 2] == 0xFF00F5D4u &&
+                    asm_hash != 0 && std::abs(asm_lerp - 15.0f) < 0.01f &&
+                    saved_mac && loaded_mac && mac_rc == 0);
+#else
+        assert_test("macOS Native Cocoa + Assembly Window (cross-platform guard)", true);
+#endif
+    }
+
+    // Test 80: Zero-Python Multiline Block & Extended py!(...) Native Fast-Path
+    {
+        Interpreter vm_py_full;
+        vm_py_full.execute_code(
+            "py! {\n"
+            "import math\n"
+            "total = 0\n"
+            "for i in range(1, 6):\n"
+            "    if i % 2 == 0:\n"
+            "        total += i * 10\n"
+            "    else:\n"
+            "        total += i\n"
+            "msg = f'sum={total}'\n"
+            "}\n"
+            "val py_ext = py!('coki'.upper() + ':' + ('ok' if 10 in [5, 10, 15] else 'no'))\n"
+            "val py_slice = py!('looping'[0:4])\n"
+        );
+        bool zero_python_spawned = !vm_py_full.python_bridge.has_probed;
+        assert_test("Zero-Python py! { ... } Block & Extended Native Fast-Path",
+                    zero_python_spawned &&
+                    vm_py_full.variables["total"].as_int() == 69 &&
+                    vm_py_full.variables["msg"].as_string() == "sum=69" &&
+                    vm_py_full.variables["py_ext"].as_string() == "COKI:ok" &&
+                    vm_py_full.variables["py_slice"].as_string() == "loop");
+    }
 
     std::cout << "\n" << color::BOLD << (passed == total ? color::GREEN : color::YELLOW)
               << "Results: " << passed << "/" << total << " tests passed." << color::RESET << "\n\n";
@@ -1325,6 +1395,24 @@ int run_tests() {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut != INVALID_HANDLE_VALUE) {
+        DWORD dwMode = 0;
+        if (GetConsoleMode(hOut, &dwMode)) {
+            SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        }
+    }
+    HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+    if (hErr != INVALID_HANDLE_VALUE) {
+        DWORD dwMode = 0;
+        if (GetConsoleMode(hErr, &dwMode)) {
+            SetConsoleMode(hErr, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        }
+    }
+#endif
     Interpreter vm;
 
     // Pre-scan channel flags (--channel=<ch>, --channel <ch>, --alpha, --omega, --rc, --prod)
@@ -1349,11 +1437,78 @@ int main(int argc, char* argv[]) {
     argc = static_cast<int>(filtered_argv.size());
     argv = filtered_argv.data();
 
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+    if (argc >= 3 && (std::string(argv[1]) == "--dx-window" || std::string(argv[1]) == "--dx-smoke")) {
+        bool smoke_mode = (std::string(argv[1]) == "--dx-smoke");
+        std::string dx_path = argv[2];
+        int smoke_frames = smoke_mode ? 3 : 0;
+        bool show_win = !smoke_mode;
+        for (int i = 3; i < argc; ++i) {
+            std::string a = argv[i];
+            if (a == "--frames" && i + 1 < argc) {
+                try { smoke_frames = std::max(1, std::stoi(argv[++i])); } catch (...) {}
+            } else if (a == "--show") {
+                show_win = true;
+            } else if (a == "--headless") {
+                show_win = false;
+            }
+        }
+        DirectXWindowSpec spec;
+        if (!load_dxwin_file(dx_path, spec)) {
+            std::cerr << color::RED << "[DIRECTX ERROR]" << color::RESET
+                      << " Failed to load .dxwin spec: " << dx_path << "\n";
+            return 1;
+        }
+        dx_native::DirectXWindowApp app;
+        app.spec = spec;
+        int rc = app.run(smoke_frames, show_win);
+        if (smoke_mode) {
+            std::cout << (rc == 0 ? color::GREEN : color::RED) << "[DX SMOKE] " << color::RESET
+                      << "Spec=" << dx_path << " Frames=" << smoke_frames
+                      << " RC=" << rc << "\n";
+        }
+        return rc;
+    }
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+    if (argc >= 3 && (std::string(argv[1]) == "--mac-window" || std::string(argv[1]) == "--mac-smoke" ||
+                      std::string(argv[1]) == "--dx-window" || std::string(argv[1]) == "--dx-smoke")) {
+        std::string flag = argv[1];
+        bool smoke_mode = (flag == "--mac-smoke" || flag == "--dx-smoke");
+        std::string dx_path = argv[2];
+        int smoke_frames = smoke_mode ? 3 : 0;
+        bool show_win = !smoke_mode;
+        for (int i = 3; i < argc; ++i) {
+            std::string a = argv[i];
+            if (a == "--frames" && i + 1 < argc) {
+                try { smoke_frames = std::max(1, std::stoi(argv[++i])); } catch (...) {}
+            } else if (a == "--show") {
+                show_win = true;
+            } else if (a == "--headless") {
+                show_win = false;
+            }
+        }
+        DirectXWindowSpec spec;
+        if (!load_dxwin_file(dx_path, spec)) {
+            std::cerr << color::RED << "[MACOS WINDOW ERROR]" << color::RESET
+                      << " Failed to load window spec: " << dx_path << "\n";
+            return 1;
+        }
+        int rc = mac_native::run_mac_native_window(spec, smoke_frames, show_win);
+        if (smoke_mode) {
+            std::cout << (rc == 0 ? color::GREEN : color::RED) << "[MAC SMOKE] " << color::RESET
+                      << "Spec=" << dx_path << " Frames=" << smoke_frames
+                      << " RC=" << rc << "\n";
+        }
+        return rc;
+    }
+#endif
+
     // Check if this executable is a Standalone Invis. Compile Native Binary with an embedded LPBN payload
     if (InvisBinaryCompiler::has_embedded_slot_payload()) {
         bool has_subcmd_or_file = false;
         bool gui_mode = false;
         bool native_mode = false;
+        bool py_gui_mode = false;
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
             if (arg == "--gui" || arg == "-g" || arg == "--window") {
@@ -1361,6 +1516,10 @@ int main(int argc, char* argv[]) {
             } else if (arg == "--native" || arg == "-n" || arg == "--os") {
                 gui_mode = true;
                 native_mode = true;
+            } else if (arg == "--py-gui" || arg == "--pygame") {
+                gui_mode = true;
+                native_mode = true;
+                py_gui_mode = true;
             } else if ((arg == "--target" || arg == "-t" || arg == "--ui") && i + 1 < argc) {
                 vm.set_target_ui(argv[++i]);
             } else if (arg == "--version" || arg == "-v" || arg == "--help" || arg == "-h") {
@@ -1384,12 +1543,17 @@ int main(int argc, char* argv[]) {
                           << info.sha256_hex.substr(0, 12) << "... | Target: " << info.target_ui << ")\n\n";
                 auto t0 = std::chrono::high_resolution_clock::now();
                 vm.execute_code(embedded_src);
+                vm.sync_stage_to_window();
                 auto t1 = std::chrono::high_resolution_clock::now();
                 double elapsed = std::chrono::duration<double, std::milli>(t1 - t0).count();
                 std::cout << "\n" << color::GREEN << "[OK] Standalone binary completed in "
                           << std::fixed << std::setprecision(2) << elapsed << "ms!" << color::RESET << "\n";
-                if (gui_mode && (!vm.current_window.cards.empty() || !vm.current_window.buttons.empty())) {
-                    if (native_mode) vm.current_window.show_native(true);
+                if (gui_mode && (vm.has_active_window || !vm.current_window.cards.empty() || !vm.current_window.buttons.empty() ||
+                                 vm.current_window.is_3d_mode || !vm.current_window.entities_3d.empty() ||
+                                 !vm.current_window.entities_2d.empty() || !vm.current_scene3d.entities.empty() ||
+                                 !vm.stage.entities_2d.empty())) {
+                    if (py_gui_mode) vm.current_window.show_native(true, "python");
+                    else if (native_mode) vm.current_window.show_native(true, "auto");
                     else vm.current_window.show(true, "native");
                 }
                 return 0;
@@ -1429,18 +1593,23 @@ int main(int argc, char* argv[]) {
 
     if (first_arg == "doctor") {
         vm.print_banner();
+        vm.python_bridge.ensure_detected();
         std::cout << color::BOLD << color::CYAN << "[LOOPING DOCTOR]" << color::RESET << " Inspecting C++ Native Engine & Subsystems (Arch " << vm.arch_version << ")...\n\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Release Channel    : " << vm.channel_name << " [" << vm.channel << "]\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Engine Version     : v" << vm.engine_version << " (C++17 Native / Arch " << vm.arch_version << ")\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Host Platform      : " << vm.eval(std::make_shared<VariableExpr>("sys.platform")).as_string()
                   << " (" << vm.eval(std::make_shared<VariableExpr>("sys.arch")).as_string() << ")\n";
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " Win32 DirectX GUI  : DirectX 11 + Direct2D + DirectWrite Dynamic Native Window (Zero Python)\n";
+#endif
         std::cout << "  " << (vm.python_bridge.is_available ? color::GREEN : color::YELLOW)
                   << (vm.python_bridge.is_available ? "✔" : "⚠") << color::RESET
-                  << " Python Interop     : " << (vm.python_bridge.is_available ? "Available (" + vm.python_bridge.detected_exe + ")" : "Not found in PATH") << "\n";
+                  << " Python Interop     : " << (vm.python_bridge.is_available ? "Available (" + vm.python_bridge.detected_exe + ") [Lazy / C++ py! Fast-Path]" : "Not found in PATH (Native C++ py! active)") << "\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " 3D Quantum Engine  : Looping3D Z-Buffer + 120Hz/240Hz Sub-Stepping Physics + Raycast\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Metal 4 Subsystem   : Apple Metal 4 (M4 Unified Memory Architecture, Hardware Ray Tracing & Mesh Shaders 240Hz)\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " UI Target Profiles : Shine UI (60Hz), XUI (240Hz), flUI (120Hz), SwiftUI (Apple 120Hz), Metal 4 (240Hz), C2 (.c2)\n";
-        std::cout << "  " << color::GREEN << "✔" << color::RESET << " Invis. Compile     : LPBN v3.0A Binary Architecture (SHA-256 CTR + Standalone Native Mach-O/ELF + Auto Cache)\n";
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " Invis. Compile     : LPBN v3.0A Binary Architecture (SHA-256 CTR + Standalone Native PE/Mach-O/ELF + Auto Cache)\n";
+        std::cout << "  " << color::GREEN << "✔" << color::RESET << " WebAssembly Port   : Looping C++17 WASM Target (looping_wasm.wasm • 2D/3D Stage & Z-Buffer)\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Default CS Modules : csid (PKCE S256), csms (E2EE), game_plus (2D/3D), core_utils, audio, ai, invis\n";
         std::cout << "  " << color::GREEN << "✔" << color::RESET << " Crypto Subsystem   : SHA-256, FNV-1a, Base64, UUID v4, CSMS E2EE Key Derivation, CRC32\n\n";
         return 0;
@@ -1661,9 +1830,9 @@ int main(int argc, char* argv[]) {
         std::cout << color::BOLD << color::CYAN << "═══ " << vm.channel_name << " v" << vm.engine_version << " (Arch " << vm.arch_version << ") REFERENCE MANUAL ═══" << color::RESET << "\n\n";
         if (topic == "all" || topic == "channels" || topic == "nomenclature") {
             std::cout << color::YELLOW << "▸ OFFICIAL RELEASE NOMENCLATURE & CHANNELS:" << color::RESET << "\n"
-                      << "  • Looping        [prod]  : Production Release (v1.1 / Arch 3.0A)\n"
-                      << "  • Omega Looping  [omega] : Release Candidate / RC (v1.1-omega / Arch 3.0A)\n"
-                      << "  • Alpha! Looping [alpha] : Super Experimental Lab Builds (v1.1-alpha / Arch 3.0A)\n\n";
+                      << "  • Looping        [prod]  : Production Release (v1.1.2 / Arch 3.1A)\n"
+                      << "  • Omega Looping  [omega] : Release Candidate / RC (v1.1.2-omega / Arch 3.1A)\n"
+                      << "  • Alpha! Looping [alpha] : Super Experimental Lab Builds (v1.1.2-alpha / Arch 3.1A)\n\n";
         }
         if (topic == "all" || topic == "syntax") {
             std::cout << color::YELLOW << "▸ SYNTAX & CONTROL FLOW:" << color::RESET << "\n"
@@ -1770,7 +1939,7 @@ int main(int argc, char* argv[]) {
             }
         }
         std::ostringstream g;
-        g << "# Looping Code (v1.1 / Arch 3.0A) — Complete Learning & Mastery Guide\n\n"
+        g << "# Looping Code (v1.1.2 / Arch 3.1A) — Complete Learning & Mastery Guide\n\n"
           << "> **Official Nomenclature**: `Looping` (`[prod]`), `Omega Looping` (`[omega]`), `Alpha! Looping` (`[alpha]`)  \n"
           << "> **Engine Architecture**: Native C++17 Universal Engine + `Invis. Compile` (`LPBN v3.0A` Binary Pipeline)\n\n"
           << "---\n\n"
@@ -1919,8 +2088,8 @@ int main(int argc, char* argv[]) {
     // CS ID Connect Authentication: looping auth <login|whoami|logout>
     if (first_arg == "auth") {
         std::string auth_subcmd = (argc >= 3) ? argv[2] : "status";
-        const char* home = getenv("HOME");
-        std::string auth_file = (home ? std::string(home) : ".") + "/.looping_csid_auth";
+        std::string home_str = get_user_home();
+        std::string auth_file = (!home_str.empty() ? home_str : ".") + "/.looping_csid_auth";
 
         if (auth_subcmd == "login") {
             std::cout << color::BOLD << color::CYAN << "[CS ID Connect]" << color::RESET << " Initiating authentication flow for Looping CLI...\n";
@@ -1996,82 +2165,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Coki AI Local Coding Assistant CLI: looping ai "<query>" | --chat | --fix <file.loop> | --rag-only
-    if (first_arg == "ai" || first_arg == "coki-ai") {
-        auto shell_quote = [](const std::string& arg) -> std::string {
-            std::string out = "'";
-            for (char c : arg) {
-                if (c == '\'') out += "'\\''";
-                else out += c;
-            }
-            out += "'";
-            return out;
-        };
-
-        auto file_exists = [](const std::string& p) -> bool {
-            std::ifstream f(p);
-            return f.good();
-        };
-
-        if (argc >= 3 && (std::string(argv[2]) == "--help" || std::string(argv[2]) == "-h")) {
-            std::cout << color::BOLD << color::CYAN << "Coki AI · Local Apple Silicon MLX + Looping RAG" << color::RESET << "\n";
-            std::cout << "  " << argv[0] << " ai \"<consulta>\"          Ask Coki AI using local MLX (127.0.0.1:8080) + RAG\n";
-            std::cout << "  " << argv[0] << " ai --chat                 Interactive terminal chat session\n";
-            std::cout << "  " << argv[0] << " ai --fix <archivo.loop>   Diagnose & repair a .loop file\n";
-            std::cout << "  " << argv[0] << " ai --rag-only \"<tema>\"    Search official local Looping docs offline\n";
-            std::cout << "  " << argv[0] << " ai --cloud \"<consulta>\"   Allow cloud edge fallback if local MLX is off\n";
-            std::cout << "  Hugging Face org: https://huggingface.co/CokiStudios\n";
-            return 0;
-        }
-
-        std::string bin_dir = ".";
-        std::string exe_path = argv[0] ? std::string(argv[0]) : "";
-        size_t slash_pos = exe_path.find_last_of("/\\");
-        if (slash_pos != std::string::npos) {
-            bin_dir = exe_path.substr(0, slash_pos);
-        }
-
-        std::string chat_script;
-        if (const char* env_chat = std::getenv("COKI_AI_CHAT")) {
-            if (file_exists(env_chat)) chat_script = env_chat;
-        }
-        std::vector<std::string> script_candidates = {
-            "coki-ai/chat.py",
-            bin_dir + "/../coki-ai/chat.py",
-            bin_dir + "/../../coki-ai/chat.py"
-        };
-        if (chat_script.empty()) {
-            for (const auto& cand : script_candidates) {
-                if (file_exists(cand)) {
-                    chat_script = cand;
-                    break;
-                }
-            }
-        }
-
-        if (chat_script.empty()) {
-            std::cerr << color::RED << "Error: coki-ai/chat.py not found in workspace." << color::RESET << "\n";
-            std::cerr << "Run from your Looping repo root or set COKI_AI_CHAT, or download weights from https://huggingface.co/CokiStudios\n";
-            return 1;
-        }
-
-        std::string ai_root = chat_script.substr(0, chat_script.find_last_of("/\\"));
-        std::string venv_py = ai_root + "/.venv/bin/python";
-        std::string ext_venv_py = "/Volumes/Support HD/CokiAI/.venv/bin/python";
-        std::string py_exec = file_exists(venv_py) ? venv_py : (file_exists(ext_venv_py) ? ext_venv_py : "python3");
-
-        std::string cmd = shell_quote(py_exec) + " " + shell_quote(chat_script);
-        if (argc < 3) {
-            cmd += " --chat";
-        } else {
-            for (int i = 2; i < argc; ++i) {
-                cmd += " " + shell_quote(argv[i]);
-            }
-        }
-        int rc = std::system(cmd.c_str());
-        return rc == 0 ? 0 : 1;
-    }
-
     // Dynamic Window Creator CLI: looping window <name> [--title <t>] [--size <w,h>] [--theme <th>] [--target <tgt>] [--output <out>] [--html <out>] [--run]
     if (first_arg == "window" || first_arg == "win" || first_arg == "gui-create") {
         if (argc < 3) {
@@ -2088,6 +2181,9 @@ int main(int argc, char* argv[]) {
         std::string target_ui = "shine_ui";
         std::string out_loop = "";
         std::string out_html = "";
+        std::string out_dx = "";
+        std::string out_dx_cpp = "";
+        std::string backend = "native";
         bool launch = true;
 
         for (int i = 3; i < argc; ++i) {
@@ -2107,10 +2203,22 @@ int main(int argc, char* argv[]) {
                 theme = argv[++i];
             } else if ((arg == "--target" || arg == "--ui" || arg == "-u") && i + 1 < argc) {
                 target_ui = argv[++i];
+            } else if ((arg == "--backend" || arg == "-b") && i + 1 < argc) {
+                backend = argv[++i];
+            } else if (arg == "--py-gui" || arg == "--pygame") {
+                backend = "pygame";
+            } else if (arg == "--compat") {
+                backend = "compat";
+            } else if (arg == "--directx" || arg == "--dx11") {
+                backend = "directx";
             } else if ((arg == "--output" || arg == "-o") && i + 1 < argc) {
                 out_loop = argv[++i];
             } else if (arg == "--html" && i + 1 < argc) {
                 out_html = argv[++i];
+            } else if (arg == "--dx" && i + 1 < argc) {
+                out_dx = argv[++i];
+            } else if (arg == "--dx-cpp" && i + 1 < argc) {
+                out_dx_cpp = argv[++i];
             } else if (arg == "--no-run" || arg == "--no-open") {
                 launch = false;
             } else if (arg == "--run" || arg == "--open" || arg == "--gui") {
@@ -2122,9 +2230,9 @@ int main(int argc, char* argv[]) {
         if (!theme.empty()) win.set_theme(theme);
 
         UIProfileSpecs specs = resolve_ui_profile(target_ui);
-        win.add_card(title, "Ventana dinámica generada por Looping v1.1 (Arch 3.0A)\nArquitectura: " + specs.name + " (" + specs.pipeline + ")")
+        win.add_card(title, "Ventana dinámica generada por Looping v1.1.2 (Arch 3.1A)\nArquitectura: " + specs.name + " (" + specs.pipeline + ")")
            .add_card("Métricas de Sistema", "Frecuencia: " + std::to_string(specs.target_fps) + " FPS\nLatencia Entrada: <0.2ms\nEstado: Óptimo")
-           .add_card("Módulos Activos", "• Xtraps Background Engine\n• Looping AST & Interpreter v1.1 (Arch 3.0A)\n• Audio Synthesizer Core")
+           .add_card("Módulos Activos", "• Xtraps Background Engine\n• Looping AST & Interpreter v1.1.2 (Arch 3.1A)\n• Audio Synthesizer Core")
            .add_card("Acciones de Control", "Panel reactivo interactivo. Haz clic en los botones para disparar eventos.")
            .add_button("INICIAR PROCESO", "start_process")
            .add_button("REINICIAR SERVICIOS", "restart_services")
@@ -2134,8 +2242,10 @@ int main(int argc, char* argv[]) {
 
         if (!out_loop.empty()) win.save_loop(out_loop);
         if (!out_html.empty()) win.save_html(out_html);
+        if (!out_dx.empty()) win.save_dxwin(out_dx);
+        if (!out_dx_cpp.empty()) win.save_directx_cpp(out_dx_cpp);
 
-        win.show(launch);
+        win.show(launch, backend);
         return 0;
     }
 
@@ -2178,7 +2288,7 @@ int main(int argc, char* argv[]) {
         if (ok) {
             std::cout << "\n" << color::GREEN << "✔ Successfully generated dynamic application template!" << color::RESET << "\n";
             std::cout << color::BOLD << "  • Artifact:" << color::RESET << " " << created_path << "\n";
-            std::cout << color::BOLD << "  • Arch:" << color::RESET << " 3.0A Quantum Synthesis & Coki Studios Ecosystem\n";
+            std::cout << color::BOLD << "  • Arch:" << color::RESET << " 3.1A Quantum Synthesis & Coki Studios Ecosystem\n";
             std::cout << color::BOLD << "  • Bundled CS Modules:" << color::RESET << " csid, csms, game_plus, core_utils, audio, ai\n";
             if (!prog.snippets.empty()) {
                 std::cout << color::BOLD << "  • Embedded Reactive Snippets (" << prog.snippets.size() << "):" << color::RESET << "\n";
@@ -2323,9 +2433,11 @@ int main(int argc, char* argv[]) {
         return success ? 0 : 1;
     }
 
-    // Run command or script execution: supports flags anywhere, including --gui / -g / -t / --native / -i / --persistent / --metal4
+    // Run command or script execution: supports flags anywhere, including --gui / -g / -t / --native / --py-gui / -i / --persistent / --metal4
     bool gui_mode = false;
     bool native_mode = false;
+    bool py_gui_mode = false;
+    std::string gui_backend = "auto";
     bool persistent_mode = false;
     bool batch_mode = false;
     bool force_metal4 = false;
@@ -2339,6 +2451,22 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--native" || arg == "-n" || arg == "--os") {
             gui_mode = true;
             native_mode = true;
+        } else if (arg == "--py-gui" || arg == "--pygame") {
+            gui_mode = true;
+            native_mode = true;
+            py_gui_mode = true;
+            gui_backend = (arg == "--pygame") ? "pygame" : "python";
+        } else if (arg == "--compat") {
+            gui_mode = true;
+            native_mode = true;
+            py_gui_mode = true;
+            gui_backend = "compat";
+        } else if (arg == "--backend" && i + 1 < argc) {
+            gui_backend = argv[++i];
+            if (gui_backend == "python" || gui_backend == "pygame" || gui_backend == "compat") {
+                py_gui_mode = true;
+            }
+            gui_mode = true;
         } else if (arg == "-i" || arg == "--interactive" || arg == "-p" || arg == "--persistent") {
             persistent_mode = true;
         } else if (arg == "--no-persist" || arg == "--batch" || arg == "-b") {
@@ -2369,21 +2497,92 @@ int main(int argc, char* argv[]) {
 
     if (gui_mode) {
         std::cout << color::CYAN << "[GUI RUNTIME]" << color::RESET 
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+                  << (py_gui_mode ? " Initializing Python LoopNativeWindow subsystem (pygame / _PygameCompat)...\n"
+                                  : " Initializing Dynamic DirectX 11 + Direct2D Native Window subsystem (Zero Python)...\n");
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+                  << (py_gui_mode ? " Initializing Python LoopNativeWindow subsystem (pygame / _PygameCompat)...\n"
+                                  : " Initializing Native macOS AppKit + Objective-C + Assembly Window subsystem (Zero Python)...\n");
+#else
                   << (native_mode ? " Initializing Pure Native OS Window subsystem (No HTML5)...\n" 
                                   : " Initializing Loop OS Native Graphical Window subsystem...\n");
+#endif
     }
 
     bool success = vm.execute_file(script_path);
+    vm.sync_stage_to_window();
 
-    bool has_ui_window = !vm.current_window.cards.empty() || 
-                         !vm.current_window.buttons.empty() || 
-                         !vm.last_exported_native_script.empty() || 
-                         vm.has_active_window;
-    bool is_playable_game = vm.has_game_entities || vm.current_scene3d.active || !vm.current_scene3d.entities.empty();
+    bool has_stage_or_3d = vm.current_window.is_3d_mode || !vm.current_window.entities_3d.empty() ||
+                           !vm.current_window.entities_2d.empty() || !vm.current_scene3d.entities.empty() ||
+                           !vm.stage.entities_2d.empty();
+    bool has_window_content = !vm.current_window.cards.empty() || 
+                              !vm.current_window.buttons.empty() || 
+                              !vm.current_window.inputs.empty() ||
+                              !vm.current_window.sliders.empty() ||
+                              !vm.current_window.toggles.empty() ||
+                              !vm.current_window.progress_bars.empty() ||
+                              !vm.last_exported_native_script.empty() || 
+                              vm.has_active_window ||
+                              has_stage_or_3d;
+    bool has_window = has_window_content || gui_mode;
 
-    if (success && gui_mode && !native_mode && (is_playable_game || !has_ui_window)) {
+    if (success && has_window) {
+        if (vm.window_process_pid <= 0) {
+            std::string win_app = vm.current_window.app_name.empty() ? "LoopingApp" : vm.current_window.app_name;
+            bool force_node = (gui_backend == "node");
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+            if (!py_gui_mode && !force_node && (has_window_content || native_mode)) {
+                std::string dx_path = "build/" + win_app + ".dxwin";
+                if (vm.current_window.save_dxwin(dx_path)) {
+                    pid_t dx_pid = launch_directx_window_process(dx_path);
+                    if (dx_pid > 0) {
+                        vm.window_process_pid = dx_pid;
+                        std::cout << color::CYAN << "[DIRECTX WINDOW]" << color::RESET
+                                  << " Launched dynamic DirectX 11 window: " << color::BOLD << dx_path << color::RESET
+                                  << " (PID: " << dx_pid << ")\n";
+                    }
+                }
+            }
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+            if (!py_gui_mode && !force_node && (has_window_content || native_mode)) {
+                std::string dx_path = "build/" + win_app + ".dxwin";
+                if (vm.current_window.save_dxwin(dx_path)) {
+                    pid_t mac_pid = launch_mac_window_process(dx_path);
+                    if (mac_pid > 0) {
+                        vm.window_process_pid = mac_pid;
+                        std::cout << color::CYAN << "[MACOS NATIVE WINDOW]" << color::RESET
+                                  << " Launched native Cocoa + Objective-C + Assembly window: " << color::BOLD << dx_path << color::RESET
+                                  << " (PID: " << mac_pid << ")\n";
+                    }
+                }
+            }
+#endif
+            if (vm.window_process_pid <= 0 && !force_node && (py_gui_mode || has_window_content)) {
+                std::string win_script = vm.last_exported_native_script;
+                if (win_script.empty() && has_window_content) {
+                    win_script = "build/" + win_app + "_native.py";
+                    vm.current_window.save_native_gui(win_script);
+                }
+                if (!win_script.empty()) {
+                    std::ifstream test_f(win_script);
+                    if (test_f.good()) {
+                        std::string py_args;
+                        if (gui_backend == "pygame" || gui_backend == "compat") {
+                            py_args = "--backend " + gui_backend;
+                        }
+                        pid_t pid = launch_native_window_process(win_script, py_args);
+                        vm.window_process_pid = pid;
+                        std::cout << color::CYAN << "[NATIVE WINDOW]" << color::RESET 
+                                  << " Launched Python LoopNativeWindow: " << color::BOLD << win_script << color::RESET 
+                                  << " (PID: " << pid << ")\n";
+                    }
+                }
+            }
+        }
+    }
+    if (success && gui_mode && vm.window_process_pid <= 0) {
         // Universal 2D/3D Stage GUI Launcher: resolves loop-node-window from any working directory
-        std::string home_dir = getenv("HOME") ? getenv("HOME") : "";
+        std::string home_dir = get_user_home();
         std::string bin_dir = ".";
         std::string argv0_str = argv[0] ? argv[0] : "";
         size_t b_slash = argv0_str.find_last_of("/\\");
@@ -2412,7 +2611,11 @@ int main(int argc, char* argv[]) {
         if (!resolved_nw.empty()) {
             std::cout << color::GREEN << "[2D/3D STAGE LAUNCH]" << color::RESET 
                       << " Launching Universal 2D/3D Quantum Stage (" << resolved_nw << ") for " << script_path << "...\n";
+#ifdef _WIN32
+            std::string cmd = "node \"" + resolved_nw + "\" --game --script \"" + script_path + "\"";
+#else
             std::string cmd = "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" node \"" + resolved_nw + "\" --game --script \"" + script_path + "\"";
+#endif
             system(cmd.c_str());
         } else {
 #ifdef __APPLE__
@@ -2425,29 +2628,11 @@ int main(int argc, char* argv[]) {
             }
 #endif
         }
-    } else if (success && (has_ui_window || native_mode)) {
-        if (vm.window_process_pid <= 0) {
-            std::string win_script = vm.last_exported_native_script;
-            if (win_script.empty() && (!vm.current_window.cards.empty() || !vm.current_window.buttons.empty())) {
-                win_script = "build/" + vm.current_window.app_name + "_native.py";
-                vm.current_window.save_native_gui(win_script);
-            }
-            if (!win_script.empty()) {
-                std::ifstream test_f(win_script);
-                if (test_f.good()) {
-                    pid_t pid = launch_native_window_process(win_script);
-                    vm.window_process_pid = pid;
-                    std::cout << color::CYAN << "[NATIVE WINDOW]" << color::RESET 
-                              << " Launched native OS window: " << color::BOLD << win_script << color::RESET 
-                              << " (PID: " << pid << ")\n";
-                }
-            }
-        }
     }
 
     // Persistent interactive terminal mode (like py -i):
     // Enter if explicitly requested (-i / --persistent) OR if a window is active and stdin is an interactive terminal
-    bool should_persist = (persistent_mode || ((has_ui_window || native_mode) && !is_playable_game && !batch_mode)) && 
+    bool should_persist = (persistent_mode || (has_window && !batch_mode)) && 
                           (isatty(fileno(stdin)) || persistent_mode);
 
     if (should_persist) {

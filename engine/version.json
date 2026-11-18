@@ -1,35 +1,36 @@
 {
-  "version": "1.1",
-  "semver": "1.1.0",
-  "alpha_version": "1.1A",
-  "smiledev_alpha_version": "1.1A",
+  "version": "1.1.2",
+  "semver": "1.1.2",
+  "alpha_version": "1.1.2A",
+  "smiledev_alpha_version": "1.1.2A",
   "engine": "Looping",
   "edition": "Production Release",
-  "arch_version": "3.0A",
+  "arch_version": "3.1A",
   "package_manager": "smiledev",
-  "release_name": "Looping Engine & smiledev v1.1 (Prod v1.1 / Alpha! 1.1A / Arch 3.0A)",
-  "release_date": "2026-11-11",
-  "architectures": ["arm64", "x86_64"],
+  "release_name": "Looping Engine & smiledev v1.1.2 (Prod v1.1.2 / Alpha! 1.1.2A / Arch 3.1A)",
+  "release_date": "2026-11-17",
+  "architectures": ["x86_64", "arm64"],
   "min_macos": "11.0",
+  "min_windows": "10.0",
   "channel_nomenclature": {
     "alpha": {
-      "name": "Alpha! 1.1A",
+      "name": "Alpha! 1.1.2A",
       "engine_name": "Alpha! Looping",
       "smiledev_name": "Alpha! SmileDev",
       "role": "Super Experimental",
-      "version": "1.1A",
-      "description": "Builds súper experimentales Alpha! 1.1A para smiledev & Looping, laboratorios en vivo y características bleeding-edge previas a estabilización."
+      "version": "1.1.2A",
+      "description": "Builds súper experimentales Alpha! 1.1.2A para smiledev & Looping con ventanas dinámicas DirectX 11 en Windows, LoopNativeWindow con pygame/_PygameCompat y evaluador py!() nativo sin Python."
     },
     "omega": {
       "name": "Omega Looping",
       "role": "Release Candidate (RC)",
-      "version": "1.1-omega",
+      "version": "1.1.2-omega",
       "description": "Candidatas a lanzamiento (RC) con congelación de APIs y validación QA previa a producción."
     },
     "prod": {
       "name": "Looping",
       "role": "Production Release",
-      "version": "1.1",
+      "version": "1.1.2",
       "description": "Versión oficial estable de producción para todo el ecosistema Coki Studios & Loop OS."
     }
   },
@@ -37,93 +38,143 @@
     "prod": {
       "name": "Looping",
       "tier": "Production Release",
-      "version": "1.1",
-      "engine_version": "1.1",
-      "smiledev_version": "1.1",
-      "arch_version": "3.0A",
-      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
-      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+      "version": "1.1.2",
+      "engine_version": "1.1.2",
+      "smiledev_version": "1.1.2",
+      "arch_version": "3.1A",
+      "tarball_url": "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
+      "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+      "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
     },
     "stable": {
       "name": "Looping",
       "tier": "Production Release",
-      "version": "1.1",
-      "engine_version": "1.1",
-      "smiledev_version": "1.1",
-      "arch_version": "3.0A",
-      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
-      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+      "version": "1.1.2",
+      "engine_version": "1.1.2",
+      "smiledev_version": "1.1.2",
+      "arch_version": "3.1A",
+      "tarball_url": "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
+      "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+      "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
     },
     "omega": {
       "name": "Omega Looping",
       "tier": "Release Candidate (RC)",
-      "version": "1.1-omega",
-      "engine_version": "1.1",
-      "smiledev_version": "1.1-omega",
-      "arch_version": "3.0A",
-      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
-      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+      "version": "1.1.2-omega",
+      "engine_version": "1.1.2",
+      "smiledev_version": "1.1.2-omega",
+      "arch_version": "3.1A",
+      "tarball_url": "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
+      "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+      "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
     },
     "alpha": {
-      "name": "Alpha! 1.1A",
+      "name": "Alpha! 1.1.2A",
       "smiledev_name": "Alpha! SmileDev",
       "tier": "Super Experimental",
-      "version": "1.1A",
-      "engine_version": "1.1",
-      "smiledev_version": "1.1A",
-      "arch_version": "3.0A",
-      "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz",
-      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+      "version": "1.1.2A",
+      "engine_version": "1.1.2",
+      "smiledev_version": "1.1.2A",
+      "arch_version": "3.1A",
+      "tarball_url": "https://engine.cokistudios.com/looping-v1.1A-darwin-universal.tar.gz",
+      "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
+      "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+      "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
     }
   },
-  "release_notes": "Looping v1.1 & smiledev (Prod v1.1 / Alpha! 1.1A / Arch 3.0A): Persistent terminal mode (-i / --persistent like py -i), Apple Metal 4 subsystem (metal4.*, sys.metal_version, 240Hz ProMotion), Quantum 3D Engine (Looping3D.hpp Z-Buffer software rasterizer, Blinn-Phong shading, raycasting & 120Hz/240Hz sub-stepping), Alpha! 1.1A Super Experimental channel for smiledev, integrated CS Ecosystem modules (csid PKCE S256, csms E2EE, game_plus 2D/3D, core_utils), and 71/71 native C++17 tests passing.",
-  "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
-  "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
-  "installer_script_url": "https://repo.cokistudios.com/engine/install.sh",
-  "pkg_url": "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
+  "release_notes": "Looping v1.1.2 & smiledev (Prod v1.1.2 / Alpha! 1.1.2A / Arch 3.1A): Dynamic DirectX 11 + Direct2D + DirectWrite native desktop windows on Windows (.dxwin / --dx-window, Zero Python/Node), LoopNativeWindow Python runtime with real pygame support + pure-Python _PygameCompat canvas replication, lazy zero-Python PythonBridge + native C++17 py!(...) fast-path evaluator (preserving all python {}/pysnippet/runpy APIs), C++17 WebAssembly runtime, Quantum 3D + loopize++ + C# interop, and 78/78 native C++17 tests passing.",
+  "tarball_url": "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+  "tarball_sha256": "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
+  "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+  "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d",
+  "windows_installer_url": "https://engine.cokistudios.com/install.ps1",
+  "installer_script_url": "https://engine.cokistudios.com/install.sh",
+  "pkg_url": "https://engine.cokistudios.com/Instalar-Looping.pkg",
   "pkg_sha256": "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
-  "dmg_url": "https://repo.cokistudios.com/engine/Looping-Engine-v2.6.0-macOS.dmg",
+  "dmg_url": "https://engine.cokistudios.com/Looping-Engine-v2.6.0-macOS.dmg",
   "dmg_sha256": "894031195bd258d7239512b43f429074cf6123cedc0374296b1a0c2881b994f2",
+  "platforms": {
+    "windows_x64": {
+      "version": "1.1.2",
+      "arch_version": "3.1A",
+      "zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+      "zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d",
+      "exe_url": "https://engine.cokistudios.com/looping.exe",
+      "exe_sha256": "c0eb77d094fb81d4f288085322af3da53855a24675343099babc15091977e440",
+      "installer_ps1_url": "https://engine.cokistudios.com/install.ps1",
+      "installer_ps1_sha256": "873c4ece45364ef0d6f3d9cedf313c11bdac2932580ba48d33cb80de70a2a49c",
+      "features": ["DirectX 11 + Direct2D + DirectWrite Dynamic Windows", "LoopNativeWindow Pygame & _PygameCompat", "Native C++ py!() Fast-Path", "78/78 Tests"]
+    },
+    "darwin_universal": {
+      "version": "1.1",
+      "arch_version": "3.0A",
+      "tarball_url": "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+      "tarball_sha256": "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d"
+    }
+  },
   "binaries": {
     "looping": {
-      "url": "https://repo.cokistudios.com/engine/looping",
-      "sha256": "c27607297dd78c5258d3e404af0596f155ed8dc3cd3bcf19103ffe97cca8293e"
+      "url": "https://engine.cokistudios.com/looping",
+      "sha256": "40b6f467e85ec5c8061fd2ddce7bc5194bc44b57e1e9cb381ff7325282f409cf"
+    },
+    "looping_exe": {
+      "url": "https://engine.cokistudios.com/looping.exe",
+      "sha256": "c0eb77d094fb81d4f288085322af3da53855a24675343099babc15091977e440"
     },
     "smiledev": {
-      "url": "https://repo.cokistudios.com/engine/smiledev",
-      "sha256": "bc735380b9f5cc3cdaf663b5c3056b7dcb4254b4e25cabd6182bd8dbef16aa68"
+      "url": "https://engine.cokistudios.com/smiledev",
+      "sha256": "fe5a23ef68290be09ae2eb30431131a59cc4a863da7cc7d16634b5463d9f88a7"
+    },
+    "smiledev_ps1": {
+      "url": "https://engine.cokistudios.com/smiledev.ps1",
+      "sha256": "0cef3e73bbe02ba48386df5161735145ec2d7ad66f1bb925ec4ed043842a9c53"
     }
   },
   "history": {
     "architecture_versions": [
       {
+        "version": "3.1A",
+        "name": "Looping Architecture v3.1A (DirectX 11 + Direct2D Dynamic Windows, Pygame & _PygameCompat, Zero-Python py!)",
+        "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+        "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
+      },
+      {
+        "version": "1.1.2A",
+        "name": "Alpha! 1.1.2A (SmileDev Super Experimental, DirectX 11 Dynamic GUI & _PygameCompat)",
+        "windows_zip_url": "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+        "windows_zip_sha256": "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
+      },
+      {
         "version": "1.1A",
         "name": "Alpha! 1.1A (SmileDev Super Experimental, Metal 4 & Persistent REPL)",
-        "tarball_url": "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz",
+        "tarball_url": "https://engine.cokistudios.com/looping-v1.1A-darwin-universal.tar.gz",
         "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
       },
       {
         "version": "3.0A",
         "name": "Looping Architecture v3.0A (Quantum 3D Perspective, Metal 4, Persistent Terminal & CS Modules)",
-        "tarball_url": "https://repo.cokistudios.com/engine/looping-v3.0A-darwin-universal.tar.gz",
+        "tarball_url": "https://engine.cokistudios.com/looping-v3.0A-darwin-universal.tar.gz",
         "tarball_sha256": "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
       },
       {
         "version": "2.8A",
         "name": "Looping Architecture v2.8A (Quantum Signature & First Production Base)",
-        "tarball_url": "https://repo.cokistudios.com/engine/looping-v2.8A-darwin-universal.tar.gz",
+        "tarball_url": "https://engine.cokistudios.com/looping-v2.8A-darwin-universal.tar.gz",
         "tarball_sha256": "393b85726e193cedbfd9d63e30627de38b21a77bd2b5c5044471e37aee074d4f"
       },
       {
         "version": "2.7A",
         "name": "Looping Architecture v2.7A (Eco Hub & Modern Match)",
-        "tarball_url": "https://repo.cokistudios.com/engine/looping-v2.7A-darwin-universal.tar.gz",
+        "tarball_url": "https://engine.cokistudios.com/looping-v2.7A-darwin-universal.tar.gz",
         "tarball_sha256": "e309cb93c4ca34cb941e7cb76fe78c183cf992fb549924ba9535be48cb09e1e3"
       },
       {
         "version": "2.6A",
         "name": "Looping Architecture v2.6A (Homebrew & Package Engine)",
-        "tarball_url": "https://repo.cokistudios.com/engine/looping-v2.6A-darwin-universal.tar.gz",
+        "tarball_url": "https://engine.cokistudios.com/looping-v2.6A-darwin-universal.tar.gz",
         "tarball_sha256": "25251a37c35e47854d9241680d7a7b8e5c14cf24d1a66ff5d568c0b2984144ea"
       }
     ]

@@ -1,0 +1,350 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000012C00000100000001 /* HiOPStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000012C00000100000001 /* HiOPStudioApp.swift */; };
+		A10000022C00000100000001 /* StudioViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000022C00000100000001 /* StudioViewModel.swift */; };
+		A10000032C00000100000001 /* StudioRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000032C00000100000001 /* StudioRootView.swift */; };
+		A10000042C00000100000001 /* HiOPCore in Frameworks */ = {isa = PBXBuildFile; productRef = B10000012C00000100000001 /* HiOPCore */; };
+		A10000112C00000100000001 /* HiOPBuilderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000112C00000100000001 /* HiOPBuilderApp.swift */; };
+		A10000122C00000100000001 /* BuilderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000122C00000100000001 /* BuilderViewModel.swift */; };
+		A10000132C00000100000001 /* BuilderWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000132C00000100000001 /* BuilderWorkspaceView.swift */; };
+		A10000142C00000100000001 /* HiOPCore in Frameworks */ = {isa = PBXBuildFile; productRef = B10000022C00000100000001 /* HiOPCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000012C00000100000001 /* HiOPStudioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiOPStudioApp.swift; sourceTree = "<group>"; };
+		A20000022C00000100000001 /* StudioViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioViewModel.swift; sourceTree = "<group>"; };
+		A20000032C00000100000001 /* StudioRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioRootView.swift; sourceTree = "<group>"; };
+		A20000112C00000100000001 /* HiOPBuilderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiOPBuilderApp.swift; sourceTree = "<group>"; };
+		A20000122C00000100000001 /* BuilderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuilderViewModel.swift; sourceTree = "<group>"; };
+		A20000132C00000100000001 /* BuilderWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuilderWorkspaceView.swift; sourceTree = "<group>"; };
+		A30000012C00000100000001 /* HiOPStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HiOPStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A30000022C00000100000001 /* HiOPBuilder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HiOPBuilder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C10000012C00000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000042C00000100000001 /* HiOPCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C10000022C00000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000142C00000100000001 /* HiOPCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D10000012C00000100000001 = {
+			isa = PBXGroup;
+			children = (
+				D20000012C00000100000001 /* Apps */,
+				D30000012C00000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D20000012C00000100000001 /* Apps */ = {
+			isa = PBXGroup;
+			children = (
+				D20000022C00000100000001 /* HiOPStudio */,
+				D20000032C00000100000001 /* HiOPBuilder */,
+			);
+			path = Apps;
+			sourceTree = "<group>";
+		};
+		D20000022C00000100000001 /* HiOPStudio */ = {
+			isa = PBXGroup;
+			children = (
+				A20000012C00000100000001 /* HiOPStudioApp.swift */,
+				A20000022C00000100000001 /* StudioViewModel.swift */,
+				A20000032C00000100000001 /* StudioRootView.swift */,
+			);
+			path = HiOPStudio;
+			sourceTree = "<group>";
+		};
+		D20000032C00000100000001 /* HiOPBuilder */ = {
+			isa = PBXGroup;
+			children = (
+				A20000112C00000100000001 /* HiOPBuilderApp.swift */,
+				A20000122C00000100000001 /* BuilderViewModel.swift */,
+				A20000132C00000100000001 /* BuilderWorkspaceView.swift */,
+			);
+			path = HiOPBuilder;
+			sourceTree = "<group>";
+		};
+		D30000012C00000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A30000012C00000100000001 /* HiOPStudio.app */,
+				A30000022C00000100000001 /* HiOPBuilder.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E10000012C00000100000001 /* HiOPStudio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000012C00000100000001 /* Build configuration list for PBXNativeTarget "HiOPStudio" */;
+			buildPhases = (
+				E20000012C00000100000001 /* Sources */,
+				C10000012C00000100000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HiOPStudio;
+			packageProductDependencies = (
+				B10000012C00000100000001 /* HiOPCore */,
+			);
+			productName = HiOPStudio;
+			productReference = A30000012C00000100000001 /* HiOPStudio.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E10000022C00000100000001 /* HiOPBuilder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000022C00000100000001 /* Build configuration list for PBXNativeTarget "HiOPBuilder" */;
+			buildPhases = (
+				E20000022C00000100000001 /* Sources */,
+				C10000022C00000100000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HiOPBuilder;
+			packageProductDependencies = (
+				B10000022C00000100000001 /* HiOPCore */,
+			);
+			productName = HiOPBuilder;
+			productReference = A30000022C00000100000001 /* HiOPBuilder.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000012C00000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = F10000002C00000100000001 /* Build configuration list for PBXProject "HiOPApple" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = es;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				es,
+				en,
+				Base,
+			);
+			mainGroup = D10000012C00000100000001;
+			packageReferences = (
+				B20000012C00000100000001 /* XCLocalSwiftPackageReference "Packages/HiOPCore" */,
+			);
+			productRefGroup = D30000012C00000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E10000012C00000100000001 /* HiOPStudio */,
+				E10000022C00000100000001 /* HiOPBuilder */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E20000012C00000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000012C00000100000001 /* HiOPStudioApp.swift in Sources */,
+				A10000022C00000100000001 /* StudioViewModel.swift in Sources */,
+				A10000032C00000100000001 /* StudioRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000022C00000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000112C00000100000001 /* HiOPBuilderApp.swift in Sources */,
+				A10000122C00000100000001 /* BuilderViewModel.swift in Sources */,
+				A10000132C00000100000001 /* BuilderWorkspaceView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F20000012C00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F20000022C00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F20000112C00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "hiOP Studio";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.hiop.studio;
+				PRODUCT_NAME = HiOPStudio;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F20000122C00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "hiOP Studio";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.hiop.studio;
+				PRODUCT_NAME = HiOPStudio;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F20000212C00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "hiOP Builder";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.hiop.builder;
+				PRODUCT_NAME = HiOPBuilder;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				TARGETED_DEVICE_FAMILY = "2,1";
+			};
+			name = Debug;
+		};
+		F20000222C00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "hiOP Builder";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				PRODUCT_BUNDLE_IDENTIFIER = com.cokistudios.hiop.builder;
+				PRODUCT_NAME = HiOPBuilder;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				TARGETED_DEVICE_FAMILY = "2,1";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F10000002C00000100000001 /* Build configuration list for PBXProject "HiOPApple" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000012C00000100000001 /* Debug */,
+				F20000022C00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F10000012C00000100000001 /* Build configuration list for PBXNativeTarget "HiOPStudio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000112C00000100000001 /* Debug */,
+				F20000122C00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F10000022C00000100000001 /* Build configuration list for PBXNativeTarget "HiOPBuilder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000212C00000100000001 /* Debug */,
+				F20000222C00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B20000012C00000100000001 /* XCLocalSwiftPackageReference "Packages/HiOPCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HiOPCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B10000012C00000100000001 /* HiOPCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B20000012C00000100000001 /* XCLocalSwiftPackageReference "Packages/HiOPCore" */;
+			productName = HiOPCore;
+		};
+		B10000022C00000100000001 /* HiOPCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B20000012C00000100000001 /* XCLocalSwiftPackageReference "Packages/HiOPCore" */;
+			productName = HiOPCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 000000012C00000100000001 /* Project object */;
+}

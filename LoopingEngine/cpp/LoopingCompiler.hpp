@@ -4,6 +4,8 @@
 #include "Looping3D.hpp"
 #include "LoopingAST.hpp"
 #include "LoopingParser.hpp"
+#include "LoopingDirectXWindow.hpp"
+#include "LoopingMacWindow.hpp"
 #include <string>
 #include <vector>
 #include <memory>
@@ -17,16 +19,61 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
 #include <sys/stat.h>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <io.h>
+#include <direct.h>
+#include <process.h>
+#ifndef _PID_T_
+#define _PID_T_
+typedef int pid_t;
+#endif
+#define getcwd _getcwd
+#define isatty _isatty
+#define fileno _fileno
+#else
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
+#endif
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
 
 namespace looping {
+
+inline void ensure_dir_exists(const std::string& dir) {
+    if (dir.empty()) return;
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+}
+
+inline void make_executable(const std::string& path) {
+#ifdef _WIN32
+    _chmod(path.c_str(), _S_IREAD | _S_IWRITE);
+#else
+    chmod(path.c_str(), 0755);
+#endif
+}
+
+inline std::string get_user_home() {
+    const char* h = std::getenv("HOME");
+    if (h && *h) return std::string(h);
+#ifdef _WIN32
+    const char* up = std::getenv("USERPROFILE");
+    if (up && *up) return std::string(up);
+#endif
+    return "";
+}
 
 namespace color {
     inline const char* RESET   = "\033[0m";
@@ -713,12 +760,103 @@ private:
     }
 };
 
-// Helper: cleanly spawn native window without blocking or cluttering the persistent shell
-inline pid_t launch_native_window_process(const std::string& script_path) {
-#ifdef _WIN32
-    std::string cmd = "start pythonw \"" + script_path + "\"";
-    system(cmd.c_str());
-    return 1;
+inline std::string resolve_looping_host_exe() {
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+    char exe_buf[MAX_PATH];
+    DWORD len = GetModuleFileNameA(NULL, exe_buf, MAX_PATH);
+    if (len > 0 && len < MAX_PATH) {
+        return std::string(exe_buf);
+    }
+    return "looping.exe";
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+    char exe_buf[4096];
+    uint32_t sz = sizeof(exe_buf);
+    if (_NSGetExecutablePath(exe_buf, &sz) == 0) {
+        return std::string(exe_buf);
+    }
+    return "looping";
+#elif defined(__linux__) && !defined(__EMSCRIPTEN__)
+    char exe_buf[4096];
+    ssize_t len = readlink("/proc/self/exe", exe_buf, sizeof(exe_buf) - 1);
+    if (len > 0) {
+        exe_buf[len] = '\0';
+        return std::string(exe_buf);
+    }
+    return "looping";
+#else
+    return "looping";
+#endif
+}
+
+// Helper: cleanly spawn native Cocoa + Objective-C + Assembly dynamic window on macOS (Zero Python)
+inline pid_t launch_mac_window_process(const std::string& dxwin_path) {
+#if defined(__APPLE__) && (!defined(TARGET_OS_IPHONE) || !TARGET_OS_IPHONE) && !defined(__EMSCRIPTEN__) && !defined(LOOPING_NO_SUBPROCESS)
+    std::string host_exe = resolve_looping_host_exe();
+    pid_t pid = fork();
+    if (pid == 0) {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
+        execl(host_exe.c_str(), host_exe.c_str(), "--mac-window", dxwin_path.c_str(), (char*)NULL);
+        execlp("looping", "looping", "--mac-window", dxwin_path.c_str(), (char*)NULL);
+        _exit(127);
+    }
+    return pid;
+#else
+    (void)dxwin_path;
+    return 0;
+#endif
+}
+
+// Helper: cleanly spawn native DirectX 11 dynamic window process on Windows (Zero Python)
+inline pid_t launch_directx_window_process(const std::string& dxwin_path) {
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+    STARTUPINFOA si{};
+    si.cb = sizeof(STARTUPINFOA);
+    PROCESS_INFORMATION pi{};
+    std::string host_exe = resolve_looping_host_exe();
+    std::string cmdline = "\"" + host_exe + "\" --dx-window \"" + dxwin_path + "\"";
+    std::vector<char> buf(cmdline.begin(), cmdline.end());
+    buf.push_back('\0');
+    if (CreateProcessA(NULL, buf.data(), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        pid_t pid = static_cast<pid_t>(pi.dwProcessId);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        return pid;
+    }
+    return 0;
+#else
+    (void)dxwin_path;
+    return 0;
+#endif
+}
+
+// Helper: cleanly spawn native Python/Pygame window without blocking or cluttering the persistent shell
+inline pid_t launch_native_window_process(const std::string& script_path, const std::string& extra_args = "") {
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+    (void)script_path;
+    (void)extra_args;
+    return 0;
+#elif defined(_WIN32)
+    STARTUPINFOA si{};
+    si.cb = sizeof(STARTUPINFOA);
+    PROCESS_INFORMATION pi{};
+    const char* py_bins[] = {"pythonw.exe", "python.exe", "py.exe"};
+    for (const char* py_exe : py_bins) {
+        std::string cmdline = std::string(py_exe) + " \"" + script_path + "\"" + (extra_args.empty() ? "" : (" " + extra_args));
+        std::vector<char> buf(cmdline.begin(), cmdline.end());
+        buf.push_back('\0');
+        if (CreateProcessA(NULL, buf.data(), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+            pid_t pid = static_cast<pid_t>(pi.dwProcessId);
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            return pid;
+        }
+    }
+    return 0;
 #else
     pid_t pid = fork();
     if (pid == 0) {
@@ -728,7 +866,11 @@ inline pid_t launch_native_window_process(const std::string& script_path) {
             dup2(devnull, STDERR_FILENO);
             close(devnull);
         }
-        execlp("python3", "python3", script_path.c_str(), (char*)NULL);
+        if (!extra_args.empty()) {
+            execlp("python3", "python3", script_path.c_str(), extra_args.c_str(), (char*)NULL);
+        } else {
+            execlp("python3", "python3", script_path.c_str(), (char*)NULL);
+        }
         _exit(127);
     }
     return pid;
@@ -842,10 +984,21 @@ public:
     std::vector<std::string> custom_statements;
     bool is_3d_mode = false;
     std::vector<loop_math::Entity3D> entities_3d;
+    std::vector<DxEntity2DSpec> entities_2d;
+    double stage_world_width = 1200.0;
+    double stage_world_height = 480.0;
+    double stage_gravity = 980.0;
+    std::string stage_scenario_name = "Holo Cyber Stage";
+    std::string stage_scenario_accent = "#38bdf8";
 
     DynamicWindow& add_entity_3d(const loop_math::Entity3D& e) {
         is_3d_mode = true;
         entities_3d.push_back(e);
+        return *this;
+    }
+
+    DynamicWindow& add_entity_2d(const DxEntity2DSpec& e) {
+        entities_2d.push_back(e);
         return *this;
     }
 
@@ -1542,11 +1695,7 @@ public:
                   << "\", x: " << e.pos.x << ", y: " << e.pos.y << ", z: " << e.pos.z
                   << ", sx: " << e.size.x << ", sy: " << e.size.y << ", sz: " << e.size.z
                   << ", scx: " << e.scale.x << ", scy: " << e.scale.y << ", scz: " << e.scale.z
-                  << ", r: " << e.radius << ", hp: " << e.health << ", maxHp: " << std::max(1.0, e.health)
-                  << ", spd: " << e.speed << ", minp: " << e.min_pos << ", maxp: " << e.max_pos
-                  << ", axis: \"" << escape_js(e.axis) << "\", pts: " << e.points
-                  << ", color: \"" << escape_js(e.color) << "\", rot: " << e.rot_deg.y
-                  << ", alive: true, vy: 0, dir: 1, flash: 0";
+                  << ", r: " << e.radius << ", color: \"" << escape_js(e.color) << "\", rot: " << e.rot_deg.y;
                 if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 450) {
                     h << ", verts: [";
                     for (size_t vi = 0; vi < e.custom_mesh.vertices.size(); ++vi) {
@@ -1573,81 +1722,17 @@ public:
             h << "    (function init3DViewport(){\n";
             h << "      const c = document.getElementById('canvas3d'); if (!c) return;\n";
             h << "      const ctx = c.getContext('2d');\n";
-            h << "      let yaw = 0.22, pitch = 0.32, dist = 24, drag = false, lx = 0, ly = 0, score3D = 0;\n";
-            h << "      const keys = new Set(), bolts = [];\n";
+            h << "      let yaw = 0.25, pitch = 0.34, dist = 28, drag = false, lx = 0, ly = 0;\n";
             h << "      c.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });\n";
             h << "      window.addEventListener('mouseup', () => { drag = false; });\n";
             h << "      window.addEventListener('mousemove', e => { if (!drag) return; yaw += (e.clientX - lx) * 0.008; pitch = Math.max(-0.2, Math.min(1.3, pitch + (e.clientY - ly) * 0.006)); lx = e.clientX; ly = e.clientY; });\n";
             h << "      c.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(8, Math.min(90, dist + e.deltaY * 0.03)); }, { passive: false });\n";
-            h << "      function fireBolt() {\n";
-            h << "        const pl = entities3D.find(e => e.type === 'player'); if (!pl) return;\n";
-            h << "        const dx = Math.sin(yaw), dz = Math.cos(yaw);\n";
-            h << "        bolts.push({ x: pl.x + dx * 1.4, y: pl.y + 0.5, z: pl.z + dz * 1.4, vx: dx * 48, vz: dz * 48, life: 2.0 });\n";
-            h << "        playTone(1120, 45);\n";
-            h << "      }\n";
-            h << "      window.addEventListener('keydown', e => {\n";
-            h << "        const k = e.key.toLowerCase();\n";
-            h << "        if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();\n";
-            h << "        if (!keys.has(k) && (k === 'z' || k === 'f')) fireBolt();\n";
-            h << "        keys.add(k);\n";
-            h << "      });\n";
-            h << "      window.addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); });\n";
             h << "      function hexRgb(hex) { const m = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex || '#38bdf8'); return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [56,189,248]; }\n";
             h << "      function cubeVerts(sx, sy, sz) { const hx=sx*0.5, hy=sy*0.5, hz=sz*0.5; return [[-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],[-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]]; }\n";
             h << "      const cubeFaces = [[0,1,2,3],[5,4,7,6],[4,0,3,7],[1,5,6,2],[3,2,6,7],[4,5,1,0]];\n";
-            h << "      function octaVerts(r) { return [[0,r*1.35,0],[0,-r*1.35,0],[-r,0,0],[r,0,0],[0,0,-r],[0,0,r]]; }\n";
-            h << "      const octaFaces = [[0,5,3],[0,3,4],[0,4,2],[0,2,5],[1,3,5],[1,4,3],[1,2,4],[1,5,2]];\n";
-            h << "      function pyrVerts(sx, sy, sz) { const hx=sx*0.5, hy=sy*0.5, hz=sz*0.5; return [[-hx,-hy,-hz],[hx,-hy,-hz],[hx,-hy,hz],[-hx,-hy,hz],[0,hy,0]]; }\n";
-            h << "      const pyrFaces = [[0,1,2,3],[0,4,1],[1,4,2],[2,4,3],[3,4,0]];\n";
-            h << "      function shipVerts() { return [[0,0.2,1.8],[-0.6,0.35,0.2],[0.6,0.35,0.2],[-1.7,-0.15,-1.1],[1.7,-0.15,-1.1],[0,-0.25,-1.5]]; }\n";
-            h << "      const shipFaces = [[0,1,3],[0,2,1],[0,4,2],[1,2,5],[1,5,3],[2,4,5],[0,3,5],[0,5,4]];\n";
-            h << "      let lastT = performance.now();\n";
             h << "      function render3DFrame(t) {\n";
-            h << "        const dt = Math.min(0.05, Math.max(0.001, (t - lastT) * 0.001)); lastT = t;\n";
             h << "        const w = c.width, h = c.height; ctx.clearRect(0,0,w,h);\n";
             h << "        const target = entities3D.find(e => e.type === 'player') || { x:0, y:2, z:12 };\n";
-            h << "        if (target && target.type === 'player') {\n";
-            h << "          let mx = 0, mz = 0;\n";
-            h << "          if (keys.has('w') || keys.has('arrowup')) mz += 1;\n";
-            h << "          if (keys.has('s') || keys.has('arrowdown')) mz -= 1;\n";
-            h << "          if (keys.has('a') || keys.has('arrowleft')) mx -= 1;\n";
-            h << "          if (keys.has('d') || keys.has('arrowright')) mx += 1;\n";
-            h << "          const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx;\n";
-            h << "          const spd = target.spd || 18;\n";
-            h << "          target.x += (fx * mz + rx * mx) * spd * dt; target.z += (fz * mz + rz * mx) * spd * dt;\n";
-            h << "          if (keys.has(' ') && target.y <= 2.05) { target.vy = 13.5; playTone(620, 65); }\n";
-            h << "          target.vy = (target.vy || 0) - 26.0 * dt; target.y += target.vy * dt;\n";
-            h << "          if (target.y < 2.0) { target.y = 2.0; target.vy = 0; }\n";
-            h << "          if (mx || mz) target.rot = Math.atan2(fx * mz + rx * mx, fz * mz + rz * mx) * 180 / Math.PI;\n";
-            h << "        }\n";
-            h << "        for (const e of entities3D) {\n";
-            h << "          if (!e.alive) continue;\n";
-            h << "          if (e.flash > 0) e.flash = Math.max(0, e.flash - dt * 5);\n";
-            h << "          if (e.type === 'enemy' || e.type === 'boss' || e.type === 'moving_platform') {\n";
-            h << "            const ax = e.axis || 'x';\n";
-            h << "            e[ax] += e.dir * (e.spd || 6) * dt;\n";
-            h << "            if (e[ax] >= e.maxp) { e[ax] = e.maxp; e.dir = -1; }\n";
-            h << "            if (e[ax] <= e.minp) { e[ax] = e.minp; e.dir = 1; }\n";
-            h << "          } else if (e.type === 'crystal' || e.type === 'ring' || e.type === 'portal') {\n";
-            h << "            e.rot += 90 * dt;\n";
-            h << "            if (target && Math.hypot(target.x - e.x, target.y - e.y, target.z - e.z) < (e.r || 2) + 1.8) {\n";
-            h << "              if (e.type !== 'portal') { e.alive = false; score3D += (e.pts || 150); playTone(980, 90); }\n";
-            h << "            }\n";
-            h << "          }\n";
-            h << "        }\n";
-            h << "        for (let bi = bolts.length - 1; bi >= 0; bi--) {\n";
-            h << "          const b = bolts[bi]; b.x += b.vx * dt; b.z += b.vz * dt; b.life -= dt;\n";
-            h << "          let hit = false;\n";
-            h << "          for (const e of entities3D) {\n";
-            h << "            if (!e.alive || (e.type !== 'enemy' && e.type !== 'boss')) continue;\n";
-            h << "            if (Math.hypot(b.x - e.x, b.y - e.y, b.z - e.z) < (e.r || 2.0) + 0.8) {\n";
-            h << "              e.hp -= 25; e.flash = 1.0; hit = true; playTone(260, 80);\n";
-            h << "              if (e.hp <= 0) { e.alive = false; score3D += (e.pts || 250); playTone(880, 120); }\n";
-            h << "              break;\n";
-            h << "            }\n";
-            h << "          }\n";
-            h << "          if (hit || b.life <= 0) bolts.splice(bi, 1);\n";
-            h << "        }\n";
             h << "        const ex = target.x - Math.sin(yaw) * Math.cos(pitch) * dist;\n";
             h << "        const ey = target.y + Math.sin(pitch) * dist + 2;\n";
             h << "        const ez = target.z - Math.cos(yaw) * Math.cos(pitch) * dist;\n";
@@ -1670,14 +1755,10 @@ public:
             h << "        ctx.stroke();\n";
             h << "        const q = [];\n";
             h << "        for (const e of entities3D) {\n";
-            h << "          if (!e.alive) continue;\n";
-            h << "          const isOct = !e.verts && (e.type === 'crystal' || e.type === 'ring' || e.type === 'portal' || e.type === 'sphere');\n";
-            h << "          const isPyr = !e.verts && e.type === 'pyramid';\n";
-            h << "          const isShip = !e.verts && e.type === 'player';\n";
-            h << "          const vs = e.verts || (isShip ? shipVerts() : (isOct ? octaVerts(e.r || 1.4) : (isPyr ? pyrVerts(e.sx||2, e.sy||2, e.sz||2) : cubeVerts(e.sx||1.6, e.sy||1.6, e.sz||1.6))));\n";
-            h << "          const fs = e.faces || (isShip ? shipFaces : (isOct ? octaFaces : (isPyr ? pyrFaces : cubeFaces)));\n";
+            h << "          const vs = e.verts || cubeVerts(e.sx||1.6, e.sy||1.6, e.sz||1.6);\n";
+            h << "          const fs = e.faces || cubeFaces;\n";
             h << "          const ang = (e.rot * Math.PI / 180) + (e.obj ? t*0.0005 : 0);\n";
-            h << "          const ca = Math.cos(ang), sa = Math.sin(ang), rgb = hexRgb(e.flash > 0 ? '#ffffff' : e.color);\n";
+            h << "          const ca = Math.cos(ang), sa = Math.sin(ang), rgb = hexRgb(e.color);\n";
             h << "          const scx = e.scx || 1, scy = e.scy || 1, scz = e.scz || 1;\n";
             h << "          const wvs = vs.map(v => { const lx = v[0]*scx, ly = v[1]*scy, lz = v[2]*scz; return [e.x + lx*ca + lz*sa, e.y + ly, e.z - lx*sa + lz*ca]; });\n";
             h << "          const pvs = wvs.map(wv => proj(wv[0], wv[1], wv[2]));\n";
@@ -1689,7 +1770,7 @@ public:
             h << "            const bx = w2[0]-w0[0], by = w2[1]-w0[1], bz = w2[2]-w0[2];\n";
             h << "            let nx = ay*bz - az*by, ny = az*bx - ax*bz, nz = ax*by - ay*bx;\n";
             h << "            const nl = Math.hypot(nx,ny,nz)||1; nx/=nl; ny/=nl; nz/=nl;\n";
-            h << "            const lit = 0.42 + Math.abs(nx*0.35 + ny*0.82 - nz*0.45) * 0.58;\n";
+            h << "            const lit = 0.42 + Math.max(0, nx*0.35 + ny*0.82 - nz*0.45) * 0.58;\n";
             h << "            const dz = pts.reduce((s,p)=>s+p[2],0)/pts.length;\n";
             h << "            q.push({ dz, pts, fill: `rgb(${(rgb[0]*lit)|0},${(rgb[1]*lit)|0},${(rgb[2]*lit)|0})` });\n";
             h << "          }\n";
@@ -1701,13 +1782,6 @@ public:
             h << "          ctx.closePath(); ctx.fillStyle = poly.fill; ctx.fill();\n";
             h << "          ctx.strokeStyle = 'rgba(226,232,240,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();\n";
             h << "        }\n";
-            h << "        for (const b of bolts) {\n";
-            h << "          const bp = proj(b.x, b.y, b.z); if (!bp) continue;\n";
-            h << "          ctx.fillStyle = '#00f5d4'; ctx.beginPath(); ctx.arc(bp[0], bp[1], Math.max(2.5, 42/bp[2]), 0, Math.PI*2); ctx.fill();\n";
-            h << "        }\n";
-            h << "        ctx.fillStyle = 'rgba(15,23,42,0.75)'; ctx.fillRect(10, 10, 290, 26);\n";
-            h << "        ctx.fillStyle = '#00f5d4'; ctx.font = 'bold 12px monospace';\n";
-            h << "        ctx.fillText(`SCORE 3D: ${score3D} | WASD + SPACE + [Z] LASER`, 18, 27);\n";
             h << "        requestAnimationFrame(render3DFrame);\n";
             h << "      }\n";
             h << "      requestAnimationFrame(render3DFrame);\n";
@@ -1772,9 +1846,7 @@ public:
     bool save_loop(const std::string& path) const {
         size_t slash = path.find_last_of("/\\");
         if (slash != std::string::npos) {
-            std::string dir = path.substr(0, slash);
-            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
-            system(mkdir_cmd.c_str());
+            ensure_dir_exists(path.substr(0, slash));
         }
         std::ofstream out(path);
         if (!out.is_open()) return false;
@@ -1785,9 +1857,7 @@ public:
     bool save_html(const std::string& path) const {
         size_t slash = path.find_last_of("/\\");
         if (slash != std::string::npos) {
-            std::string dir = path.substr(0, slash);
-            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
-            system(mkdir_cmd.c_str());
+            ensure_dir_exists(path.substr(0, slash));
         }
         std::ofstream out(path);
         if (!out.is_open()) return false;
@@ -1802,11 +1872,10 @@ public:
         py << "# -*- coding: utf-8 -*-\n";
         py << "# =====================================================================\n";
         py << "# ⚡ LOOP OS NATIVE DESKTOP WINDOW: " << title << "\n";
-        py << "# Generated by Looping Engine v2.5 (Direct Native OS - No HTML5 Required)\n";
+        py << "# Generated by Looping Engine v3.0A (Pygame + PygameCompat Replication)\n";
         py << "# =====================================================================\n\n";
-        py << "import tkinter as tk\n";
-        py << "from tkinter import ttk\n";
-        py << "import subprocess, sys, os, datetime\n\n";
+        py << "import sys, os, math, time, array, subprocess, datetime, threading\n";
+        py << "os.environ.setdefault('TK_SILENCE_DEPRECATION', '1')\n\n";
 
         std::string bg_color = "#0b0f19";
         std::string card_bg = "#151d30";
@@ -1837,6 +1906,10 @@ public:
             accent_color = "#38bdf8";
         }
 
+        std::string badge_label = (specs.code == "metal4")
+            ? "Metal 4 • 240 FPS Hardware Direct"
+            : (specs.name + " • " + std::to_string(specs.target_fps) + " FPS Direct");
+
         py << "THEME = {\n";
         py << "    'bg': '" << bg_color << "',\n";
         py << "    'card_bg': '" << card_bg << "',\n";
@@ -1851,331 +1924,1455 @@ public:
         py << "    'log_fg': '#10b981'\n";
         py << "}\n\n";
 
+        py << "WINDOW_CFG = {\n";
+        py << "    'title': \"" << escape_py(title) << "\",\n";
+        py << "    'width': " << static_cast<int>(std::max(580.0, width)) << ",\n";
+        py << "    'height': " << static_cast<int>(std::max(400.0, height)) << ",\n";
+        py << "    'badge': \"" << escape_py(badge_label) << "\",\n";
+        py << "    'pipeline': \"" << escape_py(specs.name + " " + specs.pipeline) << "\",\n";
+        py << "    'target_fps': " << std::min(120, std::max(30, specs.target_fps)) << ",\n";
+        py << "    'is_3d': " << ((is_3d_mode || !entities_3d.empty()) ? "True" : "False") << ",\n";
+        py << "    'world_width': " << stage_world_width << ",\n";
+        py << "    'world_height': " << stage_world_height << ",\n";
+        py << "    'gravity': " << stage_gravity << "\n";
+        py << "}\n\n";
+
+        py << "CARDS = [\n";
+        for (const auto& c : cards) {
+            std::string card_t = (c.icon.empty() ? "✦ " : c.icon + " ") + c.title;
+            py << "    {'title': \"" << escape_py(card_t) << "\", 'badge': \"" << escape_py(c.badge)
+               << "\", 'text': \"" << escape_py(c.text) << "\"},\n";
+        }
+        py << "]\n\n";
+
+        py << "INPUTS = [\n";
+        for (const auto& inp : inputs) {
+            py << "    {'placeholder': \"" << escape_py(inp.placeholder) << "\", 'binding': \""
+               << escape_py(inp.binding) << "\", 'value': ''},\n";
+        }
+        py << "]\n\n";
+
+        py << "SLIDERS = [\n";
+        for (const auto& sl : sliders) {
+            py << "    {'label': \"" << escape_py(sl.label) << "\", 'min': " << sl.min_val
+               << ", 'max': " << sl.max_val << ", 'val': " << sl.current_val
+               << ", 'bind': \"" << escape_py(sl.binding) << "\"},\n";
+        }
+        py << "]\n\n";
+
+        py << "TOGGLES = [\n";
+        for (const auto& tg : toggles) {
+            py << "    {'label': \"" << escape_py(tg.label) << "\", 'checked': "
+               << (tg.is_checked ? "True" : "False") << ", 'bind': \"" << escape_py(tg.binding) << "\"},\n";
+        }
+        py << "]\n\n";
+
+        py << "PROGRESS_BARS = [\n";
+        for (const auto& pr : progress_bars) {
+            py << "    {'label': \"" << escape_py(pr.label) << "\", 'progress': " << pr.progress
+               << ", 'bind': \"" << escape_py(pr.binding) << "\"},\n";
+        }
+        py << "]\n\n";
+
         py << "BUTTONS = [\n";
         for (const auto& b : buttons) {
-            py << "    {'text': \"" << escape_py(b.text) << "\", 'action': \"" << escape_py(b.action) 
+            py << "    {'text': \"" << escape_py(b.text) << "\", 'action': \"" << escape_py(b.action)
                << "\", 'snippet': \"" << escape_py(b.snippet) << "\"},\n";
         }
         py << "]\n\n";
 
-        py << "class LoopNativeWindow(tk.Tk):\n";
-        py << "    def __init__(self):\n";
-        py << "        super().__init__()\n";
-        py << "        self.title(\"" << escape_py(title) << " — Loop OS Native Window\")\n";
-        py << "        self.geometry(f\"" << static_cast<int>(width) << "x" << static_cast<int>(height) << "\")\n";
-        py << "        self.configure(bg=THEME['bg'])\n";
-        py << "        self.minsize(580, 400)\n\n";
-        py << "        self.setup_ui()\n";
-        py << "        self.log(\"[Loop OS Native] Ventana '" << escape_py(title) << "' inicializada (" << specs.name << " " << specs.pipeline << ").\", 'success')\n\n";
+        py << "TONES = [";
+        for (size_t i = 0; i < tones.size(); ++i) {
+            if (i > 0) py << ", ";
+            py << "(" << tones[i].freq_hz << ", " << tones[i].duration_ms << ")";
+        }
+        py << "]\n\n";
 
-        std::string badge_label = (specs.code == "metal4") ? "Metal 4 • 240 FPS Hardware Direct" : (specs.name + " • " + std::to_string(specs.target_fps) + " FPS Direct");
-        py << "    def setup_ui(self):\n";
-        py << "        self.c_hdr = tk.Canvas(self, height=52, bg=THEME['card_bg'], highlightthickness=0)\n";
-        py << "        self.c_hdr.pack(fill='x', side='top')\n";
-        std::string t_prefix = (title.rfind("✦", 0) == 0) ? "" : "✦ ";
-        py << "        self.c_hdr.create_text(20, 26, text=\"" << t_prefix << escape_py(title) << "\", anchor='w', fill=THEME['primary'], font=('Helvetica', 13, 'bold'))\n";
-        py << "        self.c_hdr.create_rectangle(740, 13, 960, 39, fill=THEME['accent'], outline='', tags='hdr_badge_bg')\n";
-        py << "        self.c_hdr.create_text(850, 26, text=\"" << badge_label << "\", fill='#0b0f19', font=('Helvetica', 9, 'bold'), tags='hdr_badge_txt')\n";
-        py << "        def _on_hdr_resize(e):\n";
-        py << "            w = e.width\n";
-        py << "            self.c_hdr.coords('hdr_badge_bg', w - 210, 13, w - 16, 39)\n";
-        py << "            self.c_hdr.coords('hdr_badge_txt', w - 113, 26)\n";
-        py << "        self.c_hdr.bind('<Configure>', _on_hdr_resize)\n\n";
-
-        py << "        main_frame = tk.Frame(self, bg=THEME['bg'], padx=14, pady=10)\n";
-        py << "        main_frame.pack(fill='both', expand=True)\n\n";
-
-        if (is_3d_mode || !entities_3d.empty()) {
-            py << "        import math\n";
-            py << "        self.entities_3d = [\n";
-            for (const auto& e : entities_3d) {
-                py << "            {'type': \"" << escape_py(e.type) << "\", 'name': \"" << escape_py(e.name)
-                   << "\", 'obj': \"" << escape_py(e.obj_file) << "\", 'cs': \"" << escape_py(e.cs_class)
-                   << "\", 'x': " << e.pos.x << ", 'y': " << e.pos.y << ", 'z': " << e.pos.z
-                   << ", 'sx': " << e.size.x << ", 'sy': " << e.size.y << ", 'sz': " << e.size.z
-                   << ", 'scx': " << e.scale.x << ", 'scy': " << e.scale.y << ", 'scz': " << e.scale.z
-                   << ", 'r': " << e.radius << ", 'color': \"" << escape_py(e.color)
-                   << "\", 'speed': " << e.speed << ", 'axis': \"" << escape_py(e.axis)
-                   << "\", 'min_p': " << e.min_pos << ", 'max_p': " << e.max_pos
-                   << ", 'dir': 1.0, 'collected': False, 'alive': True, 'rot': " << e.rot_deg.y;
-                if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 450) {
-                    py << ", 'verts': [";
-                    for (size_t vi = 0; vi < e.custom_mesh.vertices.size(); ++vi) {
-                        if (vi > 0) py << ",";
-                        const auto& v = e.custom_mesh.vertices[vi];
-                        py << "[" << v.x << "," << v.y << "," << v.z << "]";
-                    }
-                    py << "], 'faces': [";
-                    for (size_t fi = 0; fi < e.custom_mesh.faces.size(); ++fi) {
-                        if (fi > 0) py << ",";
-                        py << "[";
-                        const auto& idx = e.custom_mesh.faces[fi].indices;
-                        for (size_t k = 0; k < idx.size(); ++k) {
-                            if (k > 0) py << ",";
-                            py << idx[k];
-                        }
-                        py << "]";
+        py << "ENTITIES_3D = [\n";
+        for (const auto& e : entities_3d) {
+            py << "    {'type': \"" << escape_py(e.type) << "\", 'name': \"" << escape_py(e.name)
+               << "\", 'obj': \"" << escape_py(e.obj_file) << "\", 'cs': \"" << escape_py(e.cs_class)
+               << "\", 'x': " << e.pos.x << ", 'y': " << e.pos.y << ", 'z': " << e.pos.z
+               << ", 'sx': " << e.size.x << ", 'sy': " << e.size.y << ", 'sz': " << e.size.z
+               << ", 'scx': " << e.scale.x << ", 'scy': " << e.scale.y << ", 'scz': " << e.scale.z
+               << ", 'r': " << e.radius << ", 'color': \"" << escape_py(e.color.empty() ? "#38bdf8" : e.color)
+               << "\", 'speed': " << e.speed << ", 'axis': \"" << escape_py(e.axis)
+               << "\", 'min_p': " << e.min_pos << ", 'max_p': " << e.max_pos
+               << ", 'dir': 1.0, 'collected': False, 'alive': True, 'rot': " << e.rot_deg.y;
+            if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 450) {
+                py << ", 'verts': [";
+                for (size_t vi = 0; vi < e.custom_mesh.vertices.size(); ++vi) {
+                    if (vi > 0) py << ",";
+                    const auto& v = e.custom_mesh.vertices[vi];
+                    py << "[" << v.x << "," << v.y << "," << v.z << "]";
+                }
+                py << "], 'faces': [";
+                for (size_t fi = 0; fi < e.custom_mesh.faces.size(); ++fi) {
+                    if (fi > 0) py << ",";
+                    py << "[";
+                    const auto& idx = e.custom_mesh.faces[fi].indices;
+                    for (size_t k = 0; k < idx.size(); ++k) {
+                        if (k > 0) py << ",";
+                        py << idx[k];
                     }
                     py << "]";
                 }
-                py << "},\n";
+                py << "]";
             }
-            py << "        ]\n";
-            py << "        self.c_3d = tk.Canvas(main_frame, height=310, bg='#050811', highlightthickness=1, highlightbackground=THEME['primary'])\n";
-            py << "        self.c_3d.pack(fill='both', expand=True, pady=(0, 10))\n";
-            py << "        self.keys_3d = set()\n";
-            py << "        self.cam_yaw = 0.0\n";
-            py << "        self.cam_pitch = 0.28\n";
-            py << "        self.p_vel = [0.0, 0.0, 0.0]\n";
-            py << "        self.p_jumps = 0\n";
-            py << "        self.score_3d = 0\n";
-            py << "        self.bind_all('<KeyPress>', lambda e: self.keys_3d.add(e.keysym.lower()))\n";
-            py << "        self.bind_all('<KeyRelease>', lambda e: self.keys_3d.discard(e.keysym.lower()))\n";
-            py << "        def _proj3d(px, py, pz, eye, yaw, pitch, w, h):\n";
-            py << "            dx, dy, dz = px - eye[0], py - eye[1], pz - eye[2]\n";
-            py << "            cy, sy = math.cos(-yaw), math.sin(-yaw)\n";
-            py << "            rx = dx * cy + dz * sy\n";
-            py << "            rz = -dx * sy + dz * cy\n";
-            py << "            cp, sp = math.cos(-pitch), math.sin(-pitch)\n";
-            py << "            ry = dy * cp - rz * sp\n";
-            py << "            vz = dy * sp + rz * cp\n";
-            py << "            if vz <= 0.4: return None\n";
-            py << "            f = (h * 0.92) / vz\n";
-            py << "            return (w * 0.5 + rx * f, h * 0.5 - ry * f, vz)\n";
-            py << "        def _tick3d():\n";
-            py << "            dt = 0.016\n";
-            py << "            if 'q' in self.keys_3d: self.cam_yaw -= 1.8 * dt\n";
-            py << "            if 'e' in self.keys_3d: self.cam_yaw += 1.8 * dt\n";
-            py << "            player = next((o for o in self.entities_3d if o['type'] == 'player'), None)\n";
-            py << "            if player:\n";
-            py << "                spd = player['speed'] * (1.75 if 'shift_l' in self.keys_3d or 'x' in self.keys_3d else 1.0)\n";
-            py << "                fx, fz = math.sin(self.cam_yaw), math.cos(self.cam_yaw)\n";
-            py << "                rx, rz = math.cos(self.cam_yaw), -math.sin(self.cam_yaw)\n";
-            py << "                mx = ('d' in self.keys_3d or 'right' in self.keys_3d) - ('a' in self.keys_3d or 'left' in self.keys_3d)\n";
-            py << "                mz = ('w' in self.keys_3d or 'up' in self.keys_3d) - ('s' in self.keys_3d or 'down' in self.keys_3d)\n";
-            py << "                self.p_vel[0] = (fx * mz + rx * mx) * spd\n";
-            py << "                self.p_vel[2] = (fz * mz + rz * mx) * spd\n";
-            py << "                if ('space' in self.keys_3d) and self.p_jumps < 2:\n";
-            py << "                    self.p_vel[1] = 15.0; self.p_jumps += 1; self.keys_3d.discard('space')\n";
-            py << "                for _ in range(4):\n";
-            py << "                    sdt = dt * 0.25\n";
-            py << "                    self.p_vel[1] -= 26.0 * sdt\n";
-            py << "                    player['x'] += self.p_vel[0] * sdt\n";
-            py << "                    player['y'] += self.p_vel[1] * sdt\n";
-            py << "                    player['z'] += self.p_vel[2] * sdt\n";
-            py << "                    if player['y'] <= 0.6:\n";
-            py << "                        player['y'] = 0.6; self.p_vel[1] = 0.0; self.p_jumps = 0\n";
-            py << "            for o in self.entities_3d:\n";
-            py << "                o['rot'] = (o['rot'] + 90.0 * dt) % 360.0\n";
-            py << "                if o['type'] in ('moving_platform', 'enemy', 'boss') and o['alive']:\n";
-            py << "                    ax = o['axis'] if o['axis'] in ('x','y','z') else 'x'\n";
-            py << "                    o[ax] += o['dir'] * o['speed'] * dt\n";
-            py << "                    if o[ax] >= o['max_p']: o[ax] = o['max_p']; o['dir'] = -1.0\n";
-            py << "                    if o[ax] <= o['min_p']: o[ax] = o['min_p']; o['dir'] = 1.0\n";
-            py << "                if player and o['type'] in ('crystal', 'ring') and not o['collected']:\n";
-            py << "                    if (player['x']-o['x'])**2 + (player['y']-o['y'])**2 + (player['z']-o['z'])**2 < (o['r']+1.4)**2:\n";
-            py << "                        o['collected'] = True; self.score_3d += 150\n";
-            py << "            w = max(320, self.c_3d.winfo_width())\n";
-            py << "            h = max(200, self.c_3d.winfo_height())\n";
-            py << "            self.c_3d.delete('all')\n";
-            py << "            px, py_p, pz = (player['x'], player['y'], player['z']) if player else (0.0, 2.0, 0.0)\n";
-            py << "            eye = [px - math.sin(self.cam_yaw)*15.0, py_p + 6.5, pz - math.cos(self.cam_yaw)*15.0]\n";
-            py << "            for gz in range(-20, 90, 8):\n";
-            py << "                a = _proj3d(-40, 0, gz, eye, self.cam_yaw, self.cam_pitch, w, h)\n";
-            py << "                b = _proj3d( 40, 0, gz, eye, self.cam_yaw, self.cam_pitch, w, h)\n";
-            py << "                if a and b: self.c_3d.create_line(a[0], a[1], b[0], b[1], fill='#123154')\n";
-            py << "            draw_list = []\n";
-            py << "            for o in self.entities_3d:\n";
-            py << "                if o.get('collected') or not o.get('alive', True) or o['type'] == 'terrain': continue\n";
-            py << "                pt = _proj3d(o['x'], o['y'], o['z'], eye, self.cam_yaw, self.cam_pitch, w, h)\n";
-            py << "                if pt: draw_list.append((pt[2], o, pt))\n";
-            py << "            draw_list.sort(key=lambda it: -it[0])\n";
-            py << "            for vz, o, pt in draw_list:\n";
-            py << "                if o.get('verts') and o.get('faces'):\n";
-            py << "                    ry_rad = math.radians(o.get('rot', 0.0))\n";
-            py << "                    cy_o, sy_o = math.cos(ry_rad), math.sin(ry_rad)\n";
-            py << "                    scx, scy, scz = o.get('scx', 1.0), o.get('scy', 1.0), o.get('scz', 1.0)\n";
-            py << "                    proj_v = []\n";
-            py << "                    for vx, vy, vz_loc in o['verts']:\n";
-            py << "                        lvx, lvy, lvz = vx * scx, vy * scy, vz_loc * scz\n";
-            py << "                        wx = o['x'] + lvx * cy_o + lvz * sy_o\n";
-            py << "                        wy = o['y'] + lvy\n";
-            py << "                        wz = o['z'] - lvx * sy_o + lvz * cy_o\n";
-            py << "                        proj_v.append(_proj3d(wx, wy, wz, eye, self.cam_yaw, self.cam_pitch, w, h))\n";
-            py << "                    poly_q = []\n";
-            py << "                    for fc in o['faces']:\n";
-            py << "                        if len(fc) < 3: continue\n";
-            py << "                        pts = [proj_v[i] for i in fc if i < len(proj_v)]\n";
-            py << "                        if len(pts) == len(fc) and all(p is not None for p in pts):\n";
-            py << "                            avg_d = sum(p[2] for p in pts) / len(pts)\n";
-            py << "                            flat = []\n";
-            py << "                            for p in pts: flat.extend([p[0], p[1]])\n";
-            py << "                            poly_q.append((avg_d, flat))\n";
-            py << "                    poly_q.sort(key=lambda it: -it[0])\n";
-            py << "                    for _, flat in poly_q:\n";
-            py << "                        self.c_3d.create_polygon(*flat, fill=o['color'], outline='#e2e8f0')\n";
-            py << "                else:\n";
-            py << "                    rad = max(4, (max(o['sx'], o['sy']) * h * 0.45) / vz)\n";
-            py << "                    self.c_3d.create_oval(pt[0]-rad, pt[1]-rad*0.7, pt[0]+rad, pt[1]+rad*0.7, fill=o['color'], outline='#ffffff')\n";
-            py << "            self.c_3d.create_text(14, 18, anchor='w', fill='#38bdf8', font=('Courier', 10, 'bold'), text=f'SHINE LOOP 3D NATIVE • SCORE: {self.score_3d} • [WASD] Move [SPACE] Jump [Q/E] Orbit')\n";
-            py << "            self.after(16, _tick3d)\n";
-            py << "        self.after(40, _tick3d)\n\n";
+            py << "},\n";
         }
+        py << "]\n\n";
 
-        if (!cards.empty()) {
-            py << "        cards_data = [\n";
-            for (const auto& c : cards) {
-                std::string card_t = (c.icon.empty() ? "✦ " : c.icon + " ") + c.title;
-                py << "            {'title': \"" << escape_py(card_t) << "\", 'badge': \"" << escape_py(c.badge) << "\", 'text': \"" << escape_py(c.text) << "\"},\n";
-            }
-            py << "        ]\n";
-            py << "        self.c_cards = tk.Canvas(main_frame, height=225, bg=THEME['bg'], highlightthickness=0)\n";
-            py << "        self.c_cards.pack(fill='x', pady=(0, 10))\n";
-            py << "        def _redraw_cards(e=None):\n";
-            py << "            self.c_cards.delete('all')\n";
-            py << "            w = self.c_cards.winfo_width()\n";
-            py << "            if w < 100: w = 950\n";
-            py << "            cols = 2 if w >= 600 else 1\n";
-            py << "            gap = 14\n";
-            py << "            cw = (w - gap) // cols if cols == 2 else w\n";
-            py << "            ch = 98\n";
-            py << "            for i, c in enumerate(cards_data):\n";
-            py << "                col = i % cols\n";
-            py << "                row = i // cols\n";
-            py << "                x = col * (cw + gap)\n";
-            py << "                y = row * (ch + 10)\n";
-            py << "                self.c_cards.create_rectangle(x, y, x + cw, y + ch, fill=THEME['card_bg'], outline=THEME['card_border'], width=1)\n";
-            py << "                self.c_cards.create_text(x + 14, y + 20, text=c['title'], anchor='w', fill=THEME['primary'], font=('Helvetica', 11, 'bold'))\n";
-            py << "                if c['badge']:\n";
-            py << "                    bw = len(c['badge']) * 7 + 16\n";
-            py << "                    bx2 = x + cw - 12\n";
-            py << "                    bx1 = bx2 - bw\n";
-            py << "                    self.c_cards.create_rectangle(bx1, y + 10, bx2, y + 30, fill='#22314e', outline='')\n";
-            py << "                    self.c_cards.create_text((bx1 + bx2) // 2, y + 20, text=c['badge'], fill=THEME['accent'], font=('Helvetica', 8, 'bold'))\n";
-            py << "                self.c_cards.create_text(x + 14, y + 60, text=c['text'], anchor='w', fill=THEME['fg'], font=('Helvetica', 9), width=cw - 28)\n";
-            py << "        self.c_cards.bind('<Configure>', _redraw_cards)\n";
-            py << "        self.after(50, _redraw_cards)\n\n";
+        py << "ENTITIES_2D = [\n";
+        for (const auto& e : entities_2d) {
+            py << "    {'type': \"" << escape_py(e.type) << "\", 'name': \"" << escape_py(e.name)
+               << "\", 'color': \"" << escape_py(e.color.empty() ? "#38bdf8" : e.color)
+               << "\", 'x': " << e.x << ", 'y': " << e.y << ", 'w': " << e.w << ", 'h': " << e.h
+               << ", 'sx': " << e.x << ", 'sy': " << e.y << ", 'vx': 0.0, 'vy': 0.0"
+               << ", 'r': " << e.radius << ", 'speed': " << e.speed << ", 'jump': " << e.jump_force
+               << ", 'power': " << e.power << ", 'hp': " << e.health << ", 'max_hp': " << e.max_health
+               << ", 'dmg': " << e.damage << ", 'pts': " << e.points
+               << ", 'min_p': " << e.min_pos << ", 'max_p': " << e.max_pos
+               << ", 'dir': 1.0, 'is_player': " << (e.is_player ? "True" : "False")
+               << ", 'collected': False, 'alive': True, 'jumping': False, 'dbl': True},\n";
         }
+        py << "]\n\n";
 
-        if (!inputs.empty() || !sliders.empty() || !toggles.empty() || !progress_bars.empty()) {
-            py << "        ctrl_frame = tk.Frame(main_frame, bg=THEME['card_bg'], highlightbackground=THEME['card_border'], highlightthickness=1, padx=14, pady=10)\n";
-            py << "        ctrl_frame.pack(fill='x', pady=(0, 10))\n\n";
+        py << R"LOOP_PY(
+try:
+    import tkinter as tk
+except Exception:
+    tk = None
 
-            for (size_t i = 0; i < inputs.size(); ++i) {
-                const auto& inp = inputs[i];
-                py << "        tk.Label(ctrl_frame, text=\"Input [" << escape_py(inp.binding) << "]:\", font=('Helvetica', 9, 'bold'), fg=THEME['sub_fg'], bg=THEME['card_bg']).pack(anchor='w')\n";
-                py << "        self.inp_" << i << " = tk.Entry(ctrl_frame, bg='#1e293b', fg=THEME['fg'], insertbackground='white', highlightbackground=THEME['card_border'], relief='flat')\n";
-                py << "        self.inp_" << i << ".insert(0, \"" << escape_py(inp.placeholder) << "\")\n";
-                py << "        self.inp_" << i << ".pack(fill='x', pady=(2, 6))\n";
-            }
+try:
+    import winsound as _winsound
+except Exception:
+    _winsound = None
 
-            for (size_t i = 0; i < sliders.size(); ++i) {
-                const auto& sl = sliders[i];
-                py << "        self.sl_lbl_" << i << " = tk.Label(ctrl_frame, text=\"" << escape_py(sl.label) << ": " << sl.current_val << "\", font=('Helvetica', 9, 'bold'), fg=THEME['sub_fg'], bg=THEME['card_bg'])\n";
-                py << "        self.sl_lbl_" << i << ".pack(anchor='w')\n";
-                py << "        def on_sl_" << i << "(val):\n";
-                py << "            self.sl_lbl_" << i << ".config(text=f\"" << escape_py(sl.label) << ": {float(val):.0f}\")\n";
-                py << "        self.sl_" << i << " = tk.Scale(ctrl_frame, from_=" << sl.min_val << ", to=" << sl.max_val 
-                   << ", orient='horizontal', bg=THEME['card_bg'], fg=THEME['fg'], highlightthickness=0, troughcolor=THEME['log_bg'], activebackground=THEME['primary'], showvalue=0, command=on_sl_" << i << ")\n";
-                py << "        self.sl_" << i << ".set(" << sl.current_val << ")\n";
-                py << "        self.sl_" << i << ".pack(fill='x', pady=(2, 6))\n";
-            }
 
-            for (size_t i = 0; i < toggles.size(); ++i) {
-                const auto& tg = toggles[i];
-                py << "        self.tg_var_" << i << " = tk.BooleanVar(value=" << (tg.is_checked ? "True" : "False") << ")\n";
-                py << "        def on_tg_" << i << "():\n";
-                py << "            st = 'ACTIVADO' if self.tg_var_" << i << ".get() else 'DESACTIVADO'\n";
-                py << "            self.log(f\"Toggle '" << escape_py(tg.label) << "' -> {st}\", 'action')\n";
-                py << "        tk.Checkbutton(ctrl_frame, text=\"" << escape_py(tg.label) << "\", variable=self.tg_var_" << i << ", command=on_tg_" << i 
-                   << ", font=('Helvetica', 9), fg=THEME['fg'], bg=THEME['card_bg'], selectcolor=THEME['log_bg'], activebackground=THEME['card_bg']).pack(anchor='w', pady=2)\n";
-            }
+def _hex_color(col):
+    if isinstance(col, str):
+        return col if col.startswith('#') else '#38bdf8'
+    if isinstance(col, (tuple, list)) and len(col) >= 3:
+        r = max(0, min(255, int(col[0])))
+        g = max(0, min(255, int(col[1])))
+        b = max(0, min(255, int(col[2])))
+        return f'#{r:02x}{g:02x}{b:02x}'
+    return '#38bdf8'
 
-            for (size_t i = 0; i < progress_bars.size(); ++i) {
-                const auto& pr = progress_bars[i];
-                py << "        tk.Label(ctrl_frame, text=\"" << escape_py(pr.label) << " (" << pr.progress << "%)\", font=('Helvetica', 9, 'bold'), fg=THEME['sub_fg'], bg=THEME['card_bg']).pack(anchor='w', pady=(4, 2))\n";
-                py << "        self.c_pr_" << i << " = tk.Canvas(ctrl_frame, height=12, bg=THEME['log_bg'], highlightthickness=1, highlightbackground=THEME['card_border'])\n";
-                py << "        self.c_pr_" << i << ".pack(fill='x', pady=(0, 4))\n";
-                py << "        def _draw_pr_" << i << "(e=None):\n";
-                py << "            self.c_pr_" << i << ".delete('all')\n";
-                py << "            w = self.c_pr_" << i << ".winfo_width()\n";
-                py << "            pct = " << pr.progress << "\n";
-                py << "            self.c_pr_" << i << ".create_rectangle(0, 0, int(w * pct / 100), 12, fill=THEME['accent'], outline='')\n";
-                py << "        self.c_pr_" << i << ".bind('<Configure>', _draw_pr_" << i << ")\n";
-                py << "        self.after(60, _draw_pr_" << i << ")\n";
-            }
+
+def _rgb_tuple(col):
+    if isinstance(col, (tuple, list)) and len(col) >= 3:
+        return (max(0, min(255, int(col[0]))), max(0, min(255, int(col[1]))), max(0, min(255, int(col[2]))))
+    s = str(col or '#38bdf8').lstrip('#')
+    if len(s) == 3:
+        s = ''.join(ch * 2 for ch in s)
+    if len(s) >= 6:
+        try:
+            return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+        except Exception:
+            pass
+    return (56, 189, 248)
+
+
+class _CompatRect:
+    def __init__(self, x, y=0, w=0, h=0):
+        if isinstance(x, (tuple, list)):
+            x, y, w, h = x[0], x[1], x[2], x[3]
+        elif hasattr(x, 'x') and hasattr(x, 'w'):
+            x, y, w, h = x.x, x.y, x.w, x.h
+        self.x = int(x)
+        self.y = int(y)
+        self.w = int(w)
+        self.h = int(h)
+
+    @property
+    def left(self): return self.x
+    @property
+    def top(self): return self.y
+    @property
+    def right(self): return self.x + self.w
+    @property
+    def bottom(self): return self.y + self.h
+    @property
+    def width(self): return self.w
+    @property
+    def height(self): return self.h
+    @property
+    def centerx(self): return self.x + self.w // 2
+    @property
+    def centery(self): return self.y + self.h // 2
+    @property
+    def center(self): return (self.centerx, self.centery)
+    @property
+    def topleft(self): return (self.x, self.y)
+    @property
+    def size(self): return (self.w, self.h)
+
+    def collidepoint(self, px, py=None):
+        if py is None and isinstance(px, (tuple, list)):
+            px, py = px[0], px[1]
+        return self.x <= px <= self.x + self.w and self.y <= py <= self.y + self.h
+
+    def colliderect(self, other):
+        return (self.x < other.x + other.w and self.x + self.w > other.x and
+                self.y < other.y + other.h and self.y + self.h > other.y)
+
+    def copy(self):
+        return _CompatRect(self.x, self.y, self.w, self.h)
+
+    def move(self, dx, dy):
+        return _CompatRect(self.x + dx, self.y + dy, self.w, self.h)
+
+    def inflate(self, dw, dh):
+        return _CompatRect(self.x - dw // 2, self.y - dh // 2, self.w + dw, self.h + dh)
+
+
+class _CompatEvent:
+    def __init__(self, etype, **kwargs):
+        self.type = etype
+        self.__dict__.update(kwargs)
+
+
+class _CompatSurface:
+    def __init__(self, size, flags=0):
+        self._w, self._h = int(size[0]), int(size[1])
+        self._flags = flags
+        self._ops = []
+
+    def get_width(self): return self._w
+    def get_height(self): return self._h
+    def get_size(self): return (self._w, self._h)
+    def get_rect(self, **kw):
+        r = _CompatRect(0, 0, self._w, self._h)
+        if 'center' in kw:
+            cx, cy = kw['center']
+            r.x = int(cx - self._w // 2)
+            r.y = int(cy - self._h // 2)
+        elif 'topleft' in kw:
+            r.x, r.y = int(kw['topleft'][0]), int(kw['topleft'][1])
+        return r
+
+    def fill(self, color, rect=None):
+        hx = _hex_color(color)
+        if rect is None:
+            self._ops.clear()
+            self._ops.append(('rect', (0, 0, self._w, self._h), hx, '', 0))
+        else:
+            r = _CompatRect(rect)
+            self._ops.append(('rect', (r.x, r.y, r.right, r.bottom), hx, '', 0))
+
+    def blit(self, source, dest, area=None):
+        dx = int(dest.x if hasattr(dest, 'x') else dest[0])
+        dy = int(dest.y if hasattr(dest, 'y') else dest[1])
+        if isinstance(source, _CompatTextSurface):
+            self._ops.append(('text', dx, dy, source._text, source._font, source._color, source._bg))
+        elif isinstance(source, _CompatSurface):
+            for op in source._ops:
+                kind = op[0]
+                if kind == 'rect':
+                    x1, y1, x2, y2 = op[1]
+                    self._ops.append(('rect', (x1 + dx, y1 + dy, x2 + dx, y2 + dy), op[2], op[3], op[4]))
+                elif kind == 'oval':
+                    x1, y1, x2, y2 = op[1]
+                    self._ops.append(('oval', (x1 + dx, y1 + dy, x2 + dx, y2 + dy), op[2], op[3], op[4]))
+                elif kind == 'line':
+                    pts = [v + (dx if i % 2 == 0 else dy) for i, v in enumerate(op[1])]
+                    self._ops.append(('line', pts, op[2], op[3]))
+                elif kind == 'poly':
+                    pts = [v + (dx if i % 2 == 0 else dy) for i, v in enumerate(op[1])]
+                    self._ops.append(('poly', pts, op[2], op[3], op[4]))
+                elif kind == 'text':
+                    self._ops.append(('text', op[1] + dx, op[2] + dy, op[3], op[4], op[5], op[6]))
+
+    def convert_alpha(self): return self
+    def copy(self):
+        s = _CompatSurface((self._w, self._h), self._flags)
+        s._ops = list(self._ops)
+        return s
+
+
+class _CompatTextSurface:
+    def __init__(self, text, font_spec, color, bg=None):
+        self._text = text
+        self._font = font_spec
+        self._color = _hex_color(color)
+        self._bg = _hex_color(bg) if bg else None
+        sz = font_spec[1]
+        self._w = max(4, int(len(text) * sz * 0.60))
+        self._h = max(8, int(sz * 1.4))
+
+    def get_width(self): return self._w
+    def get_height(self): return self._h
+    def get_size(self): return (self._w, self._h)
+    def get_rect(self, **kw):
+        r = _CompatRect(0, 0, self._w, self._h)
+        if 'center' in kw:
+            r.x = int(kw['center'][0] - self._w // 2)
+            r.y = int(kw['center'][1] - self._h // 2)
+        return r
+
+
+class _CompatKeyMap(dict):
+    def __getitem__(self, k):
+        return self.get(k, False)
+
+
+class _PygameCompat:
+    """Pure-Python Pygame API replication layer backed by Tkinter Canvas (or headless buffer)."""
+    QUIT = 256
+    KEYDOWN = 768
+    KEYUP = 769
+    MOUSEMOTION = 1024
+    MOUSEBUTTONDOWN = 1025
+    MOUSEBUTTONUP = 1026
+    MOUSEWHEEL = 1027
+    VIDEORESIZE = 32778
+    RESIZABLE = 16
+    SRCALPHA = 65536
+
+    K_BACKSPACE = 8
+    K_RETURN = 13
+    K_ESCAPE = 27
+    K_SPACE = 32
+    K_a = ord('a')
+    K_d = ord('d')
+    K_e = ord('e')
+    K_j = ord('j')
+    K_q = ord('q')
+    K_r = ord('r')
+    K_s = ord('s')
+    K_w = ord('w')
+    K_x = ord('x')
+    K_z = ord('z')
+    K_UP = 273
+    K_DOWN = 274
+    K_RIGHT = 275
+    K_LEFT = 276
+    K_RSHIFT = 303
+    K_LSHIFT = 304
+
+    def __init__(self):
+        self.Rect = _CompatRect
+        self.Surface = _CompatSurface
+        self.Event = _CompatEvent
+        self._events = []
+        self._keys = _CompatKeyMap()
+        self._mouse_pos = (0, 0)
+        self._mouse_btns = [False, False, False]
+        self._root = None
+        self._canvas = None
+        self._surface = _CompatSurface((850, 540))
+        self._caption = "Looping PygameCompat Window"
+        self._start_ts = time.perf_counter()
+        self._clip_rect = None
+        self._tk_available = (tk is not None)
+
+        pg_self = self
+
+        class _DrawMod:
+            @staticmethod
+            def rect(surface, color, rect, width=0, border_radius=0):
+                r = _CompatRect(rect)
+                hx = _hex_color(color)
+                if width == 0:
+                    surface._ops.append(('rect', (r.x, r.y, r.right, r.bottom), hx, '', 0))
+                else:
+                    surface._ops.append(('rect', (r.x, r.y, r.right, r.bottom), '', hx, width))
+                return r
+
+            @staticmethod
+            def circle(surface, color, center, radius, width=0):
+                cx, cy = int(center[0]), int(center[1])
+                rad = max(1, int(radius))
+                hx = _hex_color(color)
+                if width == 0:
+                    surface._ops.append(('oval', (cx - rad, cy - rad, cx + rad, cy + rad), hx, '', 0))
+                else:
+                    surface._ops.append(('oval', (cx - rad, cy - rad, cx + rad, cy + rad), '', hx, width))
+                return _CompatRect(cx - rad, cy - rad, rad * 2, rad * 2)
+
+            @staticmethod
+            def ellipse(surface, color, rect, width=0):
+                r = _CompatRect(rect)
+                hx = _hex_color(color)
+                if width == 0:
+                    surface._ops.append(('oval', (r.x, r.y, r.right, r.bottom), hx, '', 0))
+                else:
+                    surface._ops.append(('oval', (r.x, r.y, r.right, r.bottom), '', hx, width))
+                return r
+
+            @staticmethod
+            def polygon(surface, color, points, width=0):
+                if not points or len(points) < 3:
+                    return _CompatRect(0, 0, 0, 0)
+                flat = []
+                for p in points:
+                    flat.extend([float(p[0]), float(p[1])])
+                hx = _hex_color(color)
+                if width == 0:
+                    surface._ops.append(('poly', flat, hx, '', 0))
+                else:
+                    surface._ops.append(('poly', flat, '', hx, width))
+                return _CompatRect(0, 0, 1, 1)
+
+            @staticmethod
+            def line(surface, color, start_pos, end_pos, width=1):
+                hx = _hex_color(color)
+                surface._ops.append(('line', [float(start_pos[0]), float(start_pos[1]), float(end_pos[0]), float(end_pos[1])], hx, max(1, int(width))))
+                return _CompatRect(0, 0, 1, 1)
+
+            @staticmethod
+            def aalines(surface, color, closed, points, blend=1):
+                if len(points) < 2:
+                    return
+                hx = _hex_color(color)
+                flat = []
+                for p in points:
+                    flat.extend([float(p[0]), float(p[1])])
+                if closed and len(points) >= 2:
+                    flat.extend([float(points[0][0]), float(points[0][1])])
+                surface._ops.append(('line', flat, hx, 1))
+
+        class _CompatFont:
+            def __init__(self, family, size, bold=False, italic=False):
+                weight = 'bold' if bold else 'normal'
+                self._spec = (family or 'Helvetica', max(7, int(size * 0.78)), weight)
+                self._px = size
+
+            def render(self, text, antialias, color, background=None):
+                return _CompatTextSurface(str(text), self._spec, color, background)
+
+            def size(self, text):
+                return (max(4, int(len(str(text)) * self._px * 0.56)), max(8, int(self._px * 1.3)))
+
+        class _FontMod:
+            @staticmethod
+            def init(): pass
+            @staticmethod
+            def Font(name, size):
+                return _CompatFont(name or 'Helvetica', size)
+            @staticmethod
+            def SysFont(name, size, bold=False, italic=False):
+                fam = name[0] if isinstance(name, (list, tuple)) and name else (name or 'Helvetica')
+                return _CompatFont(fam, size, bold, italic)
+
+        class _Clock:
+            def __init__(self):
+                self._last = time.perf_counter()
+                self._fps = 60.0
+
+            def tick(self, framerate=0):
+                now = time.perf_counter()
+                dt = now - self._last
+                if framerate > 0:
+                    target = 1.0 / float(framerate)
+                    if dt < target:
+                        time.sleep(target - dt)
+                        now = time.perf_counter()
+                        dt = now - self._last
+                self._last = now
+                if dt > 0.0001:
+                    self._fps = 0.85 * self._fps + 0.15 * (1.0 / dt)
+                return int(dt * 1000.0)
+
+            def get_fps(self):
+                return self._fps
+
+        class _TimeMod:
+            Clock = _Clock
+            @staticmethod
+            def get_ticks():
+                return int((time.perf_counter() - pg_self._start_ts) * 1000.0)
+
+        class _EventMod:
+            @staticmethod
+            def get():
+                evs = list(pg_self._events)
+                pg_self._events.clear()
+                return evs
+            @staticmethod
+            def post(ev):
+                pg_self._events.append(ev)
+
+        class _KeyMod:
+            @staticmethod
+            def get_pressed():
+                return pg_self._keys
+
+        class _MouseMod:
+            @staticmethod
+            def get_pos():
+                return pg_self._mouse_pos
+            @staticmethod
+            def get_pressed():
+                return tuple(pg_self._mouse_btns)
+
+        class _DisplayMod:
+            @staticmethod
+            def init(): pass
+            @staticmethod
+            def set_caption(cap):
+                pg_self._caption = cap
+                if pg_self._root is not None:
+                    pg_self._root.title(cap)
+            @staticmethod
+            def get_surface():
+                return pg_self._surface
+            @staticmethod
+            def set_mode(size, flags=0):
+                w, h = int(size[0]), int(size[1])
+                pg_self._surface = _CompatSurface((w, h), flags)
+                if pg_self._tk_available and pg_self._root is None:
+                    try:
+                        root = tk.Tk()
+                        root.title(pg_self._caption)
+                        root.geometry(f"{w}x{h}")
+                        root.minsize(580, 400)
+                        root.configure(bg=THEME['bg'])
+                        cv = tk.Canvas(root, width=w, height=h, bg=THEME['bg'], highlightthickness=0)
+                        cv.pack(fill='both', expand=True)
+                        pg_self._root = root
+                        pg_self._canvas = cv
+                        pg_self._bind_tk_events(root, cv)
+                    except Exception:
+                        pg_self._tk_available = False
+                        pg_self._root = None
+                        pg_self._canvas = None
+                return pg_self._surface
+
+            @staticmethod
+            def flip():
+                cv = pg_self._canvas
+                if cv is None:
+                    return
+                try:
+                    cv.delete('all')
+                    for op in pg_self._surface._ops:
+                        kind = op[0]
+                        if kind == 'rect':
+                            x1, y1, x2, y2 = op[1]
+                            cv.create_rectangle(x1, y1, x2, y2, fill=op[2], outline=op[3], width=op[4])
+                        elif kind == 'oval':
+                            x1, y1, x2, y2 = op[1]
+                            cv.create_oval(x1, y1, x2, y2, fill=op[2], outline=op[3], width=op[4])
+                        elif kind == 'poly':
+                            cv.create_polygon(*op[1], fill=op[2], outline=op[3], width=op[4])
+                        elif kind == 'line':
+                            cv.create_line(*op[1], fill=op[2], width=op[3])
+                        elif kind == 'text':
+                            if op[6]:
+                                tw = max(10, len(op[3]) * int(op[4][1] * 0.72))
+                                th = int(op[4][1] * 1.5)
+                                cv.create_rectangle(op[1], op[2], op[1] + tw, op[2] + th, fill=op[6], outline='')
+                            cv.create_text(op[1], op[2], text=op[3], anchor='nw', fill=op[5], font=op[4])
+                except Exception:
+                    pass
+
+            @staticmethod
+            def update(rects=None):
+                _DisplayMod.flip()
+
+        class _DummySound:
+            def __init__(self, *a, **kw): pass
+            def play(self): pass
+            def set_volume(self, v): pass
+
+        class _MixerMod:
+            Sound = _DummySound
+            @staticmethod
+            def init(*a, **kw): pass
+
+        self.draw = _DrawMod()
+        self.font = _FontMod()
+        self.time = _TimeMod()
+        self.event = _EventMod()
+        self.key = _KeyMod()
+        self.mouse = _MouseMod()
+        self.display = _DisplayMod()
+        self.mixer = _MixerMod()
+
+    def init(self):
+        self._start_ts = time.perf_counter()
+        return (6, 0)
+
+    def quit(self):
+        if self._root is not None:
+            try:
+                self._root.destroy()
+            except Exception:
+                pass
+            self._root = None
+
+    def _map_keysym(self, ks):
+        k = (ks or '').lower()
+        table = {
+            'backspace': self.K_BACKSPACE, 'return': self.K_RETURN, 'kp_enter': self.K_RETURN,
+            'escape': self.K_ESCAPE, 'space': self.K_SPACE,
+            'up': self.K_UP, 'down': self.K_DOWN, 'left': self.K_LEFT, 'right': self.K_RIGHT,
+            'shift_l': self.K_LSHIFT, 'shift_r': self.K_RSHIFT,
         }
+        if k in table:
+            return table[k]
+        if len(k) == 1:
+            return ord(k)
+        return 0
 
-        py << "        # Buttons Toolbar\n";
-        py << "        btn_bar = tk.Frame(main_frame, bg=THEME['bg'])\n";
-        py << "        btn_bar.pack(fill='x', pady=(2, 10))\n\n";
+    def _bind_tk_events(self, root, cv):
+        def on_close():
+            self._events.append(_CompatEvent(self.QUIT))
+        root.protocol("WM_DELETE_WINDOW", on_close)
 
-        for (size_t i = 0; i < buttons.size(); ++i) {
-            const auto& b = buttons[i];
-            std::string label = (!b.snippet.empty() ? "⚡ " : "") + b.text;
-            py << "        btn_" << i << " = tk.Button(btn_bar, text=\"" << escape_py(label) 
-               << "\", font=('Helvetica', 9, 'bold'), bg=THEME['btn_bg'], fg=THEME['btn_fg'], relief='flat', padx=8, pady=5, activebackground=THEME['primary'], cursor='hand2', command=lambda idx=" << i << ": self.on_btn_click(idx))\n";
-            py << "        btn_" << i << ".pack(side='left', padx=(0, 8))\n";
-        }
+        def on_cfg(e):
+            if e.widget == cv and (e.width != self._surface._w or e.height != self._surface._h):
+                self._surface._w = max(320, e.width)
+                self._surface._h = max(240, e.height)
+                self._events.append(_CompatEvent(self.VIDEORESIZE, w=self._surface._w, h=self._surface._h, size=(self._surface._w, self._surface._h)))
+        cv.bind('<Configure>', on_cfg)
 
-        py << "\n        # Interactive Console Log Drawer\n";
-        py << "        log_frame = tk.Frame(main_frame, bg=THEME['log_bg'], highlightbackground=THEME['card_border'], highlightthickness=1)\n";
-        py << "        log_frame.pack(fill='both', expand=True)\n";
-        py << "        log_scroll = tk.Scrollbar(log_frame)\n";
-        py << "        log_scroll.pack(side='right', fill='y')\n";
-        py << "        self.log_txt = tk.Text(log_frame, bg=THEME['log_bg'], fg=THEME['log_fg'], font=('Courier', 10), yscrollcommand=log_scroll.set, wrap='word', height=7, padx=10, pady=8, relief='flat')\n";
-        py << "        self.log_txt.pack(fill='both', expand=True)\n";
-        py << "        log_scroll.config(command=self.log_txt.yview)\n";
-        py << "        self.log_txt.tag_config('action', foreground='#38bdf8')\n";
-        py << "        self.log_txt.tag_config('success', foreground='#10b981')\n";
-        py << "        self.log_txt.tag_config('snippet', foreground='#facc15')\n\n";
+        def on_kp(e):
+            code = self._map_keysym(e.keysym)
+            if not code and getattr(e, 'char', ''):
+                code = ord(e.char[0].lower())
+            if code:
+                self._keys[code] = True
+            self._events.append(_CompatEvent(self.KEYDOWN, key=code, unicode=e.char or '', mod=0))
+        def on_kr(e):
+            code = self._map_keysym(e.keysym)
+            if not code and getattr(e, 'char', ''):
+                code = ord(e.char[0].lower())
+            if code:
+                self._keys[code] = False
+            self._events.append(_CompatEvent(self.KEYUP, key=code, mod=0))
+        root.bind_all('<KeyPress>', on_kp)
+        root.bind_all('<KeyRelease>', on_kr)
 
-        py << "    def log(self, msg, tag='success'):\n";
-        py << "        now = datetime.datetime.now().strftime('%H:%M:%S')\n";
-        py << "        self.log_txt.insert('end', f'[{now}] {msg}\\n', tag)\n";
-        py << "        self.log_txt.see('end')\n\n";
+        def on_motion(e):
+            self._mouse_pos = (e.x, e.y)
+            self._events.append(_CompatEvent(self.MOUSEMOTION, pos=(e.x, e.y)))
+        def on_b1_down(e):
+            cv.focus_set()
+            self._mouse_pos = (e.x, e.y)
+            self._mouse_btns[0] = True
+            self._events.append(_CompatEvent(self.MOUSEBUTTONDOWN, pos=(e.x, e.y), button=1))
+        def on_b1_up(e):
+            self._mouse_pos = (e.x, e.y)
+            self._mouse_btns[0] = False
+            self._events.append(_CompatEvent(self.MOUSEBUTTONUP, pos=(e.x, e.y), button=1))
+        def on_wheel(e):
+            dy = 1 if getattr(e, 'delta', 0) > 0 or getattr(e, 'num', 0) == 4 else -1
+            self._events.append(_CompatEvent(self.MOUSEWHEEL, x=0, y=dy))
 
-        py << "    def on_btn_click(self, idx):\n";
-        py << "        cfg = BUTTONS[idx]\n";
-        py << "        try:\n";
-        py << "            self.bell()\n";
-        py << "        except Exception:\n";
-        py << "            pass\n";
-        py << "        self.log(f\"Botón '{cfg['text']}' presionado → Acción: {cfg['action']}\", 'action')\n";
-        py << "        snip = cfg.get('snippet', '').strip()\n";
-        py << "        if snip:\n";
-        py << "            for line in snip.splitlines():\n";
-        py << "                if line.strip():\n";
-        py << "                    self.log(f\"  ⚡ {line}\", 'snippet')\n";
-        py << "            if snip.startswith('#!python') or snip.startswith('import '):\n";
-        py << "                try:\n";
-        py << "                    exec(snip, globals())\n";
-        py << "                except Exception as e:\n";
-        py << "                    self.log(f\"[Python Error] {e}\", 'action')\n";
-        py << "            else:\n";
-        py << "                candidates = ['./bin/looping', './LoopingEngine/cpp/looping', './looping', 'looping']\n";
-        py << "                bin_path = next((c for c in candidates if os.path.exists(c)), 'looping')\n";
-        py << "                try:\n";
-        py << "                    res = subprocess.run([bin_path, 'eval', snip], capture_output=True, text=True, timeout=3)\n";
-        py << "                    if res.stdout.strip():\n";
-        py << "                        for l in res.stdout.strip().splitlines():\n";
-        py << "                            self.log(f\"    {l}\", 'success')\n";
-        py << "                except Exception as e:\n";
-        py << "                    pass\n\n";
+        cv.bind('<Motion>', on_motion)
+        cv.bind('<ButtonPress-1>', on_b1_down)
+        cv.bind('<ButtonRelease-1>', on_b1_up)
+        cv.bind('<MouseWheel>', on_wheel)
+        cv.bind('<Button-4>', on_wheel)
+        cv.bind('<Button-5>', on_wheel)
 
-        py << "if __name__ == '__main__':\n";
-        py << "    app = LoopNativeWindow()\n";
-        py << "    app.mainloop()\n";
+
+def _resolve_requested_backend(explicit='auto'):
+    if explicit and explicit != 'auto':
+        return explicit.lower()
+    for i, a in enumerate(sys.argv[1:]):
+        if a.startswith('--backend='):
+            return a.split('=', 1)[1].lower()
+        if a == '--backend' and i + 2 < len(sys.argv):
+            return sys.argv[i + 2].lower()
+        if a in ('--pygame', '-pg'):
+            return 'pygame'
+        if a in ('--compat', '--tk'):
+            return 'compat'
+    return os.environ.get('LOOPING_PY_BACKEND', 'auto').lower()
+
+
+class LoopNativeWindow:
+    def __init__(self, backend='auto'):
+        req = _resolve_requested_backend(backend)
+        self.pg = None
+        self.backend_name = 'pygame-compat'
+        if req in ('auto', 'pygame'):
+            try:
+                import pygame as _real_pygame
+                self.pg = _real_pygame
+                self.backend_name = 'pygame'
+            except Exception:
+                self.pg = None
+
+        if self.pg is None:
+            self.pg = _PygameCompat()
+            self.backend_name = 'pygame-compat (Tkinter)' if self.pg._tk_available else 'pygame-compat (headless)'
+
+        self.pg.init()
+        try:
+            self.pg.font.init()
+        except Exception:
+            pass
+        try:
+            self.pg.mixer.init(22050, -16, 1, 512)
+        except Exception:
+            pass
+
+        self.width = int(WINDOW_CFG['width'])
+        self.height = int(WINDOW_CFG['height'])
+        self.pg.display.set_caption(f"{WINDOW_CFG['title']} — Loop OS Native Window")
+        self.screen = self.pg.display.set_mode((self.width, self.height), self.pg.RESIZABLE)
+        self.clock = self.pg.time.Clock()
+        self.running = True
+        self.total_time = 0.0
+        self.fps_display = float(WINDOW_CFG['target_fps'])
+
+        self._fonts = {}
+        self.logs = []
+        self.log_scroll = 0
+        self.active_input = -1
+        self.active_slider = -1
+        self.hover_btn = -1
+        self.dragging_3d = False
+        self.last_mouse = (0, 0)
+
+        self.inputs = [dict(x) for x in INPUTS]
+        self.sliders = [dict(x) for x in SLIDERS]
+        self.toggles = [dict(x) for x in TOGGLES]
+        self.progress_bars = [dict(x) for x in PROGRESS_BARS]
+        self.entities_3d = [dict(x) for x in ENTITIES_3D]
+        self.entities_2d = [dict(x) for x in ENTITIES_2D]
+        self.bullets_2d = []
+
+        self.cam_yaw = 0.0
+        self.cam_pitch = 0.28
+        self.cam_dist = 18.0
+        self.p_vel = [0.0, 0.0, 0.0]
+        self.p_jumps = 0
+        self.score_3d = 0
+        self.cam2d_x = 0.0
+        self.score_2d = 0
+        self.lives_2d = 3
+
+        self.vp_rect = None
+        self.input_rects = []
+        self.slider_rects = []
+        self.toggle_rects = []
+        self.button_rects = []
+        self.log_rect = self.pg.Rect(0, 0, 100, 100)
+
+        self.setup_ui()
+
+    def _font(self, size, bold=False, mono=False):
+        key = (size, bold, mono)
+        if key not in self._fonts:
+            fam = 'Courier' if mono else 'Helvetica'
+            self._fonts[key] = self.pg.font.SysFont(fam, size, bold=bold)
+        return self._fonts[key]
+
+    def setup_ui(self):
+        self._compute_layout()
+        self.log(f"[Loop OS Native] Ventana '{WINDOW_CFG['title']}' inicializada ({WINDOW_CFG['pipeline']}) [{self.backend_name}].", 'success')
+        for freq, dur in TONES[:1]:
+            self.play_tone(freq, dur)
+
+    def log(self, msg, tag='success'):
+        now = datetime.datetime.now().strftime('%H:%M:%S')
+        self.logs.append((f'[{now}] {msg}', tag))
+        if len(self.logs) > 300:
+            self.logs.pop(0)
+        self.log_scroll = 0
+
+    def play_tone(self, freq=440, dur_ms=80):
+        try:
+            sr = 22050
+            n = max(64, int(sr * max(20, min(800, dur_ms)) / 1000.0))
+            buf = array.array('h')
+            for i in range(n):
+                t = i / sr
+                env = min(1.0, t / 0.01) * min(1.0, (n / sr - t) / 0.03)
+                buf.append(int(math.sin(2.0 * math.pi * freq * t) * 5200 * max(0.0, env)))
+            if self.backend_name == 'pygame' and hasattr(self.pg.mixer, 'Sound'):
+                snd = self.pg.mixer.Sound(buffer=buf.tobytes())
+                snd.play()
+                return
+        except Exception:
+            pass
+        if _winsound is not None:
+            threading.Thread(target=lambda: _winsound.Beep(int(max(37, min(32767, freq))), int(max(20, dur_ms))), daemon=True).start()
+        elif isinstance(self.pg, _PygameCompat) and self.pg._root is not None:
+            try:
+                self.pg._root.bell()
+            except Exception:
+                pass
+
+    def on_btn_click(self, idx):
+        cfg = BUTTONS[idx]
+        self.play_tone(640, 80)
+        self.log(f"Botón '{cfg['text']}' presionado → Acción: {cfg['action']}", 'action')
+        snip = cfg.get('snippet', '').strip()
+        if snip:
+            for line in snip.splitlines():
+                if line.strip():
+                    self.log(f"  ⚡ {line}", 'snippet')
+            if snip.startswith('#!python') or snip.startswith('import '):
+                try:
+                    exec(snip, globals())
+                except Exception as e:
+                    self.log(f"[Python Error] {e}", 'action')
+            else:
+                def _run_snip():
+                    candidates = ['./bin/looping.exe', 'bin/looping.exe', 'looping.exe', './bin/looping', './looping', 'looping']
+                    bin_path = next((c for c in candidates if os.path.exists(c)), 'looping')
+                    try:
+                        cflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+                        res = subprocess.run([bin_path, 'eval', snip], capture_output=True, text=True, timeout=4, creationflags=cflags)
+                        if res.stdout.strip():
+                            for l in res.stdout.strip().splitlines():
+                                self.log(f"    {l}", 'success')
+                    except Exception:
+                        pass
+                threading.Thread(target=_run_snip, daemon=True).start()
+
+    def _compute_layout(self):
+        pad = 14
+        w = max(320, self.width - pad * 2)
+        y = 62
+        has_3d = WINDOW_CFG['is_3d'] or bool(self.entities_3d)
+        has_2d = (not has_3d) and bool(self.entities_2d)
+        self.vp_rect = None
+        if has_3d or has_2d:
+            vp_h = max(160, min(320, int(self.height * 0.42)))
+            self.vp_rect = self.pg.Rect(pad, y, w, vp_h)
+            y += vp_h + 10
+
+        self.card_rects = []
+        if CARDS:
+            cols = 2 if self.width >= 640 else 1
+            gap = 12
+            cw = (w - gap) // 2 if cols == 2 else w
+            rows = (len(CARDS) + cols - 1) // cols
+            ch = 78 if (rows > 2 or self.vp_rect) else 94
+            for i in range(len(CARDS)):
+                col = i % cols
+                row = i // cols
+                self.card_rects.append(self.pg.Rect(pad + col * (cw + gap), y + row * (ch + 10), cw, ch))
+            y += rows * (ch + 10)
+
+        self.input_rects = []
+        self.slider_rects = []
+        self.toggle_rects = []
+        self.ctrl_rect = None
+        if self.inputs or self.sliders or self.toggles or self.progress_bars:
+            top = y
+            cy = y + 10
+            for _ in self.inputs:
+                self.input_rects.append(self.pg.Rect(pad + 12, cy + 18, w - 24, 26))
+                cy += 52
+            for _ in self.sliders:
+                self.slider_rects.append(self.pg.Rect(pad + 12, cy + 20, w - 24, 14))
+                cy += 42
+            for _ in self.toggles:
+                self.toggle_rects.append(self.pg.Rect(pad + 12, cy + 2, 240, 24))
+                cy += 30
+            for _ in self.progress_bars:
+                cy += 36
+            self.ctrl_rect = self.pg.Rect(pad, top, w, cy - top + 6)
+            y = self.ctrl_rect.bottom + 10
+
+        self.button_rects = []
+        if BUTTONS:
+            bx = pad
+            by = y
+            for b in BUTTONS:
+                bw = max(118, min(260, int(len(b['text']) * 8.4 + 36)))
+                if bx + bw > pad + w and bx > pad:
+                    bx = pad
+                    by += 42
+                self.button_rects.append(self.pg.Rect(bx, by, bw, 34))
+                bx += bw + 10
+            y = by + 44
+
+        bottom = max(y + 72, self.height - 14)
+        self.log_rect = self.pg.Rect(pad, y, w, bottom - y)
+
+    def handle_events(self):
+        pg = self.pg
+        for ev in pg.event.get():
+            if ev.type == pg.QUIT:
+                self.running = False
+            elif ev.type == pg.VIDEORESIZE:
+                self.width, self.height = max(320, ev.w), max(240, ev.h)
+                if self.backend_name == 'pygame':
+                    self.screen = pg.display.set_mode((self.width, self.height), pg.RESIZABLE)
+            elif ev.type == pg.KEYDOWN:
+                if self.active_input >= 0 and self.active_input < len(self.inputs):
+                    inp = self.inputs[self.active_input]
+                    if ev.key == pg.K_BACKSPACE:
+                        inp['value'] = inp['value'][:-1]
+                    elif ev.key == pg.K_RETURN:
+                        self.log(f"Input [{inp['binding']}] = \"{inp['value']}\"", 'action')
+                        self.active_input = -1
+                    elif getattr(ev, 'unicode', '') and ord(ev.unicode[0]) >= 32:
+                        inp['value'] += ev.unicode
+                elif ev.key == pg.K_r and self.entities_2d:
+                    for e in self.entities_2d:
+                        e['x'], e['y'], e['vx'], e['vy'] = e['sx'], e['sy'], 0.0, 0.0
+                        e['collected'], e['alive'] = False, True
+                    self.score_2d, self.lives_2d = 0, 3
+            elif ev.type == pg.MOUSEMOTION:
+                mx, my = ev.pos
+                if self.dragging_3d:
+                    self.cam_yaw += (mx - self.last_mouse[0]) * 0.008
+                    self.cam_pitch = max(-0.2, min(1.3, self.cam_pitch + (my - self.last_mouse[1]) * 0.006))
+                if 0 <= self.active_slider < len(self.slider_rects):
+                    r = self.slider_rects[self.active_slider]
+                    t = max(0.0, min(1.0, (mx - r.x) / max(1, r.w)))
+                    sl = self.sliders[self.active_slider]
+                    sl['val'] = sl['min'] + t * (sl['max'] - sl['min'])
+                self.hover_btn = next((i for i, r in enumerate(self.button_rects) if r.collidepoint(mx, my)), -1)
+                self.last_mouse = (mx, my)
+            elif ev.type == pg.MOUSEBUTTONDOWN and getattr(ev, 'button', 1) == 1:
+                mx, my = ev.pos
+                self.last_mouse = (mx, my)
+                self.active_input = -1
+                if self.vp_rect and self.vp_rect.collidepoint(mx, my) and (WINDOW_CFG['is_3d'] or self.entities_3d):
+                    self.dragging_3d = True
+                    continue
+                hit = False
+                for i, r in enumerate(self.input_rects):
+                    if r.collidepoint(mx, my):
+                        self.active_input = i
+                        hit = True
+                        break
+                if hit: continue
+                for i, r in enumerate(self.slider_rects):
+                    if r.inflate(0, 14).collidepoint(mx, my):
+                        self.active_slider = i
+                        t = max(0.0, min(1.0, (mx - r.x) / max(1, r.w)))
+                        sl = self.sliders[i]
+                        sl['val'] = sl['min'] + t * (sl['max'] - sl['min'])
+                        hit = True
+                        break
+                if hit: continue
+                for i, r in enumerate(self.toggle_rects):
+                    if r.collidepoint(mx, my):
+                        self.toggles[i]['checked'] = not self.toggles[i]['checked']
+                        st = 'ACTIVADO' if self.toggles[i]['checked'] else 'DESACTIVADO'
+                        self.play_tone(720 if self.toggles[i]['checked'] else 480, 50)
+                        self.log(f"Toggle '{self.toggles[i]['label']}' -> {st}", 'action')
+                        hit = True
+                        break
+                if hit: continue
+                for i, r in enumerate(self.button_rects):
+                    if r.collidepoint(mx, my):
+                        self.on_btn_click(i)
+                        break
+            elif ev.type == pg.MOUSEBUTTONUP and getattr(ev, 'button', 1) == 1:
+                self.dragging_3d = False
+                self.active_slider = -1
+            elif ev.type == pg.MOUSEWHEEL:
+                mx, my = pg.mouse.get_pos()
+                if self.vp_rect and self.vp_rect.collidepoint(mx, my) and (WINDOW_CFG['is_3d'] or self.entities_3d):
+                    self.cam_dist = max(6.0, min(90.0, self.cam_dist - ev.y * 1.6))
+                else:
+                    self.log_scroll = max(0, min(max(0, len(self.logs) - 1), self.log_scroll + (2 if ev.y > 0 else -2)))
+
+    def update(self, dt):
+        self.total_time += dt
+        if self.active_input >= 0:
+            return
+        pg = self.pg
+        ks = pg.key.get_pressed()
+
+        if WINDOW_CFG['is_3d'] or self.entities_3d:
+            if ks[pg.K_q]: self.cam_yaw -= 1.8 * dt
+            if ks[pg.K_e]: self.cam_yaw += 1.8 * dt
+            player = next((o for o in self.entities_3d if o['type'] == 'player'), None)
+            if player:
+                spd = player['speed'] * (1.75 if (ks[pg.K_LSHIFT] or ks[pg.K_RSHIFT] or ks[pg.K_x]) else 1.0)
+                fx, fz = math.sin(self.cam_yaw), math.cos(self.cam_yaw)
+                rx, rz = math.cos(self.cam_yaw), -math.sin(self.cam_yaw)
+                mx = (1 if (ks[pg.K_d] or ks[pg.K_RIGHT]) else 0) - (1 if (ks[pg.K_a] or ks[pg.K_LEFT]) else 0)
+                mz = (1 if (ks[pg.K_w] or ks[pg.K_UP]) else 0) - (1 if (ks[pg.K_s] or ks[pg.K_DOWN]) else 0)
+                self.p_vel[0] = (fx * mz + rx * mx) * spd
+                self.p_vel[2] = (fz * mz + rz * mx) * spd
+                if ks[pg.K_SPACE] and self.p_jumps < 2:
+                    self.p_vel[1] = 15.0
+                    self.p_jumps += 1
+                    self.play_tone(520, 45)
+                for _ in range(4):
+                    sdt = dt * 0.25
+                    self.p_vel[1] -= 26.0 * sdt
+                    player['x'] += self.p_vel[0] * sdt
+                    player['y'] += self.p_vel[1] * sdt
+                    player['z'] += self.p_vel[2] * sdt
+                    if player['y'] <= 0.6:
+                        player['y'] = 0.6
+                        self.p_vel[1] = 0.0
+                        self.p_jumps = 0
+            else:
+                cam_spd = 2.2 if (ks[pg.K_LSHIFT] or ks[pg.K_RSHIFT]) else 1.0
+                if ks[pg.K_a] or ks[pg.K_LEFT]: self.cam_yaw -= 1.8 * cam_spd * dt
+                if ks[pg.K_d] or ks[pg.K_RIGHT]: self.cam_yaw += 1.8 * cam_spd * dt
+                if ks[pg.K_w] or ks[pg.K_UP]: self.cam_dist = max(3.5, self.cam_dist - 12.0 * cam_spd * dt)
+                if ks[pg.K_s] or ks[pg.K_DOWN]: self.cam_dist = min(90.0, self.cam_dist + 12.0 * cam_spd * dt)
+            for o in self.entities_3d:
+                o['rot'] = (o['rot'] + 90.0 * dt) % 360.0
+                if o['type'] in ('moving_platform', 'enemy', 'boss') and o['alive']:
+                    ax = o['axis'] if o['axis'] in ('x', 'y', 'z') else 'x'
+                    o[ax] += o['dir'] * o['speed'] * dt
+                    if o[ax] >= o['max_p']: o[ax] = o['max_p']; o['dir'] = -1.0
+                    if o[ax] <= o['min_p']: o[ax] = o['min_p']; o['dir'] = 1.0
+                if player and o['type'] in ('crystal', 'ring') and not o['collected']:
+                    if (player['x'] - o['x']) ** 2 + (player['y'] - o['y']) ** 2 + (player['z'] - o['z']) ** 2 < (o['r'] + 1.5) ** 2:
+                        o['collected'] = True
+                        self.score_3d += 150
+                        self.play_tone(880, 70)
+                        self.log(f"[3D] Recogido {o['type']} (+150 pts) | Total: {self.score_3d}", 'success')
+        elif self.entities_2d:
+            player = next((e for e in self.entities_2d if e['is_player'] or e['type'] == 'player'), None)
+            if player is None:
+                player = next((e for e in self.entities_2d if e['type'] == 'sprite'), None)
+            if player and player['alive']:
+                mv = (1 if (ks[pg.K_d] or ks[pg.K_RIGHT]) else 0) - (1 if (ks[pg.K_a] or ks[pg.K_LEFT]) else 0)
+                player['vx'] = mv * max(180.0, player['speed'])
+                if (ks[pg.K_w] or ks[pg.K_UP] or ks[pg.K_SPACE]):
+                    if not player['jumping']:
+                        player['vy'] = -max(360.0, player['jump'])
+                        player['jumping'] = True
+                        self.play_tone(480, 45)
+                player['vy'] += WINDOW_CFG['gravity'] * dt
+                player['x'] = max(0.0, min(WINDOW_CFG['world_width'] - player['w'], player['x'] + player['vx'] * dt))
+                player['y'] += player['vy'] * dt
+                floor_y = WINDOW_CFG['world_height'] - 28.0
+                if player['y'] + player['h'] >= floor_y:
+                    player['y'] = floor_y - player['h']
+                    player['vy'] = 0.0
+                    player['jumping'] = False
+                for e in self.entities_2d:
+                    if e is player or not e['alive'] or e['collected']:
+                        continue
+                    if e['type'] in ('moving_platform', 'enemy', 'boss'):
+                        e['x'] += e['dir'] * e['speed'] * dt
+                        if e['max_p'] > e['min_p']:
+                            if e['x'] >= e['max_p']: e['x'] = e['max_p']; e['dir'] = -1.0
+                            if e['x'] <= e['min_p']: e['x'] = e['min_p']; e['dir'] = 1.0
+                    if e['type'] in ('platform', 'moving_platform'):
+                        if (player['vy'] >= 0 and player['x'] + player['w'] > e['x'] and player['x'] < e['x'] + e['w'] and
+                                e['y'] <= player['y'] + player['h'] <= e['y'] + e['h'] + 14):
+                            player['y'] = e['y'] - player['h']
+                            player['vy'] = 0.0
+                            player['jumping'] = False
+                    elif e['type'] == 'coin':
+                        if (player['x'] + player['w'] > e['x'] - e['r'] and player['x'] < e['x'] + e['r'] and
+                                player['y'] + player['h'] > e['y'] - e['r'] and player['y'] < e['y'] + e['r']):
+                            e['collected'] = True
+                            self.score_2d += int(e['pts'])
+                            self.play_tone(980, 60)
+                self.cam2d_x += (max(0.0, player['x'] - 240.0) - self.cam2d_x) * min(1.0, dt * 8.0)
+
+    def _proj3d(self, px, py, pz, eye, vw, vh, vx0, vy0):
+        dx, dy, dz = px - eye[0], py - eye[1], pz - eye[2]
+        cy, sy = math.cos(-self.cam_yaw), math.sin(-self.cam_yaw)
+        rx = dx * cy + dz * sy
+        rz = -dx * sy + dz * cy
+        cp, sp = math.cos(-self.cam_pitch), math.sin(-self.cam_pitch)
+        ry = dy * cp - rz * sp
+        vz = dy * sp + rz * cp
+        if vz <= 0.4:
+            return None
+        f = (vh * 0.92) / vz
+        return (vx0 + vw * 0.5 + rx * f, vy0 + vh * 0.5 - ry * f, vz)
+
+    def render(self, surf):
+        pg = self.pg
+        self._compute_layout()
+        bg_rgb = _rgb_tuple(THEME['bg'])
+        card_rgb = _rgb_tuple(THEME['card_bg'])
+        border_rgb = _rgb_tuple(THEME['card_border'])
+        prim_rgb = _rgb_tuple(THEME['primary'])
+        acc_rgb = _rgb_tuple(THEME['accent'])
+        fg_rgb = _rgb_tuple(THEME['fg'])
+        sub_rgb = _rgb_tuple(THEME['sub_fg'])
+        btn_rgb = _rgb_tuple(THEME['btn_bg'])
+        log_bg_rgb = _rgb_tuple(THEME['log_bg'])
+        log_fg_rgb = _rgb_tuple(THEME['log_fg'])
+
+        surf.fill(bg_rgb)
+
+        # 1. Header
+        pg.draw.rect(surf, card_rgb, pg.Rect(0, 0, self.width, 52))
+        pg.draw.line(surf, border_rgb, (0, 52), (self.width, 52), 1)
+        t_txt = self._font(16, bold=True).render(f"✦ {WINDOW_CFG['title']}", True, prim_rgb)
+        surf.blit(t_txt, (18, 14))
+
+        mode_txt = f"{self.backend_name} • {self.fps_display:.0f} FPS"
+        if self.width >= 680:
+            mr = pg.Rect(self.width - 430, 13, 204, 26)
+            pg.draw.rect(surf, bg_rgb, mr)
+            pg.draw.rect(surf, border_rgb, mr, 1)
+            ms = self._font(10, bold=True).render(mode_txt, True, prim_rgb)
+            surf.blit(ms, (mr.x + 10, mr.y + 5))
+
+        br = pg.Rect(self.width - 216, 13, 200, 26)
+        pg.draw.rect(surf, acc_rgb, br)
+        bs = self._font(10, bold=True).render(WINDOW_CFG['badge'], True, (11, 15, 25))
+        surf.blit(bs, (br.x + 10, br.y + 5))
+
+        # 2. 3D or 2D Viewport
+        if self.vp_rect:
+            vp = self.vp_rect
+            pg.draw.rect(surf, (5, 8, 17), vp)
+            if WINDOW_CFG['is_3d'] or self.entities_3d:
+                player = next((o for o in self.entities_3d if o['type'] == 'player'), None)
+                px, py_p, pz = (player['x'], player['y'], player['z']) if player else (0.0, 2.0, 0.0)
+                eye = [
+                    px - math.sin(self.cam_yaw) * math.cos(self.cam_pitch) * self.cam_dist,
+                    py_p + math.sin(self.cam_pitch) * self.cam_dist + 2.5,
+                    pz - math.cos(self.cam_yaw) * math.cos(self.cam_pitch) * self.cam_dist
+                ]
+                for gz in range(-20, 90, 8):
+                    a = self._proj3d(-40, 0, gz, eye, vp.w, vp.h, vp.x, vp.y)
+                    b = self._proj3d(40, 0, gz, eye, vp.w, vp.h, vp.x, vp.y)
+                    if a and b and vp.collidepoint(a[0], a[1]) and vp.collidepoint(b[0], b[1]):
+                        pg.draw.line(surf, (18, 49, 84), (a[0], a[1]), (b[0], b[1]), 1)
+                draw_list = []
+                for o in self.entities_3d:
+                    if o.get('collected') or not o.get('alive', True) or o['type'] == 'terrain':
+                        continue
+                    pt = self._proj3d(o['x'], o['y'], o['z'], eye, vp.w, vp.h, vp.x, vp.y)
+                    if pt:
+                        draw_list.append((pt[2], o, pt))
+                draw_list.sort(key=lambda it: -it[0])
+                for vz, o, pt in draw_list:
+                    col = _rgb_tuple(o['color'])
+                    if o.get('verts') and o.get('faces'):
+                        ry_rad = math.radians(o.get('rot', 0.0))
+                        cy_o, sy_o = math.cos(ry_rad), math.sin(ry_rad)
+                        scx, scy, scz = o.get('scx', 1.0), o.get('scy', 1.0), o.get('scz', 1.0)
+                        proj_v = [
+                            self._proj3d(
+                                o['x'] + (vx * scx) * cy_o + (vz_l * scz) * sy_o,
+                                o['y'] + (vy * scy),
+                                o['z'] - (vx * scx) * sy_o + (vz_l * scz) * cy_o,
+                                eye, vp.w, vp.h, vp.x, vp.y
+                            )
+                            for vx, vy, vz_l in o['verts']
+                        ]
+                        polys = []
+                        for fc in o['faces']:
+                            if len(fc) < 3: continue
+                            pts = [proj_v[idx] for idx in fc if idx < len(proj_v)]
+                            if len(pts) == len(fc) and all(p is not None for p in pts):
+                                avg_d = sum(p[2] for p in pts) / len(pts)
+                                polys.append((avg_d, [(p[0], p[1]) for p in pts]))
+                        polys.sort(key=lambda it: -it[0])
+                        for _, poly_pts in polys:
+                            if all(vp.collidepoint(pxx, pyy) for pxx, pyy in poly_pts):
+                                pg.draw.polygon(surf, col, poly_pts)
+                                pg.draw.polygon(surf, (226, 232, 240), poly_pts, 1)
+                    elif vp.collidepoint(pt[0], pt[1]):
+                        rad = max(4, min(42, int((max(o['sx'], o['sy']) * vp.h * 0.45) / vz)))
+                        pg.draw.ellipse(surf, col, pg.Rect(pt[0] - rad, pt[1] - int(rad * 0.7), rad * 2, int(rad * 1.4)))
+                        pg.draw.ellipse(surf, (255, 255, 255), pg.Rect(pt[0] - rad, pt[1] - int(rad * 0.7), rad * 2, int(rad * 1.4)), 1)
+                hud = self._font(11, bold=True, mono=True).render(f"SHINE LOOP 3D ({self.backend_name.upper()}) • SCORE: {self.score_3d} • [WASD] Move [SPACE] Jump [Q/E] Orbit", True, prim_rgb)
+                surf.blit(hud, (vp.x + 12, vp.y + 8))
+            else:
+                sy = vp.h / max(300.0, WINDOW_CFG['world_height'])
+                fy = int(vp.y + (WINDOW_CFG['world_height'] - 28.0) * sy)
+                pg.draw.rect(surf, (18, 30, 52), pg.Rect(vp.x, fy, vp.w, vp.bottom - fy))
+                for e in self.entities_2d:
+                    if not e['alive'] or e['collected']: continue
+                    ex = int(vp.x + (e['x'] - self.cam2d_x) * sy)
+                    ey = int(vp.y + e['y'] * sy)
+                    if ex < vp.x - 40 or ex > vp.right + 40: continue
+                    ec = _rgb_tuple(e['color'])
+                    if e['type'] == 'coin':
+                        pg.draw.circle(surf, ec, (ex, ey), max(4, int(e['r'] * sy)))
+                    else:
+                        pg.draw.rect(surf, ec, pg.Rect(ex, ey, max(4, int(e['w'] * sy)), max(4, int(e['h'] * sy))))
+                hud2 = self._font(11, bold=True, mono=True).render(f"SHINE LOOP 2D ({self.backend_name.upper()}) • SCORE: {self.score_2d} • [A/D] Move [W/SPACE] Jump [R] Reset", True, prim_rgb)
+                surf.blit(hud2, (vp.x + 12, vp.y + 8))
+            pg.draw.rect(surf, prim_rgb, vp, 1)
+
+        # 3. Cards
+        for i, cr in enumerate(self.card_rects):
+            c = CARDS[i]
+            pg.draw.rect(surf, card_rgb, cr)
+            pg.draw.rect(surf, border_rgb, cr, 1)
+            pg.draw.rect(surf, prim_rgb, pg.Rect(cr.x + 10, cr.y, cr.w - 20, 3))
+            surf.blit(self._font(13, bold=True).render(c['title'], True, prim_rgb), (cr.x + 12, cr.y + 10))
+            if c['badge']:
+                bw = len(c['badge']) * 7 + 16
+                bx = cr.right - bw - 10
+                pg.draw.rect(surf, border_rgb, pg.Rect(bx, cr.y + 8, bw, 20))
+                surf.blit(self._font(9, bold=True).render(c['badge'], True, acc_rgb), (bx + 8, cr.y + 11))
+            y_off = cr.y + 34
+            for line in c['text'].splitlines():
+                if y_off + 14 > cr.bottom: break
+                surf.blit(self._font(11).render(line[:66], True, fg_rgb), (cr.x + 12, y_off))
+                y_off += 15
+
+        # 4. Controls
+        if self.ctrl_rect:
+            pg.draw.rect(surf, card_rgb, self.ctrl_rect)
+            pg.draw.rect(surf, border_rgb, self.ctrl_rect, 1)
+            for i, ir in enumerate(self.input_rects):
+                inp = self.inputs[i]
+                surf.blit(self._font(10, bold=True).render(f"Input [{inp['binding']}]:", True, sub_rgb), (ir.x, ir.y - 16))
+                pg.draw.rect(surf, (30, 41, 59), ir)
+                pg.draw.rect(surf, prim_rgb if i == self.active_input else border_rgb, ir, 1)
+                shown = inp['value'] if inp['value'] else inp['placeholder']
+                if i == self.active_input and int(self.total_time * 2) % 2 == 0:
+                    shown += '|'
+                surf.blit(self._font(11).render(shown, True, fg_rgb if inp['value'] else sub_rgb), (ir.x + 8, ir.y + 5))
+            for i, sr in enumerate(self.slider_rects):
+                sl = self.sliders[i]
+                surf.blit(self._font(10, bold=True).render(f"{sl['label']}: {sl['val']:.0f}", True, sub_rgb), (sr.x, sr.y - 17))
+                tr = pg.Rect(sr.x, sr.y + 4, sr.w, 6)
+                pg.draw.rect(surf, log_bg_rgb, tr)
+                t = max(0.0, min(1.0, (sl['val'] - sl['min']) / max(1e-6, sl['max'] - sl['min'])))
+                kx = int(tr.x + tr.w * t)
+                pg.draw.rect(surf, prim_rgb, pg.Rect(tr.x, tr.y, max(2, kx - tr.x), tr.h))
+                pg.draw.circle(surf, acc_rgb, (kx, tr.y + 3), 7)
+            for i, tr in enumerate(self.toggle_rects):
+                tg = self.toggles[i]
+                box = pg.Rect(tr.x, tr.y + 3, 18, 18)
+                pg.draw.rect(surf, prim_rgb if tg['checked'] else log_bg_rgb, box)
+                pg.draw.rect(surf, prim_rgb if tg['checked'] else border_rgb, box, 1)
+                if tg['checked']:
+                    surf.blit(self._font(11, bold=True).render("✓", True, (11, 15, 25)), (box.x + 3, box.y))
+                surf.blit(self._font(11).render(tg['label'], True, fg_rgb), (box.right + 8, tr.y + 3))
+            p_y = self.ctrl_rect.y + 10 + len(self.inputs) * 52 + len(self.sliders) * 42 + len(self.toggles) * 30
+            for pr in self.progress_bars:
+                surf.blit(self._font(10, bold=True).render(f"{pr['label']} ({pr['progress']:.0f}%)", True, sub_rgb), (self.ctrl_rect.x + 12, p_y))
+                tr = pg.Rect(self.ctrl_rect.x + 12, p_y + 18, self.ctrl_rect.w - 24, 10)
+                pg.draw.rect(surf, log_bg_rgb, tr)
+                pw = int(tr.w * max(0.0, min(1.0, pr['progress'] / 100.0)))
+                if pw > 0:
+                    pg.draw.rect(surf, acc_rgb, pg.Rect(tr.x, tr.y, pw, tr.h))
+                p_y += 36
+
+        # 5. Buttons
+        for i, br in enumerate(self.button_rects):
+            b = BUTTONS[i]
+            hov = (i == self.hover_btn)
+            pg.draw.rect(surf, prim_rgb if hov else btn_rgb, br)
+            pg.draw.rect(surf, acc_rgb if hov else border_rgb, br, 1)
+            lbl = ("⚡ " if b['snippet'] else "") + b['text']
+            surf.blit(self._font(11, bold=True).render(lbl, True, (11, 15, 25) if hov else (255, 255, 255)), (br.x + 12, br.y + 8))
+
+        # 6. Log Drawer
+        pg.draw.rect(surf, log_bg_rgb, self.log_rect)
+        pg.draw.rect(surf, border_rgb, self.log_rect, 1)
+        max_lines = max(1, (self.log_rect.h - 14) // 18)
+        end_idx = max(0, len(self.logs) - self.log_scroll)
+        start_idx = max(0, end_idx - max_lines)
+        ly = self.log_rect.y + 8
+        tag_colors = {'action': (56, 189, 248), 'success': log_fg_rgb, 'snippet': (250, 204, 21)}
+        for txt, tag in self.logs[start_idx:end_idx]:
+            surf.blit(self._font(11, mono=True).render(txt[:115], True, tag_colors.get(tag, log_fg_rgb)), (self.log_rect.x + 10, ly))
+            ly += 18
+
+    def step_frame(self, dt=0.016):
+        self.handle_events()
+        self.update(dt)
+        self.render(self.screen)
+        self.pg.display.flip()
+        if dt > 0.0001:
+            self.fps_display = 0.85 * self.fps_display + 0.15 * (1.0 / dt)
+
+    def mainloop(self):
+        max_headless = int(os.environ.get('LOOPING_HEADLESS_FRAMES', '0') or '0')
+        if self.backend_name != 'pygame' and isinstance(self.pg, _PygameCompat) and self.pg._root is not None:
+            prev = time.perf_counter()
+            frames = [0]
+            def _tk_tick():
+                nonlocal prev
+                if not self.running:
+                    self.pg.quit()
+                    return
+                now = time.perf_counter()
+                dt = max(0.001, min(0.05, now - prev))
+                prev = now
+                self.step_frame(dt)
+                frames[0] += 1
+                if max_headless > 0 and frames[0] >= max_headless:
+                    self.running = False
+                    self.pg.quit()
+                    return
+                self.pg._root.after(16, _tk_tick)
+            self.pg._root.after(10, _tk_tick)
+            self.pg._root.mainloop()
+        else:
+            prev = time.perf_counter()
+            frames = 0
+            while self.running:
+                ms = self.clock.tick(WINDOW_CFG['target_fps'])
+                dt = max(0.001, min(0.05, ms / 1000.0 if ms > 0 else (time.perf_counter() - prev)))
+                prev = time.perf_counter()
+                self.step_frame(dt)
+                frames += 1
+                if max_headless > 0 and frames >= max_headless:
+                    self.running = False
+                    break
+            self.pg.quit()
+
+
+if __name__ == '__main__':
+    app = LoopNativeWindow()
+    app.mainloop()
+)LOOP_PY";
 
         return py.str();
+    }
+
+    DirectXWindowSpec to_directx_spec(const std::string& host_exe = "") const {
+        UIProfileSpecs specs = resolve_ui_profile(target_ui);
+        DirectXWindowSpec dx;
+        dx.app_name = app_name;
+        dx.title = title;
+        dx.theme = theme;
+        dx.target_ui = target_ui;
+        dx.pipeline = specs.name + " " + specs.pipeline;
+        dx.badge_label = (specs.code == "metal4")
+            ? "Metal 4 • 240 FPS Hardware Direct"
+            : (specs.name + " • " + std::to_string(specs.target_fps) + " FPS Direct");
+        dx.host_exe = host_exe.empty() ? resolve_looping_host_exe() : host_exe;
+        dx.width = width;
+        dx.height = height;
+        dx.target_fps = specs.target_fps;
+
+        dx.bg_color = "#0b0f19";
+        dx.card_bg = "#151d30";
+        dx.card_border = "#22314e";
+        dx.btn_bg = "#0284c7";
+        dx.btn_fg = "#ffffff";
+        dx.primary_color = specs.primary_color.empty() ? "#38bdf8" : specs.primary_color;
+        dx.accent_color = (specs.accent_color.empty() || specs.accent_color == "#082f49") ? "#00f5d4" : specs.accent_color;
+        dx.log_bg = "#070a12";
+        dx.log_fg = "#10b981";
+
+        if (specs.theme.find("aqua") != std::string::npos) {
+            dx.bg_color = "#04161f";
+            dx.card_bg = "#082736";
+            dx.card_border = "#134e6b";
+            dx.btn_bg = "#00b4d8";
+            dx.primary_color = "#00f5d4";
+        } else if (specs.theme.find("indigo") != std::string::npos || specs.theme.find("fold") != std::string::npos) {
+            dx.bg_color = "#0d091a";
+            dx.card_bg = "#1a1333";
+            dx.card_border = "#352466";
+            dx.btn_bg = "#7c3aed";
+            dx.primary_color = "#c084fc";
+        } else if (specs.theme.find("metal4") != std::string::npos || specs.code == "metal4") {
+            dx.bg_color = "#070c18";
+            dx.card_bg = "#0e182a";
+            dx.card_border = "#1a3254";
+            dx.btn_bg = "#0284c7";
+            dx.primary_color = "#00f5d4";
+            dx.accent_color = "#38bdf8";
+        }
+
+        dx.is_3d_mode = is_3d_mode || !entities_3d.empty();
+        dx.world_width = stage_world_width;
+        dx.world_height = stage_world_height;
+        dx.gravity = stage_gravity;
+        dx.scenario_name = stage_scenario_name;
+        dx.scenario_accent = stage_scenario_accent;
+
+        for (const auto& c : cards) {
+            dx.cards.push_back({c.title, c.text, c.badge, c.icon, c.x, c.y, c.width, c.height});
+        }
+        for (const auto& b : buttons) {
+            dx.buttons.push_back({b.text, b.action, b.snippet, b.x, b.y, b.width, b.height});
+        }
+        for (const auto& inp : inputs) {
+            dx.inputs.push_back({inp.placeholder, inp.binding, "", inp.x, inp.y, inp.width, inp.height});
+        }
+        for (const auto& sl : sliders) {
+            dx.sliders.push_back({sl.label, sl.binding, sl.min_val, sl.max_val, sl.current_val});
+        }
+        for (const auto& tg : toggles) {
+            dx.toggles.push_back({tg.label, tg.binding, tg.is_checked});
+        }
+        for (const auto& pr : progress_bars) {
+            dx.progress_bars.push_back({pr.label, pr.binding, pr.progress});
+        }
+        for (const auto& tn : tones) {
+            dx.tones.push_back({tn.freq_hz, tn.duration_ms});
+        }
+        for (const auto& e : entities_3d) {
+            DxEntity3DSpec de;
+            de.type = e.type;
+            de.name = e.name;
+            de.color = e.color.empty() ? "#38bdf8" : e.color;
+            de.axis = e.axis;
+            de.x = e.pos.x; de.y = e.pos.y; de.z = e.pos.z;
+            de.sx = e.size.x; de.sy = e.size.y; de.sz = e.size.z;
+            de.scx = e.scale.x; de.scy = e.scale.y; de.scz = e.scale.z;
+            de.radius = e.radius;
+            de.speed = e.speed;
+            de.min_pos = e.min_pos;
+            de.max_pos = e.max_pos;
+            de.rot_y = e.rot_deg.y;
+            if (e.has_custom_mesh && !e.custom_mesh.vertices.empty() && e.custom_mesh.faces.size() <= 8000) {
+                for (const auto& v : e.custom_mesh.vertices) de.verts.push_back({v.x, v.y, v.z});
+                for (const auto& f : e.custom_mesh.faces) de.faces.push_back(f.indices);
+            }
+            dx.entities_3d.push_back(std::move(de));
+        }
+        dx.entities_2d = entities_2d;
+        return dx;
+    }
+
+    bool save_dxwin(const std::string& path, const std::string& host_exe = "") const {
+        size_t slash = path.find_last_of("/\\");
+        if (slash != std::string::npos) {
+            ensure_dir_exists(path.substr(0, slash));
+        }
+        return save_dxwin_file(path, to_directx_spec(host_exe));
+    }
+
+    std::string emit_directx_cpp() const {
+        std::ostringstream cs;
+        cs << "// Standalone Looping DirectX 11 Window Harness for: " << title << "\n";
+        cs << "// Compile: cl /std:c++17 /EHsc /utf-8 /O2 /Icpp <file.cpp>\n";
+        cs << "#include \"LoopingDirectXWindow.hpp\"\n\n";
+        cs << "int main() {\n";
+        cs << "    looping::DirectXWindowSpec spec;\n";
+        cs << "    spec.app_name = \"" << escape_str(app_name) << "\";\n";
+        cs << "    spec.title = \"" << escape_str(title) << "\";\n";
+        cs << "    spec.width = " << width << ";\n";
+        cs << "    spec.height = " << height << ";\n";
+        cs << "    spec.target_ui = \"" << escape_str(target_ui) << "\";\n";
+        for (const auto& c : cards) {
+            cs << "    spec.cards.push_back({\"" << escape_str(c.title) << "\", \"" << escape_str(c.text)
+               << "\", \"" << escape_str(c.badge) << "\", \"" << escape_str(c.icon) << "\", "
+               << c.x << ", " << c.y << ", " << c.width << ", " << c.height << "});\n";
+        }
+        for (const auto& b : buttons) {
+            cs << "    spec.buttons.push_back({\"" << escape_str(b.text) << "\", \"" << escape_str(b.action)
+               << "\", \"" << escape_str(b.snippet) << "\", " << b.x << ", " << b.y << ", " << b.width << ", " << b.height << "});\n";
+        }
+        cs << "    looping::dx_native::DirectXWindowApp app;\n";
+        cs << "    app.spec = std::move(spec);\n";
+        cs << "    return app.run();\n";
+        cs << "}\n";
+        return cs.str();
+    }
+
+    bool save_directx_cpp(const std::string& path) const {
+        size_t slash = path.find_last_of("/\\");
+        if (slash != std::string::npos) {
+            ensure_dir_exists(path.substr(0, slash));
+        }
+        std::ofstream out(path);
+        if (!out.is_open()) return false;
+        out << emit_directx_cpp();
+        return true;
     }
 
     bool save_native_gui(const std::string& path) const {
         size_t slash = path.find_last_of("/\\");
         if (slash != std::string::npos) {
-            std::string dir = path.substr(0, slash);
-            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
-            system(mkdir_cmd.c_str());
+            ensure_dir_exists(path.substr(0, slash));
         }
         std::ofstream out(path);
         if (!out.is_open()) return false;
@@ -2183,18 +3380,51 @@ public:
         return true;
     }
 
-    bool show_native(bool launch_interactive = true) const {
+    bool show_native(bool launch_interactive = true, const std::string& backend = "auto") const {
         std::cout << render_ascii() << "\n";
-        system("mkdir -p build");
+        ensure_dir_exists("build");
+
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+        std::string b_low = backend;
+        for (char& c : b_low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (b_low == "auto" || b_low == "directx" || b_low == "dx" || b_low == "native") {
+            std::string dx_path = "build/" + app_name + ".dxwin";
+            save_dxwin(dx_path);
+            std::cout << color::GREEN << "✔ [NATIVE DIRECTX WINDOW]" << color::RESET << " Native DirectX 11 desktop window synthesized successfully:\n";
+            std::cout << "  • DirectX Window Spec: " << color::CYAN << dx_path << color::RESET << " (Direct3D 11 + Direct2D + DirectWrite, Zero-Python)\n";
+            if (launch_interactive) {
+                pid_t pid = launch_directx_window_process(dx_path);
+                std::cout << color::CYAN << "[LAUNCH DIRECTX GUI]" << color::RESET << " Launching native DirectX 11 window (PID: " << pid << ")...\n";
+            }
+            return true;
+        }
+#elif defined(__APPLE__) && (!defined(TARGET_OS_IPHONE) || !TARGET_OS_IPHONE) && !defined(__EMSCRIPTEN__) && !defined(LOOPING_NO_SUBPROCESS)
+        std::string b_low = backend;
+        for (char& c : b_low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (b_low == "auto" || b_low == "cocoa" || b_low == "appkit" || b_low == "metal4" || b_low == "native") {
+            std::string dx_path = "build/" + app_name + ".dxwin";
+            save_dxwin(dx_path);
+            std::cout << color::GREEN << "✔ [NATIVE MACOS WINDOW]" << color::RESET << " Native AppKit + Objective-C + Assembly desktop window synthesized successfully:\n";
+            std::cout << "  • Native Window Spec: " << color::CYAN << dx_path << color::RESET << " (AppKit + CoreGraphics + ASM, Zero-Python)\n";
+            if (launch_interactive) {
+                pid_t pid = launch_mac_window_process(dx_path);
+                std::cout << color::CYAN << "[LAUNCH MACOS GUI]" << color::RESET << " Launching native macOS AppKit window (PID: " << pid << ")...\n";
+            }
+            return true;
+        }
+#else
+        (void)backend;
+#endif
 
         std::string py_path = "build/" + app_name + "_native.py";
         save_native_gui(py_path);
 
         std::cout << color::GREEN << "✔ [NATIVE OS WINDOW]" << color::RESET << " Native desktop window synthesized successfully:\n";
-        std::cout << "  • Native GUI App: " << color::CYAN << py_path << color::RESET << " (Direct OS / Tkinter Native Engine)\n";
+        std::cout << "  • Native GUI App: " << color::CYAN << py_path << color::RESET << " (Pygame / PygameCompat Native Engine)\n";
 
         if (launch_interactive) {
-            pid_t pid = launch_native_window_process(py_path);
+            std::string extra = (backend == "pygame" || backend == "compat") ? ("--backend " + backend) : "";
+            pid_t pid = launch_native_window_process(py_path, extra);
             std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Launching native desktop OS window (PID: " << pid << ")...\n";
         }
         return true;
@@ -2202,24 +3432,61 @@ public:
 
     bool show(bool launch_interactive = true, const std::string& mode = "native") const {
         std::cout << render_ascii() << "\n";
-        system("mkdir -p build");
+        ensure_dir_exists("build");
 
         std::string loop_path = "build/" + app_name + ".loop";
         std::string html_path = "build/" + app_name + ".html";
-        std::string py_path = "build/" + app_name + "_native.py";
-
         save_loop(loop_path);
         save_html(html_path);
+
+        std::string m_low = mode;
+        for (char& c : m_low) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+        bool use_dx = (m_low != "html" && m_low != "web" && m_low != "python" && m_low != "py" && m_low != "pygame" && m_low != "compat" && m_low != "tk");
+        if (use_dx) {
+            std::string dx_path = "build/" + app_name + ".dxwin";
+            save_dxwin(dx_path);
+            std::cout << color::GREEN << "✔ [DYNAMIC WINDOW]" << color::RESET << " Window synthesized successfully:\n";
+            std::cout << "  • Source Script: " << color::CYAN << loop_path << color::RESET << "\n";
+            std::cout << "  • Native DirectX 11: " << color::CYAN << dx_path << color::RESET << " (Direct3D 11 + Direct2D Dynamic Window, Zero-Python)\n";
+            std::cout << "  • Interactive HTML5: " << color::CYAN << html_path << color::RESET << "\n";
+            if (launch_interactive) {
+                pid_t pid = launch_directx_window_process(dx_path);
+                std::cout << color::CYAN << "[LAUNCH DIRECTX GUI]" << color::RESET << " Opening dynamic DirectX 11 window (PID: " << pid << ")...\n";
+            }
+            return true;
+        }
+#elif defined(__APPLE__) && (!defined(TARGET_OS_IPHONE) || !TARGET_OS_IPHONE) && !defined(__EMSCRIPTEN__) && !defined(LOOPING_NO_SUBPROCESS)
+        bool use_mac = (m_low != "html" && m_low != "web" && m_low != "python" && m_low != "py" && m_low != "pygame" && m_low != "compat" && m_low != "tk");
+        if (use_mac) {
+            std::string dx_path = "build/" + app_name + ".dxwin";
+            save_dxwin(dx_path);
+            std::cout << color::GREEN << "✔ [DYNAMIC WINDOW]" << color::RESET << " Window synthesized successfully:\n";
+            std::cout << "  • Source Script: " << color::CYAN << loop_path << color::RESET << "\n";
+            std::cout << "  • Native macOS AppKit+ASM: " << color::CYAN << dx_path << color::RESET << " (Cocoa AppKit + CoreGraphics + ASM, Zero-Python)\n";
+            std::cout << "  • Interactive HTML5: " << color::CYAN << html_path << color::RESET << "\n";
+            if (launch_interactive) {
+                pid_t pid = launch_mac_window_process(dx_path);
+                std::cout << color::CYAN << "[LAUNCH MACOS GUI]" << color::RESET << " Opening native macOS window (PID: " << pid << ")...\n";
+            }
+            return true;
+        }
+#endif
+
+        std::string py_path = "build/" + app_name + "_native.py";
         save_native_gui(py_path);
 
         std::cout << color::GREEN << "✔ [DYNAMIC WINDOW]" << color::RESET << " Window synthesized successfully:\n";
         std::cout << "  • Source Script: " << color::CYAN << loop_path << color::RESET << "\n";
-        std::cout << "  • Native OS GUI: " << color::CYAN << py_path << color::RESET << " (Pure Desktop OS Window)\n";
+        std::cout << "  • Native OS GUI: " << color::CYAN << py_path << color::RESET << " (Pygame / PygameCompat Desktop Window)\n";
         std::cout << "  • Interactive HTML5: " << color::CYAN << html_path << color::RESET << "\n";
 
         if (launch_interactive) {
-            if (mode == "html" || mode == "web") {
-#ifdef __APPLE__
+            if (m_low == "html" || m_low == "web") {
+#if defined(LOOPING_NO_SUBPROCESS) || defined(__EMSCRIPTEN__)
+                (void)html_path;
+#elif defined(__APPLE__)
                 std::cout << color::CYAN << "[LAUNCH GUI]" << color::RESET << " Opening dynamic window in web viewer...\n";
                 std::string open_cmd = "open \"" + html_path + "\"";
                 system(open_cmd.c_str());
@@ -2231,13 +3498,9 @@ public:
                 system(open_cmd.c_str());
 #endif
             } else {
-#ifdef _WIN32
-                std::string open_cmd = "start pythonw \"" + py_path + "\"";
-#else
-                std::string open_cmd = "python3 \"" + py_path + "\" >/dev/null 2>&1 &";
-#endif
-                std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Opening native desktop OS window...\n";
-                system(open_cmd.c_str());
+                std::string extra = (m_low == "pygame" || m_low == "compat") ? ("--backend " + m_low) : "";
+                pid_t pid = launch_native_window_process(py_path, extra);
+                std::cout << color::CYAN << "[LAUNCH NATIVE GUI]" << color::RESET << " Opening native desktop OS window (PID: " << pid << ")...\n";
             }
         }
         return true;
@@ -2946,6 +4209,13 @@ public:
             std::ifstream f(exe_buf, std::ios::binary);
             if (f.good()) return std::string(exe_buf);
         }
+#elif defined(_WIN32)
+        char exe_buf[MAX_PATH];
+        DWORD len = GetModuleFileNameA(NULL, exe_buf, MAX_PATH);
+        if (len > 0 && len < MAX_PATH) {
+            std::ifstream f(exe_buf, std::ios::binary);
+            if (f.good()) return std::string(exe_buf);
+        }
 #elif defined(__linux__)
         char exe_buf[4096];
         ssize_t len = readlink("/proc/self/exe", exe_buf, sizeof(exe_buf) - 1);
@@ -2956,6 +4226,12 @@ public:
         }
 #endif
         std::vector<std::string> candidates = {
+#ifdef _WIN32
+            "bin/looping.exe",
+            "../bin/looping.exe",
+            "../../bin/looping.exe",
+            "looping.exe",
+#endif
             "bin/looping",
             "../bin/looping",
             "../../bin/looping",
@@ -2979,9 +4255,7 @@ public:
         size_t slash = out_file.find_last_of("/\\");
         if (slash != std::string::npos) {
             std::string dir = out_file.substr(0, slash);
-            if (!dir.empty()) {
-                system(("mkdir -p \"" + dir + "\"").c_str());
-            }
+            ensure_dir_exists(dir);
         }
 
         auto ends_with = [](const std::string& str, const std::string& suf) {
@@ -3023,8 +4297,8 @@ public:
                                 if (out.is_open()) {
                                     out.write(reinterpret_cast<const char*>(exe_bytes.data()), static_cast<std::streamsize>(exe_bytes.size()));
                                     out.close();
-                                    chmod(out_file.c_str(), 0755);
-#ifdef __APPLE__
+                                    make_executable(out_file);
+#if defined(__APPLE__) && !defined(LOOPING_NO_SUBPROCESS)
                                     std::string sign_cmd = "codesign --force --sign - \"" + out_file + "\" >/dev/null 2>&1";
                                     system(sign_cmd.c_str());
 #endif
@@ -3048,7 +4322,7 @@ public:
             }
             out.write(reinterpret_cast<const char*>(lpbn_img.data()), static_cast<std::streamsize>(lpbn_img.size()));
             out.close();
-            chmod(out_file.c_str(), 0755);
+            make_executable(out_file);
         }
 
         if (out_info) {
@@ -3111,9 +4385,7 @@ public:
 
             size_t slash = swift_file.find_last_of("/\\");
             if (slash != std::string::npos) {
-                std::string dir = swift_file.substr(0, slash);
-                std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
-                system(mkdir_cmd.c_str());
+                ensure_dir_exists(swift_file.substr(0, slash));
             }
 
             std::string swift_code = SwiftUIEmitter::transpile_script(source_code);
@@ -3126,6 +4398,7 @@ public:
             swift_out.close();
 
             if (!wants_swift_file) {
+#if !defined(LOOPING_NO_SUBPROCESS) && !defined(__EMSCRIPTEN__)
                 // Compile directly into native Mach-O executable using Apple swiftc
                 std::string swiftc_cmd = "swiftc -parse-as-library \"" + swift_file + "\" -o \"" + out_file + "\" 2>/dev/null";
                 int ret = system(swiftc_cmd.c_str());
@@ -3134,6 +4407,7 @@ public:
                     std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Native SwiftUI binary compiled to: " << out_file << " [Apple Ecosystem / SwiftUI Metal 120Hz]\n";
                     return true;
                 }
+#endif
             }
 
             if (out_created_path) *out_created_path = swift_file;
@@ -3148,7 +4422,7 @@ public:
             std::string cs_file = wants_cs_file ? out_file : (out_file + ".cs");
             size_t slash = cs_file.find_last_of("/\\");
             if (slash != std::string::npos) {
-                system(("mkdir -p \"" + cs_file.substr(0, slash) + "\"").c_str());
+                ensure_dir_exists(cs_file.substr(0, slash));
             }
 
             std::ostringstream cs;
@@ -3183,6 +4457,16 @@ public:
             cs_out.close();
 
             if (!wants_cs_file) {
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+                // External C# compilation skipped inside WASM sandbox; export .cs source
+#elif defined(_WIN32)
+                std::string mcs_cmd = "(where.exe csc >NUL 2>&1 && csc /nologo /out:\"" + out_file + "\" \"" + cs_file + "\" >NUL 2>&1)";
+                if (system(mcs_cmd.c_str()) == 0) {
+                    if (out_created_path) *out_created_path = out_file;
+                    std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Managed C# assembly compiled to: " << out_file << " [C# / loopize++]\n";
+                    return true;
+                }
+#else
                 std::string mcs_cmd = "(command -v mcs >/dev/null 2>&1 && mcs -out:\"" + out_file + "\" \"" + cs_file + "\" 2>/dev/null) || "
                                       "(command -v csc >/dev/null 2>&1 && csc -out:\"" + out_file + "\" \"" + cs_file + "\" 2>/dev/null)";
                 if (system(mcs_cmd.c_str()) == 0) {
@@ -3190,6 +4474,7 @@ public:
                     std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m Managed C# assembly compiled to: " << out_file << " [C# / loopize++]\n";
                     return true;
                 }
+#endif
             }
             if (out_created_path) *out_created_path = cs_file;
             std::cout << "\033[32m✔ [COMPILER SUCCESS]\033[0m C# loopize++ source artifact exported to: " << cs_file << " [C# / .OBJ 3D]\n";
@@ -3199,9 +4484,7 @@ public:
         // Create parent directories if needed
         size_t slash = out_file.find_last_of("/\\");
         if (slash != std::string::npos) {
-            std::string dir = out_file.substr(0, slash);
-            std::string mkdir_cmd = "mkdir -p \"" + dir + "\"";
-            system(mkdir_cmd.c_str());
+            ensure_dir_exists(out_file.substr(0, slash));
         }
 
         std::string canonical_source = InvisBinaryCompiler::build_canonical_source(source_code, specs);
@@ -3220,7 +4503,7 @@ public:
             }
             out << "#!/usr/bin/env looping\n" << canonical_source;
             out.close();
-            chmod(out_file.c_str(), 0755);
+            make_executable(out_file);
         } else {
             if (!InvisBinaryCompiler::compile_to_binary(canonical_source, specs, out_file, force_compact, /*silent=*/false, &bin_info)) {
                 return false;
@@ -3233,19 +4516,10 @@ public:
             if (c2_file.size() < 3 || c2_file.substr(c2_file.size() - 3) != ".c2") {
                 c2_file += ".c2";
             }
-            char cwd_buf[2048];
-            std::string abs_c2_file = c2_file;
-            std::string abs_out_file = out_file;
-            if (getcwd(cwd_buf, sizeof(cwd_buf)) != nullptr) {
-                if (abs_c2_file.empty() || abs_c2_file[0] != '/') {
-                    abs_c2_file = std::string(cwd_buf) + "/" + abs_c2_file;
-                }
-                if (abs_out_file.empty() || abs_out_file[0] != '/') {
-                    abs_out_file = std::string(cwd_buf) + "/" + abs_out_file;
-                }
-            }
-            std::string tmp_dir = "/tmp/c2_build_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-            system(("mkdir -p \"" + tmp_dir + "\"").c_str());
+            std::error_code ec;
+            std::string abs_c2_file = std::filesystem::absolute(c2_file, ec).string();
+            std::string tmp_dir = (std::filesystem::temp_directory_path(ec) / ("c2_build_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()))).string();
+            ensure_dir_exists(tmp_dir);
 
             // 1. Manifest
             std::ofstream mf(tmp_dir + "/manifest.json");
@@ -3289,13 +4563,34 @@ public:
             }
             InvisBinaryCompiler::compile_to_binary(canonical_source, specs, tmp_dir + "/binary.loopb", /*force_compact=*/true, /*silent=*/true);
 
-            // 5. Signature
-            std::string sig_cmd = "(cd \"" + tmp_dir + "\" && shasum -a 256 manifest.json tokens.json layout.json source.loop binary.loopb > signature.sha256)";
-            system(sig_cmd.c_str());
+            // 5. Signature (pure C++ SHA-256 across all bundled artifacts)
+            {
+                std::ofstream sig_f(tmp_dir + "/signature.sha256");
+                for (const char* fname : {"manifest.json", "tokens.json", "layout.json", "source.loop", "binary.loopb"}) {
+                    std::ifstream f_in(tmp_dir + "/" + fname, std::ios::binary);
+                    if (f_in.is_open()) {
+                        std::string bytes((std::istreambuf_iterator<char>(f_in)), std::istreambuf_iterator<char>());
+                        sig_f << CryptoUtils::sha256_hex(bytes) << "  " << fname << "\n";
+                    }
+                }
+            }
 
             // 6. Zip into .c2 (Remove pre-existing file so zip creates a clean new archive)
-            std::string zip_cmd = "rm -f \"" + abs_c2_file + "\" && (cd \"" + tmp_dir + "\" && zip -q -r \"" + abs_c2_file + "\" .) && rm -rf \"" + tmp_dir + "\"";
-            system(zip_cmd.c_str());
+            std::filesystem::remove(abs_c2_file, ec);
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+            // In WASM, leave virtual directory cleaned up or artifact written
+#elif defined(_WIN32)
+            {
+                std::string zip_cmd = "powershell -NoProfile -Command \"Compress-Archive -Path '" + tmp_dir + "\\*' -DestinationPath '" + abs_c2_file + ".zip' -Force; Move-Item -Force '" + abs_c2_file + ".zip' '" + abs_c2_file + "'\" >NUL 2>&1";
+                system(zip_cmd.c_str());
+            }
+#else
+            {
+                std::string zip_cmd = "(cd \"" + tmp_dir + "\" && zip -q -r \"" + abs_c2_file + "\" .)";
+                system(zip_cmd.c_str());
+            }
+#endif
+            std::filesystem::remove_all(tmp_dir, ec);
             std::cout << "\033[36m📦 [C2 PACKAGER]\033[0m Assembled Android Component 2 package: \033[1m" << abs_c2_file << "\033[0m\n";
         }
 
@@ -3450,14 +4745,9 @@ public:
                 .add_button(430, 290, "RECOGER MONEDA", "on_collect_coin")
                 .add_button(610, 290, "FRAME DE FÍSICA", "on_game_loop")
                 .add_code("game.scenario(name: \"VoidStage\", weather: \"void\", accent: \"#38bdf8\")\n"
-                          "spawn.player(name: \"PlayerHero\", at: (100, 320), speed: 280, jump: 450, health: 100)\n"
-                          "spawn.platform(at: (50, 370), size: (210, 18), color: \"#6366f1\")\n"
-                          "spawn.moving_platform(at: (280, 290), size: (140, 18), range: (240, 500), speed: 90, color: \"#06b6d4\")\n"
-                          "spawn.coin(at: (340, 240), points: 150)\n"
+                          "spawn.sprite(\"PlayerHero\", at: (100, 350), color: \"#38bdf8\")\n"
                           "spawn.checkpoint(at: (300, 350), label: \"GATE-1\")\n"
-                          "spawn.enemy(name: \"CyberDrone\", at: (520, 350), range: (440, 680), speed: 80, health: 45)\n"
                           "spawn.laser_hazard(at: (550, 300), size: (14, 100), interval: 1.8)\n"
-                          "spawn.portal(at: (740, 330), label: \"NEXT STAGE\")\n"
                           "game.play_sfx(\"powerup\")\n"
                           "print \"[GAME ENGINE] Initialized 2D canvas with embedded reactive snippets.\"");
         } else if (type == "game3d" || type == "3d" || type == "racing3d") {
@@ -3499,7 +4789,6 @@ public:
                           "spawn3d.ring(at: (0, 4, 18), radius: 3.2, points: 250, boost: 22, color: \"#00f5d4\")\n"
                           "spawn3d.crystal(at: (3, 3, 24), points: 150, color: \"#fbbf24\")\n"
                           "spawn3d.enemy(\"Sentinel3D\", at: (0, 2.5, 32), range: (-8, 8), axis: \"x\", speed: 9, health: 60)\n"
-                          "spawn3d.obj(\"ValkyrieWing\", obj: \"valkyrie_drone.obj\", at: (-6, 3.2, 26), scale: 1.0, color: \"#f43f5e\", tag: \"enemy\", health: 60)\n"
                           "spawn3d.portal(at: (0, 3.5, 48), radius: 3.8, label: \"QUANTUM GATE\")\n"
                           "print \"[3D ENGINE] Initialized 3D scene graph with 120Hz physics sub-stepping.\"");
         } else if (type == "rpg" || type == "adventure") {
@@ -3683,14 +4972,31 @@ public:
 
     // Runs an executable artifact or script (supports Standalone Native Binary, LPBN Compact Binary, and .loop scripts)
     static bool run_artifact(const std::string& path) {
+#ifdef __EMSCRIPTEN__
+        (void)path;
+        return false;
+#elif defined(LOOPING_NO_SUBPROCESS)
+        (void)path;
+        return false;
+#else
         std::cout << "\033[36m[LAUNCHER]\033[0m Executing artifact: \033[1m" << path << "\033[0m\n";
         std::string host_exe = InvisBinaryCompiler::resolve_host_executable();
         if (host_exe.empty()) host_exe = "looping";
 
+        auto is_abs_or_rel = [](const std::string& p) {
+            if (p.rfind("./", 0) == 0 || p.rfind(".\\", 0) == 0 || (!p.empty() && (p.front() == '/' || p.front() == '\\'))) return true;
+            if (p.size() >= 2 && p[1] == ':') return true;
+            return false;
+        };
+
         InvisBinaryInfo info;
         if (InvisBinaryCompiler::extract_from_file(path, nullptr, &info) && info.valid) {
             if (info.is_standalone_exe) {
-                std::string cmd = (path.rfind("./", 0) == 0 || path.front() == '/') ? ("\"" + path + "\"") : ("./\"" + path + "\"");
+#ifdef _WIN32
+                std::string cmd = "\"" + path + "\"";
+#else
+                std::string cmd = is_abs_or_rel(path) ? ("\"" + path + "\"") : ("./\"" + path + "\"");
+#endif
                 return (system(cmd.c_str()) == 0);
             } else {
                 std::string cmd = "\"" + host_exe + "\" \"" + path + "\"";
@@ -3701,13 +5007,16 @@ public:
         std::string cmd;
         if (path.find(".loop") != std::string::npos || path.find(".ruup") != std::string::npos) {
             cmd = "\"" + host_exe + "\" \"" + path + "\"";
-        } else if (path.rfind("./", 0) == 0 || path.front() == '/') {
-            cmd = "\"" + path + "\"";
         } else {
-            cmd = "./\"" + path + "\"";
+#ifdef _WIN32
+            cmd = "\"" + path + "\"";
+#else
+            cmd = is_abs_or_rel(path) ? ("\"" + path + "\"") : ("./\"" + path + "\"");
+#endif
         }
         int res = system(cmd.c_str());
         return (res == 0);
+#endif
     }
 };
 

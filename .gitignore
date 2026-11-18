@@ -30,13 +30,19 @@ public/
 # C++ Build Outputs
 LoopingEngine/cpp/looping
 LoopingEngine/cpp/looping_bin
+LoopingEngine/cpp/*.o
 LoopingEngine/cpp/build/
 
 # Swift Package Manager Build Outputs
 .build/
+**/.build/
+**/.swiftpm/
 Packages/
 *.xcodeproj/
 *.xcworkspace/
+!HiOP.Apple/Packages/
+!HiOP.Apple/HiOPApple.xcodeproj/
+!HiOP.Apple/HiOPApple.xcodeproj/project.pbxproj
 
 # Coki AI Local MLX Artifacts (heavyweight venv, base models, LoRA weights, caches; matches dirs & symlinks)
 coki-ai/.venv

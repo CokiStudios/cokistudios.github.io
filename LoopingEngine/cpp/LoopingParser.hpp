@@ -89,6 +89,8 @@ public:
     }
 
     Parser(const std::string& src) : source(src), pos(0) {
+        replace_all(source, "\r\n", "\n");
+        replace_all(source, "\r", "\n");
         replace_all(source, "“", "\"");
         replace_all(source, "”", "\"");
         replace_all(source, "‘", "'");
@@ -1846,25 +1848,38 @@ public:
             s.rfind("entity.sprite(", 0) == 0 || s.rfind("spawn sprite", 0) == 0 ||
             s.rfind("spawn.player(", 0) == 0 || s.rfind("spawn player", 0) == 0) {
             auto sp = std::make_shared<SpawnEntityStmt>();
-            sp->entity_type = "sprite";
-            if (s.find('(') != std::string::npos && s.rfind("spawn sprite", 0) != 0) {
+            bool is_player_cmd = (s.rfind("spawn.player(", 0) == 0 || s.rfind("spawn player", 0) == 0);
+            sp->entity_type = is_player_cmd ? "player" : "sprite";
+            sp->w = 32; sp->h = 44;
+            sp->speed = 280; sp->power = 440; sp->health = 100;
+            if (s.find('(') != std::string::npos && s.rfind("spawn sprite", 0) != 0 && s.rfind("spawn player", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
-                sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", "Sprite");
-                auto at = args.get_pair("at");
-                auto sz = args.get_pair("size");
+                sp->name = !args.positional.empty() ? args.positional[0] : args.get("name", is_player_cmd ? "Player" : "Sprite");
+                auto at = args.get_pair("at", {100, 320});
+                auto sz = args.get_pair("size", {32, 44});
                 sp->x = at.first; sp->y = at.second;
-                sp->w = sz.first; sp->h = sz.second;
+                sp->w = sz.first > 0 ? sz.first : 32;
+                sp->h = sz.second > 0 ? sz.second : 44;
                 sp->color = args.get("color", "#38bdf8");
+                sp->speed = args.get_num("speed", 280);
+                sp->power = args.get_num("jump", args.get_num("jumpForce", 440));
+                sp->health = args.get_num("health", 100);
             } else {
-                std::regex nm_r(R"(spawn\s+sprite\s*["']?(.*?)["']?(?:\s+at|\s+with|$))");
-                std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
-                std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
+                std::regex nm_r(R"(spawn\s+(?:sprite|player)\s*["']?(.*?)["']?(?:\s+at|\s+with|$))");
+                std::regex at_r(R"(at\s*\((-?[0-9\.]+),\s*(-?[0-9\.]+)\))");
+                std::regex sz_r(R"(size\s*\(([0-9\.]+),\s*([0-9\.]+)\))");
                 std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::regex spd_r(R"(speed\s*([0-9\.]+))");
+                std::regex jmp_r(R"(jump\s*([0-9\.]+))");
+                std::regex hp_r(R"(health\s*([0-9\.]+))");
                 std::smatch m;
                 if (std::regex_search(s, m, nm_r) && m[1].matched) sp->name = m[1];
                 if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
                 if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); }
                 if (std::regex_search(s, m, col_r)) sp->color = m[1];
+                if (std::regex_search(s, m, spd_r)) sp->speed = std::stod(m[1]);
+                if (std::regex_search(s, m, jmp_r)) sp->power = std::stod(m[1]);
+                if (std::regex_search(s, m, hp_r)) sp->health = std::stod(m[1]);
             }
             return sp;
         }
@@ -1918,21 +1933,25 @@ public:
             s.rfind("spawn spike", 0) == 0 || s.rfind("spawn hazard", 0) == 0) {
             auto sp = std::make_shared<SpawnEntityStmt>();
             sp->entity_type = "spike";
+            sp->damage = 35;
             if (s.find('(') != std::string::npos && s.rfind("spawn spike", 0) != 0 && s.rfind("spawn hazard", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
                 auto at = args.get_pair("at");
                 auto sz = args.get_pair("size", {32, 32});
                 sp->x = at.first; sp->y = at.second;
                 sp->w = sz.first; sp->h = sz.second;
+                sp->damage = args.get_num("damage", 35);
                 sp->color = args.get("color", "#ef4444");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
                 std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::regex dmg_r(R"(damage\s*([0-9\.]+))");
                 std::smatch m;
                 if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
                 if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 32; sp->h = 32; }
                 if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#ef4444";
+                if (std::regex_search(s, m, dmg_r)) sp->damage = std::stod(m[1]);
             }
             return sp;
         }
@@ -1941,21 +1960,25 @@ public:
         if (s.rfind("spawn.pad(", 0) == 0 || s.rfind("spawn jump_pad", 0) == 0 || s.rfind("spawn pad", 0) == 0) {
             auto sp = std::make_shared<SpawnEntityStmt>();
             sp->entity_type = "jump_pad";
+            sp->power = 650;
             if (s.find('(') != std::string::npos && s.rfind("spawn jump_pad", 0) != 0 && s.rfind("spawn pad", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
                 auto at = args.get_pair("at");
                 auto sz = args.get_pair("size", {40, 12});
                 sp->x = at.first; sp->y = at.second;
                 sp->w = sz.first; sp->h = sz.second;
+                sp->power = args.get_num("power", 650);
                 sp->color = args.get("color", "#fbbf24");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
                 std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::regex pw_r(R"(power\s*([0-9\.]+))");
                 std::smatch m;
                 if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
                 if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 40; sp->h = 12; }
                 if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#fbbf24";
+                if (std::regex_search(s, m, pw_r)) sp->power = std::stod(m[1]);
             }
             return sp;
         }
@@ -1964,19 +1987,23 @@ public:
         if (s.rfind("spawn.orb(", 0) == 0 || s.rfind("spawn orb", 0) == 0 || s.rfind("spawn jump_ring", 0) == 0) {
             auto sp = std::make_shared<SpawnEntityStmt>();
             sp->entity_type = "orb";
+            sp->power = 540;
             if (s.find('(') != std::string::npos && s.rfind("spawn orb", 0) != 0 && s.rfind("spawn jump_ring", 0) != 0) {
                 auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
                 auto at = args.get_pair("at");
                 sp->x = at.first; sp->y = at.second;
                 sp->w = 28; sp->h = 28;
+                sp->power = args.get_num("power", 540);
                 sp->color = args.get("color", "#f59e0b");
             } else {
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex col_r(R"(color\s*["'](.*?)["'])");
+                std::regex pw_r(R"(power\s*([0-9\.]+))");
                 std::smatch m;
                 if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
                 sp->w = 28; sp->h = 28;
                 if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#f59e0b";
+                if (std::regex_search(s, m, pw_r)) sp->power = std::stod(m[1]);
             }
             return sp;
         }
@@ -2053,12 +2080,17 @@ public:
                 std::regex at_r(R"(at\s*\((\d+),\s*(\d+)\))");
                 std::regex sz_r(R"(size\s*\((\d+),\s*(\d+)\))");
                 std::regex rng_r(R"(range\s*\((\d+),\s*(\d+)\))");
+                std::regex spd_r(R"(speed\s*([0-9\.]+))");
+                std::regex hp_r(R"(health\s*([0-9\.]+))");
                 std::regex col_r(R"(color\s*["'](.*?)["'])");
                 std::smatch m;
                 if (std::regex_search(s, m, nm_r) && m[1].matched) sp->name = m[1];
                 if (std::regex_search(s, m, at_r)) { sp->x = std::stod(m[1]); sp->y = std::stod(m[2]); }
                 if (std::regex_search(s, m, sz_r)) { sp->w = std::stod(m[1]); sp->h = std::stod(m[2]); } else { sp->w = 34; sp->h = 44; }
                 if (std::regex_search(s, m, rng_r)) { sp->min_pos = std::stod(m[1]); sp->max_pos = std::stod(m[2]); }
+                else { sp->min_pos = sp->x - 120; sp->max_pos = sp->x + 120; }
+                if (std::regex_search(s, m, spd_r)) sp->speed = std::stod(m[1]); else sp->speed = 75;
+                if (std::regex_search(s, m, hp_r)) sp->health = std::stod(m[1]); else sp->health = 30;
                 if (std::regex_search(s, m, col_r)) sp->color = m[1]; else sp->color = "#ef4444";
             }
             return sp;
@@ -2303,9 +2335,11 @@ public:
         if (s.rfind("game.stage_preset(", 0) == 0 || s.rfind("scenario.preset(", 0) == 0) {
             auto args = parse_call_args(s.substr(s.find('(') + 1, s.find_last_of(')') - s.find('(') - 1));
             auto at = args.get_pair("at", {args.get_num("x", 70), args.get_num("y", 300)});
+            std::string col = args.get("color", "#38bdf8");
+            double od = args.get_bool("overdrive", false) ? 1.0 : 0.0;
             return std::make_shared<GameConfigStmt>("stage_preset", at.first, at.second,
-                args.get("id", "stage"), args.get("label", "Escenario"), args.get("weather", "stars"),
-                args.get_num("gravity", 980));
+                col, args.get("label", "Escenario"), args.get("weather", "stars"),
+                args.get_num("gravity", 980), od);
         }
 
         // 23l. Game World & Directives: game.gravity(...) / game.world(...) / game.camera(...) / game.camera3d(...) / game.lives(...) / game.friction(...) / game.scenario(...) / game.physics(...) / game.time_scale(...)

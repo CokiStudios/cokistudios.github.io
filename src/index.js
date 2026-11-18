@@ -2543,6 +2543,7 @@ export default {
       ? hostHeader
       : url.hostname;
     const isRepoHost = host === 'repo.cokistudios.com';
+    const isEngineHost = host === 'engine.cokistudios.com';
     const isDevHost = host === 'developer.cokistudios.com';
     const isDocsHost = host === 'docs.cokistudios.com';
     const isCdnHost = host === 'cdn.cokistudios.com';
@@ -2827,12 +2828,39 @@ export default {
       }
     }
 
-    // ── REPO.COKISTUDIOS.COM/engine & /engine ENDPOINTS (LOOPING & SMILEDEV RELEASES) ──
-    if (url.pathname === '/engine' || url.pathname.startsWith('/engine/')) {
-      // 1. JSON Manifest: /engine/latest.json or /engine/version.json (serve live asset first, fallback to embedded 1.1 / Alpha! 1.1A)
-      if (url.pathname === '/engine/latest.json' || url.pathname === '/engine/version.json') {
+    // ── ENGINE.COKISTUDIOS.COM & REPO.COKISTUDIOS.COM/engine (LOOPING & SMILEDEV RELEASES) ──
+    if (isEngineHost || url.pathname === '/engine' || url.pathname.startsWith('/engine/')) {
+      const normalizedPath = isEngineHost
+        ? (url.pathname.startsWith('/engine/') ? url.pathname.slice('/engine'.length) : (url.pathname === '/engine' ? '/' : url.pathname))
+        : (url.pathname === '/engine' ? '/' : url.pathname.slice('/engine'.length));
+
+      const fetchEngineAsset = async (assetSubPath) => {
+        const cleanSub = assetSubPath.startsWith('/') ? assetSubPath : `/${assetSubPath}`;
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = `/engine${cleanSub}`;
+        const assetReq = new Request(assetUrl.toString(), {
+          method: request.method === 'HEAD' ? 'HEAD' : 'GET',
+          headers: request.headers
+        });
+        let res = await env.ASSETS.fetch(assetReq);
+        if (res && res.status >= 300 && res.status < 400) {
+          const loc = res.headers.get('location');
+          if (loc) {
+            const nextUrl = new URL(loc, assetUrl);
+            if (nextUrl.pathname !== assetUrl.pathname) {
+              res = await env.ASSETS.fetch(new Request(nextUrl.toString(), {
+                method: request.method === 'HEAD' ? 'HEAD' : 'GET',
+                headers: request.headers
+              }));
+            }
+          }
+        }
+        return res;
+      };
+
+      const serveLatestJson = async () => {
         try {
-          const staticManifest = await env.ASSETS.fetch(request);
+          const staticManifest = await fetchEngineAsset('/latest.json');
           if (staticManifest && staticManifest.ok) {
             return new Response(staticManifest.body, {
               headers: {
@@ -2844,56 +2872,72 @@ export default {
           }
         } catch {}
         const engineMetadata = {
-          version: "1.1",
-          semver: "1.1.0",
-          alpha_version: "1.1A",
-          smiledev_alpha_version: "1.1A",
-          arch_version: "3.0A",
+          version: "1.1.2",
+          semver: "1.1.2",
+          alpha_version: "1.1.2A",
+          smiledev_alpha_version: "1.1.2A",
+          arch_version: "3.1A",
           engine: "Looping",
           package_manager: "smiledev",
-          release_name: "Looping Engine & smiledev v1.1 (Prod v1.1 / Alpha! 1.1A / Arch 3.0A)",
-          release_date: "2026-11-11",
-          architectures: ["arm64", "x86_64"],
+          release_name: "Looping Engine & smiledev v1.1.2 (Prod v1.1.2 / Alpha! 1.1.2A / Arch 3.1A)",
+          release_date: "2026-11-17",
+          architectures: ["x86_64", "arm64"],
           min_macos: "11.0",
+          min_windows: "10.0",
           channels: {
             prod: {
               name: "Looping",
               tier: "Production Release",
-              version: "1.1",
-              engine_version: "1.1",
-              smiledev_version: "1.1",
-              arch_version: "3.0A",
-              tarball_url: "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
-              tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+              version: "1.1.2",
+              engine_version: "1.1.2",
+              smiledev_version: "1.1.2",
+              arch_version: "3.1A",
+              tarball_url: "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+              tarball_sha256: "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
+              windows_zip_url: "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+              windows_zip_sha256: "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
             },
             alpha: {
-              name: "Alpha! 1.1A",
+              name: "Alpha! 1.1.2A",
               smiledev_name: "Alpha! SmileDev",
               tier: "Super Experimental",
-              version: "1.1A",
-              engine_version: "1.1",
-              smiledev_version: "1.1A",
-              arch_version: "3.0A",
-              tarball_url: "https://repo.cokistudios.com/engine/looping-v1.1A-darwin-universal.tar.gz",
-              tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d"
+              version: "1.1.2A",
+              engine_version: "1.1.2",
+              smiledev_version: "1.1.2A",
+              arch_version: "3.1A",
+              tarball_url: "https://engine.cokistudios.com/looping-v1.1A-darwin-universal.tar.gz",
+              tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
+              windows_zip_url: "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+              windows_zip_sha256: "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d"
             }
           },
-          release_notes: "Looping v1.1 & smiledev (Prod v1.1 / Alpha! 1.1A / Arch 3.0A): Persistent terminal mode (-i / --persistent), Apple Metal 4 subsystem, Quantum 3D Engine, Alpha! 1.1A channel for smiledev, and 71/71 native tests passing.",
-          tarball_url: "https://repo.cokistudios.com/engine/looping-v1.1-darwin-universal.tar.gz",
-          tarball_sha256: "6494f61686a699aab2715b3ed9cca3778a7dd5cd35ab4859d5fbf7f4d2193b7d",
-          installer_script_url: "https://repo.cokistudios.com/engine/install.sh",
-          pkg_url: "https://repo.cokistudios.com/engine/Instalar-Looping.pkg",
+          release_notes: "Looping v1.1.2 & smiledev (Prod v1.1.2 / Alpha! 1.1.2A / Arch 3.1A): Dynamic DirectX 11 Windows, Native macOS Cocoa/ASM Windows, Zero-Python py!() Fast-Path, WebAssembly Runtime & 78+ native tests.",
+          tarball_url: "https://engine.cokistudios.com/looping-v1.1-darwin-universal.tar.gz",
+          tarball_sha256: "637849682c006e5fb7a8bf8b573c406b9a2910878f6cd9ff71a517812ac24f2d",
+          windows_zip_url: "https://engine.cokistudios.com/looping-v1.1.2-windows-x64.zip",
+          windows_zip_sha256: "bcad860e466586264c541b4e82cf1b6441d9de04156f5e764b7e877036b8186d",
+          windows_installer_url: "https://engine.cokistudios.com/install.ps1",
+          installer_script_url: "https://engine.cokistudios.com/install.sh",
+          pkg_url: "https://engine.cokistudios.com/Instalar-Looping.pkg",
           pkg_sha256: "4dfd39ba899fd2526fef32ae390722d9bdbd505aab5917d35524342982a6b012",
-          dmg_url: "https://repo.cokistudios.com/engine/Looping-Engine-v2.6.0-macOS.dmg",
+          dmg_url: "https://engine.cokistudios.com/Looping-Engine-v2.6.0-macOS.dmg",
           dmg_sha256: "894031195bd258d7239512b43f429074cf6123cedc0374296b1a0c2881b994f2",
           binaries: {
             looping: {
-              url: "https://repo.cokistudios.com/engine/looping",
-              sha256: "c27607297dd78c5258d3e404af0596f155ed8dc3cd3bcf19103ffe97cca8293e"
+              url: "https://engine.cokistudios.com/looping",
+              sha256: "c9655eb37a84ff22c7570c3ca218fdfe7eac3fd8c4b0f812dda46a162fbfed72"
+            },
+            looping_exe: {
+              url: "https://engine.cokistudios.com/looping.exe",
+              sha256: "c0eb77d094fb81d4f288085322af3da53855a24675343099babc15091977e440"
             },
             smiledev: {
-              url: "https://repo.cokistudios.com/engine/smiledev",
-              sha256: "bc735380b9f5cc3cdaf663b5c3056b7dcb4254b4e25cabd6182bd8dbef16aa68"
+              url: "https://engine.cokistudios.com/smiledev",
+              sha256: "1a16a9a30a0d7f93ea72020f113904d60930d58b9ab356b384bcd213aaafff72"
+            },
+            smiledev_ps1: {
+              url: "https://engine.cokistudios.com/smiledev.ps1",
+              sha256: "9d90bb3c17c3197131f8f8460021a3d572a5f540b14fff80381de4ce6cd25dfc"
             }
           },
           homebrew: {
@@ -2909,23 +2953,80 @@ export default {
             "Cache-Control": "public, max-age=60, s-maxage=300"
           }
         });
+      };
+
+      // 1. JSON Manifest
+      if (normalizedPath === '/latest.json' || normalizedPath === '/version.json') {
+        return serveLatestJson();
       }
 
-      // 2. Direct browser view /engine -> /engine/index.html
-      if (url.pathname === '/engine' || url.pathname === '/engine/') {
+      // 2. Windows PowerShell installer (PS 5.1 & PS 7 irm | iex friendly, zero redirects)
+      if (normalizedPath === '/install.ps1') {
+        const psRes = await fetchEngineAsset('/install.ps1');
+        if (psRes && psRes.ok) {
+          return new Response(psRes.body, {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "public, max-age=60"
+            }
+          });
+        }
+      }
+
+      // 3. Unix Bash installer
+      if (normalizedPath === '/install.sh') {
+        const shRes = await fetchEngineAsset('/install.sh');
+        if (shRes && shRes.ok) {
+          return new Response(shRes.body, {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "text/x-shellscript; charset=utf-8",
+              "Cache-Control": "public, max-age=60"
+            }
+          });
+        }
+      }
+
+      // 4. Engine Landing Page (/ on engine.cokistudios.com, /engine/ on repo.cokistudios.com)
+      if (normalizedPath === '/' || normalizedPath === '/index.html') {
         const accept = request.headers.get("Accept") || "";
         if (accept.includes("application/json") || url.searchParams.get("format") === "json") {
-          const redirectUrl = new URL(request.url);
-          redirectUrl.pathname = '/engine/latest.json';
-          return Response.redirect(redirectUrl.toString(), 302);
+          return serveLatestJson();
         }
-        const engineHtmlUrl = new URL(request.url);
-        engineHtmlUrl.pathname = '/engine/index.html';
-        return env.ASSETS.fetch(new Request(engineHtmlUrl.toString(), request));
+        // On non-engine hosts, ensure a single canonical trailing slash /engine/ so relative ./ assets resolve cleanly
+        if (!isEngineHost && url.pathname === '/engine') {
+          const redir = new URL(request.url);
+          redir.pathname = '/engine/';
+          return Response.redirect(redir.toString(), 308);
+        }
+        const htmlRes = await fetchEngineAsset('/');
+        if (htmlRes && htmlRes.ok) {
+          const headers = new Headers(htmlRes.headers);
+          headers.set("Content-Type", "text/html; charset=utf-8");
+          return new Response(htmlRes.body, { status: 200, headers });
+        }
+        return htmlRes;
       }
 
-      // 3. Fallback: serve static assets (.tar.gz, .pkg, .dmg, .sh, .sha256)
-      return env.ASSETS.fetch(request);
+      // 5. Engine assets (.zip, .tar.gz, .exe, .wasm, .js, .ps1, .pkg, .dmg, .sha256)
+      const assetRes = await fetchEngineAsset(normalizedPath);
+      if (assetRes && assetRes.status !== 404) {
+        const headers = new Headers(assetRes.headers);
+        Object.entries(corsHeaders).forEach(([k, v]) => headers.set(k, v));
+        if (normalizedPath.endsWith('.ps1')) headers.set("Content-Type", "text/plain; charset=utf-8");
+        else if (normalizedPath.endsWith('.sha256')) headers.set("Content-Type", "text/plain; charset=utf-8");
+        else if (normalizedPath.endsWith('.wasm')) headers.set("Content-Type", "application/wasm");
+        return new Response(assetRes.body, { status: assetRes.status, headers });
+      }
+
+      // On engine.cokistudios.com, allow shared root assets like /assets/cs-logo.svg, /hiop-ide, /developer
+      if (isEngineHost) {
+        return env.ASSETS.fetch(request);
+      }
+      return assetRes;
     }
 
     // ── REPO.COKISTUDIOS.COM & /modules ENDPOINT ──

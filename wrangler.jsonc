@@ -25,6 +25,10 @@
       "pattern": "docs.cokistudios.com",
       "custom_domain": true
     },
+    {
+      "pattern": "engine.cokistudios.com",
+      "custom_domain": true
+    },
     "cdn.cokistudios.com/*",
     "mdm.cokistudios.com/*"
   ],

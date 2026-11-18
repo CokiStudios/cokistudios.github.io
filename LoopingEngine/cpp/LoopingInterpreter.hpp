@@ -7,6 +7,7 @@
 #include "LoopingCSharpBridge.hpp"
 #include "LoopizeCore.hpp"
 #include "LoopingCompiler.hpp"
+#include "LoopingStage.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -20,6 +21,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <thread>
+#include <functional>
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/wait.h>
@@ -181,14 +183,14 @@ public:
     std::unordered_set<std::string> imported_modules;
     std::unordered_set<std::string> imported_python_modules;
     std::string app_name = "HoloApp";
-    std::string base_version = "1.1";
-    std::string engine_version = "1.1";
-    std::string semver = "1.1.0";
-    std::string app_version = "1.1";
-    std::string arch_version = "3.0A";
+    std::string base_version = "1.1.2";
+    std::string engine_version = "1.1.2";
+    std::string semver = "1.1.2";
+    std::string app_version = "1.1.2";
+    std::string arch_version = "3.1A";
     std::string channel = "prod";
     std::string channel_name = "Looping";
-    std::string edition = "Production Release (Arch 3.0A Quantum Synthesis)";
+    std::string edition = "Production Release (Arch 3.1A Quantum Synthesis)";
     bool channel_initialized = false;
     bool invis_compile_enabled = true;
     std::string target_platform = "Shine Loop Console (Holo Looping OoS)";
@@ -203,9 +205,32 @@ public:
     DynamicWindow current_window;
     std::string last_exported_native_script = "";
     bool has_active_window = false;
-    bool has_game_entities = false;
     pid_t window_process_pid = 0;
     loop_math::Scene3D current_scene3d;
+    LoopingStageRuntime stage;
+
+    void reset_runtime() {
+        variables.clear();
+        functions.clear();
+        python_snippets.clear();
+        csharp_snippets.clear();
+        snippet_types.clear();
+        imported_modules.clear();
+        imported_python_modules.clear();
+        swiftui_components.clear();
+        dynamic_programs.clear();
+        loaded_obj_meshes.clear();
+        loopize_runtime.reset();
+        current_scene3d.clear();
+        stage.reset();
+        has_returned = false;
+        has_broken = false;
+        has_continued = false;
+        has_thrown = false;
+        thrown_error = "";
+        last_return_value = Value();
+        init_builtins();
+    }
 
     static loop_math::Vec3 val_to_vec3(const Value& v) {
         if (v.type == ValueType::List && v.list_val) {
@@ -288,13 +313,25 @@ public:
     }
 
     static std::string resolve_zbash_shell() {
-#ifndef _WIN32
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+        return "wasm-sandbox";
+#elif !defined(_WIN32)
         static const char* candidates[] = {"/bin/zsh", "/usr/bin/zsh", "/bin/bash", "/bin/sh"};
         for (const char* sh : candidates) {
             if (access(sh, X_OK) == 0) return std::string(sh);
         }
         return "/bin/sh";
 #else
+        static const char* win_candidates[] = {
+            "C:\\Program Files\\Git\\bin\\bash.exe",
+            "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+            "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+            "C:\\msys64\\usr\\bin\\bash.exe"
+        };
+        for (const char* sh : win_candidates) {
+            std::ifstream f(sh);
+            if (f.good()) return std::string(sh);
+        }
         return "cmd.exe";
 #endif
     }
@@ -339,7 +376,18 @@ public:
 
     ZBashResult run_zbash_command(const std::string& cmd, bool stream_to_stdout) {
         ZBashResult res;
-#ifndef _WIN32
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+        std::string trimmed = cmd;
+        while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) trimmed.erase(0, 1);
+        if (trimmed.rfind("echo ", 0) == 0) {
+            res.output = trimmed.substr(5) + "\n";
+            res.exit_code = 0;
+        } else {
+            res.output = "[WASM Sandbox: shell execution unavailable in browser]";
+            res.exit_code = 127;
+        }
+        if (stream_to_stdout && !res.output.empty()) std::cout << res.output << std::flush;
+#elif !defined(_WIN32)
         std::string shell_path = resolve_zbash_shell();
         int pipefd[2];
         if (pipe(pipefd) != 0) {
@@ -386,17 +434,96 @@ public:
             res.exit_code = 127;
         }
 #else
-        FILE* pipe = popen(cmd.c_str(), "r");
-        if (!pipe) {
-            res.exit_code = 127;
-            return res;
+        std::string shell_path = resolve_zbash_shell();
+        if (shell_path != "cmd.exe") {
+            auto quote_msvcrt = [](const std::string& arg) {
+                std::string out = "\"";
+                size_t bs = 0;
+                for (char c : arg) {
+                    if (c == '\\') {
+                        bs++;
+                    } else if (c == '"') {
+                        out.append(bs * 2 + 1, '\\');
+                        out.push_back('"');
+                        bs = 0;
+                    } else {
+                        out.append(bs, '\\');
+                        out.push_back(c);
+                        bs = 0;
+                    }
+                }
+                out.append(bs * 2, '\\');
+                out.push_back('"');
+                return out;
+            };
+            SECURITY_ATTRIBUTES sa{};
+            sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+            sa.bInheritHandle = TRUE;
+            sa.lpSecurityDescriptor = NULL;
+
+            HANDLE hRead = NULL, hWrite = NULL;
+            if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
+                res.exit_code = 127;
+                return res;
+            }
+            SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
+
+            STARTUPINFOA si{};
+            si.cb = sizeof(STARTUPINFOA);
+            si.hStdError = hWrite;
+            si.hStdOutput = hWrite;
+            si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+            si.dwFlags |= STARTF_USESTDHANDLES;
+
+            PROCESS_INFORMATION pi{};
+            std::string cmdline = quote_msvcrt(shell_path) + " -c " + quote_msvcrt(cmd);
+            std::vector<char> cmd_buf(cmdline.begin(), cmdline.end());
+            cmd_buf.push_back('\0');
+
+            BOOL ok = CreateProcessA(
+                shell_path.c_str(),
+                cmd_buf.data(),
+                NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi
+            );
+            CloseHandle(hWrite);
+
+            if (ok) {
+                char buf[4096];
+                DWORD bytesRead = 0;
+                while (ReadFile(hRead, buf, sizeof(buf), &bytesRead, NULL) && bytesRead > 0) {
+                    res.output.append(buf, static_cast<size_t>(bytesRead));
+                    if (stream_to_stdout) {
+                        std::cout.write(buf, bytesRead);
+                        std::cout.flush();
+                    }
+                }
+                CloseHandle(hRead);
+                WaitForSingleObject(pi.hProcess, INFINITE);
+                DWORD exitCode = 0;
+                if (GetExitCodeProcess(pi.hProcess, &exitCode)) {
+                    res.exit_code = static_cast<int>(exitCode);
+                } else {
+                    res.exit_code = 1;
+                }
+                CloseHandle(pi.hProcess);
+                CloseHandle(pi.hThread);
+            } else {
+                CloseHandle(hRead);
+                res.exit_code = 127;
+            }
+        } else {
+            FILE* pipe = popen(cmd.c_str(), "r");
+            if (!pipe) {
+                res.exit_code = 127;
+                return res;
+            }
+            char buf[512];
+            while (fgets(buf, sizeof(buf), pipe) != nullptr) {
+                res.output += buf;
+                if (stream_to_stdout) std::cout << buf << std::flush;
+            }
+            res.exit_code = pclose(pipe);
         }
-        char buf[512];
-        while (fgets(buf, sizeof(buf), pipe) != nullptr) {
-            res.output += buf;
-            if (stream_to_stdout) std::cout << buf << std::flush;
-        }
-        res.exit_code = pclose(pipe);
 #endif
         variables["zbash_last_code"] = Value(static_cast<int64_t>(res.exit_code));
         variables["zbash.last_code"] = Value(static_cast<int64_t>(res.exit_code));
@@ -413,6 +540,46 @@ public:
         variables["UI_NAME"] = Value(active_ui_specs.name);
         variables["UI_THEME"] = Value(active_ui_specs.theme);
         variables["UI_FPS"] = Value(static_cast<int64_t>(active_ui_specs.target_fps));
+    }
+
+    void sync_stage_to_window() {
+        current_window.stage_world_width = stage.world_width;
+        current_window.stage_world_height = stage.world_height;
+        current_window.stage_gravity = stage.gravity;
+        current_window.stage_scenario_name = stage.scenario_name;
+        current_window.stage_scenario_accent = stage.scenario_accent;
+        current_window.entities_2d.clear();
+        for (const auto& se : stage.entities_2d) {
+            DxEntity2DSpec de;
+            de.type = se.type;
+            de.name = se.name;
+            de.color = se.color;
+            de.label = se.label;
+            de.axis = se.axis;
+            de.x = se.x; de.y = se.y; de.w = se.w; de.h = se.h;
+            de.radius = se.radius;
+            de.speed = se.speed;
+            de.jump_force = se.jump_force;
+            de.power = se.power;
+            de.health = se.health;
+            de.max_health = se.max_health;
+            de.damage = se.damage;
+            de.points = se.points;
+            de.min_pos = se.min_pos;
+            de.max_pos = se.max_pos;
+            de.to_x = se.to_x;
+            de.to_y = se.to_y;
+            de.is_player = se.is_player;
+            de.spawn_x = se.spawn_x;
+            de.spawn_y = se.spawn_y;
+            current_window.entities_2d.push_back(std::move(de));
+        }
+        if (!current_scene3d.entities.empty() && current_scene3d.entities.size() > current_window.entities_3d.size()) {
+            current_window.entities_3d = current_scene3d.entities;
+            current_window.is_3d_mode = true;
+        } else if (current_scene3d.active) {
+            current_window.is_3d_mode = true;
+        }
     }
 
     Value execute_snippet_code(const std::string& snippet_name, const std::string& code) {
@@ -549,23 +716,24 @@ public:
     void set_channel(const std::string& ch_raw) {
         std::string ch = ch_raw;
         for (char& c : ch) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        if (ch == "alpha" || ch == "alpha!" || ch == "1.1a" || ch == "alpha-1.1a" || ch == "experimental" || ch == "super-experimental") {
+        if (ch == "alpha" || ch == "alpha!" || ch == "1.1a" || ch == "alpha-1.1a" ||
+            ch == "1.1.2a" || ch == "alpha-1.1.2a" || ch == "experimental" || ch == "super-experimental") {
             channel = "alpha";
             channel_name = "Alpha! Looping";
             engine_version = base_version + "-alpha";
-            semver = "1.1.0-alpha";
+            semver = "1.1.2-alpha";
             edition = "Alpha! Looping — Super Experimental (Arch " + arch_version + ")";
         } else if (ch == "omega" || ch == "rc" || ch == "release-candidate") {
             channel = "omega";
             channel_name = "Omega Looping";
             engine_version = base_version + "-omega";
-            semver = "1.1.0-omega";
+            semver = "1.1.2-omega";
             edition = "Omega Looping — Release Candidate / RC (Arch " + arch_version + ")";
         } else {
             channel = "prod";
             channel_name = "Looping";
             engine_version = base_version;
-            semver = "1.1.0";
+            semver = "1.1.2";
             edition = "Production Release (Arch " + arch_version + " Quantum Synthesis)";
         }
         app_version = engine_version;
@@ -615,7 +783,9 @@ public:
             if (n == "math.tau" || n == "TAU" || n == "tau") return Value(6.28318530717958647692);
             if (n == "math.phi" || n == "PHI" || n == "phi") return Value(1.61803398874989484820);
             if (n == "sys.platform") {
-#if defined(__APPLE__)
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+                return Value("wasm");
+#elif defined(__APPLE__)
                 return Value("darwin");
 #elif defined(_WIN32)
                 return Value("windows");
@@ -626,10 +796,14 @@ public:
 #endif
             }
             if (n == "sys.arch") {
-#if defined(__arm64__) || defined(__aarch64__)
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+                return Value("wasm32");
+#elif defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
                 return Value("arm64");
 #elif defined(__x86_64__) || defined(_M_X64)
                 return Value("x86_64");
+#elif defined(__i386__) || defined(_M_IX86)
+                return Value("x86");
 #else
                 return Value("unknown");
 #endif
@@ -1500,17 +1674,89 @@ public:
                 return Value(true);
             }
             if (name == "window.export_native" || name == "window.save_native") {
+                sync_stage_to_window();
                 std::string path = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
                 if (path.empty()) path = "build/" + current_window.app_name + "_native.py";
-                bool ok = current_window.save_native_gui(path);
+                bool ok = false;
+                if (path.size() >= 6 && path.substr(path.size() - 6) == ".dxwin") {
+                    ok = current_window.save_dxwin(path);
+                } else if (path.size() >= 4 && path.substr(path.size() - 4) == ".cpp") {
+                    ok = current_window.save_directx_cpp(path);
+                } else {
+                    ok = current_window.save_native_gui(path);
+                }
                 last_exported_native_script = path;
                 has_active_window = true;
                 return Value(ok ? path : "");
             }
+            if (name == "window.export_directx" || name == "window.save_directx") {
+                sync_stage_to_window();
+                std::string path = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                if (path.empty()) path = "build/" + current_window.app_name + ".dxwin";
+                bool ok = (path.size() >= 4 && path.substr(path.size() - 4) == ".cpp")
+                    ? current_window.save_directx_cpp(path)
+                    : current_window.save_dxwin(path);
+                has_active_window = true;
+                return Value(ok ? path : "");
+            }
+            if (name == "window.import_obj" || name == "import_obj" || name == "obj3d.import") {
+                std::string path = evaluated_args.size() > 0 ? evaluated_args[0].as_string() : "";
+                std::string ename = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "";
+                std::string col = evaluated_args.size() > 2 ? evaluated_args[2].as_string() : "#38bdf8";
+                double sc = evaluated_args.size() > 3 ? evaluated_args[3].as_number() : 1.0;
+
+                loop_math::Mesh3D m = loop_math::load_obj_file(path);
+                bool from_file = !m.vertices.empty() && !m.faces.empty();
+                if (!from_file && !path.empty()) {
+                    loop_math::Mesh3D preset = loop_math::make_preset_obj_mesh(path);
+                    if (!preset.vertices.empty() && path.find(".obj") == std::string::npos) {
+                        m = std::move(preset);
+                    }
+                }
+                std::unordered_map<std::string, Value> res;
+                if (m.vertices.empty() || m.faces.empty()) {
+                    res["ok"] = Value(false);
+                    res["path"] = Value(path);
+                    return Value(res);
+                }
+                loop_math::normalize_mesh(m, 1.5);
+                if (ename.empty()) {
+                    size_t sl = path.find_last_of("/\\");
+                    ename = (sl == std::string::npos) ? path : path.substr(sl + 1);
+                }
+                loaded_obj_meshes[ename] = m;
+                if (!path.empty()) loaded_obj_meshes[path] = m;
+
+                loop_math::Entity3D e;
+                e.type = "obj";
+                e.name = ename;
+                e.mesh = "obj";
+                e.obj_file = path;
+                e.pos = {0.0, 2.0, 6.0 + static_cast<double>(current_scene3d.entities.size()) * 2.5};
+                e.scale = {sc, sc, sc};
+                e.color = col;
+                e.has_custom_mesh = true;
+                e.custom_mesh = m;
+
+                current_scene3d.active = true;
+                current_scene3d.entities.push_back(e);
+                current_window.add_entity_3d(e);
+                has_active_window = true;
+
+                res["ok"] = Value(true);
+                res["name"] = Value(ename);
+                res["path"] = Value(path);
+                res["vertices"] = Value(static_cast<int64_t>(m.vertices.size()));
+                res["faces"] = Value(static_cast<int64_t>(m.faces.size()));
+                res["triangles"] = Value(static_cast<int64_t>(m.triangle_count()));
+                return Value(res);
+            }
             if (name == "window.show_native" || name == "window.open_native" || name == "window.native") {
+                sync_stage_to_window();
                 has_active_window = true;
                 bool launch = evaluated_args.size() > 0 ? evaluated_args[0].is_truthy() : true;
-                bool ok = current_window.show_native(launch);
+                std::string backend = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "auto";
+                bool ok = current_window.show_native(launch, backend);
                 return Value(ok);
             }
             if (name == "window.export_html") {
@@ -1526,9 +1772,11 @@ public:
                 return Value(ok ? path : "");
             }
             if (name == "window.show" || name == "window.open") {
+                sync_stage_to_window();
                 has_active_window = true;
                 bool launch = evaluated_args.size() > 0 ? evaluated_args[0].is_truthy() : true;
-                bool ok = current_window.show(launch);
+                std::string mode = evaluated_args.size() > 1 ? evaluated_args[1].as_string() : "native";
+                bool ok = current_window.show(launch, mode);
                 return Value(ok);
             }
             if (name == "window.ascii" || name == "window.render_ascii") {
@@ -2438,7 +2686,9 @@ public:
                 return Value("");
             }
             if (name == "sys.platform") {
-#if defined(__APPLE__)
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+                return Value("wasm");
+#elif defined(__APPLE__)
                 return Value("darwin");
 #elif defined(_WIN32)
                 return Value("windows");
@@ -2449,10 +2699,14 @@ public:
 #endif
             }
             if (name == "sys.arch") {
-#if defined(__arm64__) || defined(__aarch64__)
+#if defined(__EMSCRIPTEN__) || defined(LOOPING_NO_SUBPROCESS)
+                return Value("wasm32");
+#elif defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
                 return Value("arm64");
 #elif defined(__x86_64__) || defined(_M_X64)
                 return Value("x86_64");
+#elif defined(__i386__) || defined(_M_IX86)
+                return Value("x86");
 #else
                 return Value("unknown");
 #endif
@@ -2473,7 +2727,10 @@ public:
             }
             if (name == "zbash.has" || name == "zbash_utils.has") {
                 if (evaluated_args.empty()) return Value(false);
-                std::string check = "command -v -- " + shell_single_quote(evaluated_args[0].as_string()) + " >/dev/null 2>&1";
+                std::string tool_name = evaluated_args[0].as_string();
+                std::string check = (resolve_zbash_shell() == "cmd.exe")
+                    ? ("where.exe \"" + tool_name + "\" >NUL 2>&1")
+                    : ("command -v -- " + shell_single_quote(tool_name) + " >/dev/null 2>&1");
                 return Value(run_zbash_command(check, false).exit_code == 0);
             }
             if (name == "zbash.shell" || name == "zbash_utils.shell") {
@@ -3161,6 +3418,7 @@ public:
             }
             if (name == "game.play_sfx" || name == "game_plus.play_sfx") {
                 std::string sfx = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "coin";
+                stage.emit_sfx(sfx);
                 if (sfx == "jump") {
                     std::cout << color::CYAN << "[AUDIO SYNTH]" << color::RESET << " Tone 620 Hz for 70 ms\n";
                 } else if (sfx == "coin") {
@@ -3183,18 +3441,6 @@ public:
                 std::cout << color::YELLOW << "[GAME POPUP]" << color::RESET << " Modal: " << p_title << "\n";
                 std::cout << color::CYAN << "[AUDIO SYNTH]" << color::RESET << " Tone 880 Hz for 50 ms\n";
                 return Value(true);
-            }
-            if (name == "game.shake" || name == "game_plus.shake") {
-                double amt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.35;
-                loopize_runtime.camera.add_trauma(amt);
-                return Value(loopize_runtime.camera.trauma);
-            }
-            if (name == "game.approach" || name == "game.move_toward" || name == "game_plus.approach") {
-                double cur = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.0;
-                double tgt = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 0.0;
-                double step_d = std::max(0.0, evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 1.0);
-                if (std::abs(tgt - cur) <= step_d) return Value(tgt);
-                return Value(cur + ((tgt > cur) ? step_d : -step_d));
             }
 
             // 4b. Native 3D Mathematics, Quaternions, Matrices, Raycasting & 120Hz Physics (math3d.* / physics3d.* / scene3d.*)
@@ -3390,7 +3636,7 @@ public:
                 best.distance = std::numeric_limits<double>::infinity();
                 std::string hit_name = "", hit_type = "";
                 for (const auto& e : current_scene3d.entities) {
-                    if (e.type == "player" || e.type == "terrain" || !e.is_live()) continue;
+                    if (e.type == "player" || e.type == "terrain") continue;
                     loop_math::RayHit3D r;
                     if (e.has_custom_mesh && !e.custom_mesh.vertices.empty()) {
                         r = loop_math::raycast_mesh(orig, dir, e.custom_mesh, e.pos, e.rot_deg, e.scale);
@@ -3497,103 +3743,6 @@ public:
                 current_scene3d.clear();
                 current_window.entities_3d.clear();
                 return Value(true);
-            }
-            if (name == "physics3d.resolve_collisions" || name == "scene3d.resolve_collisions") {
-                bool push = evaluated_args.empty() || evaluated_args[0].is_truthy();
-                return Value(static_cast<int64_t>(current_scene3d.resolve_collisions(push)));
-            }
-            if (name == "scene3d.find" || name == "scene3d.get") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                std::unordered_map<std::string, Value> m;
-                if (const auto* e = current_scene3d.find_entity(ename)) {
-                    m["found"] = Value(true);
-                    m["name"] = Value(e->name);
-                    m["type"] = Value(e->type);
-                    m["tag"] = Value(e->tag);
-                    m["pos"] = vec3_to_val(e->pos);
-                    m["rot"] = vec3_to_val(e->rot_deg);
-                    m["scale"] = vec3_to_val(e->scale);
-                    m["size"] = vec3_to_val(e->size);
-                    m["health"] = Value(e->health);
-                    m["active"] = Value(e->is_live());
-                    m["color"] = Value(e->color);
-                } else {
-                    m["found"] = Value(false);
-                }
-                return Value(m);
-            }
-            if (name == "scene3d.set_pos") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                loop_math::Vec3 np = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, 0};
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    e->pos = np;
-                    return vec3_to_val(e->pos);
-                }
-                return Value();
-            }
-            if (name == "scene3d.move") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                loop_math::Vec3 dp = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, 0};
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    e->pos = e->pos + dp;
-                    return vec3_to_val(e->pos);
-                }
-                return Value();
-            }
-            if (name == "scene3d.rotate") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                loop_math::Vec3 dr = evaluated_args.size() >= 2 ? val_to_vec3(evaluated_args[1]) : loop_math::Vec3{0, 0, 0};
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    e->rot_deg = e->rot_deg + dr;
-                    return vec3_to_val(e->rot_deg);
-                }
-                return Value();
-            }
-            if (name == "scene3d.damage") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                double dmg = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 25.0;
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    double prev = e->health;
-                    e->health = std::max(0.0, e->health - std::max(0.0, dmg));
-                    e->hit_flash = 1.0;
-                    if (prev > 0.0 && e->health <= 0.0 && (e->type == "enemy" || e->type == "boss")) {
-                        loopize_runtime.combo.register_hit(std::max(100.0, e->points));
-                    }
-                    return Value(e->health);
-                }
-                return Value(0.0);
-            }
-            if (name == "scene3d.heal") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                double amt = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 25.0;
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    e->health += std::max(0.0, amt);
-                    if (e->health > 0.0) e->active = true;
-                    return Value(e->health);
-                }
-                return Value(0.0);
-            }
-            if (name == "scene3d.set_color") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                std::string hex = evaluated_args.size() >= 2 ? evaluated_args[1].as_string() : "#38bdf8";
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    e->color = hex;
-                    return Value(e->color);
-                }
-                return Value("");
-            }
-            if (name == "scene3d.set_active") {
-                std::string ename = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "";
-                bool act = evaluated_args.size() < 2 || evaluated_args[1].is_truthy();
-                if (auto* e = current_scene3d.find_entity(ename)) {
-                    e->active = act;
-                    return Value(e->active);
-                }
-                return Value(false);
-            }
-            if (name == "scene3d.alive_count") {
-                std::string filter = evaluated_args.size() >= 1 ? evaluated_args[0].as_string() : "*";
-                return Value(static_cast<int64_t>(current_scene3d.alive_count(filter)));
             }
 
             // 4b. Wavefront .OBJ & Mesh3D Geometry Pipeline (obj3d.* / mesh3d.*)
@@ -3896,34 +4045,9 @@ public:
                 double b = evaluated_args.size() >= 3 ? evaluated_args[2].as_number() : 1.0;
                 double dur = evaluated_args.size() >= 4 ? evaluated_args[3].as_number() : 1.0;
                 std::string curve = evaluated_args.size() >= 5 ? evaluated_args[4].as_string() : "out_cubic";
-                bool loop_flag = evaluated_args.size() >= 6 && evaluated_args[5].is_truthy();
-                bool pp_flag = evaluated_args.size() >= 7 && evaluated_args[6].is_truthy();
-                loopize::TweenTrack tw;
-                tw.name = key;
-                tw.curve = curve;
-                tw.start_val = a;
-                tw.end_val = b;
-                tw.duration = dur;
-                tw.elapsed = 0.0;
-                tw.ping_pong = pp_flag;
-                tw.finished = false;
-                tw.loop = loop_flag;
+                loopize::TweenTrack tw{key, curve, a, b, dur, 0.0, false, false};
                 loopize_runtime.tweens[key] = tw;
                 return Value(tw.current());
-            }
-            if (name == "loopize.wave_status" || name == "lz.wave_status") {
-                int alive_enemies = current_scene3d.alive_count("enemy") + current_scene3d.alive_count("boss");
-                int waves_total = static_cast<int>(loopize_runtime.waves.size());
-                int active_wave = loopize_runtime.active_wave_index + 1;
-                int remaining = std::max(0, waves_total - std::max(0, active_wave));
-                std::unordered_map<std::string, Value> ws;
-                ws["waves_total"] = Value(static_cast<int64_t>(waves_total));
-                ws["active_wave"] = Value(static_cast<int64_t>(std::max(0, active_wave)));
-                ws["remaining_waves"] = Value(static_cast<int64_t>(remaining));
-                ws["alive_enemies"] = Value(static_cast<int64_t>(alive_enemies));
-                ws["wave_cleared"] = Value(alive_enemies == 0);
-                ws["all_cleared"] = Value(alive_enemies == 0 && remaining == 0 && waves_total > 0);
-                return Value(ws);
             }
             if (name == "loopize.shake" || name == "lz.shake") {
                 double amt = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 0.35;
@@ -4017,9 +4141,6 @@ public:
                 st["level"] = Value(static_cast<int64_t>(loopize_runtime.level));
                 st["obj_cache"] = Value(static_cast<int64_t>(loaded_obj_meshes.size()));
                 st["cs_classes"] = Value(static_cast<int64_t>(csharp_bridge.classes.size()));
-                st["alive_enemies"] = Value(static_cast<int64_t>(current_scene3d.alive_count("enemy") + current_scene3d.alive_count("boss")));
-                st["camera_trauma"] = Value(loopize_runtime.camera.trauma);
-                st["tweens_active"] = Value(static_cast<int64_t>(loopize_runtime.tweens.size()));
                 return Value(st);
             }
 
@@ -4027,6 +4148,7 @@ public:
             if (name == "sound.beep" || name == "audio.beep") {
                 double freq = evaluated_args.size() >= 1 ? evaluated_args[0].as_number() : 440.0;
                 double dur = evaluated_args.size() >= 2 ? evaluated_args[1].as_number() : 100.0;
+                stage.emit_sfx("tone:" + std::to_string(static_cast<int>(freq)) + ":" + std::to_string(static_cast<int>(dur)));
                 std::cout << color::CYAN << "[AUDIO SYNTH]" << color::RESET << " Tone " << static_cast<int64_t>(freq) << " Hz for " << static_cast<int64_t>(dur) << " ms\n";
                 return Value(true);
             }
@@ -4042,6 +4164,7 @@ public:
                 else if (note == "A4") freq = 440.00;
                 else if (note == "B4") freq = 493.88;
                 else if (note == "C5") freq = 523.25;
+                stage.emit_sfx("tone:" + std::to_string(static_cast<int>(freq)) + ":" + std::to_string(static_cast<int>(dur)));
                 std::cout << color::CYAN << "[AUDIO SYNTH]" << color::RESET << " Tone " << static_cast<int64_t>(freq) << " Hz (" << note << ") for " << static_cast<int64_t>(dur) << " ms\n";
                 return Value(true);
             }
@@ -4115,15 +4238,19 @@ public:
                 return ret;
             }
 
-            // Fallback: If python module function, evaluate via Python Bridge
-            if (name.find('.') != std::string::npos && python_bridge.is_available) {
-                std::string py_call = name + "(";
-                for (size_t i = 0; i < evaluated_args.size(); ++i) {
-                    if (i > 0) py_call += ", ";
-                    py_call += evaluated_args[i].to_json();
+            // Fallback: If an imported Python module function was invoked, evaluate via Python Bridge
+            auto mod_dot = name.find('.');
+            if (mod_dot != std::string::npos && !imported_python_modules.empty()) {
+                std::string mod_prefix = name.substr(0, mod_dot);
+                if (imported_python_modules.count(mod_prefix) > 0 && python_bridge.check_available()) {
+                    std::string py_call = name + "(";
+                    for (size_t i = 0; i < evaluated_args.size(); ++i) {
+                        if (i > 0) py_call += ", ";
+                        py_call += evaluated_args[i].to_json();
+                    }
+                    py_call += ")";
+                    return python_bridge.eval_expr(py_call, variables);
                 }
-                py_call += ")";
-                return python_bridge.eval_expr(py_call, variables);
             }
 
             return Value();
@@ -4692,8 +4819,9 @@ public:
             // Check if built-in stdlib module (only if no local package on disk)
             static const std::unordered_set<std::string> stdlib_modules = {
                 "math", "crypto", "sys", "system", "csv", "datetime", "regex", "ui", "swiftui", "json", "file",
-                "csid", "core_utils", "utils",
-                "game_plus", "game",
+                "csid", "core_utils", "utils", "loop-core-utils",
+                "game_plus", "game", "loop-game-plus",
+                "math3d", "physics3d", "scene3d", "loop-math-3d", "invis",
                 "csms", "ai",
                 "sound", "audio", "cpp_snippets", "metal4", "metal", "loop.metal4",
                 "zbash-utils", "zbash_utils", "loop.zbash-utils", "zbash",
@@ -4708,7 +4836,7 @@ public:
             }
 
             // Search resolution paths for the module file
-            std::string home_dir = getenv("HOME") ? getenv("HOME") : "";
+            std::string home_dir = get_user_home();
             std::vector<std::string> candidate_paths = {
                 mod,
                 mod + ".loop",
@@ -4771,7 +4899,7 @@ public:
                     if (!py_comp.empty()) {
                         std::string py_path = base_dir + "/" + py_comp;
                         std::ifstream pf(py_path);
-                        if (pf.good() && python_bridge.is_available) {
+                        if (pf.good() && python_bridge.check_available()) {
                             std::string py_content((std::istreambuf_iterator<char>(pf)), std::istreambuf_iterator<char>());
                             python_bridge.execute_block(py_content, variables);
                             std::cout << "  " << color::GREEN << "✔" << color::RESET << " Python Component linked: " << py_comp << "\n";
@@ -4861,7 +4989,7 @@ public:
                 imported_modules.insert(mod);
                 if (resolved_path.size() >= 3 && resolved_path.substr(resolved_path.size() - 3) == ".py") {
                     imported_python_modules.insert(mod);
-                    if (python_bridge.is_available) {
+                    if (python_bridge.check_available()) {
                         std::ifstream pf(resolved_path);
                         std::string py_content((std::istreambuf_iterator<char>(pf)), std::istreambuf_iterator<char>());
                         python_bridge.execute_block(py_content, variables);
@@ -4992,7 +5120,7 @@ public:
 
         // 16. Spawn Entity: Sprite / Platform / Coin / Bubbly Dot
         if (auto sp = std::dynamic_pointer_cast<SpawnEntityStmt>(stmt)) {
-            has_game_entities = true;
+            stage.ingest_spawn_2d(*sp);
             if (sp->entity_type == "bubbly_dot") {
                 std::cout << color::GREEN << "[BUBBLY DOT]" << color::RESET << " Active Notch [" 
                           << (sp->state.empty() ? "MUSIC" : sp->state) << "]: \"" 
@@ -5113,7 +5241,6 @@ public:
         }
 
         if (auto sp3 = std::dynamic_pointer_cast<SpawnEntity3DStmt>(stmt)) {
-            has_game_entities = true;
             current_scene3d.active = true;
             loop_math::Entity3D e;
             e.type = sp3->entity_type;
@@ -5163,6 +5290,14 @@ public:
                 csharp_bridge.instantiate(e.cs_class, e.name + "_cs", e.name, variables, &current_scene3d);
             }
 
+            if (e.type == "player") {
+                stage.p3d_spawn_x = e.pos.x;
+                stage.p3d_spawn_y = e.pos.y;
+                stage.p3d_spawn_z = e.pos.z;
+                stage.p3d_vx = stage.p3d_vy = stage.p3d_vz = 0.0;
+                stage.p3d_coyote = stage.coyote_time;
+                stage.p3d_jumps = 0;
+            }
             current_scene3d.entities.push_back(e);
             current_window.add_entity_3d(e);
 
@@ -5177,7 +5312,7 @@ public:
 
         // Game Configuration Directives
         if (auto gcfg = std::dynamic_pointer_cast<GameConfigStmt>(stmt)) {
-            has_game_entities = true;
+            stage.ingest_game_config(*gcfg);
             if (gcfg->config_key == "world") {
                 std::cout << color::CYAN << "[GAME WORLD]" << color::RESET << " Stage Bounds: " 
                           << gcfg->val1 << "x" << gcfg->val2 << " px\n";
@@ -5211,6 +5346,7 @@ public:
 
         // 17. Emit Particles
         if (auto em = std::dynamic_pointer_cast<EmitParticlesStmt>(stmt)) {
+            stage.spawn_particles(em->x, em->y, em->color, 18);
             std::cout << color::CYAN << "[PARTICLES]" << color::RESET << " Emitted FX burst at (" 
                       << em->x << ", " << em->y << ") [" << em->color << "]\n";
             return;
@@ -5219,6 +5355,7 @@ public:
         // 18. Audio Tone
         if (auto tone = std::dynamic_pointer_cast<PlayToneStmt>(stmt)) {
             current_window.add_tone(tone->freq_hz, tone->duration_ms);
+            stage.emit_sfx("tone:" + std::to_string(static_cast<int>(tone->freq_hz)) + ":" + std::to_string(static_cast<int>(tone->duration_ms)));
             std::cout << color::GREEN << "[AUDIO SYNTH]" << color::RESET << " Tone " 
                       << static_cast<int>(tone->freq_hz) << " Hz for " 
                       << static_cast<int>(tone->duration_ms) << " ms\n";
@@ -5423,16 +5560,23 @@ public:
         std::cout << color::CYAN << "[EXEC]" << color::RESET << " Loading source: " 
                   << color::BOLD << path << color::RESET << "\n";
 
-        if (python_bridge.is_available) {
-            std::cout << color::GREEN << "[PYTHON INTEROP]" << color::RESET << " Attached Python runtime: " 
-                  << color::CYAN << python_bridge.get_command_str() << color::RESET << "\n";
-        } else {
-            std::cout << color::YELLOW << "[PYTHON INTEROP]" << color::RESET << " Standalone Mode (Python not detected in PATH)\n";
-        }
-
         std::stringstream buffer;
         buffer << file.rdbuf();
         std::string content = buffer.str();
+
+        bool uses_python = (content.find("python") != std::string::npos ||
+                            content.find("py!") != std::string::npos ||
+                            content.find("py:") != std::string::npos ||
+                            content.find("pysnippet") != std::string::npos ||
+                            content.find("runpy") != std::string::npos ||
+                            content.find("pyloop") != std::string::npos);
+
+        if (uses_python) {
+            std::cout << color::CYAN << "[PYTHON FAST-PATH]" << color::RESET
+                      << " Native C++17 Zero-Python evaluator active (lazy CPython fallback only if needed)\n";
+        } else {
+            std::cout << color::CYAN << "[RUNTIME]" << color::RESET << " Native C++17 Standalone Engine (Zero-Python Execution)\n";
+        }
 
         if (invis_compile_enabled) {
             std::string cache_bin = InvisBinaryCompiler::ensure_invis_cache(path, content, active_ui_specs);
